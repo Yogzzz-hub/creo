@@ -1,5 +1,5 @@
 import { NativeSelect } from "../../ui/NativeSelect";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import {
@@ -8,8 +8,6 @@ import {
   Calendar,
   Sparkles,
   ArrowRight,
-  Pause,
-  Play,
   Layers,
   Send,
   Upload,
@@ -21,8 +19,8 @@ import {
   Eye,
   Loader2,
   AlertTriangle,
+  MessageSquare,
 } from "lucide-react";
-import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchPodDashboard, type PodDashboardData, type PodTask } from "../../lib/ops-api";
 import { uploadTaskDeliverable, validateUploadFile, UPLOAD_ACCEPT } from "../../lib/deliverables-api";
@@ -36,6 +34,7 @@ import {
 
 interface LeadNoteItem {
   id: string;
+  taskId?: string;
   author: string;
   role: string;
   badge: string;
@@ -46,6 +45,8 @@ interface LeadNoteItem {
   tag?: string;
   badgeColor?: string;
 }
+
+const STANDUP_MEETING_URL = "https://zoom.us/j/9814421990?pwd=creo";
 
 export function MemberOverviewPage() {
   const navigate = useNavigate();
@@ -72,8 +73,34 @@ export function MemberOverviewPage() {
   const myAssignedTasks = allEligibleTasks.filter(isAssignedToCurrentUser);
   const otherPodTasks = allEligibleTasks.filter((t) => !isAssignedToCurrentUser(t));
 
+  const myInProdTasks = inProdTasks.filter(isAssignedToCurrentUser);
+  const myQaTasks = qaTasks.filter(isAssignedToCurrentUser);
   const myActiveTasks = activeSprintTasks.filter(isAssignedToCurrentUser);
   const myCompletedTasks = completedTasks.filter(isAssignedToCurrentUser);
+
+  const isCreative = isCreativeRole(user?.role);
+  // Scoped metrics and focus tasks for the logged-in user
+  const metricActiveTasks = isCreative ? myActiveTasks : (myActiveTasks.length > 0 ? myActiveTasks : activeSprintTasks);
+  const displayInProdTasks = isCreative ? myInProdTasks : inProdTasks;
+  const displayQaTasks = isCreative ? myQaTasks : qaTasks;
+
+  const isDueTodayOrOverdue = (dueDate?: string | null) => {
+    if (!dueDate) return false;
+    const d = new Date(dueDate);
+    const now = new Date();
+    return d.toDateString() === now.toDateString() || d < now;
+  };
+  const dueTodayCount = metricActiveTasks.filter((t) => isDueTodayOrOverdue(t.due_date || t.sla_due_at)).length;
+  const focusTasks = metricActiveTasks;
+
+  const openPreviewModal = (task: PodTask) => {
+    if (task.deliverable) {
+      setPreviewTask(task);
+      setPreviewModalOpen(true);
+    } else {
+      showToast(`No media cut uploaded yet for ${task.client_name} - ${task.blueprint?.concept_name || task.deliverable_type}. Use Handoff to upload.`, "info");
+    }
+  };
 
   // Deliverables table scoping: Creatives default to "My Deliverables", Leads/Admins to "All Pod"
   const [deliverablesScope, setDeliverablesScope] = useState<"my" | "all">(() =>
@@ -92,8 +119,6 @@ export function MemberOverviewPage() {
   const currentTasks = deliverablesTab === "active" ? displayActiveTasks : displayCompletedTasks;
 
   // State for interactive actions
-  const [renderPaused, setRenderPaused] = useState(false);
-  const [renderProgress] = useState(75);
   const [quickReplyText, setQuickReplyText] = useState("");
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "info" } | null>(null);
 
@@ -121,41 +146,47 @@ export function MemberOverviewPage() {
   const [handoffConfirmOpen, setHandoffConfirmOpen] = useState(false);
   const [zoomModalOpen, setZoomModalOpen] = useState(false);
 
-  const [notesList, setNotesList] = useState<LeadNoteItem[]>([
-    {
-      id: "note-1",
-      author: "Lead Producer",
-      role: "Pod Lead • 22m ago",
-      badge: "Sprint QA",
-      content:
-        "Audio stems and color grading pass look solid. Please verify CTA contrast against client brand guidelines before final handoff.",
-      attachment: "frame_0320_markup.png",
-      avatarBg: "bg-blue-600",
-      avatar: "ML",
-    },
-    {
-      id: "note-2",
-      author: "Senior Specialist",
-      role: "Copy Lead • 1h ago",
-      badge: "ATL-119",
-      content:
-        "Updated the legal disclaimer copy for Holiday Bumper C. Bumped character kerning slightly for better readability at 1080p mobile preview.",
-      tag: "Synced to Figma Flow Node",
-      avatarBg: "bg-[#0B111C]",
-      avatar: "MV",
-    },
-    {
-      id: "note-3",
-      author: "Automated QA Bot",
-      role: "Render Pass Sentinel • 2h ago",
-      badge: "Passed",
-      badgeColor: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
-      content:
-        "Pre-flight check passed for 9:16 export specs: Color gamut verified, 709 standard, peak nitrates within client target window.",
-      avatarBg: "bg-purple-600",
-      avatar: "QA",
-    },
-  ]);
+  // Clean real lead feedback notes (zero mock data)
+  const [notesList, setNotesList] = useState<LeadNoteItem[]>([]);
+
+  // Merge real QA feedback from assigned/pod tasks with notesList
+  const allNotes = useMemo(() => {
+    const realNotes: LeadNoteItem[] = [];
+    allEligibleTasks.forEach((t) => {
+      const comment =
+        t.deliverable?.rejection_comment ||
+        (t as any).rejection_comment ||
+        (t as any).qa_feedback ||
+        (t as any).feedback;
+      if (comment) {
+        const cleanLeadInitials = leadName
+          .replace(/\(.*?\)/g, "")
+          .replace(/[^a-zA-Z0-9\s]/g, "")
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase() || "PL";
+
+        realNotes.push({
+          id: `task-qa-${t.id}`,
+          taskId: t.id,
+          author: leadName,
+          role: `${t.client_name || "Pod QA"} · QA Review`,
+          badge: t.blueprint?.concept_name || t.deliverable_type?.toUpperCase() || "Revision Required",
+          badgeColor: "bg-amber-500/15 text-amber-300 border border-amber-500/30",
+          content: comment,
+          avatarBg: "bg-blue-600",
+          avatar: cleanLeadInitials,
+        });
+      }
+    });
+    const existingIds = new Set(notesList.map((n) => n.id));
+    const fresh = realNotes.filter((n) => !existingIds.has(n.id));
+    return [...fresh, ...notesList];
+  }, [allEligibleTasks, leadName, notesList]);
 
   const showToast = (text: string, type: "success" | "info" = "success") => {
     setToastMessage({ text, type });
@@ -164,20 +195,36 @@ export function MemberOverviewPage() {
 
   const handleSendQuickReply = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quickReplyText.trim()) return;
-    setNotesList([
-      {
-        id: `note-${Date.now()}`,
-        author: user?.full_name || "Specialist",
-        role: "Sr. Motion (You) • Just now",
-        badge: "Reply",
-        content: quickReplyText,
-        avatarBg: "bg-[#7FA0D6]",
-        avatar: "DK",
+    const trimmed = quickReplyText.trim();
+    const leadId = leadMember?.id || "lead";
+
+    if (trimmed) {
+      setNotesList([
+        {
+          id: `note-${Date.now()}`,
+          author: user?.full_name || "Specialist",
+          role: `${user?.role ? user.role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Specialist"} (You) • Just now`,
+          badge: "Slack Reply",
+          badgeColor: "bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30",
+          content: trimmed,
+          avatarBg: "bg-[#7FA0D6]",
+          avatar: (user?.full_name || "U").split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase(),
+        },
+        ...notesList,
+      ]);
+    }
+
+    const targetUrl = trimmed
+      ? `/workstation/slack?dm=${encodeURIComponent(leadId)}&draft=${encodeURIComponent(trimmed)}`
+      : `/workstation/slack?dm=${encodeURIComponent(leadId)}`;
+
+    navigate(targetUrl, {
+      state: {
+        draft: trimmed,
+        dm: leadId,
+        leadName,
       },
-      ...notesList,
-    ]);
-    showToast(`Reply sent to ${leadName}: "${quickReplyText}"`);
+    });
     setQuickReplyText("");
   };
 
@@ -260,11 +307,8 @@ export function MemberOverviewPage() {
 
   return (
     <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
-      {/* Top Header Navigation in Admin unified layout */}
-      <AdminTopHeader activeTab="Overview" />
-
       {/* Main Container */}
-      <main className="flex-1 max-w-[1440px] w-full mx-auto px-3 sm:px-5 lg:px-6 py-3.5 pb-20 sm:pb-6 space-y-3.5 sm:space-y-4">
+      <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20 sm:pb-8 space-y-6">
         {/* Toast Alert */}
         {toastMessage && (
           <div
@@ -303,271 +347,391 @@ export function MemberOverviewPage() {
           </div>
         </div>
 
-        {/* 2. Top 3 Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
-          {/* Active Sprint Tasks */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.05 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
-                ACTIVE SPRINT TASKS
-              </span>
-              <div className="size-6 sm:size-7 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center">
-                <Sparkles className="size-3 sm:size-3.5" />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">{activeSprintTasks.length}</span>
-                <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">Active</span>
-                <span className="text-[9.5px] sm:text-[10px] text-[#97A0B3] truncate">{inProdTasks.length} in progress · {qaTasks.length} in QA</span>
-              </div>
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-[#2A3446]">
-                <span className="font-bold text-[#7FA0D6] flex items-center gap-1">
-                  ● Due Today: 1
-                </span>
-                <Link to="/workstation/tasks" className="font-bold text-[#97A0B3] hover:text-[#F1F5F9] flex items-center gap-0.5">
-                  <ArrowRight className="size-3" />
-                </Link>
-              </div>
-            </div>
-          </motion.div>
+        {/* ROW 1: Production Focus & Lead Feedback */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch w-full">
+          {/* Left (2 cols - xl:col-span-2 flex flex-col space-y-6) */}
+          <div className="xl:col-span-2 flex flex-col space-y-6">
+            {/* The 3 Metric Cards row (grid grid-cols-1 sm:grid-cols-3 gap-3) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Active Sprint Tasks */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.05 }}
+                className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
+                    ACTIVE SPRINT TASKS
+                  </span>
+                  <div className="size-6 sm:size-7 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center">
+                    <Sparkles className="size-3 sm:size-3.5" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-baseline gap-1.5 mb-1">
+                    <span className="text-lg sm:text-xl font-black text-white">{metricActiveTasks.length}</span>
+                    <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">Active</span>
+                    <span className="text-[9.5px] sm:text-[10px] text-[#97A0B3] truncate">({displayInProdTasks.length} in progress · {displayQaTasks.length} in QA)</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-[#2A3446]">
+                    <span className="font-bold text-[#7FA0D6] flex items-center gap-1">
+                      ● Due Today: {dueTodayCount}
+                    </span>
+                    <Link to="/workstation/tasks" className="font-bold text-[#97A0B3] hover:text-[#F1F5F9] flex items-center gap-0.5">
+                      <ArrowRight className="size-3" />
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
 
-          {/* Weekly Hours Logged */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
-                WEEKLY HOURS LOGGED
-              </span>
-              <div className="size-6 sm:size-7 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
-                <Clock className="size-3 sm:size-3.5" />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">32.5</span>
-                <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">/ 40 hrs</span>
-              </div>
-              {/* Progress bar */}
-              <div className="w-full h-1.5 bg-[#161F2D] rounded-full overflow-hidden my-1">
-                <div className="h-full bg-blue-600 rounded-full w-[81%] transition-all duration-700" />
-              </div>
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1 border-t border-[#2A3446]">
-                <span className="font-bold text-emerald-600">81% target</span>
-                <span className="font-bold text-[#97A0B3]">7.5h left</span>
-              </div>
-            </div>
-          </motion.div>
+              {/* Weekly Hours Logged */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+                className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
+                    WEEKLY HOURS LOGGED
+                  </span>
+                  <div className="size-6 sm:size-7 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
+                    <Clock className="size-3 sm:size-3.5" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-baseline gap-1.5 mb-1">
+                    <span className="text-lg sm:text-xl font-black text-white">32.5</span>
+                    <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">/ 40 hrs</span>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="w-full h-1.5 bg-[#161F2D] rounded-full overflow-hidden my-1">
+                    <div className="h-full bg-blue-600 rounded-full w-[81%] transition-all duration-700" />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1 border-t border-[#2A3446]">
+                    <span className="font-bold text-emerald-600">81% target</span>
+                    <span className="font-bold text-[#97A0B3]">7.5h left</span>
+                  </div>
+                </div>
+              </motion.div>
 
-          {/* Remaining PTO */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
-                REMAINING PTO
-              </span>
-              <div className="size-6 sm:size-7 rounded-lg bg-purple-500/15 text-purple-400 border border-purple-500/30 flex items-center justify-center">
-                <Calendar className="size-3 sm:size-3.5" />
-              </div>
+              {/* Remaining PTO */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.15 }}
+                className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
+                    REMAINING PTO
+                  </span>
+                  <div className="size-6 sm:size-7 rounded-lg bg-purple-500/15 text-purple-400 border border-purple-500/30 flex items-center justify-center">
+                    <Calendar className="size-3 sm:size-3.5" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-baseline gap-1.5 mb-1">
+                    <span className="text-lg sm:text-xl font-black text-white">14.5</span>
+                    <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">Days</span>
+                    <span className="text-[9.5px] sm:text-[10px] text-[#97A0B3]">1.5d/mo</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-[#2A3446]">
+                    <span className="font-bold text-[#F1F5F9] truncate">Next: Nov 8 (0.5d)</span>
+                    <Link to="/workstation/schedule" className="font-bold text-[#7FA0D6] hover:underline shrink-0">
+                      Plan &rarr;
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
             </div>
-            <div>
-              <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">14.5</span>
-                <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">Days</span>
-                <span className="text-[9.5px] sm:text-[10px] text-[#97A0B3]">1.5d/mo</span>
+
+            {/* Section A: Today's Priority Focus & Production Queue */}
+            {focusTasks.length === 0 || !focusTasks[0] ? (
+              <div className="bg-[#161F2D] rounded-2xl p-6 sm:p-8 border border-[#2A3446]/80 shadow-2xs text-center space-y-3 flex-1 flex flex-col justify-center">
+                <div className="size-12 rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="size-6" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-sm sm:text-base font-black text-white">No Active Tasks in Production</h3>
+                  <p className="text-xs text-[#97A0B3] max-w-md mx-auto leading-relaxed">
+                    You currently have no tasks in production or internal QA review. Check your task queue for new pod assignments or review upcoming deliverables.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                  <Link
+                    to="/workstation/tasks"
+                    className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+                  >
+                    <span>Browse Task Queue</span>
+                    <ArrowRight className="size-3" />
+                  </Link>
+                  <Link
+                    to="/workstation/schedule"
+                    className="px-4 py-2 rounded-xl bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] text-xs font-bold transition-colors"
+                  >
+                    View Schedule & PTO
+                  </Link>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-[#2A3446]">
-                <span className="font-bold text-[#F1F5F9] truncate">Next: Nov 8 (0.5d)</span>
-                <Link to="/workstation/schedule" className="font-bold text-[#7FA0D6] hover:underline shrink-0">
-                  Plan &rarr;
-                </Link>
+            ) : (() => {
+              const primaryTask = focusTasks[0]!;
+              const secondaryTask = focusTasks[1];
+              return (
+                <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs space-y-3.5 flex-1 flex flex-col justify-between">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
+                    <div className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-blue-600 animate-pulse" />
+                      <h2 className="text-sm font-black text-white">
+                        Today's Priority Focus & Production Queue
+                      </h2>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-[#7FA0D6] bg-[#0B111C] px-2.5 py-1 rounded-lg border border-[#2A3446]">
+                      {focusTasks.length} {focusTasks.length === 1 ? "Active Task" : "Active Tasks"}
+                    </span>
+                  </div>
+
+                  {/* Priority Item 1 */}
+                  <div className="p-3.5 rounded-xl bg-[#0B111C]/80 border border-[#2A3446]/70 space-y-2.5 hover:border-[#7FA0D6]/30 transition-all">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                      <div className="flex items-start gap-2.5">
+                        {/* Deliverable Badge */}
+                        <div className="size-10 rounded-lg bg-slate-900 overflow-hidden shrink-0 relative flex items-center justify-center border border-slate-700">
+                          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-blue-600/30" />
+                          <span className="text-[8px] font-mono text-cyan-400 font-bold z-10 uppercase">
+                            {primaryTask.deliverable_type?.slice(0, 4) || "TASK"}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold text-[#7FA0D6]">{primaryTask.client_name || "Assigned Client"}</span>
+                            <span className="text-[#97A0B3] text-[10px]">· {primaryTask.status === "internal_qa" ? "IN QA" : "PRODUCTION"}</span>
+                          </div>
+                          <h3 className="text-xs font-black text-white">{primaryTask.blueprint?.concept_name || primaryTask.deliverable_type || "Production Deliverable"}</h3>
+                          <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[#97A0B3] mt-0.5">
+                            <span>{primaryTask.deliverable_type?.toUpperCase() || "CREATIVE ASSET"}</span>
+                            <span>•</span>
+                            <span>{primaryTask.due_date ? `Due ${new Date(primaryTask.due_date).toLocaleDateString()}` : "Active Sprint"}</span>
+                            {primaryTask.sla_due_at && (
+                              <>
+                                <span>•</span>
+                                <span className="text-amber-400 font-semibold">SLA Tracked</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold self-start ${
+                        primaryTask.status === "internal_qa"
+                          ? "bg-purple-500/15 text-purple-400 border border-purple-500/30"
+                          : "bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30"
+                      }`}>
+                        {primaryTask.status === "internal_qa" ? "Internal QA Review" : "In Production"}
+                      </span>
+                    </div>
+
+                    {/* Task Actions */}
+                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                      <button
+                        onClick={() => openPreviewModal(primaryTask)}
+                        className="px-3 py-1.5 rounded-lg bg-[#161F2D] border border-[#2A3446] hover:bg-[#161F2D] text-[11px] font-bold text-[#F1F5F9] flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <Eye className="size-3 text-[#97A0B3]" />
+                        Preview Specs
+                      </button>
+                      <Link
+                        to="/workstation/tasks"
+                        className="px-3 py-1.5 rounded-lg bg-[#161F2D] border border-[#2A3446] hover:bg-[#161F2D] text-[11px] font-bold text-[#F1F5F9] flex items-center gap-1 transition-colors"
+                      >
+                        <Layers className="size-3 text-[#97A0B3]" />
+                        Task Board
+                      </Link>
+                      <button
+                        onClick={() => openUploadModal(primaryTask)}
+                        className="px-3 py-1.5 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer ml-auto"
+                      >
+                        <Send className="size-3" />
+                        Handoff to Lead
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Priority Item 2 if exists */}
+                  {secondaryTask && (
+                    <div className="p-3.5 rounded-xl bg-[#0B111C]/80 border border-[#2A3446]/70 space-y-2.5 hover:border-[#7FA0D6]/30 transition-all">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                        <div className="flex items-start gap-2.5">
+                          <div className="size-10 rounded-lg bg-gradient-to-br from-indigo-700 to-indigo-900 overflow-hidden shrink-0 relative flex items-center justify-center text-white font-mono text-[8px] font-bold">
+                            {secondaryTask.deliverable_type?.slice(0, 4) || "P2"}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-indigo-400">{secondaryTask.client_name || "Assigned Client"}</span>
+                              <span className="text-[#97A0B3] text-[10px]">· P2-ACTIVE</span>
+                            </div>
+                            <h3 className="text-xs font-black text-white">{secondaryTask.blueprint?.concept_name || secondaryTask.deliverable_type || "Secondary Deliverable"}</h3>
+                            <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[#97A0B3] mt-0.5">
+                              <span>{secondaryTask.deliverable_type?.toUpperCase() || "CREATIVE ASSET"}</span>
+                              <span>•</span>
+                              <span>{secondaryTask.due_date ? `Due ${new Date(secondaryTask.due_date).toLocaleDateString()}` : "In Progress"}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 self-start">
+                          {secondaryTask.status === "internal_qa" ? "Internal QA" : "In Production"}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                        <button
+                          onClick={() => openPreviewModal(secondaryTask)}
+                          className="px-3 py-1.5 rounded-lg bg-[#161F2D] border border-[#2A3446] hover:bg-[#161F2D] text-[11px] font-bold text-[#F1F5F9] flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          <Eye className="size-3 text-[#97A0B3]" />
+                          Preview Specs
+                        </button>
+                        <button
+                          onClick={() => openUploadModal(secondaryTask)}
+                          className="px-3.5 py-1.5 rounded-lg bg-[#7FA0D6] hover:bg-blue-700 text-white text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer ml-auto"
+                        >
+                          <Send className="size-3" />
+                          Submit for QA
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Right (1 col - xl:col-span-1 flex flex-col) */}
+          <div className="xl:col-span-1 flex flex-col">
+            {/* Lead Feedback & Notes */}
+            <div className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/80 shadow-2xs space-y-3 h-full flex flex-col justify-between">
+              <div className="flex items-center justify-between pb-2 border-b border-[#2A3446]">
+                <div className="flex items-center gap-1.5">
+                  <FileText className="size-3.5 text-[#7FA0D6]" />
+                  <h3 className="text-xs font-black text-white">Lead Feedback & Notes</h3>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-[#7FA0D6]/15 text-[#7FA0D6]">
+                    {allNotes.length} Updates
+                  </span>
+                  <Link
+                    to={`/workstation/slack?dm=${encodeURIComponent(leadMember?.id || "lead")}`}
+                    state={{ dm: leadMember?.id || "lead", leadName }}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#0B111C] hover:bg-[#162338] border border-[#2A3446] text-[#7FA0D6] hover:text-white text-[10px] font-bold transition-colors cursor-pointer"
+                    title={`Open Slack Chat with ${leadName}`}
+                  >
+                    <MessageSquare className="size-2.5" />
+                    <span>Slack Hub</span>
+                  </Link>
+                </div>
               </div>
+
+              {/* Feed Items */}
+              {allNotes.length === 0 ? (
+                <div className="py-8 px-4 text-center rounded-xl bg-[#0B111C]/50 border border-dashed border-[#2A3446] space-y-2 flex-1 flex flex-col items-center justify-center">
+                  <div className="size-9 rounded-full bg-slate-800/80 border border-slate-700/80 mx-auto flex items-center justify-center text-[#97A0B3]">
+                    <CheckCircle2 className="size-4 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-white text-xs">No feedback or revision requests</p>
+                    <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                      Your pod lead has not requested any revisions on your current deliverables.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2.5 overflow-y-auto pr-1 flex-1 min-h-0">
+                  {allNotes.map((note) => (
+                    <div
+                      key={note.id}
+                      onClick={() => {
+                        if (note.taskId) {
+                          navigate(`/workstation/tasks?taskId=${encodeURIComponent(note.taskId)}`, {
+                            state: { selectedTaskId: note.taskId },
+                          });
+                        }
+                      }}
+                      className={`p-2.5 rounded-xl bg-[#0B111C]/80 border border-[#2A3446]/60 space-y-1.5 text-xs transition-all ${
+                        note.taskId ? "cursor-pointer hover:border-[#7FA0D6]/60 hover:bg-[#111927] group" : ""
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <div className={`size-5 rounded-md ${note.avatarBg} text-white font-black text-[9px] flex items-center justify-center`}>
+                            {note.avatar}
+                          </div>
+                          <div>
+                            <span className="font-bold text-white text-[11px]">{note.author}</span>
+                            <span className="text-[9px] text-[#97A0B3] block">{note.role}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${note.badgeColor || "bg-[#7FA0D6]/20 text-[#7FA0D6]"}`}>
+                            {note.badge}
+                          </span>
+                          {note.taskId && (
+                            <ArrowRight className="size-3 text-[#7FA0D6] opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 transition-transform" />
+                          )}
+                        </div>
+                      </div>
+
+                      <p className="text-[#F1F5F9] leading-relaxed font-medium text-[11px]">"{note.content}"</p>
+
+                      {note.taskId && (
+                        <div className="flex items-center gap-1 text-[10px] text-[#7FA0D6] font-semibold pt-0.5">
+                          <span>Open revision task in board</span>
+                          <ArrowRight className="size-2.5" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Quick Reply via Slack Form */}
+              <form onSubmit={handleSendQuickReply} className="pt-2 border-t border-[#2A3446] space-y-1.5">
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="text-[#97A0B3] flex items-center gap-1">
+                    <MessageSquare className="size-3 text-[#7FA0D6]" />
+                    <span>Reply to <strong className="text-white font-medium">{leadName}</strong> via Slack</span>
+                  </span>
+                  <span className="text-[9px] text-[#7FA0D6] font-semibold">Instant Sync</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={quickReplyText}
+                    onChange={(e) => setQuickReplyText(e.target.value)}
+                    placeholder={`Reply to ${leadName} via Slack...`}
+                    className="flex-1 px-2.5 py-1.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[11px] font-medium text-white placeholder:text-[#97A0B3] focus:outline-none focus:bg-[#161F2D] focus:ring-1 focus:ring-blue-500"
+                  />
+                  <button
+                    type="submit"
+                    title="Send via Slack Chat"
+                    className="h-7 px-2.5 rounded-lg bg-[#7FA0D6] hover:bg-blue-600 active:scale-95 text-white flex items-center gap-1 text-[11px] font-bold transition-all shadow-2xs cursor-pointer shrink-0"
+                  >
+                    <span>Slack</span>
+                    <Send className="size-2.5" />
+                  </button>
+                </div>
+              </form>
             </div>
-          </motion.div>
+          </div>
         </div>
 
-        {/* 3. Main Two-Column Layout (Left 2/3, Right 1/3) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-4 items-start">
-          {/* LEFT 2 COLUMNS */}
-          <div className="lg:col-span-2 space-y-3.5 sm:space-y-4">
-            {/* Section A: Today's Priority Focus & RenderQueue */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs space-y-3.5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
-                <div className="flex items-center gap-2">
-                  <span className="size-1.5 rounded-full bg-blue-600 animate-pulse" />
-                  <h2 className="text-sm font-black text-white">
-                    Today's Priority Focus & RenderQueue
-                  </h2>
-                </div>
-                <span className="text-[9px] font-mono font-bold text-[#97A0B3] bg-[#161F2D] px-2 py-0.5 rounded">
-                  OCTANE V2024.1.2
-                </span>
-              </div>
-
-              {/* Priority Item 1: Octane 3D Product Teaser */}
-              <div className="p-3.5 rounded-xl bg-[#0B111C]/80 border border-[#2A3446]/70 space-y-2.5 hover:border-[#7FA0D6]/30 transition-all">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                  <div className="flex items-start gap-2.5">
-                    {/* Thumbnail */}
-                    <div className="size-10 rounded-lg bg-slate-900 overflow-hidden shrink-0 relative flex items-center justify-center border border-slate-700">
-                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-blue-600/30" />
-                      <span className="text-[8px] font-mono text-cyan-400 font-bold z-10">4K HDR</span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-[#7FA0D6]">{activeSprintTasks[0]?.client_name || "Active Sprint Client"}</span>
-                        <span className="text-[#97A0B3] text-[10px]">· P1-ACTIVE</span>
-                      </div>
-                      <h3 className="text-xs font-black text-white">{activeSprintTasks[0]?.blueprint?.concept_name || "Sprint Master Render Campaign"}</h3>
-                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[#97A0B3] mt-0.5">
-                        <span>4K 60fps ProRes 422HQ</span>
-                        <span>•</span>
-                        <span>Rec.709</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 self-start">
-                    Octane Render {renderProgress}% Complete
-                  </span>
-                </div>
-
-                {/* Render Details Box */}
-                <div className="p-2.5 rounded-lg bg-[#161F2D] border border-[#2A3446] space-y-1.5">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-bold text-[#F1F5F9]">GPU-04 (Dual RTX 4090)</span>
-                    <span className="font-black text-[#7FA0D6]">Frame 3,840 / 5,120</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-[#161F2D] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-500"
-                      style={{ width: `${renderProgress}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] text-[#97A0B3] font-medium">
-                    <span>VRAM: 18.2GB</span>
-                    <span>1024 spp clean</span>
-                    <span>Elapsed: 3h 15m · Left: 1h 05m</span>
-                  </div>
-                </div>
-
-                {/* Control Action Buttons */}
-                <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                  <button
-                    onClick={() => {
-                      setRenderPaused(!renderPaused);
-                      showToast(renderPaused ? "Resumed Octane GPU Render Cluster" : "Paused Octane GPU Render Cluster", "info");
-                    }}
-                    className="px-3 py-1.5 rounded-lg bg-[#161F2D] border border-[#2A3446] hover:bg-[#161F2D] text-[11px] font-bold text-[#F1F5F9] flex items-center gap-1 transition-colors cursor-pointer"
-                  >
-                    {renderPaused ? <Play className="size-3 text-emerald-600" /> : <Pause className="size-3 text-amber-600" />}
-                    {renderPaused ? "Resume" : "Pause"}
-                  </button>
-                  <button
-                    onClick={() => setInspectModalOpen(true)}
-                    className="px-3 py-1.5 rounded-lg bg-[#161F2D] border border-[#2A3446] hover:bg-[#161F2D] text-[11px] font-bold text-[#F1F5F9] flex items-center gap-1 transition-colors cursor-pointer"
-                  >
-                    <Layers className="size-3 text-[#97A0B3]" />
-                    Inspect Cache
-                  </button>
-                  <button
-                    onClick={() => {
-                      const targetTask = myActiveTasks[0] || myAssignedTasks[0] || activeSprintTasks[0];
-                      if (targetTask) {
-                        openUploadModal(targetTask);
-                      } else {
-                        setHandoffConfirmOpen(true);
-                      }
-                    }}
-                    className="px-3 py-1.5 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer ml-auto"
-                  >
-                    <Send className="size-3" />
-                    Handoff to Lead
-                  </button>
-                </div>
-              </div>
-
-              {/* Priority Item 2: Holiday Promotion 3D Bumpers */}
-              <div className="p-3.5 rounded-xl bg-[#0B111C]/80 border border-[#2A3446]/70 space-y-2.5 hover:border-purple-200 transition-all">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                  <div className="flex items-start gap-2.5">
-                    <div className="size-10 rounded-lg bg-gradient-to-br from-amber-700 to-amber-900 overflow-hidden shrink-0 relative flex items-center justify-center text-white font-mono text-[8px] font-bold">
-                      1080p
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-purple-400">{activeSprintTasks[1]?.client_name || (clients[0]?.name || "Active Client")}</span>
-                        <span className="text-[#97A0B3] text-[10px]">· P2-SPRINT</span>
-                      </div>
-                      <h3 className="text-xs font-black text-white">{activeSprintTasks[1]?.blueprint?.concept_name || "Brand Campaign Motion Stems"}</h3>
-                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[#97A0B3] mt-0.5">
-                        <span>1080x1080</span>
-                        <span>•</span>
-                        <span>3 Variations</span>
-                        <span>•</span>
-                        <span className="text-emerald-600 font-bold">Figma Sync</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 self-start">
-                    Keyframing · Due in 6h
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                  <span className="text-[#97A0B3] font-semibold text-[10px]">Comps:</span>
-                  <span className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] font-bold text-[10px]">
-                    Bumper_A_Hero
-                  </span>
-                  <span className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] font-bold text-[10px]">
-                    Bumper_B_Gift
-                  </span>
-                  <span className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] font-bold text-[10px]">
-                    Bumper_C_Countdown
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                  <button
-                    onClick={() => showToast("Opened After Effects project file ATL-119_v03.aep")}
-                    className="px-3 py-1.5 rounded-lg bg-[#161F2D] border border-[#2A3446] hover:bg-[#161F2D] text-[11px] font-bold text-[#F1F5F9] flex items-center gap-1 transition-colors cursor-pointer"
-                  >
-                    <ExternalLink className="size-3 text-[#97A0B3]" />
-                    Open in AE
-                  </button>
-                  <button
-                    onClick={() => {
-                      const targetTask = myActiveTasks[1] || myAssignedTasks[1] || activeSprintTasks[1] || activeSprintTasks[0];
-                      if (targetTask) {
-                        openUploadModal(targetTask);
-                      } else {
-                        navigate("/workstation/handoff");
-                      }
-                    }}
-                    className="px-3.5 py-1.5 rounded-lg bg-[#7FA0D6] hover:bg-blue-700 text-white text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer ml-auto"
-                  >
-                    <Send className="size-3" />
-                    Submit for QA
-                  </button>
-                </div>
-              </div>
-            </div>
+        {/* ROW 2: Sprint Deliverables & Team Sync */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch w-full">
+          {/* Left (2 cols - xl:col-span-2 flex flex-col) */}
+          <div className="xl:col-span-2 flex flex-col">
             {/* Section B: Assigned Sprint Deliverables Table */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs space-y-3">
+            <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs space-y-3 h-full flex flex-col">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 border-b border-[#2A3446] gap-2.5">
                 <div>
                   <h2 className="text-sm font-black text-white">Assigned Sprint Deliverables</h2>
@@ -633,7 +797,7 @@ export function MemberOverviewPage() {
               {(() => {
                 if (currentTasks.length === 0) {
                   return (
-                    <div className="py-10 text-center border-2 border-dashed border-[#2A3446] rounded-xl space-y-2 p-4">
+                    <div className="py-10 text-center border-2 border-dashed border-[#2A3446] rounded-xl space-y-2 p-4 flex-1 flex flex-col items-center justify-center">
                       <div className="size-10 rounded-full bg-slate-800 border border-slate-700 mx-auto flex items-center justify-center text-[#97A0B3]">
                         <Sparkles className="size-5 text-[#7FA0D6]" />
                       </div>
@@ -671,7 +835,7 @@ export function MemberOverviewPage() {
                   );
                 }
                 return (
-                  <>
+                  <div className="flex-1 flex flex-col justify-between">
                     {/* Mobile Card View (< sm) */}
                     <div className="block sm:hidden space-y-2">
                       {currentTasks.map((t, idx) => (
@@ -730,7 +894,7 @@ export function MemberOverviewPage() {
                     </div>
 
                     {/* Desktop Table (sm+) */}
-                    <div className="hidden sm:block overflow-x-auto">
+                    <div className="hidden sm:block overflow-x-auto flex-1">
                       <table className="w-full text-left text-xs">
                         <thead>
                           <tr className="border-b border-[#2A3446] text-[#97A0B3] font-bold uppercase tracking-wider text-[9px]">
@@ -796,84 +960,16 @@ export function MemberOverviewPage() {
                         </tbody>
                       </table>
                     </div>
-                  </>
+                  </div>
                 );
               })()}
             </div>
           </div>
 
-          {/* RIGHT 1 COLUMN */}
-          <div className="space-y-3.5 sm:space-y-4">
-            {/* Lead Feedback & Notes */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/80 shadow-2xs space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[#2A3446]">
-                <div className="flex items-center gap-1.5">
-                  <FileText className="size-3.5 text-[#7FA0D6]" />
-                  <h3 className="text-xs font-black text-white">Lead Feedback & Notes</h3>
-                </div>
-                <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-[#7FA0D6]/15 text-[#7FA0D6]">
-                  {notesList.length} Updates
-                </span>
-              </div>
-
-              {/* Feed Items */}
-              <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
-                {notesList.map((note) => (
-                  <div key={note.id} className="p-2.5 rounded-xl bg-[#0B111C]/80 border border-[#2A3446]/60 space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <div className={`size-5 rounded-md ${note.avatarBg} text-white font-black text-[9px] flex items-center justify-center`}>
-                          {note.avatar}
-                        </div>
-                        <div>
-                          <span className="font-bold text-white text-[11px]">{note.author}</span>
-                          <span className="text-[9px] text-[#97A0B3] block">{note.role}</span>
-                        </div>
-                      </div>
-                      <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${note.badgeColor || "bg-[#7FA0D6]/20/70 text-[#7FA0D6]"}`}>
-                        {note.badge}
-                      </span>
-                    </div>
-
-                    <p className="text-[#F1F5F9] leading-relaxed font-medium text-[11px]">"{note.content}"</p>
-
-                    {note.attachment && (
-                      <button
-                        onClick={() => showToast(`Opened Frame.io markup preview: ${note.attachment}`)}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] font-bold text-[9px] hover:bg-[#7FA0D6]/15 cursor-pointer"
-                      >
-                        🖼️ {note.attachment}
-                      </button>
-                    )}
-                    {note.tag && (
-                      <span className="inline-block text-[9px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded">
-                        ✓ {note.tag}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Quick Reply Form */}
-              <form onSubmit={handleSendQuickReply} className="pt-1.5 border-t border-[#2A3446] flex items-center gap-1.5">
-                <input
-                  type="text"
-                  value={quickReplyText}
-                  onChange={(e) => setQuickReplyText(e.target.value)}
-                  placeholder="Quick reply to pod lead..."
-                  className="flex-1 px-2.5 py-1.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[11px] font-medium placeholder:text-[#97A0B3] focus:outline-none focus:bg-[#161F2D] focus:ring-1 focus:ring-blue-500"
-                />
-                <button
-                  type="submit"
-                  className="size-7 rounded-lg bg-[#7FA0D6] hover:bg-blue-700 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
-                >
-                  <Send className="size-3" />
-                </button>
-              </form>
-            </div>
-
-            {/* Pod A Team Sync */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/80 shadow-2xs space-y-3">
+          {/* Right (1 col - xl:col-span-1 flex flex-col) */}
+          <div className="xl:col-span-1 flex flex-col">
+            {/* Pod Team Sync */}
+            <div className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/80 shadow-2xs space-y-3 h-full flex flex-col justify-between">
               <div className="flex items-center justify-between pb-2 border-b border-[#2A3446]">
                 <div className="flex items-center gap-1.5">
                   <Users className="size-3.5 text-[#7FA0D6]" />
@@ -899,7 +995,7 @@ export function MemberOverviewPage() {
               </div>
 
               {/* Member Status List */}
-              <div className="space-y-2 text-xs">
+              <div className="space-y-2 text-xs flex-1 overflow-y-auto">
                 {members.length > 0 ? (
                   members.map((m) => (
                     <div key={m.id} className="flex items-center justify-between p-1.5 rounded-lg hover:bg-[#0B111C] transition-colors">
@@ -1418,27 +1514,34 @@ export function MemberOverviewPage() {
               </p>
             </div>
 
-            <div className="p-3 bg-[#0B111C] rounded-2xl border border-[#2A3446] text-xs font-mono text-[#F1F5F9]">
-              zoom.us/j/9814421990?pwd=creo
-            </div>
+            <a
+              href={STANDUP_MEETING_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3 bg-[#0B111C] rounded-2xl border border-[#2A3446] text-xs font-mono text-[#7FA0D6] hover:underline block break-all transition-colors"
+            >
+              {STANDUP_MEETING_URL}
+            </a>
 
             <div className="flex items-center justify-center gap-2 pt-2 border-t border-[#2A3446]">
               <button
                 type="button"
                 onClick={() => setZoomModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-xs text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-xs text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
               >
                 Dismiss
               </button>
               <button
                 type="button"
                 onClick={() => {
+                  window.open(STANDUP_MEETING_URL, "_blank", "noopener,noreferrer");
                   setZoomModalOpen(false);
-                  showToast("Connecting to ${podName} Standup video room...");
+                  showToast(`Connecting to ${podName} Standup video room...`, "info");
                 }}
-                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 cursor-pointer transition-colors flex items-center gap-1.5"
               >
-                Open Video Room
+                <Video className="size-3.5" />
+                <span>Open Video Room</span>
               </button>
             </div>
           </div>

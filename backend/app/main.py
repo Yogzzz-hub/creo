@@ -300,6 +300,7 @@ async def global_unhandled_exception_handler(request: Request, exc: Exception) -
 
 # API v1 feature routers
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(auth.users_router, prefix="/api/v1")
 app.include_router(instagram.router, prefix="/api/v1")
 app.include_router(publishing.router, prefix="/api/v1")
 app.include_router(plans.router, prefix="/api/v1")

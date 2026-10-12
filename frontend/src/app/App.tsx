@@ -127,6 +127,9 @@ const MemberTaskBoardPage = lazyModule(() =>
 const MemberSchedulePTOPage = lazyModule(() =>
   import("../pages/admin/MemberSchedulePTOPage").then((m) => ({ default: m.MemberSchedulePTOPage }))
 );
+const MemberSettingsPage = lazyModule(() =>
+  import("../pages/admin/MemberSettingsPage").then((m) => ({ default: m.MemberSettingsPage }))
+);
 const SlackChatPage = lazyModule(() =>
   import("../pages/admin/SlackChatPage").then((m) => ({ default: m.SlackChatPage }))
 );
@@ -330,8 +333,11 @@ const dashboardRoutes = {
   "/member/tasks": MemberTaskBoardPage,
   "/workstation/schedule": MemberSchedulePTOPage,
   "/member/schedule": MemberSchedulePTOPage,
+  "/workstation/settings": MemberSettingsPage,
+  "/member/settings": MemberSettingsPage,
   "/slack": SlackChatPage,
   "/workstation/slack": SlackChatPage,
+  "/workstation/chat": SlackChatPage,
   "/admin/slack": SlackChatPage,
   "/portal/slack": SlackChatPage,
 };
@@ -794,8 +800,12 @@ export function App() {
                 <Route path="/workstation/schedule" element={<MemberSchedulePTOPage />} />
                 <Route path="/member/schedule" element={<MemberSchedulePTOPage />} />
 
+                <Route path="/workstation/settings" element={<MemberSettingsPage />} />
+                <Route path="/member/settings" element={<MemberSettingsPage />} />
+
                 {/* Team & Admin Slack Hub */}
                 <Route path="/workstation/slack" element={<SlackChatPage />} />
+                <Route path="/workstation/chat" element={<SlackChatPage />} />
                 <Route path="/admin/slack" element={<SlackChatPage />} />
 
                 {/* Redirect legacy Kanban routes to Task Queue */}

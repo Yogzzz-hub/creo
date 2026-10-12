@@ -178,6 +178,10 @@ async def _require_direct_chat_access(actor: Actor, target: User, db: AsyncSessi
     if _is_admin_role(role) or _is_admin_role(target_role):
         return
 
+    # Internal agency team members (leads, specialists, designers, editors) can chat directly with each other
+    if role != UserRole.CLIENT.value and target_role != UserRole.CLIENT.value:
+        return
+
     from app.models.work import ClientAssignment
 
     shared_client = select(ClientAssignment.client_id).where(
@@ -359,8 +363,105 @@ async def get_chat_contacts(
                 }
             )
     else:
-        # Agency admins can support any client; creatives see only their own clients.
+        # Internal agency team members can chat with their leads, colleagues, and assigned clients
         from app.models.work import ClientAssignment
+        from app.models.user import StaffProfile
+        from app.routers.admin import POD_DEFINITIONS
+
+        is_creative = role in (UserRole.EDITOR.value, UserRole.DESIGNER.value, "editor", "designer")
+
+        if is_creative:
+            # Resolve the creative's pod lead and pod peers
+            current_user = await db.get(User, current_user_id)
+            current_email = (current_user.email or "").lower().strip() if current_user else ""
+            staff_prof = await db.scalar(
+                select(StaffProfile).where(StaffProfile.user_id == current_user_id)
+            )
+            lead_id = staff_prof.team_lead_id if staff_prof else None
+
+            # Fallback to pod definition by email if staff profile team_lead_id is unset
+            allowed_emails: set[str] = set()
+            for pdef in POD_DEFINITIONS:
+                if current_email in (pdef.get("editor_email"), pdef.get("designer_email")):
+                    allowed_emails.add(pdef.get("lead_email") or "")
+                    allowed_emails.add(pdef.get("lead_alias_email") or "")
+                    allowed_emails.add(pdef.get("editor_email") or "")
+                    allowed_emails.add(pdef.get("designer_email") or "")
+                    break
+            allowed_emails = {e.lower().strip() for e in allowed_emails if e}
+
+            team_stmt = (
+                select(User, StaffProfile)
+                .outerjoin(StaffProfile, StaffProfile.user_id == User.id)
+                .where(User.role.in_([UserRole.TEAM_LEAD, UserRole.EDITOR, UserRole.DESIGNER]))
+                .where(User.account_status == "active")
+                .where(User.id != current_user_id)
+                .order_by((User.role == UserRole.TEAM_LEAD).desc(), User.full_name.asc())
+            )
+            team_res = await db.execute(team_stmt)
+            for tu, sp in team_res.all():
+                if sa and tu.id == sa.id:
+                    continue
+                tu_email = (tu.email or "").lower().strip()
+
+                if lead_id is not None:
+                    is_my_lead = tu.id == lead_id
+                    is_my_peer = sp is not None and sp.team_lead_id == lead_id
+                else:
+                    is_my_lead = tu_email in allowed_emails and tu.role == UserRole.TEAM_LEAD
+                    is_my_peer = tu_email in allowed_emails and tu.role != UserRole.TEAM_LEAD
+
+                if is_my_lead or is_my_peer:
+                    role_label = (
+                        "Pod Lead"
+                        if tu.role == UserRole.TEAM_LEAD
+                        else "Video Editor"
+                        if tu.role == UserRole.EDITOR
+                        else "Graphic Designer"
+                        if tu.role == UserRole.DESIGNER
+                        else "Pod Specialist"
+                    )
+                    contacts.append(
+                        {
+                            "id": str(tu.id),
+                            "name": tu.full_name or tu.email.split("@")[0].capitalize(),
+                            "email": tu.email,
+                            "role": role_label,
+                            "is_super_admin": False,
+                        }
+                    )
+        else:
+            team_stmt = (
+                select(User)
+                .where(User.role.in_([UserRole.TEAM_LEAD, UserRole.ADMIN, UserRole.EDITOR, UserRole.DESIGNER]))
+                .where(User.account_status == "active")
+                .where(User.id != current_user_id)
+                .order_by((User.role == UserRole.TEAM_LEAD).desc(), User.full_name.asc())
+            )
+            team_res = await db.execute(team_stmt)
+            for tu in team_res.scalars().all():
+                if sa and tu.id == sa.id:
+                    continue
+                role_label = (
+                    "Pod Lead"
+                    if tu.role == UserRole.TEAM_LEAD
+                    else "Operations Admin"
+                    if tu.role == UserRole.ADMIN
+                    else "Video Editor"
+                    if tu.role == UserRole.EDITOR
+                    else "Graphic Designer"
+                    if tu.role == UserRole.DESIGNER
+                    else "Creative Specialist"
+                )
+                contacts.append(
+                    {
+                        "id": str(tu.id),
+                        "name": tu.full_name or tu.email.split("@")[0].capitalize(),
+                        "email": tu.email,
+                        "role": role_label,
+                        "is_super_admin": False,
+                    }
+                )
 
         client_stmt = (
             select(User).where(User.role == UserRole.CLIENT).where(User.account_status == "active")

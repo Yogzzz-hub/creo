@@ -40,6 +40,7 @@ from app.services.email_service import send_otp_email
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/auth", tags=["Auth"])
+users_router = APIRouter(prefix="/users", tags=["Users"])
 
 # Ephemeral in-memory OTP storage: key -> [code, expiry_timestamp, attempts]
 _otp_store: dict[str, list[Any]] = {}
@@ -791,6 +792,7 @@ async def verify_otp(
     return await _issue_session(db, user)
 
 
+@users_router.get("/me", response_model=dict[str, Any])
 @router.get("/me", response_model=dict[str, Any])
 async def get_me(
     actor: Actor = Depends(get_current_actor),
@@ -833,6 +835,7 @@ async def get_me(
         "id": str(user.id),
         "email": user.email,
         "full_name": user.full_name or user.email.split("@")[0],
+        "phone": (profile.brand_dna or {}).get("phone", "") if profile and profile.brand_dna else "",
         "role": user.role.value,
         "account_status": user.account_status.value,
         "must_reset_password": bool(user.must_reset_password),
@@ -841,6 +844,60 @@ async def get_me(
         "terms_accepted": profile.terms_accepted_at is not None if profile else False,
         "has_active_subscription": has_active_sub,
         "access_token": refreshed_token,
+    }
+
+
+class UpdateMeRequest(BaseModel):
+    full_name: str | None = None
+    name: str | None = None
+    phone: str | None = None
+
+
+@users_router.patch("/me", response_model=dict[str, Any])
+@router.patch("/me", response_model=dict[str, Any])
+async def update_me(
+    payload: UpdateMeRequest,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Update active user profile (name, phone) and return updated profile."""
+    user_id = actor.user_id
+    if str(user_id) == "00000000-0000-0000-0000-000000000001" and actor.email is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    stmt = select(User, ClientProfile).outerjoin(
+        ClientProfile, ClientProfile.user_id == User.id
+    ).where(User.id == user_id)
+    row = (await db.execute(stmt)).first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    user, profile = row
+
+    new_name = payload.full_name or payload.name
+    if new_name is not None and new_name.strip():
+        user.full_name = new_name.strip()
+
+    if payload.phone is not None:
+        if not profile:
+            profile = ClientProfile(user_id=user.id)
+            db.add(profile)
+        profile.brand_dna = {**(profile.brand_dna or {}), "phone": payload.phone.strip()}
+
+    await db.commit()
+    await db.refresh(user)
+
+    from app.services.onboarding_service import get_current_stage
+    stage = await get_current_stage(db, user.id) if user.role == UserRole.CLIENT else 5
+
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "phone": (profile.brand_dna or {}).get("phone", "") if profile and profile.brand_dna else "",
+        "role": user.role.value,
+        "account_status": user.account_status.value,
+        "onboarding_stage": stage,
+        "access_token": _access_token_for(user),
     }
 
 

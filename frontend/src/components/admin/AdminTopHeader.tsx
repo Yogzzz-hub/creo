@@ -14,6 +14,7 @@ import { NotificationMenu } from "../ui/NotificationMenu";
 
 interface AdminTopHeaderProps {
   title?: string;
+  hideTitle?: boolean;
   activeTab?: string;
   setActiveTab?: (tab: string) => void;
   kpis?: AdminKPIs | null;
@@ -24,6 +25,7 @@ interface AdminTopHeaderProps {
 
 export function AdminTopHeader({
   title,
+  hideTitle = false,
   activeTab = "Dashboard",
   setActiveTab: _setActiveTab,
   kpis: _kpis,
@@ -134,6 +136,12 @@ export function AdminTopHeader({
       ? "System Settings"
       : activeTab);
 
+  // For workstation / member role, completely remove/hide the floating capsule navbar
+  // matching the Client Portal shell where notification & profile live in the sidebar.
+  if (isMemberRole) {
+    return null;
+  }
+
   return (
     <div className={`sticky top-0 z-40 w-full bg-[#0B111C]/90 backdrop-blur-md pt-2 sm:pt-2.5 pb-1.5 sm:pb-2 transition-all ${location.pathname.startsWith("/portal") ? "px-4 sm:px-6" : "px-3.5 sm:px-6 lg:px-8"}`}>
       <header className="max-w-[1500px] mx-auto bg-[#161F2D] rounded-xl sm:rounded-full border border-[#2A3446] px-3.5 sm:px-5 lg:px-6 py-1.5 sm:py-2 flex items-center justify-between shadow-[0_4px_20px_rgba(5,8,16,0.5)] min-h-[44px] sm:min-h-[48px]">
@@ -180,18 +188,22 @@ export function AdminTopHeader({
                 ? "/workstation"
                 : "/portal"
             }
-            className="md:hidden flex items-center gap-0.5 font-black text-white text-sm sm:text-base tracking-tight shrink-0 px-1 hover:opacity-85 transition-opacity"
-            title="creo. Home"
+            className="md:hidden flex items-center gap-0.5 font-extrabold text-white text-sm sm:text-base tracking-tight shrink-0 px-1 hover:opacity-85 transition-opacity"
+            title="Creo. Home"
           >
-            creo<span className="text-[#7FA0D6] text-base sm:text-lg leading-none">.</span>
+            Creo<span className="text-[#7FA0D6] text-base sm:text-lg leading-none">.</span>
           </Link>
 
-          <span className="h-4 w-px bg-[#2A3446] mx-1 hidden sm:block shrink-0" />
+          {showBackButton && (
+            <span className="h-4 w-px bg-[#2A3446] mx-1 hidden sm:block shrink-0" />
+          )}
 
           {/* Active Page Title */}
-          <h1 className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
-            {resolvedTitle}
-          </h1>
+          {!hideTitle && resolvedTitle && (
+            <h1 className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
+              {resolvedTitle}
+            </h1>
+          )}
         </div>
 
         {/* Right Utility Icons (Bell with Functional Dropdown, Profile with Dropdown) */}

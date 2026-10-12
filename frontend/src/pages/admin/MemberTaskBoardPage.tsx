@@ -18,7 +18,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router";
+import { Link, useSearchParams, useLocation } from "react-router";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
 import { CustomSelect } from "../../components/ui/CustomSelect";
@@ -132,11 +132,29 @@ export function MemberTaskBoardPage() {
     );
   }, [data, isAdmin, user]);
 
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const targetedTaskId = searchParams.get("taskId") || (location.state as any)?.selectedTaskId;
+
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedClient, setSelectedClient] = useState<string>("All Clients");
+  const [selectedClient, setSelectedClient] = useState<string>("all");
   const [urgencyFilter, setUrgencyFilter] = useState<string>("All");
   const [mobileKanbanTab, setMobileKanbanTab] = useState<"all" | Column>("production");
+
+  useEffect(() => {
+    if (targetedTaskId && tasks.length > 0) {
+      const match = tasks.find((t) => t.task.id === targetedTaskId);
+      if (match) {
+        setMobileKanbanTab(match.column);
+        const timer = setTimeout(() => {
+          const el = document.getElementById(`task-card-${targetedTaskId}`);
+          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 200);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [targetedTaskId, tasks]);
 
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const showToast = (text: string, type: "success" | "error" = "success") => {
@@ -256,6 +274,33 @@ export function MemberTaskBoardPage() {
     onError: (err: Error) => showToast(err.message || "Could not create the task.", "error"),
   });
 
+  // ── Available clients for filtering ──
+  const availableClients = useMemo(() => {
+    const list: { id: string; name: string }[] = [];
+    const seenIds = new Set<string>();
+    const seenNames = new Set<string>();
+
+    clients.forEach((c) => {
+      if (c.id && !seenIds.has(c.id)) {
+        seenIds.add(c.id);
+        seenNames.add(c.name);
+        list.push({ id: c.id, name: c.name });
+      }
+    });
+
+    tasks.forEach(({ task }) => {
+      const cId = task.client_id || task.client_name;
+      const cName = task.client_name;
+      if (cName && !seenNames.has(cName)) {
+        seenNames.add(cName);
+        seenIds.add(cId);
+        list.push({ id: cId, name: cName });
+      }
+    });
+
+    return list;
+  }, [clients, tasks]);
+
   // ── Derived lists ──
   const filtered = tasks.filter(({ task }) => {
     const q = searchQuery.toLowerCase();
@@ -264,7 +309,11 @@ export function MemberTaskBoardPage() {
       taskTitle(task).toLowerCase().includes(q) ||
       task.client_name.toLowerCase().includes(q) ||
       formatLabel(task.deliverable_type).toLowerCase().includes(q);
-    const matchesClient = selectedClient === "All Clients" || task.client_name === selectedClient;
+    const matchesClient =
+      selectedClient === "all" ||
+      selectedClient === "All Clients" ||
+      task.client_id === selectedClient ||
+      task.client_name === selectedClient;
     const matchesUrgency =
       urgencyFilter === "All" || (urgencyFilter === "High" ? isHighPriority(task) : !isHighPriority(task));
     return matchesSearch && matchesClient && matchesUrgency;
@@ -335,60 +384,62 @@ export function MemberTaskBoardPage() {
         )}
 
         {/* Filter & action bar */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 bg-[#161F2D] sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none border sm:border-0 border-[#2A3446]">
-          <div className="relative w-full xl:max-w-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#161F2D] sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none border sm:border-0 border-[#2A3446] w-full">
+          <div className="relative flex-1 max-w-md w-full">
             <Search className="size-3.5 text-[#97A0B3] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter tasks by client, format or title..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446]/80 text-xs font-medium placeholder:text-[#97A0B3] focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#161F2D] border border-[#2A3446]/80 text-xs font-medium placeholder:text-[#97A0B3] focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <div className="flex items-center gap-1 bg-[#161F2D] p-0.5 rounded-xl border border-[#2A3446]/80 text-xs font-bold overflow-x-auto no-scrollbar py-0.5">
-              {[
-                { label: "All Clients", count: tasks.length },
-                ...clients.map((c) => ({ label: c.name, count: tasks.filter((t) => t.task.client_name === c.name).length })),
-              ].map((c) => (
-                <button
-                  key={c.label}
-                  onClick={() => setSelectedClient(c.label)}
-                  className={`px-2.5 py-1 rounded-lg transition-all shrink-0 text-xs ${
-                    selectedClient === c.label ? "bg-blue-600 text-white font-bold" : "text-[#F1F5F9] hover:text-white"
-                  }`}
-                >
-                  {c.label} ({c.count})
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            {/* Client Filter Dropdown */}
+            <select
+              value={selectedClient}
+              onChange={(e) => setSelectedClient(e.target.value)}
+              aria-label="Filter by client"
+              className="bg-[#161F2D] border border-[#2A3446] text-white text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-[#7FA0D6] transition-colors cursor-pointer"
+            >
+              <option value="all">All Clients ({tasks.length})</option>
+              {availableClients.map((client) => {
+                const clientTaskCount = tasks.filter(
+                  (t) => t.task.client_id === client.id || t.task.client_name === client.name,
+                ).length;
+                return (
+                  <option key={client.id} value={client.id}>
+                    {client.name} ({clientTaskCount})
+                  </option>
+                );
+              })}
+            </select>
 
-            <div className="flex items-center gap-2">
-              <CustomSelect
-                value={urgencyFilter}
-                onChange={setUrgencyFilter}
-                options={[
-                  { value: "All", label: "Urgency: All" },
-                  { value: "High", label: "Due soon / revisions" },
-                  { value: "Normal", label: "Normal" },
-                ]}
-              />
-              {!isAdmin && (
-                <button
-                  onClick={() => {
-                    setNewClientId(clients[0]?.id || "");
-                    setCreateOpen(true);
-                  }}
-                  disabled={clients.length === 0}
-                  className="px-3 py-1.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Plus className="size-3.5" />
-                  <span>Add Task</span>
-                </button>
-              )}
-            </div>
+            <CustomSelect
+              value={urgencyFilter}
+              onChange={setUrgencyFilter}
+              options={[
+                { value: "All", label: "Urgency: All" },
+                { value: "High", label: "Due soon / revisions" },
+                { value: "Normal", label: "Normal" },
+              ]}
+            />
+
+            {!isAdmin && (
+              <button
+                onClick={() => {
+                  setNewClientId(clients[0]?.id || "");
+                  setCreateOpen(true);
+                }}
+                disabled={clients.length === 0}
+                className="px-3 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Plus className="size-3.5" />
+                <span>Add Task</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -424,7 +475,13 @@ export function MemberTaskBoardPage() {
                 {assigned.map((task) => {
                   const due = dueText(task);
                   return (
-                    <div key={task.id} className="bg-[#161F2D] rounded-xl p-3 border border-[#2A3446]/80 space-y-2">
+                    <div
+                      key={task.id}
+                      id={`task-card-${task.id}`}
+                      className={`bg-[#161F2D] rounded-xl p-3 border space-y-2 transition-all ${
+                        targetedTaskId === task.id ? "ring-2 ring-[#7FA0D6] border-[#7FA0D6] shadow-lg shadow-blue-500/20" : "border-[#2A3446]/80"
+                      }`}
+                    >
                       <div className="flex items-center justify-between text-[10px] font-bold">
                         {clientBadge(task)}
                         <span className="px-1.5 rounded bg-[#7FA0D6]/15 text-[#7FA0D6]">{formatLabel(task.deliverable_type)}</span>
@@ -459,7 +516,14 @@ export function MemberTaskBoardPage() {
                   return (
                     <div
                       key={task.id}
-                      className={`bg-[#161F2D] rounded-xl p-3 border space-y-2 ${feedback ? "border-amber-400/50" : "border-[#2A3446]/80"}`}
+                      id={`task-card-${task.id}`}
+                      className={`bg-[#161F2D] rounded-xl p-3 border space-y-2 transition-all ${
+                        targetedTaskId === task.id
+                          ? "ring-2 ring-[#7FA0D6] border-[#7FA0D6] shadow-lg shadow-blue-500/20"
+                          : feedback
+                          ? "border-amber-400/50"
+                          : "border-[#2A3446]/80"
+                      }`}
                     >
                       <div className="flex items-center justify-between text-[10px] font-bold">
                         {clientBadge(task)}
@@ -496,7 +560,13 @@ export function MemberTaskBoardPage() {
               <ColumnHeader dot="bg-amber-500" title="Submitted for QA" count={qa.length} />
               <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar min-h-0">
                 {qa.map((task) => (
-                  <div key={task.id} className="bg-[#161F2D] rounded-xl p-3 border border-[#2A3446]/80 space-y-2">
+                  <div
+                    key={task.id}
+                    id={`task-card-${task.id}`}
+                    className={`bg-[#161F2D] rounded-xl p-3 border space-y-2 transition-all ${
+                      targetedTaskId === task.id ? "ring-2 ring-[#7FA0D6] border-[#7FA0D6] shadow-lg shadow-blue-500/20" : "border-[#2A3446]/80"
+                    }`}
+                  >
                     <div className="flex items-center justify-between text-[10px] font-bold">
                       {clientBadge(task)}
                       <span className="px-1.5 rounded bg-[#7FA0D6]/15 text-[#7FA0D6] text-[9px]">With {leadName}</span>

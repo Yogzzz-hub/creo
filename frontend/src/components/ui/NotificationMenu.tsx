@@ -216,8 +216,10 @@ export function NotificationMenu({ placement = "header" }: { placement?: "header
               onClick={() => setNotificationOpen(!notificationOpen)}
               className={`size-8 sm:size-8.5 rounded-full flex items-center justify-center transition-all relative cursor-pointer ${
                 notificationOpen
-                  ? "bg-[#161F2D] text-white shadow-sm border border-[#7FA0D6]"
-                  : "text-[#97A0B3] hover:text-white hover:bg-[#161F2D]"
+                  ? "bg-[#0B111C] text-white shadow-sm border border-[#7FA0D6]/60"
+                  : placement === "header"
+                  ? "text-[#97A0B3] hover:text-white bg-[#0B111C]/50 hover:bg-[#0B111C] border border-[#2A3446]/80 hover:border-[#7FA0D6]/40 shadow-2xs"
+                  : "text-[#97A0B3] hover:text-white hover:bg-white/[0.06]"
               }`}
               aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"}
               aria-expanded={notificationOpen}

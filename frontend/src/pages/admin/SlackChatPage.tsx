@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { request } from "../../lib/http";
-import { useSearchParams } from "react-router";
+import { useSearchParams, useLocation } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
@@ -128,10 +128,18 @@ export function SlackChatPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const isClient = user?.role === "client";
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const isWorkstation =
+    location.pathname.startsWith("/workstation") ||
+    location.pathname.startsWith("/member") ||
+    location.pathname === "/slack";
   const gate = useOnboardingGate();
   const canUseChat = !isClient || gate.isComplete;
-  const [searchParams] = useSearchParams();
+  const locationState = location.state as { draft?: string; dm?: string; leadName?: string } | null;
   const urlDm = searchParams.get("dm");
+  const urlDraft = searchParams.get("draft") || locationState?.draft || "";
+  const targetDm = urlDm || locationState?.dm || null;
 
   // Fetch DM contacts from backend
   const contactsQuery = useQuery<ChatContact[]>({
@@ -150,27 +158,41 @@ export function SlackChatPage() {
   useEffect(() => {
     if (contactsQuery.isPending) return;
 
-    if (appliedUrlDm.current !== urlDm) {
-      appliedUrlDm.current = urlDm;
-      const match = urlDm
-        ? contactsList.find(
-            (contact) =>
-              contact.id === urlDm ||
-              (urlDm === "super-admin" && contact.is_super_admin),
-          )
+    if (appliedUrlDm.current !== targetDm) {
+      appliedUrlDm.current = targetDm;
+      const match = targetDm
+        ? contactsList.find((contact) => {
+            if (contact.id === targetDm) return true;
+            if (targetDm === "super-admin" && contact.is_super_admin) return true;
+            if (
+              targetDm === "lead" &&
+              (contact.role?.toLowerCase().includes("lead") ||
+                contact.role?.toLowerCase().includes("director"))
+            ) {
+              return true;
+            }
+            return false;
+          })
         : undefined;
-      if (urlDm) {
-        setActiveContactId(match?.id ?? "");
+
+      if (match) {
+        setActiveContactId(match.id);
+        setMobileView("chat");
+        return;
+      }
+      if (targetDm && targetDm !== "lead" && targetDm !== "super-admin") {
+        setActiveContactId(targetDm);
+        setMobileView("chat");
         return;
       }
     }
 
-    if (urlDm) return;
+    if (targetDm) return;
 
     if (!contactsList.some((contact) => contact.id === activeContactId)) {
       setActiveContactId(contactsList[0]?.id ?? "");
     }
-  }, [urlDm, contactsQuery.isPending, contactsList, activeContactId]);
+  }, [targetDm, contactsQuery.isPending, contactsList, activeContactId]);
 
   const activeContact = useMemo(() => {
     return contactsList.find((contact) => contact.id === activeContactId) ?? null;
@@ -207,7 +229,18 @@ export function SlackChatPage() {
   }, [contactsList, contactSearch]);
 
   // Input states
-  const [messageText, setMessageText] = useState("");
+  const [messageText, setMessageText] = useState(urlDraft);
+  const chatInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (urlDraft) {
+      setMessageText(urlDraft);
+      const timer = setTimeout(() => {
+        chatInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [urlDraft]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiCategory, setEmojiCategory] = useState("smileys");
   const [emojiSearch, setEmojiSearch] = useState("");
@@ -453,9 +486,19 @@ export function SlackChatPage() {
   }
 
   return (
-    <div className={`flex flex-col ${isClient ? "flex-1 min-h-0" : "h-[calc(100vh-5.5rem)] min-h-[550px] -mx-4 sm:-mx-6 -my-6 sm:-my-8"} overflow-hidden`}>
-      {/* ── Top Header Context Bar ── */}
-      {!isClient && <AdminTopHeader title="Direct Chat Hub" activeTab="Direct Chat" />}
+    <div
+      className={`flex flex-col ${
+        isClient
+          ? "flex-1 min-h-0 h-full"
+          : isWorkstation
+          ? "pt-6 px-4 sm:px-6 lg:px-8 pb-6 h-[calc(100vh-1.5rem)]"
+          : "h-[calc(100vh-5.5rem)] min-h-[550px]"
+      } overflow-hidden`}
+    >
+      {/* ── Top Header Context Bar (Admin Console Only) ── */}
+      {!isClient && !isWorkstation && (
+        <AdminTopHeader title="Direct Chat Hub" activeTab="Direct Chat" />
+      )}
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -470,13 +513,13 @@ export function SlackChatPage() {
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="flex-1 flex overflow-hidden p-2 sm:p-4 gap-2 sm:gap-4 min-h-0"
+        className="flex-1 flex overflow-hidden gap-3 sm:gap-4 min-h-0"
       >
-        {/* 1. DIRECT MESSAGES SIDEBAR (GLASSMORPHIC) */}
+        {/* 1. DIRECT MESSAGES SIDEBAR */}
         <aside
           className={`${
             mobileView === "channels" ? "flex w-full" : "hidden md:flex"
-          } md:w-80 lg:w-88 flex-col shrink-0 bg-[#0B111C]/80 backdrop-blur-2xl rounded-2xl sm:rounded-3xl border border-white/[0.08] overflow-hidden shadow-2xl h-full max-h-full min-h-0`}
+          } md:w-80 lg:w-88 flex-col shrink-0 bg-[#161F2D] rounded-2xl border border-[#2A3446]/80 overflow-hidden shadow-2xs h-full max-h-full min-h-0`}
         >
           {/* Top Brand Bar */}
           <div className="p-3.5 border-b border-white/[0.08] space-y-3 shrink-0">
@@ -682,14 +725,14 @@ export function SlackChatPage() {
           </div>
         </aside>
 
-        {/* 2. DIRECT CHAT MAIN AREA (GLASSMORPHIC) */}
+        {/* 2. DIRECT CHAT MAIN AREA */}
         <section
           className={`${
             mobileView === "chat" ? "flex w-full" : "hidden md:flex"
-          } flex-1 min-w-0 bg-[#161F2D]/85 backdrop-blur-2xl rounded-2xl sm:rounded-3xl border border-white/[0.08] shadow-2xl flex flex-col overflow-hidden h-full max-h-full min-h-0`}
+          } flex-1 min-w-0 bg-[#161F2D] rounded-2xl border border-[#2A3446]/80 shadow-2xs flex flex-col overflow-hidden h-full max-h-full min-h-0`}
         >
           {/* Header Bar */}
-          <div className="px-3 sm:px-6 py-3.5 border-b border-[#2A3446] flex items-center justify-between bg-[#161F2D] gap-2 shrink-0">
+          <div className="px-4 sm:px-6 py-3.5 border-b border-[#2A3446]/60 flex items-center justify-between bg-[#161F2D] gap-2 shrink-0">
             <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
               {/* Back button on mobile to view contact list */}
               <button
@@ -764,57 +807,62 @@ export function SlackChatPage() {
             </div>
           </div>
 
-          {/* Messages Feed */}
-          <div
-            ref={messagesContainerRef}
-            className="flex-1 min-h-0 max-h-full overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 bg-[#0B111C]/90 backdrop-blur-xl flex flex-col"
-          >
-            {!activeContact || serverMessages.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-auto">
-                <div
-                  className={`size-16 rounded-3xl flex items-center justify-center mb-4 border ${
-                    activeContact?.is_super_admin
-                      ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                      : "bg-[#7FA0D6]/10 text-[#7FA0D6] border-[#7FA0D6]/20"
-                  }`}
-                >
-                  {activeContact?.is_super_admin ? (
-                    <Crown className="size-8" />
-                  ) : (
-                    <MessageSquare className="size-8" />
-                  )}
-                </div>
-                <h3 className="text-base font-black text-white">
-                  {!activeContact
-                    ? contactsQuery.isPending
-                      ? "Loading assigned contacts"
-                      : contactsQuery.isError
-                        ? "Assigned contacts unavailable"
-                        : "No assigned teammate selected"
-                    : activeContact.is_super_admin
-                    ? "Direct Channel with Creo Super Administration"
-                    : `Direct Conversation with ${activeContact.name}`}
-                </h3>
-                <p className="text-xs text-[#97A0B3] max-w-md mt-1.5 leading-relaxed">
-                  {!activeContact
-                    ? contactsQuery.isPending
-                      ? "Your assigned team contacts are loading."
-                      : contactsQuery.isError
-                        ? "Retry the contact list to load your assigned chat contacts."
-                        : "Your chat list only includes your assigned team and executive support contact."
-                    : activeContact.is_super_admin
-                    ? "This is your private, direct thread with Creo Executive Super Administration. Inquire about your creative pod, retainer adjustments, SLA escalations, or custom requests."
-                    : `This is the start of your direct 1-on-1 thread with ${activeContact.name}. Drop project feedback, creative directions, or collaborate in real time.`}
-                </p>
-                {activeContact && <div className="mt-4 flex items-center gap-2">
+          {/* Messages Feed Viewport */}
+          {!activeContact || serverMessages.length === 0 ? (
+            <div
+              ref={messagesContainerRef}
+              className="flex-1 min-h-0 flex flex-col items-center justify-center p-6 text-center bg-[#0B111C]/90"
+            >
+              <div
+                className={`size-16 rounded-3xl flex items-center justify-center mb-4 border ${
+                  activeContact?.is_super_admin
+                    ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                    : "bg-[#7FA0D6]/10 text-[#7FA0D6] border-[#7FA0D6]/20"
+                }`}
+              >
+                {activeContact?.is_super_admin ? (
+                  <Crown className="size-8" />
+                ) : (
+                  <MessageSquare className="size-8" />
+                )}
+              </div>
+              <h3 className="text-base font-black text-white">
+                {!activeContact
+                  ? contactsQuery.isPending
+                    ? "Loading assigned contacts"
+                    : contactsQuery.isError
+                      ? "Assigned contacts unavailable"
+                      : "No assigned teammate selected"
+                  : activeContact.is_super_admin
+                  ? "Direct Channel with Creo Super Administration"
+                  : `Direct Conversation with ${activeContact.name}`}
+              </h3>
+              <p className="text-xs text-[#97A0B3] max-w-md mt-1.5 leading-relaxed">
+                {!activeContact
+                  ? contactsQuery.isPending
+                    ? "Your assigned team contacts are loading."
+                    : contactsQuery.isError
+                      ? "Retry the contact list to load your assigned chat contacts."
+                      : "Your chat list only includes your assigned team and executive support contact."
+                  : activeContact.is_super_admin
+                  ? "This is your private, direct thread with Creo Executive Super Administration. Inquire about your creative pod, retainer adjustments, SLA escalations, or custom requests."
+                  : `This is the start of your direct 1-on-1 thread with ${activeContact.name}. Drop project feedback, creative directions, or collaborate in real time.`}
+              </p>
+              {activeContact && (
+                <div className="mt-4 flex items-center gap-2">
                   <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#161F2D] text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
                     <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
                     Live 2-Way Sync Active
                   </span>
-                </div>}
-              </div>
-            ) : (
-              serverMessages.map((msg) => {
+                </div>
+              )}
+            </div>
+          ) : (
+            <div
+              ref={messagesContainerRef}
+              className="flex-1 min-h-0 overflow-y-auto space-y-4 p-4 sm:p-6 bg-[#0B111C]/90"
+            >
+              {serverMessages.map((msg) => {
                 const isUser = msg.sender === currentPersona || msg.sender === (user?.full_name || "You");
                 return (
                   <div
@@ -892,13 +940,13 @@ export function SlackChatPage() {
                     </div>
                   </div>
                 );
-              })
-            )}
-            <div ref={chatEndRef} />
-          </div>
+              })}
+              <div ref={chatEndRef} />
+            </div>
+          )}
 
           {/* Message Input Bar */}
-          <div className="p-3 sm:p-4 border-t border-[#2A3446] bg-[#161F2D] relative shrink-0 mt-auto">
+          <div className="border-t border-[#2A3446]/60 p-4 bg-[#161F2D] relative shrink-0">
             {/* FULL WHATSAPP EMOJI PICKER POPOVER */}
             {showEmojiPicker && (
               <div className="absolute bottom-16 right-2 sm:right-4 z-50 w-[92vw] max-w-sm sm:w-96 bg-[#161F2D] border border-[#2A3446] rounded-3xl p-3 sm:p-4 shadow-2xl animate-in fade-in slide-in-from-bottom-2">
@@ -1002,6 +1050,7 @@ export function SlackChatPage() {
             <form onSubmit={handleSendMessage} className="space-y-2">
               <div className="relative flex items-center">
                 <input
+                  ref={chatInputRef}
                   type="text"
                   disabled={!activeContact}
                   value={messageText}
