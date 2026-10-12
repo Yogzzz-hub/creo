@@ -488,8 +488,12 @@ export interface PlanNegotiationApiItem {
   notes: string | null;
   status: "Pending Review" | "Accepted" | "Declined" | "Counter Offered";
   counterPrice: number | null;
+  agreedAmount?: number | null;
   counterNote: string | null;
   declineReason: string | null;
+  reelQuota?: number | null;
+  posterQuota?: number | null;
+  storyQuota?: number | null;
   requestedAt: string | null;
   reviewedAt: string | null;
 }
@@ -520,6 +524,10 @@ export async function fetchPlanNegotiations(): Promise<PlanNegotiationApiItem[]>
         notes: n.notes || null,
         status: (n.status === "PENDING" ? "Pending Review" : n.status === "APPROVED" ? "Accepted" : n.status === "REJECTED" ? "Declined" : n.status) || "Pending Review",
         counterPrice: n.counter_price || n.agreed_amount || null,
+        agreedAmount: n.agreed_amount || n.counter_price || null,
+        reelQuota: n.reel_quota || n.reelQuota || 8,
+        posterQuota: n.poster_quota || n.posterQuota || 12,
+        storyQuota: n.story_quota || n.storyQuota || 15,
         counterNote: n.counter_note || null,
         declineReason: n.decline_reason || null,
         requestedAt: n.created_at || n.requestedAt || null,

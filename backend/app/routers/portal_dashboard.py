@@ -718,6 +718,14 @@ async def get_client_negotiations(
     )
     res = await db.execute(stmt)
     rows = res.scalars().all()
+
+    # Also check if client has custom plan to enrich quotas and agreed amount
+    custom_plan_stmt = select(Plan).where(
+        Plan.name == f"custom_{client_id.hex[:8]}",
+        Plan.is_active.is_(True),
+    )
+    custom_plan = (await db.execute(custom_plan_stmt)).scalar_one_or_none()
+
     return [
         {
             "id": str(n.id),
@@ -727,7 +735,11 @@ async def get_client_negotiations(
             "preferredTime": n.preferred_time,
             "notes": n.notes,
             "status": n.status,
-            "counterPrice": n.counter_price,
+            "counterPrice": n.counter_price or (int(custom_plan.monthly_price) if custom_plan else getattr(n, "agreed_amount", None)),
+            "agreedAmount": getattr(n, "agreed_amount", None) or n.counter_price or (int(custom_plan.monthly_price) if custom_plan else None),
+            "reelQuota": getattr(n, "reel_quota", None) or (custom_plan.reel_quota if custom_plan else 8),
+            "posterQuota": getattr(n, "poster_quota", None) or (custom_plan.poster_quota if custom_plan else 12),
+            "storyQuota": getattr(n, "story_quota", None) or (custom_plan.story_quota if custom_plan else 15),
             "counterNote": n.counter_note,
             "declineReason": n.decline_reason,
             "requestedAt": n.created_at.isoformat() if n.created_at else None,

@@ -4523,7 +4523,11 @@ async def list_plan_negotiations(
             "preferredTime": n.preferred_time,
             "notes": n.notes,
             "status": n.status,
-            "counterPrice": n.counter_price,
+            "counterPrice": n.counter_price or getattr(n, "agreed_amount", None),
+            "agreedAmount": getattr(n, "agreed_amount", None) or n.counter_price,
+            "reelQuota": getattr(n, "reel_quota", None) or 8,
+            "posterQuota": getattr(n, "poster_quota", None) or 12,
+            "storyQuota": getattr(n, "story_quota", None) or 15,
             "counterNote": n.counter_note,
             "declineReason": n.decline_reason,
             "requestedAt": n.created_at.isoformat() if n.created_at else None,
@@ -4628,7 +4632,7 @@ async def update_plan_negotiation(
         final_price = payload.agreed_price or payload.agreed_amount
         if final_price is None and neg.proposed_offer:
             digits = "".join(ch for ch in str(neg.proposed_offer) if ch.isdigit())
-            if digits and len(digits) >= 4:
+            if digits and len(digits) >= 1:
                 try:
                     final_price = Decimal(digits)
                 except Exception:
@@ -4636,7 +4640,7 @@ async def update_plan_negotiation(
         if final_price is None and neg.counter_price:
             final_price = Decimal(neg.counter_price)
         if final_price is None or final_price <= 0:
-            final_price = Decimal("40000.00")
+            final_price = Decimal("35000.00")
 
         current = (await db.execute(select(Plan).join(Subscription, Subscription.plan_id == Plan.id)
             .where(Subscription.client_id == neg.client_id)
@@ -4648,25 +4652,125 @@ async def update_plan_negotiation(
 
         neg.status = "Accepted"
         neg.counter_price = int(final_price)
+        neg.agreed_amount = int(final_price)
+        neg.counter_note = payload.counter_note or neg.counter_note
+        neg.reel_quota = reel_q
+        neg.poster_quota = poster_q
+        neg.story_quota = story_q
         neg.reviewed_by = actor.user_id
         neg.reviewed_at = now
 
         # Update or create client-exclusive custom plan (custom_{client_id}) without changing global tiers
-        await fix_client_plan(
-            neg.client_id,
-            FixClientPlanRequest(
-                is_custom=True,
-                custom_price=final_price,
-                custom_reel_quota=reel_q,
-                custom_poster_quota=poster_q,
-                custom_story_quota=story_q,
-                custom_notes=f"Negotiation {neg.id}: {payload.counter_note or neg.notes or neg.target_topic}",
-                custom_display_name=f"Custom Negotiated Retainer ({neg.client_name or 'Client Retainer'})",
-            ),
-            db=db,
-            actor=actor,
-        )
-        msg = f"Agreed retainer price of ₹{float(final_price):,.2f}/month applied exclusively for {neg.client_name}."
+        plan_key = f"custom_{neg.client_id.hex[:8]}"
+        plan_stmt = select(Plan).where(Plan.name == plan_key)
+        plan = (await db.execute(plan_stmt)).scalar_one_or_none()
+        display_name = f"Custom Negotiated Retainer ({neg.client_name or 'Client Retainer'})"
+        highlights = [
+            f"{reel_q} Custom Reels",
+            f"{poster_q} Static Posters",
+            f"{story_q} Stories / Carousels",
+            "Negotiated Strategy Agreement",
+            "Dedicated Creative Pod Lead",
+        ]
+        if plan:
+            plan.display_name = display_name
+            plan.monthly_price = final_price
+            plan.price_minor = int(final_price * 100)
+            plan.reel_quota = reel_q
+            plan.poster_quota = poster_q
+            plan.story_quota = story_q
+            plan.highlights = highlights
+            plan.is_active = True
+        else:
+            plan = Plan(
+                id=uuid.uuid4(),
+                agency_id=neg.agency_id or getattr(actor, "agency_id", None),
+                name=plan_key,
+                display_name=display_name,
+                monthly_price=final_price,
+                price_minor=int(final_price * 100),
+                currency="INR",
+                reel_quota=reel_q,
+                poster_quota=poster_q,
+                story_quota=story_q,
+                revision_rounds=2,
+                has_dedicated_manager=True,
+                highlights=highlights,
+                is_active=True,
+            )
+            db.add(plan)
+            await db.flush()
+
+        # Check existing subscription: keep incomplete if client hasn't paid yet, or update active if already paid
+        existing_sub = (await db.execute(
+            select(Subscription).where(
+                Subscription.client_id == neg.client_id,
+                Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
+            )
+        )).scalar_one_or_none()
+
+        if existing_sub:
+            existing_sub.plan_id = plan.id
+            existing_sub.amount = plan.monthly_price
+        else:
+            # Client has NOT paid yet! Ensure an INCOMPLETE subscription exists for Razorpay checkout in onboarding
+            incomp_sub = (await db.execute(
+                select(Subscription).where(
+                    Subscription.client_id == neg.client_id,
+                    Subscription.status == SubscriptionStatus.INCOMPLETE,
+                )
+            )).scalar_one_or_none()
+            if incomp_sub:
+                incomp_sub.plan_id = plan.id
+                incomp_sub.amount = plan.monthly_price
+            else:
+                db.add(Subscription(
+                    agency_id=neg.agency_id or getattr(actor, "agency_id", None),
+                    client_id=neg.client_id,
+                    plan_id=plan.id,
+                    status=SubscriptionStatus.INCOMPLETE,
+                    gateway=PaymentProvider.RAZORPAY,
+                    gateway_subscription_id=f"neg_order_{uuid.uuid4().hex[:12]}",
+                    amount=plan.monthly_price,
+                    current_period_start=now,
+                    current_period_end=now + timedelta(days=30),
+                ))
+
+        # Synchronize monthly deliverable usage counters to the exact negotiated quotas
+        period_start_date = now.date().replace(day=1)
+        if period_start_date.month == 12:
+            period_end_date = date(period_start_date.year + 1, 1, 1) - timedelta(days=1)
+        else:
+            period_end_date = date(period_start_date.year, period_start_date.month + 1, 1) - timedelta(days=1)
+
+        for kind, quota in [
+            (DeliverableType.REEL, reel_q),
+            (DeliverableType.CAROUSEL, story_q),
+            (DeliverableType.STATIC_POST, poster_q),
+        ]:
+            uc_stmt = select(UsageCounter).where(
+                UsageCounter.client_id == neg.client_id,
+                UsageCounter.period_start == period_start_date,
+                UsageCounter.kind == kind,
+            )
+            uc = (await db.execute(uc_stmt)).scalar_one_or_none()
+            if uc:
+                uc.quota = quota
+                uc.period_end = period_end_date
+            else:
+                db.add(
+                    UsageCounter(
+                        agency_id=neg.agency_id or getattr(actor, "agency_id", None),
+                        client_id=neg.client_id,
+                        period_start=period_start_date,
+                        period_end=period_end_date,
+                        kind=kind,
+                        quota=quota,
+                        used=0,
+                    )
+                )
+
+        msg = f"Agreed retainer price of ₹{float(final_price):,.2f}/month ({reel_q} Reels, {poster_q} Posts, {story_q} Stories) applied exclusively for {neg.client_name}."
     elif payload.action == "decline":
         neg.status = "Declined"
         neg.decline_reason = payload.decline_reason or "Proposal outside allowable retainer margin."
@@ -4676,12 +4780,120 @@ async def update_plan_negotiation(
     elif payload.action == "counter":
         if payload.counter_price is None or payload.counter_price <= 0:
             raise HTTPException(status_code=422, detail="Enter a positive counter price")
+        counter_p = Decimal(payload.counter_price)
+        reel_q = payload.reel_quota if payload.reel_quota is not None else 8
+        poster_q = payload.poster_quota if payload.poster_quota is not None else 12
+        story_q = payload.story_quota if payload.story_quota is not None else 15
+
         neg.status = "Counter Offered"
         neg.counter_price = payload.counter_price
+        neg.agreed_amount = payload.counter_price
         neg.counter_note = payload.counter_note
+        neg.reel_quota = reel_q
+        neg.poster_quota = poster_q
+        neg.story_quota = story_q
         neg.reviewed_by = actor.user_id
         neg.reviewed_at = now
-        msg = f"Counter-offer of ₹{payload.counter_price:,.2f}/mo sent to {neg.client_name}."
+
+        if neg.client_id:
+            plan_key = f"custom_{neg.client_id.hex[:8]}"
+            plan_stmt = select(Plan).where(Plan.name == plan_key)
+            plan = (await db.execute(plan_stmt)).scalar_one_or_none()
+            display_name = f"Agency Counter Proposal ({neg.client_name or 'Client Retainer'})"
+            highlights = [
+                f"{reel_q} Custom Reels",
+                f"{poster_q} Static Posters",
+                f"{story_q} Stories / Carousels",
+                "Agency Executive Counter Scope",
+                "Dedicated Creative Pod Lead",
+            ]
+            if plan:
+                plan.display_name = display_name
+                plan.monthly_price = counter_p
+                plan.price_minor = int(counter_p * 100)
+                plan.reel_quota = reel_q
+                plan.poster_quota = poster_q
+                plan.story_quota = story_q
+                plan.highlights = highlights
+                plan.is_active = True
+            else:
+                plan = Plan(
+                    id=uuid.uuid4(),
+                    agency_id=neg.agency_id or getattr(actor, "agency_id", None),
+                    name=plan_key,
+                    display_name=display_name,
+                    monthly_price=counter_p,
+                    price_minor=int(counter_p * 100),
+                    currency="INR",
+                    reel_quota=reel_q,
+                    poster_quota=poster_q,
+                    story_quota=story_q,
+                    revision_rounds=2,
+                    has_dedicated_manager=True,
+                    highlights=highlights,
+                    is_active=True,
+                )
+                db.add(plan)
+                await db.flush()
+
+            # Ensure an INCOMPLETE subscription exists with this counter proposal for Razorpay checkout
+            incomp_sub = (await db.execute(
+                select(Subscription).where(
+                    Subscription.client_id == neg.client_id,
+                    Subscription.status == SubscriptionStatus.INCOMPLETE,
+                )
+            )).scalar_one_or_none()
+            if incomp_sub:
+                incomp_sub.plan_id = plan.id
+                incomp_sub.amount = counter_p
+            else:
+                db.add(Subscription(
+                    agency_id=neg.agency_id or getattr(actor, "agency_id", None),
+                    client_id=neg.client_id,
+                    plan_id=plan.id,
+                    status=SubscriptionStatus.INCOMPLETE,
+                    gateway=PaymentProvider.RAZORPAY,
+                    gateway_subscription_id=f"neg_counter_{uuid.uuid4().hex[:12]}",
+                    amount=counter_p,
+                    current_period_start=now,
+                    current_period_end=now + timedelta(days=30),
+                ))
+
+            # Synchronize monthly deliverable usage counters
+            period_start_date = now.date().replace(day=1)
+            if period_start_date.month == 12:
+                period_end_date = date(period_start_date.year + 1, 1, 1) - timedelta(days=1)
+            else:
+                period_end_date = date(period_start_date.year, period_start_date.month + 1, 1) - timedelta(days=1)
+
+            for kind, quota in [
+                (DeliverableType.REEL, reel_q),
+                (DeliverableType.CAROUSEL, story_q),
+                (DeliverableType.STATIC_POST, poster_q),
+            ]:
+                uc_stmt = select(UsageCounter).where(
+                    UsageCounter.client_id == neg.client_id,
+                    UsageCounter.period_start == period_start_date,
+                    UsageCounter.kind == kind,
+                )
+                uc = (await db.execute(uc_stmt)).scalar_one_or_none()
+                if uc:
+                    uc.quota = quota
+                    uc.period_end = period_end_date
+                else:
+                    db.add(
+                        UsageCounter(
+                            agency_id=neg.agency_id or getattr(actor, "agency_id", None),
+                            client_id=neg.client_id,
+                            period_start=period_start_date,
+                            period_end=period_end_date,
+                            kind=kind,
+                            quota=quota,
+                            used=0,
+                        )
+                    )
+
+        msg = f"Counter-offer of ₹{payload.counter_price:,.2f}/mo ({reel_q} Reels, {poster_q} Posts, {story_q} Stories) sent to {neg.client_name}."
     else:
         raise HTTPException(status_code=400, detail="Invalid action. Use accept, decline, or counter.")
 

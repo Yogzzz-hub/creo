@@ -323,11 +323,31 @@ export function PortalPaymentsPage() {
                 {latestNeg.targetTopic}
                 {latestNeg.proposedOffer ? ` (${latestNeg.proposedOffer})` : ""}
               </p>
+              {latestNeg.status === "Accepted" && (
+                <div className="mt-2 space-y-1">
+                  <p className="text-xs text-emerald-300 font-bold">
+                    Approved Retainer Rate: ₹{(latestNeg.counterPrice || latestNeg.agreedAmount || 0).toLocaleString("en-IN")}/mo
+                    {latestNeg.counterNote ? ` • "${latestNeg.counterNote}"` : ""}
+                  </p>
+                  {(latestNeg.reelQuota || latestNeg.posterQuota || latestNeg.storyQuota) && (
+                    <p className="text-[11px] text-[#BCCCE6] font-semibold">
+                      Agreed Deliverables: {latestNeg.reelQuota || 8} Reels • {latestNeg.posterQuota || 12} Posters • {latestNeg.storyQuota || 15} Stories
+                    </p>
+                  )}
+                </div>
+              )}
               {latestNeg.status === "Counter Offered" && (
-                <p className="text-xs text-blue-300 font-semibold mt-1">
-                  Executive Counter-Offer: ₹{latestNeg.counterPrice?.toLocaleString("en-IN")}/mo
-                  {latestNeg.counterNote ? ` • "${latestNeg.counterNote}"` : ""}
-                </p>
+                <div className="mt-2 space-y-1">
+                  <p className="text-xs text-blue-300 font-bold">
+                    Executive Counter-Offer: ₹{(latestNeg.counterPrice || 0).toLocaleString("en-IN")}/mo
+                    {latestNeg.counterNote ? ` • "${latestNeg.counterNote}"` : ""}
+                  </p>
+                  {(latestNeg.reelQuota || latestNeg.posterQuota || latestNeg.storyQuota) && (
+                    <p className="text-[11px] text-[#BCCCE6] font-semibold">
+                      Proposed Deliverables: {latestNeg.reelQuota || 8} Reels • {latestNeg.posterQuota || 12} Posters • {latestNeg.storyQuota || 15} Stories
+                    </p>
+                  )}
+                </div>
               )}
               {latestNeg.status === "Declined" && latestNeg.declineReason && (
                 <p className="text-xs text-rose-300 mt-1">

@@ -5196,8 +5196,12 @@ export interface PlanNegotiationItem {
   requestedAt: string | null;
   status: "Pending Review" | "Accepted" | "Declined" | "Counter Offered";
   counterPrice?: number | null;
+  agreedAmount?: number | null;
   counterNote?: string | null;
   declineReason?: string | null;
+  reelQuota?: number | null;
+  posterQuota?: number | null;
+  storyQuota?: number | null;
 }
 
 export function AdminRevenuePage() {
@@ -6061,7 +6065,11 @@ export function AdminPlansPage() {
   const [isSubmittingAccept, setIsSubmittingAccept] = useState(false);
 
   const [counterPriceInput, setCounterPriceInput] = useState("");
+  const [counterReelsInput, setCounterReelsInput] = useState("8");
+  const [counterPostersInput, setCounterPostersInput] = useState("12");
+  const [counterStoriesInput, setCounterStoriesInput] = useState("15");
   const [counterNoteInput, setCounterNoteInput] = useState("");
+  const [isSubmittingCounter, setIsSubmittingCounter] = useState(false);
   const [declineReasonInput, setDeclineReasonInput] = useState("");
 
   const [newPropClient, setNewPropClient] = useState("");
@@ -6094,6 +6102,10 @@ export function AdminPlansPage() {
             requestedAt: n.requestedAt,
             status: n.status,
             counterPrice: n.counterPrice,
+            agreedAmount: n.agreedAmount,
+            reelQuota: n.reelQuota || 8,
+            posterQuota: n.posterQuota || 12,
+            storyQuota: n.storyQuota || 15,
             counterNote: n.counterNote,
             declineReason: n.declineReason,
           }));
@@ -6111,11 +6123,25 @@ export function AdminPlansPage() {
     setAcceptModalItem(item);
     const digits = (item.proposedOffer || "").replace(/[^\d.]/g, "");
     const parsed = parseFloat(digits);
-    setAcceptPriceInput(parsed && !isNaN(parsed) ? String(parsed) : "35000");
-    setAcceptReelsInput("8");
-    setAcceptPostersInput("12");
-    setAcceptStoriesInput("15");
-    setAcceptNotesInput(`Custom negotiated retainer approved for ${item.clientName}. Scope terms confirmed.`);
+    const basePrice = item.counterPrice || (parsed && !isNaN(parsed) ? parsed : 35000);
+    setAcceptPriceInput(String(basePrice));
+    setAcceptReelsInput(String(item.reelQuota || 8));
+    setAcceptPostersInput(String(item.posterQuota || 12));
+    setAcceptStoriesInput(String(item.storyQuota || 15));
+    setAcceptNotesInput(item.counterNote || `Custom negotiated retainer approved for ${item.clientName}. Scope terms confirmed.`);
+  };
+
+  // Actions: OPEN Counter Offer Negotiation Modal
+  const handleOpenCounterModal = (item: PlanNegotiationItem) => {
+    setCounterModalItem(item);
+    const digits = (item.proposedOffer || "").replace(/[^\d.]/g, "");
+    const parsed = parseFloat(digits);
+    const basePrice = item.counterPrice || (parsed && !isNaN(parsed) ? parsed : 40000);
+    setCounterPriceInput(String(basePrice));
+    setCounterReelsInput(String(item.reelQuota || 8));
+    setCounterPostersInput(String(item.posterQuota || 12));
+    setCounterStoriesInput(String(item.storyQuota || 15));
+    setCounterNoteInput(item.counterNote || `We can offer ₹${basePrice.toLocaleString('en-IN')}/mo with a revised custom deliverable scope.`);
   };
 
   // Auto-focus negotiation from URL query params (e.g. from notification deep-link)
@@ -6225,29 +6251,50 @@ export function AdminPlansPage() {
     e.preventDefault();
     if (!counterModalItem || !counterPriceInput) return;
     const target = counterModalItem;
-    const price = parseFloat(counterPriceInput);
+    const price = parseFloat(counterPriceInput) || 40000;
+    const reelQuota = parseInt(counterReelsInput, 10) || 8;
+    const posterQuota = parseInt(counterPostersInput, 10) || 12;
+    const storyQuota = parseInt(counterStoriesInput, 10) || 15;
 
-    setNegotiations((prev) =>
-      prev.map((n) =>
-        n.id === target.id
-          ? { ...n, status: "Counter Offered", counterPrice: price, counterNote: counterNoteInput }
-          : n
-      )
-    );
-    setToast(`Counter offer of ₹${price.toLocaleString('en-IN')}/mo submitted to ${target.clientName}.`);
-    setCounterModalItem(null);
-    setCounterPriceInput("");
-    setCounterNoteInput("");
-
+    setIsSubmittingCounter(true);
     try {
       await updatePlanNegotiation(target.id, "counter", {
         counter_price: price,
         counter_note: counterNoteInput || undefined,
+        reel_quota: reelQuota,
+        poster_quota: posterQuota,
+        story_quota: storyQuota,
       });
+
+      setNegotiations((prev) =>
+        prev.map((n) =>
+          n.id === target.id
+            ? {
+                ...n,
+                status: "Counter Offered",
+                counterPrice: price,
+                agreedAmount: price,
+                reelQuota,
+                posterQuota,
+                storyQuota,
+                counterNote: counterNoteInput,
+              }
+            : n
+        )
+      );
+      setToast(
+        `Counter offer of ₹${price.toLocaleString('en-IN')}/mo (${reelQuota} Reels, ${posterQuota} Posts, ${storyQuota} Stories) submitted to ${target.clientName}. Custom plan updated in client onboarding.`
+      );
+      setCounterModalItem(null);
+      setCounterPriceInput("");
+      setCounterNoteInput("");
     } catch (err) {
-      console.warn("Backend counter notice:", err);
+      console.error("Failed to submit counter offer:", err);
+      setToast(`Error submitting counter offer: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      setIsSubmittingCounter(false);
+      setTimeout(() => setToast(null), 5000);
     }
-    setTimeout(() => setToast(null), 4000);
   };
 
   // Actions: Create New Proposal Submit
@@ -6666,8 +6713,32 @@ export function AdminPlansPage() {
                       <div className="flex items-center gap-4 bg-[#161F2D] p-3 rounded-xl border border-[#2A3446] flex-wrap">
                         {item.proposedOffer && (
                           <div>
-                            <span className="text-[10px] text-[#7FA0D6] uppercase block font-bold">Proposed Offer</span>
+                            <span className="text-[10px] text-[#7FA0D6] uppercase block font-bold">Client Offer</span>
                             <span className="text-sm font-black text-emerald-400">{item.proposedOffer}</span>
+                          </div>
+                        )}
+                        {item.status === "Accepted" && (
+                          <div>
+                            <span className="text-[10px] text-emerald-400 uppercase block font-bold">Agreed Retainer</span>
+                            <span className="text-sm font-black text-emerald-300">
+                              ₹{(item.counterPrice || item.agreedAmount || 0).toLocaleString('en-IN')}/mo
+                            </span>
+                          </div>
+                        )}
+                        {item.status === "Counter Offered" && (
+                          <div>
+                            <span className="text-[10px] text-purple-400 uppercase block font-bold">Counter Offer</span>
+                            <span className="text-sm font-black text-purple-300">
+                              ₹{(item.counterPrice || 0).toLocaleString('en-IN')}/mo
+                            </span>
+                          </div>
+                        )}
+                        {(item.status === "Accepted" || item.status === "Counter Offered") && (
+                          <div>
+                            <span className="text-[10px] text-[#7FA0D6] uppercase block font-bold">Deliverables Quota</span>
+                            <span className="text-xs font-bold text-white">
+                              {item.reelQuota || 8} Reels • {item.posterQuota || 12} Posts • {item.storyQuota || 15} Stories
+                            </span>
                           </div>
                         )}
                         <div>
@@ -6698,7 +6769,7 @@ export function AdminPlansPage() {
                         </span>
 
                         {/* Functional ACCEPT, DECLINE, and COUNTER buttons */}
-                        {item.status === "Pending Review" && (
+                        {item.status === "Pending Review" ? (
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
@@ -6707,26 +6778,33 @@ export function AdminPlansPage() {
                             >
                               <Check className="w-3.5 h-3.5 stroke-[3]" /> ACCEPT
                             </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeclineModalItem(item)}
-                            className="px-4 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 font-bold text-xs border border-rose-500/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
-                          >
-                            <X className="w-3.5 h-3.5 stroke-[3]" /> DECLINE
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setCounterModalItem(item);
-                              setCounterPriceInput("");
-                            }}
-                            className="px-4 py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-[#7FA0D6] hover:text-white font-bold text-xs border border-[#7FA0D6]/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
-                          >
-                            <SlidersHorizontal className="w-3.5 h-3.5" /> Counter
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                            <button
+                              type="button"
+                              onClick={() => setDeclineModalItem(item)}
+                              className="px-4 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 font-bold text-xs border border-rose-500/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                            >
+                              <X className="w-3.5 h-3.5 stroke-[3]" /> DECLINE
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenCounterModal(item)}
+                              className="px-4 py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-[#7FA0D6] hover:text-white font-bold text-xs border border-[#7FA0D6]/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                            >
+                              <SlidersHorizontal className="w-3.5 h-3.5" /> Counter
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenAcceptModal(item)}
+                              className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:border-[#7FA0D6] text-[11px] font-bold text-[#BCCCE6] hover:text-white cursor-pointer transition-all"
+                            >
+                              Edit Scope / Quotas
+                            </button>
+                          </div>
+                        )}
+                      </div>
                   </div>
 
                   {/* Scope Notes */}
@@ -7074,35 +7152,95 @@ export function AdminPlansPage() {
               </button>
             </div>
 
-            <form onSubmit={handleConfirmCounter} className="space-y-3 text-xs">
+            {/* ISOLATION GUARANTEE CALLOUT */}
+            <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs space-y-1">
+              <div className="flex items-center gap-1.5 font-black uppercase text-[10px] tracking-wider text-purple-400">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Client Counter Scope Guarantee
+              </div>
+              <p className="text-[11px] text-[#F1F5F9] leading-relaxed">
+                This counter proposal will update <strong>ONLY for {counterModalItem.clientName}</strong> in their client onboarding. Standard agency tiers remain completely unchanged.
+              </p>
+            </div>
+
+            <form onSubmit={handleConfirmCounter} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Counter Proposed Rate (₹ INR / mo)</label>
-                <input
-                  type="number"
-                  required
-                  value={counterPriceInput}
-                  onChange={(e) => setCounterPriceInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-                />
+                <label className="block font-bold text-white mb-1">
+                  Counter Proposed Rate (₹ INR / mo) <span className="text-purple-400">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white font-bold text-sm">₹</span>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={counterPriceInput}
+                    onChange={(e) => setCounterPriceInput(e.target.value)}
+                    className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                    placeholder="e.g. 40000"
+                  />
+                </div>
+              </div>
+
+              {/* Deliverable Quota Inputs */}
+              <div className="grid grid-cols-3 gap-2.5">
+                <div>
+                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Reels / mo</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={counterReelsInput}
+                    onChange={(e) => setCounterReelsInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Posters / mo</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={counterPostersInput}
+                    onChange={(e) => setCounterPostersInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Stories / mo</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={counterStoriesInput}
+                    onChange={(e) => setCounterStoriesInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block font-bold text-[#F1F5F9] mb-1">Counter Offer Notes / Scope Terms</label>
                 <textarea
-                  rows={3}
-                  placeholder="e.g. We can offer ₹85,000/mo with 12-month commitment."
+                  rows={2}
+                  placeholder="e.g. We can offer ₹40,000/mo with custom deliverable package."
                   value={counterNoteInput}
                   onChange={(e) => setCounterNoteInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setCounterModalItem(null)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+                <button
+                  type="button"
+                  onClick={() => setCounterModalItem(null)}
+                  disabled={isSubmittingCounter}
+                  className="px-4 py-2.5 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                >
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-2 rounded-xl bg-purple-600 text-white font-bold hover:bg-purple-700 cursor-pointer">
-                  Submit Counter
+                <button
+                  type="submit"
+                  disabled={isSubmittingCounter}
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs shadow-lg shadow-purple-600/30 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                >
+                  {isSubmittingCounter ? "Submitting Counter..." : `Submit Counter Offer (₹${Number(counterPriceInput || 0).toLocaleString('en-IN')})`}
                 </button>
               </div>
             </form>
