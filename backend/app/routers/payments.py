@@ -288,7 +288,8 @@ async def get_client_subscription(
     sub = check["subscription"]
     plan = check["plan"]
 
-    # If no active/expired subscription was found, check for an incomplete/pending checkout order
+    # Check if there is an incomplete checkout order, but keep it distinct as pending_checkout
+    pending_checkout = None
     if not sub:
         inc_stmt = (
             select(Subscription, Plan)
@@ -302,7 +303,12 @@ async def get_client_subscription(
         )
         inc_row = (await db.execute(inc_stmt)).first()
         if inc_row:
-            sub, plan = inc_row
+            inc_sub, inc_plan = inc_row
+            pending_checkout = {
+                "id": str(inc_sub.id),
+                "plan_name": inc_plan.display_name,
+                "amount": float(inc_sub.amount if inc_sub.amount is not None else inc_plan.monthly_price),
+            }
 
     counters_stmt = select(UsageCounter).where(UsageCounter.client_id == client_id)
     counters = (await db.execute(counters_stmt)).scalars().all()
@@ -314,7 +320,7 @@ async def get_client_subscription(
         for c in counters
     }
 
-    # Hide incomplete/unpaid checkout orders from invoices table
+    # Only show actual paid/active/canceled subscriptions in invoices, NOT incomplete abandoned checkout orders!
     inv_stmt = (
         select(Subscription, Plan)
         .join(Plan, Subscription.plan_id == Plan.id)
@@ -387,7 +393,8 @@ async def get_client_subscription(
             "poster_quota": plan.poster_quota,
             "reel_quota": plan.reel_quota,
             "story_quota": plan.story_quota,
-        } if plan else None,
+        } if (plan and (check["is_active"] or check["is_expired"])) else None,
+        "pending_checkout": pending_checkout,
         "quotas": quota_map if (sub_data and check["is_active"]) else {},
         "invoices": invoices,
         "is_active": check["is_active"],
