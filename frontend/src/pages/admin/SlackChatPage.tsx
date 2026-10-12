@@ -911,7 +911,7 @@ export function SlackChatPage() {
         await request("/api/v1/chat/messages", {
           method: "POST",
           body: JSON.stringify({
-            recipient_id: activeContact.id,
+            recipient_id: contact.id,
             message: taskContent,
             thread_type: "direct",
           }),
@@ -936,17 +936,24 @@ export function SlackChatPage() {
     }
   };
 
-  if (isClient && !gate.isReady) {
-    return <CreoLoadingScreen />;
+  if (isClient && gate.error) {
+    return (
+      <div role="alert" className="p-6 text-sm text-[#BCCCE6]">
+        Could not verify onboarding status. <button type="button" className="underline" onClick={() => void gate.refetch()}>Retry</button>
+      </div>
+    );
   }
+
+  if (isClient && !gate.isReady) {
+    return <CreoLoadingScreen fullScreen={false} label="Checking workspace access" className="min-h-[45vh]" />;
+  }
+
   if (isClient && !gate.isComplete) {
     return (
-      <div className="w-full">
-        <SubscriptionLockedState
-          title="Team Chat Locked"
-          description="Complete setup to access your team chat and creative hub."
-        />
-      </div>
+      <SubscriptionLockedState
+        title="Direct Chat Locked"
+        description="Complete setup to chat with your creative team."
+      />
     );
   }
 
@@ -1344,14 +1351,14 @@ export function SlackChatPage() {
                     ? `Welcome to #${activeChannel.label}`
                     : activeContact?.is_super_admin
                     ? "Direct Channel with Creo Super Administration"
-                    : `Direct Conversation with ${activeContact?.name || "Direct Message"}`}
+                    : `Direct Conversation with ${activeContact?.name || "Team Member"}`}
                 </h3>
                 <p className="text-xs text-[#97A0B3] max-w-md mt-1.5 leading-relaxed">
                   {activeMode === "channel"
                     ? `This is the start of the #${activeChannel.label} channel. Collaborate with your creative team, drop project notes, or review revisions in real time.`
                     : activeContact?.is_super_admin
                     ? "This is your private, direct thread with Creo Executive Super Administration. Inquire about your creative pod, retainer adjustments, SLA escalations, or custom requests."
-                    : `This is the start of your direct 1-on-1 thread with ${activeContact?.name || "Direct Message"}. Drop project feedback, creative directions, or collaborate in real time.`}
+                    : `This is the start of your direct 1-on-1 thread with ${activeContact?.name || "your team"}. Drop project feedback, creative directions, or collaborate in real time.`}
                 </p>
               </div>
             ) : (

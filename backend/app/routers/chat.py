@@ -506,6 +506,7 @@ async def get_messages(
             channel.startswith("client-")
             or channel in ("pod-direct-chat", "pod-creative", "pod-creative-hub", "client-pod-thread", "pod-team-chat")
         ):
+            await _require_completed_onboarding(actor, db)
             stmt = (
                 select(DirectMessage)
                 .where(
@@ -516,6 +517,8 @@ async def get_messages(
                         DirectMessage.thread_type.like("client-%"),
                     )
                 )
+                .order_by(DirectMessage.created_at.asc())
+                .limit(200)
             )
             await _require_completed_onboarding(actor, db)
         else:
@@ -531,17 +534,17 @@ async def get_messages(
                 )
             await _require_client_assignment(actor, effective_client_id, db)
 
-        if channel not in {"pod-direct-chat", f"client-{effective_client_id}"}:
-            raise HTTPException(status_code=400, detail="Invalid client channel")
-        stmt = (
-            select(DirectMessage)
-            .where(
-                DirectMessage.client_id == effective_client_id,
-                DirectMessage.thread_type != "direct",
+            if channel not in {"pod-direct-chat", f"client-{effective_client_id}"}:
+                raise HTTPException(status_code=400, detail="Invalid client channel")
+            stmt = (
+                select(DirectMessage)
+                .where(
+                    DirectMessage.client_id == effective_client_id,
+                    DirectMessage.thread_type != "direct",
+                )
+                .order_by(DirectMessage.created_at.asc())
+                .limit(200)
             )
-            .order_by(DirectMessage.created_at.asc())
-            .limit(200)
-        )
 
     res = await db.execute(stmt)
     messages = res.scalars().all()
