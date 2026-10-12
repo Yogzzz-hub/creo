@@ -347,8 +347,8 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
 
       {/* Plan Cards Grid: Equal Heights across all 3 cards */}
       {plansLoading ? (
-        <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-12 text-center text-[#97A0B3]">
-          <Loader2 className="size-7 border-2 border-[#7FA0D6] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <div role="status" className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-12 text-center text-[#97A0B3]">
+          <Loader2 aria-hidden="true" className="size-7 animate-spin text-[#7FA0D6] mx-auto mb-3 motion-reduce:animate-none" />
           <p className="text-xs font-medium">Loading pricing plans…</p>
         </div>
       ) : (
