@@ -83,9 +83,6 @@ export const PortalDeliverablesPage = lazyPage(() =>
 export const PortalCalendarPage = lazyPage(() =>
   import("../pages/portal/PortalCalendarPage").then((m) => m.PortalCalendarPage),
 );
-export const PortalCreativePodPage = lazyPage(() =>
-  import("../pages/portal/PortalCreativePodPage").then((m) => m.PortalCreativePodPage),
-);
 export const PortalPaymentsPage = lazyPage(() =>
   import("../pages/portal/PortalPaymentsPage").then((m) => m.PortalPaymentsPage),
 );

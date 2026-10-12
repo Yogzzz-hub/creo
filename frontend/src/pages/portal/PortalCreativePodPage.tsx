@@ -215,14 +215,24 @@ export function PortalCreativePodPage() {
                   Working hours: <span className="text-[#97A0B3]">Mon-Fri, 10am-7pm IST</span>
                 </p>
 
-                {/* Message Button */}
-                <Link
-                  to={`/portal/slack?dm=${encodeURIComponent(member.id || member.user_id || "")}`}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-[#2A3446] text-[#97A0B3] bg-[#161F2D]/60 text-[13px] font-medium cursor-pointer transition-all duration-200 hover:border-[#7FA0D6] hover:text-[#BCCCE6] hover:bg-[#7FA0D6]/[0.08] mt-auto"
-                >
-                  <MessageCircle className="w-4 h-4" strokeWidth={1.8} />
-                  Message {member.name.split(" ")[0]}
-                </Link>
+                {/* Message Button - Client only DMs Team Lead or messages Pod Hub */}
+                {member.role.toLowerCase().includes("lead") ? (
+                  <Link
+                    to={`/portal/slack?dm=${encodeURIComponent(member.name)}`}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-[#7FA0D6]/40 bg-[#7FA0D6]/10 text-white hover:bg-[#7FA0D6]/20 text-[13px] font-bold cursor-pointer transition-all duration-200 mt-auto"
+                  >
+                    <MessageCircle className="w-4 h-4 text-[#7FA0D6]" strokeWidth={1.8} />
+                    Message Team Lead
+                  </Link>
+                ) : (
+                  <Link
+                    to="/portal/slack?channel=pod-creative-hub"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-[#2A3446] text-[#97A0B3] bg-[#161F2D]/60 text-[13px] font-medium cursor-pointer transition-all duration-200 hover:border-[#7FA0D6] hover:text-[#BCCCE6] hover:bg-[#7FA0D6]/[0.08] mt-auto"
+                  >
+                    <MessageCircle className="w-4 h-4" strokeWidth={1.8} />
+                    Chat in Pod Hub
+                  </Link>
+                )}
               </div>
             );
           })

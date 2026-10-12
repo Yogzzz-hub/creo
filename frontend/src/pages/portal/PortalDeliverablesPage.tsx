@@ -143,9 +143,7 @@ function errorMessage(error: unknown, fallback: string): string {
 }
 
 function DeliverablesLoading() {
-  const [slow, setSlow] = useState(false);
-  useEffect(() => { const timer = setTimeout(() => setSlow(true), 8000); return () => clearTimeout(timer); }, []);
-  return <section role="status" aria-live="polite" className="space-y-5 animate-page-in"><h1 className="text-2xl font-bold text-white">Content review</h1><p className="text-sm text-[#97A0B3]">{slow ? "The server is taking longer than usual. Your uploads are still being checked; a retry will appear if the request fails." : "Loading your uploaded content..."}</p><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{[0, 1, 2].map(i => <div key={i} className="rounded-2xl p-5 bg-[#161F2D] border border-[#2A3446] space-y-4 motion-safe:animate-pulse"><div className="aspect-video rounded-xl bg-[#2A3446]" /><div className="h-4 w-2/3 rounded bg-[#2A3446]" /><div className="h-3 w-1/2 rounded bg-[#2A3446]" /></div>)}</div></section>;
+  return <section role="status" aria-live="polite" className="space-y-5 animate-page-in"><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{[0, 1, 2].map(i => <div key={i} className="rounded-2xl p-5 bg-[#161F2D] border border-[#2A3446] space-y-4 motion-safe:animate-pulse"><div className="aspect-video rounded-xl bg-[#2A3446]" /><div className="h-4 w-2/3 rounded bg-[#2A3446]" /><div className="h-3 w-1/2 rounded bg-[#2A3446]" /></div>)}</div></section>;
 }
 
 export function PortalDeliverablesPage() {
@@ -313,15 +311,9 @@ export function PortalDeliverablesPage() {
 
   return (
     <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-500 overflow-hidden">
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 sm:mb-6 shrink-0">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#97A0B3] mb-1.5 sm:mb-2">
-            {deliverables.length > 0 ? `CYCLE DELIVERABLES · ${pendingItems.length} WAITING FOR YOU` : "NO DELIVERABLES YET"}
-          </p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">Review</h1>
-        </div>
-        {pendingItems.length > 1 && (
+      {/* ── Actions Row ── */}
+      {pendingItems.length > 1 && (
+        <div className="flex justify-end mb-4 shrink-0">
           <button
             onClick={handleApproveAll}
             disabled={!!bulkProgress}
@@ -333,8 +325,8 @@ export function PortalDeliverablesPage() {
               </>
             )}
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {deliverables.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-10">

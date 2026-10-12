@@ -19,11 +19,15 @@ import {
   Trash2,
   Eye,
   Check,
+  Edit3,
+  AlertTriangle,
+  FileText,
 } from "lucide-react";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
+import { StoryApprovalModal } from "../../components/ops/StoryApprovalModal";
 
 export type CalendarEvent = {
   id: string;
@@ -40,6 +44,10 @@ export type CalendarEvent = {
   year: number;
   time: string;
   caption?: string;
+  story_description?: string;
+  approval_type?: string;
+  team_notes?: string;
+  client_feedback?: string;
   file_url?: string | null;
   file_type?: string | null;
   brand_summary?: string | null;
@@ -139,7 +147,6 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
-
   // Filter State
   const [selectedClient, setSelectedClient] = useState("all");
   const [formatFilter, setFormatFilter] = useState<"all" | "reel" | "poster" | "story" | "carousel">("all");
@@ -149,6 +156,8 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
   // Modals State
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [inspectEvent, setInspectEvent] = useState<CalendarEvent | null>(null);
+  const [storyModalOpen, setStoryModalOpen] = useState(false);
+  const [selectedSlotForEdit, setSelectedSlotForEdit] = useState<CalendarEvent | null>(null);
 
   // New Event Form State
   const [newClient, setNewClient] = useState("");
@@ -326,6 +335,17 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={() => {
+              setSelectedSlotForEdit(null);
+              setStoryModalOpen(true);
+            }}
+            className="min-h-9 px-3.5 rounded-xl border border-blue-500/30 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+          >
+            <Plus size={15} strokeWidth={2.5} />
+            Schedule Story & Approval
+          </button>
+
+          <button
+            onClick={() => {
               if (clientRoster.length > 0 && clientRoster[0]?.client_id) setNewClient(clientRoster[0].client_id);
               setIsScheduleOpen(true);
             }}
@@ -400,7 +420,6 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
           </span>
         </div>
       </div>
-
       {/* Filter and Control Bar */}
       <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-3 sm:p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Format Filter Pills with Format-specific icons */}
@@ -801,6 +820,17 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                         >
                           <Eye size={11} /> Details
                         </button>
+
+                        <button
+                          onClick={() => {
+                            setSelectedSlotForEdit(event);
+                            setStoryModalOpen(true);
+                          }}
+                          className="px-2 py-1 rounded-lg text-[10px] font-bold bg-[#161F2D] hover:bg-[#2A3446] text-[#BCCCE6] border border-[#2A3446] transition-all cursor-pointer inline-flex items-center gap-1"
+                          title="Fill Story & Approval Details"
+                        >
+                          <Edit3 size={11} /> Story
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1126,6 +1156,15 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
           </div>
         </div>
       )}
+
+      {/* Story & Approval Modal */}
+      <StoryApprovalModal
+        isOpen={storyModalOpen}
+        onClose={() => setStoryModalOpen(false)}
+        onSuccess={() => void calendarQuery.refetch()}
+        initialSlot={selectedSlotForEdit}
+        defaultDate={`${year}-${String(monthNumber).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`}
+      />
     </div>
   );
 

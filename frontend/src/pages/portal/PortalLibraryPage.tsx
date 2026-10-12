@@ -115,35 +115,27 @@ export function PortalLibraryPage() {
   }
 
   return (
-    <div className="w-full min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-4 overflow-x-hidden">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-bold tracking-[0.15em] text-[#97A0B3] uppercase mb-1">
-            EVERYTHING WE HAVE MADE FOR YOU
-          </p>
-          <h1 className="text-3xl font-semibold text-white">Library</h1>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8 pb-12 overflow-x-hidden">
+      {/* Action Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-3">
+        <div className="relative w-full sm:w-auto">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search posts, captions..."
+            className="w-full sm:w-[280px] pl-10 pr-4 py-2.5 bg-[#161F2D] border border-[#2A3446] rounded-xl text-sm text-white placeholder:text-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6] transition-all"
+          />
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search posts, captions..."
-              className="w-full sm:w-[280px] pl-10 pr-4 py-2.5 bg-[#161F2D] border border-[#2A3446] rounded-xl text-sm text-white placeholder:text-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6] transition-all"
-            />
-          </div>
-          <button
-            onClick={() => handleDownload("all")}
-            disabled={assets.length === 0 || downloading === "all"}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#161F2D] border border-[#2A3446] hover:bg-white/[0.04] transition-colors rounded-xl text-sm font-medium text-white shrink-0 disabled:opacity-50"
-          >
-            {downloading === "all" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            Download all
-          </button>
-        </div>
+        <button
+          onClick={() => handleDownload("all")}
+          disabled={assets.length === 0 || downloading === "all"}
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#161F2D] border border-[#2A3446] hover:bg-white/[0.04] transition-colors rounded-xl text-sm font-medium text-white shrink-0 disabled:opacity-50 cursor-pointer"
+        >
+          {downloading === "all" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          Download all
+        </button>
       </div>
 
       {/* Stats Bar */}

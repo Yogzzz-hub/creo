@@ -38,6 +38,16 @@ ALLOWED_MIMES: dict[str, str] = {
     "image/jpg": "jpg",
     "image/webp": "webp",
     "image/gif": "gif",
+    "image/svg+xml": "svg",
+    "application/pdf": "pdf",
+    "application/zip": "zip",
+    "application/x-zip-compressed": "zip",
+    "font/ttf": "ttf",
+    "font/otf": "otf",
+    "font/woff": "woff",
+    "font/woff2": "woff2",
+    "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
 }
 
 # App Flow 6.4: 10 MB for images, 500 MB for videos.
@@ -50,7 +60,11 @@ _LOCAL_STATIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."
 
 
 def max_size_for(mime_type: str) -> int:
-    return MAX_VIDEO_SIZE_BYTES if mime_type.startswith("video/") else MAX_IMAGE_SIZE_BYTES
+    if mime_type.startswith("video/"):
+        return MAX_VIDEO_SIZE_BYTES
+    if mime_type in ("application/zip", "application/x-zip-compressed", "application/pdf"):
+        return 100 * 1024 * 1024
+    return 25 * 1024 * 1024
 
 
 class StorageError(Exception):

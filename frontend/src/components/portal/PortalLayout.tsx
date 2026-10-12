@@ -44,12 +44,12 @@ export function PortalLayout() {
         <div
           className={
             isSlack
-              ? "flex-1 min-w-0 xl:pl-[280px] flex flex-col h-screen max-h-screen overflow-hidden"
-              : "flex-1 min-w-0 xl:pl-[280px] flex flex-col min-h-screen"
+              ? "flex-1 min-w-0 lg:pl-[280px] flex flex-col h-screen max-h-screen overflow-hidden"
+              : "flex-1 min-w-0 lg:pl-[280px] flex flex-col min-h-screen overflow-x-hidden"
           }
         >
-          {/* Keep navigation available below the desktop sidebar breakpoint. */}
-          <div className="sticky top-0 z-40 shrink-0 xl:hidden">
+          {/* Top Header with Hamburger: kept in phone view, removed from desktop view */}
+          <div className="lg:hidden">
             <AdminTopHeader showBackButton />
           </div>
 
@@ -58,15 +58,15 @@ export function PortalLayout() {
             id="main-content"
             className={
               isSlack
-                ? "portal-main flex-1 w-full px-4 sm:px-6 pt-4 pb-4 flex flex-col min-h-0 overflow-hidden"
-                : "portal-main flex-1 w-full px-4 sm:px-6 pt-4 pb-6"
+                ? "portal-main flex-1 w-full px-2 sm:px-4 lg:px-6 pt-1 sm:pt-2 pb-2 sm:pb-3 flex flex-col min-h-0 overflow-hidden"
+                : "portal-main flex-1 w-full px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8 pb-10 min-w-0 overflow-x-hidden"
             }
           >
             <div
               className={
                 isSlack
-                  ? "portal-content mx-auto w-full max-w-[1500px] flex-1 min-h-0 flex flex-col h-full max-h-full overflow-hidden"
-                  : "portal-content mx-auto flex w-full max-w-[1500px] flex-col gap-4"
+                  ? "mx-auto w-full max-w-[1700px] flex-1 min-h-0 flex flex-col h-full max-h-full overflow-hidden"
+                  : "mx-auto w-full max-w-[1400px] min-w-0"
               }
             >
               {!isSlack && pathname !== "/portal" && pathname !== "/portal/" && (

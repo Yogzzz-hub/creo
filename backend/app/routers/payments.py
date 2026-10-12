@@ -146,6 +146,132 @@ async def create_addon_order(
     }
 
 
+class ConfirmAddonRequest(BaseModel):
+    addon_id: str
+    order_id: str | None = None
+    payment_id: str
+    signature: str | None = None
+
+
+@router.post("/addon-confirm")
+async def confirm_addon_order(
+    body: ConfirmAddonRequest,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Verify and record a one-time add-on pack purchase, adding to quotas and generating a paid invoice."""
+    import uuid
+    from datetime import UTC, datetime
+    from sqlalchemy.orm.attributes import flag_modified
+    from app.config import settings as _s
+    from app.models.billing import PaymentEvent, UsageCounter
+    from app.models.enums import DeliverableType, PaymentProvider
+    from app.models.user import ClientProfile
+
+    ADDON_CONFIG = {
+        "extra_reel": {"name": "Extra reel", "amount": 4500.0, "type": DeliverableType.REEL, "quota_delta": 1},
+        "rush": {"name": "Rush delivery (24h turnaround)", "amount": 6000.0, "type": None, "quota_delta": 0},
+        "revision": {"name": "Extra revision round", "amount": 1500.0, "type": None, "quota_delta": 0},
+        "shoot": {"name": "Half-day shoot (Chennai)", "amount": 18000.0, "type": DeliverableType.SHOOT_DAY, "quota_delta": 1},
+        "addon_posters_5": {"name": "5 Extra Static Posts", "amount": 3500.0, "type": DeliverableType.STATIC_POST, "quota_delta": 5},
+        "addon_posters_10": {"name": "10 Extra Static Posts", "amount": 6000.0, "type": DeliverableType.STATIC_POST, "quota_delta": 10},
+        "addon_reels_3": {"name": "3 Extra Reels", "amount": 6500.0, "type": DeliverableType.REEL, "quota_delta": 3},
+        "addon_reels_6": {"name": "6 Extra Reels", "amount": 12000.0, "type": DeliverableType.REEL, "quota_delta": 6},
+        "addon_stories_10": {"name": "10 Extra Stories", "amount": 2500.0, "type": DeliverableType.CAROUSEL, "quota_delta": 10},
+        "addon_stories_20": {"name": "20 Extra Stories", "amount": 4500.0, "type": DeliverableType.CAROUSEL, "quota_delta": 20},
+        "addon_shoot_half": {"name": "Half-day Shoot", "amount": 15000.0, "type": DeliverableType.SHOOT_DAY, "quota_delta": 1},
+        "addon_shoot_full": {"name": "Full-day Shoot", "amount": 28000.0, "type": DeliverableType.SHOOT_DAY, "quota_delta": 2},
+    }
+
+    if body.addon_id not in ADDON_CONFIG:
+        raise HTTPException(status_code=400, detail=f"Invalid addon_id: '{body.addon_id}'")
+
+    client_id = actor.client_id or actor.user_id
+    now = datetime.now(UTC)
+    cfg = ADDON_CONFIG[body.addon_id]
+    amount = cfg["amount"]
+
+    # Verify signature if key secret is available
+    key_secret = getattr(_s, "RAZORPAY_KEY_SECRET", "")
+    if key_secret and body.order_id and body.signature:
+        import hashlib
+        import hmac
+        expected = hmac.new(
+            key_secret.encode("utf-8"),
+            f"{body.order_id}|{body.payment_id}".encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+        if not hmac.compare_digest(expected, body.signature):
+            raise HTTPException(status_code=400, detail="Invalid payment signature")
+
+    # Increment quota if deliverable type is defined
+    if cfg["type"] and cfg["quota_delta"] > 0:
+        counter_stmt = (
+            select(UsageCounter)
+            .where(
+                UsageCounter.client_id == client_id,
+                UsageCounter.kind == cfg["type"],
+            )
+            .order_by(UsageCounter.period_end.desc())
+            .limit(1)
+        )
+        counter = (await db.execute(counter_stmt)).scalar_one_or_none()
+        if counter:
+            counter.quota += cfg["quota_delta"]
+            db.add(counter)
+
+    # Record in ClientProfile
+    prof_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    prof = (await db.execute(prof_stmt)).scalar_one_or_none()
+    if not prof:
+        prof = ClientProfile(user_id=client_id, brand_dna={})
+        db.add(prof)
+
+    dna = dict(prof.brand_dna or {})
+    addon_purchases = list(dna.get("addon_purchases", []))
+    addon_inv_id = f"INV-{now.year}-ADDON-{uuid.uuid4().hex[:6].upper()}"
+    new_invoice = {
+        "id": addon_inv_id,
+        "date": now.strftime("%B %d, %Y"),
+        "amount": f"₹{amount:,.2f}",
+        "status": "Paid",
+        "plan": f"{cfg['name']} (Add-on)",
+        "addon_id": body.addon_id,
+        "order_id": body.order_id,
+        "payment_id": body.payment_id,
+        "created_at": now.isoformat(),
+    }
+    addon_purchases.insert(0, new_invoice)
+    dna["addon_purchases"] = addon_purchases
+    prof.brand_dna = dna
+    flag_modified(prof, "brand_dna")
+
+    # Audit / payment event
+    event = PaymentEvent(
+        provider=PaymentProvider.RAZORPAY,
+        provider_event_id=body.payment_id or f"addon_{uuid.uuid4().hex[:8]}",
+        event_type="addon.payment.captured",
+        payload={
+            "client_id": str(client_id),
+            "addon_id": body.addon_id,
+            "order_id": body.order_id,
+            "amount": amount,
+            "invoice_id": addon_inv_id,
+        },
+        signature_valid=True,
+        processed_at=now,
+    )
+    db.add(event)
+
+    await db.commit()
+
+    return {
+        "success": True,
+        "message": f"Successfully added {cfg['name']} to this cycle!",
+        "invoice": new_invoice,
+    }
+
+
 
 @router.get("/subscription", response_model=dict[str, Any])
 async def get_client_subscription(
@@ -188,10 +314,14 @@ async def get_client_subscription(
         for c in counters
     }
 
+    # Hide incomplete/unpaid checkout orders from invoices table
     inv_stmt = (
         select(Subscription, Plan)
         .join(Plan, Subscription.plan_id == Plan.id)
-        .where(Subscription.client_id == client_id)
+        .where(
+            Subscription.client_id == client_id,
+            Subscription.status != SubscriptionStatus.INCOMPLETE,
+        )
         .order_by(Subscription.created_at.desc())
     )
     inv_rows = (await db.execute(inv_stmt)).all()
@@ -203,8 +333,9 @@ async def get_client_subscription(
             "id": f"INV-{s.created_at.year}-{str(s.id)[:8].upper()}",
             "date": s.created_at.strftime("%B %d, %Y"),
             "amount": f"₹{inv_amt:,.2f}",
-            "status": "Paid" if s_status in ["active", "trialing"] else s_status.capitalize(),
+            "status": "Paid" if s_status in ["active", "trialing", "canceled"] else s_status.capitalize(),
             "plan": p.display_name if p else "Growth Tier",
+            "created_at": s.created_at.isoformat() if s.created_at else None,
         })
 
     sub_data = None
@@ -231,6 +362,21 @@ async def get_client_subscription(
     prof = (await db.execute(prof_stmt)).scalar_one_or_none()
     pause_info = (prof.brand_dna or {}).get("subscription_pause") if prof else None
     is_paused_next = bool(pause_info and pause_info.get("is_paused"))
+
+    # Include paid add-on purchases in the invoices table
+    addon_purchases = (prof.brand_dna or {}).get("addon_purchases", []) if prof else []
+    for addon_inv in addon_purchases:
+        invoices.append({
+            "id": addon_inv.get("id"),
+            "date": addon_inv.get("date"),
+            "amount": addon_inv.get("amount"),
+            "status": "Paid",
+            "plan": addon_inv.get("plan", "Add-on Purchase"),
+            "created_at": addon_inv.get("created_at"),
+        })
+
+    # Sort all invoices by created_at descending
+    invoices.sort(key=lambda x: str(x.get("created_at") or ""), reverse=True)
 
     return {
         "subscription": sub_data,
@@ -267,7 +413,10 @@ async def get_payment_history(
     result = await db.execute(
         select(Subscription, Plan)
         .join(Plan, Subscription.plan_id == Plan.id)
-        .where(Subscription.client_id == client_id)
+        .where(
+            Subscription.client_id == client_id,
+            Subscription.status != SubscriptionStatus.INCOMPLETE,
+        )
         .order_by(Subscription.created_at.desc())
     )
     rows = result.all()
@@ -278,7 +427,7 @@ async def get_payment_history(
             "plan_id": str(sub.plan_id),
             "plan_name": plan.display_name,
             "amount": float(sub.amount) if sub.amount else float(plan.monthly_price),
-            "status": sub.status.value,
+            "status": "Paid" if sub.status in [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING, SubscriptionStatus.CANCELED] else sub.status.value,
             "gateway": sub.gateway.value,
             "gateway_subscription_id": sub.gateway_subscription_id,
             "gateway_customer_id": sub.gateway_customer_id,

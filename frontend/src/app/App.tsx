@@ -19,7 +19,6 @@ import {
   OnboardingView,
   PortalAccountPage,
   PortalCalendarPage,
-  PortalCreativePodPage,
   PortalDashboardPage,
   PortalDeliverablesPage,
   PortalLibraryPage,
@@ -276,8 +275,6 @@ const dashboardRoutes = {
   "/portal/deliverables": PortalDeliverablesPage,
   "/portal/deliverables/:deliverableId": PortalDeliverablesPage,
   "/portal/calendar": PortalCalendarPage,
-  "/portal/creative-pod": PortalCreativePodPage,
-  "/portal/creative_pod": PortalCreativePodPage,
   "/portal/payments": PortalPaymentsPage,
   "/portal/support": PortalSupportPage,
   "/portal/support/:ticketId": ClientTicketDetailPage,
@@ -532,8 +529,8 @@ export function App() {
                 <Route path="deliverables" element={<SimpleErrorBoundary name="Deliverables"><PortalDeliverablesPage /></SimpleErrorBoundary>} />
                 <Route path="deliverables/:deliverableId" element={<SimpleErrorBoundary name="Deliverables"><PortalDeliverablesPage /></SimpleErrorBoundary>} />
                 <Route path="calendar" element={<PortalCalendarPage />} />
-                <Route path="creative-pod" element={<PortalCreativePodPage />} />
-                <Route path="creative_pod" element={<PortalCreativePodPage />} />
+                <Route path="creative-pod" element={<Navigate to="/portal" replace />} />
+                <Route path="creative_pod" element={<Navigate to="/portal" replace />} />
                 <Route path="payments" element={<PortalPaymentsPage />} />
                 <Route path="support" element={<SimpleErrorBoundary name="Support"><PortalSupportPage /></SimpleErrorBoundary>} />
                 <Route path="support/:ticketId" element={<ClientTicketDetailPage />} />

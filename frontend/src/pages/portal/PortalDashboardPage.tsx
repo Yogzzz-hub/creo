@@ -6,7 +6,7 @@ import { approveDeliverable, requestChanges } from "../../lib/deliverables-api";
 import { useAuth } from "../../lib/auth-context";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
-import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
+import { Instagram, ExternalLink } from "lucide-react";
 
 /* ── Types ── */
 export interface TeamHandler {
@@ -25,6 +25,7 @@ interface DashboardData {
   ai_summary_line: string | null;
   onboarding_stage: number;
   brand_summary: string | null;
+  instagram_username?: string | null;
   account_status?: string;
   active_plan?: {
     status: string;
@@ -43,13 +44,6 @@ interface DashboardData {
 
 
 
-
-function greetingForNow(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
 
 export function PortalDashboardPage() {
   const { user } = useAuth();
@@ -173,14 +167,12 @@ export function PortalDashboardPage() {
     (d: any) => d.status === "pending_approval"
   );
 
-  const companyName = dashboard?.company?.name || user?.company_name || user?.full_name || "Brand";
+  const displayName =
+    user?.full_name?.trim() ||
+    user?.company_name?.trim() ||
+    dashboard?.company?.name?.trim() ||
+    "Client";
   const pendingCount = pendingDeliverables.length;
-  
-  const today = new Date();
-  const dayName = today.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
-  const dateStr = today.toLocaleDateString("en-GB", { day: "numeric", month: "short" }).toUpperCase();
-  const daysRemaining = (dashboard?.active_plan as any)?.days_remaining ?? subData?.days_remaining ?? 30;
-  const cycleDay = Math.max(1, Math.min(30, 30 - daysRemaining + 1));
 
   if (!gate.isReady || (!isLocked && (isDashboardLoading || !dashboard))) {
     return <CreoLoadingScreen fullScreen={false} label="Loading Workspace" className="min-h-[45vh]" />;
@@ -191,25 +183,12 @@ export function PortalDashboardPage() {
       {/* ── Top Header Bar ── */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          {/* Context date */}
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#97A0B3] mb-3">
-            {dayName} {dateStr}
-            {!isLocked && ` · CYCLE DAY ${cycleDay} OF 30`}
-          </p>
-          {/* Hero Title */}
-          <h1 className={`${isLocked ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl"} font-normal text-[#F8FAFC] leading-tight`}>
-            {isLocked ? "Welcome" : greetingForNow()}, {isLocked ? user?.full_name || companyName : companyName}.{" "}
-            <span className="font-bold italic">
-              {isLocked
-                ? "Let's finish setting up your workspace."
-                : pendingCount > 0
-                  ? `${pendingCount} piece${pendingCount > 1 ? "s are" : " is"} waiting for you.`
-                  : "All clear for now."}
-            </span>
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#F8FAFC] tracking-tight">
+            Hi, {displayName}
           </h1>
         </div>
         <div className={`flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0 pt-1 ${isLocked ? "hidden" : ""}`}>
-          <Link to="/portal/creative-pod" className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-[#2A3446] text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors">
+          <Link to="/portal/slack" className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-[#2A3446] text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors">
             <svg className="w-4 h-4 text-[#7FA0D6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
@@ -513,20 +492,80 @@ export function PortalDashboardPage() {
             })()}
           </div>
 
-          {/* Results */}
-          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
-            <h3 className="text-base font-semibold text-white mb-2">Results</h3>
-            <p className="text-sm text-[#97A0B3] mb-5 leading-relaxed">
-              Connect Instagram to see reach and saves for every post we publish. Until then we show nothing here rather than guess.
-            </p>
-            <Link to="/portal/account?tab=integrations" className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[#BCCCE6] text-[13px] font-bold text-[#0B111C] hover:bg-white transition-colors w-max">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-              </svg>
-              @ Connect Instagram
-            </Link>
+          {/* Results & Instagram Publishing */}
+          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-base font-semibold text-white">Results & Publishing</h3>
+              {dashboard?.instagram_username && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Meta Synced
+                </span>
+              )}
+            </div>
+
+            {dashboard?.instagram_username ? (
+              <div className="space-y-4">
+                <p className="text-sm text-[#97A0B3] leading-relaxed">
+                  Your workspace is linked to Instagram. Approved deliverables are auto-published directly to your account.
+                </p>
+                <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="size-9 rounded-full bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] p-[2px]">
+                      <div className="size-full rounded-full bg-[#0B111C] flex items-center justify-center text-white">
+                        <Instagram className="size-4 text-rose-400" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white leading-tight">
+                        @{dashboard.instagram_username.replace(/^@/, "")}
+                      </p>
+                      <p className="text-[11px] text-[#7FA0D6]">Auto-Publishing Active</p>
+                    </div>
+                  </div>
+                  <a
+                    href={`https://www.instagram.com/${dashboard.instagram_username.replace(/^@/, "")}/`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-[#161F2D] hover:bg-[#2A3446] text-[#BCCCE6] text-xs font-bold transition-colors flex items-center gap-1.5"
+                  >
+                    <span>View</span>
+                    <ExternalLink className="size-3" />
+                  </a>
+                </div>
+                <div className="flex items-center justify-between pt-1">
+                  <Link
+                    to="/portal/account?tab=integrations"
+                    className="text-xs text-[#7FA0D6] hover:text-[#BCCCE6] hover:underline font-semibold flex items-center gap-1"
+                  >
+                    Manage Instagram Integration ⚙
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-[#97A0B3] mb-4 leading-relaxed">
+                  Connect Instagram to see reach and saves for every post we publish, and enable direct publishing of approved deliverables.
+                </p>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <Link
+                    to="/portal/account?tab=integrations"
+                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[#BCCCE6] text-[13px] font-bold text-[#0B111C] hover:bg-white transition-colors w-max"
+                  >
+                    <Instagram className="w-4 h-4" />
+                    @ Connect Instagram
+                  </Link>
+                  <a
+                    href="https://www.instagram.com/accounts/emailsignup/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-[#97A0B3] hover:text-white transition-colors underline flex items-center gap-1"
+                  >
+                    <span>Need an account? Create an Instagram ID ↗</span>
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* From your pod */}
@@ -535,7 +574,7 @@ export function PortalDashboardPage() {
               <h3 className="text-base font-semibold text-white">From your pod</h3>
               {!isLocked && (
                 <Link
-                  to="/portal/creative-pod"
+                  to="/portal/slack"
                   className="px-4 py-1.5 rounded-full border border-[#2A3446] text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors"
                 >
                   Open chat

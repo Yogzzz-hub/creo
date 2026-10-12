@@ -209,7 +209,6 @@ export function AdminSidebar() {
         { label: "Dashboard", href: "/portal", icon: LayoutDashboard },
         { label: "Content Deliverables", href: "/portal/deliverables", icon: Layers },
         { label: "Content Calendar", href: "/portal/calendar", icon: Calendar },
-        { label: "Creative Pod", href: "/portal/creative-pod", icon: Briefcase },
       ],
     },
     {
@@ -227,7 +226,6 @@ export function AdminSidebar() {
       { label: "Client Dashboard", href: "/portal", icon: LayoutDashboard },
       { label: "Content Deliverables", href: "/portal/deliverables", icon: Layers },
       { label: "Content Calendar", href: "/portal/calendar", icon: Calendar },
-      { label: "Creative Pod", href: "/portal/creative-pod", icon: Briefcase },
       { label: "Plans & Billing", href: "/portal/payments", icon: CreditCard },
       { label: "Support Desk", href: "/portal/support", icon: LifeBuoy },
     ],

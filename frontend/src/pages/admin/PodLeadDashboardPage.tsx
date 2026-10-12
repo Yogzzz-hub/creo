@@ -31,7 +31,9 @@ import {
   X,
   MessageSquare,
   TrendingUp,
+  Sparkles,
 } from "lucide-react";
+import { StoryApprovalModal } from "../../components/ops/StoryApprovalModal";
 
 export function PodLeadDashboardPage() {
   const { user } = useAuth();
@@ -42,6 +44,7 @@ export function PodLeadDashboardPage() {
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
   const [standupModalOpen, setStandupModalOpen] = useState(false);
   const [standupNote, setStandupNote] = useState("");
+  const [storyApprovalOpen, setStoryApprovalOpen] = useState(false);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [assignForm, setAssignForm] = useState({
     title: "",
@@ -296,6 +299,13 @@ export function PodLeadDashboardPage() {
             >
               <Plus className="size-3.5" />
               Assign Deliverable
+            </button>
+            <button
+              onClick={() => setStoryApprovalOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+            >
+              <Sparkles className="size-3.5" />
+              Story & Client Approval
             </button>
           </div>
         </div>
@@ -1146,6 +1156,16 @@ export function PodLeadDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Story & Approval Request Modal */}
+      <StoryApprovalModal
+        isOpen={storyApprovalOpen}
+        onClose={() => setStoryApprovalOpen(false)}
+        onSuccess={() => {
+          showToast("Story approval request sent successfully!", "success");
+          queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
+        }}
+      />
     </div>
   );
 }

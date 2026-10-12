@@ -85,12 +85,17 @@ export function PortalPaymentsPage() {
   ];
 
   const backendInvoices = (subData as any)?.invoices || [];
-  const invoices = backendInvoices.map((inv: any) => ({
-    id: inv.id,
-    period: inv.date,
-    amount: typeof inv.amount === 'string' ? parseFloat(inv.amount.replace(/[^0-9.]/g, '')) : inv.amount,
-    status: inv.status
-  }));
+  const invoices = backendInvoices
+    .filter((inv: any) => {
+      const st = String(inv?.status || "").toLowerCase();
+      return st !== "incomplete" && st !== "unpaid" && st !== "pending";
+    })
+    .map((inv: any) => ({
+      id: inv.id,
+      period: inv.date,
+      amount: typeof inv.amount === 'string' ? parseFloat(inv.amount.replace(/[^0-9.]/g, '')) : inv.amount,
+      status: inv.status
+    }));
 
   const usage = (subData as any)?.quotas || (subData as any)?.usage || {};
   const usageBars = [
@@ -131,7 +136,22 @@ export function PortalPaymentsPage() {
           order_id: orderData.order_id,
           prefill: { name: user?.full_name || "", email: user?.email || "" },
         },
-        () => {
+        async (paymentResponse) => {
+          try {
+            await request("/api/v1/payments/addon-confirm", {
+              method: "POST",
+              body: JSON.stringify({
+                addon_id: addon.id,
+                order_id: paymentResponse.razorpay_order_id || orderData?.order_id,
+                payment_id: paymentResponse.razorpay_payment_id || `pay_mock_${Date.now()}`,
+                signature: paymentResponse.razorpay_signature,
+              }),
+            });
+          } catch (confirmErr) {
+            console.warn("Add-on confirmation notice:", confirmErr);
+          }
+          await queryClient.invalidateQueries({ queryKey: ["client-subscription", user?.id] });
+          await queryClient.refetchQueries({ queryKey: ["client-subscription", user?.id] });
           setActionNotice(`Successfully added ${addon.name} to this cycle!`);
           setTimeout(() => setActionNotice(null), 4000);
         },
@@ -153,8 +173,8 @@ export function PortalPaymentsPage() {
       id: id,
       date: targetInv?.date || new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
       amount: targetInv?.amount ? String(targetInv.amount) : `₹${planPrice.toLocaleString("en-IN")}`,
-      status: targetInv.status || "Unavailable",
-      plan: targetInv.plan || planName,
+      status: targetInv?.status || "Paid",
+      plan: targetInv?.plan || planName,
       clientName: user?.full_name || undefined,
       clientEmail: user?.email || undefined,
       companyName: user?.company_name || undefined,
@@ -190,12 +210,9 @@ export function PortalPaymentsPage() {
   // No plan yet: show where to resume instead of placeholder plan figures.
   if (!gate.isPaid && !subData?.subscription) {
     return (
-      <div className="w-full min-w-0 space-y-4">
-        <div>
-          <p className="text-xs uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-2">No active plan yet</p>
-          <h1 className="text-3xl font-bold text-[#F8FAFC] tracking-tight">Plan & billing</h1>
-        </div>
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-5 sm:p-6">
+      <div className="space-y-6 pb-12">
+        <ResumeOnboardingBanner variant="hero" title="Activate your plan in a few quick steps" />
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 lg:p-8">
           <h3 className="text-base font-semibold text-[#F8FAFC] mb-1.5">Invoices</h3>
           <p className="text-sm text-[#97A0B3] leading-relaxed">
             Receipts and invoices will appear here after your first payment.
@@ -223,22 +240,15 @@ export function PortalPaymentsPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-2">
-            {planName} PLAN • RENEWS {renewalDate}
-          </p>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Plan & billing</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <button 
-            type="button"
-            onClick={() => setCompareModalOpen(true)}
-            className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
-          >
-            Compare plans
-          </button>
+      {/* Action Controls */}
+      <div className="flex flex-wrap items-center justify-end gap-3 pb-1">
+        <button 
+          type="button"
+          onClick={() => setCompareModalOpen(true)}
+          className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
+        >
+          Compare plans
+        </button>
           
           {isPausedNextMonth ? (
             <button
@@ -264,7 +274,6 @@ export function PortalPaymentsPage() {
             </button>
           )}
         </div>
-      </div>
 
       {/* Paused for Next Month Notice Banner */}
       {isPausedNextMonth && (
