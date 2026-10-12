@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { History, Instagram, LifeBuoy } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { useConfirm } from "../ui/ConfirmDialog";
@@ -235,15 +236,27 @@ export function PublishingPanel({
           </button>
         )}
       {user?.role === "client" && (
-        <p className="text-xs text-[#97A0B3]">
-          Approval does not post immediately.{" "}
-          <Link className="underline" to="/portal/support">
-            Request schedule changes through support.
-          </Link>{" "}
-          <Link className="underline" to="/portal/account/instagram">
-            Manage Instagram connection.
-          </Link>
-        </p>
+        <div className="p-3.5 rounded-xl bg-[#0B111C]/60 border border-[#2A3446] space-y-2.5 mt-2">
+          <p className="text-[11px] text-[#97A0B3] leading-relaxed">
+            Approval locks the caption and media. Content will automatically dispatch at its scheduled time.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 pt-0.5">
+            <Link
+              to="/portal/support"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#161F2D] hover:bg-[#202B3D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs font-semibold text-[#BCCCE6] hover:text-white transition-all shadow-xs text-center cursor-pointer"
+            >
+              <LifeBuoy className="w-3.5 h-3.5 text-[#7FA0D6]" />
+              <span>Schedule Support</span>
+            </Link>
+            <Link
+              to="/portal/account/instagram"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#161F2D] hover:bg-[#202B3D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs font-semibold text-[#BCCCE6] hover:text-white transition-all shadow-xs text-center cursor-pointer"
+            >
+              <Instagram className="w-3.5 h-3.5 text-[#7FA0D6]" />
+              <span>Manage Instagram</span>
+            </Link>
+          </div>
+        </div>
       )}
       {manage && (
         <div className="flex flex-wrap gap-2">
@@ -398,10 +411,11 @@ export function PublishingPanel({
         <>
           <button
             type="button"
-            className="text-xs underline min-h-11"
+            className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/30 text-xs font-semibold text-[#97A0B3] hover:text-white transition-all cursor-pointer shadow-xs mt-1"
             onClick={() => setShowHistory(!showHistory)}
           >
-            {showHistory ? "Hide" : "View"} publishing history
+            <History className="w-3.5 h-3.5 text-[#7FA0D6]" />
+            <span>{showHistory ? "Hide publishing history" : "View publishing history"}</span>
           </button>
           {showHistory && (
             <div className="text-xs space-y-2">
