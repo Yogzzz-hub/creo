@@ -186,23 +186,6 @@ export function PortalDashboardPage() {
     return <CreoLoadingScreen fullScreen={false} label="Loading Workspace" className="min-h-[45vh]" />;
   }
 
-  if (isLocked) {
-    return (
-      <div className="w-full min-w-0 space-y-5 sm:space-y-6">
-        <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-[#97A0B3]">
-            {dayName} {dateStr}
-          </p>
-          <h1 className="text-2xl font-normal leading-tight text-[#F8FAFC] sm:text-3xl">
-            Welcome, {user?.full_name || companyName}.{" "}
-            <span className="font-bold italic">Let's finish setting up your workspace.</span>
-          </h1>
-        </div>
-        <ResumeOnboardingBanner variant="hero" />
-      </div>
-    );
-  }
-
   return (
     <div className="w-full min-w-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
       {/* ── Top Header Bar ── */}
@@ -214,8 +197,8 @@ export function PortalDashboardPage() {
             {!isLocked && ` · CYCLE DAY ${cycleDay} OF 30`}
           </p>
           {/* Hero Title */}
-          <h1 className="text-3xl sm:text-4xl font-normal text-[#F8FAFC] leading-tight">
-            {isLocked ? "Welcome" : greetingForNow()}, {companyName}.{" "}
+          <h1 className={`${isLocked ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl"} font-normal text-[#F8FAFC] leading-tight`}>
+            {isLocked ? "Welcome" : greetingForNow()}, {isLocked ? user?.full_name || companyName : companyName}.{" "}
             <span className="font-bold italic">
               {isLocked
                 ? "Let's finish setting up your workspace."
@@ -244,6 +227,7 @@ export function PortalDashboardPage() {
       </div>
 
       {/* ── Resume onboarding (above the pipeline while setup is incomplete) ── */}
+      {isLocked && <ResumeOnboardingBanner variant="hero" />}
 
       {/* ── Main Content Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
