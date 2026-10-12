@@ -21,6 +21,7 @@ import {
   TrendingUp,
   Eye,
   EyeOff,
+  Type,
 } from "lucide-react";
 import { fetchClientBrandProfile } from "../../lib/ops-api";
 import type { ClientBrandProfile } from "../../lib/ops-api";
@@ -98,9 +99,14 @@ function TagBadge({
 }
 
 function ColorSwatch({ color, index }: { color: string | any; index?: number }) {
-  const labels = ["Primary Brand", "Secondary Accent", "Highlight Tone", "Surface Tone", "Accent Tone"];
+  const labels = [
+    "Primary Brand",
+    "Accent / Secondary",
+    "Surface / Canvas",
+    "Glow / Highlight",
+  ];
   const hex = typeof color === "string" ? color : (color?.hex || color?.color || "#0F172A");
-  const name = typeof color === "object" && color?.name ? color.name : (index !== undefined && labels[index] ? labels[index] : "Brand Tone");
+  const name = typeof color === "object" && color?.name ? color.name : (index !== undefined && labels[index] ? labels[index] : `Accent Tone ${(index ?? 0) + 1}`);
   return (
     <div className="flex items-center gap-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 min-w-[130px] shadow-xs">
       <div
@@ -178,13 +184,30 @@ export function AdminClientBrandPage() {
         ? "paid_not_onboarded"
         : "not_paid_not_onboarded";
 
-  const palette: any[] = Array.isArray(dna.palette) && dna.palette.length > 0
+  const CANONICAL_PALETTE = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"];
+  const rawPalette: any[] = Array.isArray(dna.palette) && dna.palette.length > 0
     ? dna.palette
     : Array.isArray(visualDir.primary_colors) && visualDir.primary_colors.length > 0
       ? visualDir.primary_colors
-      : isOnboarded
-        ? ["#0B111C", "#7FA0D6", "#38BDF8", "#F8FAFC"]
-        : [];
+      : CANONICAL_PALETTE;
+
+  const extractedPalette: string[] = [];
+  if (Array.isArray(rawPalette)) {
+    rawPalette.forEach((item: any) => {
+      const hex = typeof item === "string" ? item.trim() : (item?.hex || item?.color || "").trim();
+      if (hex && hex.startsWith("#")) {
+        extractedPalette.push(hex.toUpperCase());
+      }
+    });
+  }
+  const palette: string[] = [0, 1, 2, 3].map((i) => extractedPalette[i] || CANONICAL_PALETTE[i] || "#161F2D");
+  if (extractedPalette.length > 4) {
+    for (let i = 4; i < extractedPalette.length; i++) {
+      if (extractedPalette[i]) {
+        palette.push(extractedPalette[i]!);
+      }
+    }
+  }
   const visualStyles: string[] = Array.isArray(visualDir.styles)
     ? visualDir.styles.map((s: any) => (typeof s === "string" ? s : (s?.name || String(s))))
     : [];
@@ -495,8 +518,38 @@ export function AdminClientBrandPage() {
                 </div>
               </div>
             )}
+            {/* Typography Pairing */}
+            <div className="pt-2 border-t border-[#2A3446]/60">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2 flex items-center gap-1.5">
+                <Type className="size-3 text-[#7FA0D6]" /> Typography Pairing & System
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
+                    Headlines / Display
+                  </span>
+                  <p className="text-sm font-bold text-white">
+                    {dna.typography?.headline || visualDir.headings_font || "Inter Display · 700 Bold"}
+                  </p>
+                  <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                    Bold, punchy titles optimized for feed stops.
+                  </p>
+                </div>
+                <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
+                    Body Copy / Subtitles
+                  </span>
+                  <p className="text-sm font-normal text-white">
+                    {dna.typography?.body || visualDir.body_font || "Inter Sans · 400 Regular"}
+                  </p>
+                  <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                    High legibility for reel captions and carousel body copy.
+                  </p>
+                </div>
+              </div>
+            </div>
             {visualStyles.length > 0 && (
-              <div>
+              <div className="pt-2 border-t border-[#2A3446]/60">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
                   Visual Styles
                 </p>

@@ -245,6 +245,7 @@ export interface ClientBrandProfile {
   client_id: string;
   full_name: string;
   email: string;
+  phone?: string | null;
   account_status: string;
   company_name: string | null;
   instagram_username: string | null;
@@ -291,6 +292,7 @@ export interface UpdateClientProfilePayload {
   company_name?: string | null;
   full_name?: string | null;
   email?: string | null;
+  phone?: string | null;
   instagram_username?: string | null;
   timezone?: string | null;
   industry?: string | null;

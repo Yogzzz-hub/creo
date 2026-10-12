@@ -649,23 +649,41 @@ async def get_client_roster(
                 elif isinstance(c, dict) and c.get("hex"):
                     q_colors.append(str(c["hex"]).strip().upper())
 
-        # If questionnaire has colors, prioritize them over seed/template brand_dna
-        if q_colors:
-            dna_dict["palette"] = q_colors
-            vis = dna_dict.get("visual_direction")
-            if not isinstance(vis, dict):
-                vis = {}
-            vis["primary_colors"] = q_colors
-            dna_dict["visual_direction"] = vis
-        elif not dna_dict.get("palette"):
-            # Deterministic fallback based on UUID
+        # Canonical fallback tokens matching client portal tokens
+        default_tokens = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"]
+
+        # Base colors priority: explicit brand_dna palette -> questionnaire answers -> visual_direction
+        base_palette = []
+        if isinstance(dna_dict.get("palette"), list) and dna_dict["palette"]:
+            base_palette = [
+                (c.get("hex") if isinstance(c, dict) else c).strip().upper()
+                for c in dna_dict["palette"]
+                if (isinstance(c, str) and c.strip().startswith("#")) or (isinstance(c, dict) and c.get("hex"))
+            ]
+        elif q_colors:
+            base_palette = q_colors
+        elif isinstance(dna_dict.get("visual_direction"), dict) and isinstance(dna_dict["visual_direction"].get("primary_colors"), list):
+            base_palette = [
+                (c.get("hex") if isinstance(c, dict) else c).strip().upper()
+                for c in dna_dict["visual_direction"]["primary_colors"]
+                if (isinstance(c, str) and c.strip().startswith("#")) or (isinstance(c, dict) and c.get("hex"))
+            ]
+
+        if not base_palette:
             cid_int = abs(int(uuid.UUID(str(r[0])).int)) % len(curated_palettes)
-            dna_dict["palette"] = curated_palettes[cid_int]
-            vis = dna_dict.get("visual_direction")
-            if not isinstance(vis, dict):
-                vis = {}
-            vis["primary_colors"] = curated_palettes[cid_int]
-            dna_dict["visual_direction"] = vis
+            base_palette = curated_palettes[cid_int]
+
+        # Always pad to 4 tokens minimum to match Client Portal
+        padded_palette = list(base_palette)
+        for i in range(len(padded_palette), 4):
+            padded_palette.append(default_tokens[i])
+
+        dna_dict["palette"] = padded_palette
+        vis = dna_dict.get("visual_direction")
+        if not isinstance(vis, dict):
+            vis = {}
+        vis["primary_colors"] = padded_palette
+        dna_dict["visual_direction"] = vis
 
         ind_val = (
             dna_dict.get("industry")
@@ -685,6 +703,7 @@ async def get_client_roster(
                 "client_id": str(r[0]),
                 "email": r[1],
                 "full_name": r[2],
+                "phone": dna_dict.get("phone", ""),
                 "account_status": r[3],
                 "company_name": r[4],
                 "instagram_username": r[5],
@@ -880,31 +899,27 @@ async def get_client_brand_profile(
                 for p in q_ans.get("pillars")
             ]
 
-    # If brand_dna already has a palette explicitly set by client or admin, consider it
-    direct_dna_palette: list[str] = []
-    if isinstance(brand_dna.get("palette"), list):
+    # Base colors priority:
+    # 1. Direct palette from brand_dna if explicitly set by client or admin
+    # 2. Questionnaire's explicit hex_codes/colours chosen during onboarding
+    # 3. visual_direction.primary_colors
+    base_palette: list[str] = []
+    if isinstance(brand_dna.get("palette"), list) and brand_dna["palette"]:
         for c in brand_dna["palette"]:
             if isinstance(c, str) and c.strip().startswith("#"):
-                direct_dna_palette.append(c.strip().upper())
+                base_palette.append(c.strip().upper())
             elif isinstance(c, dict) and c.get("hex"):
-                direct_dna_palette.append(str(c["hex"]).strip().upper())
+                base_palette.append(str(c["hex"]).strip().upper())
+    elif chosen_palette:
+        base_palette = chosen_palette
+    elif isinstance(brand_dna.get("visual_direction"), dict) and isinstance(brand_dna["visual_direction"].get("primary_colors"), list):
+        for c in brand_dna["visual_direction"]["primary_colors"]:
+            if isinstance(c, str) and c.strip().startswith("#"):
+                base_palette.append(c.strip().upper())
+            elif isinstance(c, dict) and c.get("hex"):
+                base_palette.append(str(c["hex"]).strip().upper())
 
-    # Prioritize:
-    # 1. Questionnaire's explicit hex_codes/colours chosen during onboarding
-    # 2. Or direct palette from brand_dna if set
-    final_palette = chosen_palette if chosen_palette else direct_dna_palette
-
-    if not final_palette:
-        vis_colors = []
-        vis_existing = brand_dna.get("visual_direction")
-        if isinstance(vis_existing, dict) and isinstance(vis_existing.get("primary_colors"), list):
-            for c in vis_existing["primary_colors"]:
-                if isinstance(c, str) and c.strip().startswith("#"):
-                    vis_colors.append(c.strip().upper())
-        if vis_colors:
-            final_palette = vis_colors
-
-    if not final_palette:
+    if not base_palette:
         hash_val = abs(int(uuid.UUID(str(client_uuid)).int)) % 6
         curated_palettes = [
             ["#0F172A", "#2563EB", "#38BDF8", "#F8FAFC"],
@@ -914,7 +929,14 @@ async def get_client_brand_profile(
             ["#831843", "#DB2777", "#F472B6", "#FDF2F8"],
             ["#1E293B", "#0D9488", "#2DD4BF", "#F0FDFA"],
         ]
-        final_palette = curated_palettes[hash_val]
+        base_palette = curated_palettes[hash_val]
+
+    # Canonical 4 tokens matching client portal tokens:
+    # [0] Primary Brand, [1] Accent / Secondary, [2] Surface / Canvas, [3] Glow / Highlight
+    default_tokens = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"]
+    final_palette = list(base_palette)
+    for i in range(len(final_palette), 4):
+        final_palette.append(default_tokens[i])
 
     # Ensure brand_dna has both palette and visual_direction aligned to final_palette
     brand_dna["palette"] = final_palette
@@ -922,6 +944,18 @@ async def get_client_brand_profile(
     if not isinstance(vis, dict):
         vis = {}
     vis["primary_colors"] = final_palette
+
+    # Synchronize typography system with Client Portal tokens
+    if "typography" not in brand_dna or not isinstance(brand_dna.get("typography"), dict):
+        brand_dna["typography"] = {
+            "headline": vis.get("headings_font") or "Inter Display · 700 Bold",
+            "body": vis.get("body_font") or "Inter Sans · 400 Regular",
+            "mono": "JetBrains Mono",
+        }
+    typo_headline = brand_dna["typography"].get("headline") or "Inter Display · 700 Bold"
+    typo_body = brand_dna["typography"].get("body") or "Inter Sans · 400 Regular"
+    vis["headings_font"] = typo_headline
+    vis["body_font"] = typo_body
     brand_dna["visual_direction"] = vis
 
     # Derive onboarding stage
@@ -947,6 +981,7 @@ async def get_client_brand_profile(
         "client_id": str(client_uuid),
         "full_name": client_user.full_name,
         "email": client_user.email,
+        "phone": brand_dna.get("phone") or (getattr(profile, "phone", None) if profile else None) or "",
         "account_status": client_user.account_status,
         "company_name": profile.company_name if profile else None,
         "instagram_username": profile.instagram_username if profile else None,
@@ -974,6 +1009,7 @@ class UpdateClientProfileRequest(BaseModel):
     company_name: str | None = None
     full_name: str | None = None
     email: str | None = None
+    phone: str | None = None
     instagram_username: str | None = None
     timezone: str | None = None
     industry: str | None = None
@@ -1012,6 +1048,7 @@ async def update_client_profile(
                 or_(
                     User.email.ilike(f"%{clean_slug}%"),
                     ClientProfile.company_name.ilike(f"%{clean_slug}%"),
+                    ClientProfile.instagram_username.ilike(f"%{clean_slug}%"),
                 ),
             )
             .limit(1)
@@ -1055,6 +1092,8 @@ async def update_client_profile(
         profile.brand_summary = payload.brand_summary.strip()
 
     brand_dna_data = dict(profile.brand_dna or {})
+    if payload.phone is not None:
+        brand_dna_data["phone"] = payload.phone.strip()
     if payload.industry is not None:
         brand_dna_data["category"] = payload.industry.strip()
         brand_dna_data["industry"] = payload.industry.strip()
@@ -1063,11 +1102,16 @@ async def update_client_profile(
     if new_colors is not None and isinstance(new_colors, list) and len(new_colors) > 0:
         clean_colors = [str(c).strip().upper() for c in new_colors if str(c).strip().startswith("#")]
         if clean_colors:
-            brand_dna_data["palette"] = clean_colors
+            # Pad to 4 tokens if fewer than 4 provided
+            default_tokens = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"]
+            padded_colors = list(clean_colors)
+            for i in range(len(padded_colors), 4):
+                padded_colors.append(default_tokens[i])
+            brand_dna_data["palette"] = padded_colors
             vis = brand_dna_data.get("visual_direction")
             if not isinstance(vis, dict):
                 vis = {}
-            vis["primary_colors"] = clean_colors
+            vis["primary_colors"] = padded_colors
             brand_dna_data["visual_direction"] = vis
 
     if payload.brand_dna is not None:

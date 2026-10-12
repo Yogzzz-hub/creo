@@ -80,6 +80,8 @@ import {
   Columns2,
   Maximize2,
   Sparkles,
+  Copy,
+  Type,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CustomSelect } from "../../components/ui/CustomSelect";
@@ -351,17 +353,43 @@ export function AdminClientsPage() {
 
     const existing = existingKey ? mergedClientsData[existingKey] : undefined;
 
-    const scPalette = Array.isArray((sc as any).brand_dna?.palette) && (sc as any).brand_dna.palette.length > 0
+    const CANONICAL_PALETTE = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"];
+    const CANONICAL_ROLES = [
+      "Primary Brand",
+      "Accent / Secondary",
+      "Surface / Canvas",
+      "Glow / Highlight",
+    ];
+
+    const rawScPalette = Array.isArray((sc as any).brand_dna?.palette) && (sc as any).brand_dna.palette.length > 0
       ? (sc as any).brand_dna.palette
       : Array.isArray((sc as any).brand_dna?.visual_direction?.primary_colors) && (sc as any).brand_dna.visual_direction.primary_colors.length > 0
         ? (sc as any).brand_dna.visual_direction.primary_colors
-        : (isOnboarded ? ["#0B111C", "#7FA0D6", "#38BDF8", "#F8FAFC"] : []);
-    const scColorLabels = ["Primary Brand", "Accent Royal", "Cyan Highlight", "Clean Neutral", "Tone 5"];
-    const resolvedColors = scPalette.map((col: any, idx: number) => {
-      const hex = typeof col === "string" ? col : (col?.hex || "#0B111C");
-      const name = typeof col === "object" && col?.name ? col.name : (scColorLabels[idx] || `Brand Tone ${idx + 1}`);
-      return { name, hex };
-    });
+        : [];
+
+    const extractedScList: string[] = [];
+    if (Array.isArray(rawScPalette)) {
+      rawScPalette.forEach((item: any) => {
+        const hex = typeof item === "string" ? item.trim() : (item?.hex || item?.color || "").trim();
+        if (hex && hex.startsWith("#")) {
+          extractedScList.push(hex.toUpperCase());
+        }
+      });
+    }
+
+    const finalScHexes: string[] = [0, 1, 2, 3].map((i) => extractedScList[i] || CANONICAL_PALETTE[i] || "#161F2D");
+    if (extractedScList.length > 4) {
+      for (let i = 4; i < extractedScList.length; i++) {
+        if (extractedScList[i]) {
+          finalScHexes.push(extractedScList[i]!);
+        }
+      }
+    }
+
+    const resolvedColors = finalScHexes.map((hex, idx) => ({
+      name: CANONICAL_ROLES[idx] || `Accent Tone ${idx + 1}`,
+      hex: hex || "#161F2D",
+    }));
 
     const clientStatus =
       lifecycleStatus === "not_paid_not_onboarded"
@@ -399,7 +427,7 @@ export function AdminClientsPage() {
           ...existing.contact,
           name: sc.full_name || existing.contact.name || formattedName,
           email: sc.email || existing.contact.email,
-          phone: isOnboarded && existing.contact.phone && existing.contact.phone !== "+91 98401 23890" ? existing.contact.phone : "Not provided yet",
+          phone: (sc as any).phone || (sc as any).brand_dna?.phone || (isOnboarded && existing.contact.phone && existing.contact.phone !== "+91 98401 23890" && existing.contact.phone !== "Not provided yet" ? existing.contact.phone : "Not provided yet"),
         },
         brand: {
           ...existing.brand,
@@ -444,7 +472,7 @@ export function AdminClientsPage() {
           name: sc.full_name || formattedName,
           title: "Account Owner & Authorized Contact",
           email: sc.email,
-          phone: "Not provided yet",
+          phone: (sc as any).phone || (sc as any).brand_dna?.phone || "Not provided yet",
           renewedDate: !isPaid ? "Pending Subscription" : isOnboarded ? "Current Sprint" : "Payment Confirmed",
           termMonths: isPaid ? 12 : 0,
         },
@@ -570,73 +598,99 @@ export function AdminClientsPage() {
   });
   const liveBrandProfile = clientBrandQuery.data;
 
+  const [copiedHexIndex, setCopiedHexIndex] = useState<number | null>(null);
+
+  const handleCopyHex = (hex: string, index: number) => {
+    navigator.clipboard.writeText(hex);
+    setCopiedHexIndex(index);
+    setTimeout(() => setCopiedHexIndex(null), 2000);
+  };
+
   const realColors = useMemo(() => {
+    const CANONICAL_PALETTE = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"];
+    const CANONICAL_ROLES = [
+      "Primary Brand",
+      "Accent / Secondary",
+      "Surface / Canvas",
+      "Glow / Highlight",
+    ];
+
     const raw =
       liveBrandProfile?.brand_dna?.palette ||
       liveBrandProfile?.brand_dna?.visual_direction?.primary_colors ||
-      activeClient?.brand?.colors?.map((c: any) => c.hex) ||
-      [];
-    if (Array.isArray(raw) && raw.length > 0) {
-      const labels = [
-        "Primary Brand",
-        "Secondary Accent",
-        "Highlight Tone",
-        "Surface / Neutral",
-        "Accent 5",
-      ];
-      return raw.map((item: any, idx: number) => {
-        const hex = typeof item === "string" ? item : (item?.hex || item?.color || "#0F172A");
-        const name = typeof item === "object" && item?.name ? item.name : (labels[idx] || `Brand Tone ${idx + 1}`);
-        return { name: String(name), hex: String(hex) };
+      (activeClient?.brand?.colors && activeClient.brand.colors.length > 0
+        ? activeClient.brand.colors.map((c: any) => (typeof c === "string" ? c : c.hex))
+        : []);
+
+    const extractedList: string[] = [];
+    if (Array.isArray(raw)) {
+      raw.forEach((item: any) => {
+        const hex = typeof item === "string" ? item.trim() : (item?.hex || item?.color || "").trim();
+        if (hex && hex.startsWith("#")) {
+          extractedList.push(hex.toUpperCase());
+        }
       });
     }
-    const fallback = activeClient?.brand?.colors || [
-      { name: "Brand Primary", hex: "#0F172A" },
-      { name: "Brand Accent", hex: "#2563EB" },
-    ];
-    return fallback.map((item: any, idx: number) => {
-      const hex = typeof item === "string" ? item : (item?.hex || item?.color || "#0F172A");
-      const name = typeof item === "object" && item?.name ? item.name : `Brand Tone ${idx + 1}`;
-      return { name: String(name), hex: String(hex) };
-    });
+
+    // Always pad to 4 tokens minimum to match Client Portal tokens
+    const finalHexes: string[] = [0, 1, 2, 3].map((i) => extractedList[i] || CANONICAL_PALETTE[i] || "#161F2D");
+    if (extractedList.length > 4) {
+      for (let i = 4; i < extractedList.length; i++) {
+        if (extractedList[i]) {
+          finalHexes.push(extractedList[i]!);
+        }
+      }
+    }
+
+    return finalHexes.map((hex, idx) => ({
+      name: CANONICAL_ROLES[idx] || `Accent Tone ${idx + 1}`,
+      hex: hex || "#161F2D",
+    }));
   }, [liveBrandProfile, activeClient]);
 
   const realTypography = useMemo(() => {
     const vis = liveBrandProfile?.brand_dna?.visual_direction;
-    const headings = vis?.headings_font || activeClient?.brand?.headingsFont || "Plus Jakarta Sans";
-    const body = vis?.body_font || activeClient?.brand?.bodyFont || "Inter Sans";
+    const typo = liveBrandProfile?.brand_dna?.typography;
+    const headings = typo?.headline || vis?.headings_font || activeClient?.brand?.headingsFont || "Inter Display · 700 Bold";
+    const body = typo?.body || vis?.body_font || activeClient?.brand?.bodyFont || "Inter Sans · 400 Regular";
     return {
-      headingsFont: typeof headings === "string" ? headings : "Plus Jakarta Sans",
-      bodyFont: typeof body === "string" ? body : "Inter Sans",
+      headingsFont: typeof headings === "string" ? headings : "Inter Display · 700 Bold",
+      bodyFont: typeof body === "string" ? body : "Inter Sans · 400 Regular",
       monoFont: "JetBrains Mono",
     };
   }, [liveBrandProfile, activeClient]);
 
   const realTone = useMemo(() => {
-    const tone = liveBrandProfile?.brand_dna?.tone;
-    const toneObj = typeof tone === "object" && tone !== null ? tone : {};
+    const dna = liveBrandProfile?.brand_dna || {};
+    const toneObj = typeof dna.tone === "object" && dna.tone !== null ? dna.tone : {};
     const rawTags =
       Array.isArray(toneObj.voice_words) && toneObj.voice_words.length > 0
         ? toneObj.voice_words
-        : Array.isArray(liveBrandProfile?.brand_dna?.tone_keywords) && liveBrandProfile.brand_dna.tone_keywords.length > 0
-          ? liveBrandProfile.brand_dna.tone_keywords
-          : typeof tone === "string" && tone.trim()
-            ? tone.split(",").map((s: string) => s.trim()).filter(Boolean)
-            : (activeClient?.brand?.toneTags || ["Conversion Authority", "High Polish"]);
+        : Array.isArray(dna.tone_keywords) && dna.tone_keywords.length > 0
+          ? dna.tone_keywords
+          : typeof dna.tone === "string" && dna.tone.trim()
+            ? dna.tone.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : (activeClient?.brand?.toneTags || ["Warm", "Premium", "Friendly"]);
 
     const tags = Array.isArray(rawTags)
-      ? rawTags.map((t: any) => (typeof t === "string" ? t : (t?.name || t?.word || String(t))))
-      : ["Conversion Authority", "High Polish"];
+      ? rawTags.map((t: any) => {
+          const str = typeof t === "string" ? t : (t?.name || t?.word || String(t));
+          return str.charAt(0).toUpperCase() + str.slice(1);
+        })
+      : ["Warm", "Premium", "Friendly"];
 
     const rawSummary =
-      liveBrandProfile?.brand_dna?.summary_line ||
+      dna.summary_line ||
       liveBrandProfile?.brand_summary ||
-      liveBrandProfile?.brand_dna?.positioning ||
+      dna.positioning ||
       activeClient?.brand?.toneSummary ||
       `Engineered brand identity for ${activeClient?.name || "Client"}.`;
 
     const summary = typeof rawSummary === "string" ? rawSummary : String(rawSummary || "");
-    return { summary, tags };
+    const audience = dna.audience_segments?.[0]?.description || dna.target_audience || "";
+    const painPoints = dna.audience_segments?.[0]?.core_pain_point || dna.value_propositions || "";
+
+    return { summary, tags, audience, painPoints };
   }, [liveBrandProfile, activeClient]);
 
   const showToast = (msg: string) => {
@@ -1143,7 +1197,11 @@ export function AdminClientsPage() {
                         <span>Direct Phone</span>
                       </div>
                       <span className="font-bold text-white font-mono">
-                        {activeClient?.contact?.phone && activeClient.contact.phone !== "+91 98401 23890" ? activeClient.contact.phone : "Not provided yet"}
+                        {liveBrandProfile?.phone ||
+                          (liveBrandProfile?.brand_dna as any)?.phone ||
+                          (activeClient?.contact?.phone && activeClient.contact.phone !== "+91 98401 23890" && activeClient.contact.phone !== "Not provided yet"
+                            ? activeClient.contact.phone
+                            : "Not provided yet")}
                       </span>
                     </div>
                   </div>
@@ -1326,23 +1384,26 @@ export function AdminClientsPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Typography */}
+                    {/* Typography Pairing & System */}
                     <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs">
-                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
-                        TYPOGRAPHY HIERARCHY
-                      </span>
-                      <div className="space-y-1 text-[#F1F5F9]">
-                        <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Headings:</span>
-                          <span className="font-bold text-white">{realTypography.headingsFont}</span>
+                      <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        <Type className="size-3.5 text-[#7FA0D6]" />
+                        <span>TYPOGRAPHY PAIRING & SYSTEM</span>
+                      </div>
+                      <div className="space-y-2 pt-1 text-[#F1F5F9]">
+                        <div className="p-2.5 bg-[#161F2D]/60 rounded-xl border border-[#2A3446]">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-0.5">
+                            Headlines / Display
+                          </span>
+                          <p className="font-bold text-sm text-white">{realTypography.headingsFont}</p>
+                          <p className="text-[11px] text-[#97A0B3] mt-0.5">Bold, punchy titles optimized for feed stops.</p>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Body & Data:</span>
-                          <span className="font-medium text-white">{realTypography.bodyFont}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Monospace:</span>
-                          <span className="font-mono text-white">{realTypography.monoFont}</span>
+                        <div className="p-2.5 bg-[#161F2D]/60 rounded-xl border border-[#2A3446]">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-0.5">
+                            Body Copy / Subtitles
+                          </span>
+                          <p className="font-medium text-xs text-white">{realTypography.bodyFont}</p>
+                          <p className="text-[11px] text-[#97A0B3] mt-0.5">High legibility for reel captions and carousel body copy.</p>
                         </div>
                       </div>
                     </div>
@@ -1357,29 +1418,67 @@ export function AdminClientsPage() {
                           {realTone.summary}
                         </p>
                       </div>
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {realTone.tags.map((tag: string, tagIdx: number) => (
-                          <span key={`${tag}-${tagIdx}`} className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[10px] font-bold text-[#F1F5F9] shadow-2xs">
-                            {tag}
-                          </span>
-                        ))}
+                      <div className="space-y-2">
+                        {realTone.audience && (
+                          <div className="pt-2 border-t border-[#2A3446]/60">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block">
+                              Target Audience
+                            </span>
+                            <p className="text-[11px] text-[#F1F5F9] mt-0.5 line-clamp-2">
+                              {realTone.audience}
+                            </p>
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {realTone.tags.map((tag: string, tagIdx: number) => (
+                            <span key={`${tag}-${tagIdx}`} className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[10px] font-bold text-[#F1F5F9] shadow-2xs">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Approved Color Spectrum */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
-                      APPROVED COLOR SPECTRUM
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-2.5">
+                  {/* Visual Palette & Tokens */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Palette className="size-3.5 text-[#7FA0D6]" />
+                        <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                          VISUAL PALETTE & TOKENS
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-medium text-[#97A0B3]">
+                        Click swatch to copy hex
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {realColors.map((c, cIdx) => (
-                        <div key={`${c.hex}-${cIdx}`} className="rounded-2xl border border-[#2A3446] overflow-hidden bg-[#161F2D] shadow-2xs space-y-1.5 pb-2">
-                          <div className="h-10 w-full" style={{ backgroundColor: c.hex }} />
-                          <div className="px-2.5">
-                            <span className="text-[11px] font-bold text-white block truncate">{c.name}</span>
-                            <span className="text-[10px] font-mono text-[#97A0B3]">{c.hex}</span>
+                        <div
+                          key={`${c.hex}-${cIdx}`}
+                          onClick={() => handleCopyHex(c.hex, cIdx)}
+                          className="group relative bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/50 rounded-xl p-2.5 cursor-pointer transition-all hover:scale-[1.02] shadow-sm"
+                          title="Click to copy hex"
+                        >
+                          <div
+                            className="w-full aspect-[4/3] rounded-lg mb-2.5 border border-[#2A3446] shadow-inner relative flex items-center justify-center"
+                            style={{ backgroundColor: c.hex }}
+                          >
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 rounded-md px-2 py-1 flex items-center gap-1 text-[10px] text-white font-medium">
+                              {copiedHexIndex === cIdx ? (
+                                <Check className="size-3 text-emerald-400" />
+                              ) : (
+                                <Copy className="size-3" />
+                              )}
+                              <span>{copiedHexIndex === cIdx ? "Copied" : "Copy"}</span>
+                            </div>
                           </div>
+                          <p className="text-[11px] font-bold text-white truncate">{c.name}</p>
+                          <p className="font-mono text-[10px] text-[#97A0B3] uppercase tracking-wider mt-0.5">
+                            {c.hex}
+                          </p>
                         </div>
                       ))}
                     </div>
@@ -1396,27 +1495,39 @@ export function AdminClientsPage() {
                           <span className="font-bold text-xs text-white">
                             {liveBrandProfile?.instagram_username
                               ? `@${liveBrandProfile.instagram_username}`
-                              : (activeClient?.brand?.social?.handle || `@${(liveBrandProfile?.company_name || activeClient?.name || "client").toLowerCase().replace(/[^a-z0-9]/g, "")}`)}
+                              : (activeClient?.brand?.social?.handle && activeClient.brand.social.handle !== "Not connected"
+                                  ? activeClient.brand.social.handle
+                                  : "Not connected")}
                           </span>
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[9px] font-extrabold uppercase">
-                            CONNECTED
-                          </span>
+                          {liveBrandProfile?.instagram_username ? (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[9px] font-extrabold uppercase">
+                              CONNECTED
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[9px] font-extrabold uppercase">
+                              NOT CONNECTED
+                            </span>
+                          )}
                         </div>
                         <span className="text-[11px] text-[#97A0B3]">
-                          Real-time Profile Connected • Verified Brand DNA
+                          {liveBrandProfile?.instagram_username
+                            ? "Real-time Profile Connected • Verified Brand DNA"
+                            : "Awaiting Instagram handle connection during onboarding"}
                         </span>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const handle = (liveBrandProfile?.instagram_username || activeClient?.brand?.social?.handle || "").replace("@", "");
-                        if (handle) window.open(`https://instagram.com/${handle}`, "_blank");
-                      }}
-                      className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] shadow-2xs cursor-pointer"
-                    >
-                      Launch Channel
-                    </button>
+                    {liveBrandProfile?.instagram_username && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const handle = (liveBrandProfile.instagram_username || "").replace("@", "");
+                          if (handle) window.open(`https://instagram.com/${handle}`, "_blank");
+                        }}
+                        className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] shadow-2xs cursor-pointer"
+                      >
+                        Launch Channel
+                      </button>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center justify-between text-xs text-[#97A0B3] font-medium pt-3 border-t border-[#2A3446] gap-2">
