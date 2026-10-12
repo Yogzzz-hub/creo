@@ -112,14 +112,13 @@ export function MemberTaskBoardPage() {
     queryKey: ["pod_dashboard", user?.id, undefined],
     queryFn: () => fetchPodDashboard(),
     staleTime: 30_000,
-    enabled: !!user?.id,
   });
   const clients = data?.clients || [];
   const leadName = data?.pod?.lead?.name || "your Pod Lead";
 
   // Creatives see their own work and unassigned role-matched tasks; leads/admins see the full pod.
   const tasks = useMemo(() => {
-    if (!data?.tasks || isAdmin) return [] as { task: PodTask; column: Column }[];
+    if (!data?.tasks) return [] as { task: PodTask; column: Column }[];
     const buckets: (keyof PodDashboardData["tasks"])[] = [
       "backlog", "in_production", "internal_qa", "client_review", "ready_to_publish", "completed",
     ];
@@ -128,7 +127,7 @@ export function MemberTaskBoardPage() {
         .filter((t) => shouldShowTaskForUser(t, user))
         .map((task) => ({ task, column: columnOf(bucket) })),
     );
-  }, [data, isAdmin, user]);
+  }, [data, user]);
 
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -473,6 +472,19 @@ export function MemberTaskBoardPage() {
         {isLoading ? (
           <div className="flex items-center justify-center py-24 text-[#97A0B3]">
             <Loader2 className="size-6 animate-spin" />
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
+            <div className="size-10 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+              <AlertTriangle className="size-5" />
+            </div>
+            <p className="text-xs text-rose-400 font-medium">{(error as Error)?.message || "Failed to load tasks."}</p>
+            <button
+              onClick={() => refetch()}
+              className="px-3 py-1.5 rounded-lg bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-xs font-bold text-white transition-colors cursor-pointer"
+            >
+              Retry
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5 items-stretch h-[560px] sm:h-[600px] lg:h-[calc(100vh-270px)] min-h-[500px]">

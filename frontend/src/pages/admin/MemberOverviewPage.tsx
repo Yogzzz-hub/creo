@@ -52,7 +52,7 @@ export function MemberOverviewPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery<PodDashboardData>({
+  const { data, isLoading, isError, error, refetch } = useQuery<PodDashboardData>({
     queryKey: ["pod_dashboard", user?.id, undefined],
     queryFn: () => fetchPodDashboard(),
     staleTime: 30_000,
@@ -300,6 +300,28 @@ export function MemberOverviewPage() {
       setIsUploading(false);
     }
   };
+
+  if (isError) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center gap-4 text-center p-6">
+        <div className="size-12 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+          <AlertTriangle className="size-6" />
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-base font-bold text-white">Failed to load workstation overview</h3>
+          <p className="text-xs text-[#97A0B3] max-w-sm">
+            {(error as Error)?.message || "Could not connect to the workstation service."}
+          </p>
+        </div>
+        <button
+          onClick={() => refetch()}
+          className="px-4 py-2 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-xs font-bold text-white transition-colors cursor-pointer"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   if (isLoading || !data) {
     return <CreoLoadingScreen fullScreen={false} label="Loading Workstation Overview" className="min-h-[45vh]" />;

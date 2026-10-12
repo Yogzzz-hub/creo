@@ -361,6 +361,7 @@ async def get_chat_contacts(
             select(ClientAssignment, User)
             .join(User, User.id == ClientAssignment.user_id)
             .where(ClientAssignment.client_id == current_user_id, ClientAssignment.role == "team_lead")
+        )
         tl_res = await db.execute(tl_stmt)
         tl_assigned = tl_res.all()
 
