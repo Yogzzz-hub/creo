@@ -69,7 +69,9 @@ export function PortalLayout() {
                   : "portal-content mx-auto flex w-full max-w-[1500px] flex-col gap-4"
               }
             >
-              {!isSlack && <ResumeOnboardingBanner variant="compact" />}
+              {!isSlack && pathname !== "/portal" && pathname !== "/portal/" && (
+                <ResumeOnboardingBanner variant="compact" />
+              )}
               <Suspense fallback={<CreoInlineLoader />}>
                 <div
                   key={pathname}

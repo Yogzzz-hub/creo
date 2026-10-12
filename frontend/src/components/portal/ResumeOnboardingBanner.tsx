@@ -134,7 +134,7 @@ export function ResumeOnboardingBanner({
           </div>
 
           {/* Step tracker */}
-          <ol className="grid w-full grid-cols-5 gap-2 lg:max-w-md">
+          <ol className="grid w-full grid-cols-5 gap-2 lg:max-w-sm">
             {ONBOARDING_STEPS.map((s) => {
               const done = s.step <= completedSteps;
               const current = s.step === currentStep;

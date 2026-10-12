@@ -6,6 +6,7 @@ import { approveDeliverable, requestChanges } from "../../lib/deliverables-api";
 import { useAuth } from "../../lib/auth-context";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
+import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
 
 /* ── Types ── */
 export interface TeamHandler {
@@ -183,6 +184,23 @@ export function PortalDashboardPage() {
 
   if (!gate.isReady || (!isLocked && (isDashboardLoading || !dashboard))) {
     return <CreoLoadingScreen fullScreen={false} label="Loading Workspace" className="min-h-[45vh]" />;
+  }
+
+  if (isLocked) {
+    return (
+      <div className="w-full min-w-0 space-y-5 sm:space-y-6">
+        <div>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-[#97A0B3]">
+            {dayName} {dateStr}
+          </p>
+          <h1 className="text-2xl font-normal leading-tight text-[#F8FAFC] sm:text-3xl">
+            Welcome, {user?.full_name || companyName}.{" "}
+            <span className="font-bold italic">Let's finish setting up your workspace.</span>
+          </h1>
+        </div>
+        <ResumeOnboardingBanner variant="hero" />
+      </div>
+    );
   }
 
   return (
