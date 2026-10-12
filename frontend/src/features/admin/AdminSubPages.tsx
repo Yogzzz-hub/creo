@@ -5093,7 +5093,7 @@ export function AdminRevenuePage() {
   const [filter, setFilter] = useState<"all" | "paid" | "pending" | "overdue">("all");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState<string | null>(null);
-  const [revenueLayout, setRevenueLayout] = useState<"split" | "enlarged">("split");
+  const [revenueLayout, setRevenueLayout] = useState<"split" | "enlarged">("enlarged");
 
   // Modals
   const [selectedReceipt, setSelectedReceipt] = useState<TransactionItem | null>(null);
@@ -5248,20 +5248,8 @@ export function AdminRevenuePage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* View Mode Toggle: Split View vs Enlarged Graph */}
+            {/* View Mode Toggle: Full Width vs Split View */}
             <div className="flex items-center p-1 bg-[#161F2D] border border-[#2A3446] rounded-xl text-xs font-bold">
-              <button
-                type="button"
-                onClick={() => setRevenueLayout("split")}
-                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-                  revenueLayout === "split"
-                    ? "bg-[#7FA0D6] text-white shadow-xs font-black"
-                    : "text-[#97A0B3] hover:text-white"
-                }`}
-                title="Side-by-side: Graph on left, History on right"
-              >
-                <Columns2 className="w-3.5 h-3.5" /> Split View
-              </button>
               <button
                 type="button"
                 onClick={() => setRevenueLayout("enlarged")}
@@ -5270,9 +5258,21 @@ export function AdminRevenuePage() {
                     ? "bg-[#7FA0D6] text-white shadow-xs font-black"
                     : "text-[#97A0B3] hover:text-white"
                 }`}
-                title="Enlarge graph to full width"
+                title="Full-width view: spacious layout showing all row details with zero horizontal scrolling"
               >
-                <Maximize2 className="w-3.5 h-3.5" /> Enlarged Graph
+                <Maximize2 className="w-3.5 h-3.5" /> Full Width (No Scroll)
+              </button>
+              <button
+                type="button"
+                onClick={() => setRevenueLayout("split")}
+                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+                  revenueLayout === "split"
+                    ? "bg-[#7FA0D6] text-white shadow-xs font-black"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+                title="Side-by-side: Compact split view"
+              >
+                <Columns2 className="w-3.5 h-3.5" /> Split View
               </button>
             </div>
 
@@ -5512,77 +5512,158 @@ export function AdminRevenuePage() {
                 </div>
               </div>
 
-              {/* Transactions Table with Scrollbar in Split View */}
-              <div className={`overflow-x-auto rounded-2xl border border-[#2A3446] ${
-                revenueLayout === "split" ? "max-h-[350px] overflow-y-auto" : ""
+              {/* Transactions Table: Complete row visible with zero horizontal scrolling */}
+              <div className={`rounded-2xl border border-[#2A3446] bg-[#0B111C]/40 ${
+                revenueLayout === "split" ? "max-h-[380px] overflow-y-auto overflow-x-hidden" : "overflow-hidden"
               }`}>
-                <table className="w-full text-left text-xs text-white">
-                  <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] sticky top-0 z-10">
-                    <tr>
-                      <th className="px-3 sm:px-4 py-3">CLIENT & SCOPE</th>
-                      <th className="px-3 sm:px-4 py-3">INVOICE #</th>
-                      <th className="px-3 sm:px-4 py-3">AMOUNT</th>
-                      <th className="px-3 sm:px-4 py-3">METHOD</th>
-                      <th className="px-3 sm:px-4 py-3">STATUS</th>
-                      <th className="px-3 sm:px-4 py-3 text-right">ACTIONS</th>
-                    </tr>
+                <table className="w-full text-left text-xs text-white table-auto">
+                  <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] sticky top-0 z-10">
+                    {revenueLayout === "split" ? (
+                      <tr>
+                        <th className="px-2.5 py-3 w-[36%]">CLIENT & SCOPE</th>
+                        <th className="px-2 py-3 w-[24%]">INVOICE & METHOD</th>
+                        <th className="px-2 py-3 w-[16%] text-right">AMOUNT</th>
+                        <th className="px-2 py-3 w-[14%] text-center">STATUS</th>
+                        <th className="px-2 py-3 w-[10%] text-right pr-3">ACTION</th>
+                      </tr>
+                    ) : (
+                      <tr>
+                        <th className="px-4 py-3">CLIENT & SCOPE</th>
+                        <th className="px-4 py-3">INVOICE #</th>
+                        <th className="px-4 py-3">SETTLED DATE</th>
+                        <th className="px-4 py-3">AMOUNT</th>
+                        <th className="px-4 py-3">PAYMENT METHOD</th>
+                        <th className="px-4 py-3 text-center">STATUS</th>
+                        <th className="px-4 py-3 text-right pr-4">ACTIONS</th>
+                      </tr>
+                    )}
                   </thead>
                   <tbody className="divide-y divide-[#2A3446]/40 font-medium bg-[#161F2D]/50">
                     {filteredTx.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
+                        <td colSpan={revenueLayout === "split" ? 5 : 7} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
                           No transactions recorded yet
                         </td>
                       </tr>
                     ) : (
                       filteredTx.map((tx) => (
                         <tr key={tx.id} className="hover:bg-[#0B111C]/70 transition-colors">
-                          <td className="px-3 sm:px-4 py-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className={`w-8 h-8 rounded-xl ${tx.avatarBg} font-black text-xs flex items-center justify-center shrink-0`}>
-                                {tx.clientInitials}
-                              </div>
-                              <div className="truncate max-w-[140px]">
-                                <div className="font-bold text-xs text-white truncate">{tx.client}</div>
-                                <div className="text-[10px] text-[#97A0B3] truncate">{tx.scope}</div>
-                              </div>
-                            </div>
-                          </td>
+                          {revenueLayout === "split" ? (
+                            <>
+                              {/* Col 1: Client & Scope */}
+                              <td className="px-2.5 py-3">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className={`w-7 h-7 rounded-lg ${tx.avatarBg} font-black text-[11px] flex items-center justify-center shrink-0`}>
+                                    {tx.clientInitials}
+                                  </div>
+                                  <div className="min-w-0 truncate">
+                                    <div className="font-bold text-xs text-white truncate" title={tx.client}>{tx.client}</div>
+                                    <div className="text-[10px] text-[#97A0B3] truncate" title={tx.scope}>{tx.scope}</div>
+                                  </div>
+                                </div>
+                              </td>
 
-                          <td className="px-3 sm:px-4 py-3 font-mono font-bold text-[#F1F5F9] text-xs">{tx.id}</td>
+                              {/* Col 2: Invoice # & Method */}
+                              <td className="px-2 py-3">
+                                <div className="font-mono font-bold text-[#F1F5F9] text-[11px]">{tx.id}</div>
+                                <div className="text-[10px] text-[#97A0B3] truncate">{tx.method}</div>
+                              </td>
 
-                          <td className="px-3 sm:px-4 py-3 font-black text-xs text-white">
-                            ₹{tx.amount.toLocaleString('en-IN')}
-                          </td>
+                              {/* Col 3: Amount */}
+                              <td className="px-2 py-3 font-black text-xs text-white text-right whitespace-nowrap">
+                                ₹{tx.amount.toLocaleString('en-IN')}
+                              </td>
 
-                          <td className="px-3 sm:px-4 py-3 text-[#F1F5F9] font-medium text-[11px]">{tx.method}</td>
+                              {/* Col 4: Status */}
+                              <td className="px-2 py-3 text-center">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border inline-flex items-center gap-1 ${tx.badgeClass}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]"}`} />
+                                  {tx.status}
+                                </span>
+                              </td>
 
-                          <td className="px-3 sm:px-4 py-3">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 w-fit ${tx.badgeClass}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]"}`} />
-                              {tx.status}
-                            </span>
-                          </td>
+                              {/* Col 5: Action */}
+                              <td className="px-2 py-3 text-right pr-3 whitespace-nowrap">
+                                {tx.status === "Paid" ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedReceipt(tx)}
+                                    className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer text-xs"
+                                  >
+                                    Receipt <ArrowUpRight className="w-3.5 h-3.5" />
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSendReminder(tx)}
+                                    className="px-2 py-1 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <Play className="w-2.5 h-2.5 fill-current" /> Remind
+                                  </button>
+                                )}
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              {/* Full Width Row: All 7 Columns completely visible */}
+                              <td className="px-4 py-3.5">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-8 h-8 rounded-xl ${tx.avatarBg} font-black text-xs flex items-center justify-center shrink-0`}>
+                                    {tx.clientInitials}
+                                  </div>
+                                  <div>
+                                    <div className="font-bold text-xs text-white">{tx.client}</div>
+                                    <div className="text-[11px] text-[#97A0B3]">{tx.scope}</div>
+                                  </div>
+                                </div>
+                              </td>
 
-                          <td className="px-3 sm:px-4 py-3 text-right">
-                            {tx.status === "Paid" ? (
-                              <button
-                                type="button"
-                                onClick={() => setSelectedReceipt(tx)}
-                                className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer text-xs"
-                              >
-                                Receipt <ArrowUpRight className="w-3.5 h-3.5" />
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleSendReminder(tx)}
-                                className="px-2.5 py-1 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold text-[11px] inline-flex items-center gap-1 cursor-pointer"
-                              >
-                                <Play className="w-3 h-3 fill-current" /> Remind
-                              </button>
-                            )}
-                          </td>
+                              <td className="px-4 py-3.5 font-mono font-bold text-[#F1F5F9] text-xs">
+                                {tx.id}
+                              </td>
+
+                              <td className="px-4 py-3.5 text-xs text-[#97A0B3] font-medium">
+                                {tx.date}
+                              </td>
+
+                              <td className="px-4 py-3.5 font-black text-sm text-white whitespace-nowrap">
+                                ₹{tx.amount.toLocaleString('en-IN')}
+                              </td>
+
+                              <td className="px-4 py-3.5 text-[#F1F5F9] font-medium text-xs">
+                                <span className="px-2.5 py-1 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[#F1F5F9] inline-block">
+                                  {tx.method}
+                                </span>
+                              </td>
+
+                              <td className="px-4 py-3.5 text-center">
+                                <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border inline-flex items-center gap-1.5 ${tx.badgeClass}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]"}`} />
+                                  {tx.status}
+                                </span>
+                              </td>
+
+                              <td className="px-4 py-3.5 text-right pr-4">
+                                {tx.status === "Paid" ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedReceipt(tx)}
+                                    className="px-3 py-1.5 rounded-xl border border-[#7FA0D6]/30 bg-[#7FA0D6]/10 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold inline-flex items-center gap-1 cursor-pointer text-xs transition-colors"
+                                  >
+                                    View Receipt <ArrowUpRight className="w-3.5 h-3.5" />
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSendReminder(tx)}
+                                    className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 font-bold text-xs inline-flex items-center gap-1 cursor-pointer transition-colors"
+                                  >
+                                    <Play className="w-3 h-3 fill-current" /> Send Reminder
+                                  </button>
+                                )}
+                              </td>
+                            </>
+                          )}
                         </tr>
                       ))
                     )}
