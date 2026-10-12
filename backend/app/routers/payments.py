@@ -80,6 +80,7 @@ async def confirm_payment(
 async def create_addon_order(
     body: dict,
     actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Create a Razorpay order for a one-time add-on pack purchase (server-authoritative pricing)."""
     from app.config import settings as _s
@@ -104,6 +105,28 @@ async def create_addon_order(
             status_code=400,
             detail=f"Invalid or unauthorized addon package ID: '{addon_id}'. Allowed add-ons: {list(ADDON_PRICING.keys())}",
         )
+
+    # Add-ons are available only to clients with a currently active, unexpired plan.
+    # Enforce this before asking Razorpay to create an order, even if the UI is bypassed.
+    from app.services.subscription_guard import check_client_subscription
+
+    client_id = actor.client_id or actor.user_id
+    subscription_check = await check_client_subscription(db, client_id)
+    if not subscription_check["is_active"]:
+        is_expired = subscription_check["is_expired"]
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "code": "SUBSCRIPTION_EXPIRED" if is_expired else "PAYMENT_REQUIRED",
+                "message": (
+                    "Your plan has expired. Renew an active plan before adding extras."
+                    if is_expired
+                    else "An active subscription is required before you can add extras."
+                ),
+                "status": subscription_check["status"],
+            },
+        )
+
     # Server-enforced pricing: never allow client-supplied amount
     amount_minor = ADDON_PRICING[addon_id]
     currency = "INR"
