@@ -149,6 +149,7 @@ async def transition(
     qa_notes: str | None = None,
     request_id: str | None = None,
     commit: bool = True,
+    publishing_fingerprint: str | None = None,
 ) -> Deliverable:
     """Execute a status transition on a deliverable.
 
@@ -162,6 +163,14 @@ async def transition(
         Conflict: illegal edge or revision limit reached
         Forbidden: actor role not permitted for this edge
     """
+    # Serialize changes to an enrolled version with schedules and provider work.
+    from app.models.publishing import PublishingJob
+    from app.services.publishing_service import lock_profile
+    enrolled = (await db.execute(select(PublishingJob.id).where(
+        PublishingJob.deliverable_id == deliverable.id))).scalar_one_or_none()
+    if enrolled:
+        await lock_profile(db, deliverable.client_id)
+        await db.refresh(deliverable, attribute_names=["status", "approved_at"])
     current = DeliverableStatus(deliverable.status)
     from_str = current.value
     to_str = to_status.value
@@ -251,6 +260,10 @@ async def transition(
             deliverable.rejection_comment = qa_notes
         elif reason and to_str == DeliverableStatus.REVISION_REQUESTED:
             deliverable.rejection_comment = reason
+
+    # Approval records eligibility only; publishing has its own lifecycle.
+    from app.services.publishing_service import on_deliverable_transition
+    await on_deliverable_transition(db, deliverable, to_str, actor_id, publishing_fingerprint)
 
     # 6. Automate Task Pipeline Status synchronization
     try:

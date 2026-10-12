@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, useLayoutEffect } from "react";
 import { Outlet, useLocation } from "react-router";
 import { useRouteMemory } from "../../lib/useRouteMemory";
 import { PortalSidebarNew } from "./PortalSidebarNew";
@@ -7,16 +7,19 @@ import { AdminTopHeader } from "../admin/AdminTopHeader";
 import { CreoInlineLoader } from "../ui/CreoLoader";
 
 import { ResumeOnboardingBanner } from "./ResumeOnboardingBanner";
+import { useOnboardingGate } from "../../lib/useOnboardingGate";
 
 export function PortalLayout() {
   // Passively save current route to sessionStorage on every navigation
   useRouteMemory();
   const { pathname } = useLocation();
-  // The dashboard and plan pages render the larger resume card themselves instead of the strip
-  const hasHeroResume =
-    pathname === "/portal" || pathname === "/portal/" || pathname.startsWith("/portal/payments");
-
-  const isSlack = pathname.startsWith("/portal/slack");
+  // Start each page below its header rather than retaining the previous page's scroll.
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
+  const gate = useOnboardingGate();
+  // Only an unlocked chat uses a fixed-height viewport; locked pages scroll normally.
+  const isSlack = pathname.startsWith("/portal/slack") && gate.isComplete;
 
   return (
     <AdminSidebarProvider>
@@ -41,12 +44,14 @@ export function PortalLayout() {
         <div
           className={
             isSlack
-              ? "flex-1 min-w-0 xl:pl-[280px] flex flex-col h-screen max-h-screen overflow-hidden"
-              : "flex-1 min-w-0 xl:pl-[280px] flex flex-col min-h-screen"
+              ? "flex-1 min-w-0 lg:pl-[280px] flex flex-col h-screen max-h-screen overflow-hidden"
+              : "flex-1 min-w-0 lg:pl-[280px] flex flex-col min-h-screen overflow-x-hidden"
           }
         >
-          {/* Top Header with Hamburger (mobile), Page Title, Notification Bell & Profile */}
-          <AdminTopHeader showBackButton />
+          {/* Top Header with Hamburger: kept in phone view, removed from desktop view */}
+          <div className="lg:hidden">
+            <AdminTopHeader showBackButton />
+          </div>
 
           {/* Main Content Area — fixed height for Slack so internal scrollbars activate */}
           <main
@@ -54,17 +59,19 @@ export function PortalLayout() {
             className={
               isSlack
                 ? "portal-main flex-1 w-full px-2 sm:px-4 lg:px-6 pt-1 sm:pt-2 pb-2 sm:pb-3 flex flex-col min-h-0 overflow-hidden"
-                : "portal-main flex-1 w-full px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-10"
+                : "portal-main flex-1 w-full px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8 pb-10 min-w-0 overflow-x-hidden"
             }
           >
             <div
               className={
                 isSlack
                   ? "mx-auto w-full max-w-[1700px] flex-1 min-h-0 flex flex-col h-full max-h-full overflow-hidden"
-                  : "mx-auto w-full max-w-[1500px]"
+                  : "mx-auto w-full max-w-[1400px] min-w-0"
               }
             >
-              {!hasHeroResume && !isSlack && <ResumeOnboardingBanner variant="compact" />}
+              {!isSlack && pathname !== "/portal" && pathname !== "/portal/" && (
+                <ResumeOnboardingBanner variant="compact" />
+              )}
               <Suspense fallback={<CreoInlineLoader />}>
                 <div
                   key={pathname}

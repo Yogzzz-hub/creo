@@ -3,10 +3,11 @@ import "../../styles/public-responsive.css";
 import { useState, useEffect } from "react";
 import { 
   Mail, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Check, User, Building2,
-  Loader2, ShieldCheck, Zap
+  Loader2, ShieldCheck, Zap, KeyRound
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../../lib/auth-context";
+import { HttpError } from "../../lib/http";
 
 import { PasswordRecoveryModal } from "../../components/auth/PasswordRecoveryModal";
 
@@ -16,6 +17,7 @@ interface PendingRegistration {
   email: string;
   fullName: string;
   expiresAt: number;
+  emailDeliveryConfirmed: true;
 }
 
 function readPendingRegistration(): PendingRegistration | null {
@@ -23,7 +25,7 @@ function readPendingRegistration(): PendingRegistration | null {
     const raw = sessionStorage.getItem(PENDING_REGISTRATION_KEY);
     if (!raw) return null;
     const pending = JSON.parse(raw) as PendingRegistration;
-    if (!pending.email || pending.expiresAt <= Date.now()) {
+    if (!pending.email || pending.emailDeliveryConfirmed !== true || pending.expiresAt <= Date.now()) {
       sessionStorage.removeItem(PENDING_REGISTRATION_KEY);
       return null;
     }
@@ -38,11 +40,33 @@ function writePendingRegistration(email: string, fullName: string): void {
     email,
     fullName,
     expiresAt: Date.now() + 10 * 60_000,
+    emailDeliveryConfirmed: true,
   } satisfies PendingRegistration));
 }
 
 function clearPendingRegistration(): void {
   sessionStorage.removeItem(PENDING_REGISTRATION_KEY);
+}
+
+/** Errors the API reports about which sign-in methods an existing account has. */
+const ACCOUNT_METHOD_CODES = new Set(["PASSWORD_NOT_SET", "ACCOUNT_EXISTS"]);
+
+interface AuthNotice {
+  message: string;
+  code?: string;
+  email?: string;
+  methods?: string[];
+}
+
+function GoogleMark({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#7FA0D6"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#7FA0D6"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#D8BF9B"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#D8BF9B"/>
+    </svg>
+  );
 }
 
 export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
@@ -51,7 +75,22 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
   const { loginWithPassword, registerIntent, resendRegistration, verifyRegistration, getGoogleAuthUrl } = useAuth();
   
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [slowServerWake, setSlowServerWake] = useState(false);
+  const [error, setErrorState] = useState<AuthNotice | null>(null);
+  const setError = (message: string | null) => setErrorState(message ? { message } : null);
+  function showError(err: unknown, fallback: string, forEmail?: string) {
+    if (err instanceof HttpError) {
+      const methods = err.details?.sign_in_methods;
+      setErrorState({
+        message: err.message || fallback,
+        code: err.code,
+        email: forEmail,
+        methods: Array.isArray(methods) ? methods.filter((m): m is string => typeof m === "string") : undefined,
+      });
+    } else {
+      setErrorState({ message: err instanceof Error && err.message ? err.message : fallback });
+    }
+  }
   const [showPassword, setShowPassword] = useState(false);
 
   const initialMode = location.pathname === "/signup" || defaultView === "signup" ? "signup" : "signin";
@@ -89,10 +128,9 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const cleanEmail = email.trim();
-    const cleanPass = password.trim();
     const cleanName = fullName.trim();
 
-    if (!cleanEmail || !cleanPass) {
+    if (!cleanEmail || !password.trim()) {
       setError("Please enter your email and password.");
       return;
     }
@@ -106,11 +144,14 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
       return;
     }
 
+    let wakeTimer: ReturnType<typeof setTimeout> | undefined;
     try {
       setLoading(true);
+      setSlowServerWake(false);
       setError(null);
+      wakeTimer = setTimeout(() => setSlowServerWake(true), 3500);
       if (mode === "signin") {
-        const loggedInUser = await loginWithPassword(cleanEmail, cleanPass);
+        const loggedInUser = await loginWithPassword(cleanEmail, password);
         const { getRoleHome } = await import("../../components/auth/ProtectedRoute");
         const roleHome = getRoleHome(loggedInUser.role);
 
@@ -124,7 +165,10 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
           navigate(roleHome, { replace: true });
         }
       } else {
-        await registerIntent(cleanEmail, cleanPass, cleanName);
+        const result = await registerIntent(cleanEmail, password, cleanName);
+        if (result.status !== "sent" || result.email_delivered !== true) {
+          throw new Error("We could not deliver the verification email. Please try again shortly.");
+        }
         writePendingRegistration(cleanEmail, cleanName);
         setRegistrationPending(true);
       }
@@ -134,9 +178,11 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
         setRegistrationPending(false);
         clearPendingRegistration();
       }
-      setError(err.message || "Authentication failed. Please verify credentials.");
+      showError(err, "Authentication failed. Please verify credentials.", cleanEmail);
     } finally {
+      if (wakeTimer) clearTimeout(wakeTimer);
       setLoading(false);
+      setSlowServerWake(false);
     }
   }
 
@@ -160,14 +206,34 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
     }
   }
 
+  async function startGoogleSignIn() {
+    try {
+      setLoading(true);
+      const url = await getGoogleAuthUrl();
+      if (url) {
+        window.location.href = url;
+      } else {
+        navigate("/auth/callback/google");
+      }
+    } catch {
+      setLoading(false);
+    }
+  }
+
   async function handleResendRegistrationCode() {
     try {
       setLoading(true);
       setError(null);
       if (password.trim()) {
-        await registerIntent(email.trim(), password.trim(), fullName.trim());
+        const result = await registerIntent(email.trim(), password.trim(), fullName.trim());
+        if (result.status !== "sent" || result.email_delivered !== true) {
+          throw new Error("We could not deliver the verification email. Please try again shortly.");
+        }
       } else {
-        await resendRegistration(email.trim());
+        const result = await resendRegistration(email.trim());
+        if (result.status !== "sent" || result.email_delivered !== true) {
+          throw new Error("We could not deliver the verification email. Please try again shortly.");
+        }
       }
       writePendingRegistration(email.trim(), fullName.trim());
       setOtpCode("");
@@ -202,10 +268,6 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
             <span>creo</span>
             <span className="text-[#7FA0D6] text-2xl leading-none">.</span>
           </Link>
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#121926] border border-[#222F44] text-[10px] font-semibold text-[#7FA0D6] uppercase tracking-wider">
-            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Agency OS v2.6
-          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -290,14 +352,6 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 pt-1 text-[11px] text-[#97A0B3]">
-              <span className="flex items-center gap-1.5 font-semibold text-[#F8FAFC]">
-                <ShieldCheck className="size-3.5 text-[#7FA0D6]" />
-                SOC-2 Type II Certified
-              </span>
-              <span>&bull;</span>
-              <span>Trusted by 52+ leading creative studios</span>
-            </div>
           </div>
 
           {/* Right Column: Auth Console Bento Card (Fits cleanly in vertical space) */}
@@ -358,10 +412,87 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                 </p>
               </div>
 
-              {/* Error Banner */}
-              {error && (
-                <div className="mb-3 bg-red-950/40 border border-red-800/60 rounded-xl px-3.5 py-2 text-left">
-                  <p className="text-[11px] text-red-300 font-semibold">{error}</p>
+              {/* Account-method notice: the email exists, but not with the method just tried */}
+              {error?.code && ACCOUNT_METHOD_CODES.has(error.code) ? (() => {
+                const methods = error.methods ?? [];
+                const hasGoogle = methods.includes("google");
+                const hasPassword = methods.includes("password");
+                const who = error.email || email.trim() || "This email";
+                const title = error.code === "ACCOUNT_EXISTS"
+                  ? "You already have a CREO account"
+                  : hasGoogle ? "This account uses Google sign-in" : "No password set yet";
+                const body = error.code === "ACCOUNT_EXISTS"
+                  ? hasPassword
+                    ? `${who} is already registered. Sign in instead${hasGoogle ? ", or continue with Google" : ""}.`
+                    : `${who} is already registered${hasGoogle ? " with Google" : ""}. ${hasGoogle ? "Continue with Google, or set" : "Set"} a password to sign in with your email.`
+                  : hasGoogle
+                    ? `${who} was created with Google, so it doesn't have a CREO password yet. Continue with Google, or set a password to use either method.`
+                    : `${who} doesn't have a password yet. Verify your email to set one.`;
+                return (
+                  <div role="alert" className="mb-3 rounded-xl border border-[#7FA0D6]/40 bg-[#0A0F18] p-3.5 text-left">
+                    <div className="flex items-start gap-2.5">
+                      <div className="size-7 rounded-lg bg-[#121926] border border-[#222F44] flex items-center justify-center shrink-0">
+                        {hasGoogle && !hasPassword ? <GoogleMark size={13} /> : <KeyRound className="size-3.5 text-[#7FA0D6]" />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#F8FAFC]">{title}</p>
+                        <p className="text-[11px] text-[#97A0B3] mt-0.5 leading-relaxed break-words">{body}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                      {hasGoogle && (
+                        <button
+                          type="button"
+                          onClick={startGoogleSignIn}
+                          disabled={loading}
+                          className="flex-1 bg-[#BCCCE6] hover:bg-white text-[#050810] text-[11px] font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition disabled:opacity-60 cursor-pointer"
+                        >
+                          <GoogleMark size={12} /> Continue with Google
+                        </button>
+                      )}
+                      {error.code === "ACCOUNT_EXISTS" && hasPassword && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMode("signin");
+                            setRememberMe(true);
+                            setError(null);
+                            navigate(`/login?email=${encodeURIComponent(error.email || email.trim())}`, { replace: true });
+                          }}
+                          className="flex-1 border border-[#222F44] hover:border-[#7FA0D6]/50 text-[#F8FAFC] text-[11px] font-bold py-2 rounded-lg transition cursor-pointer"
+                        >
+                          Sign in instead
+                        </button>
+                      )}
+                      {!hasPassword && (
+                        <button
+                          type="button"
+                          onClick={() => setForgotOpen(true)}
+                          className="flex-1 border border-[#222F44] hover:border-[#7FA0D6]/50 text-[#F8FAFC] text-[11px] font-bold py-2 rounded-lg transition cursor-pointer"
+                        >
+                          Set a password
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })() : error && (
+                <div role="alert" className="mb-3 bg-red-950/40 border border-red-800/60 rounded-xl px-3.5 py-2 text-left">
+                  <p className="text-[11px] text-red-300 font-semibold">
+                    {error.message}
+                    {error.code === "INVALID_CREDENTIALS" && (
+                      <>
+                        {" "}
+                        <button
+                          type="button"
+                          onClick={() => setForgotOpen(true)}
+                          className="underline text-red-200 hover:text-white cursor-pointer"
+                        >
+                          Reset your password
+                        </button>
+                      </>
+                    )}
+                  </p>
                 </div>
               )}
 
@@ -474,7 +605,10 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                     <input 
                       type="email" 
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (error?.email) setErrorState(null);
+                      }}
                       placeholder={mode === "signin" ? "admin@creo.agency" : "founder@agency.com"} 
                       className="bg-transparent text-xs text-[#F8FAFC] placeholder-[#97A0B3]/50 focus:outline-none w-full rounded-md"
                       style={{ colorScheme: "dark" }}
@@ -543,7 +677,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                         setForgotOpen(true);
 
                       }}
-                      className="text-[#7FA0D6] hover:text-white transition focus:outline-none text-[11px] cursor-pointer"
+                      className="inline-flex min-h-9 items-center justify-center rounded-lg border border-[#222F44] bg-[#0A0F18] px-3 py-1.5 text-[11px] font-semibold text-[#BCCCE6] transition-colors hover:border-[#7FA0D6]/50 hover:bg-[#161F2D] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] cursor-pointer"
                     >
                       Forgot password?
                     </button>
@@ -559,11 +693,16 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                   {loading && <Loader2 className="size-3.5 animate-spin" />}
                   <span>
                     {mode === "signin" 
-                      ? (loading ? "Authenticating..." : "Sign In to Command Center") 
-                      : (loading ? "Creating Account..." : "Launch Agency Account")}
+                      ? (loading ? (slowServerWake ? "Waking up server..." : "Authenticating...") : "Sign In to Command Center") 
+                      : (loading ? (slowServerWake ? "Waking up server..." : "Creating Account...") : "Launch Agency Account")}
                   </span>
                   {!loading && <ArrowRight className="size-3.5" />}
                 </button>
+                {loading && slowServerWake && (
+                  <p className="text-[10px] text-[#7FA0D6] text-center mt-2 animate-pulse">
+                    ⚡ Server was sleeping after inactivity. Waking up (~30s)...
+                  </p>
+                )}
               </form>
               )}
 
@@ -581,26 +720,9 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                   <button 
                     type="button"
                     className="w-full bg-[#0A0F18] border border-[#222F44] hover:bg-[#0B111C] hover:border-[#7FA0D6]/40 text-[#F8FAFC] text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-2.5 transition shadow-xs cursor-pointer" 
-                    onClick={async () => { 
-                      try { 
-                        setLoading(true); 
-                        const url = await getGoogleAuthUrl(); 
-                        if (url) {
-                          window.location.href = url; 
-                        } else {
-                          navigate("/auth/callback/google");
-                        }
-                      } catch { 
-                        setLoading(false); 
-                      } 
-                    }}
+                    onClick={startGoogleSignIn}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#7FA0D6"/>
-                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#7FA0D6"/>
-                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#D8BF9B"/>
-                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#D8BF9B"/>
-                    </svg>
+                    <GoogleMark />
                     <span>Google Workspace</span>
                   </button>
                 </div>
@@ -612,33 +734,11 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                 </div>
               ) : null}
 
-              {/* Bottom security micro badge */}
-              <div className="pt-2 text-center text-[10px] text-[#97A0B3]/50 flex items-center justify-center gap-1.5">
-                <ShieldCheck className="size-3 text-[#7FA0D6]" />
-                <span>256-Bit Encrypted &bull; ISO/SOC-2 Standards</span>
-              </div>
-
             </div>
           </div>
 
         </div>
       </main>
-
-      {/* ── Slim Bottom Bar (Compact: 36px) ── */}
-      <footer className="relative z-20 min-h-12 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-10 py-4 border-t border-[#222F44]/40 bg-[#050810]/70 text-[10px] text-[#97A0B3]/60">
-        <div>
-          &copy; {new Date().getFullYear()} CREO Technologies Inc. All rights reserved.
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-1.5 text-emerald-400 font-medium">
-            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Systems nominal &bull; 24ms</span>
-          </div>
-          <Link to="/privacy" className="hover:text-[#F8FAFC] transition">Privacy</Link>
-          <Link to="/terms" className="hover:text-[#F8FAFC] transition">Terms</Link>
-        </div>
-      </footer>
 
       {/* ── Forgot Password Modal ── */}
       {forgotOpen && <PasswordRecoveryModal initialEmail={email} onClose={() => setForgotOpen(false)} />}

@@ -2,6 +2,31 @@
 
 @custom-variant dark (&:is(.dark *));
 
+:where(button:disabled, input:disabled, select:disabled, textarea:disabled, [aria-disabled="true"]) {
+  cursor: not-allowed;
+}
+
+/* Shared interaction defaults for every dashboard and portaled dialog.
+   Utilities can still provide each control's own hover treatment. */
+@layer base {
+  :where(button, a[href], [role="button"], summary, select, input[type="checkbox"], input[type="radio"]):not(:disabled):not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+  :where(button, input, select, textarea):disabled,
+  :where([aria-disabled="true"]) {
+    cursor: not-allowed;
+  }
+  :where(button, a[href], [role="button"], summary):focus-visible {
+    outline: 2px solid #7FA0D6;
+    outline-offset: 3px;
+  }
+  @media (hover: hover) {
+    :where(button, [role="button"], summary):not(:disabled):not([aria-disabled="true"]):hover {
+      filter: brightness(1.12);
+    }
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

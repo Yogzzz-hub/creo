@@ -2,24 +2,265 @@
 
 from __future__ import annotations
 
+import asyncio
+import io
+import mimetypes
+import os
 import uuid
+from datetime import UTC, datetime, time, timedelta, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
-from app.models.billing import Plan, PlanNegotiation, Subscription
+from app.models.billing import Plan, PlanNegotiation
 from app.models.enums import DeliverableStatus, TicketStatus, UserRole
 from app.models.ops import Announcement, AuditLog, Notification
+from app.models.pod_call import PodCallBooking
 from app.models.support import Ticket
 from app.models.user import ClientProfile, User
 from app.models.work import ClientAssignment, Deliverable
 
 router = APIRouter(prefix="/portal", tags=["Portal"])
+
+_CALL_TIMEZONE = timezone(timedelta(hours=5, minutes=30))
+_CALL_SLOT_TIMES = {
+    0: time(10, 30),
+    1: time(14, 0),
+    2: time(11, 0),
+    3: time(15, 30),
+    4: time(10, 0),
+}
+
+
+class PodCallBookingRequest(BaseModel):
+    starts_at: datetime
+
+
+async def _get_client_and_pod_lead(actor: Actor, db: AsyncSession) -> tuple[User, User]:
+    if actor.role != UserRole.CLIENT:
+        raise HTTPException(status_code=403, detail="Only client accounts can book a pod call.")
+
+    client = await db.get(User, actor.user_id)
+    if not client:
+        raise HTTPException(status_code=404, detail="Client account not found.")
+
+    from app.services.onboarding_service import get_current_stage
+
+    client_id = actor.client_id or actor.user_id
+    if await get_current_stage(db, client_id) < 8:
+        raise HTTPException(
+            status_code=403,
+            detail="Complete workspace setup before booking a pod call.",
+        )
+
+    result = await db.execute(
+        select(ClientAssignment, User)
+        .join(User, User.id == ClientAssignment.user_id)
+        .where(ClientAssignment.client_id == client_id)
+        .order_by(
+            ClientAssignment.is_primary.desc(),
+            (ClientAssignment.role == "team_lead").desc(),
+            (ClientAssignment.role == "creative_lead").desc(),
+        )
+    )
+    lead = next(
+        (
+            member
+            for assignment, member in result.all()
+            if assignment.is_primary or assignment.role in {"team_lead", "creative_lead"}
+        ),
+        None,
+    )
+    if not lead:
+        raise HTTPException(status_code=409, detail="Your pod lead has not been assigned yet.")
+    return client, lead
+
+
+def _candidate_pod_call_slots(now: datetime, days: int = 45) -> list[datetime]:
+    local_now = now.astimezone(_CALL_TIMEZONE)
+    candidates: list[datetime] = []
+    for offset in range(1, days + 1):
+        slot_date = local_now.date() + timedelta(days=offset)
+        if slot_date.weekday() not in _CALL_SLOT_TIMES:
+            continue
+        candidates.append(
+            datetime.combine(
+                slot_date,
+                _CALL_SLOT_TIMES[slot_date.weekday()],
+                tzinfo=_CALL_TIMEZONE,
+            )
+        )
+    return candidates
+
+
+def _format_call_slot(starts_at: datetime) -> dict[str, str]:
+    local = starts_at.astimezone(_CALL_TIMEZONE)
+    return {
+        "id": local.isoformat(),
+        "starts_at": local.isoformat(),
+        "date_label": f"{local:%a, %b} {local.day}",
+        "time_label": f"{local.strftime('%I:%M %p').lstrip('0')} IST",
+    }
+
+
+@router.get("/pod-calls/availability", response_model=dict[str, Any])
+async def get_pod_call_availability(
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """List real, unbooked slots for this client's currently assigned pod lead."""
+    client, lead = await _get_client_and_pod_lead(actor, db)
+    now = datetime.now(UTC)
+    result = await db.execute(
+        select(PodCallBooking.starts_at).where(
+            PodCallBooking.lead_id == lead.id,
+            PodCallBooking.status == "booked",
+            PodCallBooking.starts_at >= now,
+        )
+    )
+    reserved = {int(starts_at.timestamp()) for starts_at in result.scalars().all()}
+    slots = [
+        _format_call_slot(candidate)
+        for candidate in _candidate_pod_call_slots(now)
+        if int(candidate.timestamp()) not in reserved
+    ][:5]
+    client_bookings = await db.execute(
+        select(PodCallBooking.starts_at)
+        .where(
+            PodCallBooking.client_id == client.id,
+            PodCallBooking.status == "booked",
+            PodCallBooking.starts_at >= now,
+        )
+        .order_by(PodCallBooking.starts_at.asc())
+    )
+
+    return {
+        "lead": {
+            "id": str(lead.id),
+            "name": lead.full_name or lead.email.split("@", 1)[0],
+        },
+        "slots": slots,
+        "bookings": [_format_call_slot(starts_at) for starts_at in client_bookings.scalars().all()],
+    }
+
+
+@router.post("/pod-calls", response_model=dict[str, Any])
+async def book_pod_call(
+    payload: PodCallBookingRequest,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Persist a 15-minute call and notify only the client and their assigned lead."""
+    client, lead = await _get_client_and_pod_lead(actor, db)
+    if payload.starts_at.tzinfo is None or payload.starts_at.utcoffset() is None:
+        raise HTTPException(status_code=422, detail="A timezone-aware start time is required.")
+
+    now = datetime.now(UTC)
+    starts_at = payload.starts_at.astimezone(UTC)
+    available_times = {candidate.astimezone(UTC) for candidate in _candidate_pod_call_slots(now)}
+    if starts_at <= now or starts_at not in available_times:
+        raise HTTPException(
+            status_code=400,
+            detail="That call slot is no longer available. Refresh and choose another time.",
+        )
+
+    existing = await db.execute(
+        select(PodCallBooking.id).where(
+            PodCallBooking.lead_id == lead.id,
+            PodCallBooking.starts_at == starts_at,
+            PodCallBooking.status == "booked",
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(
+            status_code=409,
+            detail="That call slot was just booked. Refresh and choose another time.",
+        )
+
+    booking_id = uuid.uuid4()
+    booking = PodCallBooking(
+        id=booking_id,
+        agency_id=client.agency_id,
+        client_id=client.id,
+        lead_id=lead.id,
+        starts_at=starts_at,
+        duration_minutes=15,
+        status="booked",
+    )
+    local_start = starts_at.astimezone(_CALL_TIMEZONE)
+    time_label = local_start.strftime("%I:%M %p").lstrip("0")
+    formatted_start = f"{local_start:%a, %b} {local_start.day} at {time_label} IST"
+    client_name = client.full_name or client.email.split("@", 1)[0]
+    agency_id = client.agency_id
+    if lead.role == UserRole.TEAM_LEAD:
+        lead_link = "/admin/pod-dashboard"
+    elif lead.role in {UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.SALES}:
+        lead_link = "/admin"
+    else:
+        lead_link = "/workstation/overview"
+
+    db.add(booking)
+    db.add_all(
+        [
+            Notification(
+                agency_id=agency_id,
+                user_id=client.id,
+                title="Your pod call is booked",
+                message=(
+                    f"Your 15-minute call with {lead.full_name or 'your pod lead'} "
+                    f"is booked for {formatted_start}."
+                ),
+                link="/portal/creative-pod",
+            ),
+            Notification(
+                agency_id=agency_id,
+                user_id=lead.id,
+                title="New pod call booking",
+                message=f"{client_name} booked a 15-minute call with you for {formatted_start}.",
+                link=lead_link,
+            ),
+        ]
+    )
+    db.add(
+        AuditLog(
+            agency_id=agency_id,
+            actor_id=client.id,
+            actor_role=actor.role if isinstance(actor.role, UserRole) else None,
+            entity="pod_call_booking",
+            entity_id=booking_id,
+            action="booked",
+            to_value={
+                "client_id": str(client.id),
+                "lead_id": str(lead.id),
+                "starts_at": starts_at.isoformat(),
+                "duration_minutes": 15,
+            },
+        )
+    )
+    try:
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="That call slot was just booked. Refresh and choose another time.",
+        ) from exc
+
+    return {
+        "id": str(booking_id),
+        "starts_at": local_start.isoformat(),
+        "lead_name": lead.full_name or lead.email.split("@", 1)[0],
+        "message": (
+            f"Your call with {lead.full_name or 'your pod lead'} "
+            f"is booked for {formatted_start}."
+        ),
+    }
 
 
 @router.get("/pod", response_model=dict[str, Any])
@@ -38,7 +279,9 @@ async def get_portal_pod(
         .join(User, User.id == ClientAssignment.user_id)
         .where(ClientAssignment.client_id == target_client_id)
         .order_by(
+            ClientAssignment.is_primary.desc(),
             (ClientAssignment.role == "team_lead").desc(),
+            (ClientAssignment.role == "creative_lead").desc(),
             (ClientAssignment.role == "video_editor").desc(),
         )
     )
@@ -331,7 +574,7 @@ async def get_portal_profile(
         "phone": phone,
         "company_name": profile.company_name if profile else "",
         "instagram_username": profile.instagram_username if profile else "",
-        "instagram_connected": bool(profile.instagram_username or profile.instagram_user_id) if profile else False,
+        "instagram_connected": profile.ig_connection_status == "connected" if profile else False,
         "two_fa_enabled": two_fa,
         "brand_summary": profile.brand_summary if profile else "",
         "brand_dna": brand_dna_data,
@@ -422,8 +665,14 @@ async def change_password(
     if not user:
         return {"status": "error", "message": "User not found."}
 
-    from app.core.security import hash_password, verify_password, validate_password_strength
-    if user.hashed_password and not verify_password(current_pass, user.hashed_password):
+    from app.core.security import hash_password, validate_password_strength, verify_password
+    # Google-only accounts must prove email ownership (auth reset flow) to add a password.
+    if not user.hashed_password:
+        return {
+            "status": "error",
+            "message": "This account has no password yet. Use 'Set a password' to verify your email first.",
+        }
+    if not verify_password(current_pass, user.hashed_password):
         return {"status": "error", "message": "Current password is incorrect."}
 
     valid, err = validate_password_strength(new_pass)
@@ -437,6 +686,9 @@ async def change_password(
 
 
 @router.patch("/2fa", response_model=dict[str, Any])
+@router.post("/2fa", response_model=dict[str, Any])
+@router.patch("/profile/2fa", response_model=dict[str, Any])
+@router.post("/profile/2fa", response_model=dict[str, Any])
 async def toggle_two_factor(
     body: dict[str, Any],
     actor: Actor = Depends(get_current_actor),
@@ -448,64 +700,17 @@ async def toggle_two_factor(
 
     profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
     profile = (await db.execute(profile_stmt)).scalar_one_or_none()
-    if profile:
-        profile.brand_dna = {**(profile.brand_dna or {}), "two_fa_enabled": enabled}
-        await db.commit()
+    if not profile:
+        profile = ClientProfile(user_id=client_id)
+        db.add(profile)
+
+    profile.brand_dna = {**(profile.brand_dna or {}), "two_fa_enabled": enabled}
+    await db.commit()
 
     return {
         "status": "success",
         "two_fa_enabled": enabled,
         "message": "Two-factor authentication enabled." if enabled else "Two-factor authentication disabled.",
-    }
-
-
-@router.post("/integrations/instagram/connect", response_model=dict[str, Any])
-async def connect_instagram_integration(
-    body: dict[str, Any],
-    actor: Actor = Depends(get_current_actor),
-    db: AsyncSession = Depends(get_db),
-) -> dict[str, Any]:
-    """Connect Instagram Business account for automated publishing."""
-    client_id = actor.client_id or actor.user_id
-    username = body.get("username", "").strip() or "creo.creativestudio"
-    if not username.startswith("@"):
-        username = f"@{username}"
-
-    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
-    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
-    if profile:
-        profile.instagram_username = username
-        profile.instagram_user_id = f"ig_user_{uuid.uuid4().hex[:10]}"
-        await db.commit()
-
-    return {
-        "status": "success",
-        "instagram_connected": True,
-        "instagram_username": username,
-        "message": f"Instagram Business account connected as {username}.",
-    }
-
-
-@router.delete("/integrations/instagram", response_model=dict[str, Any])
-async def disconnect_instagram_integration(
-    actor: Actor = Depends(get_current_actor),
-    db: AsyncSession = Depends(get_db),
-) -> dict[str, Any]:
-    """Disconnect Instagram Business account."""
-    client_id = actor.client_id or actor.user_id
-
-    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
-    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
-    if profile:
-        profile.instagram_username = None
-        profile.instagram_user_id = None
-        profile.ig_token_encrypted = None
-        await db.commit()
-
-    return {
-        "status": "success",
-        "instagram_connected": False,
-        "message": "Instagram Business account disconnected successfully.",
     }
 
 
@@ -575,6 +780,109 @@ async def regenerate_brand_dna_profile(
     }
 
 
+@router.post("/brand/upload", response_model=dict[str, Any])
+async def upload_brand_asset(
+    file: UploadFile = File(...),
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Upload a brand asset (vector mark, font, guideline PDF, image) to client profile."""
+    client_id = actor.client_id or actor.user_id
+    if not client_id:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    from app.services import storage_service
+
+    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
+    if not profile:
+        profile = ClientProfile(user_id=client_id)
+        db.add(profile)
+
+    file_bytes = await file.read()
+    size = len(file_bytes)
+    if size == 0:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    mime_type = file.content_type or "application/octet-stream"
+    if mime_type == "application/octet-stream" and file.filename:
+        guessed, _ = mimetypes.guess_type(file.filename)
+        if guessed:
+            mime_type = guessed
+
+    # Clean filename
+    orig_name = os.path.basename(file.filename or "brand_asset")
+    safe_name = "".join(c for c in orig_name if c.isalnum() or c in "._- ") or "brand_asset"
+    storage_key = f"brand_assets/{client_id}/{uuid.uuid4().hex[:10]}_{safe_name}"
+
+    try:
+        fileobj = io.BytesIO(file_bytes)
+        stored = await asyncio.to_thread(
+            storage_service.put_object, storage_key, fileobj, mime_type, size
+        )
+    except Exception as exc:
+        relative = os.path.join("uploads", "brand_assets", str(client_id), f"{uuid.uuid4().hex[:8]}_{safe_name}")
+        destination = os.path.join(storage_service._LOCAL_STATIC_DIR, relative)
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
+        with open(destination, "wb") as out:
+            out.write(file_bytes)
+        stored = "/static/" + relative.replace(os.sep, "/")
+
+    size_str = f"{size / (1024 * 1024):.1f} MB" if size >= 1024 * 1024 else f"{max(1, round(size / 1024))} KB"
+
+    file_record = {
+        "id": str(uuid.uuid4()),
+        "name": safe_name,
+        "url": stored,
+        "file_url": stored,
+        "size": size_str,
+        "size_bytes": size,
+        "mime_type": mime_type,
+        "uploaded_at": datetime.now(UTC).isoformat(),
+    }
+
+    dna = dict(profile.brand_dna or {})
+    existing_files = list(dna.get("files") or [])
+    existing_files.insert(0, file_record)
+    dna["files"] = existing_files
+    profile.brand_dna = dna
+
+    await db.commit()
+
+    return {
+        "status": "success",
+        "message": f"'{safe_name}' uploaded successfully.",
+        "file": file_record,
+        "files": existing_files,
+    }
+
+
+@router.delete("/brand/files/{file_id}", response_model=dict[str, Any])
+async def delete_brand_asset(
+    file_id: str,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Remove an uploaded brand asset from the client profile."""
+    client_id = actor.client_id or actor.user_id
+    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
+    if not profile or not profile.brand_dna:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    dna = dict(profile.brand_dna or {})
+    files_list = [f for f in (dna.get("files") or []) if f.get("id") != file_id]
+    dna["files"] = files_list
+    profile.brand_dna = dna
+    await db.commit()
+
+    return {
+        "status": "success",
+        "message": "File removed successfully.",
+        "files": files_list,
+    }
+
+
 
 
 @router.get("/announcements", response_model=list[dict[str, Any]])
@@ -631,7 +939,7 @@ async def book_plan_bargain_call(
 
     # 1. Create PlanNegotiation record so admin can see it on Plans & Negotiations page
     neg = PlanNegotiation(
-        agency_id=getattr(actor, "agency_id", None),
+        agency_id=client_user.agency_id,
         client_id=actor.user_id,
         client_name=client_name,
         client_email=client_user.email,
@@ -645,13 +953,36 @@ async def book_plan_bargain_call(
     db.add(neg)
     await db.flush()
 
-    # 2. Alert all active Admin and Super Admin users with direct link to this client's negotiation
+    # 2. Notify only this client's agency admins. Legacy unassigned accounts
+    #    route to one platform super admin instead of broadcasting globally.
     admin_stmt = select(User.id).where(
         User.role.in_([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
         User.account_status == "active",
     )
+    if client_user.agency_id:
+        admin_stmt = admin_stmt.where(User.agency_id == client_user.agency_id)
+    else:
+        admin_stmt = (
+            admin_stmt.where(User.role == UserRole.SUPER_ADMIN, User.agency_id.is_(None))
+            .order_by(User.created_at.asc())
+            .limit(1)
+        )
     admin_res = await db.execute(admin_stmt)
     admin_ids = admin_res.scalars().all()
+
+    if not admin_ids:
+        fallback_admin = await db.execute(
+            select(User.id)
+            .where(
+                User.role == UserRole.SUPER_ADMIN,
+                User.account_status == "active",
+            )
+            .order_by(User.created_at.asc())
+            .limit(1)
+        )
+        fallback_id = fallback_admin.scalar_one_or_none()
+        if fallback_id:
+            admin_ids = [fallback_id]
 
     notifs = []
     offer_str = f" • Proposed Offer: {payload.proposed_offer}" if payload.proposed_offer else ""
@@ -660,9 +991,14 @@ async def book_plan_bargain_call(
     for aid in admin_ids:
         notifs.append(
             Notification(
+                agency_id=client_user.agency_id,
                 user_id=aid,
                 title=f"📞 Plan Bargain Call: {client_name}",
-                message=f"{client_name} ({client_user.email}) requested a call to bargain plan: {payload.target_topic}. Contact: {phone} (Preferred: {payload.preferred_time}){offer_str}{notes_str}",
+                message=(
+                    f"{client_name} ({client_user.email}) requested a call to bargain plan: "
+                    f"{payload.target_topic}. Contact: {phone} "
+                    f"(Preferred: {payload.preferred_time}){offer_str}{notes_str}"
+                ),
                 link=redirect_link,
             )
         )
@@ -672,7 +1008,7 @@ async def book_plan_bargain_call(
     # 3. Add Audit Log
     db.add(
         AuditLog(
-            agency_id=getattr(actor, "agency_id", None),
+            agency_id=client_user.agency_id,
             actor_id=actor.user_id,
             actor_role=actor.role if isinstance(actor.role, UserRole) else None,
             entity="plan_bargain_call",
@@ -699,7 +1035,10 @@ async def book_plan_bargain_call(
         "client_name": client_name,
         "phone": phone,
         "topic": payload.target_topic,
-        "message": f"Negotiation call request logged successfully. Our Agency Director will call you at {phone} ({payload.preferred_time}).",
+        "message": (
+            "Your agency team received the call request and will contact you "
+            f"at {phone} ({payload.preferred_time})."
+        ),
     }
 
 

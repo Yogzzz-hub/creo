@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select, text
@@ -13,7 +13,6 @@ from sqlalchemy import select, text
 from app.db.session import async_session_factory
 from app.models.enums import AccountStatus, UserRole
 from app.models.user import ClientProfile, User
-from app.services.instagram_client import get_instagram_client
 from app.services.sla_service import breach_sweep
 from app.workers.celery_app import celery_app
 from app.workers.tasks.notify import send_notification_async
@@ -43,37 +42,41 @@ async def _get_active_agencies() -> list[uuid.UUID]:
 
 
 async def refresh_expiring_ig_async() -> int:
-    """Proactively refresh long-lived Instagram access tokens expiring within 3 days."""
-    ig_client = get_instagram_client()
-    now = datetime.now(UTC)
-    threshold = now + timedelta(days=3)
-    agencies = await _get_active_agencies()
-    total_refreshed = 0
+    """Verify Facebook grants; expired consent requires client reauthorization."""
+    from app.config import settings
+    from app.services.instagram_connection import configured, verify
 
-    for agency_id in agencies:
+    if not configured() or settings.INSTAGRAM_CLIENT_MODE != "real":
+        return 0
+    count = 0
+    for agency_id in await _get_active_agencies():
         async with async_session_factory() as db:
             async with tenant_session(db, agency_id=agency_id):
-                stmt = select(ClientProfile).where(
-                    ClientProfile.ig_token_expires_at.is_not(None),
-                    ClientProfile.ig_token_expires_at <= threshold,
+                ids = (
+                    (
+                        await db.execute(
+                            select(ClientProfile.user_id)
+                            .join(User, User.id == ClientProfile.user_id)
+                            .where(
+                                User.agency_id == agency_id,
+                                ClientProfile.ig_connection_status == "connected",
+                            )
+                        )
+                    )
+                    .scalars()
+                    .all()
                 )
-                res = await db.execute(stmt)
-                expiring = res.scalars().all()
-
-                refreshed_count = 0
-                for profile in expiring:
-                    try:
-                        refresh_data = await ig_client.refresh_access_token("existing_token")
-                        expires_in = refresh_data.get("expires_in", 5184000)
-                        profile.ig_token_expires_at = now + timedelta(seconds=expires_in)
-                        refreshed_count += 1
-                    except Exception as e:
-                        logger.error("Failed to refresh token for user %s: %s", profile.user_id, e)
-
-                await db.commit()
-                total_refreshed += refreshed_count
-    logger.info("Refreshed %d expiring Instagram tokens across all agencies", total_refreshed)
-    return total_refreshed
+                for client_id in ids:
+                    profile = (
+                        await db.execute(
+                            select(ClientProfile)
+                            .where(ClientProfile.user_id == client_id)
+                            .with_for_update()
+                        )
+                    ).scalar_one()
+                    await verify(db, profile)
+                    count += 1
+    return count
 
 
 async def refresh_kpis_async() -> str:

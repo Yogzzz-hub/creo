@@ -1,4 +1,4 @@
-import { ArrowRight, Check, LifeBuoy, PhoneCall, Sparkles } from "lucide-react";
+import { ArrowRight, Check, PhoneCall, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import {
@@ -54,7 +54,7 @@ export function ResumeOnboardingBanner({
     return (
       <section
         aria-label="Resume onboarding"
-        className="mb-6 rounded-2xl border border-[#D8BF9B]/25 bg-[#161F2D] px-4 py-3.5 sm:px-5 shadow-[0_4px_20px_rgba(5,8,16,0.35)] animate-page-in"
+        className="rounded-2xl border border-[#D8BF9B]/25 bg-[#161F2D] px-4 py-3.5 sm:px-5 shadow-[0_4px_20px_rgba(5,8,16,0.35)] animate-page-in"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
           <div className="flex min-w-0 flex-1 items-center gap-3.5">
@@ -123,24 +123,18 @@ export function ResumeOnboardingBanner({
                 <button
                   type="button"
                   onClick={() => setBargainOpen(true)}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/10 px-5 py-3 text-sm font-semibold text-[#BCCCE6] transition-colors hover:bg-[#7FA0D6]/20"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/10 px-5 py-3 text-sm font-semibold text-[#BCCCE6] cursor-pointer transition-colors enabled:hover:bg-[#293D58] enabled:hover:border-[#9CB8E5] enabled:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161F2D]"
                 >
                   <PhoneCall className="size-4" />
                   Call & bargain a custom plan
                 </button>
               )}
-              <Link
-                to="/portal/support"
-                className="inline-flex items-center gap-1.5 px-2 py-3 text-sm font-medium text-[#97A0B3] transition-colors hover:text-[#F8FAFC]"
-              >
-                <LifeBuoy className="size-4" />
-                Need help?
-              </Link>
+
             </div>
           </div>
 
           {/* Step tracker */}
-          <ol className="grid w-full grid-cols-5 gap-2 lg:max-w-md">
+          <ol className="grid w-full grid-cols-5 gap-2 lg:max-w-sm">
             {ONBOARDING_STEPS.map((s) => {
               const done = s.step <= completedSteps;
               const current = s.step === currentStep;

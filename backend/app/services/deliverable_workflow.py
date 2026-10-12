@@ -157,11 +157,39 @@ def _status(value: DeliverableStatus | str) -> DeliverableStatus:
 
 
 async def on_client_pod(db: AsyncSession, user_id: uuid.UUID, client_id: uuid.UUID) -> bool:
+    # 1. Direct assignment
     stmt = select(ClientAssignment.id).where(
         ClientAssignment.client_id == client_id,
         ClientAssignment.user_id == user_id,
     ).limit(1)
-    return (await db.execute(stmt)).scalar_one_or_none() is not None
+    if (await db.execute(stmt)).scalar_one_or_none() is not None:
+        return True
+
+    # 2. User reports to a lead who is assigned to this client
+    lead_id = (await db.execute(
+        select(StaffProfile.team_lead_id).where(StaffProfile.user_id == user_id)
+    )).scalar_one_or_none()
+    if lead_id is not None:
+        stmt = select(ClientAssignment.id).where(
+            ClientAssignment.client_id == client_id,
+            ClientAssignment.user_id == lead_id,
+        ).limit(1)
+        if (await db.execute(stmt)).scalar_one_or_none() is not None:
+            return True
+
+    # 3. User is a team lead and one of their reporting staff is assigned to this client
+    staff_ids = (await db.execute(
+        select(StaffProfile.user_id).where(StaffProfile.team_lead_id == user_id)
+    )).scalars().all()
+    if staff_ids:
+        stmt = select(ClientAssignment.id).where(
+            ClientAssignment.client_id == client_id,
+            ClientAssignment.user_id.in_(staff_ids),
+        ).limit(1)
+        if (await db.execute(stmt)).scalar_one_or_none() is not None:
+            return True
+
+    return False
 
 
 async def _reports_to(db: AsyncSession, user_id: uuid.UUID, lead_id: uuid.UUID) -> bool:
@@ -181,8 +209,17 @@ async def ensure_task_access(db: AsyncSession, actor: Actor, task: Task) -> None
     if role in _CREATIVE_ROLES:
         if task.assigned_to == actor.user_id:
             return
-        if task.assigned_to is None and await on_client_pod(db, actor.user_id, task.client_id):
-            return
+        if await on_client_pod(db, actor.user_id, task.client_id):
+            if task.assigned_to is None:
+                return
+            # Allow pod creatives to work on tasks assigned to admin/lead or pod peers
+            assigned_user = await db.get(User, task.assigned_to)
+            if (
+                assigned_user is None
+                or assigned_user.role not in _CREATIVE_ROLES
+                or await on_client_pod(db, task.assigned_to, task.client_id)
+            ):
+                return
         raise Forbidden("This task is assigned to another creative", code="TASK_NOT_ASSIGNED")
     if role == UserRole.TEAM_LEAD:
         if task.assigned_to == actor.user_id:
@@ -401,8 +438,13 @@ async def submit_task_deliverable(
             reason=f"Superseded by v{version}", commit=False,
         )
 
-    if task.assigned_to is None and actor.role in (*_CREATIVE_ROLES, UserRole.TEAM_LEAD):
-        task.assigned_to = actor.user_id
+    if actor.role in (*_CREATIVE_ROLES, UserRole.TEAM_LEAD):
+        if task.assigned_to is None:
+            task.assigned_to = actor.user_id
+        elif task.assigned_to != actor.user_id:
+            assigned_user = await db.get(User, task.assigned_to)
+            if assigned_user is None or assigned_user.role not in _CREATIVE_ROLES:
+                task.assigned_to = actor.user_id
     task.status = TaskStatus.INTERNAL_QA
 
     db.add(AuditLog(
@@ -514,13 +556,15 @@ async def _team_recipients(db: AsyncSession, deliverable: Deliverable, task: Tas
 
 
 async def client_approve(
-    db: AsyncSession, actor: Actor, deliverable: Deliverable, *, request_id: str | None = None
+    db: AsyncSession, actor: Actor, deliverable: Deliverable, *, request_id: str | None = None,
+    publishing_fingerprint: str | None = None,
 ) -> Deliverable:
     """Journey 1 step 15: approval unlocks download and moves the task to ready-to-publish."""
     task = await db.get(Task, deliverable.task_id) if deliverable.task_id else None
     await deliverable_state.transition(
         db, deliverable, DeliverableStatus.APPROVED,
         actor_id=actor.user_id, actor_role=actor.role, request_id=request_id, commit=False,
+        publishing_fingerprint=publishing_fingerprint,
     )
     label = type_label(task, deliverable)
     client_label = await _client_label(db, deliverable.client_id)

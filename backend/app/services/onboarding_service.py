@@ -1034,10 +1034,10 @@ async def notify_team_of_new_client_summary(
                 CREO PRODUCTION ENGINE • POD ASSIGNMENT
               </div>
               <h1 style="margin: 0; color: #FFFFFF; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">
-                New Client Assigned: {company_name}
+                New Client Assigned: {html.escape(str(company_name))}
               </h1>
               <p style="margin: 6px 0 0 0; color: #E2E8F0; font-size: 13px;">
-                Instagram: @{ig_handle} • Onboarding Complete & Calendar Drafted
+                Instagram: @{html.escape(str(ig_handle))} • Onboarding Complete & Calendar Drafted
               </p>
             </td>
           </tr>
@@ -1050,7 +1050,7 @@ async def notify_team_of_new_client_summary(
               </p>
               <div style="background-color: #EFF6FF; border-left: 4px solid #2B7BC4; padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
                 <p style="margin: 0; font-size: 13px; color: #1E3A8A; font-weight: 600;">
-                  You have been assigned as: <span style="color: #2B7BC4; font-weight: 800;">{role_title}</span>
+                  You have been assigned as: <span style="color: #2B7BC4; font-weight: 800;">{html.escape(str(role_title))}</span>
                 </p>
               </div>
 
@@ -1060,7 +1060,7 @@ async def notify_team_of_new_client_summary(
                   Core Strategic Positioning
                 </div>
                 <p style="margin: 0; font-size: 15px; font-weight: 700; color: #0D2137; font-style: italic; line-height: 1.5;">
-                  &ldquo;{positioning}&rdquo;
+                  &ldquo;{html.escape(str(positioning))}&rdquo;
                 </p>
               </div>
 
@@ -1111,7 +1111,7 @@ async def notify_team_of_new_client_summary(
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 24px;">
                 <tr>
                   <td align="center">
-                    <a href="{portal_link}" style="display: inline-block; background: linear-gradient(135deg, #2B7BC4 0%, #1E609A 100%); color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none; padding: 14px 28px; border-radius: 12px; box-shadow: 0 4px 12px rgba(43,123,196,0.3);">
+                    <a href="{html.escape(str(portal_link))}" style="display: inline-block; background: linear-gradient(135deg, #2B7BC4 0%, #1E609A 100%); color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none; padding: 14px 28px; border-radius: 12px; box-shadow: 0 4px 12px rgba(43,123,196,0.3);">
                       Open Client Production Workspace &rarr;
                     </a>
                   </td>

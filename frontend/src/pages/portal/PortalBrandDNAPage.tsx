@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { useSearchParams } from "react-router";
@@ -22,7 +23,11 @@ import {
   X,
   FileText,
   Type,
+  Trash2,
+  Download,
+  Loader2,
 } from "lucide-react";
+import { resolveAssetUrl } from "../../lib/media";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
 
@@ -73,6 +78,76 @@ export function PortalBrandDNAPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(tab === "edit-brand");
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalText, setSuccessModalText] = useState("Changes saved successfully!");
+  const [isUploading, setIsUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const isAnyModalOpen = isSuccessModalOpen || isEditModalOpen || isVersionModalOpen;
+    if (!isAnyModalOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsSuccessModalOpen(false);
+        setIsEditModalOpen(false);
+        setIsVersionModalOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isSuccessModalOpen, isEditModalOpen, isVersionModalOpen]);
+
+  const brandFiles: any[] = profile?.brand_dna?.files || [];
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setIsUploading(true);
+    let successCount = 0;
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file) continue;
+        const formData = new FormData();
+        formData.append("file", file);
+        await request("/api/v1/portal/brand/upload", {
+          method: "POST",
+          body: formData,
+        });
+        successCount++;
+      }
+      queryClient.invalidateQueries({ queryKey: ["portal-profile"] });
+      const firstFileName = files[0]?.name || "Asset";
+      setSuccessModalText(
+        successCount === 1
+          ? `"${firstFileName}" uploaded and saved to your brand assets!`
+          : `${successCount} brand assets uploaded and saved successfully!`
+      );
+      setIsSuccessModalOpen(true);
+    } catch (err: any) {
+      alert(err?.message || "Failed to upload asset. Please try again.");
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleDeleteFile = async (fileId: string) => {
+    setDeletingId(fileId);
+    try {
+      await request(`/api/v1/portal/brand/files/${fileId}`, {
+        method: "DELETE",
+      });
+      queryClient.invalidateQueries({ queryKey: ["portal-profile"] });
+    } catch (err: any) {
+      alert(err?.message || "Failed to delete file. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const updateProfileMutation = useMutation({
     mutationFn: async (payload: Record<string, any>) => {
@@ -194,10 +269,10 @@ export function PortalBrandDNAPage() {
 
   if (!gate.isComplete && isBrandTab) {
     return (
-      <div className="flex items-center justify-center py-6 sm:py-10">
+      <div className="w-full">
         <SubscriptionLockedState
           title="Brand DNA Locked"
-          description="Complete your onboarding setup to manage your brand DNA, visual assets, and brand guidelines."
+          description="Complete setup to manage your brand assets and guidelines."
         />
       </div>
     );
@@ -302,49 +377,64 @@ export function PortalBrandDNAPage() {
   };
 
   return (
-    <div className="animate-in fade-in duration-300 space-y-6 pb-12 relative">
+    <div className="w-full min-w-0 animate-in fade-in duration-300 space-y-4 relative">
       {/* ─────────────────────────────────────────────────────────── */}
-      {/* SUCCESS POPUP (CENTERED WITH WHOLE BG BLURRED)              */}
+      {/* SUCCESS POPUP (CENTERED VIA PORTAL WITH BODY SCROLL LOCKED) */}
       {/* ─────────────────────────────────────────────────────────── */}
-      {isSuccessModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl relative animate-in zoom-in-95 duration-200">
-            <button
-              type="button"
-              onClick={() => setIsSuccessModalOpen(false)}
-              className="absolute top-4 right-4 size-7 rounded-lg border border-[#2A3446] bg-[#0B111C] flex items-center justify-center text-[#97A0B3] hover:text-white transition-colors cursor-pointer"
+      {isSuccessModalOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+            onClick={() => setIsSuccessModalOpen(false)}
+          >
+            <div
+              className="bg-[#161F2D] border border-[#2A3446] rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl relative animate-in zoom-in-95 duration-200 m-auto"
+              onClick={(e) => e.stopPropagation()}
             >
-              <X className="size-4" />
-            </button>
+              <button
+                type="button"
+                onClick={() => setIsSuccessModalOpen(false)}
+                className="absolute top-4 right-4 size-7 rounded-lg border border-[#2A3446] bg-[#0B111C] flex items-center justify-center text-[#97A0B3] hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
 
-            <div className="size-14 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400 shadow-lg shadow-emerald-500/10">
-              <CheckCircle2 className="size-7" />
+              <div className="size-14 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400 shadow-lg shadow-emerald-500/10">
+                <CheckCircle2 className="size-7" />
+              </div>
+
+              <div className="space-y-1.5">
+                <h3 className="text-lg font-bold text-white tracking-tight">Changes Saved Successfully</h3>
+                <p className="text-xs text-[#97A0B3] leading-relaxed">
+                  {successModalText}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsSuccessModalOpen(false)}
+                className="w-full py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] font-bold text-xs hover:bg-white transition-all shadow-sm active:scale-95 cursor-pointer"
+              >
+                Done
+              </button>
             </div>
+          </div>,
+          document.body
+        )}
 
-            <div className="space-y-1.5">
-              <h3 className="text-lg font-bold text-white tracking-tight">Changes Saved Successfully</h3>
-              <p className="text-xs text-[#97A0B3] leading-relaxed">
-                {successModalText}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsSuccessModalOpen(false)}
-              className="w-full py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] font-bold text-xs hover:bg-white transition-all shadow-sm active:scale-95 cursor-pointer"
+      {/* ─────────────────────────────────────────────────────────── */}
+      {/* SUGGEST AN EDIT POPUP (CENTERED VIA PORTAL)                 */}
+      {/* ─────────────────────────────────────────────────────────── */}
+      {isEditModalOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto"
+            onClick={() => setIsEditModalOpen(false)}
+          >
+            <div
+              className="bg-[#161F2D] border border-[#2A3446] rounded-2xl max-w-2xl w-full p-6 sm:p-7 space-y-5 shadow-2xl relative m-auto animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
             >
-              Done
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─────────────────────────────────────────────────────────── */}
-      {/* SUGGEST AN EDIT POPUP (CENTERED WITH WHOLE BG BLURRED)      */}
-      {/* ─────────────────────────────────────────────────────────── */}
-      {isEditModalOpen && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl max-w-2xl w-full p-6 sm:p-7 space-y-5 shadow-2xl relative my-8 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
               <div className="flex items-center gap-2.5">
                 <div className="size-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
@@ -510,15 +600,23 @@ export function PortalBrandDNAPage() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ─────────────────────────────────────────────────────────── */}
-      {/* VERSION HISTORY MODAL (CENTERED WITH WHOLE BG BLURRED)      */}
+      {/* VERSION HISTORY MODAL (CENTERED VIA PORTAL)                 */}
       {/* ─────────────────────────────────────────────────────────── */}
-      {isVersionModalOpen && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200">
+      {isVersionModalOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+            onClick={() => setIsVersionModalOpen(false)}
+          >
+            <div
+              className="bg-[#161F2D] border border-[#2A3446] rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200 m-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
             <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
               <div className="flex items-center gap-2">
                 <History className="size-4 text-[#7FA0D6]" />
@@ -592,45 +690,30 @@ export function PortalBrandDNAPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#2A3446]">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
-              <span className="size-1.5 rounded-full bg-[#7FA0D6] animate-pulse" />
-              VERSION 3 · SYNCED WITH CREATIVE POD
-            </span>
-            <span className="text-xs text-[#97A0B3]">Updated on 2 Sep</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Brand DNA</h1>
-          <p className="text-xs sm:text-sm text-[#97A0B3] mt-0.5">
-            The strategic compass, visual system, and creative guidelines governing all content for your brand.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setIsVersionModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#2A3446] bg-[#0B111C] text-xs sm:text-[13px] font-medium text-white hover:bg-[#161F2D] hover:border-[#7FA0D6]/40 transition-colors cursor-pointer"
-          >
-            <History className="size-3.5 text-[#97A0B3]" /> Version history
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsEditModalOpen(true)}
-            className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs sm:text-[13px] font-bold hover:bg-white transition-all shadow-sm active:scale-95 cursor-pointer"
-          >
-            <Edit3 className="size-3.5" /> Suggest an edit
-          </button>
-        </div>
+      {/* Action Bar */}
+      <div className="flex items-center justify-end gap-3 pb-3">
+        <button
+          type="button"
+          onClick={() => setIsVersionModalOpen(true)}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#2A3446] bg-[#0B111C] text-xs sm:text-[13px] font-medium text-white hover:bg-[#161F2D] hover:border-[#7FA0D6]/40 transition-colors cursor-pointer"
+        >
+          <History className="size-3.5 text-[#97A0B3]" /> Version history
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsEditModalOpen(true)}
+          className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs sm:text-[13px] font-bold hover:bg-white transition-all shadow-sm active:scale-95 cursor-pointer"
+        >
+          <Edit3 className="size-3.5" /> Suggest an edit
+        </button>
       </div>
 
       {/* Bento Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {/* ── CARD 1: BRAND VOICE & PERSONALITY ── */}
         <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#2A3446] bg-[#0B111C]/50">
@@ -962,21 +1045,89 @@ export function PortalBrandDNAPage() {
                   </div>
                   <div>
                     <h5 className="text-xs font-bold text-white">Brand Assets & Logo Packs</h5>
-                    <p className="text-[11px] text-[#97A0B3]">Vector marks, font licenses, and product photography</p>
+                    <p className="text-[11px] text-[#97A0B3]">Vector marks, font licenses, guidelines, and raw media</p>
                   </div>
                 </div>
-                <label className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#2A3446] bg-[#161F2D] text-xs font-medium text-white hover:border-[#7FA0D6]/40 transition-colors cursor-pointer">
-                  <Upload className="size-3.5" /> Upload assets
+                <label className={`flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#2A3446] bg-[#161F2D] text-xs font-medium text-white hover:border-[#7FA0D6]/40 transition-colors cursor-pointer ${isUploading ? "opacity-60 cursor-not-allowed" : ""}`}>
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="size-3.5 animate-spin text-[#7FA0D6]" /> Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="size-3.5" /> Upload assets
+                    </>
+                  )}
                   <input
                     type="file"
+                    multiple
+                    disabled={isUploading}
+                    accept="image/*,video/*,.pdf,.doc,.docx,.zip,.ai,.psd,.eps,.svg,.ttf,.otf,.woff,.woff2"
                     className="hidden"
-                    onChange={() => {
-                      setIsSuccessModalOpen(true);
-                      setSuccessModalText("Assets uploaded and queued for creative pod review!");
-                    }}
+                    onChange={handleFileUpload}
                   />
                 </label>
               </div>
+
+              {/* Uploaded Files List */}
+              {brandFiles.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  {brandFiles.map((file: any) => {
+                    const isImg = file.mime_type?.startsWith("image/") || /\.(png|jpe?g|webp|gif|svg)$/i.test(file.name);
+                    const isVid = file.mime_type?.startsWith("video/") || /\.(mp4|mov|webm)$/i.test(file.name);
+                    const IconComp = isImg ? ImageIcon : isVid ? Film : FileText;
+
+                    return (
+                      <div
+                        key={file.id}
+                        className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-between gap-3 text-xs text-white hover:border-[#7FA0D6]/30 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="size-8 rounded-lg bg-[#161F2D] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] shrink-0">
+                            <IconComp className="size-4" />
+                          </div>
+                          <div className="min-w-0 text-left">
+                            <p className="font-semibold text-white truncate max-w-[200px] sm:max-w-[320px]">{file.name}</p>
+                            <p className="text-[10px] text-[#97A0B3]">
+                              {file.size || "Unknown size"}
+                              {file.uploaded_at ? ` · ${new Date(file.uploaded_at).toLocaleDateString()}` : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <a
+                            href={resolveAssetUrl(file.url || file.file_url)}
+                            target="_blank"
+                            rel="noreferrer"
+                            download={file.name}
+                            className="p-1.5 rounded-lg border border-[#2A3446] bg-[#161F2D] text-[#97A0B3] hover:text-white hover:border-[#7FA0D6]/40 transition-colors"
+                            title="Download file"
+                          >
+                            <Download className="size-3.5" />
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteFile(file.id)}
+                            disabled={deletingId === file.id}
+                            className="p-1.5 rounded-lg border border-[#2A3446] bg-[#161F2D] text-[#97A0B3] hover:text-rose-400 hover:border-rose-500/40 transition-colors disabled:opacity-50 cursor-pointer"
+                            title="Remove file"
+                          >
+                            {deletingId === file.id ? (
+                              <Loader2 className="size-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="size-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-2 text-center py-3 text-[11px] text-[#97A0B3]/80">
+                  No brand files uploaded yet. Vector marks, font licenses, and guidelines will appear here.
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -62,7 +62,7 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(minute="*/5"),
         "options": {"queue": "default"},
     },
-    # Beat publishes query with FOR UPDATE SKIP LOCKED every minute
+    # Beat dispatches durable jobs; workers serialize claims under row locks.
     "dispatch-due-publishes": {
         "task": "app.workers.tasks.scheduler.dispatch_due_publishes_task",
         "schedule": crontab(minute="*"),  # Every minute
@@ -80,7 +80,7 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(minute="*/15"),  # Every 15 minutes
         "options": {"queue": "default"},
     },
-    # Daily proactive long-lived Instagram token refresh at 03:00 IST
+    # Daily Facebook authorization health check; expired consent requires reconnect.
     "proactive-ig-token-refresh": {
         "task": "app.workers.tasks.maintenance.refresh_expiring_ig_task",
         "schedule": crontab(hour=3, minute=0),

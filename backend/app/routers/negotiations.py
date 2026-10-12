@@ -383,6 +383,9 @@ async def list_negotiations(
     """Admin retrieves all custom plan negotiations."""
     query = select(PlanNegotiation).order_by(desc(PlanNegotiation.created_at))
 
+    if actor.role != UserRole.SUPER_ADMIN:
+        query = query.where(PlanNegotiation.agency_id == actor.agency_id)
+
     if negotiation_id:
         query = query.where(PlanNegotiation.id == negotiation_id)
     if status_filter:

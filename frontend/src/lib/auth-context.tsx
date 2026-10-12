@@ -5,6 +5,15 @@ import { getAuthToken, setAuthToken, clearAuthToken } from "./auth-token";
 import { queryClient } from "./query-client";
 
 const USER_CACHE_KEY = "creo_auth_user";
+export const GOOGLE_OAUTH_STATE_KEY = "creo_google_oauth_state";
+
+function rememberGoogleState(state: string): void {
+  try {
+    sessionStorage.setItem(GOOGLE_OAUTH_STATE_KEY, state);
+  } catch {
+    // sessionStorage unavailable
+  }
+}
 
 function readCachedUser(): AuthUser | null {
   try {
@@ -49,6 +58,22 @@ export interface AuthUser {
   onboarding_status?: string;
   terms_accepted?: boolean;
   must_reset_password?: boolean;
+  /** Linked sign-in methods for this one account: "password", "google". */
+  sign_in_methods?: string[];
+}
+
+export interface RegistrationCodeResult {
+  status: "sent";
+  message: string;
+  email: string;
+  email_delivered: true;
+  expires_in_seconds: number;
+}
+
+export interface PasswordResetVerification {
+  reset_token: string;
+  email: string;
+  sign_in_methods: string[];
 }
 
 interface AuthContextType {
@@ -59,11 +84,12 @@ interface AuthContextType {
   verifyOtp: (email: string, code: string, full_name?: string) => Promise<AuthUser>;
   loginWithPassword: (email: string, password: string) => Promise<AuthUser>;
   register: (email: string, password: string, full_name?: string) => Promise<AuthUser>;
-  registerIntent: (email: string, password: string, full_name?: string) => Promise<{ status: string; message: string }>;
-  resendRegistration: (email: string) => Promise<{ status: string; message: string }>;
+  registerIntent: (email: string, password: string, full_name?: string) => Promise<RegistrationCodeResult>;
+  resendRegistration: (email: string) => Promise<RegistrationCodeResult>;
   verifyRegistration: (email: string, code: string, password?: string, full_name?: string) => Promise<AuthUser>;
   forgotPassword: (email: string) => Promise<{ status: string; message: string }>;
-  verifyResetOtp: (email: string, code: string) => Promise<AuthUser>;
+  verifyResetOtp: (email: string, code: string) => Promise<PasswordResetVerification>;
+  resetPassword: (resetToken: string, newPassword: string) => Promise<AuthUser>;
   setMandatoryPassword: (newPassword: string) => Promise<void>;
   getGoogleAuthUrl: () => Promise<string>;
   logout: () => Promise<void>;
@@ -187,14 +213,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const registerIntent = async (email: string, password: string, full_name?: string) => {
-    return await request<{ status: string; message: string }>("/api/v1/auth/register-intent", {
+    return await request<RegistrationCodeResult>("/api/v1/auth/register-intent", {
       method: "POST",
       body: JSON.stringify({ email, password, full_name }),
     });
   };
 
   const resendRegistration = async (email: string) => {
-    return await request<{ status: string; message: string }>("/api/v1/auth/resend-registration", {
+    return await request<RegistrationCodeResult>("/api/v1/auth/resend-registration", {
       method: "POST",
       body: JSON.stringify({ email }),
     });
@@ -217,10 +243,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  // Verifying the code only proves email ownership; the session starts once the new password is saved.
   const verifyResetOtp = async (email: string, code: string) => {
-    const res = await request<{ access_token: string; user: AuthUser }>("/api/v1/auth/verify-reset-otp", {
+    return await request<PasswordResetVerification>("/api/v1/auth/verify-reset-otp", {
       method: "POST",
       body: JSON.stringify({ email, code }),
+    });
+  };
+
+  const resetPassword = async (resetToken: string, newPassword: string) => {
+    const res = await request<{ access_token: string; user: AuthUser }>("/api/v1/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ reset_token: resetToken, new_password: newPassword }),
     });
     setToken(res.access_token);
     setUser(res.user);
@@ -243,10 +277,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const getGoogleAuthUrl = async () => {
     const callbackUrl = window.location.origin + "/auth/google/callback";
     try {
-      const res = await request<{ url: string }>(
+      const res = await request<{ url: string; state: string }>(
         `/api/v1/auth/google/url?redirect_uri=${encodeURIComponent(callbackUrl)}`
       );
-      if (res?.url) return res.url;
+      if (res?.url) {
+        rememberGoogleState(res.state);
+        return res.url;
+      }
     } catch (e) {
       console.warn("Backend /auth/google/url request failed, using client OAuth fallback", e);
     }
@@ -254,7 +291,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const clientId =
       (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) ||
       "810637569983-c6evh2ce0evjkgdmsgcicghl4lmnvfer.apps.googleusercontent.com";
-    const state = Math.random().toString(36).substring(2);
+    const state = crypto.randomUUID().replace(/-/g, "");
+    rememberGoogleState(state);
     return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&response_type=code&scope=openid%20email%20profile&redirect_uri=${encodeURIComponent(
       callbackUrl
     )}&state=${state}&access_type=offline&prompt=consent`;
@@ -289,6 +327,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         verifyRegistration,
         forgotPassword,
         verifyResetOtp,
+        resetPassword,
         setMandatoryPassword,
         getGoogleAuthUrl,
         logout,

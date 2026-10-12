@@ -1,3 +1,4 @@
+import { PublishingControl, PublishingQueue } from "../../components/ops/PublishingPanel";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
@@ -31,6 +32,8 @@ import {
   validateUploadFile,
 } from "../../lib/deliverables-api";
 import { fetchPodDashboard, type PodDashboardData, type PodTask } from "../../lib/ops-api";
+import { StoryApprovalModal } from "../../components/ops/StoryApprovalModal";
+import { shouldShowTaskForUser, getEligibleDeliverableTypes } from "../../lib/creative-roles";
 
 type Column = "assigned" | "production" | "qa" | "review";
 
@@ -104,7 +107,6 @@ export function MemberTaskBoardPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
-  const isCreative = user?.role === "editor" || user?.role === "designer" || user?.role === "team_member";
 
   const { data, isLoading, isError, error, refetch } = useQuery<PodDashboardData>({
     queryKey: ["pod_dashboard", user?.id, undefined],
@@ -115,7 +117,7 @@ export function MemberTaskBoardPage() {
   const clients = data?.clients || [];
   const leadName = data?.pod?.lead?.name || "your Pod Lead";
 
-  // Creatives see their own and unclaimed work; leads see the pod. Admins manage from the admin console.
+  // Creatives see their own work and unassigned role-matched tasks; leads/admins see the full pod.
   const tasks = useMemo(() => {
     if (!data?.tasks || isAdmin) return [] as { task: PodTask; column: Column }[];
     const buckets: (keyof PodDashboardData["tasks"])[] = [
@@ -123,10 +125,10 @@ export function MemberTaskBoardPage() {
     ];
     return buckets.flatMap((bucket) =>
       (data.tasks[bucket] || [])
-        .filter((t) => !isCreative || !t.assigned_to || t.assigned_to === user?.id)
+        .filter((t) => shouldShowTaskForUser(t, user))
         .map((task) => ({ task, column: columnOf(bucket) })),
     );
-  }, [data, isAdmin, isCreative, user?.id]);
+  }, [data, isAdmin, user]);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -209,12 +211,24 @@ export function MemberTaskBoardPage() {
 
   // ── New task modal ──
   const [createOpen, setCreateOpen] = useState(false);
+  const [storyApprovalModalOpen, setStoryApprovalModalOpen] = useState(false);
   const [newClientId, setNewClientId] = useState("");
-  const [newType, setNewType] = useState("reel");
+  const eligibleFormats = getEligibleDeliverableTypes(user?.role);
+  const availableFormats = eligibleFormats && eligibleFormats.length > 0
+    ? eligibleFormats
+    : (["reel", "static_post", "carousel", "story", "shoot_day"] as const);
+  const defaultFormat: string = availableFormats[0] || "reel";
+  const [newType, setNewType] = useState<string>(() => defaultFormat);
   const [newTitle, setNewTitle] = useState("");
   const [newBrief, setNewBrief] = useState("");
   const [newDue, setNewDue] = useState("");
   const [startNow, setStartNow] = useState(false);
+
+  useEffect(() => {
+    if (availableFormats.length > 0 && !availableFormats.includes(newType)) {
+      setNewType(availableFormats[0] || "reel");
+    }
+  }, [availableFormats, newType]);
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -373,6 +387,14 @@ export function MemberTaskBoardPage() {
                   <span>Add Task</span>
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => setStoryApprovalModalOpen(true)}
+                className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] hover:border-[#7FA0D6]/50 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shadow-2xs"
+              >
+                <Sparkles className="size-3.5 text-[#7FA0D6]" />
+                <span>Story & Approval Request</span>
+              </button>
             </div>
           </div>
         </div>
@@ -536,6 +558,7 @@ export function MemberTaskBoardPage() {
                       <p className="text-[11px] text-[#97A0B3]">
                         {formatLabel(task.deliverable_type)} · v{task.deliverable?.version ?? 1}
                       </p>
+                      {task.deliverable?.id && <PublishingControl deliverableId={task.deliverable.id} />}
                     </div>
                   );
                 })}
@@ -544,6 +567,7 @@ export function MemberTaskBoardPage() {
             </div>
           </div>
         )}
+        <PublishingQueue />
       </motion.main>
 
       {/* Upload & submit modal */}
@@ -764,10 +788,11 @@ export function MemberTaskBoardPage() {
               <div>
                 <label htmlFor="task-format" className="block font-bold text-[#F1F5F9] mb-1">Format</label>
                 <NativeSelect id="task-format" value={newType} onChange={(e) => setNewType(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C]">
-                  <option value="reel">Reel</option>
-                  <option value="static_post">Poster</option>
-                  <option value="carousel">Carousel</option>
-                  <option value="story">Story</option>
+                  {availableFormats.map((fmt: string) => (
+                    <option key={fmt} value={fmt}>
+                      {formatLabel(fmt)}
+                    </option>
+                  ))}
                 </NativeSelect>
               </div>
               <div>
@@ -797,6 +822,14 @@ export function MemberTaskBoardPage() {
           </form>
         </div>
       )}
+
+      {/* Story & Approval Modal */}
+      <StoryApprovalModal
+        isOpen={storyApprovalModalOpen}
+        onClose={() => setStoryApprovalModalOpen(false)}
+        onSuccess={() => refreshBoard()}
+        defaultClientId={clients[0]?.id}
+      />
     </div>
   );
 }

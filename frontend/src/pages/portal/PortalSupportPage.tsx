@@ -130,6 +130,7 @@ export function PortalSupportPage() {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (createTicketMutation.isPending) return;
     if (!subject.trim() || !description.trim()) {
       showToast("Please fill in both subject and description.");
       return;
@@ -143,7 +144,8 @@ export function PortalSupportPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-6xl mx-auto space-y-6 pb-16 min-w-0">
+
 
       {/* ── Retainer Notice Banner (Informative & Actionable, Never Blocking Support) ── */}
       {isExpired && !isStaffOrAdmin && (
@@ -163,7 +165,7 @@ export function PortalSupportPage() {
             <button
               type="button"
               onClick={() => setBargainModalOpen(true)}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] hover:text-white hover:border-[#7FA0D6]/50 text-xs font-bold transition-colors cursor-pointer"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] text-xs font-bold cursor-pointer transition-colors enabled:hover:bg-[#293D58] enabled:hover:border-[#9CB8E5] enabled:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161F2D]"
             >
               <PhoneCall className="size-3.5" />
               <span>Call & Bargain</span>
@@ -180,12 +182,12 @@ export function PortalSupportPage() {
       )}
 
       {/* ── Main Help Section ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
         {/* ── Left Column: Ask your pod (Form) ── */}
-        <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
+        <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] min-w-0">
           <h3 className="text-base font-semibold text-white mb-5">Ask your pod</h3>
 
-          <form onSubmit={handleFormSubmit} className="space-y-5">
+          <form onSubmit={handleFormSubmit} className="space-y-5 min-w-0">
             {/* Category Pills */}
             <div>
               <label className="block text-sm text-[#97A0B3] mb-2">What is it about?</label>
@@ -195,10 +197,11 @@ export function PortalSupportPage() {
                     key={cat}
                     type="button"
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-4 py-2 rounded-full text-[13px] font-medium transition-colors ${
+                    aria-pressed={selectedCategory === cat}
+                    className={`min-h-11 px-4 py-2 rounded-full text-[13px] font-medium cursor-pointer transition-colors ${
                       selectedCategory === cat
-                        ? "bg-[#BCCCE6] text-[#0B111C]"
-                        : "bg-transparent border border-[#2A3446] text-white hover:bg-[#161F2D]"
+                        ? "bg-[#BCCCE6] text-[#0B111C] hover:bg-[#D2DDF0]"
+                        : "bg-transparent border border-[#2A3446] text-[#BCCCE6] hover:bg-[#222D3E] hover:border-[#7FA0D6] hover:text-white"
                     }`}
                   >
                     {cat}
@@ -209,25 +212,27 @@ export function PortalSupportPage() {
 
             {/* Subject Input */}
             <div>
-              <label className="block text-sm text-[#97A0B3] mb-2">Subject</label>
+              <label htmlFor="support-subject" className="block text-sm text-[#97A0B3] mb-2">Subject</label>
               <input
+                id="support-subject"
                 type="text"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Briefly summarize your request..."
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-lg p-3 text-sm text-white placeholder-[#97A0B3] focus:outline-none focus:border-white/[0.2] transition-colors"
+                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 text-sm text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-2 focus:ring-[#7FA0D6]/20 transition-colors"
               />
             </div>
 
             {/* Message */}
             <div>
-              <label className="block text-sm text-[#97A0B3] mb-2">Message</label>
+              <label htmlFor="support-message" className="block text-sm text-[#97A0B3] mb-2">Message</label>
               <textarea
-                rows={4}
+                id="support-message"
+                rows={5}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe your issue or request..."
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-lg p-3 text-sm text-white placeholder-[#97A0B3] focus:outline-none focus:border-white/[0.2] resize-none transition-colors"
+                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 text-sm text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-2 focus:ring-[#7FA0D6]/20 resize-none transition-colors"
               />
             </div>
 
@@ -235,24 +240,24 @@ export function PortalSupportPage() {
             <div className="flex justify-end">
               <button
                 type="submit"
-                onClick={handleFormSubmit}
                 disabled={createTicketMutation.isPending || !subject.trim() || !description.trim()}
-                className="w-10 h-10 rounded-full bg-[#BCCCE6] text-[#0B111C] flex items-center justify-center hover:bg-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="min-h-11 px-5 gap-2 rounded-xl bg-[#BCCCE6] text-[#0B111C] text-sm font-semibold flex items-center justify-center enabled:hover:bg-[#D2DDF0] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {createTicketMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Send className="w-4 h-4" />
                 )}
+                {createTicketMutation.isPending ? "Sending..." : "Send request"}
               </button>
             </div>
           </form>
         </div>
 
         {/* ── Right Column: Your requests + Common questions ── */}
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           {/* Your Requests */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
+          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] min-w-0">
             <h3 className="text-base font-semibold text-white mb-4">Your requests</h3>
 
             {ticketsList.length === 0 ? (
@@ -292,7 +297,7 @@ export function PortalSupportPage() {
           </div>
 
           {/* Common Questions (Accordion) */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
+          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] min-w-0">
             <h3 className="text-base font-semibold text-white mb-4">Common questions</h3>
 
             <div className="divide-y divide-white/[0.05]">
@@ -301,7 +306,9 @@ export function PortalSupportPage() {
                   <button
                     type="button"
                     onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
-                    className="w-full flex items-center justify-between py-4 text-left group"
+                    aria-expanded={expandedFaq === i}
+                    aria-controls={`support-faq-${i}`}
+                    className="w-full flex items-center justify-between rounded-xl px-3 py-4 text-left group cursor-pointer transition-colors hover:bg-[#222D3E]"
                   >
                     <span className="text-sm text-[#97A0B3] group-hover:text-white transition-colors pr-4">{item.q}</span>
                     <Plus
@@ -311,7 +318,7 @@ export function PortalSupportPage() {
                     />
                   </button>
                   {expandedFaq === i && (
-                    <div className="pb-4 text-sm text-[#97A0B3] animate-in fade-in slide-in-from-top-2">
+                    <div id={`support-faq-${i}`} className="px-3 pb-4 text-sm leading-6 text-[#97A0B3] animate-in fade-in slide-in-from-top-2">
                       {item.a}
                     </div>
                   )}
@@ -324,7 +331,7 @@ export function PortalSupportPage() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#161F2D] text-white px-5 py-3 rounded-xl shadow-2xl border border-white/[0.1] text-sm font-medium flex items-center gap-2">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 max-w-[calc(100vw-2rem)] z-50 bg-[#161F2D] text-white px-5 py-3 rounded-xl shadow-2xl border border-white/[0.1] text-sm font-medium flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-[#BCCCE6]" />
           {toastMessage}
           <button type="button" onClick={() => setToastMessage(null)} className="ml-2 text-[#97A0B3] hover:text-white cursor-pointer">

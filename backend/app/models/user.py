@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, LargeBinary, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, LargeBinary, String, Text, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,6 +23,8 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __table_args__ = (
         Index("idx_users_role_created_at", "role", "created_at"),
         Index("idx_users_agency", "agency_id", "role", "created_at"),
+        # One account per address regardless of case; every auth lookup uses lower(email).
+        Index("uq_users_email_lower", text("lower(email)"), unique=True),
     )
 
     agency_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -40,7 +42,11 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     auth_id: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Sign-in methods linked to this account: a password, a Google identity, or both.
     hashed_password: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    google_sub: Mapped[str | None] = mapped_column(
+        String(255), unique=True, nullable=True, index=True
+    )
     role: Mapped[UserRole] = mapped_column(
         pg_enum(UserRole, "user_role"),
         default=UserRole.CLIENT,
@@ -99,6 +105,11 @@ class ClientProfile(Base, TimestampMixin):
     instagram_username: Mapped[str | None] = mapped_column(String(255), nullable=True)
     instagram_user_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     ig_token_encrypted: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    ig_connection_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    ig_connection_status: Mapped[str] = mapped_column(
+        String(30), default="disconnected", server_default="disconnected"
+    )
+    ig_metadata: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, server_default="{}")
     ig_token_expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

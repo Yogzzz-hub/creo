@@ -1,154 +1,96 @@
-"""Email service providing asynchronous SMTP delivery with Creo branding and high inbox deliverability."""
+"""Asynchronous transactional email delivery via Brevo HTTPS or SMTP."""
 
 from __future__ import annotations
 
-import asyncio
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.utils import formataddr, formatdate, make_msgid
-import smtplib
-from typing import Any
+from email.utils import formataddr, parseaddr
+from html import escape
 
 from app.config import settings
 from app.core.logging import get_logger
 
-import socket
-
 logger = get_logger(__name__)
 
 
-def _create_ipv4_connection(address: tuple[str, int], timeout: float = 10.0, source_address: Any = None) -> socket.socket:
-    """Force IPv4 (AF_INET) socket connection to prevent [Errno 101] Network is unreachable on cloud container networks."""
-    host, port = address
-    err = None
-    for res in socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM):
-        af, socktype, proto, canonname, sa = res
-        sock = None
-        try:
-            sock = socket.socket(af, socktype, proto)
-            if timeout:
-                sock.settimeout(timeout)
-            if source_address:
-                sock.bind(source_address)
-            sock.connect(sa)
-            return sock
-        except socket.error as e:
-            err = e
-            if sock is not None:
-                sock.close()
-    if err is not None:
-        raise err
-    raise socket.error(f"Could not resolve IPv4 for {host}:{port}")
-
-
-class IPv4SMTP(smtplib.SMTP):
-    def _get_socket(self, host: str, port: int, timeout: float) -> socket.socket:
-        return _create_ipv4_connection((host, port), timeout, self.source_address)
-
-
-class IPv4SMTP_SSL(smtplib.SMTP_SSL):
-    def _get_socket(self, host: str, port: int, timeout: float) -> socket.socket:
-        new_socket = _create_ipv4_connection((host, port), timeout, self.source_address)
-        server_hostname = getattr(self, "_host", host) or host
-        return self.context.wrap_socket(new_socket, server_hostname=server_hostname)
-
-
-def _send_smtp_sync(
+async def _send_via_smtp(
     to_email: str,
     subject: str,
     html_content: str,
     text_content: str | None = None,
+    from_email: str = "",
+    from_name: str = "Creo",
 ) -> bool:
-    """Send an email synchronously over SSL or TLS via configured SMTP credentials with RFC-compliant anti-spam headers."""
-    smtp_pw = (settings.SMTP_PASSWORD or "").strip().strip('"').strip("'")
-    smtp_user = (settings.SMTP_USERNAME or "").strip()
-    sender_email = (settings.SMTP_FROM_EMAIL or smtp_user).strip()
-    clean_to = to_email.strip()
+    """Send transactional email via SMTP relay (sync wrapped in asyncio.to_thread)."""
+    import asyncio
+    import smtplib
+    import ssl
+    from email.message import EmailMessage
 
-    if not smtp_user or not smtp_pw or not sender_email:
-        logger.error("email_provider_not_configured")
+    host = (settings.SMTP_SERVER or settings.SMTP_HOST).strip()
+    port = int(settings.SMTP_PORT)
+    username = settings.SMTP_USERNAME.strip()
+    password = settings.SMTP_PASSWORD.strip()
+    # Compatibility for installations that previously stored an SMTP key here.
+    if not password and settings.BREVO_API_KEY.strip().startswith("xsmtpsib-"):
+        password = settings.BREVO_API_KEY.strip()
+
+    sender_name, sender_email = parseaddr(from_email or settings.SMTP_FROM_EMAIL.strip())
+    if (
+        not host or not username or not password or "@" not in sender_email
+        or sender_email.lower().endswith("@smtp-brevo.com")
+    ):
+        logger.error(
+            "smtp_not_configured",
+            hint="Set SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, and a verified SMTP_FROM_EMAIL",
+        )
         return False
 
-    # Primary multipart/alternative container
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    # Use standard formataddr to avoid malformed header penalties
-    msg["From"] = formataddr(("Creo", sender_email))
-    msg["To"] = clean_to
-    msg["Reply-To"] = sender_email
-    msg["Date"] = formatdate(localtime=True)
-    
-    domain = sender_email.split("@")[-1] if "@" in sender_email else "creo.agency"
-    msg["Message-ID"] = make_msgid(domain=domain)
-    
-    # Anti-spam transactional email headers recognized by Google, Microsoft, Yahoo
-    msg["Auto-Submitted"] = "auto-generated"
-    msg["X-Auto-Response-Suppress"] = "All"
-    msg["X-Priority"] = "3"
-    msg["MIME-Version"] = "1.0"
-
-    # Always attach clean plain-text first (RFC alternative order requirement: plain text first, then html)
-    if text_content:
-        msg.attach(MIMEText(text_content, "plain", "utf-8"))
-    else:
-        msg.attach(MIMEText(subject, "plain", "utf-8"))
-
-    # HTML part second
-    msg.attach(MIMEText(html_content, "html", "utf-8"))
-
-    # Establish SMTP connection: direct SSL (port 465) or STARTTLS (port 587)
-    server = None
-    try:
-        if settings.SMTP_USE_SSL:
-            try:
-                server = IPv4SMTP_SSL(
-                    settings.SMTP_HOST,
-                    settings.SMTP_PORT,
-                    timeout=5,
-                )
-            except Exception as e_ipv4:
-                if isinstance(e_ipv4, (TimeoutError, socket.timeout)):
-                    raise e_ipv4
-                server = smtplib.SMTP_SSL(
-                    settings.SMTP_HOST,
-                    settings.SMTP_PORT,
-                    timeout=5,
-                )
-        else:
-            try:
-                server = IPv4SMTP(
-                    settings.SMTP_HOST,
-                    settings.SMTP_PORT,
-                    timeout=5,
-                )
-            except Exception as e_ipv4:
-                if isinstance(e_ipv4, (TimeoutError, socket.timeout)):
-                    raise e_ipv4
-                server = smtplib.SMTP(
-                    settings.SMTP_HOST,
-                    settings.SMTP_PORT,
-                    timeout=5,
-                )
-            server.starttls()
-
-        server.login(smtp_user, smtp_pw)
-        server.send_message(msg)
+    def _sync_smtp_send() -> bool:
+        server = None
         try:
-            server.quit()
-        except Exception:
-            pass
-        logger.info("smtp_email_sent_successfully", to_email=clean_to, subject=subject, port=settings.SMTP_PORT)
-        return True
-    except Exception as e_primary:
-        logger.warning("smtp_primary_attempt_failed", port=settings.SMTP_PORT, error=str(e_primary))
-    finally:
-        if server is not None:
-            try:
-                server.close()
-            except Exception:
-                pass
+            msg = EmailMessage()
+            msg["Subject"] = subject
+            msg["From"] = formataddr((sender_name or from_name, sender_email))
+            msg["To"] = to_email
+            msg.set_content(text_content or "")
+            if html_content:
+                msg.add_alternative(html_content, subtype="html")
 
-    return False
+            # Submission ports use STARTTLS, even if an old SSL flag remains.
+            use_ssl = port == 465 or (port not in (587, 2525) and settings.SMTP_USE_SSL)
+            context = ssl.create_default_context()
+            if use_ssl:
+                server = smtplib.SMTP_SSL(host, port, timeout=12.0, context=context)
+            else:
+                server = smtplib.SMTP(host, port, timeout=12.0)
+                server.ehlo()
+                if port in (587, 2525) or settings.SMTP_USE_TLS:
+                    server.starttls(context=context)
+                    server.ehlo()
+            server.login(username, password)
+            refused = server.send_message(msg, from_addr=sender_email, to_addrs=[to_email])
+            if refused:
+                logger.error("smtp_recipient_refused", host=host)
+                return False
+            logger.info("smtp_email_accepted", to_email=to_email, host=host)
+            return True
+        except Exception as exc:
+            logger.error(
+                "smtp_email_failed", error_type=type(exc).__name__,
+                smtp_code=getattr(exc, "smtp_code", None), host=host,
+            )
+            return False
+        finally:
+            # A failed QUIT after acceptance must not trigger duplicate delivery.
+            if server is not None:
+                try:
+                    server.quit()
+                except Exception:
+                    try:
+                        server.close()
+                    except Exception:
+                        pass
+
+    return await asyncio.to_thread(_sync_smtp_send)
 
 
 async def send_email(
@@ -157,37 +99,99 @@ async def send_email(
     html_content: str,
     text_content: str | None = None,
 ) -> bool:
-    """Non-blocking email delivery executing SMTP or Resend HTTP API on Port 443."""
-    if settings.RESEND_API_KEY:
-        try:
-            import httpx
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.post(
-                    "https://api.resend.com/emails",
-                    headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
-                    json={
-                        "from": settings.RESEND_FROM_EMAIL,
-                        "to": [to_email],
-                        "subject": subject,
-                        "html": html_content,
-                        "text": text_content,
-                    },
-                )
-                if resp.status_code < 400:
-                    logger.info("resend_email_sent_successfully", to_email=to_email)
-                    return True
-                else:
-                    logger.warning("resend_api_failed", status=resp.status_code, body=resp.text)
-        except Exception as e_resend:
-            logger.warning("resend_api_exception", error=str(e_resend))
+    """Submit an email to Brevo's transactional API or SMTP relay.
 
-    return await asyncio.to_thread(
-        _send_smtp_sync,
-        to_email=to_email,
-        subject=subject,
-        html_content=html_content,
-        text_content=text_content,
-    )
+    Returns True on success, False on failure. Never raises — all errors are
+    caught, logged, and surfaced as a boolean so callers can decide what to do.
+    """
+    api_key = (settings.BREVO_API_KEY or "").strip()
+    display_name, from_email = parseaddr((settings.BREVO_FROM_EMAIL or "").strip())
+    from_name = display_name or settings.BREVO_FROM_NAME.strip() or "Creo"
+    clean_to = to_email.strip()
+
+    if not clean_to or "@" not in clean_to or any(c in clean_to + subject for c in "\r\n"):
+        logger.error("email_headers_invalid")
+        return False
+
+    # If the provided key is an SMTP key (starts with xsmtpsib-), or SMTP_PASSWORD is set without API key, use SMTP relay
+    if api_key.startswith("xsmtpsib-") or (not api_key and (settings.SMTP_PASSWORD or "").strip()):
+        return await _send_via_smtp(
+            clean_to,
+            subject,
+            html_content,
+            text_content,
+            from_email=from_email,
+            from_name=from_name,
+        )
+
+    if not api_key or not from_email:
+        # Check if SMTP is configured as fallback
+        if (settings.SMTP_PASSWORD or "").strip() or (settings.SMTP_USERNAME or "").strip():
+            return await _send_via_smtp(
+                clean_to,
+                subject,
+                html_content,
+                text_content,
+                from_email=from_email,
+                from_name=from_name,
+            )
+        logger.error(
+            "brevo_not_configured",
+            hint="Set BREVO_API_KEY and BREVO_FROM_EMAIL to a verified Brevo sender",
+        )
+        return False
+
+    payload: dict = {
+        "sender": {"name": from_name, "email": from_email},
+        "to": [{"email": clean_to}],
+        "subject": subject,
+        "htmlContent": html_content,
+    }
+    if text_content:
+        payload["textContent"] = text_content
+
+    try:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(
+                "https://api.brevo.com/v3/smtp/email",
+                headers={
+                    "api-key": api_key,
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+
+            if 200 <= resp.status_code < 300:
+                resp_data = resp.json()
+                message_id = resp_data.get("messageId")
+                if not message_id:
+                    logger.error("brevo_message_id_missing", status=resp.status_code)
+                    return False
+                logger.info(
+                    "brevo_email_accepted",
+                    to_email=clean_to,
+                    message_id=message_id,
+                )
+                return True
+            else:
+                logger.error(
+                    "brevo_api_error",
+                    status=resp.status_code,
+                    # Do not log provider bodies that may echo message content.
+                    to_email=clean_to,
+                )
+                return False
+
+    except Exception as exc:
+        logger.error(
+            "brevo_api_exception",
+            error_type=type(exc).__name__,
+            to_email=clean_to,
+        )
+        return False
 
 
 async def send_otp_email(to_email: str, otp_code: str) -> bool:
@@ -284,3 +288,327 @@ async def send_otp_email(to_email: str, otp_code: str) -> bool:
 </html>"""
 
     return await send_email(to_email, subject, html_content, text_content)
+
+
+async def send_payment_verification_request_email(
+    to_email: str,
+    client_name: str,
+    plan_name: str,
+    amount: float,
+    payment_method: str,
+    is_admin: bool = False,
+    notes: str = "",
+) -> bool:
+    """Intimate Admin or Client when an offline payment verification request is submitted."""
+    formatted_amount = f"₹{int(amount):,}"
+    method_upper = payment_method.upper()
+
+    if is_admin:
+        subject = f"[Action Required] Offline Payment Verification: {client_name} ({method_upper})"
+        title = "New Offline Payment Verification Request"
+        badge_bg = "#FEF3C7"
+        badge_color = "#92400E"
+        badge_text = "Pending Admin Review"
+        action_text = "Review in Admin Portal"
+        action_url = "https://creo.yogalakshmibaskar20.workers.dev/admin/finance"
+        intro = f"A client has submitted an offline payment verification request ({escape(method_upper)}) for the <strong>{escape(plan_name)}</strong> plan."
+        details_html = f"""
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Client Name</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 600; text-align: right;">{escape(client_name)}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Client Email</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 600; text-align: right;">{escape(to_email) if not is_admin else ""}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Plan</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 600; text-align: right;">{escape(plan_name)}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Amount</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 700; text-align: right;">{formatted_amount}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Payment Method</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 600; text-align: right;">{escape(method_upper)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Reference / Note</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 500; text-align: right;">{escape(notes or 'None provided')}</td>
+          </tr>
+        """
+        text_content = (
+            f"NEW OFFLINE PAYMENT REQUEST\n\n"
+            f"Client: {client_name}\n"
+            f"Plan: {plan_name}\n"
+            f"Amount: {formatted_amount}\n"
+            f"Method: {method_upper}\n"
+            f"Note: {notes}\n\n"
+            f"Review and approve in Admin Portal: {action_url}"
+        )
+    else:
+        subject = "Payment Verification Request Received — Creo"
+        title = "Payment Verification Request Received"
+        badge_bg = "#EFF6FF"
+        badge_color = "#1E40AF"
+        badge_text = "Under Agency Review"
+        action_text = "View Onboarding Status"
+        action_url = "https://creo.yogalakshmibaskar20.workers.dev/onboarding?step=3"
+        intro = f"Hi {escape(client_name)}, we received your offline {escape(method_upper)} payment verification request for the <strong>{escape(plan_name)}</strong> plan ({formatted_amount})."
+        details_html = f"""
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Selected Plan</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 600; text-align: right;">{escape(plan_name)}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Amount</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 700; text-align: right;">{formatted_amount}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Payment Method</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 600; text-align: right;">{escape(method_upper)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Your Reference Note</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 500; text-align: right;">{escape(notes or 'None provided')}</td>
+          </tr>
+        """
+        text_content = (
+            f"PAYMENT VERIFICATION REQUEST RECEIVED\n\n"
+            f"Hi {client_name},\n\n"
+            f"We received your offline payment verification request for {plan_name} ({formatted_amount}).\n"
+            f"Our agency finance team is reviewing your details. Once verified, your subscription will activate and you can proceed directly to Brand Onboarding (Step 4).\n\n"
+            f"Check status: {action_url}"
+        )
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F1F5F9; padding: 32px 12px;">
+    <tr>
+      <td align="center">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 520px; background-color: #FFFFFF; border-radius: 16px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);">
+          <tr>
+            <td align="center" style="background: #0D2137; padding: 24px; border-bottom: 2px solid #2B7BC4;">
+              <div style="font-size: 26px; font-weight: 900; color: #FFFFFF;">CREO<span style="color: #38BDF8;">.</span></div>
+              <div style="margin-top: 4px; font-size: 11px; font-weight: 700; color: #7DD3FC; text-transform: uppercase; letter-spacing: 1.5px;">Billing & Payments</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 28px;">
+              <div style="display: inline-block; background-color: {badge_bg}; color: {badge_color}; border-radius: 12px; padding: 4px 12px; font-size: 12px; font-weight: 700; margin-bottom: 16px;">
+                {badge_text}
+              </div>
+              <h1 style="margin: 0 0 12px 0; font-size: 20px; font-weight: 800; color: #0D2137;">{title}</h1>
+              <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #475569;">{intro}</p>
+              
+              <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                  {details_html}
+                </table>
+              </div>
+
+              <div style="text-align: center; margin-bottom: 20px;">
+                <a href="{action_url}" style="display: inline-block; background: #2B7BC4; color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none; padding: 12px 28px; border-radius: 8px;">
+                  {action_text} &rarr;
+                </a>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #F8FAFC; padding: 16px 24px; text-align: center; border-top: 1px solid #E2E8F0;">
+              <p style="margin: 0; font-size: 11px; color: #94A3B8;">&copy; 2026 Creo Creative Studio. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    return await send_email(to_email, subject, html_content, text_content)
+
+
+async def send_payment_approved_email(
+    to_email: str,
+    client_name: str,
+    plan_name: str,
+    amount: float,
+    admin_notes: str = "",
+) -> bool:
+    """Intimate the client via email that their offline payment was verified and approved by admin."""
+    formatted_amount = f"₹{int(amount):,}"
+    subject = f"🎉 Payment Verified: Your Creo {plan_name} Subscription is Active!"
+    action_url = "https://creo.yogalakshmibaskar20.workers.dev/onboarding?step=4"
+
+    text_content = (
+        f"PAYMENT VERIFIED & APPROVED!\n\n"
+        f"Hi {client_name},\n\n"
+        f"Great news! Your offline payment for the {plan_name} plan ({formatted_amount}) has been verified and approved by our agency team.\n\n"
+        f"Your subscription is now active! Payment Step 3 has been completed.\n"
+        f"You can now proceed directly to Brand Onboarding & Questionnaire (Step 4):\n"
+        f"{action_url}\n\n"
+        f"{f'Admin note: {admin_notes}' if admin_notes else ''}\n\n"
+        f"— Creo Creative Agency\n"
+    )
+
+    notes_section = ""
+    if admin_notes:
+        notes_section = f"""
+        <div style="background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 13px; color: #166534;">
+          <strong>Admin Note:</strong> {admin_notes}
+        </div>
+        """
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F1F5F9; padding: 32px 12px;">
+    <tr>
+      <td align="center">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 520px; background-color: #FFFFFF; border-radius: 16px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);">
+          <tr>
+            <td align="center" style="background: #0D2137; padding: 24px; border-bottom: 2px solid #2B7BC4;">
+              <div style="font-size: 26px; font-weight: 900; color: #FFFFFF;">CREO<span style="color: #38BDF8;">.</span></div>
+              <div style="margin-top: 4px; font-size: 11px; font-weight: 700; color: #7DD3FC; text-transform: uppercase; letter-spacing: 1.5px;">Payment Approved</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 28px;">
+              <div style="display: inline-block; background-color: #DCFCE7; color: #166534; border-radius: 12px; padding: 4px 12px; font-size: 12px; font-weight: 700; margin-bottom: 16px;">
+                &#10003; Payment Verified
+              </div>
+              <h1 style="margin: 0 0 12px 0; font-size: 22px; font-weight: 800; color: #0D2137;">You're Ready to Roll!</h1>
+              <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #475569;">
+                Hi <strong>{escape(client_name)}</strong>, your offline payment for the <strong>{escape(plan_name)}</strong> plan ({formatted_amount}) has been verified and approved by the agency admin.
+              </p>
+              
+              <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                  <tr style="border-bottom: 1px solid #F1F5F9;">
+                    <td style="padding: 8px 0; color: #64748B; font-size: 13px;">Status</td>
+                    <td style="padding: 8px 0; color: #166534; font-size: 13px; font-weight: 700; text-align: right;">ACTIVE (Step 3 Bypassed)</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #F1F5F9;">
+                    <td style="padding: 8px 0; color: #64748B; font-size: 13px;">Plan</td>
+                    <td style="padding: 8px 0; color: #0D2137; font-size: 13px; font-weight: 600; text-align: right;">{escape(plan_name)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; color: #64748B; font-size: 13px;">Amount Paid</td>
+                    <td style="padding: 8px 0; color: #0D2137; font-size: 13px; font-weight: 700; text-align: right;">{formatted_amount}</td>
+                  </tr>
+                </table>
+              </div>
+
+              {notes_section}
+
+              <div style="text-align: center; margin-bottom: 24px;">
+                <a href="{action_url}" style="display: inline-block; background: #0D2137; color: #38BDF8; font-size: 15px; font-weight: 800; text-decoration: none; padding: 14px 32px; border-radius: 10px; border: 1px solid #2B7BC4; box-shadow: 0 4px 12px rgba(13, 33, 55, 0.2);">
+                  Proceed to Step 4: Brand DNA &rarr;
+                </a>
+              </div>
+
+              <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #94A3B8; text-align: center;">
+                Click above or visit your onboarding portal to fill in your Brand DNA questionnaire.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #F8FAFC; padding: 16px 24px; text-align: center; border-top: 1px solid #E2E8F0;">
+              <p style="margin: 0; font-size: 11px; color: #94A3B8;">&copy; 2026 Creo Creative Studio. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    return await send_email(to_email, subject, html_content, text_content)
+
+
+async def send_payment_rejected_email(
+    to_email: str,
+    client_name: str,
+    plan_name: str,
+    reason: str = "",
+) -> bool:
+    """Intimate the client via email that their offline payment request was declined."""
+    subject = "Update Regarding Your Payment Verification — Creo"
+    action_url = "https://creo.yogalakshmibaskar20.workers.dev/onboarding?step=3"
+
+    text_content = (
+        f"OFFLINE PAYMENT VERIFICATION UPDATE\n\n"
+        f"Hi {client_name},\n\n"
+        f"We were unable to verify your offline payment request for the {plan_name} plan.\n\n"
+        f"Reason: {reason or 'Payment could not be verified'}\n\n"
+        f"Please review your payment information or complete your payment online:\n"
+        f"{action_url}\n\n"
+        f"— Creo Creative Agency\n"
+    )
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F1F5F9; padding: 32px 12px;">
+    <tr>
+      <td align="center">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 520px; background-color: #FFFFFF; border-radius: 16px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);">
+          <tr>
+            <td align="center" style="background: #0D2137; padding: 24px; border-bottom: 2px solid #EF4444;">
+              <div style="font-size: 26px; font-weight: 900; color: #FFFFFF;">CREO<span style="color: #38BDF8;">.</span></div>
+              <div style="margin-top: 4px; font-size: 11px; font-weight: 700; color: #FCA5A5; text-transform: uppercase; letter-spacing: 1.5px;">Verification Update</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 28px;">
+              <div style="display: inline-block; background-color: #FEE2E2; color: #991B1B; border-radius: 12px; padding: 4px 12px; font-size: 12px; font-weight: 700; margin-bottom: 16px;">
+                Verification Declined
+              </div>
+              <h1 style="margin: 0 0 12px 0; font-size: 20px; font-weight: 800; color: #0D2137;">Payment Could Not Be Verified</h1>
+              <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #475569;">
+                Hi <strong>{escape(client_name)}</strong>, we were unable to confirm your offline payment details for the <strong>{escape(plan_name)}</strong> plan.
+              </p>
+              
+              <div style="background-color: #FFF1F2; border: 1px solid #FECDD3; border-radius: 10px; padding: 14px; margin-bottom: 24px;">
+                <p style="margin: 0; font-size: 13px; color: #9F1239; line-height: 1.5;">
+                  <strong>Reason:</strong> {escape(reason or 'Payment record could not be confirmed with agency bank/cash receipts.')}
+                </p>
+              </div>
+
+              <div style="text-align: center; margin-bottom: 20px;">
+                <a href="{action_url}" style="display: inline-block; background: #2B7BC4; color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none; padding: 12px 28px; border-radius: 8px;">
+                  Review &amp; Retry Payment &rarr;
+                </a>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #F8FAFC; padding: 16px 24px; text-align: center; border-top: 1px solid #E2E8F0;">
+              <p style="margin: 0; font-size: 11px; color: #94A3B8;">&copy; 2026 Creo Creative Studio. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    return await send_email(to_email, subject, html_content, text_content)
+

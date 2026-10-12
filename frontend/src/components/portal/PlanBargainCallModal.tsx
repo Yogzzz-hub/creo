@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
+import { useConfirm } from "../ui/ConfirmDialog";
 
 interface PlanBargainCallModalProps {
   isOpen: boolean;
@@ -41,10 +42,11 @@ export function PlanBargainCallModal({
   initialTopic,
 }: PlanBargainCallModalProps) {
   const { user } = useAuth();
-  const [targetTopic, setTargetTopic] = useState(initialTopic || TOPICS[0]);
+  const confirm = useConfirm();
+  const [targetTopic, setTargetTopic] = useState(initialTopic || TOPICS[0] || "Plan Consultation");
   const [proposedOffer, setProposedOffer] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [preferredTime, setPreferredTime] = useState(TIME_SLOTS[0]);
+  const [preferredTime, setPreferredTime] = useState(TIME_SLOTS[0] || "Immediate / ASAP");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,9 +99,20 @@ export function PlanBargainCallModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phoneNumber.trim()) {
-      setError("Please provide a contact phone number so our Agency Director can reach you.");
+      setError("Please provide a contact phone number so your agency team can reach you.");
       return;
     }
+
+    const shouldSendRequest = await confirm({
+      title: "Send this call request?",
+      description: "Your agency’s responsible team will receive the plan consultation details.",
+      details: [targetTopic, `Contact: ${phoneNumber}`, `Preferred time: ${preferredTime}`],
+      confirmText: "Send call request",
+      cancelText: "Review details",
+      tone: "info",
+      icon: "info",
+    });
+    if (!shouldSendRequest) return;
 
     try {
       setLoading(true);
@@ -160,9 +173,9 @@ export function PlanBargainCallModal({
             <div className="size-14 rounded-full bg-emerald-950/50 border border-emerald-800/60 text-emerald-400 mx-auto flex items-center justify-center shadow-sm">
               <CheckCircle2 className="size-7" />
             </div>
-            <h3 className="text-lg font-bold text-[#F8FAFC]">Call Request Confirmed!</h3>
+            <h3 className="text-lg font-bold text-[#F8FAFC]">Call request sent</h3>
             <p className="text-xs text-[#97A0B3] max-w-xs mx-auto leading-relaxed">
-              Our Agency Director has received your plan negotiation request. We will connect with you at{" "}
+              Your agency team has received the plan consultation request. They will contact you at{" "}
               <strong className="text-white">{phoneNumber}</strong> ({preferredTime}).
             </p>
           </div>

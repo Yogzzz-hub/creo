@@ -24,9 +24,14 @@
 }
 
 .public-site :where(a, button, input, [tabindex]):focus-visible,
-.auth-page :where(a, button, input):focus-visible {
+.auth-page :where(a, button):focus-visible {
   outline: 2px solid #7fa0d6;
   outline-offset: 4px;
+}
+
+/* Auth text fields use a focus-within ring on their rounded wrapper. */
+.auth-page input:focus-visible {
+  outline: none;
 }
 
 .public-skip-link {

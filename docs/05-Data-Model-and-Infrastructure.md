@@ -393,6 +393,7 @@ Total Models/Tables: 32
 | email | VARCHAR(255) | False | False |  |
 | full_name | VARCHAR(255) | True | False |  |
 | hashed_password | VARCHAR(255) | True | False |  |
+| google_sub | VARCHAR(255) | True | False |  |
 | role | VARCHAR(18) | False | False |  |
 | account_status | VARCHAR(20) | False | False |  |
 | token_version | INTEGER | False | False |  |

@@ -1,5 +1,6 @@
 import { Suspense, Component, type ReactNode, type ErrorInfo, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } from "react-router";
+import { ArrowLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "../lib/auth-context";
 import { ConfirmProvider } from "../components/ui/ConfirmDialog";
@@ -18,7 +19,6 @@ import {
   OnboardingView,
   PortalAccountPage,
   PortalCalendarPage,
-  PortalCreativePodPage,
   PortalDashboardPage,
   PortalDeliverablesPage,
   PortalLibraryPage,
@@ -48,9 +48,7 @@ import { PortalLayout } from "../components/portal/PortalLayout";
 
 // Ops Layout & Features
 import { OpsLayout } from "../components/ops/OpsLayout";
-const HomePage = lazyModule(() =>
-  import("../pages/public/HomePage").then(m => ({ default: m.HomePage }))
-);
+import { HomePage } from "../pages/public/HomePage";
 
 const AdminDashboard = lazyModule(() =>
   import("../features/admin/AdminDashboard").then((m) => ({ default: m.AdminDashboard }))
@@ -180,46 +178,24 @@ function OnboardingPageWrapper() {
   return (
     <div data-surface="review" className="bento-theme min-h-[100dvh] bg-[#0B111C] text-[#F8FAFC] flex flex-col overflow-x-hidden">
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-30 border-b border-[#2A3446] bg-[#050810]/95 backdrop-blur-md px-4 sm:px-8 py-2.5 shadow-md shrink-0">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <span className="size-8 flex items-center justify-center rounded-xl bg-[#161F2D] border border-[#2A3446] font-mono text-sm font-bold text-[#7FA0D6] shadow-xs group-hover:scale-105 transition-transform">
-              C
-            </span>
-            <div className="flex flex-col">
-              <span className="text-base font-bold font-display tracking-tight text-white">
+      <header className="sticky top-0 z-30 border-b border-[#2A3446]/80 bg-[#0B111C]/95 backdrop-blur-md shrink-0">
+        <div className="max-w-6xl mx-auto flex min-h-16 items-center justify-between gap-4 px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-4 sm:gap-5">
+            <Link to="/" aria-label="Creo home" className="rounded-lg px-1 py-2 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]">
+              <span className="text-2xl font-bold font-display tracking-tight text-white group-hover:text-[#BCCCE6] transition-colors">
                 creo<span className="text-[#7FA0D6]">.</span>
               </span>
-              <span className="text-[10px] font-semibold text-[#97A0B3] -mt-1 tracking-wider uppercase">
-                Client Onboarding
-              </span>
-            </div>
-          </Link>
-
-          <div className="flex items-center gap-3 sm:gap-4 text-xs font-semibold">
-            <Link
-              to="/"
-              className="text-[#97A0B3] hover:text-white transition-colors hidden sm:inline-flex items-center gap-1.5"
-            >
-              ← Back to Home
             </Link>
-            <a
-              href="https://wa.me/919941999415"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="whitespace-nowrap text-[#97A0B3] hover:text-[#7FA0D6] transition-colors inline-flex items-center gap-1.5"
-            >
-              <span className="sm:hidden">Help</span>
-              <span className="hidden sm:inline">Need Help?</span>
-            </a>
-            <Link
-              to="/portal"
-              className="whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#161F2D] text-[#BCCCE6] hover:bg-[#2A3446] border border-[#2A3446] transition-colors"
-            >
-              <span className="sm:hidden">Portal →</span>
-              <span className="hidden sm:inline">Go to Portal →</span>
-            </Link>
+            <span className="h-6 w-px bg-[#2A3446]" aria-hidden="true" />
+            <span className="text-xs sm:text-sm font-medium text-[#A7B4C8]">Client onboarding</span>
           </div>
+          <Link
+            to="/portal"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#161F2D] hover:bg-[#202B3D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs sm:text-sm font-semibold text-[#BCCCE6] hover:text-white transition-all shadow-xs cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4 text-[#7FA0D6]" />
+            <span>Back to Portal</span>
+          </Link>
         </div>
       </header>
 
@@ -299,8 +275,6 @@ const dashboardRoutes = {
   "/portal/deliverables": PortalDeliverablesPage,
   "/portal/deliverables/:deliverableId": PortalDeliverablesPage,
   "/portal/calendar": PortalCalendarPage,
-  "/portal/creative-pod": PortalCreativePodPage,
-  "/portal/creative_pod": PortalCreativePodPage,
   "/portal/payments": PortalPaymentsPage,
   "/portal/support": PortalSupportPage,
   "/portal/support/:ticketId": ClientTicketDetailPage,
@@ -556,13 +530,14 @@ export function App() {
                 <Route path="deliverables" element={<SimpleErrorBoundary name="Deliverables"><PortalDeliverablesPage /></SimpleErrorBoundary>} />
                 <Route path="deliverables/:deliverableId" element={<SimpleErrorBoundary name="Deliverables"><PortalDeliverablesPage /></SimpleErrorBoundary>} />
                 <Route path="calendar" element={<PortalCalendarPage />} />
-                <Route path="creative-pod" element={<PortalCreativePodPage />} />
-                <Route path="creative_pod" element={<PortalCreativePodPage />} />
+                <Route path="creative-pod" element={<Navigate to="/portal" replace />} />
+                <Route path="creative_pod" element={<Navigate to="/portal" replace />} />
                 <Route path="payments" element={<PortalPaymentsPage />} />
                 <Route path="support" element={<SimpleErrorBoundary name="Support"><PortalSupportPage /></SimpleErrorBoundary>} />
                 <Route path="support/:ticketId" element={<ClientTicketDetailPage />} />
 
                 <Route path="account" element={<PortalAccountPage />} />
+                <Route path="account/instagram" element={<PortalAccountPage defaultTab="instagram" />} />
                 <Route path="brand" element={<PortalBrandDNAPage />} />
                 <Route path="brand-dna" element={<PortalBrandDNAPage />} />
                 <Route path="library" element={<PortalLibraryPage />} />

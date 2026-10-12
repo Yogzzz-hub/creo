@@ -1,3 +1,4 @@
+import { PublishingQueue } from "../../components/ops/PublishingPanel";
 import { useParams, Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
@@ -812,6 +813,7 @@ export function AdminClientBrandPage() {
           Client ID: {(client.client_id || "").slice(0, 8)}
         </span>
       </div>
+        <PublishingQueue clientId={clientId} />
       </motion.main>
     </div>
   );

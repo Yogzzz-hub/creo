@@ -2,7 +2,6 @@ import { Link, useLocation } from "react-router";
 import { 
   Home, 
   CreditCard, 
-  Box, 
   Calendar, 
   Inbox, 
   LifeBuoy 
@@ -14,7 +13,6 @@ export function CreoBottomNavbar() {
   const navItems = [
     { name: "Dashboard", path: "/portal", icon: Home },
     { name: "Plans", path: "/portal/payments", icon: CreditCard },
-    { name: "Creative Pod", path: "/portal/creative-pod", icon: Box },
     { name: "Calendar", path: "/portal/calendar", icon: Calendar },
     { name: "Deliverables", path: "/portal/deliverables", icon: Inbox },
     { name: "Support", path: "/portal/support", icon: LifeBuoy },

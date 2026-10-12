@@ -1,7 +1,7 @@
 """Beat Scheduler Tasks using transactional concurrency controls.
 
-Uses UPDATE ... WHERE id IN (SELECT ... FOR UPDATE SKIP LOCKED LIMIT 50) RETURNING
-to ensure strictly zero duplicate dispatches across multiple concurrent beat/worker processes.
+Publishing jobs remain durable in PostgreSQL. Dispatch is at-least-once;
+workers claim under row locks and reconcile uncertain provider results.
 """
 
 from __future__ import annotations
@@ -10,6 +10,7 @@ import asyncio
 import concurrent.futures
 import logging
 import uuid
+from datetime import UTC, datetime
 from collections.abc import Coroutine
 from typing import Any, TypeVar
 
@@ -42,63 +43,50 @@ async def _get_active_agencies() -> list[uuid.UUID]:
 
 
 async def dispatch_due_publishes_async() -> list[uuid.UUID]:
-    """Atomically claim due scheduled deliverables using FOR UPDATE SKIP LOCKED and recover stale claims."""
-    agencies = await _get_active_agencies()
-    all_claimed = []
-    
-    for agency_id in agencies:
+    """Enqueue due durable jobs; workers claim under row locks. Legacy rows are untouched."""
+    from sqlalchemy import delete, or_, select
+
+    from app.models.publishing import InstagramOAuth, PublishingJob
+    from app.workers.tasks.publish import enabled, publish_deliverable_task
+
+    can_publish = enabled()
+    claimed = []
+    for agency_id in await _get_active_agencies():
         async with async_session_factory() as db:
             async with tenant_session(db, agency_id=agency_id):
-                # Recover stale claims: reset deliverables stranded in 'publishing' for > 30 minutes back to 'scheduled'
-                stale_query = text("""
-                    UPDATE deliverables
-                       SET status = 'scheduled', updated_at = now()
-                     WHERE status = 'publishing'
-                       AND updated_at < now() - INTERVAL '30 minutes'
-                       AND agency_id = :agency_id;
-                """)
-                await db.execute(stale_query, {"agency_id": str(agency_id)})
-                
-                # Atomic claim query per CLAUDE.md Invariant 19 and BUILD-PROMPTS.md Phase 6
-                query = text("""
-                    UPDATE deliverables
-                       SET status = 'publishing', updated_at = now()
-                     WHERE id IN (
-                       SELECT id FROM deliverables
-                        WHERE status = 'scheduled'
-                          AND scheduled_at <= now()
-                          AND agency_id = :agency_id
-                        ORDER BY scheduled_at
-                        FOR UPDATE SKIP LOCKED
-                        LIMIT 50
-                     )
-                    RETURNING id;
-                """)
-                res = await db.execute(query, {"agency_id": str(agency_id)})
-                claimed_ids = [uuid.UUID(str(row[0])) for row in res.fetchall()]
-                await db.commit()
-
-                if claimed_ids:
-                    all_claimed.extend(claimed_ids)
-                    logger.info(
-                        "Agency %s: Claimed %d due deliverables for publishing", agency_id, len(claimed_ids)
+                now = datetime.now(UTC)
+                await db.execute(delete(InstagramOAuth).where(InstagramOAuth.expires_at < now))
+                if not can_publish:
+                    await db.commit()
+                    continue
+                stmt = (
+                    select(PublishingJob.id)
+                    .where(
+                        PublishingJob.agency_id == agency_id,
+                        PublishingJob.status.in_(["scheduled", "processing"]),
+                        PublishingJob.scheduled_at <= now,
+                        or_(
+                            PublishingJob.next_attempt_at.is_(None),
+                            PublishingJob.next_attempt_at <= now,
+                        ),
+                        or_(PublishingJob.lease_until.is_(None), PublishingJob.lease_until <= now),
                     )
-                    from app.workers.tasks.publish import publish_deliverable_task
-
-                    for deliv_id in claimed_ids:
-                        try:
-                            # Note: Celery tasks should carry agency_id. We must update publish_deliverable_task to accept it.
-                            publish_deliverable_task.apply_async((str(deliv_id), str(agency_id)), retry=False)
-                        except Exception as e:
-                            logger.warning("Could not enqueue publish task via Celery broker: %s. Reverting status to scheduled.", e)
-                            revert_query = text("""
-                                UPDATE deliverables
-                                   SET status = 'scheduled', updated_at = now()
-                                 WHERE id = :deliv_id AND status = 'publishing';
-                            """)
-                            await db.execute(revert_query, {"deliv_id": str(deliv_id)})
-                            await db.commit()
-    return all_claimed
+                    .order_by(PublishingJob.scheduled_at)
+                    .limit(100)
+                )
+                ids = (await db.execute(stmt)).scalars().all()
+                await db.commit()
+                for job_id in ids:
+                    try:
+                        publish_deliverable_task.apply_async(
+                            (str(job_id), str(agency_id)), retry=False
+                        )
+                        claimed.append(job_id)
+                    except Exception:
+                        logger.warning(
+                            "Publishing broker unavailable; durable jobs will be retried by beat"
+                        )
+    return claimed
 
 
 @celery_app.task(name="app.workers.tasks.scheduler.dispatch_due_publishes_task", queue="default")

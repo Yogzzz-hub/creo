@@ -14,12 +14,8 @@ import {
   X,
   Layers,
   Sparkles,
-  RotateCcw,
-  Music,
-  ShieldCheck,
   Film,
-  Target,
-  Zap,
+  MessageSquare,
 } from "lucide-react";
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
@@ -41,9 +37,13 @@ interface CalendarEntry {
   slot_kind?: string;
   slot_strategy?: "anchor" | "flex" | "swapped";
   flex_deadline?: string | null;
-  concept_status?: "concept_pending" | "concept_revision" | "concept_approved" | "approved";
+  concept_status?: "concept_pending" | "concept_revision" | "concept_approved" | "approved" | "pending_approval" | "revision_requested";
   selected_hook?: BlueprintHook | null;
   blueprint?: CreativeBlueprint | null;
+  story_description?: string;
+  approval_type?: string;
+  team_notes?: string;
+  client_feedback?: string;
   raw_status?: string;
   file_url?: string;
   file_type?: string;
@@ -131,8 +131,9 @@ export function PortalCalendarPage() {
   const [selectedHookIndex, setSelectedHookIndex] = useState<number>(0);
   const [isConceptSubmitting, setIsConceptSubmitting] = useState<boolean>(false);
   const [conceptFeedback, setConceptFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
-  const [flexTheme, setFlexTheme] = useState<string>("");
-  const [isProposingFlex, setIsProposingFlex] = useState<boolean>(false);
+  const [requestChangeOpen, setRequestChangeOpen] = useState(false);
+  const [changeNotes, setChangeNotes] = useState("");
+  const [isSubmittingChange, setIsSubmittingChange] = useState(false);
   const queryClient = useQueryClient();
   const [isRebalancing, setIsRebalancing] = useState(false);
   const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
@@ -267,14 +268,14 @@ export function PortalCalendarPage() {
   };
 
   const handleApproveConcept = async () => {
-    if (!previewEntry || !previewEntry.blueprint?.hooks?.length) return;
+    if (!previewEntry) return;
     setIsConceptSubmitting(true);
     setConceptFeedback(null);
     try {
-      const chosenHook = previewEntry.blueprint.hooks[selectedHookIndex] || previewEntry.blueprint.hooks[0];
+      const chosenHook = previewEntry.blueprint?.hooks?.[selectedHookIndex] || previewEntry.blueprint?.hooks?.[0] || null;
       await request<any>(`/api/v1/calendar/slots/${previewEntry.id}/approve-concept`, {
         method: "POST",
-        body: JSON.stringify({ selected_hook: chosenHook }),
+        body: JSON.stringify({ selected_hook: chosenHook, notes: "Client approved concept" }),
       });
       setPreviewEntry({
         ...previewEntry,
@@ -282,7 +283,7 @@ export function PortalCalendarPage() {
         selected_hook: chosenHook,
       });
       setConceptFeedback({
-        text: "Concept & Hook approved! The task has been dispatched to your pod editor.",
+        text: "Story Concept approved! Your creative team is now proceeding with production.",
         type: "success",
       });
       queryClient.invalidateQueries({ queryKey: ["calendar-entries"] });
@@ -293,67 +294,37 @@ export function PortalCalendarPage() {
     }
   };
 
-  const handleRerollConcept = async () => {
-    if (!previewEntry) return;
-    setIsConceptSubmitting(true);
-    setConceptFeedback(null);
+  const handleRequestChanges = async () => {
+    if (!previewEntry || !changeNotes.trim()) return;
+    setIsSubmittingChange(true);
     try {
-      const res = await request<any>(`/api/v1/calendar/slots/${previewEntry.id}/reroll-concept`, {
+      await request<any>(`/api/v1/calendar/slots/${previewEntry.id}/request-changes`, {
         method: "POST",
+        body: JSON.stringify({ notes: changeNotes.trim() }),
       });
       setPreviewEntry({
         ...previewEntry,
-        blueprint: res.blueprint,
-        concept_status: "concept_pending",
-        selected_hook: res.blueprint?.hooks?.[0],
+        concept_status: "concept_revision" as any,
       });
-      setSelectedHookIndex(0);
+      setRequestChangeOpen(false);
+      setChangeNotes("");
       setConceptFeedback({
-        text: `New angle generated! ${res.remaining_daily_rerolls ?? "Several"} re-rolls remaining today.`,
+        text: "Your revision notes have been submitted to your creative team lead.",
         type: "success",
       });
       queryClient.invalidateQueries({ queryKey: ["calendar-entries"] });
     } catch (err: any) {
-      setConceptFeedback({
-        text: err.message || "Daily re-roll quota reached (5/5). Try again tomorrow.",
-        type: "error",
-      });
+      setConceptFeedback({ text: err.message || "Failed to send revision notes.", type: "error" });
     } finally {
-      setIsConceptSubmitting(false);
-    }
-  };
-
-  const handleProposeFlex = async () => {
-    if (!previewEntry || !flexTheme.trim()) return;
-    setIsProposingFlex(true);
-    setConceptFeedback(null);
-    try {
-      const res = await request<any>(`/api/v1/calendar/flex/${previewEntry.id}/propose`, {
-        method: "POST",
-        body: JSON.stringify({ theme: flexTheme.trim() }),
-      });
-      setPreviewEntry({
-        ...previewEntry,
-        slot_strategy: "swapped",
-        blueprint: res.blueprint,
-        concept_status: "concept_pending",
-      });
-      setFlexTheme("");
-      setConceptFeedback({
-        text: "Flex slot filled with custom trend topic! Blueprint generated.",
-        type: "success",
-      });
-      queryClient.invalidateQueries({ queryKey: ["calendar-entries"] });
-    } catch (err: any) {
-      setConceptFeedback({ text: err.message || "Failed to propose flex topic.", type: "error" });
-    } finally {
-      setIsProposingFlex(false);
+      setIsSubmittingChange(false);
     }
   };
 
   const openEntryModal = (entry: CalendarEntry) => {
     setPreviewEntry(entry);
     setConceptFeedback(null);
+    setRequestChangeOpen(false);
+    setChangeNotes("");
     if (entry.blueprint?.hooks?.length) {
       if (entry.selected_hook) {
         const foundIdx = entry.blueprint.hooks.findIndex(
@@ -384,12 +355,12 @@ export function PortalCalendarPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-[1440px] mx-auto px-4 md:px-8 pb-10 font-sans text-white bg-[#0B111C]">
+    <div className="flex w-full min-w-0 flex-col gap-4 font-sans text-white">
       {/* ── Bento Grid Layout ──────────────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-stretch">
         
         {/* Left Column: Calendar View (xl:col-span-2) */}
-        <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-4 sm:p-6 lg:p-7 min-w-0 flex-col h-full">
+        <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-5 sm:p-6 min-w-0 flex-col h-full">
           {/* Calendar Header */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-3">
@@ -513,7 +484,7 @@ export function PortalCalendarPage() {
         </div>
 
         {/* Right Column: Dispatch Queue (xl:col-span-1) */}
-        <div className="xl:col-span-1 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-4 sm:p-6 lg:p-7 flex flex-col h-full min-w-0">
+        <div className="xl:col-span-1 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-5 sm:p-6 flex flex-col h-full min-w-0">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-[20px] font-black text-white tracking-tight">
               {selectedDate ? `Task Queue for ${selectedDate}th` : "Today's Dispatch Queue"}
@@ -633,8 +604,8 @@ export function PortalCalendarPage() {
           >
             {/* Modal Header */}
             <div className="sticky top-0 bg-[#161F2D]/95 backdrop-blur-sm z-10 flex items-center justify-between p-4 sm:p-5 border-b border-[#2A3446]">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
                   getTypeConfig(previewEntry.type).pillBg
                 }`}>
                   {(() => {
@@ -644,25 +615,19 @@ export function PortalCalendarPage() {
                   <span>{previewEntry.format_label || getTypeConfig(previewEntry.type).label}</span>
                 </span>
 
-                {previewEntry.slot_strategy === "flex" || previewEntry.slot_strategy === "swapped" ? (
-                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                    ⚡ Flex Slot (30% Buffer)
+                {previewEntry.concept_status === "concept_approved" || previewEntry.status === "approved" ? (
+                  <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                    <CheckCircle2 className="size-3.5" />
+                    Story Approved
+                  </span>
+                ) : previewEntry.concept_status === "revision_requested" ? (
+                  <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                    Changes Requested
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold bg-blue-500/15 text-[#7FA0D6] border border-blue-500/30">
-                    🎯 Anchor Slot (70%)
-                  </span>
-                )}
-
-                {previewEntry.blueprint?.funnel_stage && (
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                    previewEntry.blueprint.funnel_stage === "reach"
-                      ? "bg-sky-500/15 text-sky-400 border border-sky-500/30"
-                      : previewEntry.blueprint.funnel_stage === "authority"
-                      ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30"
-                      : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                  }`}>
-                    {previewEntry.blueprint.funnel_stage.toUpperCase()} (Funnel Mix)
+                  <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold bg-sky-500/15 text-sky-400 border border-sky-500/30">
+                    <span className="size-1.5 rounded-full bg-sky-400 animate-ping" />
+                    Pending Your Approval
                   </span>
                 )}
               </div>
@@ -700,7 +665,7 @@ export function PortalCalendarPage() {
 
             {/* Modal Body */}
             <div className="p-5 sm:p-6 space-y-5">
-              {/* Concept feedback alert */}
+              {/* Alert Feedback Banner */}
               {conceptFeedback && (
                 <div className={`p-3.5 rounded-xl text-xs font-semibold flex items-center justify-between ${
                   conceptFeedback.type === "success"
@@ -714,240 +679,132 @@ export function PortalCalendarPage() {
                 </div>
               )}
 
-              {/* Flex Slot Propose Section (if strategy is flex or swapped) */}
-              {(previewEntry.slot_strategy === "flex" || previewEntry.slot_strategy === "swapped") && (
-                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                      <Zap className="size-4 text-amber-400" />
-                      Dynamic Flex Hot-Swap Protocol
-                    </h4>
-                    {previewEntry.flex_deadline && (
-                      <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
-                        Auto-converts by: {previewEntry.flex_deadline}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-amber-200/80 leading-relaxed">
-                    Have a sudden industry event, feature launch, or viral trend? Fill this flex slot instantly with human-guided direction.
-                  </p>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={flexTheme}
-                      onChange={(e) => setFlexTheme(e.target.value)}
-                      placeholder="e.g. Breaking AI regulation impact or flash founder update..."
-                      className="flex-1 text-xs px-3 py-2 rounded-xl border border-amber-500/40 bg-[#0B111C] text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleProposeFlex}
-                      disabled={isProposingFlex || !flexTheme.trim()}
-                      className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-colors shrink-0 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
-                    >
-                      {isProposingFlex ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
-                      <span>Generate</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Topic and Publication Details */}
+              {/* Story Title & Date */}
               <div>
-                <h3 className="text-lg font-black text-white">
-                  {previewEntry.topic}
+                <h3 className="text-lg font-black text-white leading-snug">
+                  {previewEntry.topic || previewEntry.title}
                 </h3>
-                <p className="text-xs text-[#97A0B3] mt-1 flex items-center gap-1.5">
+                <p className="text-xs text-[#97A0B3] mt-1.5 flex items-center gap-1.5 font-medium">
                   <Clock className="size-3.5 text-[#7FA0D6]" />
-                  <span>Scheduled Publication: {previewEntry.date} at {previewEntry.scheduled_time || "11:00 AM"}</span>
+                  <span>Scheduled Publication: {previewEntry.date} · {previewEntry.scheduled_time || "11:00 AM"}</span>
                 </p>
               </div>
 
-              {/* Blueprint Premise */}
-              {previewEntry.blueprint?.premise && (
-                <div className="p-4 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-1">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#97A0B3] block">
-                    Core Premise
-                  </span>
-                  <p className="text-xs font-semibold text-[#F1F5F9] leading-relaxed">
-                    {previewEntry.blueprint.premise}
-                  </p>
+              {/* What this story is about */}
+              <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-2">
+                <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[#7FA0D6]">
+                  <Sparkles className="size-3.5" />
+                  <span>Story Outline & Concept</span>
                 </div>
-              )}
+                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium whitespace-pre-line">
+                  {previewEntry.story_description ||
+                   (previewEntry.blueprint as any)?.story_description ||
+                   previewEntry.blueprint?.premise ||
+                   previewEntry.caption ||
+                   "Your creative team is preparing this story concept for production."}
+                </p>
+              </div>
 
-              {/* ── Tier 2: Concept Approval Gate (Hooks A/B/C) ─────────────── */}
-              {previewEntry.blueprint?.hooks && previewEntry.blueprint.hooks.length > 0 && (
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-black text-white flex items-center gap-1.5">
-                        <Target className="size-4 text-[#7FA0D6]" />
-                        <span>Select Concept Hook Angle (A / B / C)</span>
-                      </h4>
-                      <p className="text-[11px] text-[#97A0B3]">
-                        Approve your preferred hook before production starts. Revisions after production cost hours; concept alignment is instant.
-                      </p>
-                    </div>
+              {/* Team Approval Request Box */}
+              <div className="p-4 rounded-2xl bg-[#7FA0D6]/10 border border-[#7FA0D6]/25 space-y-2.5">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-[#7FA0D6] animate-pulse" />
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#7FA0D6]">
+                      Approval Requested For
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/20 text-[#BCCCE6] border border-[#7FA0D6]/30">
+                    {previewEntry.approval_type || (previewEntry.blueprint as any)?.approval_type || "Story Concept & Topic"}
+                  </span>
+                </div>
+
+                {(previewEntry.team_notes || (previewEntry.blueprint as any)?.team_notes) ? (
+                  <div className="text-xs text-slate-300 bg-[#0B111C]/70 p-3 rounded-xl border border-[#2A3446] space-y-1">
+                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider block">
+                      Note from your Creative Team
+                    </span>
+                    <p className="italic text-slate-200 leading-relaxed font-medium">
+                      &ldquo;{previewEntry.team_notes || (previewEntry.blueprint as any)?.team_notes}&rdquo;
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Please review the story outline above and confirm if this direction works for your brand before filming/design begins.
+                  </p>
+                )}
+              </div>
+
+              {/* Approval Actions */}
+              {previewEntry.concept_status !== "concept_approved" && previewEntry.status !== "approved" ? (
+                <div className="space-y-3 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={handleApproveConcept}
+                      disabled={isConceptSubmitting}
+                      className="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {isConceptSubmitting ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="size-4" />
+                      )}
+                      <span>Approve Story Concept</span>
+                    </button>
 
                     <button
                       type="button"
-                      onClick={handleRerollConcept}
-                      disabled={isConceptSubmitting}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-[#7FA0D6] hover:text-[#BCCCE6] disabled:opacity-50 cursor-pointer"
-                      title="Generate new hook angles (5 daily quota)"
+                      onClick={() => setRequestChangeOpen(!requestChangeOpen)}
+                      className="py-3 px-4 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:bg-[#2A3446] text-slate-200 font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <RotateCcw className="size-3.5" />
-                      <span>Re-Roll Angles</span>
+                      <MessageSquare className="size-4 text-[#7FA0D6]" />
+                      <span>Request Changes</span>
                     </button>
                   </div>
 
-                  {/* Hook Selection Cards */}
-                  <div className="space-y-2.5">
-                    {previewEntry.blueprint.hooks.map((hook, idx) => {
-                      const isSelected = selectedHookIndex === idx;
-                      const isApprovedHook =
-                        previewEntry.concept_status === "concept_approved" &&
-                        previewEntry.selected_hook &&
-                        (previewEntry.selected_hook as any).text === hook.text;
-
-                      return (
-                        <div
-                          key={idx}
-                          onClick={() => {
-                            if (previewEntry.concept_status !== "concept_approved") {
-                              setSelectedHookIndex(idx);
-                            }
-                          }}
-                          className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
-                            isSelected || isApprovedHook
-                              ? "border-[#7FA0D6] bg-[#0B111C] shadow-xs"
-                              : "border-[#2A3446] bg-[#161F2D] hover:border-[#7FA0D6]/40"
-                          }`}
+                  {requestChangeOpen && (
+                    <div className="p-4 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-3 animate-in fade-in duration-150">
+                      <label className="text-xs font-bold text-white block">
+                        What changes would you like the team to make?
+                      </label>
+                      <textarea
+                        value={changeNotes}
+                        onChange={(e) => setChangeNotes(e.target.value)}
+                        placeholder="e.g. Can we focus on a different hook, or highlight our special offer more prominently?"
+                        className="w-full text-xs p-3 rounded-xl bg-[#161F2D] border border-[#2A3446] text-white placeholder:text-slate-500 focus:outline-none focus:border-[#7FA0D6]"
+                        rows={3}
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setRequestChangeOpen(false)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white cursor-pointer"
                         >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                              <span className="size-5 rounded-full flex items-center justify-center text-[10px] font-black bg-[#7FA0D6] text-white">
-                                {idx === 0 ? "A" : idx === 1 ? "B" : "C"}
-                              </span>
-                              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-[#0B111C] text-[#F1F5F9] border border-[#2A3446]">
-                                {hook.angle.replace("_", " ")}
-                              </span>
-                            </div>
-
-                            {isApprovedHook && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                                <CheckCircle2 className="size-3" />
-                                Chosen Hook
-                              </span>
-                            )}
-                          </div>
-
-                          <p className="text-xs font-bold text-white leading-snug">
-                            &ldquo;{hook.text}&rdquo;
-                          </p>
-                          <p className="text-[11px] text-[#97A0B3] mt-1 italic">
-                            Why it works: {hook.rationale}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Concept Approval Button */}
-                  {previewEntry.concept_status !== "concept_approved" ? (
-                    <div className="pt-2">
-                      <button
-                        type="button"
-                        onClick={handleApproveConcept}
-                        disabled={isConceptSubmitting}
-                        className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-                      >
-                        {isConceptSubmitting ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                          <CheckCircle2 className="size-4" />
-                        )}
-                        <span>
-                          Approve Hook {selectedHookIndex === 0 ? "A" : selectedHookIndex === 1 ? "B" : "C"} & Launch Production
-                        </span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/15 p-3 text-xs text-emerald-400 font-semibold flex items-center gap-2">
-                      <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
-                      <span>Concept Approved! Task dispatched with your selected angle.</span>
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRequestChanges}
+                          disabled={isSubmittingChange || !changeNotes.trim()}
+                          className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                        >
+                          {isSubmittingChange && <Loader2 className="size-3.5 animate-spin" />}
+                          <span>Send Feedback to Team</span>
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
-              )}
-
-              {/* ── Storyboard & Beats Breakdown ───────────────────────────── */}
-              {previewEntry.blueprint?.beats && previewEntry.blueprint.beats.length > 0 && (
-                <div className="space-y-2 pt-2 border-t border-[#2A3446]">
-                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#97A0B3] flex items-center gap-1.5">
-                    <Film className="size-3.5 text-[#7FA0D6]" />
-                    Shot-by-Shot Storyboard Beats
-                  </h4>
-                  <div className="space-y-2">
-                    {previewEntry.blueprint.beats.map((beat, bIdx) => (
-                      <div key={bIdx} className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs space-y-1">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-[#97A0B3]">
-                          <span className="text-[#7FA0D6] font-extrabold">Shot {bIdx + 1} ({beat.timestamp_range})</span>
-                          <span className="px-1.5 py-0.5 rounded bg-[#161F2D] text-[#F1F5F9] border border-[#2A3446] font-semibold text-[10px]">
-                            {beat.shot_type}
-                          </span>
-                        </div>
-                        <p className="text-[#F1F5F9] font-medium">
-                          <strong className="text-white">Visual:</strong> {beat.visual_cue}
-                        </p>
-                        <p className="text-[#97A0B3] italic">
-                          <strong className="text-white not-italic">Voiceover / Script:</strong> &ldquo;{beat.script_line}&rdquo;
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ── Audio Direction & Brand Guardrails ─────────────────────── */}
-              {previewEntry.blueprint?.audio_direction && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#2A3446] text-xs">
-                  <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/30 space-y-1">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-400 flex items-center gap-1">
-                      <Music className="size-3" />
-                      Actionable Audio Direction
-                    </span>
-                    <p className="font-bold text-white text-[11.5px]">
-                      {previewEntry.blueprint.audio_direction.genre_mood} · {previewEntry.blueprint.audio_direction.bpm_range}
-                    </p>
-                    <p className="text-[11px] text-[#97A0B3]">
-                      Rule: {previewEntry.blueprint.audio_direction.vocal_rules}
+              ) : (
+                <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/15 p-4 text-xs text-emerald-400 font-semibold flex items-center gap-3">
+                  <CheckCircle2 className="size-5 text-emerald-400 shrink-0" />
+                  <div>
+                    <h4 className="font-black text-sm text-emerald-300">Story Concept Approved</h4>
+                    <p className="text-xs text-emerald-400/90 font-medium mt-0.5">
+                      Your creative team is actively producing this deliverable.
                     </p>
                   </div>
-
-                  <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-1">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#97A0B3] flex items-center gap-1">
-                      <ShieldCheck className="size-3 text-emerald-400" />
-                      Brand Guardrails Respected
-                    </span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {previewEntry.blueprint.respects?.map((resp, rIdx) => (
-                        <span key={rIdx} className="text-[10.5px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium">
-                          ✓ {resp}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Editorial Caption (if exists) */}
-              {previewEntry.caption && (
-                <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-[#F1F5F9] leading-relaxed">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
-                    Editorial Caption & Call to Action
-                  </span>
-                  {previewEntry.caption}
                 </div>
               )}
 
@@ -955,15 +812,15 @@ export function PortalCalendarPage() {
               <div className="flex gap-3 pt-2 border-t border-[#2A3446]">
                 <Link
                   to="/portal/deliverables"
-                  className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#7FA0D6] hover:bg-[#7FA0D6] text-white font-bold text-xs shadow-xs transition-colors"
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/50 text-white font-bold text-xs transition-colors"
                 >
                   <span>Deliverables Dock</span>
-                  <ExternalLink className="size-3.5" />
+                  <ExternalLink className="size-3.5 text-[#7FA0D6]" />
                 </Link>
                 <button
                   type="button"
                   onClick={() => setPreviewEntry(null)}
-                  className="px-4 py-3 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:bg-[#2A3446] text-[#F1F5F9] font-bold text-xs transition-colors cursor-pointer"
+                  className="px-5 py-3 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:bg-[#2A3446] text-[#F1F5F9] font-bold text-xs transition-colors cursor-pointer"
                 >
                   Close
                 </button>

@@ -139,6 +139,10 @@ async def get_calendar_entries(
             "flex_deadline": cal.flex_deadline.strftime("%Y-%m-%d") if cal.flex_deadline else None,
             "concept_status": getattr(cal, "concept_status", "approved"),
             "blueprint": cal.blueprint,
+            "story_description": (cal.blueprint or {}).get("story_description") or (cal.blueprint or {}).get("premise") or "",
+            "approval_type": (cal.blueprint or {}).get("approval_type") or "Story Concept & Topic",
+            "team_notes": (cal.blueprint or {}).get("team_notes") or "",
+            "client_feedback": (cal.blueprint or {}).get("client_feedback") or "",
             "selected_hook": cal.selected_hook,
             "raw_status": d.status.value if d else (cal.status or "draft"),
             "version": d.version if d else 1,
@@ -288,7 +292,36 @@ from pydantic import BaseModel
 
 
 class ApproveConceptRequest(BaseModel):
-    selected_hook: dict[str, Any]
+    selected_hook: dict[str, Any] | None = None
+    notes: str | None = None
+
+
+class ConceptChangesRequest(BaseModel):
+    notes: str
+
+
+class StoryDetailsUpdateRequest(BaseModel):
+    client_id: uuid.UUID | None = None
+    title: str | None = None
+    format: str | None = None
+    publish_date: date | None = None
+    scheduled_time: str | None = None
+    story_description: str | None = None
+    approval_type: str | None = None
+    team_notes: str | None = None
+    request_approval: bool = True
+
+
+class CreateStorySlotRequest(BaseModel):
+    client_id: uuid.UUID
+    title: str
+    format: str = "Reel"
+    publish_date: date
+    scheduled_time: str | None = None
+    story_description: str
+    approval_type: str = "Story Concept & Topic"
+    team_notes: str | None = None
+    request_approval: bool = True
 
 
 class ProposeFlexRequest(BaseModel):
@@ -305,7 +338,7 @@ async def approve_concept_endpoint(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Tier 2: Client concept approval gate. Selects chosen hook A/B/C and unlocks task production."""
+    """Client concept approval gate. Unlocks task production and notifies team lead."""
     target_id = client_id or actor.client_id or actor.user_id
     await ensure_client_access(db, actor, target_id, write=True)
     slot = await db.get(ContentCalendar, slot_id)
@@ -313,8 +346,9 @@ async def approve_concept_endpoint(
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Calendar slot not found")
 
-    slot.selected_hook = payload.selected_hook
+    slot.selected_hook = payload.selected_hook or slot.selected_hook or {"approved": True}
     slot.concept_status = "concept_approved"
+    slot.status = "approved"
 
     # Only sync the task linked to this exact slot; dates/types are not ownership.
     from app.models.enums import DeliverableType, TaskStatus
@@ -334,11 +368,247 @@ async def approve_concept_endpoint(
         task_res.concept_status = "concept_approved"
         task_res.blueprint = slot.blueprint
 
+    # Notify team lead
+    from app.models.ops import Notification
+    from app.models.work import ClientAssignment
+    leads = (await db.execute(
+        select(ClientAssignment.user_id).where(
+            ClientAssignment.client_id == target_id,
+            ClientAssignment.role == "team_lead"
+        )
+    )).scalars().all()
+    for lead_id in set(leads):
+        db.add(Notification(
+            id=uuid.uuid4(),
+            user_id=lead_id,
+            agency_id=actor.agency_id,
+            title="Story Concept Approved by Client",
+            message=f"Client approved story '{slot.caption}'.",
+            link="/admin/calendar",
+        ))
+
     await db.commit()
     return {
         "status": "concept_approved",
         "slot_id": str(slot_id),
         "selected_hook": slot.selected_hook,
+    }
+
+
+@router.post("/slots/{slot_id}/request-changes", response_model=dict[str, Any])
+@router.post("/{client_id}/slots/{slot_id}/request-changes", response_model=dict[str, Any])
+async def request_concept_changes_endpoint(
+    slot_id: uuid.UUID,
+    payload: ConceptChangesRequest,
+    client_id: uuid.UUID | None = None,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Client requests modifications or adds feedback on the story concept."""
+    target_id = client_id or actor.client_id or actor.user_id
+    await ensure_client_access(db, actor, target_id, write=True)
+    slot = await db.get(ContentCalendar, slot_id)
+    if not slot or slot.client_id != target_id:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Calendar slot not found")
+
+    slot.concept_status = "revision_requested"
+    bp = dict(slot.blueprint or {})
+    bp["client_feedback"] = payload.notes
+    slot.blueprint = bp
+
+    # Notify team lead of requested changes
+    from app.models.ops import Notification
+    from app.models.work import ClientAssignment
+    leads = (await db.execute(
+        select(ClientAssignment.user_id).where(
+            ClientAssignment.client_id == target_id,
+            ClientAssignment.role == "team_lead"
+        )
+    )).scalars().all()
+    for lead_id in set(leads):
+        db.add(Notification(
+            id=uuid.uuid4(),
+            user_id=lead_id,
+            agency_id=actor.agency_id,
+            title="Client Requested Story Changes",
+            message=f"Feedback on '{slot.caption}': {payload.notes}",
+            link="/admin/calendar",
+        ))
+
+    await db.commit()
+    return {
+        "status": "revision_requested",
+        "slot_id": str(slot_id),
+        "feedback": payload.notes,
+    }
+
+
+@router.patch("/slots/{slot_id}/story-details", response_model=dict[str, Any])
+@router.patch("/{client_id}/slots/{slot_id}/story-details", response_model=dict[str, Any])
+async def update_slot_story_details_endpoint(
+    slot_id: uuid.UUID,
+    payload: StoryDetailsUpdateRequest,
+    client_id: uuid.UUID | None = None,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Workers or Team Leads fill story details and request client approval."""
+    slot = await db.get(ContentCalendar, slot_id)
+    if not slot:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Calendar slot not found")
+
+    target_id = slot.client_id
+    await ensure_client_access(db, actor, target_id, write=True)
+
+    if payload.title is not None and payload.title.strip():
+        slot.caption = payload.title.strip()
+
+    if payload.format is not None and payload.format.strip():
+        raw_fmt = payload.format.strip().lower()
+        slot.slot_kind = "poster" if raw_fmt in ["post", "poster", "static_post"] else raw_fmt
+
+    if payload.publish_date is not None:
+        slot.publish_date = payload.publish_date
+
+    if payload.scheduled_time is not None:
+        try:
+            from datetime import datetime, timezone
+            time_part = payload.scheduled_time.strip()
+            if ":" in time_part:
+                hours, mins = [int(p) for p in time_part.split(":")[:2]]
+                slot.scheduled_time = datetime.combine(
+                    slot.publish_date,
+                    datetime.min.time().replace(hour=hours, minute=mins),
+                    tzinfo=timezone.utc,
+                )
+        except Exception:
+            pass
+
+    bp = dict(slot.blueprint or {})
+    if payload.title is not None:
+        bp["title"] = payload.title
+    if payload.story_description is not None:
+        bp["story_description"] = payload.story_description
+        bp["premise"] = payload.story_description
+    if payload.approval_type is not None:
+        bp["approval_type"] = payload.approval_type
+    if payload.team_notes is not None:
+        bp["team_notes"] = payload.team_notes
+    if payload.format is not None:
+        bp["format"] = payload.format
+
+    slot.blueprint = bp
+
+    if payload.request_approval:
+        slot.concept_status = "pending_approval"
+        slot.status = "pending_approval"
+        from app.models.ops import Notification
+        approval_for = payload.approval_type or bp.get("approval_type", "Story Concept")
+        db.add(Notification(
+            id=uuid.uuid4(),
+            user_id=slot.client_id,
+            agency_id=actor.agency_id,
+            title="Story Concept Ready for Your Approval",
+            message=f"Your creative team outlined '{slot.caption}' and requested approval for {approval_for}.",
+            link="/portal/calendar",
+        ))
+
+    await db.commit()
+    return {
+        "status": "success",
+        "slot_id": str(slot.id),
+        "title": slot.caption,
+        "format": slot.slot_kind,
+        "concept_status": slot.concept_status,
+        "story_description": bp.get("story_description", ""),
+        "approval_type": bp.get("approval_type", ""),
+        "team_notes": bp.get("team_notes", ""),
+    }
+
+
+@router.post("/slots/create-story", response_model=dict[str, Any])
+@router.post("/{client_id}/slots/create-story", response_model=dict[str, Any])
+async def create_story_slot_endpoint(
+    payload: CreateStorySlotRequest,
+    client_id: uuid.UUID | None = None,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Workers or Team Leads schedule a new story and request client approval."""
+    target_id = client_id or payload.client_id
+    await ensure_client_access(db, actor, target_id, write=True)
+
+    from datetime import datetime, timezone
+    raw_fmt = payload.format.strip().lower()
+    slot_kind = "poster" if raw_fmt in ["post", "poster", "static_post"] else raw_fmt
+
+    sched_dt = None
+    if payload.scheduled_time:
+        try:
+            time_part = payload.scheduled_time.strip()
+            if ":" in time_part:
+                hours, mins = [int(p) for p in time_part.split(":")[:2]]
+                sched_dt = datetime.combine(
+                    payload.publish_date,
+                    datetime.min.time().replace(hour=hours, minute=mins),
+                    tzinfo=timezone.utc,
+                )
+        except Exception:
+            pass
+
+    if not sched_dt:
+        sched_dt = datetime.combine(
+            payload.publish_date,
+            datetime.min.time().replace(hour=11, minute=0),
+            tzinfo=timezone.utc,
+        )
+
+    bp = {
+        "title": payload.title.strip(),
+        "story_description": payload.story_description.strip(),
+        "premise": payload.story_description.strip(),
+        "approval_type": payload.approval_type.strip(),
+        "team_notes": (payload.team_notes or "").strip(),
+        "format": payload.format.strip(),
+    }
+
+    new_slot = ContentCalendar(
+        id=uuid.uuid4(),
+        client_id=target_id,
+        publish_date=payload.publish_date,
+        scheduled_time=sched_dt,
+        caption=payload.title.strip(),
+        slot_kind=slot_kind,
+        status="pending_approval" if payload.request_approval else "draft",
+        concept_status="pending_approval" if payload.request_approval else "draft",
+        blueprint=bp,
+    )
+    db.add(new_slot)
+
+    if payload.request_approval:
+        from app.models.ops import Notification
+        db.add(Notification(
+            id=uuid.uuid4(),
+            user_id=target_id,
+            agency_id=actor.agency_id,
+            title="Story Concept Ready for Your Approval",
+            message=f"Your team scheduled '{payload.title.strip()}' and requested approval for {payload.approval_type}.",
+            link="/portal/calendar",
+        ))
+
+    await db.commit()
+    return {
+        "status": "success",
+        "slot_id": str(new_slot.id),
+        "title": new_slot.caption,
+        "format": new_slot.slot_kind,
+        "concept_status": new_slot.concept_status,
+        "publish_date": new_slot.publish_date.isoformat(),
+        "story_description": bp["story_description"],
+        "approval_type": bp["approval_type"],
+        "team_notes": bp["team_notes"],
     }
 
 
