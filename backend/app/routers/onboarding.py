@@ -331,13 +331,15 @@ async def create_manual_payment_request(
     # Fetch client info for notification
     u_res = await db.execute(select(User).where(User.id == client_id))
     u = u_res.scalar_one_or_none()
+    client_name = u.full_name or "Valued Client" if u else "Valued Client"
+    client_email = u.email if u else ""
 
     # Create administrative notification
     from app.models.ops import Notification
     admin_notif = Notification(
         user_id=None,
         title="Offline Payment Verification Requested",
-        message=f"{u.full_name or u.email} requested offline payment verification ({body.payment_method.upper()}) for {plan.display_name} (₹{int(amount):,}).",
+        message=f"{client_name} ({client_email}) requested offline payment verification ({body.payment_method.upper()}) for {plan.display_name} (₹{int(amount):,}).",
         type="billing",
         payload={
             "request_id": str(req_id),
@@ -348,7 +350,49 @@ async def create_manual_payment_request(
         },
     )
     db.add(admin_notif)
+
+    # Create client in-app notification
+    client_notif = Notification(
+        user_id=client_id,
+        title="Offline Payment Verification Under Review",
+        message=f"Your offline payment request for {plan.display_name} (₹{int(amount):,}) has been received. Our agency team will verify and activate your account shortly.",
+        type="billing",
+        link="/onboarding?step=3",
+    )
+    db.add(client_notif)
     await db.commit()
+
+    # Intimate via Email (Brevo / SMTP) in background
+    from app.services.email_service import send_payment_verification_request_email
+    import asyncio
+
+    if client_email:
+        asyncio.create_task(
+            send_payment_verification_request_email(
+                to_email=client_email,
+                client_name=client_name,
+                plan_name=plan.display_name,
+                amount=amount,
+                payment_method=body.payment_method,
+                is_admin=False,
+                notes=body.reference_note or "",
+            )
+        )
+
+    # Intimate agency admins via email
+    admin_emails = ["admin@creo.agency", "ops.admin@creo.agency"]
+    for a_email in admin_emails:
+        asyncio.create_task(
+            send_payment_verification_request_email(
+                to_email=a_email,
+                client_name=client_name,
+                plan_name=plan.display_name,
+                amount=amount,
+                payment_method=body.payment_method,
+                is_admin=True,
+                notes=body.reference_note or "",
+            )
+        )
 
     return ManualPaymentRequestResponse(
         id=req_id,

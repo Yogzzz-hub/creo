@@ -274,3 +274,327 @@ async def send_otp_email(to_email: str, otp_code: str) -> bool:
 </html>"""
 
     return await send_email(to_email, subject, html_content, text_content)
+
+
+async def send_payment_verification_request_email(
+    to_email: str,
+    client_name: str,
+    plan_name: str,
+    amount: float,
+    payment_method: str,
+    is_admin: bool = False,
+    notes: str = "",
+) -> bool:
+    """Intimate Admin or Client when an offline payment verification request is submitted."""
+    formatted_amount = f"₹{int(amount):,}"
+    method_upper = payment_method.upper()
+
+    if is_admin:
+        subject = f"[Action Required] Offline Payment Verification: {client_name} ({method_upper})"
+        title = "New Offline Payment Verification Request"
+        badge_bg = "#FEF3C7"
+        badge_color = "#92400E"
+        badge_text = "Pending Admin Review"
+        action_text = "Review in Admin Portal"
+        action_url = "https://creo.yogalakshmibaskar20.workers.dev/admin/finance"
+        intro = f"A client has submitted an offline payment verification request ({method_upper}) for the <strong>{plan_name}</strong> plan."
+        details_html = f"""
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Client Name</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 600; text-align: right;">{client_name}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Client Email</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 600; text-align: right;">{to_email if not is_admin else ""}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Plan</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 600; text-align: right;">{plan_name}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Amount</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 700; text-align: right;">{formatted_amount}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Payment Method</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 600; text-align: right;">{method_upper}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Reference / Note</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 500; text-align: right;">{notes or 'None provided'}</td>
+          </tr>
+        """
+        text_content = (
+            f"NEW OFFLINE PAYMENT REQUEST\n\n"
+            f"Client: {client_name}\n"
+            f"Plan: {plan_name}\n"
+            f"Amount: {formatted_amount}\n"
+            f"Method: {method_upper}\n"
+            f"Note: {notes}\n\n"
+            f"Review and approve in Admin Portal: {action_url}"
+        )
+    else:
+        subject = f"Payment Verification Request Received — Creo"
+        title = "Payment Verification Request Received"
+        badge_bg = "#EFF6FF"
+        badge_color = "#1E40AF"
+        badge_text = "Under Agency Review"
+        action_text = "View Onboarding Status"
+        action_url = "https://creo.yogalakshmibaskar20.workers.dev/onboarding?step=3"
+        intro = f"Hi {client_name}, we received your offline {method_upper} payment verification request for the <strong>{plan_name}</strong> plan ({formatted_amount})."
+        details_html = f"""
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Selected Plan</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 600; text-align: right;">{plan_name}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Amount</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 700; text-align: right;">{formatted_amount}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;">
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Payment Method</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 600; text-align: right;">{method_upper}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; color: #64748B; font-size: 13px;">Your Reference Note</td>
+            <td style="padding: 10px 0; color: #0D2137; font-size: 13px; font-weight: 500; text-align: right;">{notes or 'None provided'}</td>
+          </tr>
+        """
+        text_content = (
+            f"PAYMENT VERIFICATION REQUEST RECEIVED\n\n"
+            f"Hi {client_name},\n\n"
+            f"We received your offline payment verification request for {plan_name} ({formatted_amount}).\n"
+            f"Our agency finance team is reviewing your details. Once verified, your subscription will activate and you can proceed directly to Brand Onboarding (Step 4).\n\n"
+            f"Check status: {action_url}"
+        )
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F1F5F9; padding: 32px 12px;">
+    <tr>
+      <td align="center">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 520px; background-color: #FFFFFF; border-radius: 16px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);">
+          <tr>
+            <td align="center" style="background: #0D2137; padding: 24px; border-bottom: 2px solid #2B7BC4;">
+              <div style="font-size: 26px; font-weight: 900; color: #FFFFFF;">CREO<span style="color: #38BDF8;">.</span></div>
+              <div style="margin-top: 4px; font-size: 11px; font-weight: 700; color: #7DD3FC; text-transform: uppercase; letter-spacing: 1.5px;">Billing & Payments</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 28px;">
+              <div style="display: inline-block; background-color: {badge_bg}; color: {badge_color}; border-radius: 12px; padding: 4px 12px; font-size: 12px; font-weight: 700; margin-bottom: 16px;">
+                {badge_text}
+              </div>
+              <h1 style="margin: 0 0 12px 0; font-size: 20px; font-weight: 800; color: #0D2137;">{title}</h1>
+              <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #475569;">{intro}</p>
+              
+              <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                  {details_html}
+                </table>
+              </div>
+
+              <div style="text-align: center; margin-bottom: 20px;">
+                <a href="{action_url}" style="display: inline-block; background: #2B7BC4; color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none; padding: 12px 28px; border-radius: 8px;">
+                  {action_text} &rarr;
+                </a>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #F8FAFC; padding: 16px 24px; text-align: center; border-top: 1px solid #E2E8F0;">
+              <p style="margin: 0; font-size: 11px; color: #94A3B8;">&copy; 2026 Creo Creative Studio. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    return await send_email(to_email, subject, html_content, text_content)
+
+
+async def send_payment_approved_email(
+    to_email: str,
+    client_name: str,
+    plan_name: str,
+    amount: float,
+    admin_notes: str = "",
+) -> bool:
+    """Intimate the client via email that their offline payment was verified and approved by admin."""
+    formatted_amount = f"₹{int(amount):,}"
+    subject = f"🎉 Payment Verified: Your Creo {plan_name} Subscription is Active!"
+    action_url = "https://creo.yogalakshmibaskar20.workers.dev/onboarding?step=4"
+
+    text_content = (
+        f"PAYMENT VERIFIED & APPROVED!\n\n"
+        f"Hi {client_name},\n\n"
+        f"Great news! Your offline payment for the {plan_name} plan ({formatted_amount}) has been verified and approved by our agency team.\n\n"
+        f"Your subscription is now active! Payment Step 3 has been completed.\n"
+        f"You can now proceed directly to Brand Onboarding & Questionnaire (Step 4):\n"
+        f"{action_url}\n\n"
+        f"{f'Admin note: {admin_notes}' if admin_notes else ''}\n\n"
+        f"— Creo Creative Agency\n"
+    )
+
+    notes_section = ""
+    if admin_notes:
+        notes_section = f"""
+        <div style="background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 13px; color: #166534;">
+          <strong>Admin Note:</strong> {admin_notes}
+        </div>
+        """
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F1F5F9; padding: 32px 12px;">
+    <tr>
+      <td align="center">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 520px; background-color: #FFFFFF; border-radius: 16px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);">
+          <tr>
+            <td align="center" style="background: #0D2137; padding: 24px; border-bottom: 2px solid #2B7BC4;">
+              <div style="font-size: 26px; font-weight: 900; color: #FFFFFF;">CREO<span style="color: #38BDF8;">.</span></div>
+              <div style="margin-top: 4px; font-size: 11px; font-weight: 700; color: #7DD3FC; text-transform: uppercase; letter-spacing: 1.5px;">Payment Approved</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 28px;">
+              <div style="display: inline-block; background-color: #DCFCE7; color: #166534; border-radius: 12px; padding: 4px 12px; font-size: 12px; font-weight: 700; margin-bottom: 16px;">
+                &#10003; Payment Verified
+              </div>
+              <h1 style="margin: 0 0 12px 0; font-size: 22px; font-weight: 800; color: #0D2137;">You're Ready to Roll!</h1>
+              <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #475569;">
+                Hi <strong>{client_name}</strong>, your offline payment for the <strong>{plan_name}</strong> plan ({formatted_amount}) has been verified and approved by the agency admin.
+              </p>
+              
+              <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                  <tr style="border-bottom: 1px solid #F1F5F9;">
+                    <td style="padding: 8px 0; color: #64748B; font-size: 13px;">Status</td>
+                    <td style="padding: 8px 0; color: #166534; font-size: 13px; font-weight: 700; text-align: right;">ACTIVE (Step 3 Bypassed)</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #F1F5F9;">
+                    <td style="padding: 8px 0; color: #64748B; font-size: 13px;">Plan</td>
+                    <td style="padding: 8px 0; color: #0D2137; font-size: 13px; font-weight: 600; text-align: right;">{plan_name}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; color: #64748B; font-size: 13px;">Amount Paid</td>
+                    <td style="padding: 8px 0; color: #0D2137; font-size: 13px; font-weight: 700; text-align: right;">{formatted_amount}</td>
+                  </tr>
+                </table>
+              </div>
+
+              {notes_section}
+
+              <div style="text-align: center; margin-bottom: 24px;">
+                <a href="{action_url}" style="display: inline-block; background: #0D2137; color: #38BDF8; font-size: 15px; font-weight: 800; text-decoration: none; padding: 14px 32px; border-radius: 10px; border: 1px solid #2B7BC4; box-shadow: 0 4px 12px rgba(13, 33, 55, 0.2);">
+                  Proceed to Step 4: Brand DNA &rarr;
+                </a>
+              </div>
+
+              <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #94A3B8; text-align: center;">
+                Click above or visit your onboarding portal to fill in your Brand DNA questionnaire.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #F8FAFC; padding: 16px 24px; text-align: center; border-top: 1px solid #E2E8F0;">
+              <p style="margin: 0; font-size: 11px; color: #94A3B8;">&copy; 2026 Creo Creative Studio. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    return await send_email(to_email, subject, html_content, text_content)
+
+
+async def send_payment_rejected_email(
+    to_email: str,
+    client_name: str,
+    plan_name: str,
+    reason: str = "",
+) -> bool:
+    """Intimate the client via email that their offline payment request was declined."""
+    subject = f"Update Regarding Your Payment Verification — Creo"
+    action_url = "https://creo.yogalakshmibaskar20.workers.dev/onboarding?step=3"
+
+    text_content = (
+        f"OFFLINE PAYMENT VERIFICATION UPDATE\n\n"
+        f"Hi {client_name},\n\n"
+        f"We were unable to verify your offline payment request for the {plan_name} plan.\n\n"
+        f"Reason: {reason or 'Payment could not be verified'}\n\n"
+        f"Please review your payment information or complete your payment online:\n"
+        f"{action_url}\n\n"
+        f"— Creo Creative Agency\n"
+    )
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F1F5F9; padding: 32px 12px;">
+    <tr>
+      <td align="center">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 520px; background-color: #FFFFFF; border-radius: 16px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);">
+          <tr>
+            <td align="center" style="background: #0D2137; padding: 24px; border-bottom: 2px solid #EF4444;">
+              <div style="font-size: 26px; font-weight: 900; color: #FFFFFF;">CREO<span style="color: #38BDF8;">.</span></div>
+              <div style="margin-top: 4px; font-size: 11px; font-weight: 700; color: #FCA5A5; text-transform: uppercase; letter-spacing: 1.5px;">Verification Update</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 28px;">
+              <div style="display: inline-block; background-color: #FEE2E2; color: #991B1B; border-radius: 12px; padding: 4px 12px; font-size: 12px; font-weight: 700; margin-bottom: 16px;">
+                Verification Declined
+              </div>
+              <h1 style="margin: 0 0 12px 0; font-size: 20px; font-weight: 800; color: #0D2137;">Payment Could Not Be Verified</h1>
+              <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #475569;">
+                Hi <strong>{client_name}</strong>, we were unable to confirm your offline payment details for the <strong>{plan_name}</strong> plan.
+              </p>
+              
+              <div style="background-color: #FFF1F2; border: 1px solid #FECDD3; border-radius: 10px; padding: 14px; margin-bottom: 24px;">
+                <p style="margin: 0; font-size: 13px; color: #9F1239; line-height: 1.5;">
+                  <strong>Reason:</strong> {reason or 'Payment record could not be confirmed with agency bank/cash receipts.'}
+                </p>
+              </div>
+
+              <div style="text-align: center; margin-bottom: 20px;">
+                <a href="{action_url}" style="display: inline-block; background: #2B7BC4; color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none; padding: 12px 28px; border-radius: 8px;">
+                  Review &amp; Retry Payment &rarr;
+                </a>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #F8FAFC; padding: 16px 24px; text-align: center; border-top: 1px solid #E2E8F0;">
+              <p style="margin: 0; font-size: 11px; color: #94A3B8;">&copy; 2026 Creo Creative Studio. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    return await send_email(to_email, subject, html_content, text_content)
+

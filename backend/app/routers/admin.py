@@ -4469,7 +4469,38 @@ async def approve_manual_payment_request(
     sub = await _activate_manual_subscription(
         db, client_id, plan_id, payment_method, amount, actor.user_id, admin_notes,
     )
+
+    # 3. Fetch client user and plan details for intimacy
+    client_res = await db.execute(select(User).where(User.id == client_id))
+    client_user = client_res.scalar_one_or_none()
+    plan_res = await db.execute(select(Plan).where(Plan.id == plan_id))
+    plan_obj = plan_res.scalar_one_or_none()
+    plan_display = plan_obj.display_name if plan_obj else "Creo Subscription"
+
+    # 4. In-App Notification for Client
+    approval_notif = Notification(
+        user_id=client_id,
+        title="🎉 Payment Verified & Approved",
+        message=f"Your offline payment for {plan_display} (₹{int(amount):,}) has been verified and approved by the agency admin! You can now proceed directly to Step 4 (Brand DNA).",
+        type="billing",
+        link="/onboarding?step=4",
+    )
+    db.add(approval_notif)
     await db.commit()
+
+    # 5. Intimate Client via Branded Email in background
+    if client_user and client_user.email:
+        from app.services.email_service import send_payment_approved_email
+        import asyncio
+        asyncio.create_task(
+            send_payment_approved_email(
+                to_email=client_user.email,
+                client_name=client_user.full_name or "Valued Client",
+                plan_name=plan_display,
+                amount=float(amount),
+                admin_notes=admin_notes,
+            )
+        )
 
     return {
         "status": "success",
@@ -4491,13 +4522,20 @@ async def reject_manual_payment_request(
     now = datetime.now(UTC)
 
     res = await db.execute(text("""
-        SELECT id, client_id FROM manual_payment_requests WHERE id = :rid
+        SELECT r.id, r.client_id, r.plan_id, p.display_name, u.email, u.full_name
+        FROM manual_payment_requests r
+        LEFT JOIN plans p ON p.id = r.plan_id
+        LEFT JOIN users u ON u.id = r.client_id
+        WHERE r.id = :rid
     """), {"rid": request_id})
     row = res.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Payment request not found")
 
     client_id = row[1]
+    plan_display = row[3] or "Selected Plan"
+    client_email = row[4]
+    client_name = row[5] or "Valued Client"
 
     await db.execute(text("""
         UPDATE manual_payment_requests
@@ -4510,7 +4548,7 @@ async def reject_manual_payment_request(
         "rid": request_id,
     })
 
-    # Notify client
+    # Notify client in-app
     notif = Notification(
         user_id=client_id,
         title="Offline Payment Verification Declined",
@@ -4520,6 +4558,19 @@ async def reject_manual_payment_request(
     )
     db.add(notif)
     await db.commit()
+
+    # Intimate client via email
+    if client_email:
+        from app.services.email_service import send_payment_rejected_email
+        import asyncio
+        asyncio.create_task(
+            send_payment_rejected_email(
+                to_email=client_email,
+                client_name=client_name,
+                plan_name=plan_display,
+                reason=admin_notes,
+            )
+        )
 
     return {"status": "success", "message": "Manual payment request declined"}
 
@@ -4545,6 +4596,10 @@ async def direct_bypass_client_payment(
     if not plan:
         raise HTTPException(status_code=404, detail="Selected plan does not exist")
 
+    # Fetch client user
+    c_res = await db.execute(select(User).where(User.id == client_id))
+    client_user = c_res.scalar_one_or_none()
+
     now = datetime.now(UTC)
 
     # Record or update manual_payment_requests row
@@ -4567,7 +4622,31 @@ async def direct_bypass_client_payment(
     sub = await _activate_manual_subscription(
         db, client_id, plan.id, payment_method, plan.monthly_price, actor.user_id, notes,
     )
+
+    # In-App notification
+    direct_notif = Notification(
+        user_id=client_id,
+        title="🎉 Account Activated by Agency Admin",
+        message=f"Payment for {plan.display_name} has been verified and approved by the agency admin! You can now start Brand Onboarding.",
+        type="billing",
+        link="/onboarding?step=4",
+    )
+    db.add(direct_notif)
     await db.commit()
+
+    # Intimate client via email
+    if client_user and client_user.email:
+        from app.services.email_service import send_payment_approved_email
+        import asyncio
+        asyncio.create_task(
+            send_payment_approved_email(
+                to_email=client_user.email,
+                client_name=client_user.full_name or "Valued Client",
+                plan_name=plan.display_name,
+                amount=float(plan.monthly_price),
+                admin_notes=notes,
+            )
+        )
 
     return {
         "status": "success",
