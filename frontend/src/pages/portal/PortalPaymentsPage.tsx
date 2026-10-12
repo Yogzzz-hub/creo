@@ -211,6 +211,24 @@ export function PortalPaymentsPage() {
     }
   };
 
+  return (
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full min-w-0 space-y-4">
+      {/* Action Toast / Confirmation Notice */}
+      {actionNotice && (
+        <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-700/60 text-emerald-300 text-xs font-semibold flex items-center gap-2.5 animate-[fadeIn_0.2s_ease-out]">
+          <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
+          <span>{actionNotice}</span>
+        </div>
+      )}
+
+      {/* Error Toast / Alert Notice */}
+      {errorNotice && (
+        <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs font-semibold flex items-center gap-2.5 animate-[fadeIn_0.2s_ease-out]">
+          <AlertCircle className="size-4 shrink-0 text-rose-400" />
+          <span>{errorNotice}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
@@ -254,6 +272,7 @@ export function PortalPaymentsPage() {
             )
           )}
         </div>
+      </div>
 
       {/* Paused for Next Month Notice Banner */}
       {isPausedNextMonth && (

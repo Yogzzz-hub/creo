@@ -6,6 +6,7 @@ import { approveDeliverable, requestChanges } from "../../lib/deliverables-api";
 import { useAuth } from "../../lib/auth-context";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
+import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
 import { Instagram, ExternalLink } from "lucide-react";
 
 /* ── Types ── */

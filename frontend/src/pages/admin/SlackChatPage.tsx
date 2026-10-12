@@ -273,6 +273,9 @@ export function SlackChatPage() {
   const isAdmin = ["admin", "super_admin", "ops_admin"].includes(roleStr);
   const isTeamMember = !isClient && !isTeamLead && !isAdmin;
 
+  const gate = useOnboardingGate();
+  const canUseChat = !isClient || gate.isComplete;
+
   const [searchParams] = useSearchParams();
   const urlDm = searchParams.get("dm");
   const urlChannel = searchParams.get("channel");
@@ -421,7 +424,7 @@ export function SlackChatPage() {
   }, [isClient, isAdmin, isTeamLead, isTeamMember, clientChannelSlug]);
 
   // Fetch DM contacts from backend
-  const contactsQuery = useQuery<ChatContact[]>({
+  const { data: serverContacts } = useQuery<ChatContact[]>({
     queryKey: ["chat_contacts", user?.id],
     queryFn: () => request<ChatContact[]>("/api/v1/chat/contacts"),
     enabled: !!user?.id && canUseChat,
@@ -479,11 +482,11 @@ export function SlackChatPage() {
 
     // Strict frontend filter ensuring no unauthorized contacts leak through
     return rawList
-      .map((c) => ({
+      .map((c: ChatContact) => ({
         ...c,
         role: (c.role || "").replace(/Client Representative/gi, "Client"),
       }))
-      .filter((c) => {
+      .filter((c: ChatContact) => {
         // Exclude self if somehow present
         if (c.id === user?.id || (c.email && c.email.toLowerCase() === (user?.email || "").toLowerCase())) {
           return false;
@@ -551,10 +554,6 @@ export function SlackChatPage() {
   const activeContact = useMemo(() => {
     return contactsList.find((contact) => contact.id === activeContactId) ?? null;
   }, [contactsList, activeContactId]);
-  const superAdminContact = useMemo(
-    () => contactsList.find((contact) => contact.is_super_admin) ?? null,
-    [contactsList],
-  );
 
   // Active channel object
   const activeChannel = useMemo(() => {
@@ -675,21 +674,21 @@ export function SlackChatPage() {
 
       const formattedServer = serverItems.map((m: any) => {
         const isSelf = m.sender_id === user?.id;
-        const senderName = isSelf ? (user?.full_name || "You") : (m.sender_name || (activeMode === "dm" ? activeContact.name : "Team Specialist"));
+        const senderName = isSelf ? (user?.full_name || "You") : (m.sender_name || (activeMode === "dm" ? (activeContact?.name || "Direct Contact") : "Team Specialist"));
         const senderRole = isSelf
           ? (user?.role === "super_admin" || user?.role === "admin"
               ? "Super Admin"
               : user?.role === "client"
               ? "Client"
               : "Specialist")
-          : (activeMode === "dm" ? (activeContact.role || "").replace(/Client Representative/gi, "Client") : "Creative Pod");
+          : (activeMode === "dm" ? ((activeContact?.role || "").replace(/Client Representative/gi, "Client")) : "Creative Pod");
 
         return {
           id: m.id,
           sender: senderName,
           role: senderRole,
           avatar: (senderName || "U").slice(0, 2).toUpperCase(),
-          avatarBg: isSelf ? "bg-[#7FA0D6]" : (activeMode === "dm" && activeContact.is_super_admin ? "bg-amber-500" : "bg-[#64748B]"),
+          avatarBg: isSelf ? "bg-[#7FA0D6]" : (activeMode === "dm" && activeContact?.is_super_admin ? "bg-amber-500" : "bg-[#64748B]"),
           content: m.message,
           timestamp: m.created_at
             ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -912,7 +911,7 @@ export function SlackChatPage() {
         await request("/api/v1/chat/messages", {
           method: "POST",
           body: JSON.stringify({
-            recipient_id: activeContact.id,
+            recipient_id: contact.id,
             message: taskContent,
             thread_type: "direct",
           }),
@@ -936,6 +935,27 @@ export function SlackChatPage() {
       showToast("Could not assign task", "info");
     }
   };
+
+  if (isClient && gate.error) {
+    return (
+      <div role="alert" className="p-6 text-sm text-[#BCCCE6]">
+        Could not verify onboarding status. <button type="button" className="underline" onClick={() => void gate.refetch()}>Retry</button>
+      </div>
+    );
+  }
+
+  if (isClient && !gate.isReady) {
+    return <CreoLoadingScreen fullScreen={false} label="Checking workspace access" className="min-h-[45vh]" />;
+  }
+
+  if (isClient && !gate.isComplete) {
+    return (
+      <SubscriptionLockedState
+        title="Direct Chat Locked"
+        description="Complete setup to chat with your creative team."
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col h-full max-h-full min-h-0 flex-1 overflow-hidden -mx-2 sm:-mx-4 -my-2 sm:-my-4">
@@ -1331,14 +1351,14 @@ export function SlackChatPage() {
                     ? `Welcome to #${activeChannel.label}`
                     : activeContact?.is_super_admin
                     ? "Direct Channel with Creo Super Administration"
-                    : `Direct Conversation with ${activeContact.name}`}
+                    : `Direct Conversation with ${activeContact?.name || "Team Member"}`}
                 </h3>
                 <p className="text-xs text-[#97A0B3] max-w-md mt-1.5 leading-relaxed">
                   {activeMode === "channel"
                     ? `This is the start of the #${activeChannel.label} channel. Collaborate with your creative team, drop project notes, or review revisions in real time.`
                     : activeContact?.is_super_admin
                     ? "This is your private, direct thread with Creo Executive Super Administration. Inquire about your creative pod, retainer adjustments, SLA escalations, or custom requests."
-                    : `This is the start of your direct 1-on-1 thread with ${activeContact.name}. Drop project feedback, creative directions, or collaborate in real time.`}
+                    : `This is the start of your direct 1-on-1 thread with ${activeContact?.name || "your team"}. Drop project feedback, creative directions, or collaborate in real time.`}
                 </p>
               </div>
             ) : (
