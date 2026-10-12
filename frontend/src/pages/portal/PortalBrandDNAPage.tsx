@@ -194,7 +194,7 @@ export function PortalBrandDNAPage() {
 
   if (!gate.isComplete && isBrandTab) {
     return (
-      <div className="flex items-center justify-center py-6 sm:py-10">
+      <div className="w-full">
         <SubscriptionLockedState
           title="Brand DNA Locked"
           description="Complete your onboarding setup to manage your brand DNA, visual assets, and brand guidelines."
@@ -302,7 +302,7 @@ export function PortalBrandDNAPage() {
   };
 
   return (
-    <div className="animate-in fade-in duration-300 space-y-6 pb-12 relative">
+    <div className="w-full min-w-0 animate-in fade-in duration-300 space-y-4 relative">
       {/* ─────────────────────────────────────────────────────────── */}
       {/* SUCCESS POPUP (CENTERED WITH WHOLE BG BLURRED)              */}
       {/* ─────────────────────────────────────────────────────────── */}
@@ -344,7 +344,7 @@ export function PortalBrandDNAPage() {
       {/* ─────────────────────────────────────────────────────────── */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl max-w-2xl w-full p-6 sm:p-7 space-y-5 shadow-2xl relative my-8 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl max-w-2xl w-full p-5 sm:p-6 space-y-5 shadow-2xl relative my-8 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
               <div className="flex items-center gap-2.5">
                 <div className="size-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
@@ -630,7 +630,7 @@ export function PortalBrandDNAPage() {
       </div>
 
       {/* Bento Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {/* ── CARD 1: BRAND VOICE & PERSONALITY ── */}
         <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#2A3446] bg-[#0B111C]/50">

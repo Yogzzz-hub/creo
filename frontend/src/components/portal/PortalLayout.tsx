@@ -7,6 +7,7 @@ import { AdminTopHeader } from "../admin/AdminTopHeader";
 import { CreoInlineLoader } from "../ui/CreoLoader";
 
 import { ResumeOnboardingBanner } from "./ResumeOnboardingBanner";
+import { useOnboardingGate } from "../../lib/useOnboardingGate";
 
 export function PortalLayout() {
   // Passively save current route to sessionStorage on every navigation
@@ -16,11 +17,9 @@ export function PortalLayout() {
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [pathname]);
-  // The dashboard and plan pages render the larger resume card themselves instead of the strip
-  const hasHeroResume =
-    pathname === "/portal" || pathname === "/portal/" || pathname.startsWith("/portal/payments");
-
-  const isSlack = pathname.startsWith("/portal/slack");
+  const gate = useOnboardingGate();
+  // Only an unlocked chat uses a fixed-height viewport; locked pages scroll normally.
+  const isSlack = pathname.startsWith("/portal/slack") && gate.isComplete;
 
   return (
     <AdminSidebarProvider>
@@ -59,18 +58,18 @@ export function PortalLayout() {
             id="main-content"
             className={
               isSlack
-                ? "portal-main flex-1 w-full px-2 sm:px-4 lg:px-6 pt-1 sm:pt-2 pb-2 sm:pb-3 flex flex-col min-h-0 overflow-hidden"
-                : "portal-main flex-1 w-full px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-10"
+                ? "portal-main flex-1 w-full px-4 sm:px-6 pt-4 pb-4 flex flex-col min-h-0 overflow-hidden"
+                : "portal-main flex-1 w-full px-4 sm:px-6 pt-4 pb-6"
             }
           >
             <div
               className={
                 isSlack
-                  ? "mx-auto w-full max-w-[1700px] flex-1 min-h-0 flex flex-col h-full max-h-full overflow-hidden"
-                  : "mx-auto w-full max-w-[1500px]"
+                  ? "portal-content mx-auto w-full max-w-[1500px] flex-1 min-h-0 flex flex-col h-full max-h-full overflow-hidden"
+                  : "portal-content mx-auto flex w-full max-w-[1500px] flex-col gap-4"
               }
             >
-              {!hasHeroResume && !isSlack && <ResumeOnboardingBanner variant="compact" />}
+              {!isSlack && <ResumeOnboardingBanner variant="compact" />}
               <Suspense fallback={<CreoInlineLoader />}>
                 <div
                   key={pathname}

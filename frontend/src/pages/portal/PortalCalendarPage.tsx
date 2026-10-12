@@ -384,12 +384,12 @@ export function PortalCalendarPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-[1440px] mx-auto px-4 md:px-8 pb-10 font-sans text-white bg-[#0B111C]">
+    <div className="flex w-full min-w-0 flex-col gap-4 font-sans text-white">
       {/* ── Bento Grid Layout ──────────────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-stretch">
         
         {/* Left Column: Calendar View (xl:col-span-2) */}
-        <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-4 sm:p-6 lg:p-7 min-w-0 flex-col h-full">
+        <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-5 sm:p-6 min-w-0 flex-col h-full">
           {/* Calendar Header */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-3">
@@ -513,7 +513,7 @@ export function PortalCalendarPage() {
         </div>
 
         {/* Right Column: Dispatch Queue (xl:col-span-1) */}
-        <div className="xl:col-span-1 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-4 sm:p-6 lg:p-7 flex flex-col h-full min-w-0">
+        <div className="xl:col-span-1 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-5 sm:p-6 flex flex-col h-full min-w-0">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-[20px] font-black text-white tracking-tight">
               {selectedDate ? `Task Queue for ${selectedDate}th` : "Today's Dispatch Queue"}

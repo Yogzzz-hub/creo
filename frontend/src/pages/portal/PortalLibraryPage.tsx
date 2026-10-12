@@ -64,7 +64,7 @@ export function PortalLibraryPage() {
   if (!gate.isReady) return <div role="status" className="p-6 animate-pulse">Loading your library…</div>;
   if (!gate.isComplete) {
     return (
-      <div className="flex items-center justify-center py-6 sm:py-10">
+      <div className="w-full">
         <SubscriptionLockedState
           title="Asset Library Locked"
           description="Your finished master renders and brand assets library will activate once your onboarding setup is completed."
@@ -115,7 +115,7 @@ export function PortalLibraryPage() {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8 pb-12 overflow-x-hidden">
+    <div className="w-full min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-4 overflow-x-hidden">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
@@ -205,7 +205,7 @@ export function PortalLibraryPage() {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 min-h-[400px]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-h-[400px]">
         {filteredAssets.length === 0 ? (
           <div className="col-span-full flex flex-col items-center justify-center text-[#97A0B3] py-20 border border-dashed border-white/[0.1] rounded-2xl">
             <Search className="w-8 h-8 mb-4 opacity-50" />

@@ -300,7 +300,7 @@ export function AdminTopHeader({
       : activeTab);
 
   return (
-    <div className="sticky top-0 z-40 w-full bg-[#0B111C]/90 backdrop-blur-md pt-2 sm:pt-2.5 pb-1.5 sm:pb-2 px-3.5 sm:px-6 lg:px-8 transition-all">
+    <div className={`sticky top-0 z-40 w-full bg-[#0B111C]/90 backdrop-blur-md pt-2 sm:pt-2.5 pb-1.5 sm:pb-2 transition-all ${location.pathname.startsWith("/portal") ? "px-4 sm:px-6" : "px-3.5 sm:px-6 lg:px-8"}`}>
       <header className="max-w-[1500px] mx-auto bg-[#161F2D] rounded-xl sm:rounded-full border border-[#2A3446] px-3.5 sm:px-5 lg:px-6 py-1.5 sm:py-2 flex items-center justify-between shadow-[0_4px_20px_rgba(5,8,16,0.5)] min-h-[44px] sm:min-h-[48px]">
         {/* Left Section: Mobile Hamburger + Back Button + Mobile Brand Logo + Title */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">

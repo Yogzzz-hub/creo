@@ -1,4 +1,4 @@
-import { ArrowRight, Check, LifeBuoy, PhoneCall, Sparkles } from "lucide-react";
+import { ArrowRight, Check, PhoneCall, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import {
@@ -54,7 +54,7 @@ export function ResumeOnboardingBanner({
     return (
       <section
         aria-label="Resume onboarding"
-        className="mb-6 rounded-2xl border border-[#D8BF9B]/25 bg-[#161F2D] px-4 py-3.5 sm:px-5 shadow-[0_4px_20px_rgba(5,8,16,0.35)] animate-page-in"
+        className="rounded-2xl border border-[#D8BF9B]/25 bg-[#161F2D] px-4 py-3.5 sm:px-5 shadow-[0_4px_20px_rgba(5,8,16,0.35)] animate-page-in"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
           <div className="flex min-w-0 flex-1 items-center gap-3.5">
@@ -129,13 +129,7 @@ export function ResumeOnboardingBanner({
                   Call & bargain a custom plan
                 </button>
               )}
-              <Link
-                to="/portal/support"
-                className="inline-flex items-center gap-1.5 px-2 py-3 text-sm font-medium text-[#97A0B3] transition-colors hover:text-[#F8FAFC]"
-              >
-                <LifeBuoy className="size-4" />
-                Need help?
-              </Link>
+
             </div>
           </div>
 

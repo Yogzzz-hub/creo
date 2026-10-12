@@ -276,7 +276,7 @@ export function PortalDeliverablesPage() {
 
   if (!gate.isComplete) {
     return (
-      <div className="flex items-center justify-center py-6 sm:py-10">
+      <div className="w-full">
         <SubscriptionLockedState
           title="Deliverables Queue Locked"
           description="Your creative deliverables queue and sign-off docks will activate as soon as your workspace setup is complete."
@@ -296,7 +296,7 @@ export function PortalDeliverablesPage() {
 
   if (listQuery.data?.subscription_active === false) {
     return (
-      <div className="flex items-center justify-center py-6 sm:py-10">
+      <div className="w-full">
         <SubscriptionLockedState
           title="Subscription inactive"
           description="Your subscription has lapsed. Renew to review and download your deliverables."
@@ -347,7 +347,7 @@ export function PortalDeliverablesPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0 pb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0 pb-6">
           {/* Left Column: Batch List */}
           <div className="col-span-1 lg:col-span-3 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-4 flex flex-col overflow-hidden max-h-[420px] lg:max-h-none">
             <div className="flex flex-wrap gap-1 mb-3" role="tablist" aria-label="Filter deliverables">
@@ -441,7 +441,7 @@ export function PortalDeliverablesPage() {
           </div>
 
           {/* Right Column: Details & Actions */}
-          <div className="col-span-1 lg:col-span-4 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-4 sm:p-6 flex flex-col overflow-hidden">
+          <div className="col-span-1 lg:col-span-4 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-5 sm:p-6 flex flex-col overflow-hidden">
             {shownItem ? (
               <div className="flex-1 overflow-y-auto pr-1 scrollbar-hide space-y-6">
                 <div>

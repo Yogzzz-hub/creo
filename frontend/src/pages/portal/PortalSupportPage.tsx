@@ -144,7 +144,7 @@ export function PortalSupportPage() {
   }
 
   return (
-    <div className="w-full min-w-0 space-y-6 text-white">
+    <div className="w-full min-w-0 space-y-4 text-white">
 
       {/* ── Retainer Notice Banner (Informative & Actionable, Never Blocking Support) ── */}
       {isExpired && !isStaffOrAdmin && (
@@ -181,9 +181,9 @@ export function PortalSupportPage() {
       )}
 
       {/* ── Main Help Section ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-4">
         {/* ── Left Column: Ask your pod (Form) ── */}
-        <div className="min-w-0 bg-[#161F2D] rounded-3xl p-5 sm:p-7 border border-[#2A3446]">
+        <div className="min-w-0 bg-[#161F2D] rounded-3xl p-5 sm:p-6 border border-[#2A3446]">
           <h3 className="text-base font-semibold text-white mb-5">Contact support</h3>
 
           <form onSubmit={handleFormSubmit} className="space-y-5">
@@ -254,9 +254,9 @@ export function PortalSupportPage() {
         </div>
 
         {/* ── Right Column: Your requests + Common questions ── */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Your Requests */}
-          <div className="min-w-0 bg-[#161F2D] rounded-3xl p-5 sm:p-7 border border-[#2A3446]">
+          <div className="min-w-0 bg-[#161F2D] rounded-3xl p-5 sm:p-6 border border-[#2A3446]">
             <h3 className="text-base font-semibold text-white mb-4">Your requests</h3>
 
             {ticketsList.length === 0 ? (
@@ -296,7 +296,7 @@ export function PortalSupportPage() {
           </div>
 
           {/* Common Questions (Accordion) */}
-          <div className="min-w-0 bg-[#161F2D] rounded-3xl p-5 sm:p-7 border border-[#2A3446]">
+          <div className="min-w-0 bg-[#161F2D] rounded-3xl p-5 sm:p-6 border border-[#2A3446]">
             <h3 className="text-base font-semibold text-white mb-4">Common questions</h3>
 
             <div className="divide-y divide-white/[0.05]">

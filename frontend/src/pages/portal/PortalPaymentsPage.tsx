@@ -7,7 +7,6 @@ import { fetchClientNegotiations } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem } from "../../lib/ops-api";
 import { openRazorpayCheckout } from "../../lib/razorpay";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
-import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
 import { PausePlanModal } from "../../components/portal/PausePlanModal";
 import { ComparePlansModal } from "../../components/portal/ComparePlansModal";
 import { PlanBargainCallModal } from "../../components/portal/PlanBargainCallModal";
@@ -191,13 +190,12 @@ export function PortalPaymentsPage() {
   // No plan yet: show where to resume instead of placeholder plan figures.
   if (!gate.isPaid && !subData?.subscription) {
     return (
-      <div className="space-y-6 pb-12">
+      <div className="w-full min-w-0 space-y-4">
         <div>
           <p className="text-xs uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-2">No active plan yet</p>
           <h1 className="text-3xl font-bold text-[#F8FAFC] tracking-tight">Plan & billing</h1>
         </div>
-        <ResumeOnboardingBanner variant="hero" title="Activate your plan in a few quick steps" />
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 lg:p-8">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-5 sm:p-6">
           <h3 className="text-base font-semibold text-[#F8FAFC] mb-1.5">Invoices</h3>
           <p className="text-sm text-[#97A0B3] leading-relaxed">
             Receipts and invoices will appear here after your first payment.
@@ -208,7 +206,7 @@ export function PortalPaymentsPage() {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 pb-12">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full min-w-0 space-y-4">
       {/* Action Toast / Confirmation Notice */}
       {actionNotice && (
         <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-700/60 text-emerald-300 text-xs font-semibold flex items-center gap-2.5 animate-[fadeIn_0.2s_ease-out]">
@@ -295,9 +293,6 @@ export function PortalPaymentsPage() {
         </div>
       )}
 
-      {/* Paid but onboarding unfinished */}
-      <ResumeOnboardingBanner variant="hero" title="Your plan is active — finish setup to start production" />
-
       {/* Active Negotiation Status Banner */}
       {latestNeg && (
         <div
@@ -357,10 +352,10 @@ export function PortalPaymentsPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         
         {/* Top Left: Current Plan */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8 flex flex-col justify-between">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-10">
             <div>
               <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-1">
@@ -394,7 +389,7 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Top Right: Add to this cycle */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6">
           <h3 className="text-sm font-bold text-white mb-6">Add to this cycle</h3>
           {!hasActivePlan && (
             <p className="text-xs text-[#97A0B3] -mt-3 mb-4">
@@ -429,7 +424,7 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Bottom Left: Invoices */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6">
           <h3 className="text-sm font-bold text-white mb-6">Invoices</h3>
           <div className="overflow-x-auto scrollbar-hide">
             <table className="w-full min-w-[500px]">
@@ -478,7 +473,7 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Bottom Right: Payment method */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8 flex flex-col justify-between">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6 flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-white mb-6">Payment method</h3>
             

@@ -22,7 +22,6 @@ import { useAuth } from "../../lib/auth-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
-import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
 import { getAuthToken } from "../../lib/auth-token";
 
@@ -446,22 +445,15 @@ export function SlackChatPage() {
 
   if (isClient && !gate.isComplete) {
     return (
-      <div className="flex flex-1 min-h-0 flex-col py-2 sm:py-4">
-        <ResumeOnboardingBanner variant="compact" />
-        <div className="flex flex-1 items-center justify-center py-6 sm:py-10">
-          <SubscriptionLockedState
-            title="Direct Chat Locked"
-            description="Your private chat with the assigned creative pod unlocks after you complete workspace setup. Resume setup above to continue where you left off."
-            showResumeAction={false}
-            showSupportAction={false}
-          />
-        </div>
-      </div>
+      <SubscriptionLockedState
+        title="Direct Chat Locked"
+        description="Your private chat with the assigned creative pod unlocks after you complete workspace setup. Resume setup to continue where you left off."
+      />
     );
   }
 
   return (
-    <div className={`flex flex-col ${isClient ? "flex-1 min-h-0" : "h-[calc(100vh-5.5rem)] min-h-[550px]"} overflow-hidden -mx-4 sm:-mx-6 -my-6 sm:-my-8`}>
+    <div className={`flex flex-col ${isClient ? "flex-1 min-h-0" : "h-[calc(100vh-5.5rem)] min-h-[550px] -mx-4 sm:-mx-6 -my-6 sm:-my-8"} overflow-hidden`}>
       {/* ── Top Header Context Bar ── */}
       {!isClient && <AdminTopHeader title="Direct Chat Hub" activeTab="Direct Chat" />}
 

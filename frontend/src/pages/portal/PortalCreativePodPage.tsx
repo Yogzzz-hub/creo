@@ -133,7 +133,7 @@ export function PortalCreativePodPage() {
 
   if (!gate.isComplete) {
     return (
-      <div className="flex items-center justify-center py-6 sm:py-10">
+      <div className="w-full">
         <SubscriptionLockedState
           title="Creative Pod Access Locked"
           description="Your dedicated creative specialists and lead producer will be provisioned once your account setup is completed."
@@ -143,7 +143,7 @@ export function PortalCreativePodPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-4">
       {/* Toast Alert */}
       {toastMessage && typeof document !== "undefined" && createPortal(
         <div
@@ -172,7 +172,7 @@ export function PortalCreativePodPage() {
       <h1 className="text-2xl font-semibold text-white">Your pod</h1>
 
       {/* ── Team Cards Grid ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {isLoading ? (
           <div className="col-span-full flex items-center justify-center py-16">
             <div className="w-8 h-8 border-2 border-[#7FA0D6] border-t-transparent rounded-full animate-spin" />
@@ -191,7 +191,7 @@ export function PortalCreativePodPage() {
             return (
               <div
                 key={memberId || i}
-                className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] flex flex-col animate-in fade-in zoom-in-95 duration-500 fill-mode-both"
+                className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] flex flex-col animate-in fade-in zoom-in-95 duration-500 fill-mode-both"
                 style={{ animationDelay: `${i * 100}ms` }}
               >
                 {/* Avatar + Name */}
@@ -230,9 +230,9 @@ export function PortalCreativePodPage() {
       </div>
 
       {/* ── Bottom Section: Slack Hub Access + Booking ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Slack Hub Banner (2 cols) */}
-        <div className="lg:col-span-2 bg-gradient-to-br from-[#161F2D] to-[#0D1522] rounded-2xl p-6 sm:p-8 border border-[#2A3446] flex flex-col justify-between shadow-sm relative overflow-hidden">
+        <div className="lg:col-span-2 bg-gradient-to-br from-[#161F2D] to-[#0D1522] rounded-2xl p-5 sm:p-6 border border-[#2A3446] flex flex-col justify-between shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#7FA0D6]/5 rounded-full blur-3xl pointer-events-none" />
           
           <div className="relative z-10">
@@ -266,7 +266,7 @@ export function PortalCreativePodPage() {
         </div>
 
         {/* Booking (1 col) */}
-        <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] flex flex-col overflow-hidden shadow-sm">
+        <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] flex flex-col overflow-hidden shadow-sm">
           <div className="shrink-0">
             <h3 className="text-base font-semibold text-white mb-1">Book a call</h3>
             <p className="text-[13px] text-[#97A0B3] mb-5">15-minute slots with {callAvailability?.lead?.name || podLead?.name || "your pod lead"}</p>

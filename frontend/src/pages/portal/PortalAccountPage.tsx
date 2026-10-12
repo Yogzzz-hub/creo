@@ -118,8 +118,8 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
   const tabButton = (active: boolean) =>
     `inline-flex min-h-10 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B111C] cursor-pointer ${active ? "bg-[#BCCCE6] text-[#0B111C] shadow-[0_4px_16px_rgba(127,160,214,0.18)]" : "text-[#97A0B3] hover:bg-white/[0.05] hover:text-white"}`;
   return (
-    <div className="w-full min-w-0 space-y-6 text-white">
-      <header className="flex flex-col gap-5 rounded-3xl border border-[#2A3446] bg-[radial-gradient(ellipse_at_top_left,rgba(127,160,214,0.12),transparent_55%),#111927] p-5 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
+    <div className="w-full min-w-0 space-y-4 text-white">
+      <header className="flex flex-col gap-5 rounded-3xl border border-[#2A3446] bg-[radial-gradient(ellipse_at_top_left,rgba(127,160,214,0.12),transparent_55%),#111927] p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#7FA0D6]/20 bg-[#7FA0D6]/[0.08] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#9CB8E5]">
             <Settings2 className="size-3.5" /> Workspace preferences
@@ -257,7 +257,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                 {brand ? "Brand" : "Profile"}
               </span>
             </div>
-            <div className="grid gap-x-5 gap-y-4 p-5 sm:grid-cols-2 sm:p-7">
+            <div className="grid gap-x-5 gap-y-4 p-5 sm:grid-cols-2 sm:p-6">
             {(brand
               ? ["company", "instagram", "summary"]
               : ["name", "company", "phone"]
@@ -332,7 +332,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
             </section>
           )}
           {!brand && (
-            <section className="rounded-3xl border border-[#2A3446] bg-[#161F2D] p-5 shadow-[0_18px_48px_rgba(3,8,16,0.16)] sm:p-7">
+            <section className="rounded-3xl border border-[#2A3446] bg-[#161F2D] p-5 shadow-[0_18px_48px_rgba(3,8,16,0.16)] sm:p-6">
               <div className="mb-5 flex items-center gap-3">
                 <div className="flex size-10 items-center justify-center rounded-xl border border-[#7FA0D6]/20 bg-[#7FA0D6]/10 text-[#8EACDE]"><UsersRound className="size-5" /></div>
                 <div className="min-w-0 flex-1">

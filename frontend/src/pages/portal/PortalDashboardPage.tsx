@@ -5,7 +5,6 @@ import { HttpError, request } from "../../lib/http";
 import { approveDeliverable, requestChanges } from "../../lib/deliverables-api";
 import { useAuth } from "../../lib/auth-context";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
-import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
 
 /* ── Types ── */
@@ -187,7 +186,7 @@ export function PortalDashboardPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="w-full min-w-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
       {/* ── Top Header Bar ── */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
@@ -227,14 +226,13 @@ export function PortalDashboardPage() {
       </div>
 
       {/* ── Resume onboarding (above the pipeline while setup is incomplete) ── */}
-      <ResumeOnboardingBanner variant="hero" />
 
       {/* ── Main Content Grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left Column: Batch Status + Asset List (2/3 width) */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4">
           {/* Batch Status Card */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
+          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-base font-semibold text-white">
@@ -377,7 +375,7 @@ export function PortalDashboardPage() {
           </div>
 
           {/* Coming Up */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
+          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-semibold text-white">Coming up</h3>
               <span className="text-xs font-medium text-[#97A0B3]">
@@ -434,9 +432,9 @@ export function PortalDashboardPage() {
         </div>
 
         {/* Right Column: Plan + Results + Pod */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Your plan this cycle */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
+          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
             <h3 className="text-base font-semibold text-white mb-5">Your plan this cycle</h3>
             {isLocked ? (
               <div className="space-y-4">
@@ -514,7 +512,7 @@ export function PortalDashboardPage() {
           </div>
 
           {/* Results */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
+          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
             <h3 className="text-base font-semibold text-white mb-2">Results</h3>
             <p className="text-sm text-[#97A0B3] mb-5 leading-relaxed">
               Connect Instagram to see reach and saves for every post we publish. Until then we show nothing here rather than guess.
@@ -530,7 +528,7 @@ export function PortalDashboardPage() {
           </div>
 
           {/* From your pod */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
+          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-semibold text-white">From your pod</h3>
               {!isLocked && (
