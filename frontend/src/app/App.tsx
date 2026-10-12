@@ -1,5 +1,6 @@
 import { Suspense, Component, type ReactNode, type ErrorInfo, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } from "react-router";
+import { ArrowLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "../lib/auth-context";
 import { ConfirmProvider } from "../components/ui/ConfirmDialog";
@@ -18,7 +19,6 @@ import {
   OnboardingView,
   PortalAccountPage,
   PortalCalendarPage,
-  PortalCreativePodPage,
   PortalDashboardPage,
   PortalDeliverablesPage,
   PortalLibraryPage,
@@ -48,9 +48,7 @@ import { PortalLayout } from "../components/portal/PortalLayout";
 
 // Ops Layout & Features
 import { OpsLayout } from "../components/ops/OpsLayout";
-const HomePage = lazyModule(() =>
-  import("../pages/public/HomePage").then(m => ({ default: m.HomePage }))
-);
+import { HomePage } from "../pages/public/HomePage";
 
 const AdminDashboard = lazyModule(() =>
   import("../features/admin/AdminDashboard").then((m) => ({ default: m.AdminDashboard }))
@@ -194,14 +192,13 @@ function OnboardingPageWrapper() {
             <span className="h-6 w-px bg-[#2A3446]" aria-hidden="true" />
             <span className="text-xs sm:text-sm font-medium text-[#A7B4C8]">Client onboarding</span>
           </div>
-          {user && (
-            <div className="flex min-w-0 items-center gap-2.5">
-              <span className="hidden sm:block max-w-40 truncate text-sm font-medium text-[#BCCCE6]">{user.full_name || user.email}</span>
-              <span aria-label="Your account" className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[#7FA0D6]/30 bg-[#7FA0D6]/15 text-xs font-semibold text-[#BCCCE6]">
-                {(user.full_name || user.email || "C").slice(0, 1).toUpperCase()}
-              </span>
-            </div>
-          )}
+          <Link
+            to="/portal"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#161F2D] hover:bg-[#202B3D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs sm:text-sm font-semibold text-[#BCCCE6] hover:text-white transition-all shadow-xs cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4 text-[#7FA0D6]" />
+            <span>Back to Portal</span>
+          </Link>
         </div>
       </header>
 
@@ -281,8 +278,6 @@ const dashboardRoutes = {
   "/portal/deliverables": PortalDeliverablesPage,
   "/portal/deliverables/:deliverableId": PortalDeliverablesPage,
   "/portal/calendar": PortalCalendarPage,
-  "/portal/creative-pod": PortalCreativePodPage,
-  "/portal/creative_pod": PortalCreativePodPage,
   "/portal/payments": PortalPaymentsPage,
   "/portal/support": PortalSupportPage,
   "/portal/support/:ticketId": ClientTicketDetailPage,
@@ -310,6 +305,7 @@ const dashboardRoutes = {
   "/admin/leaves": AdminLeaveApprovalsPage,
   "/admin/revenue": AdminRevenuePage,
   "/admin/plans": AdminPlansPage,
+  "/admin/plans-and-negotiations": AdminPlansPage,
   "/admin/sales": AdminSalesPage,
   "/admin/pod-dashboard": PodLeadDashboardPage,
   "/admin/pod": PodLeadDashboardPage,
@@ -540,8 +536,8 @@ export function App() {
                 <Route path="deliverables" element={<SimpleErrorBoundary name="Deliverables"><PortalDeliverablesPage /></SimpleErrorBoundary>} />
                 <Route path="deliverables/:deliverableId" element={<SimpleErrorBoundary name="Deliverables"><PortalDeliverablesPage /></SimpleErrorBoundary>} />
                 <Route path="calendar" element={<PortalCalendarPage />} />
-                <Route path="creative-pod" element={<PortalCreativePodPage />} />
-                <Route path="creative_pod" element={<PortalCreativePodPage />} />
+                <Route path="creative-pod" element={<Navigate to="/portal" replace />} />
+                <Route path="creative_pod" element={<Navigate to="/portal" replace />} />
                 <Route path="payments" element={<PortalPaymentsPage />} />
                 <Route path="support" element={<SimpleErrorBoundary name="Support"><PortalSupportPage /></SimpleErrorBoundary>} />
                 <Route path="support/:ticketId" element={<ClientTicketDetailPage />} />
@@ -585,7 +581,9 @@ export function App() {
                   path="/admin/clients"
                   element={
                     <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                      <AdminClientsPage />
+                      <SimpleErrorBoundary name="Admin Clients">
+                        <AdminClientsPage />
+                      </SimpleErrorBoundary>
                     </ProtectedRoute>
                   }
                 />
@@ -593,13 +591,19 @@ export function App() {
                   path="/admin/clients/:clientId"
                   element={
                     <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                      <AdminClientsPage />
+                      <SimpleErrorBoundary name="Admin Clients">
+                        <AdminClientsPage />
+                      </SimpleErrorBoundary>
                     </ProtectedRoute>
                   }
                 />
                 <Route
                   path="/admin/clients/:clientId/brand"
-                  element={<AdminClientBrandPage />}
+                  element={
+                    <SimpleErrorBoundary name="Admin Client Brand Brief">
+                      <AdminClientBrandPage />
+                    </SimpleErrorBoundary>
+                  }
                 />
                 <Route path="/admin/calendar" element={<AdminCalendarPage />} />
                 <Route path="/admin/deliverables" element={<AdminDeliverablesPage />} />
@@ -641,6 +645,14 @@ export function App() {
                 />
                 <Route
                   path="/admin/plans"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <AdminPlansPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/plans-and-negotiations"
                   element={
                     <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
                       <AdminPlansPage />
@@ -731,7 +743,9 @@ export function App() {
                   path="/team-lead/clients/:clientId"
                   element={
                     <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer"]}>
-                      <AdminClientBrandPage />
+                      <SimpleErrorBoundary name="Team Lead Client Details">
+                        <AdminClientBrandPage />
+                      </SimpleErrorBoundary>
                     </ProtectedRoute>
                   }
                 />
@@ -780,7 +794,9 @@ export function App() {
                   path="/lead/clients/:clientId"
                   element={
                     <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer"]}>
-                      <AdminClientBrandPage />
+                      <SimpleErrorBoundary name="Lead Client Details">
+                        <AdminClientBrandPage />
+                      </SimpleErrorBoundary>
                     </ProtectedRoute>
                   }
                 />

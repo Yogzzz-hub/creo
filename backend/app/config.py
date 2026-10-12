@@ -83,14 +83,14 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = Field(default="")
     GOOGLE_REDIRECT_URI: str = Field(default="https://creo-dsxr.onrender.com")
 
-    # Legacy SMTP settings (kept for backward compatibility; Brevo HTTPS API is primary)
-    SMTP_SERVER: str = Field(default="smtp.gmail.com")
-    SMTP_HOST: str = Field(default="smtp.gmail.com")
-    SMTP_PORT: int = Field(default=465)
+    # Brevo SMTP relay; an explicit Brevo HTTPS API key takes precedence.
+    SMTP_SERVER: str = Field(default="smtp-relay.brevo.com")
+    SMTP_HOST: str = Field(default="smtp-relay.brevo.com")
+    SMTP_PORT: int = Field(default=2525)
     SMTP_USERNAME: str = Field(default="")
     SMTP_PASSWORD: str = Field(default="")
-    SMTP_USE_TLS: bool = Field(default=False)
-    SMTP_USE_SSL: bool = Field(default=True)
+    SMTP_USE_TLS: bool = Field(default=True)
+    SMTP_USE_SSL: bool = Field(default=False)
     SMTP_FROM_EMAIL: str = Field(default="")
 
     # Payment Gateways — Razorpay
@@ -219,7 +219,7 @@ class Settings(BaseSettings):
             if self.SMTP_PORT == 465:
                 self.SMTP_USE_SSL = True
                 self.SMTP_USE_TLS = False
-            elif self.SMTP_PORT == 587:
+            elif self.SMTP_PORT in (587, 2525):
                 self.SMTP_USE_SSL = False
                 self.SMTP_USE_TLS = True
 

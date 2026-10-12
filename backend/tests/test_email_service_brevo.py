@@ -33,6 +33,8 @@ class FakeAsyncClient:
 
 @pytest.fixture(autouse=True)
 def configured_brevo(monkeypatch: Any) -> None:
+    monkeypatch.setattr(settings, "SMTP_PASSWORD", "")
+    monkeypatch.setattr(settings, "SMTP_USERNAME", "")
     monkeypatch.setattr(settings, "BREVO_API_KEY", "test-brevo-key")
     monkeypatch.setattr(settings, "BREVO_FROM_EMAIL", "verify@example.com")
     monkeypatch.setattr(settings, "BREVO_FROM_NAME", "Creo")
@@ -116,3 +118,19 @@ def test_otp_template_uses_brevo_delivery() -> None:
     assert payload["subject"] == "123456 is your Creo verification code"
     assert "123456" in payload["textContent"]
     assert payload["to"] == [{"email": "client@example.net"}]
+
+
+def test_smtp_relay_used_when_xsmtpsib_key(monkeypatch: Any) -> None:
+    sent_args: dict[str, Any] = {}
+
+    async def fake_smtp(*args: Any, **kwargs: Any) -> bool:
+        sent_args["args"] = args
+        sent_args["kwargs"] = kwargs
+        return True
+
+    monkeypatch.setattr(email_service, "_send_via_smtp", fake_smtp)
+    monkeypatch.setattr(settings, "BREVO_API_KEY", "xsmtpsib-test-smtp-key")
+    assert asyncio.run(email_service.send_email("client@example.net", "Verify", "<p>Code</p>")) is True
+    assert "kwargs" in sent_args
+    assert sent_args["args"][0] == "client@example.net"
+

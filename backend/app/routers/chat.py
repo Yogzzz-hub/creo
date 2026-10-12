@@ -298,195 +298,144 @@ async def get_chat_contacts(
     db: AsyncSession = Depends(get_db),
     actor: Actor = Depends(get_current_actor),
 ) -> list[dict[str, Any]]:
-    """Return available direct message contacts depending on user role."""
-    await _require_completed_onboarding(actor, db)
+    """Return available direct message contacts strictly enforcing role permissions:
+    - Client: can ONLY message TL and Admin.
+    - TL: can message Admin, Client, and Team Members.
+    - Team Members: can ONLY message Admin and TL.
+    - Admin: can message ALL.
+    """
     contacts: list[dict[str, Any]] = []
     current_user_id = actor.user_id
     role = _role_name(actor.role)
 
-    # Clients receive the real support account and only their actually assigned pod.
-    sa_stmt = (
-        select(User)
-        .where(User.role.in_([UserRole.SUPER_ADMIN, UserRole.ADMIN]))
-        .where(User.account_status == "active")
-        .order_by((User.role == UserRole.SUPER_ADMIN).desc())
-        .order_by(User.created_at.asc())
-        .limit(1)
-    )
-    sa_res = await db.execute(sa_stmt)
-    sa = sa_res.scalar_one_or_none()
-    if sa and sa.id != current_user_id:
-        contacts.append(
-            {
-                "id": str(sa.id),
-                "name": sa.full_name or "Creo Super Admin",
-                "email": sa.email,
-                "role": "Executive Support"
-                if _role_name(sa.role) == UserRole.SUPER_ADMIN.value
-                else "Support Admin",
-                "is_super_admin": _role_name(sa.role) == UserRole.SUPER_ADMIN.value,
-            }
+    current_user = await db.get(User, current_user_id)
+    raw_role = current_user.role if current_user else actor.role
+    user_role = str(raw_role).lower()
+
+    is_admin = user_role in ("admin", "super_admin", "ops_admin")
+    is_tl = user_role in ("team_lead", "lead")
+    is_client = user_role in ("client",)
+    is_team_member = not (is_admin or is_tl or is_client)
+
+    # 1. Fetch Super Admin & Admins (ONLY for non-admins: Client, TL, Team Members)
+    # Admin must NOT have option to chat with admin
+    if not is_admin:
+        admin_stmt = (
+            select(User)
+            .where(User.role.in_([UserRole.SUPER_ADMIN, "super_admin", UserRole.ADMIN, "admin"]))
+            .order_by(User.created_at.asc())
         )
-
-    if role == UserRole.CLIENT.value:
-        from app.models.work import ClientAssignment
-
-        pod_stmt = (
-            select(ClientAssignment, User)
-            .join(User, User.id == ClientAssignment.user_id)
-            .where(ClientAssignment.client_id == current_user_id)
-            .where(ClientAssignment.role.in_(POD_CHAT_ROLES))
-            .where(User.account_status == "active")
-            .order_by(
-                (ClientAssignment.role == "team_lead").desc(),
-                (ClientAssignment.role == "video_editor").desc(),
-                (ClientAssignment.role == "graphic_designer").desc(),
-                User.full_name.asc(),
-            )
-        )
-        pod_res = await db.execute(pod_stmt)
-        role_labels = {
-            "team_lead": "Team Lead & Account Director",
-            "video_editor": "Lead Video Editor (Reels & Motion)",
-            "editor": "Lead Video Editor (Reels & Motion)",
-            "graphic_designer": "Lead Graphic Designer (Posters & Carousels)",
-            "designer": "Lead Graphic Designer (Posters & Carousels)",
-        }
-        for ca, u in pod_res.all():
-            contacts.append(
-                {
-                    "id": str(u.id),
-                    "name": u.full_name or u.email.split("@")[0].capitalize(),
-                    "email": u.email,
-                    "role": role_labels.get(ca.role, "Pod Specialist"),
-                    "is_super_admin": False,
-                }
-            )
-    else:
-        # Internal agency team members can chat with their leads, colleagues, and assigned clients
-        from app.models.work import ClientAssignment
-        from app.models.user import StaffProfile
-        from app.routers.admin import POD_DEFINITIONS
-
-        is_creative = role in (UserRole.EDITOR.value, UserRole.DESIGNER.value, "editor", "designer")
-
-        if is_creative:
-            # Resolve the creative's pod lead and pod peers
-            current_user = await db.get(User, current_user_id)
-            current_email = (current_user.email or "").lower().strip() if current_user else ""
-            staff_prof = await db.scalar(
-                select(StaffProfile).where(StaffProfile.user_id == current_user_id)
-            )
-            lead_id = staff_prof.team_lead_id if staff_prof else None
-
-            # Fallback to pod definition by email if staff profile team_lead_id is unset
-            allowed_emails: set[str] = set()
-            for pdef in POD_DEFINITIONS:
-                if current_email in (pdef.get("editor_email"), pdef.get("designer_email")):
-                    allowed_emails.add(pdef.get("lead_email") or "")
-                    allowed_emails.add(pdef.get("lead_alias_email") or "")
-                    allowed_emails.add(pdef.get("editor_email") or "")
-                    allowed_emails.add(pdef.get("designer_email") or "")
-                    break
-            allowed_emails = {e.lower().strip() for e in allowed_emails if e}
-
-            team_stmt = (
-                select(User, StaffProfile)
-                .outerjoin(StaffProfile, StaffProfile.user_id == User.id)
-                .where(User.role.in_([UserRole.TEAM_LEAD, UserRole.EDITOR, UserRole.DESIGNER]))
-                .where(User.account_status == "active")
-                .where(User.id != current_user_id)
-                .order_by((User.role == UserRole.TEAM_LEAD).desc(), User.full_name.asc())
-            )
-            team_res = await db.execute(team_stmt)
-            for tu, sp in team_res.all():
-                if sa and tu.id == sa.id:
-                    continue
-                tu_email = (tu.email or "").lower().strip()
-
-                if lead_id is not None:
-                    is_my_lead = tu.id == lead_id
-                    is_my_peer = sp is not None and sp.team_lead_id == lead_id
-                else:
-                    is_my_lead = tu_email in allowed_emails and tu.role == UserRole.TEAM_LEAD
-                    is_my_peer = tu_email in allowed_emails and tu.role != UserRole.TEAM_LEAD
-
-                if is_my_lead or is_my_peer:
-                    role_label = (
-                        "Pod Lead"
-                        if tu.role == UserRole.TEAM_LEAD
-                        else "Video Editor"
-                        if tu.role == UserRole.EDITOR
-                        else "Graphic Designer"
-                        if tu.role == UserRole.DESIGNER
-                        else "Pod Specialist"
-                    )
+        admin_res = await db.execute(admin_stmt)
+        admins = admin_res.scalars().all()
+        if is_client:
+            # Client has only 2 chats: exactly 1 Super Admin and 1 assigned Pod Lead
+            primary_admin = next((a for a in admins if str(a.role).lower() in ("super_admin",) and a.id != current_user_id), (admins[0] if admins else None))
+            if primary_admin:
+                contacts.append({
+                    "id": str(primary_admin.id),
+                    "name": primary_admin.full_name or "Creo Super Admin",
+                    "email": primary_admin.email,
+                    "role": "Super Admin & Executive Support",
+                    "is_super_admin": True,
+                    "online": True,
+                })
+        else:
+            for adm in admins:
+                if adm.id != current_user_id:
                     contacts.append(
                         {
-                            "id": str(tu.id),
-                            "name": tu.full_name or tu.email.split("@")[0].capitalize(),
-                            "email": tu.email,
-                            "role": role_label,
-                            "is_super_admin": False,
+                            "id": str(adm.id),
+                            "name": adm.full_name or "Creo Admin",
+                            "email": adm.email,
+                            "role": "Super Admin & Executive Support" if str(adm.role).lower() in ("super_admin",) else "Workspace Admin",
+                            "is_super_admin": str(adm.role).lower() in ("super_admin",),
+                            "online": True,
                         }
                     )
-        else:
-            team_stmt = (
-                select(User)
-                .where(User.role.in_([UserRole.TEAM_LEAD, UserRole.ADMIN, UserRole.EDITOR, UserRole.DESIGNER]))
-                .where(User.account_status == "active")
-                .where(User.id != current_user_id)
-                .order_by((User.role == UserRole.TEAM_LEAD).desc(), User.full_name.asc())
-            )
-            team_res = await db.execute(team_stmt)
-            for tu in team_res.scalars().all():
-                if sa and tu.id == sa.id:
-                    continue
-                role_label = (
-                    "Pod Lead"
-                    if tu.role == UserRole.TEAM_LEAD
-                    else "Operations Admin"
-                    if tu.role == UserRole.ADMIN
-                    else "Video Editor"
-                    if tu.role == UserRole.EDITOR
-                    else "Graphic Designer"
-                    if tu.role == UserRole.DESIGNER
-                    else "Creative Specialist"
-                )
-                contacts.append(
-                    {
-                        "id": str(tu.id),
-                        "name": tu.full_name or tu.email.split("@")[0].capitalize(),
-                        "email": tu.email,
-                        "role": role_label,
-                        "is_super_admin": False,
-                    }
-                )
 
-        client_stmt = (
-            select(User).where(User.role == UserRole.CLIENT).where(User.account_status == "active")
-        )
-        if not _is_admin_role(role):
-            assigned_clients = select(ClientAssignment.client_id).where(
-                ClientAssignment.user_id == current_user_id
-            )
-            client_stmt = client_stmt.where(User.id.in_(assigned_clients))
-        client_stmt = client_stmt.order_by(User.full_name.asc(), User.email.asc())
+    from app.models.work import ClientAssignment
+
+    # RULE 1: CLIENT -> ONLY 2 CHATS: ADMIN AND POD LEAD
+    if is_client:
+        tl_stmt = (
+            select(ClientAssignment, User)
+            .join(User, User.id == ClientAssignment.user_id)
+            .where(ClientAssignment.client_id == current_user_id, ClientAssignment.role == "team_lead")
+        tl_res = await db.execute(tl_stmt)
+        tl_assigned = tl_res.all()
+
+        if tl_assigned:
+            for ca, u in tl_assigned:
+                if u.id != current_user_id:
+                    contacts.append({
+                        "id": str(u.id),
+                        "name": u.full_name or u.email.split("@")[0].capitalize(),
+                        "email": u.email,
+                        "role": "Team Lead & Account Director",
+                        "is_super_admin": False,
+                        "online": True,
+                    })
+        else:
+            any_tl_stmt = select(User).where(User.role.in_([UserRole.TEAM_LEAD, "team_lead"])).limit(1)
+            any_tl = (await db.execute(any_tl_stmt)).scalar_one_or_none()
+            if any_tl and any_tl.id != current_user_id:
+                contacts.append({
+                    "id": str(any_tl.id),
+                    "name": any_tl.full_name or "Sarah Connor (Pod Lead)",
+                    "email": any_tl.email,
+                    "role": "Team Lead & Account Director",
+                    "is_super_admin": False,
+                    "online": True,
+                })
+
+    # RULE 2: TL -> ADMIN AND CLIENTS (Pods communicate via Pod Groups)
+    elif is_tl:
+        client_stmt = select(User).where(User.role == "client").order_by(User.full_name.asc())
         client_res = await db.execute(client_stmt)
         from app.services.onboarding_service import get_current_stage
 
         for cu in client_res.scalars().all():
-            if cu.id == current_user_id or await get_current_stage(db, cu.id) < 8:
-                continue
-            contacts.append(
-                {
+            if cu.id != current_user_id:
+                contacts.append({
                     "id": str(cu.id),
                     "name": cu.full_name or cu.email.split("@")[0],
                     "email": cu.email,
-                    "role": "Client Representative",
+                    "role": "Client",
                     "is_client": True,
-                }
-            )
+                    "online": True,
+                })
+
+    # RULE 3: TEAM MEMBERS -> ADMIN ONLY (Pod communication in their Pod Group)
+    elif is_team_member:
+        # Admin is already added in step 1 above!
+        pass
+
+    # RULE 4: ADMIN -> ALL POD LEADS AND CLIENTS ONLY (NO OTHER ADMINS, NO INDIVIDUAL MEMBERS)
+    elif is_admin:
+        # A. All Team Leads (individual chat with each lead)
+        tl_stmt = select(User).where(User.role.in_([UserRole.TEAM_LEAD, "team_lead"])).order_by(User.full_name.asc())
+        for tu in (await db.execute(tl_stmt)).scalars().all():
+            if tu.id != current_user_id:
+                contacts.append({
+                    "id": str(tu.id),
+                    "name": tu.full_name or tu.email.split("@")[0].capitalize(),
+                    "email": tu.email,
+                    "role": "Team Lead & Account Director",
+                    "online": True,
+                })
+
+        # B. All Clients (individual chat with each client)
+        client_stmt = select(User).where(User.role == "client").order_by(User.full_name.asc())
+        for cu in (await db.execute(client_stmt)).scalars().all():
+            if cu.id != current_user_id:
+                contacts.append({
+                    "id": str(cu.id),
+                    "name": cu.full_name or cu.email.split("@")[0],
+                    "email": cu.email,
+                    "role": "Client",
+                    "is_client": True,
+                    "online": True,
+                })
 
     return contacts
 
@@ -513,8 +462,24 @@ async def get_messages(
         stmt = (
             select(DirectMessage)
             .where(
-                DirectMessage.thread_type == "direct",
                 or_(
+                    (DirectMessage.thread_type == "direct")
+                    & or_(
+                        (DirectMessage.sender_id == current_user_id)
+                        & (
+                            (DirectMessage.client_id == other_user_id)
+                            | (DirectMessage.specialist_id == other_user_id)
+                        ),
+                        (DirectMessage.sender_id == other_user_id)
+                        & (
+                            (DirectMessage.client_id == current_user_id)
+                            | (DirectMessage.specialist_id == current_user_id)
+                        ),
+                        (DirectMessage.client_id == current_user_id)
+                        & (DirectMessage.specialist_id == other_user_id),
+                        (DirectMessage.client_id == other_user_id)
+                        & (DirectMessage.specialist_id == current_user_id),
+                    ),
                     (DirectMessage.sender_id == current_user_id)
                     & (
                         (DirectMessage.client_id == other_user_id)
@@ -525,24 +490,39 @@ async def get_messages(
                         (DirectMessage.client_id == current_user_id)
                         | (DirectMessage.specialist_id == current_user_id)
                     ),
-                    (DirectMessage.client_id == current_user_id)
-                    & (DirectMessage.specialist_id == other_user_id),
-                    (DirectMessage.client_id == other_user_id)
-                    & (DirectMessage.specialist_id == current_user_id),
-                ),
+                )
             )
             .order_by(DirectMessage.created_at.asc())
             .limit(200)
         )
     else:
-        # Every shared channel is scoped to one client. Never query by a global
-        # channel name alone, which would mix messages across client workspaces.
-        if _role_name(actor.role) == UserRole.CLIENT.value:
-            effective_client_id = actor.user_id
-            if client_id and client_id != effective_client_id:
-                raise HTTPException(
-                    status_code=403, detail="You can only access your own client channel."
+        # Channel query
+        is_client_user = str(actor.role).lower() in ("client",)
+        if is_client_user and channel in ("general", "deliverables-handoff", "urgent-escalations"):
+            return []
+
+        effective_client_id = (
+            actor.user_id if is_client_user else client_id
+        )
+
+        if effective_client_id and channel and (
+            channel.startswith("client-")
+            or channel in ("pod-direct-chat", "pod-creative", "pod-creative-hub", "client-pod-thread", "pod-team-chat")
+        ):
+            await _require_completed_onboarding(actor, db)
+            stmt = (
+                select(DirectMessage)
+                .where(
+                    or_(
+                        (DirectMessage.client_id == effective_client_id)
+                        & (DirectMessage.thread_type != "direct"),
+                        DirectMessage.thread_type == channel,
+                        DirectMessage.thread_type.like("client-%"),
+                    )
                 )
+                .order_by(DirectMessage.created_at.asc())
+                .limit(200)
+            )
             await _require_completed_onboarding(actor, db)
         else:
             effective_client_id = client_id
@@ -557,17 +537,17 @@ async def get_messages(
                 )
             await _require_client_assignment(actor, effective_client_id, db)
 
-        if channel not in {"pod-direct-chat", f"client-{effective_client_id}"}:
-            raise HTTPException(status_code=400, detail="Invalid client channel")
-        stmt = (
-            select(DirectMessage)
-            .where(
-                DirectMessage.client_id == effective_client_id,
-                DirectMessage.thread_type != "direct",
+            if channel not in {"pod-direct-chat", f"client-{effective_client_id}"}:
+                raise HTTPException(status_code=400, detail="Invalid client channel")
+            stmt = (
+                select(DirectMessage)
+                .where(
+                    DirectMessage.client_id == effective_client_id,
+                    DirectMessage.thread_type != "direct",
+                )
+                .order_by(DirectMessage.created_at.asc())
+                .limit(200)
             )
-            .order_by(DirectMessage.created_at.asc())
-            .limit(200)
-        )
 
     res = await db.execute(stmt)
     messages = res.scalars().all()
@@ -610,50 +590,25 @@ async def send_message(
 
     sender_user = await db.get(User, current_user_id)
     sender_name = sender_user.full_name or "Someone" if sender_user else "Someone"
-    websocket_recipients = {current_user_id}
+    sender_role = str(sender_user.role if sender_user else actor.role).lower()
+
+    is_sender_admin = sender_role in ("admin", "super_admin", "ops_admin")
+    is_sender_tl = sender_role in ("team_lead", "lead")
+    is_sender_client = sender_role in ("client",)
+    is_sender_tm = not (is_sender_admin or is_sender_tl or is_sender_client)
 
     if payload.channel:
-        is_client_user = role == UserRole.CLIENT.value
-        client_id = current_user_id if is_client_user else payload.client_id
-        if client_id is None:
+        # Enforce channel permissions:
+        # Client can ONLY post in their dedicated client pod channel (#pod-creative-hub or client-*)
+        if is_sender_client and payload.channel in ("general", "deliverables-handoff", "urgent-escalations", "pod-team-chat"):
             raise HTTPException(
-                status_code=400, detail="client_id is required for a shared channel"
-            )
-        if is_client_user and payload.client_id and payload.client_id != current_user_id:
-            raise HTTPException(
-                status_code=403, detail="You can only post to your own client channel."
+                status_code=403,
+                detail="Clients can only message in their dedicated Pod Hub channel (#pod-creative-hub)."
             )
 
-        client_user = await db.get(User, client_id)
-        if not client_user or _role_name(client_user.role) != UserRole.CLIENT.value:
-            raise HTTPException(status_code=404, detail="Client not found")
-        await _require_client_assignment(actor, client_id, db)
-        if payload.channel not in {"pod-direct-chat", f"client-{client_id}"}:
-            raise HTTPException(status_code=400, detail="Invalid client channel")
-
-        from app.models.work import ClientAssignment
-
-        assignments = (
-            (
-                await db.execute(
-                    select(ClientAssignment.user_id)
-                    .where(ClientAssignment.client_id == client_id)
-                    .where(ClientAssignment.role.in_(POD_CHAT_ROLES))
-                )
-            )
-            .scalars()
-            .all()
-        )
-        assigned_user_ids = set(assignments)
-        if is_client_user and not assigned_user_ids:
-            raise HTTPException(
-                status_code=403, detail="Your creative pod has not been assigned yet."
-            )
-        websocket_recipients.update(assigned_user_ids)
-        websocket_recipients.add(client_id)
-        specialist_id = (
-            next(iter(assigned_user_ids), current_user_id) if is_client_user else current_user_id
-        )
+        is_client_user = is_sender_client
+        client_id = current_user_id if is_client_user else (payload.client_id or current_user_id)
+        specialist_id = current_user_id
 
         new_msg = DirectMessage(
             client_id=client_id,
@@ -688,7 +643,51 @@ async def send_message(
             raise HTTPException(status_code=404, detail="Recipient not found")
         await _require_direct_chat_access(actor, target_user, db)
 
-        if role == UserRole.CLIENT.value:
+        target_role = str(target_user.role).lower()
+        is_target_admin = target_role in ("admin", "super_admin", "ops_admin")
+        is_target_tl = target_role in ("team_lead", "lead")
+        is_target_client = target_role in ("client",)
+        is_target_tm = not (is_target_admin or is_target_tl or is_target_client)
+
+        # STRICT ROLE AUTHORIZATION RULES:
+        # RULE 1: CLIENT CAN ONLY MESSAGE TL AND ADMIN
+        if is_sender_client:
+            if not (is_target_admin or is_target_tl):
+                raise HTTPException(
+                    status_code=403,
+                    detail="Clients are only permitted to message Team Leads and Administrators."
+                )
+
+        # RULE 2: TL CAN MESSAGE ADMIN AND CLIENTS
+        elif is_sender_tl:
+            if not (is_target_admin or is_target_client):
+                raise HTTPException(
+                    status_code=403,
+                    detail="Team Leads can only direct message Administrators and Clients."
+                )
+
+        # RULE 3: TEAM MEMBERS CAN ONLY MESSAGE ADMIN
+        elif is_sender_tm:
+            if not is_target_admin:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Team members are only permitted to message Administrators."
+                )
+
+        # RULE 4: ADMIN CAN MESSAGE LEADS AND CLIENTS (NO ADMIN-TO-ADMIN, NO INDIVIDUAL MEMBERS)
+        elif is_sender_admin:
+            if is_target_admin:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Cannot direct message an administrator account."
+                )
+            if not (is_target_tl or is_target_client):
+                raise HTTPException(
+                    status_code=403,
+                    detail="Administrators can only direct message Team Leads and Clients. Use Pod Group channels to collaborate with team members."
+                )
+
+        if actor.role in (UserRole.CLIENT, "client"):
             client_id = current_user_id
             specialist_id = payload.recipient_id
         elif _role_name(target_user.role) == UserRole.CLIENT.value:

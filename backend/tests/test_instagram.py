@@ -145,6 +145,12 @@ class ApprovalAndTimeTests(unittest.TestCase):
         )
         self.assertNotIn("secret", json.dumps(connection.public_status(profile)))
 
+    def test_encryption_accepts_copy_pasted_key_whitespace(self):
+        key = Fernet.generate_key().decode()
+        with patch.object(settings, "ENCRYPTION_KEY", f"  {key}\n"):
+            encrypted = connection.seal({"page_token": "private-value"})
+            self.assertEqual(connection.unseal(encrypted), {"page_token": "private-value"})
+
 
 class MediaTests(unittest.TestCase):
     def image(self, width=1080, height=1080, codec="mjpeg", format_name="jpeg_pipe"):

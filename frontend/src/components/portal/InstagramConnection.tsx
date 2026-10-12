@@ -25,7 +25,7 @@ interface Selection {
 }
 const endpoint = "/api/v1/portal/integrations/instagram";
 const button =
-  "min-h-11 rounded-xl border border-[#2A3446] px-4 py-2 text-sm font-semibold disabled:opacity-50 hover:bg-[#2A3446]";
+  "min-h-11 rounded-xl border border-[#2A3446] px-4 py-2 text-sm font-semibold cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-50 enabled:hover:bg-[#2A3446] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]";
 
 export function InstagramConnection() {
   const { user } = useAuth();
@@ -39,6 +39,7 @@ export function InstagramConnection() {
     queryKey: ["instagram-connection", user?.id],
     queryFn: () => request<Connection>(endpoint),
     enabled: user?.role === "client",
+    staleTime: 0,
   });
   const invalidate = useCallback(() => {
     void cache.invalidateQueries({ queryKey: ["instagram-connection"] });
@@ -126,6 +127,7 @@ export function InstagramConnection() {
       invalidate();
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Instagram request failed.");
+      invalidate();
     } finally {
       setBusy(false);
     }
@@ -140,7 +142,7 @@ export function InstagramConnection() {
           <h2 className="text-xl font-bold">Instagram connection</h2>
           <Link
             to="/portal/account"
-            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#2A3446] bg-[#0B111C] px-4 py-2 text-sm font-semibold text-[#BCCCE6] transition-colors hover:border-[#7FA0D6]/50 hover:bg-[#1A2433] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#2A3446] bg-[#0B111C] px-4 py-2 text-sm font-semibold text-[#BCCCE6] cursor-pointer transition-colors hover:border-[#7FA0D6]/50 hover:bg-[#1A2433] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]"
           >
             Account settings
           </Link>
@@ -197,9 +199,8 @@ export function InstagramConnection() {
             )}
             {!data.configured && (
               <p className="text-sm text-amber-300">
-                Instagram connection is unavailable until the API is configured with a Meta App ID,
-                Meta App Secret, valid encryption key, and the exact HTTPS callback URL registered
-                in Meta.
+                Your agency needs to finish Instagram setup. You can try connecting again once
+                setup is ready.
               </p>
             )}
             {!data.publishing_enabled && (
@@ -210,8 +211,8 @@ export function InstagramConnection() {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                className={`${button} ${data.configured ? "bg-[#BCCCE6] text-[#0B111C] hover:bg-white" : ""}`}
-                disabled={busy || !data.configured}
+                className={`${button} bg-[#BCCCE6] text-[#0B111C] enabled:hover:bg-white`}
+                disabled={busy}
                 onClick={() => void perform("connect")}
               >
                 {busy

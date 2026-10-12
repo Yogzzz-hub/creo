@@ -76,8 +76,6 @@ export function AdminTopHeader({
       ? "Content Deliverables"
       : location.pathname.startsWith("/portal/calendar")
       ? "Content Calendar"
-      : location.pathname.startsWith("/portal/creative-pod")
-      ? "Creative Pod"
       : location.pathname.startsWith("/portal/payments")
       ? "Plans & Billing"
       : location.pathname.startsWith("/portal/support")
@@ -151,7 +149,7 @@ export function AdminTopHeader({
           <button
             type="button"
             onClick={toggleMobile}
-            className={`${location.pathname.startsWith("/portal") ? "xl:hidden" : "md:hidden"} size-8 rounded-full flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] transition-all cursor-pointer border border-transparent hover:border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] shrink-0`}
+            className={`${location.pathname.startsWith("/portal") ? "lg:hidden" : "md:hidden"} size-8 rounded-full flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] transition-all cursor-pointer border border-transparent hover:border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] shrink-0`}
             aria-expanded={mobileOpen}
             aria-label="Open navigation sidebar"
             title="Open navigation menu"

@@ -2,7 +2,6 @@ import { Link, useLocation } from "react-router";
 import {
   LayoutDashboard,
   CreditCard,
-  Sparkles,
   CalendarDays,
   CheckSquare,
   LifeBuoy,
@@ -15,7 +14,6 @@ export function PortalBottomNav() {
   const navItems = [
     { label: "Home", href: "/portal", icon: LayoutDashboard, exact: true },
     { label: "Plans", href: "/portal/payments", icon: CreditCard },
-    { label: "Pod", href: "/portal/creative-pod", icon: Sparkles },
     { label: "Calendar", href: "/portal/calendar", icon: CalendarDays },
     { label: "Work", href: "/portal/deliverables", icon: CheckSquare },
     { label: "Support", href: "/portal/support", icon: LifeBuoy },

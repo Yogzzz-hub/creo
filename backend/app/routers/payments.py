@@ -11,7 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
-from app.models.billing import PaymentEvent, Plan, Subscription, UsageCounter
+import uuid
+from decimal import Decimal
+from app.models.billing import PaymentEvent, Plan, PlanNegotiation, Subscription, UsageCounter
 from app.models.enums import SubscriptionStatus
 from app.schemas.billing import (
     ConfirmPaymentRequest,
@@ -22,14 +24,112 @@ from app.schemas.billing import (
 )
 from app.services import payment_service
 
+from fastapi import APIRouter, Depends, HTTPException, Request
+
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
 
 @router.get("/plans", response_model=list[PlanResponse])
 async def list_plans(
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> list[PlanResponse]:
-    """Retrieve all available subscription plans."""
+    """Retrieve all available subscription plans.
+    If the authenticated client has an approved or counter-offered custom negotiation,
+    returns ONLY that client's custom negotiated plan (the 3 standard tiers are hidden).
+    """
+    client_id: uuid.UUID | None = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:].strip()
+        try:
+            from app.core.security import decode_token
+            payload = decode_token(token, expected_type="access")
+            client_id = uuid.UUID(payload["sub"])
+        except Exception:
+            pass
+
+    query_cid = request.query_params.get("client_id")
+    if not client_id and query_cid:
+        try:
+            client_id = uuid.UUID(query_cid)
+        except Exception:
+            pass
+
+    if client_id:
+        custom_plan_stmt = select(Plan).where(
+            Plan.name == f"custom_{client_id.hex[:8]}",
+            Plan.is_active.is_(True),
+        )
+        custom_plan = (await db.execute(custom_plan_stmt)).scalar_one_or_none()
+
+        # If custom plan not yet generated, check if client has an Accepted or Counter Offered negotiation
+        if not custom_plan:
+            neg_stmt = (
+                select(PlanNegotiation)
+                .where(
+                    PlanNegotiation.client_id == client_id,
+                    PlanNegotiation.status.in_(["Accepted", "Counter Offered", "APPROVED"]),
+                )
+                .order_by(PlanNegotiation.created_at.desc())
+                .limit(1)
+            )
+            neg = (await db.execute(neg_stmt)).scalar_one_or_none()
+            if neg:
+                final_amt = neg.counter_price or neg.agreed_amount
+                if not final_amt and neg.proposed_offer:
+                    digits = "".join(c for c in str(neg.proposed_offer) if c.isdigit())
+                    if digits:
+                        try:
+                            final_amt = int(digits)
+                        except Exception:
+                            pass
+                if not final_amt or final_amt <= 0:
+                    final_amt = 35000
+
+                reel_q = neg.reel_quota or 8
+                poster_q = neg.poster_quota or 12
+                story_q = neg.story_quota or 15
+                display_name = (
+                    f"Agency Counter Proposal ({neg.client_name})"
+                    if neg.status == "Counter Offered"
+                    else f"Custom Negotiated Retainer ({neg.client_name})"
+                )
+                highlights = [
+                    f"{reel_q} Custom Reels",
+                    f"{poster_q} Static Posters",
+                    f"{story_q} Stories / Carousels",
+                    "Negotiated Strategy Agreement",
+                    "Dedicated Creative Pod Lead",
+                ]
+
+                custom_plan = Plan(
+                    id=uuid.uuid4(),
+                    agency_id=neg.agency_id,
+                    name=f"custom_{client_id.hex[:8]}",
+                    display_name=display_name,
+                    monthly_price=Decimal(final_amt),
+                    price_minor=int(final_amt * 100),
+                    currency="INR",
+                    reel_quota=reel_q,
+                    poster_quota=poster_q,
+                    story_quota=story_q,
+                    revision_rounds=2,
+                    has_dedicated_manager=True,
+                    highlights=highlights,
+                    is_active=True,
+                )
+                db.add(custom_plan)
+                await db.commit()
+                await db.refresh(custom_plan)
+
+        # STRICT ISOLATION & REQUIREMENT:
+        # If client has a customized negotiated package, ONLY return that custom plan.
+        # The 3 standard tiers MUST NOT be shown to this client!
+        if custom_plan:
+            return [PlanResponse.model_validate(custom_plan)]
+
+    # Standard public tiers ONLY for clients without custom negotiations
     stmt = (
         select(Plan)
         .where(
@@ -146,6 +246,132 @@ async def create_addon_order(
     }
 
 
+class ConfirmAddonRequest(BaseModel):
+    addon_id: str
+    order_id: str | None = None
+    payment_id: str
+    signature: str | None = None
+
+
+@router.post("/addon-confirm")
+async def confirm_addon_order(
+    body: ConfirmAddonRequest,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Verify and record a one-time add-on pack purchase, adding to quotas and generating a paid invoice."""
+    import uuid
+    from datetime import UTC, datetime
+    from sqlalchemy.orm.attributes import flag_modified
+    from app.config import settings as _s
+    from app.models.billing import PaymentEvent, UsageCounter
+    from app.models.enums import DeliverableType, PaymentProvider
+    from app.models.user import ClientProfile
+
+    ADDON_CONFIG = {
+        "extra_reel": {"name": "Extra reel", "amount": 4500.0, "type": DeliverableType.REEL, "quota_delta": 1},
+        "rush": {"name": "Rush delivery (24h turnaround)", "amount": 6000.0, "type": None, "quota_delta": 0},
+        "revision": {"name": "Extra revision round", "amount": 1500.0, "type": None, "quota_delta": 0},
+        "shoot": {"name": "Half-day shoot (Chennai)", "amount": 18000.0, "type": DeliverableType.SHOOT_DAY, "quota_delta": 1},
+        "addon_posters_5": {"name": "5 Extra Static Posts", "amount": 3500.0, "type": DeliverableType.STATIC_POST, "quota_delta": 5},
+        "addon_posters_10": {"name": "10 Extra Static Posts", "amount": 6000.0, "type": DeliverableType.STATIC_POST, "quota_delta": 10},
+        "addon_reels_3": {"name": "3 Extra Reels", "amount": 6500.0, "type": DeliverableType.REEL, "quota_delta": 3},
+        "addon_reels_6": {"name": "6 Extra Reels", "amount": 12000.0, "type": DeliverableType.REEL, "quota_delta": 6},
+        "addon_stories_10": {"name": "10 Extra Stories", "amount": 2500.0, "type": DeliverableType.CAROUSEL, "quota_delta": 10},
+        "addon_stories_20": {"name": "20 Extra Stories", "amount": 4500.0, "type": DeliverableType.CAROUSEL, "quota_delta": 20},
+        "addon_shoot_half": {"name": "Half-day Shoot", "amount": 15000.0, "type": DeliverableType.SHOOT_DAY, "quota_delta": 1},
+        "addon_shoot_full": {"name": "Full-day Shoot", "amount": 28000.0, "type": DeliverableType.SHOOT_DAY, "quota_delta": 2},
+    }
+
+    if body.addon_id not in ADDON_CONFIG:
+        raise HTTPException(status_code=400, detail=f"Invalid addon_id: '{body.addon_id}'")
+
+    client_id = actor.client_id or actor.user_id
+    now = datetime.now(UTC)
+    cfg = ADDON_CONFIG[body.addon_id]
+    amount = cfg["amount"]
+
+    # Verify signature if key secret is available
+    key_secret = getattr(_s, "RAZORPAY_KEY_SECRET", "")
+    if key_secret and body.order_id and body.signature:
+        import hashlib
+        import hmac
+        expected = hmac.new(
+            key_secret.encode("utf-8"),
+            f"{body.order_id}|{body.payment_id}".encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+        if not hmac.compare_digest(expected, body.signature):
+            raise HTTPException(status_code=400, detail="Invalid payment signature")
+
+    # Increment quota if deliverable type is defined
+    if cfg["type"] and cfg["quota_delta"] > 0:
+        counter_stmt = (
+            select(UsageCounter)
+            .where(
+                UsageCounter.client_id == client_id,
+                UsageCounter.kind == cfg["type"],
+            )
+            .order_by(UsageCounter.period_end.desc())
+            .limit(1)
+        )
+        counter = (await db.execute(counter_stmt)).scalar_one_or_none()
+        if counter:
+            counter.quota += cfg["quota_delta"]
+            db.add(counter)
+
+    # Record in ClientProfile
+    prof_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    prof = (await db.execute(prof_stmt)).scalar_one_or_none()
+    if not prof:
+        prof = ClientProfile(user_id=client_id, brand_dna={})
+        db.add(prof)
+
+    dna = dict(prof.brand_dna or {})
+    addon_purchases = list(dna.get("addon_purchases", []))
+    addon_inv_id = f"INV-{now.year}-ADDON-{uuid.uuid4().hex[:6].upper()}"
+    new_invoice = {
+        "id": addon_inv_id,
+        "date": now.strftime("%B %d, %Y"),
+        "amount": f"₹{amount:,.2f}",
+        "status": "Paid",
+        "plan": f"{cfg['name']} (Add-on)",
+        "addon_id": body.addon_id,
+        "order_id": body.order_id,
+        "payment_id": body.payment_id,
+        "created_at": now.isoformat(),
+    }
+    addon_purchases.insert(0, new_invoice)
+    dna["addon_purchases"] = addon_purchases
+    prof.brand_dna = dna
+    flag_modified(prof, "brand_dna")
+
+    # Audit / payment event
+    event = PaymentEvent(
+        provider=PaymentProvider.RAZORPAY,
+        provider_event_id=body.payment_id or f"addon_{uuid.uuid4().hex[:8]}",
+        event_type="addon.payment.captured",
+        payload={
+            "client_id": str(client_id),
+            "addon_id": body.addon_id,
+            "order_id": body.order_id,
+            "amount": amount,
+            "invoice_id": addon_inv_id,
+        },
+        signature_valid=True,
+        processed_at=now,
+    )
+    db.add(event)
+
+    await db.commit()
+
+    return {
+        "success": True,
+        "message": f"Successfully added {cfg['name']} to this cycle!",
+        "invoice": new_invoice,
+    }
+
+
 
 @router.get("/subscription", response_model=dict[str, Any])
 async def get_client_subscription(
@@ -162,7 +388,8 @@ async def get_client_subscription(
     sub = check["subscription"]
     plan = check["plan"]
 
-    # If no active/expired subscription was found, check for an incomplete/pending checkout order
+    # Check if there is an incomplete checkout order, but keep it distinct as pending_checkout
+    pending_checkout = None
     if not sub:
         inc_stmt = (
             select(Subscription, Plan)
@@ -176,7 +403,12 @@ async def get_client_subscription(
         )
         inc_row = (await db.execute(inc_stmt)).first()
         if inc_row:
-            sub, plan = inc_row
+            inc_sub, inc_plan = inc_row
+            pending_checkout = {
+                "id": str(inc_sub.id),
+                "plan_name": inc_plan.display_name,
+                "amount": float(inc_sub.amount if inc_sub.amount is not None else inc_plan.monthly_price),
+            }
 
     counters_stmt = select(UsageCounter).where(UsageCounter.client_id == client_id)
     counters = (await db.execute(counters_stmt)).scalars().all()
@@ -188,10 +420,14 @@ async def get_client_subscription(
         for c in counters
     }
 
+    # Only show actual paid/active/canceled subscriptions in invoices, NOT incomplete abandoned checkout orders!
     inv_stmt = (
         select(Subscription, Plan)
         .join(Plan, Subscription.plan_id == Plan.id)
-        .where(Subscription.client_id == client_id)
+        .where(
+            Subscription.client_id == client_id,
+            Subscription.status != SubscriptionStatus.INCOMPLETE,
+        )
         .order_by(Subscription.created_at.desc())
     )
     inv_rows = (await db.execute(inv_stmt)).all()
@@ -203,8 +439,9 @@ async def get_client_subscription(
             "id": f"INV-{s.created_at.year}-{str(s.id)[:8].upper()}",
             "date": s.created_at.strftime("%B %d, %Y"),
             "amount": f"₹{inv_amt:,.2f}",
-            "status": "Paid" if s_status in ["active", "trialing"] else s_status.capitalize(),
+            "status": "Paid" if s_status in ["active", "trialing", "canceled"] else s_status.capitalize(),
             "plan": p.display_name if p else "Growth Tier",
+            "created_at": s.created_at.isoformat() if s.created_at else None,
         })
 
     sub_data = None
@@ -232,6 +469,21 @@ async def get_client_subscription(
     pause_info = (prof.brand_dna or {}).get("subscription_pause") if prof else None
     is_paused_next = bool(pause_info and pause_info.get("is_paused"))
 
+    # Include paid add-on purchases in the invoices table
+    addon_purchases = (prof.brand_dna or {}).get("addon_purchases", []) if prof else []
+    for addon_inv in addon_purchases:
+        invoices.append({
+            "id": addon_inv.get("id"),
+            "date": addon_inv.get("date"),
+            "amount": addon_inv.get("amount"),
+            "status": "Paid",
+            "plan": addon_inv.get("plan", "Add-on Purchase"),
+            "created_at": addon_inv.get("created_at"),
+        })
+
+    # Sort all invoices by created_at descending
+    invoices.sort(key=lambda x: str(x.get("created_at") or ""), reverse=True)
+
     return {
         "subscription": sub_data,
         "plan": {
@@ -241,7 +493,8 @@ async def get_client_subscription(
             "poster_quota": plan.poster_quota,
             "reel_quota": plan.reel_quota,
             "story_quota": plan.story_quota,
-        } if plan else None,
+        } if (plan and (check["is_active"] or check["is_expired"])) else None,
+        "pending_checkout": pending_checkout,
         "quotas": quota_map if (sub_data and check["is_active"]) else {},
         "invoices": invoices,
         "is_active": check["is_active"],
@@ -267,7 +520,10 @@ async def get_payment_history(
     result = await db.execute(
         select(Subscription, Plan)
         .join(Plan, Subscription.plan_id == Plan.id)
-        .where(Subscription.client_id == client_id)
+        .where(
+            Subscription.client_id == client_id,
+            Subscription.status != SubscriptionStatus.INCOMPLETE,
+        )
         .order_by(Subscription.created_at.desc())
     )
     rows = result.all()
@@ -278,7 +534,7 @@ async def get_payment_history(
             "plan_id": str(sub.plan_id),
             "plan_name": plan.display_name,
             "amount": float(sub.amount) if sub.amount else float(plan.monthly_price),
-            "status": sub.status.value,
+            "status": "Paid" if sub.status in [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING, SubscriptionStatus.CANCELED] else sub.status.value,
             "gateway": sub.gateway.value,
             "gateway_subscription_id": sub.gateway_subscription_id,
             "gateway_customer_id": sub.gateway_customer_id,

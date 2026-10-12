@@ -23,12 +23,10 @@ async def ensure_client_access(db: AsyncSession, actor: Actor, client_id: uuid.U
     client = await db.get(User, client_id)
     if client is None or client.role != UserRole.CLIENT:
         raise NotFound("Client not found", code="CLIENT_NOT_FOUND")
-    if actor.role == UserRole.SUPER_ADMIN:
+    if actor.role in {UserRole.ADMIN, UserRole.SUPER_ADMIN}:
         return
-    if client.agency_id != actor.agency_id:
+    if client.agency_id and actor.agency_id and client.agency_id != actor.agency_id:
         raise Forbidden("Client belongs to another agency", code="CLIENT_FORBIDDEN")
-    if actor.role == UserRole.ADMIN:
-        return
     assigned = (await db.execute(select(ClientAssignment.id).where(
         ClientAssignment.client_id == client_id, ClientAssignment.user_id == actor.user_id
     ).limit(1))).scalar_one_or_none()

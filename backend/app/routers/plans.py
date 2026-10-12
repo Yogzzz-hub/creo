@@ -16,8 +16,15 @@ router = APIRouter(prefix="/plans", tags=["Plans"])
 
 @router.get("", response_model=list[dict[str, Any]])
 async def list_plans(db: AsyncSession = Depends(get_db)) -> list[dict[str, Any]]:
-    """Retrieve all active pricing tiers and quotas."""
-    stmt = select(Plan).where(Plan.is_active.is_(True)).order_by(Plan.price_minor.asc())
+    """Retrieve all active standard pricing tiers and quotas."""
+    stmt = (
+        select(Plan)
+        .where(
+            Plan.is_active.is_(True),
+            Plan.name.in_(["starter", "growth", "scale"]),
+        )
+        .order_by(Plan.price_minor.asc())
+    )
     res = await db.execute(stmt)
     plans = res.scalars().all()
 

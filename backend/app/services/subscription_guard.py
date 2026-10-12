@@ -82,7 +82,10 @@ async def check_client_subscription(
     stmt = (
         select(Subscription, Plan)
         .join(Plan, Subscription.plan_id == Plan.id)
-        .where(Subscription.client_id == client_id)
+        .where(
+            Subscription.client_id == client_id,
+            Subscription.status != SubscriptionStatus.INCOMPLETE,
+        )
         .order_by(
             case((Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]), 0), else_=1).asc(),
             Subscription.created_at.desc(),

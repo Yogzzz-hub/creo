@@ -75,6 +75,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
   const { loginWithPassword, registerIntent, resendRegistration, verifyRegistration, getGoogleAuthUrl } = useAuth();
   
   const [loading, setLoading] = useState(false);
+  const [slowServerWake, setSlowServerWake] = useState(false);
   const [error, setErrorState] = useState<AuthNotice | null>(null);
   const setError = (message: string | null) => setErrorState(message ? { message } : null);
   function showError(err: unknown, fallback: string, forEmail?: string) {
@@ -143,9 +144,12 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
       return;
     }
 
+    let wakeTimer: ReturnType<typeof setTimeout> | undefined;
     try {
       setLoading(true);
+      setSlowServerWake(false);
       setError(null);
+      wakeTimer = setTimeout(() => setSlowServerWake(true), 3500);
       if (mode === "signin") {
         const loggedInUser = await loginWithPassword(cleanEmail, password);
         const { getRoleHome } = await import("../../components/auth/ProtectedRoute");
@@ -176,7 +180,9 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
       }
       showError(err, "Authentication failed. Please verify credentials.", cleanEmail);
     } finally {
+      if (wakeTimer) clearTimeout(wakeTimer);
       setLoading(false);
+      setSlowServerWake(false);
     }
   }
 
@@ -687,11 +693,16 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                   {loading && <Loader2 className="size-3.5 animate-spin" />}
                   <span>
                     {mode === "signin" 
-                      ? (loading ? "Authenticating..." : "Sign In to Command Center") 
-                      : (loading ? "Creating Account..." : "Launch Agency Account")}
+                      ? (loading ? (slowServerWake ? "Waking up server..." : "Authenticating...") : "Sign In to Command Center") 
+                      : (loading ? (slowServerWake ? "Waking up server..." : "Creating Account...") : "Launch Agency Account")}
                   </span>
                   {!loading && <ArrowRight className="size-3.5" />}
                 </button>
+                {loading && slowServerWake && (
+                  <p className="text-[10px] text-[#7FA0D6] text-center mt-2 animate-pulse">
+                    ⚡ Server was sleeping after inactivity. Waking up (~30s)...
+                  </p>
+                )}
               </form>
               )}
 

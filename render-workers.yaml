@@ -67,6 +67,11 @@ services:
           type: web
           name: creo-api-singapore
           envVarKey: GEMINI_API_KEY
+      - key: SMTP_USE_SSL
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: SMTP_USE_SSL
       - key: SMTP_USERNAME
         fromService:
           type: web
