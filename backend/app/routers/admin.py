@@ -293,26 +293,23 @@ async def get_revenue_trend(
     trunc = cfg["trunc"]
     label_fmt = cfg["label_fmt"]
 
-    sql = text(f"""
-        WITH buckets AS (
-            SELECT
-                date_trunc(:trunc, s.created_at) AS bucket,
-                COALESCE(SUM(p.price_minor), 0)::BIGINT AS revenue
+    # We want to show a cumulative MRR curve (Total MRR at each point in time).
+    # Fetch all active subscriptions with their created_at date.
+    subs_sql = text("""
+        WITH active_subs AS (
+            SELECT DISTINCT ON (s.client_id)
+                s.client_id,
+                COALESCE(s.amount * 100, p.price_minor) AS effective_mrr_minor,
+                s.created_at
             FROM subscriptions s
             JOIN plans p ON p.id = s.plan_id
-            WHERE s.status IN ('trialing', 'active')
-              AND s.created_at >= NOW() - INTERVAL '{days_back} days'
-            GROUP BY bucket
-            ORDER BY bucket
+            WHERE s.status IN ('active', 'trialing')
+            ORDER BY s.client_id, s.created_at DESC
         )
-        SELECT
-            to_char(bucket, :label_fmt) AS label,
-            revenue
-        FROM buckets;
+        SELECT created_at, effective_mrr_minor FROM active_subs ORDER BY created_at;
     """)
-
-    res = await db.execute(sql, {"trunc": trunc, "label_fmt": label_fmt})
-    rows = res.fetchall()
+    res = await db.execute(subs_sql)
+    all_subs = res.fetchall()
 
     # Generate full sequence of buckets for fluid curve with variations
     import math
@@ -322,19 +319,24 @@ async def get_revenue_trend(
     
     if timeframe in ("7d", "7D"):
         num_points = 7
-        labels = [(now - timedelta(days=6 - i)).strftime("%b %d") for i in range(7)]
+        dates = [now - timedelta(days=6 - i) for i in range(7)]
+        labels = [d.strftime("%b %d") for d in dates]
     elif timeframe in ("30d", "30D"):
         num_points = 30
-        labels = [(now - timedelta(days=29 - i)).strftime("%b %d") for i in range(30)]
+        dates = [now - timedelta(days=29 - i) for i in range(30)]
+        labels = [d.strftime("%b %d") for d in dates]
     elif timeframe in ("90d", "quarter", "Quarter"):
         num_points = 13
-        labels = [(now - timedelta(weeks=12 - i)).strftime("%b %d") for i in range(13)]
+        dates = [now - timedelta(weeks=12 - i) for i in range(13)]
+        labels = [d.strftime("%b %d") for d in dates]
     elif timeframe in ("custom", "Custom"):
         num_points = 10
-        labels = [(now - timedelta(days=6 * (9 - i))).strftime("%b %d") for i in range(10)]
+        dates = [now - timedelta(days=6 * (9 - i)) for i in range(10)]
+        labels = [d.strftime("%b %d") for d in dates]
     else: # 365d, year
         num_points = 12
-        labels = [(now - timedelta(days=30 * (11 - i))).strftime("%b %Y") for i in range(12)]
+        dates = [now - timedelta(days=30 * (11 - i)) for i in range(12)]
+        labels = [d.strftime("%b %Y") for d in dates]
 
     # Fetch total base revenue from active (non-trialing) subscriptions
     total_sql = text("""
@@ -356,18 +358,17 @@ async def get_revenue_trend(
     total_revenue = int(total_row[0]) if total_row and total_row[0] else 0
     total_clients = int(total_row[1]) if total_row and total_row[1] else 0
 
-    # Map database bucket values if present
-    db_map = {r[0].strip(): int(r[1]) for r in rows if r[0]}
-
-    for i, lbl in enumerate(labels):
-        val = db_map.get(lbl, 0)
+    # Calculate cumulative MRR for each point in time
+    for dt, lbl in zip(dates, labels):
+        # A subscription is active on `dt` if it was created before `dt`
+        val = sum(int(sub.effective_mrr_minor) for sub in all_subs if sub.created_at <= dt)
         points.append({"label": lbl, "value": val})
 
     return {
         "timeframe": timeframe,
         "points": points,
         "total_revenue": total_revenue,
-        "total_revenue_formatted": f"₹{total_revenue / 100:,.2f}" if total_revenue > 0 else " — ",
+        "total_revenue_formatted": f"₹{total_revenue / 100:,.0f}" if total_revenue > 0 else " — ",
         "total_clients": total_clients,
     }
 
@@ -2299,7 +2300,7 @@ async def reject_custom_deal(
 @router.get("/reports")
 async def get_admin_reports(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = InvestorActor,
+    actor: Actor = AdminActor,
 ) -> dict[str, Any]:
     """Provide real-time executive financial metrics, SLA compliance, and asset format breakdown."""
     # 1. Real Active Clients count (no artificial flooring)
@@ -2374,6 +2375,67 @@ async def get_admin_reports(
         "format_distribution": format_distribution if total_assets > 0 else [],
         "generated_at_ist": now_ist,
     }
+
+
+@router.get("/transactions")
+async def get_recent_transactions(
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> list[dict[str, Any]]:
+    """Return recent subscriptions/transactions for the revenue engine page."""
+    # Query subscriptions combined with user and plan data
+    sql = text("""
+        SELECT 
+            s.id::TEXT as sub_id,
+            u.full_name,
+            cp.company_name,
+            p.display_name,
+            s.amount,
+            p.monthly_price,
+            s.gateway,
+            s.status,
+            s.created_at
+        FROM subscriptions s
+        JOIN users u ON u.id = s.client_id
+        LEFT JOIN client_profiles cp ON cp.user_id = u.id
+        LEFT JOIN plans p ON p.id = s.plan_id
+        ORDER BY s.created_at DESC
+        LIMIT 50
+    """)
+    res = await db.execute(sql)
+    rows = res.fetchall()
+
+    transactions = []
+    for r in rows:
+        client_name = r[2] or r[1] or "Unknown Client"
+        amount = float(r[4] or r[5] or 0)
+        
+        status_raw = r[7]
+        status_map = {
+            "active": "Paid",
+            "trialing": "Paid",
+            "incomplete": "Pending",
+            "canceled": "Refunded/Cancelled",
+            "past_due": "Overdue"
+        }
+        status_display = status_map.get(status_raw, "Pending")
+        
+        method_raw = (r[6] or "").lower()
+        method_display = "Direct Wire / ACH" if "wire" in method_raw else "Cards / Stripe" if "stripe" in method_raw else "Cards / Razorpay"
+        
+        created_at: datetime = r[8]
+
+        transactions.append({
+            "id": f"SUB-{str(r[0])[:8].upper()}",
+            "client": client_name,
+            "scope": f"{r[3] or 'Custom Plan'} Subscription",
+            "amount": amount,
+            "method": method_display,
+            "status": status_display,
+            "date": created_at.strftime("%b %d, %Y") if created_at else "Unknown",
+        })
+
+    return transactions
 
 
 # --- Team Roster & Staff Endpoints ---
@@ -3256,8 +3318,10 @@ async def get_admin_calendar(
         raise HTTPException(status_code=400, detail="Invalid calendar month or year.")
 
     def scope_calendar(stmt: Any, client_column: Any) -> Any:
-        if actor.role not in (UserRole.SUPER_ADMIN, "super_admin"):
-            stmt = stmt.where(User.agency_id == actor.agency_id)
+        if actor.role in (UserRole.SUPER_ADMIN, UserRole.ADMIN, "super_admin", "admin"):
+            return stmt
+        if actor.agency_id:
+            stmt = stmt.where(or_(User.agency_id == actor.agency_id, User.agency_id.is_(None)))
         if actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN, "admin", "super_admin"):
             assigned_clients = select(ClientAssignment.client_id).where(ClientAssignment.user_id == actor.user_id)
             stmt = stmt.where(client_column.in_(assigned_clients))
@@ -3298,23 +3362,31 @@ async def get_admin_calendar(
         client_name = company_name or email.split("@")[0].capitalize()
         event_dt = cal.scheduled_time or datetime.combine(cal.publish_date, datetime.min.time().replace(hour=11), tzinfo=timezone.utc)
         
-        # Determine format label
-        format_label = "Poster"
+        # Determine format label accurately
+        raw_slot_kind = str(cal.slot_kind or "").lower()
         cap = (cal.caption or "").lower()
-        if deliv_type:
+        if raw_slot_kind in {"reel", "carousel", "story", "poster", "static_post"}:
+            format_label = "Reel" if raw_slot_kind == "reel" else "Story" if raw_slot_kind == "story" else "Carousel" if raw_slot_kind == "carousel" else "Poster"
+        elif deliv_type:
             val = str(deliv_type.value if hasattr(deliv_type, "value") else deliv_type).lower()
             if "reel" in val or "video" in val:
                 format_label = "Reel"
-            elif "carousel" in val or "story" in val:
+            elif "carousel" in val:
+                format_label = "Carousel"
+            elif "story" in val:
                 format_label = "Story"
             else:
                 format_label = "Poster"
         elif "reel" in cap or "video" in cap:
             format_label = "Reel"
-        elif "story" in cap or "carousel" in cap:
+        elif "carousel" in cap:
+            format_label = "Carousel"
+        elif "story" in cap:
             format_label = "Story"
-        elif d and ("video" in d.file_type.lower() or "mp4" in d.file_type.lower()):
+        elif d and ("video" in (d.file_type or "").lower() or "mp4" in (d.file_type or "").lower()):
             format_label = "Reel"
+        else:
+            format_label = "Poster"
 
         status_str = "scheduled"
         file_url = None
@@ -3335,6 +3407,7 @@ async def get_admin_calendar(
         events.append({
             "id": str(cal.id),
             "client_id": str(cal.client_id),
+            "client_email": email,
             "deliverable_id": str(d.id) if d else None,
             "client_name": client_name,
             "title": title,
@@ -3352,9 +3425,14 @@ async def get_admin_calendar(
             "time": event_dt.strftime("%I:%M %p") if event_dt else "11:00 AM",
             "caption": cal.caption or "",
             "file_url": file_url,
+            "file_type": d.file_type if d else ("video/mp4" if format_label == "Reel" else "image/jpeg"),
             "brand_summary": brand_summary,
             "blueprint": cal.blueprint,
             "selected_hook": cal.selected_hook,
+            "is_locked": getattr(cal, "is_locked", False),
+            "slot_kind": cal.slot_kind,
+            "slot_strategy": getattr(cal, "slot_strategy", "anchor"),
+            "concept_status": getattr(cal, "concept_status", "approved"),
         })
 
     # 2. Query standalone deliverables not yet attached to a ContentCalendar row
@@ -3398,14 +3476,16 @@ async def get_admin_calendar(
             val = str(deliv_type.value if hasattr(deliv_type, "value") else deliv_type).lower()
             if "reel" in val or "video" in val:
                 format_label = "Reel"
-            elif "carousel" in val or "story" in val:
+            elif "carousel" in val:
+                format_label = "Carousel"
+            elif "story" in val:
                 format_label = "Story"
             else:
                 format_label = "Poster"
-        elif "video" in d.file_type.lower() or "mp4" in d.file_type.lower():
+        elif "video" in (d.file_type or "").lower() or "mp4" in (d.file_type or "").lower():
             format_label = "Reel"
-        elif "carousel" in d.file_type.lower():
-            format_label = "Story"
+        elif "carousel" in (d.file_type or "").lower():
+            format_label = "Carousel"
         else:
             format_label = "Poster"
 
@@ -3413,6 +3493,8 @@ async def get_admin_calendar(
 
         events.append({
             "id": str(d.id),
+            "client_id": str(d.client_id),
+            "client_email": email,
             "deliverable_id": str(d.id),
             "client_name": client_name,
             "title": title,
@@ -3425,9 +3507,138 @@ async def get_admin_calendar(
             "time": event_date.strftime("%I:%M %p") if event_date else "11:00 AM",
             "caption": "",
             "file_url": storage_service.resolve_media_url(d.file_url),
+            "file_type": d.file_type,
+            "brand_summary": None,
+            "blueprint": None,
+            "selected_hook": None,
+            "is_locked": False,
+            "slot_kind": "reel" if format_label == "Reel" else "poster",
+            "slot_strategy": "standalone",
+            "concept_status": "approved",
         })
 
     return events
+
+
+class AdminCreateCalendarEventPayload(BaseModel):
+    client_id: uuid.UUID
+    publish_date: date
+    scheduled_time: datetime | None = None
+    format_type: str = Field(default="Reel")  # Reel, Poster, Story, Carousel
+    caption: str | None = None
+    status: str = Field(default="scheduled")
+
+
+@router.post("/calendar/events")
+async def admin_create_calendar_event(
+    payload: AdminCreateCalendarEventPayload,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Admin creates or schedules a new content calendar slot for a client."""
+    client = await db.get(User, payload.client_id)
+    if not client or client.role != UserRole.CLIENT:
+        raise NotFound("Client not found")
+
+    fmt = payload.format_type.lower()
+    slot_kind = "reel" if "reel" in fmt else "story" if "story" in fmt else "carousel" if "carousel" in fmt else "poster"
+
+    entry = ContentCalendar(
+        agency_id=client.agency_id or actor.agency_id,
+        client_id=payload.client_id,
+        publish_date=payload.publish_date,
+        scheduled_time=payload.scheduled_time or datetime.combine(payload.publish_date, datetime.min.time().replace(hour=11), tzinfo=timezone.utc),
+        caption=payload.caption or f"Brand {payload.format_type.capitalize()} · Scheduled Publication",
+        status=payload.status or "scheduled",
+        slot_kind=slot_kind,
+        slot_strategy="anchor",
+        concept_status="approved",
+    )
+    db.add(entry)
+    await db.commit()
+    await db.refresh(entry)
+    return {"message": "Calendar event scheduled successfully", "id": str(entry.id)}
+
+
+class AdminUpdateCalendarEventPayload(BaseModel):
+    publish_date: date | None = None
+    scheduled_time: datetime | None = None
+    caption: str | None = None
+    status: str | None = None
+    format_type: str | None = None
+
+
+@router.patch("/calendar/events/{event_id}")
+async def admin_update_calendar_event(
+    event_id: uuid.UUID,
+    payload: AdminUpdateCalendarEventPayload,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Admin updates or reschedules a content calendar event."""
+    entry = await db.get(ContentCalendar, event_id)
+    if entry:
+        if payload.publish_date is not None:
+            entry.publish_date = payload.publish_date
+        if payload.scheduled_time is not None:
+            entry.scheduled_time = payload.scheduled_time
+        if payload.caption is not None:
+            entry.caption = payload.caption
+        if payload.status is not None:
+            entry.status = payload.status
+        if payload.format_type is not None:
+            fmt = payload.format_type.lower()
+            entry.slot_kind = "reel" if "reel" in fmt else "story" if "story" in fmt else "carousel" if "carousel" in fmt else "poster"
+
+        if entry.deliverable_id and payload.status:
+            deliv = await db.get(Deliverable, entry.deliverable_id)
+            if deliv:
+                if payload.status == "approved":
+                    deliv.status = DeliverableStatus.APPROVED
+                    deliv.approved_at = datetime.now(timezone.utc)
+                elif payload.status == "rejected":
+                    deliv.status = DeliverableStatus.REJECTED
+                    deliv.rejected_at = datetime.now(timezone.utc)
+        await db.commit()
+        return {"message": "Calendar event updated successfully", "id": str(entry.id)}
+
+    deliv = await db.get(Deliverable, event_id)
+    if deliv:
+        if payload.publish_date is not None:
+            deliv.scheduled_at = datetime.combine(payload.publish_date, datetime.min.time().replace(hour=11), tzinfo=timezone.utc)
+        if payload.status is not None:
+            if payload.status == "approved":
+                deliv.status = DeliverableStatus.APPROVED
+                deliv.approved_at = datetime.now(timezone.utc)
+            elif payload.status == "rejected":
+                deliv.status = DeliverableStatus.REJECTED
+                deliv.rejected_at = datetime.now(timezone.utc)
+        await db.commit()
+        return {"message": "Deliverable updated successfully", "id": str(deliv.id)}
+
+    raise NotFound("Calendar entry not found")
+
+
+@router.delete("/calendar/events/{event_id}")
+async def admin_delete_calendar_event(
+    event_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Admin removes a scheduled event from the calendar."""
+    entry = await db.get(ContentCalendar, event_id)
+    if entry:
+        await db.delete(entry)
+        await db.commit()
+        return {"message": "Calendar event removed"}
+
+    deliv = await db.get(Deliverable, event_id)
+    if deliv:
+        deliv.scheduled_at = None
+        await db.commit()
+        return {"message": "Deliverable unscheduled"}
+
+    raise NotFound("Calendar event not found")
 
 
 # =========================================================================

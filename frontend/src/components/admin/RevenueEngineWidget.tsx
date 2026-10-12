@@ -78,13 +78,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
 
   const rawPoints = (trendData?.points && trendData.points.length > 0)
     ? trendData.points
-    : [
-        { label: "W1", value: Math.round(mrrValue * 0.2) },
-        { label: "W2", value: Math.round(mrrValue * 0.4) },
-        { label: "W3", value: Math.round(mrrValue * 0.6) },
-        { label: "W4", value: Math.round(mrrValue * 0.8) },
-        { label: "Current", value: mrrValue },
-      ];
+    : mrrValue > 0 ? [{ label: "Current", value: mrrValue }] : [];
   const chartData = rawPoints.map((p) => ({
     name: p.label,
     revenue: p.value,
@@ -103,7 +97,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
       className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-xl hover:border-[#7FA0D6]/60 hover:shadow-[0_0_25px_rgba(127,160,214,0.15)] transition-all duration-300 p-4 sm:p-5 flex flex-col justify-between w-full h-full font-sans cursor-pointer group hover-card-innovative overflow-hidden relative"
     >
       {/* Header Row */}
-      <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-[#2A3446]/80 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 pb-2.5 border-b border-[#2A3446]/80 shrink-0 gap-3">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] group-hover:scale-110 group-hover:border-[#7FA0D6]/50 group-hover:bg-[#161F2D] transition-all shrink-0">
             <Wallet className="w-4.5 h-4.5" />
@@ -118,7 +112,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
         </div>
 
         {/* Timeframe Pills */}
-        <div className="flex bg-[#0B111C] p-1 rounded-xl text-xs font-semibold border border-[#2A3446]" onClick={(e) => e.stopPropagation()}>
+        <div className="flex bg-[#0B111C] p-1 rounded-xl text-xs font-semibold border border-[#2A3446] self-start sm:self-auto overflow-x-auto w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
           {(Object.entries(TIMEFRAME_LABELS) as [Timeframe, string][]).map(([key, label]) => (
             <button
               key={key}
@@ -146,7 +140,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
           <div className="absolute -right-6 -top-6 w-28 h-28 bg-[#7FA0D6]/15 rounded-full blur-2xl pointer-events-none" />
           
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#97A0B3]">Total Portfolio Value</span>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#97A0B3]" title="Monthly Recurring Revenue">Total Portfolio Value (MRR)</span>
             <ShieldCheck className="w-4 h-4 text-[#7FA0D6] group-hover/card:scale-110 transition-transform" />
           </div>
 
@@ -174,7 +168,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
               </div>
             )}
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }} barCategoryGap="18%">
+              <BarChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barCategoryGap="18%">
                 <defs>
                   <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#BCCCE6" stopOpacity={1} />
@@ -200,15 +194,17 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
                   tick={{ fontSize: 9, fill: "#97A0B3" }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v: number) =>
-                    v >= 10000000
-                      ? `₹${(v / 10000000).toFixed(1)}Cr`
-                      : v >= 100000
-                      ? `₹${(v / 100000).toFixed(0)}L`
-                      : v >= 1000
-                      ? `₹${(v / 1000).toFixed(0)}K`
-                      : `₹${v}`
-                  }
+                  width={40}
+                  tickFormatter={(v: number) => {
+                    const val = v / 100;
+                    return val >= 10000000
+                      ? `₹${(val / 10000000).toFixed(1)}Cr`
+                      : val >= 100000
+                      ? `₹${(val / 100000).toFixed(0)}L`
+                      : val >= 1000
+                      ? `₹${(val / 1000).toFixed(0)}K`
+                      : `₹${val}`;
+                  }}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={false} />
                 <Bar
@@ -235,8 +231,8 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
         </div>
 
         {/* 3 KPI Summary Pills with Active Hover Highlight */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-[#0B111C] hover:bg-[#161F2D] hover:border-[#7FA0D6]/60 hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-200 rounded-xl p-2.5 border border-[#2A3446] flex flex-col items-center justify-center text-center cursor-pointer shadow-sm group/pill">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="bg-[#0B111C] hover:bg-[#161F2D] hover:border-[#7FA0D6]/60 hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-200 rounded-xl p-2.5 border border-[#2A3446] flex flex-col items-center justify-center text-center cursor-pointer shadow-sm group/pill" title="Monthly Recurring Revenue">
             <span className="text-xs sm:text-sm font-black text-white group-hover/pill:text-[#7FA0D6] transition-colors leading-none">{displayRevenue}</span>
             <span className="text-[9px] text-[#97A0B3] uppercase font-bold tracking-wider mt-1">Total MRR</span>
           </div>

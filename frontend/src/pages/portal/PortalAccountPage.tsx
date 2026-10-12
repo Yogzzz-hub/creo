@@ -288,7 +288,6 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           <p className="text-sm font-semibold text-[#97A0B3]">Loading your account settings…</p>
         </div>
       )}
-
       {/* Error state */}
       {query.isError && (
         <div className="bg-rose-500/10 border border-rose-500/30 rounded-3xl p-8 text-center space-y-4">

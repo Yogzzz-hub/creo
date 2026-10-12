@@ -19,6 +19,9 @@ import {
   fetchKanbanTasks,
   fetchAdminDeliverables,
   fetchPlansSummary,
+  fetchAdminKPIs,
+  fetchRevenueTrend,
+  fetchAdminTransactions,
 } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem, PlanSummaryItem } from "../../lib/ops-api";
 import type { ClientRosterItem } from "../../types/ops";
@@ -4715,87 +4718,67 @@ export function AdminRevenuePage() {
   const [newInvAmount, setNewInvAmount] = useState("");
   const [newInvMethod, setNewInvMethod] = useState("Stripe ACH");
 
-  // Transactions Data (Populated active billing roster)
-  const [transactions, setTransactions] = useState<TransactionItem[]>([
-    {
-      id: "INV-2026-088",
-      client: "Ryze Mushroom Coffee",
-      clientInitials: "RM",
-      scope: "Enterprise Retainer Billing (Oct 2026)",
-      amount: 120000,
-      method: "Direct Wire / ACH",
-      status: "Paid",
-      date: "Oct 1, 2026",
-      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
-      avatarBg: "bg-blue-600 text-white font-black",
-    },
-    {
-      id: "INV-2026-087",
-      client: "Acme Corp",
-      clientInitials: "AC",
-      scope: "Growth Retainer Billing (Oct 2026)",
-      amount: 25000,
-      method: "Cards / Razorpay",
-      status: "Paid",
-      date: "Oct 1, 2026",
-      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
-      avatarBg: "bg-emerald-600 text-white font-black",
-    },
-    {
-      id: "INV-2026-086",
-      client: "Kavya Organics",
-      clientInitials: "KO",
-      scope: "Brand Acceleration Package",
-      amount: 50000,
-      method: "Direct Wire / ACH",
-      status: "Paid",
-      date: "Sep 28, 2026",
-      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
-      avatarBg: "bg-purple-600 text-white font-black",
-    },
-    {
-      id: "INV-2026-085",
-      client: "Ryze Mushroom Coffee",
-      clientInitials: "RM",
-      scope: "3D Render Asset Package Add-on",
-      amount: 45000,
-      method: "Cards / Razorpay",
-      status: "Paid",
-      date: "Sep 25, 2026",
-      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
-      avatarBg: "bg-blue-600 text-white font-black",
-    },
-    {
-      id: "INV-2026-084",
-      client: "Urbanic Fashion",
-      clientInitials: "UF",
-      scope: "Performance Marketing Retainer Deposit",
-      amount: 95000,
-      method: "Direct Wire / ACH",
-      status: "Paid",
-      date: "Sep 20, 2026",
-      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
-      avatarBg: "bg-amber-600 text-white font-black",
-    },
-    {
-      id: "INV-2026-083",
-      client: "Zenith Fitness",
-      clientInitials: "ZF",
-      scope: "Q4 Retainer Renewal Advance",
-      amount: 85000,
-      method: "Direct Wire / ACH",
-      status: "Pending",
-      date: "Due Net 15",
-      badgeClass: "bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold",
-      avatarBg: "bg-[#7FA0D6] text-white font-black",
-    },
-  ]);
+  // Transactions Data (In real app, fetch from backend)
+  const { data: serverTransactions } = useQuery({
+    queryKey: ["admin_transactions"],
+    queryFn: () => fetchAdminTransactions(),
+    refetchInterval: 60000,
+  });
 
-  const totalMrr = transactions.reduce((acc, t) => acc + (t.status === "Paid" ? t.amount : 0), 0);
+  const [localTransactions, setLocalTransactions] = useState<TransactionItem[]>([]);
+
+  const mappedServer = (serverTransactions || []).map((t: any, idx: number) => {
+    // Determine badge class dynamically based on status
+    const status = t.status || "Pending";
+    let badgeClass = "bg-slate-500/20 text-slate-400 border border-slate-500/30 font-black";
+    if (status === "Paid") badgeClass = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black";
+    else if (status === "Overdue" || status === "Refunded/Cancelled") badgeClass = "bg-rose-500/20 text-rose-400 border border-rose-500/30 font-black";
+    else if (status === "Pending") badgeClass = "bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold";
+
+    // Dynamic avatar color
+    const colors = ["bg-blue-600", "bg-emerald-600", "bg-purple-600", "bg-amber-600", "bg-[#7FA0D6]"];
+    const avatarBg = `${colors[idx % colors.length]} text-white font-black`;
+    
+    return {
+      ...t,
+      badgeClass,
+      avatarBg,
+      clientInitials: (t.client || "").split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2),
+    };
+  });
+
+  const transactions = [...localTransactions, ...mappedServer];
+
+
+  // Fetch real KPI data for MRR
+  const { data: kpis } = useQuery({
+    queryKey: ["admin_kpis"],
+    queryFn: () => fetchAdminKPIs("30d"),
+    refetchInterval: 60000,
+  });
+
+  // Fetch real Revenue Trend
+  const { data: trendData } = useQuery({
+    queryKey: ["admin_revenue_trend", "quarter"],
+    queryFn: () => fetchRevenueTrend("quarter"),
+    refetchInterval: 60000,
+  });
+
+  const { data: plansData } = useQuery({
+    queryKey: ["admin_plans"],
+    queryFn: () => fetchPlansSummary(),
+    refetchInterval: 60000,
+  });
+  const plans = plansData?.plans || [];
+
+  const totalMrr = kpis?.mrr_minor ? kpis.mrr_minor / 100 : 0;
   const totalCollected = totalMrr;
   const projectedArr = totalMrr * 12;
 
-  // Chart Trend Data (Monthly Trend)
+  // Chart Trend Data (Quarterly Trend)
+  const chartData = (trendData?.points && trendData.points.length > 0)
+    ? trendData.points.map(p => ({ name: p.label, revenue: p.value }))
+    : [{ name: "Current", revenue: totalMrr * 100 }];
 
   // Actions: Create Invoice
   const handleCreateInvoiceSubmit = (e: React.FormEvent) => {
@@ -4815,7 +4798,7 @@ export function AdminRevenuePage() {
       avatarBg: "bg-[#7FA0D6]/20 text-blue-800",
     };
 
-    setTransactions((prev) => [newTx, ...prev]);
+    setLocalTransactions((prev) => [newTx, ...prev]);
     setToast(`Invoice ${newTx.id} created for ${newInvClient} (₹${newTx.amount.toLocaleString('en-IN')})!`);
     setIsCreateInvoiceOpen(false);
     setNewInvClient("");
@@ -4975,8 +4958,8 @@ export function AdminRevenuePage() {
 
               {/* Peak Marker Badge */}
               <div className="flex justify-end mb-2">
-                <span className="px-3 py-1 rounded-full text-[11px] font-black bg-[#7FA0D6] text-white shadow-md">
-                  ₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "24,80,000"} Current MRR
+                <span className="px-3 py-1 rounded-full text-[11px] font-black bg-[#7FA0D6] text-white shadow-md" title="Monthly Recurring Revenue">
+                  ₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"} Current MRR
                 </span>
               </div>
 
@@ -4984,15 +4967,8 @@ export function AdminRevenuePage() {
               <div className="w-full h-64 bg-[#0B111C]/60 rounded-2xl p-4 border border-[#2A3446]/60">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={[
-                      { name: "May", revenue: 14500000 },
-                      { name: "Jun", revenue: 18200000 },
-                      { name: "Jul", revenue: 16800000 },
-                      { name: "Aug", revenue: 21500000 },
-                      { name: "Sep", revenue: 19400000 },
-                      { name: "Oct", revenue: 24800000 },
-                    ]}
-                    margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
+                    data={chartData}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                     barCategoryGap="20%"
                   >
                     <defs>
@@ -5019,13 +4995,17 @@ export function AdminRevenuePage() {
                       tick={{ fontSize: 10, fill: "#97A0B3" }}
                       axisLine={false}
                       tickLine={false}
-                      tickFormatter={(v: number) =>
-                        v >= 10000000
-                          ? `₹${(v / 10000000).toFixed(1)}Cr`
-                          : v >= 100000
-                          ? `₹${(v / 100000).toFixed(0)}L`
-                          : `₹${v}`
-                      }
+                      width={36}
+                      tickFormatter={(v: number) => {
+                        const val = v / 100;
+                        return val >= 10000000
+                          ? `₹${(val / 10000000).toFixed(1)}Cr`
+                          : val >= 100000
+                          ? `₹${(val / 100000).toFixed(0)}L`
+                          : val >= 1000
+                          ? `₹${(val / 1000).toFixed(0)}K`
+                          : `₹${val}`;
+                      }}
                     />
                     <Tooltip
                       formatter={(val: any) => [`₹${(Number(val) / 100).toLocaleString('en-IN')}`, "Revenue"]}
@@ -5035,20 +5015,16 @@ export function AdminRevenuePage() {
                       cursor={false}
                     />
                     <Bar dataKey="revenue" radius={[8, 8, 3, 3]} maxBarSize={28}>
-                      {[
-                        { name: "May", revenue: 14500000 },
-                        { name: "Jun", revenue: 18200000 },
-                        { name: "Jul", revenue: 16800000 },
-                        { name: "Aug", revenue: 21500000 },
-                        { name: "Sep", revenue: 19400000 },
-                        { name: "Oct", revenue: 24800000 },
-                      ].map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={entry.revenue === 24800000 ? "url(#revenueBarGradPeak)" : "url(#revenueBarGrad)"}
-                          className="transition-all duration-200 hover:brightness-125 cursor-pointer"
-                        />
-                      ))}
+                      {chartData.map((entry, index) => {
+                        const maxVal = Math.max(...chartData.map((d) => d.revenue));
+                        return (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={entry.revenue === maxVal ? "url(#revenueBarGradPeak)" : "url(#revenueBarGrad)"}
+                            className="transition-all duration-200 hover:brightness-125 cursor-pointer"
+                          />
+                        );
+                      })}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -5056,20 +5032,20 @@ export function AdminRevenuePage() {
             </div>
 
             {/* Bottom Metrics Bar */}
-            <div className="pt-4 border-t border-[#2A3446] grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-              <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
+            <div className="pt-4 border-t border-[#2A3446] grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center">
+              <div className="bg-[#0B111C] p-2 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Invoiced</span>
-                <div className="text-sm font-black text-white">₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "24,80,000"}</div>
+                <div className="text-sm font-black text-white">₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
+              <div className="bg-[#0B111C] p-2 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Direct UPI / Wire</span>
-                <div className="text-sm font-black text-white">₹{totalCollected > 0 ? totalCollected.toLocaleString('en-IN') : "14,50,000"}</div>
+                <div className="text-sm font-black text-white">₹{totalCollected > 0 ? totalCollected.toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
+              <div className="bg-[#0B111C] p-2 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Cards / Razorpay</span>
-                <div className="text-sm font-black text-white">₹{totalCollected > 0 ? totalCollected.toLocaleString('en-IN') : "10,30,000"}</div>
+                <div className="text-sm font-black text-white">₹{totalCollected > 0 ? (totalCollected * 0).toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
+              <div className="bg-[#0B111C] p-2 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Disputed / Refunded</span>
                 <div className="text-sm font-black text-emerald-400">₹0</div>
               </div>
@@ -5099,56 +5075,36 @@ export function AdminRevenuePage() {
 
               {/* Tiers List (Dark Ops Color Theme) */}
               <div className="space-y-4">
-                {/* Package 1 */}
-                <div className="space-y-2 p-3.5 bg-[#0B111C] rounded-2xl border border-[#2A3446]">
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="flex items-center gap-2 text-white">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]" /> Package 1 (Scale)
-                    </span>
-                    <span className="text-white font-black">₹95,000 <span className="text-[10px] font-normal text-[#97A0B3]">/ mo</span></span>
+                {plans.length > 0 ? (
+                  plans.map((p, idx) => {
+                    const planMrr = p.monthly_price * p.subscriber_count;
+                    const pct = totalMrr > 0 ? (planMrr / totalMrr) * 100 : 0;
+                    const colors = ["bg-[#7FA0D6]", "bg-[#BCCCE6]", "bg-[#D8BF9B]", "bg-purple-400"];
+                    const textColors = ["text-[#7FA0D6]", "text-[#BCCCE6]", "text-[#D8BF9B]", "text-purple-400"];
+                    const colIdx = idx % colors.length;
+                    return (
+                      <div key={p.id} className="space-y-2 p-3.5 bg-[#0B111C] rounded-2xl border border-[#2A3446]">
+                        <div className="flex items-center justify-between text-xs font-bold">
+                          <span className="flex items-center gap-2 text-white">
+                            <span className={`w-2.5 h-2.5 rounded-full ${colors[colIdx]}`} /> {p.display_name || p.name}
+                          </span>
+                          <span className="text-white font-black">₹{p.monthly_price.toLocaleString('en-IN')} <span className="text-[10px] font-normal text-[#97A0B3]">/ mo</span></span>
+                        </div>
+                        <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
+                          <div className={`${colors[colIdx]} h-full rounded-full`} style={{ width: `${pct}%` }} />
+                        </div>
+                        <div className="flex justify-between text-[11px] text-[#97A0B3] font-semibold">
+                          <span>{p.subscriber_count} Retainer Account{p.subscriber_count !== 1 ? 's' : ''}</span>
+                          <span className={`${textColors[colIdx]} font-bold`}>{pct.toFixed(1)}% of MRR</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="p-4 text-center text-[#97A0B3] text-sm bg-[#0B111C] rounded-2xl border border-[#2A3446]">
+                    No active plans found.
                   </div>
-                  <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
-                    <div className="bg-[#7FA0D6] h-full rounded-full w-[46.8%]" />
-                  </div>
-                  <div className="flex justify-between text-[11px] text-[#97A0B3] font-semibold">
-                    <span>2 Retainer Accounts</span>
-                    <span className="text-[#7FA0D6] font-bold">46.8% of MRR</span>
-                  </div>
-                </div>
-
-                {/* Package 2 */}
-                <div className="space-y-2 p-3.5 bg-[#0B111C] rounded-2xl border border-[#2A3446]">
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="flex items-center gap-2 text-white">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#BCCCE6]" /> Package 2 (Growth)
-                    </span>
-                    <span className="text-white font-black">₹50,000 <span className="text-[10px] font-normal text-[#97A0B3]">/ mo</span></span>
-                  </div>
-                  <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
-                    <div className="bg-[#BCCCE6] h-full rounded-full w-[36.7%]" />
-                  </div>
-                  <div className="flex justify-between text-[11px] text-[#97A0B3] font-semibold">
-                    <span>3 Retainer Accounts</span>
-                    <span className="text-[#BCCCE6] font-bold">36.7% of MRR</span>
-                  </div>
-                </div>
-
-                {/* Package 3 */}
-                <div className="space-y-2 p-3.5 bg-[#0B111C] rounded-2xl border border-[#2A3446]">
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="flex items-center gap-2 text-white">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#D8BF9B]" /> Package 3 (Starter)
-                    </span>
-                    <span className="text-white font-black">₹25,000 <span className="text-[10px] font-normal text-[#97A0B3]">/ mo</span></span>
-                  </div>
-                  <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
-                    <div className="bg-[#D8BF9B] h-full rounded-full w-[16.5%]" />
-                  </div>
-                  <div className="flex justify-between text-[11px] text-[#97A0B3] font-semibold">
-                    <span>2 Retainer Accounts</span>
-                    <span className="text-[#D8BF9B] font-bold">16.5% of MRR</span>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 

@@ -42,6 +42,7 @@ from app.routers import (
     tickets,
     webhooks,
     chat,
+    negotiations,
 )
 
 logger = get_logger("app.main")
@@ -311,6 +312,7 @@ app.include_router(deliverables.portal_router, prefix="/api/v1")
 app.include_router(tasks.router, prefix="/api/v1")
 app.include_router(tasks.router)
 app.include_router(admin.router, prefix="/api/v1")
+app.include_router(negotiations.router, prefix="/api/v1/negotiations")
 app.include_router(admin.router)
 app.include_router(platform.router, prefix="/api/v1")
 app.include_router(tenant.router, prefix="/api/v1")

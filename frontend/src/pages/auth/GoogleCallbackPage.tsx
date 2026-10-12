@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
 import { Check, AlertCircle, ArrowRight, Lock, Loader2 } from "lucide-react";
 import { request } from "../../lib/http";
-import { useAuth } from "../../lib/auth-context";
+import { GOOGLE_OAUTH_STATE_KEY, useAuth } from "../../lib/auth-context";
 import { setAuthToken } from "../../lib/auth-token";
 import type { AuthUser } from "../../lib/auth-context";
 import { getRoleHome } from "../../components/auth/ProtectedRoute";
@@ -12,7 +12,7 @@ import { getPostLoginRedirect } from "../../lib/useRouteMemory";
 export function GoogleCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { refresh } = useAuth();
+  const { refresh, user } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [authenticatedUser, setAuthenticatedUser] = useState<AuthUser | null>(null);
@@ -33,6 +33,10 @@ export function GoogleCallbackPage() {
   }, []);
 
   useEffect(() => {
+    // refresh() changes identity on every provider render; run the handshake once.
+    if (hasExchangedRef.current) return;
+    hasExchangedRef.current = true;
+
     const token = searchParams.get("token");
     if (token) {
       setAuthToken(token);
@@ -56,12 +60,28 @@ export function GoogleCallbackPage() {
     const code = searchParams.get("code");
     if (!code) {
       setStatus("error");
-      setErrorMessage("No authorization code received from Google.");
+      setErrorMessage(
+        searchParams.get("error") === "access_denied"
+          ? "Google sign-in was cancelled."
+          : "No authorization code received from Google.",
+      );
       return;
     }
 
-    if (hasExchangedRef.current) return;
-    hasExchangedRef.current = true;
+    // The state must match the one this tab sent to Google, or the code may belong
+    // to someone else's account (login CSRF).
+    let expectedState: string | null = null;
+    try {
+      expectedState = sessionStorage.getItem(GOOGLE_OAUTH_STATE_KEY);
+      sessionStorage.removeItem(GOOGLE_OAUTH_STATE_KEY);
+    } catch {
+      // sessionStorage unavailable
+    }
+    if (!expectedState || searchParams.get("state") !== expectedState) {
+      setStatus("error");
+      setErrorMessage("This Google sign-in link has expired or was started elsewhere. Please try again.");
+      return;
+    }
 
     const exchangeCode = async () => {
       try {
@@ -187,7 +207,10 @@ export function GoogleCallbackPage() {
               </div>
 
               <h1 className="text-[30px] sm:text-[32px] font-semibold text-[#F8FAFC] tracking-tight leading-tight">
-                Welcome, {authenticatedUser?.full_name?.split(" ")[0] || "Jai"}!
+                {(() => {
+                  const firstName = (authenticatedUser ?? user)?.full_name?.split(" ")[0];
+                  return firstName ? `Welcome, ${firstName}!` : "Welcome back!";
+                })()}
               </h1>
               <p className="text-[14px] sm:text-[15px] font-normal text-[#97A0B3] mt-2.5 sm:mt-3 leading-relaxed max-w-lg">
                 Authentication confirmed. Launching your production workspace…

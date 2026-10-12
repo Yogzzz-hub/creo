@@ -84,7 +84,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = Field(default="")
     GOOGLE_REDIRECT_URI: str = Field(default="https://creo-dsxr.onrender.com")
 
-    # Google Gmail SMTP
+    # Legacy SMTP settings (kept for backward compat; Resend API is primary)
     SMTP_SERVER: str = Field(default="smtp.gmail.com")
     SMTP_HOST: str = Field(default="smtp.gmail.com")
     SMTP_PORT: int = Field(default=465)
@@ -148,7 +148,7 @@ class Settings(BaseSettings):
     INSTAGRAM_APP_SECRET: str = Field(default="")
     INSTAGRAM_REDIRECT_URI: str = Field(default="http://localhost:3000/api/auth/callback/instagram")
     RESEND_API_KEY: str = Field(default="")
-    RESEND_FROM_EMAIL: str = Field(default="Creo Verification <onboarding@resend.dev>")
+    RESEND_FROM_EMAIL: str = Field(default="")  # e.g. "Creo <noreply@yourdomain.com>"
     WHATSAPP_API_TOKEN: str = Field(default="")
     WHATSAPP_PHONE_NUMBER_ID: str = Field(default="")
 

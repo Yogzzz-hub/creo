@@ -45,6 +45,11 @@ htmlcov/
 .ruff_cache/
 backend/scripts/verify_workflow_*.py
 backend/scratch/
+backend/test_*.py
+backend/check_*.py
+backend/clear_*.py
+backend/fix_*.py
+backend/rename_*.py
 
 # Node
 node_modules/

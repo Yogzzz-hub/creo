@@ -108,9 +108,9 @@ The sales and investor destinations are therefore not complete working role jour
 
 1. Registration intent validates email uniqueness and password strength and generates an email OTP.
 2. Verification checks the stored code, expiration, and attempt counter, then creates the account and session.
-3. Password login verifies the stored bcrypt hash and rejects suspended users.
+3. Password login verifies the stored bcrypt hash and rejects suspended users. An account without a password answers `PASSWORD_NOT_SET` with its sign-in methods, and the login page offers "Continue with Google" or "Set a password" instead of a wrong-password error.
 4. OTP login offers a separate email-code path and can create an account when one does not exist.
-5. Google login exchanges an authorization code through backend OAuth handling; multiple callback routes are supported.
+5. Google login exchanges an authorization code through backend OAuth handling; multiple callback routes are supported. The browser checks the returned OAuth `state` against the one it sent.
 6. The browser stores the access token in memory and `localStorage`.
 7. API requests attach `Authorization: Bearer ...` and include credentials.
 8. On initial load, `AuthProvider` requests `/api/v1/auth/me` to restore the user profile.
@@ -134,13 +134,23 @@ otherwise:
 
 Examples in code: registration/OTP/reset request limits use five requests per ten minutes; password login uses ten attempts per fifteen minutes. These are per-process limits, not shared distributed limits. With multiple API workers, OTP availability and rate-limit state can differ between workers.
 
-### 2.4 Password reset and backend access
+### 2.4 One account per email, several sign-in methods
 
-Forgot-password creates a reset OTP. Reset verification issues a session marked `must_reset_password`. The backend token guard permits only `/auth/me`, `/auth/logout`, and `/auth/set-mandatory-password` for such a token. The frontend displays a mandatory reset modal.
+A person is one `users` row keyed by lowercase email (unique index on `lower(email)`). Password and Google are sign-in methods on that row (`hashed_password`, `google_sub`), exposed to the frontend as `sign_in_methods`. Every sign-in path finds the account case-insensitively and issues the session through one helper, so suspension and token rules are identical for all of them.
+
+Google sign-in resolves the account in this order: the user already linked to the Google account ID (`google_sub`), then a case-insensitive email match (which links Google to that existing account), then a new client account. Linking by email requires Google to report the address as verified. If the email is already linked to a different Google account, sign-in is refused with `GOOGLE_ACCOUNT_MISMATCH`.
+
+### 2.5 Password reset and backend access
+
+Forgot-password creates a reset OTP; the same flow adds a password to a Google-only account. Verifying the code returns a 15-minute `reset_token` (not a session). `POST /auth/reset-password` with that token saves the password and returns a session. Saving any password increments `token_version`, which makes the reset token single-use and revokes earlier sessions: `/auth/me` and `/auth/refresh` reject tokens whose `tv` claim no longer matches.
+
+Passwords are compared after trimming surrounding whitespace (hashes stored untrimmed by the old reset modal still verify), and only the first 72 bytes are used, as bcrypt requires.
+
+`must_reset_password` remains for accounts an administrator forces to change password. The backend token guard permits only `/auth/me`, `/auth/logout`, and `/auth/set-mandatory-password` for such a token, the frontend displays a mandatory reset modal, and `/auth/set-mandatory-password` refuses accounts without the flag.
 
 The backend derives the actor from JWT claims and checks a revocation/suspension cache. Frontend role checks control navigation; they do not replace API authorization.
 
-Observed gaps: registration paths infer privileged roles from email text; startup resets a fixed super-admin account password; an admin-seed reset route exists; account-page password change does not verify the supplied current password. These are implementation defects, not intended authentication algorithms.
+Observed gaps: registration paths infer privileged roles from email text; startup resets a fixed super-admin account password; an admin-seed reset route exists. These are implementation defects, not intended authentication algorithms.
 
 ## 3. Onboarding and Brand DNA
 

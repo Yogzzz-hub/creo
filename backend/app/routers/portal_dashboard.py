@@ -428,7 +428,13 @@ async def change_password(
         return {"status": "error", "message": "User not found."}
 
     from app.core.security import hash_password, verify_password, validate_password_strength
-    if user.hashed_password and not verify_password(current_pass, user.hashed_password):
+    # Google-only accounts must prove email ownership (auth reset flow) to add a password.
+    if not user.hashed_password:
+        return {
+            "status": "error",
+            "message": "This account has no password yet. Use 'Set a password' to verify your email first.",
+        }
+    if not verify_password(current_pass, user.hashed_password):
         return {"status": "error", "message": "Current password is incorrect."}
 
     valid, err = validate_password_strength(new_pass)
