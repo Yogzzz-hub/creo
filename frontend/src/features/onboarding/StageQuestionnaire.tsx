@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 
 import {
+  type QuestionnaireState,
   fetchQuestionnaireState,
   saveQuestionnaireSection,
   saveQuestionnaireSections,
@@ -429,6 +430,7 @@ function AddColorPaletteButton({ onAddColor }: { onAddColor: (hex: string) => vo
 }
 
 interface StageQuestionnaireProps {
+  isActive?: boolean;
   userId: string;
   initialSection?: SectionKey;
   onComplete: (assignedTeam?: AssignedTeamMember[]) => void;
@@ -972,7 +974,7 @@ function generateVisualDirectionPreview(
   };
 }
 
-export function StageQuestionnaire({ userId, initialSection, onComplete }: StageQuestionnaireProps) {
+export function StageQuestionnaire({ userId, initialSection, onComplete, isActive = true }: StageQuestionnaireProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const validSections: SectionKey[] = ["a", "b", "c", "d", "e", "f", "g"];
 
@@ -1025,7 +1027,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
   const [activeSection, setActiveSection] = useState<SectionKey>(() => getSavedSection() || "a");
 
   useEffect(() => {
-    if (!activeSection) return;
+    if (!activeSection || !isActive) return;
     try {
       if (typeof window !== "undefined") {
         sessionStorage.setItem("creo_active_section", activeSection);
@@ -1046,7 +1048,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
       },
       { replace: true }
     );
-  }, [activeSection, userId, setSearchParams]);
+  }, [activeSection, userId, setSearchParams, isActive]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
@@ -1277,6 +1279,17 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
       if (lastSavedRef.current[secKey] === serialized) return;
       const res = await saveQuestionnaireSection(userId, secKey, data);
       lastSavedRef.current[secKey] = serialized;
+      // Returning from another route should restore the latest acknowledged save,
+      // rather than the snapshot fetched before the client edited their answers.
+      queryClient.setQueryData<QuestionnaireState>(["questionnaire-state", userId], (previous) =>
+        previous ? {
+          ...previous,
+          [`section_${secKey}`]: data,
+          core_completed: res.core_completed,
+          extended_completed: res.extended_completed,
+          version: res.version,
+        } : previous,
+      );
       if (res.core_completed) setCoreUnlocked(true);
     };
     const queued = saveQueueRef.current.then(run, run);
