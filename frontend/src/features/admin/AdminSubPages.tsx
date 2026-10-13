@@ -28,6 +28,7 @@ import {
   approveManualPayment,
   rejectManualPayment,
   directBypassClientPayment,
+  revokeClientBypass,
 } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem, PlanSummaryItem, ManualPaymentRequest } from "../../lib/ops-api";
 import { fetchPlans } from "../../lib/onboarding-api";
@@ -90,6 +91,7 @@ import {
   Sparkles,
   Copy,
   Type,
+  RotateCcw,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CustomSelect } from "../../components/ui/CustomSelect";
@@ -861,6 +863,28 @@ export function AdminClientsPage() {
     }
   };
 
+  const handleRevokeBypass = async (client: { id: string; name: string }) => {
+    const ok = await confirm({
+      title: "Revoke Payment Bypass?",
+      description: `Are you sure you want to revoke the payment bypass for ${client.name}? This will immediately cancel their active subscription, reset monthly deliverable quotas, and return their account to Step 3 (Unpaid / Choose plan).`,
+      confirmText: "Revoke Bypass & Reset to Step 3",
+      cancelText: "Keep Active",
+      tone: "danger",
+    });
+    if (!ok) return;
+
+    try {
+      await revokeClientBypass(client.id);
+      await queryClient.invalidateQueries({ queryKey: ["admin-client-roster"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-manual-payments"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-client-brand-profile", client.id] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-kpis"] });
+      showToast(`Payment bypass revoked for ${client.name}. Account returned to Step 3.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to revoke payment bypass.");
+    }
+  };
+
 
   const filteredClientList = clientList.filter((c) => {
     const matchesSearch =
@@ -1084,7 +1108,7 @@ export function AdminClientsPage() {
                             ? "Awaiting Onboarding Form"
                             : "Account Not Onboarded"}
                         </span>
-                        {isNotPaidNotOnboarded && (
+                        {isNotPaidNotOnboarded ? (
                           <button
                             type="button"
                             onClick={(e) => {
@@ -1103,7 +1127,23 @@ export function AdminClientsPage() {
                             <Banknote className="w-3.5 h-3.5 text-emerald-400" />
                             <span>Bypass Payment</span>
                           </button>
-                        )}
+                        ) : isPaidNotOnboarded ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRevokeBypass({
+                                id: client.id,
+                                name: client.name,
+                              });
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                            title="Revoke payment bypass and return client to Step 3"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
+                            <span>Revoke Bypass</span>
+                          </button>
+                        ) : null}
                       </div>
                       <span className="text-[#7FA0D6] font-bold group-hover:underline flex items-center gap-1">
                         View Client Detail View &rarr;
@@ -1174,7 +1214,7 @@ export function AdminClientsPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                {isNotPaidNotOnboarded && (
+                {isNotPaidNotOnboarded ? (
                   <button
                     type="button"
                     onClick={() => {
@@ -1191,6 +1231,22 @@ export function AdminClientsPage() {
                   >
                     <Banknote className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Bypass Step 3 Payment</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!activeClient) return;
+                      handleRevokeBypass({
+                        id: activeClient.id,
+                        name: activeClient.name,
+                      });
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
+                    title="Revoke payment bypass and return client to Step 3"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
+                    <span>Revoke Payment Bypass</span>
                   </button>
                 )}
                 {isNotPaidNotOnboarded ? (

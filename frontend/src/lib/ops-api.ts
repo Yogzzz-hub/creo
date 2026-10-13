@@ -654,3 +654,15 @@ export async function directBypassClientPayment(
   );
 }
 
+export async function revokeClientBypass(
+  clientId: string,
+): Promise<{ status: string; message: string }> {
+  return request<{ status: string; message: string }>(
+    `/api/v1/admin/clients/${clientId}/revoke-bypass`,
+    {
+      method: "POST",
+    },
+  );
+}
+
+

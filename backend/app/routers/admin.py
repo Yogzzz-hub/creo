@@ -5264,6 +5264,18 @@ async def direct_bypass_client_payment(
     if not plan:
         raise HTTPException(status_code=404, detail="Selected plan does not exist")
 
+    # Guard: prevent multiple bypasses for the same user at the same time
+    existing_sub_stmt = select(Subscription).where(
+        Subscription.client_id == client_id,
+        Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
+    )
+    existing_sub = (await db.execute(existing_sub_stmt)).scalars().first()
+    if existing_sub:
+        raise HTTPException(
+            status_code=400,
+            detail="Client already has an active subscription or bypass. Please revoke the existing bypass before applying a new one.",
+        )
+
     # Fetch client user
     c_res = await db.execute(select(User).where(User.id == client_id))
     client_user = c_res.scalar_one_or_none()
@@ -5341,6 +5353,83 @@ async def direct_bypass_client_payment(
         "message": f"Payment successfully bypassed for client on {plan.display_name}. Subscription activated.",
         "subscription_id": str(sub.id),
         "client_id": str(client_id),
+    }
+
+
+@router.post("/clients/{client_id}/revoke-bypass")
+async def revoke_client_bypass(
+    client_id: uuid.UUID,
+    actor: Actor = AdminActor,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Revoke payment bypass: cancels active subscription, cancels manual requests, resets quotas, returns client to Step 3."""
+    # 1. Cancel all active/trialing subscriptions for this client
+    sub_stmt = select(Subscription).where(
+        Subscription.client_id == client_id,
+        Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
+    )
+    active_subs = (await db.execute(sub_stmt)).scalars().all()
+    now = datetime.now(UTC)
+    cancelled_ids = []
+    for sub in active_subs:
+        sub.status = SubscriptionStatus.CANCELED
+        sub.canceled_at = now
+        cancelled_ids.append(str(sub.id))
+
+    # 2. Cancel/reject manual payment requests
+    await db.execute(text("""
+        UPDATE manual_payment_requests
+        SET status = 'CANCELLED', updated_at = :now, admin_notes = 'Payment bypass revoked by Admin'
+        WHERE client_id = :cid AND status IN ('PENDING', 'APPROVED')
+    """), {"cid": client_id, "now": now})
+
+    # 3. Reset usage quotas to zero
+    usage_stmt = select(UsageCounter).where(UsageCounter.client_id == client_id)
+    counters = (await db.execute(usage_stmt)).scalars().all()
+    for counter in counters:
+        counter.quota = 0
+        counter.used = 0
+
+    # 4. Add audit log
+    reviewer_id = None
+    if actor and actor.user_id:
+        rev_user = (await db.execute(select(User.id).where(User.id == actor.user_id))).scalar_one_or_none()
+        if rev_user:
+            reviewer_id = rev_user
+
+    audit = AuditLog(
+        actor_id=reviewer_id,
+        actor_role=actor.role if actor else "admin",
+        entity="client_subscription",
+        entity_id=client_id,
+        action="admin_revoke_payment_bypass",
+        to_value={
+            "client_id": str(client_id),
+            "cancelled_subscription_ids": cancelled_ids,
+        },
+    )
+    db.add(audit)
+
+    # 5. Notify client
+    db.add(
+        Notification(
+            user_id=client_id,
+            title="⚠️ Retainer Subscription Revoked",
+            message="Your payment bypass has been revoked by administration. Please select a plan on Step 3 to continue.",
+            link="/onboarding?step=3",
+            is_read=False,
+        )
+    )
+
+    await db.commit()
+    from app.core.dashboard_cache import invalidate_dashboard_cache
+    await invalidate_dashboard_cache()
+
+    return {
+        "status": "success",
+        "message": "Payment bypass successfully revoked. Client returned to Step 3 (Unpaid).",
+        "client_id": str(client_id),
+        "cancelled_subscriptions": len(cancelled_ids),
     }
 
 

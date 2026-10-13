@@ -305,15 +305,26 @@ async def create_manual_payment_request(
     client_id = actor.client_id or actor.user_id
     await _ensure_manual_payments_table(db)
 
-    # Verify plan exists (check regular plans or custom client plan)
+    # Verify plan exists (check by UUID, slug name, or custom client plan)
     from app.models.billing import Plan, Subscription
     from app.models.enums import SubscriptionStatus
-    plan_stmt = select(Plan).where(Plan.id == body.plan_id)
-    plan_res = await db.execute(plan_stmt)
-    plan = plan_res.scalar_one_or_none()
+    plan = None
+    try:
+        pid_uuid = uuid.UUID(str(body.plan_id))
+        plan = (await db.execute(select(Plan).where(Plan.id == pid_uuid))).scalar_one_or_none()
+    except (ValueError, TypeError):
+        pass
+
     if not plan:
-        plan_stmt = select(Plan).where(Plan.name == f"custom_{client_id.hex[:8]}", Plan.is_active.is_(True))
-        plan = (await db.execute(plan_stmt)).scalar_one_or_none()
+        plan = (await db.execute(
+            select(Plan).where(Plan.name == str(body.plan_id), Plan.is_active.is_(True))
+        )).scalar_one_or_none()
+
+    if not plan:
+        plan = (await db.execute(
+            select(Plan).where(Plan.name == f"custom_{client_id.hex[:8]}", Plan.is_active.is_(True))
+        )).scalar_one_or_none()
+
     if not plan:
         raise HTTPException(status_code=404, detail="Selected plan does not exist")
 
@@ -324,7 +335,7 @@ async def create_manual_payment_request(
             Subscription.status.in_([SubscriptionStatus.TRIALING, SubscriptionStatus.ACTIVE]),
         )
     )
-    if sub_res.scalar_one_or_none():
+    if sub_res.scalars().first():
         raise HTTPException(status_code=400, detail="Client already has an active subscription")
 
     amount = float(plan.monthly_price)
@@ -344,7 +355,7 @@ async def create_manual_payment_request(
             SET plan_id = :pid, payment_method = :pm, amount = :amt, reference_note = :rn, updated_at = NOW()
             WHERE id = :rid
         """), {
-            "pid": body.plan_id,
+            "pid": plan.id,
             "pm": body.payment_method,
             "amt": amount,
             "rn": body.reference_note,
@@ -358,7 +369,7 @@ async def create_manual_payment_request(
         """), {
             "id": req_id,
             "cid": client_id,
-            "pid": body.plan_id,
+            "pid": plan.id,
             "pm": body.payment_method,
             "amt": amount,
             "rn": body.reference_note,

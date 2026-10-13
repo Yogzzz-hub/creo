@@ -59,41 +59,58 @@ async def list_plans(
             pass
 
     if client_id:
-        user_stmt = select(User.created_at).where(User.id == client_id)
-        user_created_at = (await db.execute(user_stmt)).scalar_one_or_none()
+        user_stmt = select(User).where(User.id == client_id)
+        current_user = (await db.execute(user_stmt)).scalar_one_or_none()
+        user_created_at = current_user.created_at if current_user else None
+        clean_email = current_user.email.strip().lower() if current_user and current_user.email else ""
+
+        # Query all negotiations linked to this client_id or matching their email
+        neg_filters = [PlanNegotiation.client_id == client_id]
+        if clean_email:
+            neg_filters.append(func.lower(PlanNegotiation.client_email) == clean_email)
+
+        all_negs = (await db.execute(
+            select(PlanNegotiation).where(or_(*neg_filters)).order_by(PlanNegotiation.created_at.desc())
+        )).scalars().all()
+
+        active_valid_neg = None
+        for n in all_negs:
+            # If negotiation was created before this user account was created, it's stale from a deleted account
+            if user_created_at and n.created_at and n.created_at < user_created_at - timedelta(minutes=5):
+                n.status = "ARCHIVED"
+                n.client_id = None
+            elif n.status in ["Accepted", "Counter Offered", "APPROVED"]:
+                if active_valid_neg is None:
+                    active_valid_neg = n
 
         custom_plan_stmt = select(Plan).where(
             Plan.name == f"custom_{client_id.hex[:8]}",
             Plan.is_active.is_(True),
         )
         custom_plan = (await db.execute(custom_plan_stmt)).scalar_one_or_none()
-        # Guard: If custom plan was created before this user account was created, it's stale from a deleted account
-        if custom_plan and user_created_at and getattr(custom_plan, "created_at", None):
-            if custom_plan.created_at < user_created_at - timedelta(minutes=5):
-                custom_plan.is_active = False
-                await db.commit()
-                custom_plan = None
 
-        # If custom plan not yet generated, check if client has an Accepted or Counter Offered negotiation
-        if not custom_plan:
-            neg_stmt = (
-                select(PlanNegotiation)
-                .where(
-                    PlanNegotiation.client_id == client_id,
-                    PlanNegotiation.status.in_(["Accepted", "Counter Offered", "APPROVED"]),
+        # If there is NO active valid negotiation for this user account:
+        if not active_valid_neg:
+            # Deactivate any custom plan for this client
+            if custom_plan:
+                custom_plan.is_active = False
+                custom_plan = None
+            if clean_email:
+                await db.execute(
+                    update(Plan)
+                    .where(
+                        Plan.name.like("custom_%"),
+                        Plan.display_name.ilike(f"%{clean_email}%"),
+                    )
+                    .values(is_active=False)
                 )
-                .order_by(PlanNegotiation.created_at.desc())
-                .limit(1)
-            )
-            neg = (await db.execute(neg_stmt)).scalar_one_or_none()
-            # Guard: If negotiation was created before this user account, it's stale from a deleted account
-            if neg and user_created_at and getattr(neg, "created_at", None):
-                if neg.created_at < user_created_at - timedelta(minutes=5):
-                    neg = None
-            if neg:
-                final_amt = neg.counter_price or neg.agreed_amount
-                if not final_amt and neg.proposed_offer:
-                    digits = "".join(c for c in str(neg.proposed_offer) if c.isdigit())
+            await db.commit()
+        else:
+            # We have a valid active negotiation for this account!
+            if not custom_plan:
+                final_amt = active_valid_neg.counter_price or active_valid_neg.agreed_amount
+                if not final_amt and active_valid_neg.proposed_offer:
+                    digits = "".join(c for c in str(active_valid_neg.proposed_offer) if c.isdigit())
                     if digits:
                         try:
                             final_amt = int(digits)
@@ -102,13 +119,13 @@ async def list_plans(
                 if not final_amt or final_amt <= 0:
                     final_amt = 35000
 
-                reel_q = neg.reel_quota or 8
-                poster_q = neg.poster_quota or 12
-                story_q = neg.story_quota or 15
+                reel_q = active_valid_neg.reel_quota or 8
+                poster_q = active_valid_neg.poster_quota or 12
+                story_q = active_valid_neg.story_quota or 15
                 display_name = (
-                    f"Agency Counter Proposal ({neg.client_name})"
-                    if neg.status == "Counter Offered"
-                    else f"Custom Negotiated Retainer ({neg.client_name})"
+                    f"Agency Counter Proposal ({active_valid_neg.client_name})"
+                    if active_valid_neg.status == "Counter Offered"
+                    else f"Custom Negotiated Retainer ({active_valid_neg.client_name})"
                 )
                 highlights = [
                     f"{reel_q} Custom Reels",
@@ -120,7 +137,7 @@ async def list_plans(
 
                 custom_plan = Plan(
                     id=uuid.uuid4(),
-                    agency_id=neg.agency_id,
+                    agency_id=active_valid_neg.agency_id,
                     name=f"custom_{client_id.hex[:8]}",
                     display_name=display_name,
                     monthly_price=Decimal(final_amt),
