@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
 import httpx
 from pydantic import BaseModel, EmailStr, Field
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -227,6 +227,31 @@ async def _default_signup_agency_id(db: AsyncSession) -> uuid.UUID | None:
         .order_by((Agency.status == "active").desc(), Agency.created_at.asc())
         .limit(1)
     )
+
+
+async def _cleanup_stale_client_records(db: AsyncSession, email: str, full_name: str | None = None) -> None:
+    """Clear orphaned negotiations and deactivate custom plans left behind by deleted users with this email."""
+    try:
+        from app.models.billing import PlanNegotiation, Plan
+        clean_email = email.strip().lower()
+        await db.execute(
+            update(PlanNegotiation)
+            .where(func.lower(PlanNegotiation.client_email) == clean_email)
+            .values(status="ARCHIVED", client_id=None)
+        )
+        plan_filter = [Plan.display_name.ilike(f"%{clean_email}%")]
+        if full_name and full_name.strip():
+            plan_filter.append(Plan.display_name.ilike(f"%{full_name.strip()}%"))
+        await db.execute(
+            update(Plan)
+            .where(
+                Plan.name.like("custom_%"),
+                or_(*plan_filter),
+            )
+            .values(is_active=False)
+        )
+    except Exception as e:
+        logger.warning("cleanup_stale_client_records_error", error=str(e))
 
 
 async def _apply_new_password(user: User, new_password: str) -> None:
@@ -487,6 +512,7 @@ async def verify_registration(
     try:
         await db.flush()
         db.add(ClientProfile(user_id=user.id))
+        await _cleanup_stale_client_records(db, email_clean, resolved_name)
         await db.commit()
     except IntegrityError as exc:
         await db.rollback()
@@ -1094,6 +1120,7 @@ async def _process_google_code(
         try:
             await db.flush()
             db.add(ClientProfile(user_id=user.id))
+            await _cleanup_stale_client_records(db, email, full_name)
             await db.commit()
             await db.refresh(user)
         except IntegrityError as exc:

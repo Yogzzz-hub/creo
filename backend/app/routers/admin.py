@@ -1478,10 +1478,27 @@ async def offboard_client(
     for counter in counters:
         counter.quota = 0
     already_offboarded = client.account_status == AccountStatus.SUSPENDED
-    client.account_status = AccountStatus.SUSPENDED
     if not already_offboarded:
         client.token_version += 1
+    client.account_status = AccountStatus.SUSPENDED
     await db.execute(delete(ClientAssignment).where(ClientAssignment.client_id == client_id_uuid))
+    # Deactivate custom plan & archive negotiations
+    await db.execute(
+        update(Plan)
+        .where(Plan.name == f"custom_{client_id_uuid.hex[:8]}")
+        .values(is_active=False)
+    )
+    if client.email:
+        await db.execute(
+            update(PlanNegotiation)
+            .where(
+                or_(
+                    PlanNegotiation.client_id == client_id_uuid,
+                    func.lower(PlanNegotiation.client_email) == client.email.lower()
+                )
+            )
+            .values(status="ARCHIVED")
+        )
     if not already_offboarded or subscriptions:
         actor_role_str = actor.role.value if hasattr(actor.role, "value") else str(actor.role)
         db.add(AuditLog(actor_id=actor.user_id, actor_role=actor_role_str, entity="client",
@@ -4516,10 +4533,10 @@ async def list_plan_negotiations(
     res = await db.execute(stmt)
     rows = res.scalars().all()
 
-    # Self-heal legacy negotiations missing client_id by email lookup
+    # Self-heal legacy negotiations missing client_id by email lookup (strictly for PENDING requests)
     needs_commit = False
     for n in rows:
-        if not n.client_id and n.client_email:
+        if not n.client_id and n.client_email and n.status == "PENDING":
             u_stmt = select(User).where(func.lower(User.email) == n.client_email.strip().lower())
             u = (await db.execute(u_stmt)).scalar_one_or_none()
             if u:
@@ -4957,8 +4974,8 @@ async def _activate_manual_subscription(
         Subscription.client_id == client_id,
         Subscription.status.in_([SubscriptionStatus.TRIALING, SubscriptionStatus.ACTIVE]),
     )
-    existing_sub = (await db.execute(existing_sub_stmt)).scalar_one_or_none()
-    if existing_sub:
+    existing_subs = (await db.execute(existing_sub_stmt)).scalars().all()
+    for existing_sub in existing_subs:
         existing_sub.status = SubscriptionStatus.CANCELED
 
     # Create new active manual subscription
@@ -4976,9 +4993,9 @@ async def _activate_manual_subscription(
     db.add(sub)
     await db.flush()
 
-    # Ensure terms accepted so v_client_onboarding derives stage 3
+    # Ensure terms accepted so v_client_onboarding derives stage 3 (Step 4 Brand Questionnaire)
     cp_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
-    cp = (await db.execute(cp_stmt)).scalar_one_or_none()
+    cp = (await db.execute(cp_stmt)).scalars().first()
     if not cp:
         cp = ClientProfile(
             user_id=client_id,
@@ -5001,7 +5018,7 @@ async def _activate_manual_subscription(
         UsageCounter.client_id == client_id,
         UsageCounter.period_start == m_start,
     )
-    uc = (await db.execute(uc_stmt)).scalar_one_or_none()
+    uc = (await db.execute(uc_stmt)).scalars().first()
     if not uc:
         uc = UsageCounter(
             id=uuid.uuid4(),
@@ -5241,6 +5258,10 @@ async def direct_bypass_client_payment(
     plan_res = await db.execute(plan_stmt)
     plan = plan_res.scalar_one_or_none()
     if not plan:
+        # Check custom plan for this client
+        plan_stmt = select(Plan).where(Plan.name == f"custom_{client_id.hex[:8]}", Plan.is_active.is_(True))
+        plan = (await db.execute(plan_stmt)).scalar_one_or_none()
+    if not plan:
         raise HTTPException(status_code=404, detail="Selected plan does not exist")
 
     # Fetch client user
@@ -5249,25 +5270,45 @@ async def direct_bypass_client_payment(
 
     now = datetime.now(UTC)
 
-    # Record or update manual_payment_requests row
-    req_id = uuid.uuid4()
-    await db.execute(text("""
-        INSERT INTO manual_payment_requests (id, client_id, plan_id, payment_method, amount, reference_note, status, reviewed_by, reviewed_at, admin_notes, created_at, updated_at)
-        VALUES (:id, :cid, :pid, :pm, :amt, :rn, 'APPROVED', :aid, :now, :notes, :now, :now)
+    # Validate reviewer_id against users table to prevent FK violation
+    reviewer_id = None
+    if actor and actor.user_id:
+        rev_user = (await db.execute(select(User.id).where(User.id == actor.user_id))).scalar_one_or_none()
+        if rev_user:
+            reviewer_id = rev_user
+
+    # Update any existing pending manual_payment_requests row for this client
+    updated_res = await db.execute(text("""
+        UPDATE manual_payment_requests
+        SET status = 'APPROVED', reviewed_by = :aid, reviewed_at = :now, admin_notes = :notes, updated_at = :now
+        WHERE client_id = :cid AND status = 'PENDING'
     """), {
-        "id": req_id,
-        "cid": client_id,
-        "pid": plan.id,
-        "pm": payment_method,
-        "amt": float(plan.monthly_price),
-        "rn": notes,
-        "aid": actor.user_id,
+        "aid": reviewer_id,
         "now": now,
         "notes": notes,
+        "cid": client_id,
     })
 
+    # If no pending request was updated, insert an approved bypass record
+    if updated_res.rowcount == 0:
+        req_id = uuid.uuid4()
+        await db.execute(text("""
+            INSERT INTO manual_payment_requests (id, client_id, plan_id, payment_method, amount, reference_note, status, reviewed_by, reviewed_at, admin_notes, created_at, updated_at)
+            VALUES (:id, :cid, :pid, :pm, :amt, :rn, 'APPROVED', :aid, :now, :notes, :now, :now)
+        """), {
+            "id": req_id,
+            "cid": client_id,
+            "pid": plan.id,
+            "pm": payment_method,
+            "amt": float(plan.monthly_price),
+            "rn": notes,
+            "aid": reviewer_id,
+            "now": now,
+            "notes": notes,
+        })
+
     sub = await _activate_manual_subscription(
-        db, client_id, plan.id, payment_method, plan.monthly_price, actor.user_id, notes,
+        db, client_id, plan.id, payment_method, plan.monthly_price, reviewer_id, notes,
     )
 
     # In-App notification

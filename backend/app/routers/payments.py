@@ -11,8 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
+from datetime import UTC, datetime, timedelta
 import uuid
 from decimal import Decimal
+from app.models.user import User
 from app.models.billing import PaymentEvent, Plan, PlanNegotiation, Subscription, UsageCounter
 from app.models.enums import SubscriptionStatus
 from app.schemas.billing import (
@@ -57,11 +59,20 @@ async def list_plans(
             pass
 
     if client_id:
+        user_stmt = select(User.created_at).where(User.id == client_id)
+        user_created_at = (await db.execute(user_stmt)).scalar_one_or_none()
+
         custom_plan_stmt = select(Plan).where(
             Plan.name == f"custom_{client_id.hex[:8]}",
             Plan.is_active.is_(True),
         )
         custom_plan = (await db.execute(custom_plan_stmt)).scalar_one_or_none()
+        # Guard: If custom plan was created before this user account was created, it's stale from a deleted account
+        if custom_plan and user_created_at and getattr(custom_plan, "created_at", None):
+            if custom_plan.created_at < user_created_at - timedelta(minutes=5):
+                custom_plan.is_active = False
+                await db.commit()
+                custom_plan = None
 
         # If custom plan not yet generated, check if client has an Accepted or Counter Offered negotiation
         if not custom_plan:
@@ -75,6 +86,10 @@ async def list_plans(
                 .limit(1)
             )
             neg = (await db.execute(neg_stmt)).scalar_one_or_none()
+            # Guard: If negotiation was created before this user account, it's stale from a deleted account
+            if neg and user_created_at and getattr(neg, "created_at", None):
+                if neg.created_at < user_created_at - timedelta(minutes=5):
+                    neg = None
             if neg:
                 final_amt = neg.counter_price or neg.agreed_amount
                 if not final_amt and neg.proposed_offer:

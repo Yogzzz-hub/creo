@@ -229,6 +229,22 @@ export function AdminClientsPage() {
   const [directBypassNotes, setDirectBypassNotes] = useState<string>("");
   const [processingPaymentId, setProcessingPaymentId] = useState<string | null>(null);
   const [directBypassBusy, setDirectBypassBusy] = useState(false);
+  const [directBypassClientPlans, setDirectBypassClientPlans] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (directBypassTargetClient?.id) {
+      request<any[]>(`/api/v1/payments/plans?client_id=${directBypassTargetClient.id}`)
+        .then((clientPlans) => {
+          if (Array.isArray(clientPlans) && clientPlans.length > 0) {
+            setDirectBypassClientPlans(clientPlans);
+            setDirectBypassPlanId(clientPlans[0].id);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setDirectBypassClientPlans([]);
+    }
+  }, [directBypassTargetClient?.id]);
 
   const manualPayments = manualPaymentsQuery.data || [];
   const pendingManualPayments = manualPayments.filter((p) => p.status === "PENDING");
@@ -802,7 +818,8 @@ export function AdminClientsPage() {
     e.preventDefault();
     if (!directBypassTargetClient || !directBypassPlanId) return;
 
-    const chosenPlan = plansQuery.data?.find((p) => p.id === directBypassPlanId);
+    const allAvailablePlans = [...(directBypassClientPlans || []), ...(plansQuery.data || [])];
+    const chosenPlan = allAvailablePlans.find((p) => p.id === directBypassPlanId);
     const planName = chosenPlan?.display_name || chosenPlan?.name || "Selected Plan";
     const planPrice = chosenPlan ? `₹${(chosenPlan.price_minor / 100).toLocaleString()}/mo` : "";
 
@@ -832,6 +849,7 @@ export function AdminClientsPage() {
       });
       await queryClient.invalidateQueries({ queryKey: ["admin-client-roster"] });
       await queryClient.invalidateQueries({ queryKey: ["admin-manual-payments"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-client-brand-profile", directBypassTargetClient.id] });
       setIsDirectBypassModalOpen(false);
       setDirectBypassTargetClient(null);
       setDirectBypassNotes("");
@@ -2626,7 +2644,7 @@ export function AdminClientsPage() {
                     onChange={(e) => setDirectBypassPlanId(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
                   >
-                    {plansQuery.data?.map((p) => (
+                    {((directBypassClientPlans.length > 0 ? directBypassClientPlans : plansQuery.data) || []).map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.display_name} (₹{(p.price_minor / 100).toLocaleString()}/mo)
                       </option>

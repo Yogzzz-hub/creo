@@ -8,8 +8,11 @@ from typing import Any
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.logging import get_logger
+logger = get_logger("app.routers.onboarding")
 
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
@@ -264,28 +267,32 @@ async def resend_onboarding_summary(
 
 
 async def _ensure_manual_payments_table(db: AsyncSession) -> None:
-    try:
-        await db.execute(text("""
-            CREATE TABLE IF NOT EXISTS manual_payment_requests (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                plan_id UUID NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
-                payment_method VARCHAR(50) NOT NULL DEFAULT 'cash',
-                amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
-                reference_note TEXT,
-                status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
-                reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
-                reviewed_at TIMESTAMP WITH TIME ZONE,
-                admin_notes TEXT,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
-            );
-            CREATE INDEX IF NOT EXISTS idx_manual_payments_client_id ON manual_payment_requests(client_id);
-            CREATE INDEX IF NOT EXISTS idx_manual_payments_status ON manual_payment_requests(status);
-            CREATE INDEX IF NOT EXISTS idx_manual_payments_created_at ON manual_payment_requests(created_at);
-        """))
-    except Exception as exc:
-        logger.warning("ensure_manual_payments_table_warning", error=str(exc))
+    stmts = [
+        """CREATE TABLE IF NOT EXISTS manual_payment_requests (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            plan_id UUID NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
+            payment_method VARCHAR(50) NOT NULL DEFAULT 'cash',
+            amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+            reference_note TEXT,
+            status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+            reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+            reviewed_at TIMESTAMP WITH TIME ZONE,
+            admin_notes TEXT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+        );""",
+        "CREATE INDEX IF NOT EXISTS idx_manual_payments_client_id ON manual_payment_requests(client_id);",
+        "CREATE INDEX IF NOT EXISTS idx_manual_payments_status ON manual_payment_requests(status);",
+        "CREATE INDEX IF NOT EXISTS idx_manual_payments_created_at ON manual_payment_requests(created_at);",
+    ]
+    for stmt in stmts:
+        try:
+            await db.execute(text(stmt))
+            await db.commit()
+        except Exception as exc:
+            await db.rollback()
+            logger.debug("ensure_manual_payments_stmt", error=str(exc))
 
 
 @router.post("/manual-payment-request", response_model=ManualPaymentRequestResponse)
@@ -298,12 +305,15 @@ async def create_manual_payment_request(
     client_id = actor.client_id or actor.user_id
     await _ensure_manual_payments_table(db)
 
-    # Verify plan exists
+    # Verify plan exists (check regular plans or custom client plan)
     from app.models.billing import Plan, Subscription
     from app.models.enums import SubscriptionStatus
     plan_stmt = select(Plan).where(Plan.id == body.plan_id)
     plan_res = await db.execute(plan_stmt)
     plan = plan_res.scalar_one_or_none()
+    if not plan:
+        plan_stmt = select(Plan).where(Plan.name == f"custom_{client_id.hex[:8]}", Plan.is_active.is_(True))
+        plan = (await db.execute(plan_stmt)).scalar_one_or_none()
     if not plan:
         raise HTTPException(status_code=404, detail="Selected plan does not exist")
 
