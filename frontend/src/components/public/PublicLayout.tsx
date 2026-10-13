@@ -23,9 +23,9 @@ export function PublicLayout() {
           {/* Soft cross-fade + rise between marketing pages */}
           <motion.div
             key={pathname}
-            initial={reduce ? false : { opacity: 0, y: 14 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: reduce ? 0 : 0.15 }}
           >
             <Outlet />
           </motion.div>

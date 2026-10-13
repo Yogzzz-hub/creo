@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import secrets
 import time
 import urllib.parse
@@ -228,9 +229,9 @@ async def _default_signup_agency_id(db: AsyncSession) -> uuid.UUID | None:
     )
 
 
-def _apply_new_password(user: User, new_password: str) -> None:
+async def _apply_new_password(user: User, new_password: str) -> None:
     """Store a new password and end every session issued before it."""
-    user.hashed_password = hash_password(new_password)
+    user.hashed_password = await asyncio.to_thread(hash_password, new_password)
     user.must_reset_password = False
     user.token_version += 1
 
@@ -368,7 +369,7 @@ async def register_intent(
     otp_code = f"{secrets.randbelow(900000) + 100000}"
     expires_at = time.time() + 600.0  # 10 minutes
     pending_registration = {
-        "password_hash": hash_password(payload.password),
+        "password_hash": await asyncio.to_thread(hash_password, payload.password),
         "full_name": payload.full_name or email_clean.split("@")[0].capitalize(),
     }
     await _deliver_otp_or_raise(email_clean, otp_code)
@@ -461,7 +462,7 @@ async def verify_registration(
         valid, err = validate_password_strength(payload.password)
         if not valid:
             raise HTTPException(status_code=400, detail=err)
-        hashed_pw = hash_password(payload.password)
+        hashed_pw = await asyncio.to_thread(hash_password, payload.password)
         resolved_name = payload.full_name or email_clean.split("@")[0].capitalize()
 
     existing_user = await _get_user_by_email(db, email_clean)
@@ -607,7 +608,7 @@ async def reset_password(
     if not valid:
         raise HTTPException(status_code=400, detail=err)
 
-    _apply_new_password(user, payload.new_password)
+    await _apply_new_password(user, payload.new_password)
     if user.email_verified_at is None:
         user.email_verified_at = datetime.now(timezone.utc)
     await db.commit()
@@ -640,7 +641,7 @@ async def set_mandatory_password(
     if not valid:
         raise HTTPException(status_code=400, detail=err)
 
-    _apply_new_password(user, payload.new_password)
+    await _apply_new_password(user, payload.new_password)
     await db.commit()
     await db.refresh(user)
 
@@ -691,7 +692,7 @@ async def login(
     if not user.hashed_password:
         raise _password_not_set_error(user)
 
-    if not verify_password(payload.password, user.hashed_password):
+    if not await asyncio.to_thread(verify_password, payload.password, user.hashed_password):
         raise Unauthorized(
             "Invalid email or password. Please check your credentials.",
             code="INVALID_CREDENTIALS",
