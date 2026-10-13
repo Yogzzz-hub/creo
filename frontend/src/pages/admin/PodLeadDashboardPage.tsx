@@ -1,4 +1,3 @@
-import { PublishingQueue } from "../../components/ops/PublishingPanel";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -778,7 +777,6 @@ export function PodLeadDashboardPage() {
             </div>
           </div>
         </div>
-        <PublishingQueue />
       </main>
 
       {/* Revision Modal */}

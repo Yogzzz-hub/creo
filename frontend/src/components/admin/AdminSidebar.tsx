@@ -13,6 +13,7 @@ import {
   CheckSquare,
   Calendar,
   ListTodo,
+  Send,
   Building2,
   LifeBuoy,
   ShieldCheck,
@@ -150,6 +151,7 @@ export function AdminSidebar() {
       items: [
         { label: "Deliverables Review", href: "/admin/deliverables", icon: Layers },
         { label: "Publishing Calendar", href: "/admin/calendar", icon: Calendar },
+        { label: "Instagram Publishing", href: "/admin/publishing", icon: Send },
         { label: "Task Queue", href: "/admin/tasks", icon: ListTodo },
       ],
     },
@@ -183,6 +185,7 @@ export function AdminSidebar() {
         { label: "Task Queue", href: "/lead/tasks", icon: ListTodo },
         { label: "Deliverables Review & Sign-Off", href: "/lead/deliverables", icon: Layers },
         { label: "Publishing Calendar", href: "/admin/calendar", icon: Calendar },
+        { label: "Instagram Publishing", href: "/admin/publishing", icon: Send },
       ],
     },
     {
@@ -207,6 +210,7 @@ export function AdminSidebar() {
       items: [
         { label: "Dashboard", href: "/workstation", icon: LayoutDashboard },
         { label: "Tasks", href: "/workstation/tasks", icon: CheckSquare },
+        { label: "Instagram Publishing", href: "/admin/publishing", icon: Send },
         { label: "Leave Requests", href: "/workstation/schedule", icon: Calendar },
         { label: "Slack Chat", href: "/workstation/slack", icon: MessageSquare, badge: "Chat" },
       ],

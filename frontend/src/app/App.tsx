@@ -127,6 +127,9 @@ const MemberTaskBoardPage = lazyModule(() =>
   import("../pages/admin/MemberTaskBoardPage").then((m) => ({ default: m.MemberTaskBoardPage }))
 );
 
+const PublishingPage = lazyModule(() =>
+  import("../pages/admin/PublishingPage").then((m) => ({ default: m.PublishingPage }))
+);
 const MemberSchedulePTOPage = lazyModule(() =>
   import("../pages/admin/MemberSchedulePTOPage").then((m) => ({ default: m.MemberSchedulePTOPage }))
 );
@@ -780,6 +783,17 @@ export function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/admin/publishing"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer"]}>
+                      <PublishingPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/lead/publishing" element={<Navigate to="/admin/publishing" replace />} />
+                <Route path="/workstation/publishing" element={<Navigate to="/admin/publishing" replace />} />
+                <Route path="/member/publishing" element={<Navigate to="/admin/publishing" replace />} />
                 <Route
                   path="/lead/tasks"
                   element={

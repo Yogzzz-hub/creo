@@ -1,4 +1,3 @@
-import { PublishingQueue } from "../../components/ops/PublishingPanel";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -317,7 +316,6 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
 
   const content = (
     <div className="flex flex-col gap-6 w-full max-w-[1440px] mx-auto text-white">
-      <PublishingQueue />
       {/* Top Header & Admin Actions */}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
