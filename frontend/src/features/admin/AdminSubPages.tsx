@@ -881,7 +881,7 @@ export function AdminClientsPage() {
         activeTab="Client Details"
       />
 
-      <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
+      <main className="flex-1 px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {toast && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
@@ -2789,7 +2789,7 @@ export function AdminDeliverablesPage() {
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {/* Toast Notification */}
         {toastMessage && (
           <div className="fixed top-20 right-4 sm:right-8 left-4 sm:left-auto z-50 bg-[#0B111C] text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2.5 animate-bounce">
@@ -3379,7 +3379,7 @@ export function AdminTasksPage() {
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {/* Header Title and Search Filter Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -4292,7 +4292,7 @@ export function AdminTeamManagementPage() {
         activeTab="Team Details"
       />
 
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {toast && (
           <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
@@ -5354,7 +5354,7 @@ export function AdminLeaveApprovalsPage() {
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Team Details" />
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-8">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
           <div className="p-4 bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs font-bold rounded-2xl flex items-center justify-between shadow-xl backdrop-blur-md animate-fade-in">
             <div className="flex items-center gap-2">
@@ -5741,7 +5741,7 @@ export function AdminRevenuePage() {
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader title="Revenue Engine" activeTab="Revenue" />
 
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6 sm:space-y-8">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-6 sm:space-y-8">
         {toast && (
           <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
@@ -6878,7 +6878,7 @@ export function AdminPlansPage() {
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Revenue" />
-      <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
+      <main className="flex-1 px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">

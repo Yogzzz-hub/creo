@@ -79,7 +79,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
       />
 
       {/* Main Container */}
-      <main className="flex-1 px-3 sm:px-5 lg:px-6 pt-3 pb-6 max-w-[1440px] w-full mx-auto">
+      <main className="flex-1 px-3 sm:px-5 lg:px-6 pt-6 sm:pt-8 pb-10 max-w-[1440px] w-full mx-auto">
         {queries.some((query) => query.isPending) && <p role="status" className="mb-4 text-sm text-slate-400">Loading dashboard data?</p>}
         {error && <p role="alert" className="mb-4 text-sm text-amber-300">{error instanceof Error ? error.message : "Some dashboard data could not be loaded."} <button onClick={() => { queries.forEach((query) => { if (query.isError) void query.refetch(); }); }} className="underline">Retry</button></p>}
         {/* Status banner */}
