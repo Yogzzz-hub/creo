@@ -150,7 +150,7 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
   const [cancellingManual, setCancellingManual] = useState(false);
   const [manualMsg, setManualMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const { data: plans, isLoading: plansLoading } = useQuery<Plan[]>({
+  const { data: plans, isLoading: plansLoading, isError: plansError, refetch: refetchPlans } = useQuery<Plan[]>({
     queryKey: ["plans"],
     queryFn: fetchPlans,
     enabled: !isAlreadyPaid,
@@ -487,6 +487,20 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
           <Loader2 aria-hidden="true" className="size-7 animate-spin text-[#7FA0D6] mx-auto mb-3 motion-reduce:animate-none" />
           <p className="text-xs font-medium">Loading pricing plans…</p>
         </div>
+      ) : plansError || !plans || plans.length === 0 ? (
+        <div role="alert" className="rounded-2xl border border-rose-800/60 bg-rose-950/30 p-8 text-center text-rose-200">
+          <p className="text-sm font-bold mb-1">We couldn&apos;t load your plan.</p>
+          <p className="text-xs text-rose-300/80 mb-4">
+            Please try again. If this keeps happening, contact your agency admin.
+          </p>
+          <button
+            type="button"
+            onClick={() => void refetchPlans()}
+            className="px-5 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-bold text-white hover:border-[#7FA0D6] cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
       ) : plans && plans.length === 1 && plans[0] ? (
         (() => {
           const singlePlan = plans[0]!;
@@ -630,6 +644,7 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
                   className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
                   required
                 >
+                  {(plans || []).length === 0 && <option value="">No plans available</option>}
                   {(plans || []).map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.display_name} — {formatINR(p.price_minor)}/month
