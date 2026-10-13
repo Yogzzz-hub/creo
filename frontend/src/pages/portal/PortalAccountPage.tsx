@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 
 export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: string }) {
-  const { user } = useAuth();
+  const { user, patchUser, refresh } = useAuth();
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
 
@@ -110,21 +110,56 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
     setBusy(true);
     setMessage("");
     setErrorMessage("");
+
+    const newFullName = form.name.trim();
+    const newCompany = form.company.trim();
+    const newPhone = form.phone.trim();
+
+    // 1. Instantly patch auth user so sidebar, header, and home greeting update LIVE (0ms latency)
+    patchUser({
+      full_name: newFullName,
+      company_name: newCompany,
+    });
+
+    // 2. Instantly update profile query cache so settings badge updates LIVE
+    queryClient.setQueriesData({ queryKey: ["portal-profile"] }, (old: any) =>
+      old ? { ...old, full_name: newFullName, company_name: newCompany, phone: newPhone } : old
+    );
+    queryClient.setQueriesData({ queryKey: ["portal-dashboard"] }, (old: any) =>
+      old
+        ? {
+            ...old,
+            full_name: newFullName,
+            company_name: newCompany,
+            company: { ...(old?.company || {}), name: newCompany },
+          }
+        : old
+    );
+
     try {
       await request("/api/v1/portal/profile", {
         method: "PUT",
         body: JSON.stringify({
-          full_name: form.name,
-          company_name: form.company,
-          phone: form.phone,
+          full_name: newFullName,
+          company_name: newCompany,
+          phone: newPhone,
         }),
       });
-      await queryClient.invalidateQueries({ queryKey: ["portal-profile"] });
-      await queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] });
-      await query.refetch();
+
+      // 3. Revalidate and synchronize persistent auth profile
+      await Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: ["portal-profile"] }),
+        queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] }),
+        queryClient.refetchQueries({ queryKey: ["portal-profile"] }),
+        queryClient.refetchQueries({ queryKey: ["portal-dashboard"] }),
+        query.refetch(),
+        refresh(),
+      ]);
+
       setMessage("Your account details have been saved successfully.");
     } catch (e) {
       setErrorMessage(e instanceof Error ? e.message : "Changes could not be saved.");
+      await query.refetch();
     } finally {
       setBusy(false);
     }
@@ -140,6 +175,15 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
     const cleanHandle = raw.startsWith("@") ? raw : `@${raw}`;
     setIsConnectingIg(true);
     setErrorMessage("");
+
+    // Optimistically update query caches
+    queryClient.setQueriesData({ queryKey: ["portal-profile"] }, (old: any) =>
+      old ? { ...old, instagram_username: cleanHandle, instagram_connected: true } : old
+    );
+    queryClient.setQueriesData({ queryKey: ["portal-dashboard"] }, (old: any) =>
+      old ? { ...old, instagram_username: cleanHandle } : old
+    );
+
     try {
       await request("/api/v1/portal/integrations/instagram/connect", {
         method: "POST",
@@ -152,6 +196,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
       setMessage(`Instagram account ${cleanHandle} connected successfully!`);
     } catch (err: any) {
       setErrorMessage(err?.message || "Failed to connect Instagram account.");
+      await query.refetch();
     } finally {
       setIsConnectingIg(false);
     }
@@ -161,6 +206,15 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
   async function handleDisconnectInstagram() {
     setIsDisconnectingIg(true);
     setErrorMessage("");
+
+    // Optimistically update query caches
+    queryClient.setQueriesData({ queryKey: ["portal-profile"] }, (old: any) =>
+      old ? { ...old, instagram_username: "", instagram_connected: false } : old
+    );
+    queryClient.setQueriesData({ queryKey: ["portal-dashboard"] }, (old: any) =>
+      old ? { ...old, instagram_username: null } : old
+    );
+
     try {
       await request("/api/v1/portal/integrations/instagram", {
         method: "DELETE",
@@ -174,6 +228,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
       setMessage("Instagram account disconnected successfully.");
     } catch (err: any) {
       setErrorMessage(err?.message || "Failed to disconnect Instagram account.");
+      await query.refetch();
     } finally {
       setIsDisconnectingIg(false);
     }

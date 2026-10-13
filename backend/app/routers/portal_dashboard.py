@@ -16,7 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dashboard_cache import dashboard_cached
+from app.core.dashboard_cache import dashboard_cached, invalidate_dashboard_cache
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
 from app.models.billing import Plan, PlanNegotiation
@@ -615,8 +615,15 @@ async def update_portal_profile(
         profile = ClientProfile(user_id=client_id)
         db.add(profile)
 
+    user = await db.get(User, client_id)
+    if not user:
+        user_stmt = select(User).where(User.id == client_id)
+        user = (await db.execute(user_stmt)).scalar_one_or_none()
+
     if "company_name" in body:
         profile.company_name = body["company_name"]
+        if user:
+            user.company_name = body["company_name"]
     if "instagram_username" in body:
         profile.instagram_username = body["instagram_username"]
     if "brand_summary" in body:
@@ -627,11 +634,8 @@ async def update_portal_profile(
     if "phone" in body:
         profile.brand_dna = {**(profile.brand_dna or {}), "phone": body["phone"]}
 
-    if "full_name" in body:
-        user_stmt = select(User).where(User.id == client_id)
-        user = (await db.execute(user_stmt)).scalar_one_or_none()
-        if user:
-            user.full_name = body["full_name"]
+    if "full_name" in body and user:
+        user.full_name = body["full_name"]
 
     # If questionnaire answers provided, update Questionnaire record too
     if "questionnaire_answers" in body and isinstance(body["questionnaire_answers"], dict):
@@ -649,10 +653,12 @@ async def update_portal_profile(
             db.add(quest)
 
     await db.commit()
+    await invalidate_dashboard_cache()
 
     return {
         "status": "success",
         "message": "Profile updated successfully",
+        "full_name": user.full_name if user else None,
         "company_name": profile.company_name,
         "instagram_username": profile.instagram_username,
         "brand_summary": profile.brand_summary,

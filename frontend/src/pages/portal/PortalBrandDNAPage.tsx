@@ -60,7 +60,7 @@ const VOICE_OPTIONS = [
 ];
 
 export function PortalBrandDNAPage() {
-  const { user } = useAuth();
+  const { user, patchUser } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = searchParams.get("tab") || "brand";
@@ -156,8 +156,12 @@ export function PortalBrandDNAPage() {
         body: JSON.stringify(payload),
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      if (variables?.company_name) {
+        patchUser({ company_name: variables.company_name });
+      }
       queryClient.invalidateQueries({ queryKey: ["portal-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] });
       setIsEditModalOpen(false);
       setSuccessModalText("Changes saved successfully!");
       setIsSuccessModalOpen(true);

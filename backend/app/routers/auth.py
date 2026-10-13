@@ -237,10 +237,12 @@ async def _apply_new_password(user: User, new_password: str) -> None:
 
 
 def _user_payload(user: User, stage: int) -> dict[str, Any]:
+    company_name = user.client_profile.company_name if getattr(user, "client_profile", None) else None
     return {
         "id": str(user.id),
         "email": user.email,
         "full_name": user.full_name,
+        "company_name": company_name,
         "role": user.role.value,
         "account_status": user.account_status.value,
         "must_reset_password": bool(user.must_reset_password),
@@ -836,6 +838,7 @@ async def get_me(
         "id": str(user.id),
         "email": user.email,
         "full_name": user.full_name or user.email.split("@")[0],
+        "company_name": profile.company_name if profile else None,
         "phone": (profile.brand_dna or {}).get("phone", "") if profile and profile.brand_dna else "",
         "role": user.role.value,
         "account_status": user.account_status.value,
