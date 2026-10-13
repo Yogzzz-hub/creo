@@ -548,7 +548,7 @@ export function PortalDashboardPage() {
                 <p className="text-sm text-[#97A0B3] mb-4 leading-relaxed">
                   Connect Instagram to see reach and saves for every post we publish, and enable direct publishing of approved deliverables.
                 </p>
-                <div className="flex flex-col gap-3">
+                <div>
                   <Link
                     to="/portal/account?tab=integrations"
                     className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[#BCCCE6] text-[13px] font-bold text-[#0B111C] hover:bg-white transition-colors w-fit"
@@ -556,16 +556,6 @@ export function PortalDashboardPage() {
                     <Instagram className="w-4 h-4" />
                     @ Connect Instagram
                   </Link>
-                  <div>
-                    <a
-                      href="https://www.instagram.com/accounts/emailsignup/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-[#97A0B3] hover:text-white transition-colors underline inline-flex items-center gap-1"
-                    >
-                      <span>Need an account? Create an Instagram ID ↗</span>
-                    </a>
-                  </div>
                 </div>
               </div>
             )}
