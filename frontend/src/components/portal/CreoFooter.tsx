@@ -12,9 +12,9 @@ export function CreoFooter() {
           <Link to="/terms" className="hover:text-white transition-colors">
             Terms of Service
           </Link>
-          <a href="#" className="hover:text-white transition-colors">
+          <Link to="/portal/support" className="hover:text-white transition-colors">
             Security SLA
-          </a>
+          </Link>
         </div>
       </div>
     </footer>

@@ -27,6 +27,7 @@ interface DashboardData {
   onboarding_stage: number;
   brand_summary: string | null;
   instagram_username?: string | null;
+  instagram_connected?: boolean;
   account_status?: string;
   active_plan?: {
     status: string;
@@ -497,7 +498,7 @@ export function PortalDashboardPage() {
           <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-semibold text-white">Results & Publishing</h3>
-              {dashboard?.instagram_username && (
+              {dashboard?.instagram_connected && dashboard?.instagram_username && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
                   <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Meta Synced
@@ -505,7 +506,7 @@ export function PortalDashboardPage() {
               )}
             </div>
 
-            {dashboard?.instagram_username ? (
+            {dashboard?.instagram_connected && dashboard?.instagram_username ? (
               <div className="space-y-4">
                 <p className="text-sm text-[#97A0B3] leading-relaxed">
                   Your workspace is linked to Instagram. Approved deliverables are auto-published directly to your account.

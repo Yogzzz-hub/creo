@@ -16,6 +16,7 @@ import {
   ClientsPage,
   FaqPage,
   GoogleCallbackPage,
+  InstagramCallbackPage,
   OnboardingView,
   PortalAccountPage,
   PortalCalendarPage,
@@ -510,6 +511,17 @@ export function App() {
               <Route path="/verifying" element={<CreoLoader />} />
               <Route path="/loader-preview" element={<CreoLoader />} />
 
+              {/* Meta OAuth return: outside the onboarding gate so it also works mid-onboarding.
+                  Registered as the exact INSTAGRAM_REDIRECT_URI path. */}
+              <Route
+                path="/portal/account/instagram"
+                element={
+                  <ProtectedRoute allowedRoles={["client"]}>
+                    <InstagramCallbackPage />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* 3. Onboarding Multi-stage Flow (Client + Admin) */}
               <Route
                 path="/onboarding"
@@ -554,7 +566,6 @@ export function App() {
                 <Route path="support/:ticketId" element={<ClientTicketDetailPage />} />
 
                 <Route path="account" element={<PortalAccountPage />} />
-                <Route path="account/instagram" element={<PortalAccountPage defaultTab="instagram" />} />
                 <Route path="brand" element={<PortalBrandDNAPage />} />
                 <Route path="brand-dna" element={<PortalBrandDNAPage />} />
                 <Route path="library" element={<PortalLibraryPage />} />
