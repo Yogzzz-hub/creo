@@ -12,7 +12,9 @@ services:
     # Build commands execute before database environment bindings are provisioned
     # and multiple concurrent builds can cause DDL race conditions.
     startCommand: "cd backend && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 4"
-    healthCheckPath: /api/v1/health
+    # Liveness must not repeatedly poll PostgreSQL and Redis.
+    # /api/v1/health remains available for dependency monitoring.
+    healthCheckPath: /
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.0

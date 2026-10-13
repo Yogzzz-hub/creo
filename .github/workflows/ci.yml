@@ -64,6 +64,16 @@ jobs:
           DIRECT_DATABASE_URL: postgresql+asyncpg://postgres:postgrespassword@localhost:5432/creo
         run: alembic upgrade head
 
+      - name: Run Backend Regression Tests
+        working-directory: ./backend
+        env:
+          ENVIRONMENT: test
+          JWT_SECRET: ci-only-secret-for-isolated-regression-tests
+          DATABASE_URL: postgresql+asyncpg://postgres:postgrespassword@localhost:5432/creo
+          DIRECT_DATABASE_URL: postgresql+asyncpg://postgres:postgrespassword@localhost:5432/creo
+          REDIS_URL: fakeredis://
+        run: python -m pytest tests -q
+
   frontend:
     name: Frontend Lint, Typecheck & Build
     runs-on: ubuntu-latest
@@ -90,6 +100,10 @@ jobs:
       - name: TypeScript Type Check
         working-directory: ./frontend
         run: npx tsc --noEmit
+
+      - name: Test Worker API Routing and Cache Isolation
+        working-directory: ./frontend
+        run: node --test ../tests/worker.test.mjs
 
       - name: Build Frontend Bundle
         working-directory: ./frontend

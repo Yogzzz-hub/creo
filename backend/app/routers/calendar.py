@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import uuid
-import asyncio
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
@@ -74,11 +73,15 @@ async def get_calendar_entries(
     seen_deliverable_ids: set[uuid.UUID] = set()
 
     from app.services.deliverable_workflow import CLIENT_VISIBLE_STATUSES
-    from app.services.storage_service import resolve_media_url
+    from app.services.storage_service import resolve_media_urls
+    media_urls = await resolve_media_urls([
+        d.file_url for _, d, _ in cal_rows
+        if d and (actor.role != UserRole.CLIENT or d.status in CLIENT_VISIBLE_STATUSES)
+    ])
     for cal, d, d_type in cal_rows:
         if actor.role == UserRole.CLIENT and d and d.status not in CLIENT_VISIBLE_STATUSES:
             d = None
-        media_url = await asyncio.to_thread(resolve_media_url, d.file_url) if d else None
+        media_url = media_urls.get(d.file_url) if d else None
         if d:
             seen_deliverable_ids.add(d.id)
         
@@ -163,10 +166,13 @@ async def get_calendar_entries(
     if actor.role == UserRole.CLIENT:
         deliv_stmt = deliv_stmt.where(Deliverable.status.in_(CLIENT_VISIBLE_STATUSES))
     deliv_rows = (await db.execute(deliv_stmt)).all()
+    media_urls = await resolve_media_urls([
+        d.file_url for d, _ in deliv_rows if d.id not in seen_deliverable_ids
+    ])
     for d, d_type in deliv_rows:
-        media_url = await asyncio.to_thread(resolve_media_url, d.file_url)
         if d.id in seen_deliverable_ids:
             continue
+        media_url = media_urls.get(d.file_url)
         sched_dt = d.scheduled_at or d.created_at
         if d_type:
             val = str(d_type.value if hasattr(d_type, "value") else d_type).lower()

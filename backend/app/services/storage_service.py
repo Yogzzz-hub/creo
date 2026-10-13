@@ -14,6 +14,7 @@ Key guarantees:
 
 from __future__ import annotations
 
+import asyncio
 import os
 import time as clock_time
 from collections import OrderedDict
@@ -21,7 +22,10 @@ from threading import Lock
 import uuid
 from collections.abc import Iterator
 from datetime import UTC, datetime
+from functools import lru_cache
 from typing import IO, Any, Literal
+from urllib.parse import quote
+from weakref import WeakValueDictionary
 
 import structlog
 
@@ -150,25 +154,15 @@ def mark_s3_unhealthy(reason: str) -> None:
 
 
 def _check_s3_health() -> bool:
-    global _s3_healthy
-    if _s3_healthy is not None:
-        return _s3_healthy
-    if not (settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY):
-        _s3_healthy = False
-        return False
-    try:
-        s3 = _get_s3_client()
-        s3.head_bucket(Bucket=settings.STORAGE_BUCKET)
-        _s3_healthy = True
-        return True
-    except Exception as exc:
-        error_str = str(exc)
-        if "403" in error_str or "AccessDenied" in error_str or "Forbidden" in error_str:
-            _s3_healthy = False
-            log.warning("s3_access_denied_defaulting_to_supabase", error=error_str)
-            return False
-        _s3_healthy = True
-        return True
+    """Inspect configuration without making a blocking bucket probe.
+
+    Signing an R2 URL is local cryptography. A bucket HEAD here used to block
+    the API event loop on the first media list, potentially for SDK retries.
+    Actual storage operations still validate access and can mark R2 unhealthy.
+    """
+    return settings.STORAGE_S3_ENABLED and _s3_healthy is not False and bool(
+        settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY
+    )
 
 
 def _is_s3_configured() -> bool:
@@ -192,7 +186,15 @@ def _supabase_headers() -> dict[str, str]:
 
 
 def _get_s3_client() -> Any:
-    """Lazily create a boto3 S3 client (avoids import cost at module level)."""
+    """Reuse SDK clients; credential/endpoint changes get a separate instance."""
+    return _s3_client_for(
+        settings.STORAGE_REGION or "auto", settings.STORAGE_ENDPOINT_URL,
+        settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY,
+    )
+
+
+@lru_cache(maxsize=4)
+def _s3_client_for(region: str, endpoint: str | None, access_key: str, secret_key: str) -> Any:
     try:
         import importlib
 
@@ -200,17 +202,20 @@ def _get_s3_client() -> Any:
         botocore_config: Any = importlib.import_module("botocore.config")
 
         kwargs: dict[str, Any] = {
-            "region_name": settings.STORAGE_REGION or "auto",
+            "region_name": region,
             # Cloudflare R2 only accepts SigV4; without this botocore may sign
             # pre-signed URLs with legacy SigV2, which R2 rejects.
-            "config": botocore_config.Config(signature_version="s3v4"),
+            "config": botocore_config.Config(
+                signature_version="s3v4", connect_timeout=5, read_timeout=60,
+                retries={"max_attempts": 1},
+            ),
         }
-        if settings.AWS_ACCESS_KEY_ID:
-            kwargs["aws_access_key_id"] = settings.AWS_ACCESS_KEY_ID
-        if settings.AWS_SECRET_ACCESS_KEY:
-            kwargs["aws_secret_access_key"] = settings.AWS_SECRET_ACCESS_KEY
-        if settings.STORAGE_ENDPOINT_URL:
-            kwargs["endpoint_url"] = settings.STORAGE_ENDPOINT_URL
+        if access_key:
+            kwargs["aws_access_key_id"] = access_key
+        if secret_key:
+            kwargs["aws_secret_access_key"] = secret_key
+        if endpoint:
+            kwargs["endpoint_url"] = endpoint
 
         return boto3.client("s3", **kwargs)
     except (ImportError, ModuleNotFoundError) as exc:
@@ -218,6 +223,17 @@ def _get_s3_client() -> Any:
             "boto3 is not installed. Add it to pyproject.toml dependencies.",
             code="BOTO3_MISSING",
         ) from exc
+
+
+@lru_cache(maxsize=1)
+def _storage_http_client() -> Any:
+    """httpx clients are thread-safe; reuse TLS connections for media signing."""
+    import httpx
+
+    return httpx.Client(
+        timeout=10.0,
+        limits=httpx.Limits(max_connections=12, max_keepalive_connections=8),
+    )
 
 
 def upload_intent(
@@ -475,22 +491,19 @@ def signed_get(
         )
         headers = {**_supabase_headers(), "Content-Type": "application/json"}
         try:
-            with httpx.Client(timeout=10.0) as client:
-                resp = client.post(sign_url, headers=headers, json={"expiresIn": effective_ttl})
-                if resp.status_code in (200, 201):
-                    signed_path = resp.json().get("signedURL", "")
-                    signed = f"{settings.SUPABASE_URL.rstrip('/')}/storage/v1{signed_path}"
-                    if download_filename:
-                        sep = "&" if "?" in signed else "?"
-                        signed = f"{signed}{sep}download={quote(download_filename)}"
-                    return signed
-                log.warning("supabase_signed_get_bad_status", status=resp.status_code, body=resp.text)
-                if resp.status_code in (400, 404):
-                    if settings.ENVIRONMENT in ("development", "test"):
-                        return (
-                            f"https://{settings.STORAGE_BUCKET}.s3.amazonaws.com/{storage_key}?presigned=mock"
-                        )
-                    raise ObjectNotFound(storage_key)
+            resp = _storage_http_client().post(sign_url, headers=headers, json={"expiresIn": effective_ttl})
+            if resp.status_code in (200, 201):
+                signed_path = resp.json().get("signedURL", "")
+                signed = f"{settings.SUPABASE_URL.rstrip('/')}/storage/v1{signed_path}"
+                if download_filename:
+                    sep = "&" if "?" in signed else "?"
+                    signed = f"{signed}{sep}download={quote(download_filename)}"
+                return signed
+            log.warning("supabase_signed_get_bad_status", status=resp.status_code)
+            if resp.status_code in (400, 404):
+                if settings.ENVIRONMENT in ("development", "test"):
+                    return f"https://{settings.STORAGE_BUCKET}.s3.amazonaws.com/{storage_key}?presigned=mock"
+                raise ObjectNotFound(storage_key)
         except ObjectNotFound:
             raise
         except Exception as exc:
@@ -605,25 +618,42 @@ def public_base_url(request: Any | None) -> str:
 
 _signed_media_cache: OrderedDict[tuple, tuple[float, str]] = OrderedDict()
 _signed_media_lock = Lock()
+_signing_locks: WeakValueDictionary[tuple, Any] = WeakValueDictionary()
 
 
 def _cached_signed_media(raw: str, filename: str | None) -> str:
+    # Supabase's download name is an unsigned query parameter. Reuse its preview
+    # signature instead of another provider round trip for every approved file.
+    supabase = raw.startswith("supabase://") or (
+        not raw.startswith("r2://") and not _is_s3_configured() and _is_supabase_configured()
+    )
+    if filename and supabase:
+        url = _cached_signed_media(raw, None)
+        return f"{url}{'&' if '?' in url else '?'}download={quote(filename)}"
+
     # Only media URLs are cached, after each caller's record-level authorization.
-    key = (settings.STORAGE_ENDPOINT_URL, settings.SUPABASE_URL, settings.STORAGE_BUCKET, raw, filename)
-    now = clock_time.monotonic()
+    key = (settings.STORAGE_ENDPOINT_URL, settings.SUPABASE_URL, settings.STORAGE_BUCKET,
+           settings.STORAGE_S3_ENABLED, settings.AWS_ACCESS_KEY_ID, raw, filename)
     with _signed_media_lock:
-        hit = _signed_media_cache.get(key)
-        if hit and hit[0] > now:
+        lock = _signing_locks.get(key)
+        if lock is None:
+            lock = Lock()
+            _signing_locks[key] = lock
+    # Concurrent calendar and gallery requests share one signing operation.
+    with lock:
+        with _signed_media_lock:
+            hit = _signed_media_cache.get(key)
+            if hit and hit[0] > clock_time.monotonic():
+                _signed_media_cache.move_to_end(key)
+                return hit[1]
+        result = signed_get(raw, download_filename=filename)
+        duration = max(0, min(300, settings.PRESIGNED_URL_TTL - 60))
+        with _signed_media_lock:
+            _signed_media_cache[key] = (clock_time.monotonic() + duration, result)
             _signed_media_cache.move_to_end(key)
-            return hit[1]
-    result = signed_get(raw, download_filename=filename)
-    duration = max(0, min(300, settings.PRESIGNED_URL_TTL - 60))
-    with _signed_media_lock:
-        _signed_media_cache[key] = (clock_time.monotonic() + duration, result)
-        _signed_media_cache.move_to_end(key)
-        while len(_signed_media_cache) > 1024:
-            _signed_media_cache.popitem(last=False)
-    return result
+            while len(_signed_media_cache) > 1024:
+                _signed_media_cache.popitem(last=False)
+        return result
 
 
 def resolve_media_url(
@@ -669,6 +699,17 @@ def resolve_media_url(
     except Exception as exc:
         log.warning("media_url_sign_failed", key=raw, error=str(exc))
         return None
+
+
+async def resolve_media_urls(raw_urls: list[str | None], request: Any | None = None) -> dict[str, str | None]:
+    """Resolve authorized rows concurrently, with bounded provider pressure."""
+    semaphore = asyncio.Semaphore(6)
+
+    async def resolve(raw: str) -> tuple[str, str | None]:
+        async with semaphore:
+            return raw, await asyncio.to_thread(resolve_media_url, raw, request)
+
+    return dict(await asyncio.gather(*(resolve(raw) for raw in dict.fromkeys(raw_urls) if raw)))
 
 
 StorageKind = Literal["upload_intent", "confirm", "signed_get"]

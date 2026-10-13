@@ -6,16 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
     <title>Creo Platform — Content Production SaaS</title>
-    <!-- Clean Premium Fonts: Inter, Figtree, DM Sans, Plus Jakarta Sans -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Figtree:ital,wght@0,300..900;1,300..900&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap"
-      rel="stylesheet"
-    />
-    <!-- Media storage preconnect -->
-    <link rel="preconnect" href="https://storage.creo.network" />
-    <link rel="dns-prefetch" href="https://storage.creo.network" />
+    <!-- The font used throughout Creo comes from the same edge as the app. -->
+    <link rel="preload" href="/assets/fonts/inter-latin-v1.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" />
 
     <!-- Warm the production API while the dashboard bundle loads. Checkout loads on demand. -->
     <link rel="preconnect" href="https://creo-api-singapore.onrender.com" crossorigin />

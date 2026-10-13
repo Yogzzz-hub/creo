@@ -16,6 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.dashboard_cache import dashboard_cached
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
 from app.models.billing import Plan, PlanNegotiation
@@ -355,6 +356,21 @@ async def get_portal_dashboard(
     else:
         target_client_id = client_id or actor.client_id or actor.user_id
 
+    return await _portal_dashboard_snapshot(
+        target_client_id=target_client_id, current_stage=current_stage, actor=actor, db=db,
+    )
+
+
+@dashboard_cached(ttl=10)
+async def _portal_dashboard_snapshot(
+    target_client_id: uuid.UUID,
+    current_stage: int | None,
+    actor: Actor,
+    db: AsyncSession,
+) -> dict[str, Any]:
+    """Cache aggregation only; the route checks authentication/onboarding each time."""
+    from app.services.onboarding_service import get_current_stage
+
     # If default actor ID was used and no client_id query param, pick the first client with deliverables
     if str(target_client_id) == "00000000-0000-0000-0000-000000000001":
         stmt_first = select(User.id).where(User.role == "client").limit(1)
@@ -672,14 +688,14 @@ async def change_password(
             "status": "error",
             "message": "This account has no password yet. Use 'Set a password' to verify your email first.",
         }
-    if not verify_password(current_pass, user.hashed_password):
+    if not await asyncio.to_thread(verify_password, current_pass, user.hashed_password):
         return {"status": "error", "message": "Current password is incorrect."}
 
     valid, err = validate_password_strength(new_pass)
     if not valid:
         return {"status": "error", "message": err}
 
-    user.hashed_password = hash_password(new_pass)
+    user.hashed_password = await asyncio.to_thread(hash_password, new_pass)
     await db.commit()
 
     return {"status": "success", "message": "Password changed successfully."}

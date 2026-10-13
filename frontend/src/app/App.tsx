@@ -44,11 +44,15 @@ import { CreoLoader, CreoInlineLoader } from "../components/ui/CreoLoader";
 import { SimpleErrorBoundary } from "../components/ui/SimpleErrorBoundary";
 
 // Portal Layout (pages are lazy-loaded from ./lazy-pages)
-import { PortalLayout } from "../components/portal/PortalLayout";
-
-// Ops Layout & Features
-import { OpsLayout } from "../components/ops/OpsLayout";
-import { HomePage } from "../pages/public/HomePage";
+const PortalLayout = lazyModule(() =>
+  import("../components/portal/PortalLayout").then(m => ({ default: m.PortalLayout }))
+);
+const OpsLayout = lazyModule(() =>
+  import("../components/ops/OpsLayout").then(m => ({ default: m.OpsLayout }))
+);
+const HomePage = lazyModule(() =>
+  import("../pages/public/HomePage").then(m => ({ default: m.HomePage }))
+);
 
 const AdminDashboard = lazyModule(() =>
   import("../features/admin/AdminDashboard").then((m) => ({ default: m.AdminDashboard }))
@@ -175,9 +179,6 @@ function OnboardingPageWrapper() {
   const navigate = useNavigate();
   const userId = user?.id || "00000000-0000-0000-0000-000000000001";
 
-  // Warm the portal while the client works through onboarding
-  useEffect(() => whenIdle(() => preloadPortalPages()), []);
-
   return (
     <div data-surface="review" className="bento-theme min-h-[100dvh] bg-[#0B111C] text-[#F8FAFC] flex flex-col overflow-x-hidden">
       {/* Top Header Bar */}
@@ -275,6 +276,17 @@ function HealthPage() {
 }
 
 const dashboardRoutes = {
+  "/": HomePage,
+  "/pricing": PricingPage,
+  "/work": PortfolioPage,
+  "/portfolio": PortfolioPage,
+  "/clients": ClientsPage,
+  "/about": AboutPage,
+  "/faq": FaqPage,
+  "/terms": TermsPage,
+  "/privacy": PrivacyPage,
+  "/login": AuthPage,
+  "/signup": AuthPage,
   "/portal/deliverables": PortalDeliverablesPage,
   "/portal/deliverables/:deliverableId": PortalDeliverablesPage,
   "/portal/calendar": PortalCalendarPage,
@@ -360,7 +372,6 @@ function RoutePrefetcher() {
   }, [role, needsOnboarding]);
 
   useEffect(() => {
-    if (!role) return;
     const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
     if (connection?.saveData || connection?.effectiveType?.includes("2g")) return;
     const warmLink = (event: Event) => {
@@ -368,7 +379,7 @@ function RoutePrefetcher() {
       if (!(target instanceof Element)) return;
       const link = target.closest("a[href]");
       if (!(link instanceof HTMLAnchorElement) || link.origin !== location.origin) return;
-      const path = link.pathname.replace(/\/$/, "");
+      const path = link.pathname.replace(/\/$/, "") || "/";
       for (const [route, page] of Object.entries(dashboardRoutes)) {
         const pattern = new RegExp(`^${route.replace(/:[^/]+/g, "[^/]+")}$`);
         if (pattern.test(path)) { void page.preload().catch(() => {}); break; }

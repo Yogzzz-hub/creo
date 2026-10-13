@@ -3731,6 +3731,9 @@ async def get_admin_calendar(
     cal_res = await db.execute(cal_stmt)
     cal_rows = cal_res.fetchall()
 
+    media_urls = await storage_service.resolve_media_urls([
+        d.file_url for _, _, _, d, _, _ in cal_rows if d
+    ])
     for cal, email, company_name, d, deliv_type, brand_summary in cal_rows:
         client_name = company_name or email.split("@")[0].capitalize()
         event_dt = cal.scheduled_time or datetime.combine(cal.publish_date, datetime.min.time().replace(hour=11), tzinfo=timezone.utc)
@@ -3771,7 +3774,7 @@ async def get_admin_calendar(
                 if d.status.value in ["draft", "pending_approval"]
                 else d.status.value
             )
-            file_url = storage_service.resolve_media_url(d.file_url)
+            file_url = media_urls.get(d.file_url)
 
         title = cal.caption or f"{format_label} · {client_name}"
 
@@ -3841,6 +3844,7 @@ async def get_admin_calendar(
     deliv_res = await db.execute(deliv_stmt)
     deliv_rows = deliv_res.fetchall()
 
+    media_urls = await storage_service.resolve_media_urls([d.file_url for d, _, _, _ in deliv_rows])
     for d, deliv_type, email, company_name in deliv_rows:
         client_name = company_name or email.split("@")[0].capitalize()
         event_date = d.scheduled_at or d.created_at
@@ -3879,7 +3883,7 @@ async def get_admin_calendar(
             "year": event_date.year if event_date else 2026,
             "time": event_date.strftime("%I:%M %p") if event_date else "11:00 AM",
             "caption": "",
-            "file_url": storage_service.resolve_media_url(d.file_url),
+            "file_url": media_urls.get(d.file_url),
             "file_type": d.file_type,
             "brand_summary": None,
             "blueprint": None,
@@ -4237,6 +4241,9 @@ async def get_pod_dashboard(
     seen_task_ids = set()
     sla_breaches_count = 0
 
+    media_urls = await storage_service.resolve_media_urls([
+        deliv.file_url for _, _, _, deliv in tasks_rows if deliv
+    ], request)
     for t, assignee, c_profile, deliv in tasks_rows:
         if t.id in seen_task_ids:
             continue
@@ -4272,7 +4279,7 @@ async def get_pod_dashboard(
             "effort_points": t.effort_points,
             "blueprint": t.blueprint or {},
             "is_revision": t.is_revision,
-            "deliverable": deliverable_workflow.serialize_for_team(deliv, request) if deliv else None,
+            "deliverable": deliverable_workflow.serialize_for_team(deliv, request, media_urls=media_urls) if deliv else None,
         }
         tasks_by_status[t_status].append(task_data)
 

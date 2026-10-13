@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, AlertCircle, ArrowRight, Layers, User, Database, ChevronDown, Zap, Loader2, Instagram, Mail, Check, Layout, Clock } from "lucide-react";
 import { PricingCards } from "../../components/public/PricingCards";
 import { request } from "../../lib/http";
+import { useNearViewport } from "../../lib/useNearViewport";
 import {
   EASE_OUT_EXPO,
   Magnetic,
@@ -51,9 +52,12 @@ function CollageTile({
   return (
     <TiltCard max={9} lift={30} glow="transparent" className={`relative ${aspect} rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926] shadow-[0_18px_40px_-18px_rgba(0,0,0,0.8)]`}>
       <img
-        src={src}
+        src={src.replace("w=800&q=80", "w=400&q=70")}
+        srcSet={[200, 400, 600].map(width => `${src.replace("w=800&q=80", `w=${width}&q=70`)} ${width}w`).join(", ")}
+        sizes="(min-width: 1024px) 170px, 28vw"
         alt={alt}
         loading="lazy"
+        decoding="async"
         className="w-full h-full object-cover block transition-transform duration-[900ms] ease-out group-hover/tilt:scale-[1.06]"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-[#050810]/55 via-transparent to-transparent" />
@@ -117,11 +121,13 @@ export function HomePage() {
   const [sampleSubmitting, setSampleSubmitting] = useState(false);
   const [sampleSuccess, setSampleSuccess] = useState(false);
   const [sampleError, setSampleError] = useState<string | null>(null);
+  const ledger = useNearViewport<HTMLElement>();
 
   const { data: ledgerData } = useQuery<{ has_enough: boolean; items: any[] }>({
     queryKey: ["public-ledger"],
     queryFn: () => request<any>("/api/v1/public/ledger"),
     staleTime: 60_000,
+    enabled: ledger.isNear,
   });
 
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
@@ -136,9 +142,18 @@ export function HomePage() {
   };
 
   const approvedCount = assets.filter(a => a.status === "approved").length;
-  // Fetch the WebGL scene only once the page is idle so it never delays first paint
+  // Keep optional WebGL off touch/low-power devices and out of initial rendering.
   const [showScene, setShowScene] = useState(false);
-  useEffect(() => whenIdle(() => setShowScene(true)), []);
+  useEffect(() => {
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    if (!window.matchMedia("(min-width: 1024px) and (hover: hover) and (pointer: fine)").matches
+      || window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      || connection?.saveData || connection?.effectiveType?.includes("2g")
+      || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4)) return;
+    let cancelIdle: (() => void) | undefined;
+    const timer = setTimeout(() => { cancelIdle = whenIdle(() => setShowScene(true)); }, 3000);
+    return () => { clearTimeout(timer); cancelIdle?.(); };
+  }, []);
   const processRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress: processProgress } = useScroll({
     target: processRef,
@@ -204,24 +219,19 @@ export function HomePage() {
               </motion.div>
 
               <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-[4.75rem] xl:text-[5.5rem] font-black tracking-tight leading-[1.03] text-[#F8FAFC]">
-                <SplitText text="Content that" animateOnMount className="block" />
-                <SplitText text="ships every week." animateOnMount delay={0.12} className="block" />
-                <SplitText
-                  text="Proof you can"
-                  animateOnMount
-                  delay={0.24}
-                  className="block italic font-serif font-light pr-2"
-                />
-                <SplitText text="check." animateOnMount delay={0.36} className="block" wordClassName="text-[#BCCCE6]" />
+                <span className="block">Content that</span>
+                <span className="block">ships every week.</span>
+                <span className="block italic font-serif font-light pr-2">Proof you can</span>
+                <span className="block text-[#BCCCE6]">check.</span>
               </h1>
 
-              <Reveal delay={0.45} blur>
+              <div>
                 <p className="text-base sm:text-lg lg:text-xl text-[#97A0B3] leading-relaxed max-w-xl mt-7 mb-9 font-normal">
                   A dedicated lead, editor and designer learn your brand, then deliver reels, carousels and stories to a portal where you approve them in one click.
                 </p>
-              </Reveal>
+              </div>
 
-              <Reveal delay={0.55}>
+              <div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-1">
                   <Magnetic className="w-full sm:w-auto">
                     <Link
@@ -239,9 +249,9 @@ export function HomePage() {
                     Explore the portal first
                   </Link>
                 </div>
-              </Reveal>
+              </div>
 
-              <Reveal delay={0.65}>
+              <div>
                 <div className="text-sm font-semibold text-[#97A0B3] mt-10 border-t border-[#222F44]/80 pt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
                   <span className="flex items-center gap-2">
                     <Check className="size-4 text-[#7FA0D6]" /> Month-to-month
@@ -255,7 +265,7 @@ export function HomePage() {
                     <Check className="size-4 text-[#7FA0D6]" /> Late batch? Next cycle credited
                   </span>
                 </div>
-              </Reveal>
+              </div>
             </div>
 
             {/* Right 3-Column Asymmetric Media Collage — columns drift at different speeds */}
@@ -297,7 +307,7 @@ export function HomePage() {
       </section>
 
       {/* 2. The Studio Ledger Section */}
-      <section className="bg-[#0B111C] py-16 sm:py-24 border-y border-[#222F44]">
+      <section ref={ledger.ref} className="bg-[#0B111C] py-16 sm:py-24 border-y border-[#222F44]">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <Reveal>
