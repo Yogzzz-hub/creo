@@ -237,50 +237,59 @@ export function PortalDashboardPage() {
 
             {/* Progress Steps */}
             {(() => {
-              // Internal drafts are never sent to clients; open revisions are the visible "in production" work.
-              const inProd = deliverablesData?.items?.filter((d: any) => d.status === "revision_requested")?.length || 0;
-              const hasScheduled = (upcomingEntries.length > 0) || (deliverablesData?.items?.some((d: any) => d.status === "scheduled" || d.status === "approved"));
-              const hasReview = pendingDeliverables.length > 0;
-
-              const dynamicSteps = [
-                { label: "Brief", completed: !isLocked, active: false },
-                { label: "Production", completed: hasReview || hasScheduled, active: inProd > 0 && !hasReview },
-                { label: "Internal QA", completed: hasReview || hasScheduled, active: false },
-                { label: "Your review", completed: hasScheduled && !hasReview, active: hasReview },
-                { label: "Scheduled", completed: false, active: hasScheduled && !hasReview },
-              ];
+              // Each step maps to real DeliverableStatus values from the backend, so the
+              // tracker cannot drift from what the pipeline actually reports.
+              const STAGE_OF: Record<string, number> = {
+                draft: 1, in_production: 1,
+                pending_qa: 2, qa_rejected: 2,
+                pending_approval: 3, revision_requested: 3,
+                approved: 4, scheduled: 4, publishing: 4, published: 4,
+              };
+              const items: any[] = deliverablesData?.items || [];
+              // Furthest stage this cycle reached; a booked calendar slot also counts as
+              // scheduled even when its deliverable row is not loaded here.
+              const reached = items.reduce(
+                (max, d) => Math.max(max, STAGE_OF[d.status as string] ?? 0),
+                upcomingEntries.length > 0 ? 4 : 0,
+              );
+              // Work waiting on the client outranks later work: that is the step to show.
+              const activeStep = isLocked
+                ? 0
+                : items.some((d) => d.status === "pending_approval")
+                ? 3
+                : Math.max(reached, 1);
+              const steps = ["Brief", "Production", "Internal QA", "Your review", "Scheduled"];
 
               return (
-                <div className="flex gap-2 mb-8">
-                  {dynamicSteps.map((step) => (
-                    <div key={step.label} className="flex-1 flex flex-col">
-                      <div
-                        className={`h-1.5 w-full rounded-full mb-3 ${
-                          step.completed || step.active
-                            ? "bg-[#7FA0D6]"
-                            : "bg-white/[0.08]"
-                        }`}
-                      />
-                      <span
-                        className={`text-[13px] text-center tracking-wide ${
-                          step.active
-                            ? "text-white font-bold"
-                            : step.completed
-                            ? "text-[#97A0B3] font-medium"
-                            : "text-[#97A0B3] font-medium"
-                        }`}
-                      >
-                        {step.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <ol className="flex items-stretch gap-1.5 sm:gap-2 mb-6">
+                  {steps.map((label, i) => {
+                    const done = i < activeStep;
+                    const active = i === activeStep;
+                    return (
+                      <li key={label} className="flex-1 min-w-0">
+                        <div
+                          aria-hidden="true"
+                          className={`h-1.5 w-full rounded-full ${
+                            done ? "bg-[#7FA0D6]" : active ? "bg-[#BCCCE6]" : "bg-white/[0.08]"
+                          }`}
+                        />
+                        <span
+                          className={`mt-2.5 block truncate text-center text-[11px] sm:text-[13px] leading-tight ${
+                            active ? "text-white font-bold" : "text-[#97A0B3] font-medium"
+                          }`}
+                        >
+                          {label}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ol>
               );
             })()}
 
             {/* Alert Box (Only when review is needed) */}
             {pendingDeliverables.length > 0 && (
-              <div className="bg-[#161F2D] rounded-xl p-4 mb-8">
+              <div className="rounded-xl border border-[#2A3446] bg-[#0B111C]/60 p-4 mb-5">
                 <p className="text-[13px] text-[#97A0B3] leading-relaxed">
                   You have <span className="text-white font-medium">{pendingDeliverables.length} {pendingDeliverables.length === 1 ? 'deliverable' : 'deliverables'}</span> awaiting your review. Approving or requesting changes keeps your batch on its delivery SLA.
                 </p>

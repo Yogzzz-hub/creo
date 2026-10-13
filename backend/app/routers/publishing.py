@@ -22,7 +22,8 @@ router = APIRouter(prefix="/publishing", tags=["Instagram publishing"])
 
 
 class ScheduleBody(BaseModel):
-    local_time: str = Field(max_length=40)
+    # Omit local_time to follow the deliverable's content calendar slot.
+    local_time: str | None = Field(default=None, max_length=40)
     timezone: str = Field(default="Asia/Kolkata", max_length=64)
     fold: Literal[0, 1] | None = None
     caption: str = Field(default="", max_length=2200)
@@ -35,7 +36,9 @@ class ApproveBody(BaseModel):
 
 
 class ActionBody(BaseModel):
-    action: Literal["pause", "resume", "cancel", "retry", "reconcile"]
+    action: Literal[
+        "pause", "resume", "cancel", "retry", "reconcile", "publish_now", "use_calendar"
+    ]
 
 
 async def deliverable(db, actor, deliverable_id):
@@ -88,8 +91,10 @@ async def details(
         await db.execute(select(PublishingJob).where(PublishingJob.deliverable_id == d.id))
     ).scalar_one_or_none()
     profile = await db.get(ClientProfile, d.client_id)
+    plan = await service.calendar_plan(db, d)
     return {
-        "job": service.serialize(job, d) if job else None,
+        "job": service.serialize(job, d, plan[0] if plan else None) if job else None,
+        "calendar_publish_at": plan[0].isoformat() if plan else None,
         "timezone": profile.timezone if profile else "Asia/Kolkata",
         "approval_status": str(d.status),
         "file_type": d.file_type,

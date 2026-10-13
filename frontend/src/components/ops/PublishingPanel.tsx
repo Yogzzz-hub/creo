@@ -10,6 +10,7 @@ import {
   LifeBuoy,
   Link2,
   Loader2,
+  Send,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
@@ -33,6 +34,7 @@ export interface PublishingJob {
   instagram_account_id?: string;
   last_error?: string;
   error_code?: string;
+  calendar_publish_at?: string | null;
   review_fingerprint: string;
   approved: boolean;
   version: number;
@@ -40,6 +42,7 @@ export interface PublishingJob {
 }
 interface Details {
   job: PublishingJob | null;
+  calendar_publish_at?: string | null;
   timezone: string;
   approval_status: string;
   file_type: string;
@@ -163,27 +166,59 @@ export function PublishingPanel({
     setEditing(true);
   }
   async function perform(action: string) {
-    if (
-      ["cancel", "pause"].includes(action) &&
-      !(await confirm({
-        title: `${action === "cancel" ? "Cancel" : "Pause"} publication?`,
+    const prompts: Record<string, { title: string; description: string; confirmText: string }> = {
+      cancel: {
+        title: "Cancel auto-post?",
+        description:
+          "This stops automatic posting for this version. The approved deliverable stays in Creo and you can re-arm it from the calendar slot.",
+        confirmText: "Cancel auto-post",
+      },
+      pause: {
+        title: "Pause publication?",
         description: "The approved deliverable remains available in Creo.",
         confirmText: "Continue",
-      }))
-    )
-      return;
+      },
+      publish_now: {
+        title: "Post to Instagram now?",
+        description:
+          "This posts the approved version immediately instead of waiting for its calendar slot. It cannot be undone from Creo.",
+        confirmText: "Post now",
+      },
+    };
+    const ask = prompts[action];
+    if (ask && !(await confirm(ask))) return;
     setBusy(true);
     setMessage("");
     try {
-      if (action === "save") {
+      if (action === "save" || action === "save_calendar") {
+        // Without local_time the backend takes the time from this deliverable's content
+        // calendar slot, so the team never retypes a date that already exists.
+        const body =
+          action === "save_calendar"
+            ? { caption: form.caption, media_type: form.media_type }
+            : { ...form, fold: form.fold === "" ? null : Number(form.fold) };
         await request(`/api/v1/deliverables/${deliverableId}/schedule`, {
           method: "POST",
-          body: JSON.stringify({ ...form, fold: form.fold === "" ? null : Number(form.fold) }),
+          body: JSON.stringify(body),
         });
         setEditing(false);
         setMessage(
-          "Publishing plan saved. Only client-approved media and caption can enter the queue.",
+          action === "save_calendar"
+            ? "Auto-post armed for the content calendar slot."
+            : "Custom publishing time saved. Only client-approved media and caption can enter the queue.",
         );
+      } else if (action === "use_calendar") {
+        await request(`/api/v1/publishing/deliverables/${deliverableId}/action`, {
+          method: "POST",
+          body: JSON.stringify({ action }),
+        });
+        setMessage("Schedule re-synced with the content calendar slot.");
+      } else if (action === "publish_now") {
+        await request(`/api/v1/publishing/deliverables/${deliverableId}/action`, {
+          method: "POST",
+          body: JSON.stringify({ action }),
+        });
+        setMessage("Posting now. The status updates once Instagram confirms.");
       } else if (action === "approve") {
         await request(`/api/v1/publishing/deliverables/${deliverableId}/approve`, {
           method: "POST",
@@ -244,10 +279,27 @@ export function PublishingPanel({
   const statusText = job
     ? publishingLabel(job.status)
     : data?.approval_status === "approved"
-      ? "Approved — awaiting schedule"
+      ? "Awaiting schedule"
       : "Awaiting client approval";
   const showApprove =
     !readOnly && data?.can_approve && job && !job.approved && !frozen && job.status !== "canceled";
+  const lead = admin || user?.role === "team_lead";
+  const calendarAt = data?.calendar_publish_at || job?.calendar_publish_at || null;
+  const zone = job?.timezone || data?.timezone || "Asia/Kolkata";
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleString(undefined, {
+      timeZone: zone,
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  // The job follows its calendar slot unless the team saved a different time.
+  const offCalendar = Boolean(
+    job?.scheduled_at &&
+      calendarAt &&
+      Math.abs(new Date(job.scheduled_at).getTime() - new Date(calendarAt).getTime()) > 60_000,
+  );
+  const canPostNow =
+    manage && lead && job?.approved && connected && !frozen && job.status !== "canceled";
   const hasStaffActions =
     manage &&
     (!frozen ||
@@ -256,7 +308,7 @@ export function PublishingPanel({
       (admin && ["scheduled", "failed", "uncertain"].includes(job?.status || "")));
   return (
     <section className="min-w-0 space-y-4 rounded-2xl border border-[#2A3446] bg-[#0B111C]/60 p-4 text-white sm:p-5">
-      <header className="flex items-start justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex min-w-0 items-center gap-2.5">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#2A3446] bg-[#161F2D] text-[#7FA0D6]">
             <Instagram className="size-4" />
@@ -280,25 +332,47 @@ export function PublishingPanel({
         </span>
       </div>
 
-      {job?.scheduled_at && (
-        <p className="flex items-start gap-2 break-words text-sm">
-          <CalendarClock className="mt-0.5 size-4 shrink-0 text-[#7FA0D6]" />
-          <span>
-            {new Date(job.scheduled_at).toLocaleString(undefined, {
-              timeZone: job.timezone,
-              dateStyle: "medium",
-              timeStyle: "short",
-            })}
-            <span className="text-[#97A0B3]">
-              {" "}
-              · {job.timezone} · {job.media_type.toLowerCase()} · v{job.version}
+      <div className="rounded-xl border border-[#2A3446] bg-[#161F2D]/70 px-3 py-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span className={labelText}>Content calendar slot</span>
+          {offCalendar && (
+            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">
+              Custom time
             </span>
+          )}
+        </div>
+        <p className="mt-1.5 flex items-start gap-2 text-sm">
+          <CalendarClock className="mt-0.5 size-4 shrink-0 text-[#7FA0D6]" />
+          <span className="min-w-0 break-words">
+            {calendarAt ? (
+              <>
+                {fmt(calendarAt)} <span className="text-[#97A0B3]">· {zone}</span>
+              </>
+            ) : (
+              <span className="text-[#97A0B3]">
+                No calendar slot yet. The team books one on the content calendar.
+              </span>
+            )}
           </span>
         </p>
-      )}
+        {offCalendar && job?.scheduled_at && (
+          <p className="mt-1 pl-6 text-xs text-amber-300">
+            Posting at {fmt(job.scheduled_at)} instead.
+          </p>
+        )}
+        {!offCalendar && job?.scheduled_at && job.status === "scheduled" && (
+          <p className="mt-1 pl-6 text-xs text-emerald-300">Auto-post armed for this slot.</p>
+        )}
+      </div>
+
       {job && (
         <div className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-3">
-          <p className={labelText}>Caption for client approval</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className={labelText}>Caption for client approval</p>
+            <p className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-[#97A0B3]">
+              {job.media_type.toLowerCase()} · v{job.version}
+            </p>
+          </div>
           <p className="mt-1.5 whitespace-pre-wrap break-words text-sm text-[#E2E8F0]">
             {job.caption || "No caption"}
           </p>
@@ -365,9 +439,51 @@ export function PublishingPanel({
 
       {hasStaffActions && (
         <div className="flex flex-wrap gap-2">
+          {!frozen && !job && (
+            <button
+              type="button"
+              className={buttonPrimary}
+              disabled={busy || !calendarAt}
+              title={calendarAt ? undefined : "Book a content calendar slot first"}
+              onClick={() => void perform("save_calendar")}
+            >
+              <CalendarClock className="size-4" /> Arm auto-post from calendar
+            </button>
+          )}
+          {canPostNow && (
+            <button
+              type="button"
+              className={job?.status === "scheduled" ? button : buttonPrimary}
+              disabled={busy}
+              onClick={() => void perform("publish_now")}
+            >
+              <Send className="size-4" /> Post now
+            </button>
+          )}
+          {!frozen && job && offCalendar && (
+            <button
+              type="button"
+              className={button}
+              disabled={busy || !calendarAt}
+              onClick={() => void perform("use_calendar")}
+            >
+              <CalendarClock className="size-4" /> Use calendar time
+            </button>
+          )}
+          {!frozen && job && ["canceled", "needs_schedule"].includes(job.status) && (
+            <button
+              type="button"
+              className={buttonPrimary}
+              disabled={busy || !calendarAt}
+              title={calendarAt ? undefined : "Book a content calendar slot first"}
+              onClick={() => void perform("use_calendar")}
+            >
+              <CalendarClock className="size-4" /> Re-arm from calendar
+            </button>
+          )}
           {!frozen && (
-            <button type="button" className={buttonPrimary} disabled={busy} onClick={edit}>
-              {job ? "Edit schedule" : "Plan publication"}
+            <button type="button" className={button} disabled={busy} onClick={edit}>
+              {job ? "Custom time" : "Set a custom time"}
             </button>
           )}
           {job?.status === "paused" && (
@@ -417,7 +533,7 @@ export function PublishingPanel({
               disabled={busy}
               onClick={() => void perform("cancel")}
             >
-              Cancel publication
+              Cancel auto-post
             </button>
           )}
         </div>
@@ -432,8 +548,9 @@ export function PublishingPanel({
           }}
         >
           <p className="text-xs text-[#97A0B3]">
-            Plan ahead of approval. Changes to the caption or media require the client to approve
-            publishing details again.
+            Only needed to post away from the content calendar slot
+            {calendarAt ? ` (${fmt(calendarAt)})` : ""}. Changes to the caption or media require the
+            client to approve publishing details again.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
@@ -503,8 +620,18 @@ export function PublishingPanel({
           </label>
           <div className="flex flex-wrap gap-2">
             <button className={buttonPrimary} disabled={busy} type="submit">
-              {busy ? "Validating media and saving…" : "Save publishing plan"}
+              {busy ? "Validating media and saving…" : "Save custom time"}
             </button>
+            {calendarAt && (
+              <button
+                className={button}
+                disabled={busy}
+                type="button"
+                onClick={() => void perform(job ? "use_calendar" : "save_calendar")}
+              >
+                Use calendar time
+              </button>
+            )}
             <button
               className={button}
               disabled={busy}
