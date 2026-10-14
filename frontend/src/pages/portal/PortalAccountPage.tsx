@@ -397,7 +397,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
               your password is never shared with Creo. This replaces the workspace's existing connection.
             </p>
             <button type="button"
-              disabled={isConnectingIg || !ig?.instagram_login_configured}
+              disabled={isConnectingIg || igQuery.isPending}
               onClick={() => void handleConnectInstagram("instagram")}
               className="min-h-11 px-6 py-3 rounded-full bg-[#BCCCE6] text-[#0B111C] font-bold text-xs hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >

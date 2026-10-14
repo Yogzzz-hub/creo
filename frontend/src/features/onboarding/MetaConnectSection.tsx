@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, CheckCircle2, Instagram, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowUpRight, CheckCircle2, Facebook, Instagram, Loader2, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
 import {
@@ -134,23 +134,6 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
           <Loader2 className="size-3.5 animate-spin" /> Checking connection…
         </output>
       )}
-      {data && (
-        <div className="rounded-2xl border border-[#2A3446] bg-[#0B111C] p-5 space-y-3">
-          <button
-            type="button"
-            disabled={busy !== null || !data.instagram_login_configured}
-            onClick={() => void connect("instagram")}
-            className="min-h-11 px-6 py-3 rounded-xl bg-[#BCCCE6] text-[#0B111C] text-sm font-bold hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-          >
-            {busy === "connect" ? "Opening authorization..." : "Connect Instagram directly"}
-          </button>
-          <p className="text-xs text-[#97A0B3]">
-            {data.instagram_login_configured
-              ? "No Facebook Page needed. Connecting replaces this workspace's existing Instagram connection."
-              : "Direct Instagram connection will be available once your agency finishes setup."}
-          </p>
-        </div>
-      )}
       {status.isError && (
         <p role="alert" className="text-xs text-rose-300 flex items-center gap-2">
           <AlertCircle className="size-3.5" />
@@ -167,7 +150,38 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
         </p>
       )}
 
-      {data?.connected ? (
+      {data && !data.connected && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {([
+            { provider: "instagram", title: "Instagram", subtitle: "Connect directly", description: "Connect your Business or Creator account. No Facebook Page needed.", label: "Connect Instagram", Icon: Instagram, badge: "Direct connection", color: "bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF]" },
+            { provider: "facebook", title: "Facebook", subtitle: "Connect a linked Instagram account", description: "Sign in with Facebook and select the Page linked to your Instagram professional account.", label: "Connect with Facebook", Icon: Facebook, badge: "Via Facebook Page", color: "bg-[#1877F2]" },
+          ] as const).map(({ provider, title, subtitle, description, label, Icon, badge, color }) => (
+            <section key={provider} className="flex flex-col rounded-2xl border border-[#2A3446] bg-[#0B111C] p-5 sm:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <span className={`inline-flex size-12 shrink-0 items-center justify-center rounded-2xl text-white ${color}`}>
+                  <Icon className="size-6" aria-hidden="true" />
+                </span>
+                <span className="rounded-full border border-[#2A3446] px-3 py-1 text-[10px] font-semibold text-[#BCCCE6]">{badge}</span>
+              </div>
+              <h3 className="mt-5 text-lg font-bold text-white">{title}</h3>
+              <p className="mt-1 text-xs font-semibold text-[#BCCCE6]">{subtitle}</p>
+              <p className="mt-3 flex-1 text-xs leading-relaxed text-[#97A0B3]">{description}</p>
+              <button type="button" disabled={busy !== null} onClick={() => void connect(provider)}
+                className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#BCCCE6] px-4 py-3 text-sm font-bold text-[#0B111C] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B111C] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                {busy === "connect" ? <Loader2 className="size-4 animate-spin" /> : <Icon className="size-4" aria-hidden="true" />}
+                {busy === "connect" ? "Opening authorization..." : label}
+                {busy !== "connect" && <ArrowUpRight className="size-4" aria-hidden="true" />}
+              </button>
+            </section>
+          ))}
+          <p className="md:col-span-2 flex items-start justify-center gap-2 text-[11px] leading-relaxed text-[#97A0B3]">
+            <ShieldCheck className="size-4 shrink-0 text-[#7FA0D6]" aria-hidden="true" />
+            Your password stays with Instagram or Facebook. You choose what to share and can disconnect anytime.
+          </p>
+          {needsReconnect && <p role="alert" className="md:col-span-2 text-xs text-amber-300">{data.error || "Your connection expired. Choose a method above to reconnect."}</p>}
+        </div>
+      )}
+      {data?.connected && (
         <div className="rounded-2xl border border-[#2A3446] bg-[#0B111C] p-4 space-y-4">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-full bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] p-[2px]">
@@ -213,45 +227,6 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
             </button>
           </div>
         </div>
-      ) : (
-        data && (
-          <div className="rounded-2xl border border-[#2A3446] bg-[#0B111C] p-5 space-y-4">
-            {needsReconnect && (
-              <p role="alert" className="text-xs text-amber-300">
-                {data.error || "Your Meta authorization expired. Reconnect to resume publishing."}
-              </p>
-            )}
-            {!data.configured && (
-              <p className="text-xs text-amber-300">
-                Your agency still needs to finish Instagram setup. You can skip this and connect
-                later.
-              </p>
-            )}
-            <button
-              type="button"
-              disabled={busy !== null}
-              onClick={() => void connect()}
-              className="w-full sm:w-auto min-w-[240px] px-6 py-3 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-sm font-bold transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            >
-              {busy === "connect" ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Instagram className="size-4" />
-              )}
-              <span>
-                {busy === "connect"
-                  ? "Redirecting to Meta…"
-                  : needsReconnect
-                    ? "Reconnect with Facebook"
-                    : "Connect with Facebook"}
-              </span>
-            </button>
-            <p className="text-[11px] text-[#97A0B3]">
-              You will be redirected to Facebook to approve access, then brought back here. Your
-              Instagram password is never shared with Creo.
-            </p>
-          </div>
-        )
       )}
     </div>
   );

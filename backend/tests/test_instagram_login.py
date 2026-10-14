@@ -22,7 +22,7 @@ class DirectLoginTests(unittest.IsolatedAsyncioTestCase):
         self.wrapped = False
         self.expiry = 5184000
         self.patches = [
-            patch.object(settings, "INSTAGRAM_LOGIN_APP_ID", "direct-app"),
+            patch.object(settings, "INSTAGRAM_LOGIN_APP_ID", "1055855437409043"),
             patch.object(settings, "INSTAGRAM_LOGIN_APP_SECRET", "direct-secret"),
         ]
         for item in self.patches:
@@ -38,7 +38,7 @@ class DirectLoginTests(unittest.IsolatedAsyncioTestCase):
         if request.url.host == "api.instagram.com":
             self.assertEqual(path, "/oauth/access_token")
             body = parse_qs(request.content.decode())
-            self.assertEqual(body["client_id"], ["direct-app"])
+            self.assertEqual(body["client_id"], ["1055855437409043"])
             self.assertEqual(body["client_secret"], ["direct-secret"])
             self.assertEqual(body["grant_type"], ["authorization_code"])
             result = {"access_token": "short-token", "user_id": "12345"}
@@ -110,7 +110,7 @@ class DirectLoginTests(unittest.IsolatedAsyncioTestCase):
         url = urlparse(connection.authorization_url("ig:random-state", "instagram"))
         query = parse_qs(url.query)
         self.assertEqual(url.hostname, "www.instagram.com")
-        self.assertEqual(query["client_id"], ["direct-app"])
+        self.assertEqual(query["client_id"], ["1055855437409043"])
         self.assertEqual(set(query["scope"][0].split(",")), LOGIN_SCOPES)
         self.assertEqual(query["state"], ["ig:random-state"])
         self.assertNotIn("client_secret", query)
