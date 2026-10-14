@@ -326,12 +326,34 @@ async def on_deliverable_transition(
         await audit(db, job, "version_invalidated")
 
 
+async def calendar_plan(
+    db: AsyncSession, d: Deliverable
+) -> tuple[datetime, uuid.UUID] | None:
+    """The content calendar slot that drives this deliverable's automatic posting."""
+    entry = (
+        await db.execute(
+            select(ContentCalendar)
+            .where(
+                ContentCalendar.deliverable_id == d.id,
+                ContentCalendar.client_id == d.client_id,
+            )
+            .order_by(ContentCalendar.publish_date.asc())
+        )
+    ).scalars().first()
+    if not entry:
+        return None
+    when = entry.publish_at or entry.scheduled_time
+    if not when:
+        return None
+    return (when if when.tzinfo else when.replace(tzinfo=UTC)).astimezone(UTC), entry.id
+
+
 async def schedule(
     db: AsyncSession,
     actor: Actor,
     d: Deliverable,
     *,
-    local_time: str,
+    local_time: str | None = None,
     timezone: str,
     caption: str,
     media_type: str,
@@ -339,7 +361,29 @@ async def schedule(
     calendar_entry_id: uuid.UUID | None = None,
 ) -> PublishingJob:
     await access(db, actor, d, write=True)
-    when = utc_schedule(local_time, timezone, fold)
+    # The content calendar is the default source of truth for posting times; an explicit
+    # local_time is only an override by the team.
+    if local_time:
+        when = utc_schedule(local_time, timezone, fold)
+    else:
+        plan = await calendar_plan(db, d)
+        if not plan:
+            raise Conflict(
+                "This deliverable has no content calendar slot. Add one or set a time.",
+                code="NO_CALENDAR_SLOT",
+            )
+        when, calendar_entry_id = plan
+        # Show the calendar slot in the client's own timezone, not a request default.
+        client_zone = await db.scalar(
+            select(ClientProfile.timezone).where(ClientProfile.user_id == d.client_id)
+        )
+        timezone = client_zone or timezone
+        if when <= datetime.now(UTC):
+            raise Conflict(
+                "The calendar slot for this deliverable is in the past. "
+                "Move the calendar date or post it now.",
+                code="CALENDAR_SLOT_PAST",
+            )
     profile = await lock_profile(db, d.client_id)
     await db.refresh(d)
     job = await job_for(db, d, create=True, actor_id=actor.user_id)
@@ -432,6 +476,12 @@ async def action(db: AsyncSession, actor: Actor, d: Deliverable, operation: str)
         )
     if operation in ("pause", "retry") and actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
         raise Forbidden("An administrator must pause or retry publishing.")
+    if operation == "publish_now" and actor.role not in (
+        UserRole.ADMIN,
+        UserRole.SUPER_ADMIN,
+        UserRole.TEAM_LEAD,
+    ):
+        raise Forbidden("An administrator or team lead must publish ahead of schedule.")
     if operation == "cancel":
         job.status = "canceled"
     elif operation == "pause":
@@ -447,15 +497,56 @@ async def action(db: AsyncSession, actor: Actor, d: Deliverable, operation: str)
             raise Conflict("The previous provider result is uncertain; reconcile it first.")
         job.attempts, job.stage, job.container_id = 0, "new", None
         set_ready(job, d, profile)
+    elif operation == "publish_now":
+        # Manual override for a broken or missed schedule. Approval and the client's own
+        # Instagram connection are still required; only the timing is bypassed.
+        if not approved(job, d):
+            raise Conflict("This exact version and caption need client approval first.")
+        if profile.ig_connection_status != "connected" or not profile.ig_token_encrypted:
+            raise Conflict("The client must connect Instagram before publishing.")
+        job.last_error, job.error_code = None, None
+        job.attempts, job.stage, job.container_id = 0, "new", None
+        job.scheduled_at = job.next_attempt_at = datetime.now(UTC)
+        job.status = "scheduled"
+        job.connection_id, job.instagram_account_id = (
+            profile.ig_connection_id,
+            profile.instagram_user_id,
+        )
+    elif operation == "use_calendar":
+        plan = await calendar_plan(db, d)
+        if not plan:
+            raise Conflict(
+                "This deliverable has no content calendar slot.", code="NO_CALENDAR_SLOT"
+            )
+        when, entry_id = plan
+        if when <= datetime.now(UTC):
+            raise Conflict(
+                "The calendar slot for this deliverable is in the past. "
+                "Move the calendar date or post it now.",
+                code="CALENDAR_SLOT_PAST",
+            )
+        job.calendar_entry_id = entry_id
+        job.scheduled_at = when
+        job.attempts, job.stage, job.container_id = 0, "new", None
+        set_ready(job, d, profile)
     else:
         raise Conflict("Unsupported publishing operation.")
     job.updated_by = actor.user_id
     await audit(db, job, operation, actor)
     await db.commit()
+    if operation == "publish_now":
+        from app.workers.tasks.publish import publish_deliverable_task
+
+        try:
+            publish_deliverable_task.apply_async(
+                (str(job.id), str(job.agency_id)), retry=False
+            )
+        except Exception:  # The beat sweeper picks it up when the broker is unavailable.
+            pass
     return job
 
 
-def serialize(job: PublishingJob, d: Deliverable) -> dict:
+def serialize(job: PublishingJob, d: Deliverable, calendar_at: datetime | None = None) -> dict:
     result = {
         key: getattr(job, key)
         for key in (
@@ -477,6 +568,7 @@ def serialize(job: PublishingJob, d: Deliverable) -> dict:
     for key in ("scheduled_at", "published_at", "last_attempt_at"):
         result[key] = getattr(job, key).isoformat() if getattr(job, key) else None
     result.update(
+        calendar_publish_at=calendar_at.isoformat() if calendar_at else None,
         version=d.version,
         approval_status=str(d.status),
         approved=approved(job, d),

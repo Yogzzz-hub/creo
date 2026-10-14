@@ -1,7 +1,19 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  AlertTriangle,
+  CalendarClock,
+  CheckCircle2,
+  ChevronDown,
+  ExternalLink,
+  History,
+  Instagram,
+  LifeBuoy,
+  Link2,
+  Loader2,
+  Send,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { History, Instagram, LifeBuoy } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { useConfirm } from "../ui/ConfirmDialog";
@@ -22,6 +34,7 @@ export interface PublishingJob {
   instagram_account_id?: string;
   last_error?: string;
   error_code?: string;
+  calendar_publish_at?: string | null;
   review_fingerprint: string;
   approved: boolean;
   version: number;
@@ -29,6 +42,7 @@ export interface PublishingJob {
 }
 interface Details {
   job: PublishingJob | null;
+  calendar_publish_at?: string | null;
   timezone: string;
   approval_status: string;
   file_type: string;
@@ -38,9 +52,41 @@ interface Details {
   account?: string;
 }
 const input =
-  "w-full min-h-11 rounded-xl border border-[#2A3446] bg-[#0B111C] p-3 text-sm text-white";
-const button =
-  "min-h-11 rounded-xl border border-[#2A3446] px-3 py-2 text-sm text-white hover:bg-[#2A3446] disabled:opacity-50";
+  "mt-1.5 w-full min-h-11 rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-sm text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none disabled:opacity-50";
+const labelText = "block text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]";
+// One button system for every publishing surface: same height, radius and type size,
+// so rows of actions always line up. `flex-1` makes a row share its width evenly.
+const btnBase =
+  "inline-flex min-h-10 flex-1 basis-36 items-center justify-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition-colors cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] disabled:cursor-not-allowed disabled:opacity-50";
+const button = `${btnBase} border-[#2A3446] bg-[#161F2D] text-[#BCCCE6] enabled:hover:border-[#7FA0D6]/50 enabled:hover:text-white`;
+const buttonPrimary = `${btnBase} border-transparent bg-[#BCCCE6] text-[#0B111C] enabled:hover:bg-white`;
+const buttonDanger = `${btnBase} border-rose-500/30 bg-rose-500/10 text-rose-300 enabled:hover:border-rose-400/60 enabled:hover:text-rose-200`;
+const linkButton = `${button} no-underline`;
+
+const STATUS_TONE: Record<string, string> = {
+  published: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  scheduled: "bg-[#7FA0D6]/15 text-[#BCCCE6] border-[#7FA0D6]/30",
+  processing: "bg-[#7FA0D6]/15 text-[#BCCCE6] border-[#7FA0D6]/30",
+  needs_schedule: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  pending_approval: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  failed: "bg-rose-500/15 text-rose-300 border-rose-500/30",
+  uncertain: "bg-rose-500/15 text-rose-300 border-rose-500/30",
+  paused: "bg-slate-500/15 text-slate-300 border-slate-500/30",
+  canceled: "bg-slate-500/15 text-slate-300 border-slate-500/30",
+};
+
+function StatusBadge({ status, label }: { status: string; label: string }) {
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+        STATUS_TONE[status] || "bg-[#2A3446]/40 text-[#BCCCE6] border-[#2A3446]"
+      }`}
+    >
+      {label}
+    </span>
+  );
+}
+
 export const publishingLabel = (status: string) =>
   ({
     pending_approval: "Awaiting client approval",
@@ -120,27 +166,59 @@ export function PublishingPanel({
     setEditing(true);
   }
   async function perform(action: string) {
-    if (
-      ["cancel", "pause"].includes(action) &&
-      !(await confirm({
-        title: `${action === "cancel" ? "Cancel" : "Pause"} publication?`,
+    const prompts: Record<string, { title: string; description: string; confirmText: string }> = {
+      cancel: {
+        title: "Cancel auto-post?",
+        description:
+          "This stops automatic posting for this version. The approved deliverable stays in Creo and you can re-arm it from the calendar slot.",
+        confirmText: "Cancel auto-post",
+      },
+      pause: {
+        title: "Pause publication?",
         description: "The approved deliverable remains available in Creo.",
         confirmText: "Continue",
-      }))
-    )
-      return;
+      },
+      publish_now: {
+        title: "Post to Instagram now?",
+        description:
+          "This posts the approved version immediately instead of waiting for its calendar slot. It cannot be undone from Creo.",
+        confirmText: "Post now",
+      },
+    };
+    const ask = prompts[action];
+    if (ask && !(await confirm(ask))) return;
     setBusy(true);
     setMessage("");
     try {
-      if (action === "save") {
+      if (action === "save" || action === "save_calendar") {
+        // Without local_time the backend takes the time from this deliverable's content
+        // calendar slot, so the team never retypes a date that already exists.
+        const body =
+          action === "save_calendar"
+            ? { caption: form.caption, media_type: form.media_type }
+            : { ...form, fold: form.fold === "" ? null : Number(form.fold) };
         await request(`/api/v1/deliverables/${deliverableId}/schedule`, {
           method: "POST",
-          body: JSON.stringify({ ...form, fold: form.fold === "" ? null : Number(form.fold) }),
+          body: JSON.stringify(body),
         });
         setEditing(false);
         setMessage(
-          "Publishing plan saved. Only client-approved media and caption can enter the queue.",
+          action === "save_calendar"
+            ? "Auto-post armed for the content calendar slot."
+            : "Custom publishing time saved. Only client-approved media and caption can enter the queue.",
         );
+      } else if (action === "use_calendar") {
+        await request(`/api/v1/publishing/deliverables/${deliverableId}/action`, {
+          method: "POST",
+          body: JSON.stringify({ action }),
+        });
+        setMessage("Schedule re-synced with the content calendar slot.");
+      } else if (action === "publish_now") {
+        await request(`/api/v1/publishing/deliverables/${deliverableId}/action`, {
+          method: "POST",
+          body: JSON.stringify({ action }),
+        });
+        setMessage("Posting now. The status updates once Instagram confirms.");
       } else if (action === "approve") {
         await request(`/api/v1/publishing/deliverables/${deliverableId}/approve`, {
           method: "POST",
@@ -166,113 +244,246 @@ export function PublishingPanel({
     }
   }
   if (query.isPending)
-    return <output className="text-xs text-[#97A0B3]">Loading Instagram publishing…</output>;
+    return (
+      <output className="flex items-center gap-2 rounded-2xl border border-[#2A3446] bg-[#0B111C]/50 p-4 text-xs text-[#97A0B3]">
+        <Loader2 className="size-3.5 animate-spin motion-reduce:animate-none" /> Loading Instagram
+        publishing…
+      </output>
+    );
   if (query.isError)
     return (
-      <p role="alert" className="text-sm text-amber-300">
-        {query.error.message}{" "}
-        <button type="button" className={button} onClick={() => void query.refetch()}>
+      <div
+        role="alert"
+        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200"
+      >
+        <span className="min-w-0 break-words">{query.error.message}</span>
+        <button
+          type="button"
+          className={`${button} flex-none basis-auto`}
+          onClick={() => void query.refetch()}
+        >
           Retry
         </button>
-      </p>
+      </div>
     );
   const manage = !readOnly && data?.can_manage;
+  const isClient = user?.role === "client";
   const admin = ["admin", "super_admin"].includes(user?.role || "");
   const frozen = job && ["processing", "uncertain", "published"].includes(job.status);
+  const connected = data?.connection_status === "connected";
+  const statusKey = job
+    ? job.status
+    : data?.approval_status === "approved"
+      ? "needs_schedule"
+      : "pending_approval";
+  const statusText = job
+    ? publishingLabel(job.status)
+    : data?.approval_status === "approved"
+      ? "Awaiting schedule"
+      : "Awaiting client approval";
+  const showApprove =
+    !readOnly && data?.can_approve && job && !job.approved && !frozen && job.status !== "canceled";
+  const lead = admin || user?.role === "team_lead";
+  const calendarAt = data?.calendar_publish_at || job?.calendar_publish_at || null;
+  const zone = job?.timezone || data?.timezone || "Asia/Kolkata";
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleString(undefined, {
+      timeZone: zone,
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  // The job follows its calendar slot unless the team saved a different time.
+  const offCalendar = Boolean(
+    job?.scheduled_at &&
+      calendarAt &&
+      Math.abs(new Date(job.scheduled_at).getTime() - new Date(calendarAt).getTime()) > 60_000,
+  );
+  const canPostNow =
+    manage && lead && job?.approved && connected && !frozen && job.status !== "canceled";
+  const hasStaffActions =
+    manage &&
+    (!frozen ||
+      (job && job.status !== "canceled") ||
+      job?.status === "paused" ||
+      (admin && ["scheduled", "failed", "uncertain"].includes(job?.status || "")));
   return (
-    <section className="border border-[#2A3446] rounded-2xl p-4 space-y-3 bg-[#0B111C]/50 text-white min-w-0">
-      <h3 className="font-semibold text-sm">Instagram publishing</h3>
-      <p className="text-sm">
-        {job
-          ? publishingLabel(job.status)
-          : data?.approval_status === "approved"
-            ? "Approved — awaiting schedule"
-            : "Content requires client approval"}
-      </p>
-      <p className="text-xs text-[#97A0B3]">
-        Account: {data?.account ? `@${data.account}` : "Not connected"} ·{" "}
-        {data?.connection_status.replaceAll("_", " ")}
-      </p>
-      {job?.scheduled_at && (
-        <p className="text-sm break-words">
-          {new Date(job.scheduled_at).toLocaleString(undefined, {
-            timeZone: job.timezone,
-            dateStyle: "medium",
-            timeStyle: "short",
-          })}{" "}
-          ({job.timezone}) · {job.media_type.toLowerCase()} · v{job.version}
+    <section className="min-w-0 space-y-4 rounded-2xl border border-[#2A3446] bg-[#0B111C]/60 p-4 text-white sm:p-5">
+      <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#2A3446] bg-[#161F2D] text-[#7FA0D6]">
+            <Instagram className="size-4" />
+          </span>
+          <h3 className="truncate text-sm font-bold">Instagram publishing</h3>
+        </div>
+        <StatusBadge status={statusKey} label={statusText} />
+      </header>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#2A3446] bg-[#161F2D]/70 px-3 py-2.5 text-xs">
+        <span className="flex min-w-0 items-center gap-2">
+          <span
+            className={`size-2 shrink-0 rounded-full ${connected ? "bg-emerald-400" : "bg-slate-500"}`}
+          />
+          <span className="truncate font-semibold text-white">
+            {data?.account ? `@${data.account}` : "No Instagram account"}
+          </span>
+        </span>
+        <span className="text-[#97A0B3] capitalize">
+          {(data?.connection_status || "disconnected").replaceAll("_", " ")}
+        </span>
+      </div>
+
+      <div className="rounded-xl border border-[#2A3446] bg-[#161F2D]/70 px-3 py-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span className={labelText}>Content calendar slot</span>
+          {offCalendar && (
+            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">
+              Custom time
+            </span>
+          )}
+        </div>
+        <p className="mt-1.5 flex items-start gap-2 text-sm">
+          <CalendarClock className="mt-0.5 size-4 shrink-0 text-[#7FA0D6]" />
+          <span className="min-w-0 break-words">
+            {calendarAt ? (
+              <>
+                {fmt(calendarAt)} <span className="text-[#97A0B3]">· {zone}</span>
+              </>
+            ) : (
+              <span className="text-[#97A0B3]">
+                No calendar slot yet. The team books one on the content calendar.
+              </span>
+            )}
+          </span>
         </p>
-      )}
+        {offCalendar && job?.scheduled_at && (
+          <p className="mt-1 pl-6 text-xs text-amber-300">
+            Posting at {fmt(job.scheduled_at)} instead.
+          </p>
+        )}
+        {!offCalendar && job?.scheduled_at && job.status === "scheduled" && (
+          <p className="mt-1 pl-6 text-xs text-emerald-300">Auto-post armed for this slot.</p>
+        )}
+      </div>
+
       {job && (
-        <div className="text-sm">
-          <p className="text-xs text-[#97A0B3]">Caption for client approval</p>
-          <p className="whitespace-pre-wrap break-words">{job.caption || "No caption"}</p>
+        <div className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className={labelText}>Caption for client approval</p>
+            <p className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-[#97A0B3]">
+              {job.media_type.toLowerCase()} · v{job.version}
+            </p>
+          </div>
+          <p className="mt-1.5 whitespace-pre-wrap break-words text-sm text-[#E2E8F0]">
+            {job.caption || "No caption"}
+          </p>
         </div>
       )}
       {job?.permalink && (
-        <a className="underline text-sm" href={job.permalink} target="_blank" rel="noreferrer">
-          View published content
+        <a
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#BCCCE6] underline-offset-2 hover:text-white hover:underline"
+          href={job.permalink}
+          target="_blank"
+          rel="noreferrer"
+        >
+          View published content <ExternalLink className="size-3.5" />
         </a>
       )}
       {job?.last_error && (
-        <p role="alert" className="text-sm text-amber-300 break-words">
+        <p
+          role="alert"
+          className="flex items-start gap-2 break-words rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200"
+        >
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           {job.last_error}
         </p>
       )}
-      {message && <output className="text-sm break-words">{message}</output>}
-      {!readOnly &&
-        data?.can_approve &&
-        job &&
-        !job.approved &&
-        !frozen &&
-        job.status !== "canceled" && (
+      {message && (
+        <output className="block break-words rounded-xl border border-[#2A3446] bg-[#161F2D] p-3 text-sm text-[#E2E8F0]">
+          {message}
+        </output>
+      )}
+
+      {showApprove && (
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            className={button}
+            className={buttonPrimary}
             disabled={busy}
             onClick={() => void perform("approve")}
           >
-            Approve this version and caption for publishing
+            <CheckCircle2 className="size-4" /> Approve version &amp; caption
           </button>
-        )}
-      {user?.role === "client" && (
-        <div className="p-3.5 rounded-xl bg-[#0B111C]/60 border border-[#2A3446] space-y-2.5 mt-2">
-          <p className="text-[11px] text-[#97A0B3] leading-relaxed">
-            Approval locks the caption and media. Content will automatically dispatch at its scheduled time.
+        </div>
+      )}
+
+      {isClient && (
+        <div className="space-y-3 rounded-xl border border-[#2A3446] bg-[#161F2D]/60 p-3.5">
+          <p className="text-[11px] leading-relaxed text-[#97A0B3]">
+            Approval locks the caption and media. Approved content is dispatched automatically at
+            its scheduled time.
           </p>
-          <div className="flex flex-col sm:flex-row gap-2 pt-0.5">
+          <div className="flex flex-wrap gap-2">
             <Link
-              to="/portal/support"
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#161F2D] hover:bg-[#202B3D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs font-semibold text-[#BCCCE6] hover:text-white transition-all shadow-xs text-center cursor-pointer"
+              to="/portal/account?tab=integrations"
+              className={connected ? linkButton : buttonPrimary}
             >
-              <LifeBuoy className="w-3.5 h-3.5 text-[#7FA0D6]" />
-              <span>Schedule Support</span>
+              {connected ? <Instagram className="size-4" /> : <Link2 className="size-4" />}
+              {connected ? "Manage Instagram" : "Connect Instagram"}
             </Link>
-            <Link
-              to="/portal/account/instagram"
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#161F2D] hover:bg-[#202B3D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs font-semibold text-[#BCCCE6] hover:text-white transition-all shadow-xs text-center cursor-pointer"
-            >
-              <Instagram className="w-3.5 h-3.5 text-[#7FA0D6]" />
-              <span>Manage Instagram</span>
+            <Link to="/portal/support" className={linkButton}>
+              <LifeBuoy className="size-4" /> Scheduling support
             </Link>
           </div>
         </div>
       )}
-      {manage && (
+
+      {hasStaffActions && (
         <div className="flex flex-wrap gap-2">
-          {!frozen && (
-            <button type="button" className={button} disabled={busy} onClick={edit}>
-              {job ? "Edit schedule" : "Plan publication"}
+          {!frozen && !job && (
+            <button
+              type="button"
+              className={buttonPrimary}
+              disabled={busy || !calendarAt}
+              title={calendarAt ? undefined : "Book a content calendar slot first"}
+              onClick={() => void perform("save_calendar")}
+            >
+              <CalendarClock className="size-4" /> Arm auto-post from calendar
             </button>
           )}
-          {job && !frozen && job.status !== "canceled" && (
+          {canPostNow && (
+            <button
+              type="button"
+              className={job?.status === "scheduled" ? button : buttonPrimary}
+              disabled={busy}
+              onClick={() => void perform("publish_now")}
+            >
+              <Send className="size-4" /> Post now
+            </button>
+          )}
+          {!frozen && job && offCalendar && (
             <button
               type="button"
               className={button}
-              disabled={busy}
-              onClick={() => void perform("cancel")}
+              disabled={busy || !calendarAt}
+              onClick={() => void perform("use_calendar")}
             >
-              Cancel
+              <CalendarClock className="size-4" /> Use calendar time
+            </button>
+          )}
+          {!frozen && job && ["canceled", "needs_schedule"].includes(job.status) && (
+            <button
+              type="button"
+              className={buttonPrimary}
+              disabled={busy || !calendarAt}
+              title={calendarAt ? undefined : "Book a content calendar slot first"}
+              onClick={() => void perform("use_calendar")}
+            >
+              <CalendarClock className="size-4" /> Re-arm from calendar
+            </button>
+          )}
+          {!frozen && (
+            <button type="button" className={button} disabled={busy} onClick={edit}>
+              {job ? "Custom time" : "Set a custom time"}
             </button>
           )}
           {job?.status === "paused" && (
@@ -282,7 +493,7 @@ export function PublishingPanel({
               disabled={busy}
               onClick={() => void perform("resume")}
             >
-              Resume future schedule
+              Resume schedule
             </button>
           )}
           {admin && job?.status === "scheduled" && (
@@ -302,7 +513,7 @@ export function PublishingPanel({
               disabled={busy}
               onClick={() => void perform("retry")}
             >
-              Retry eligible job
+              Retry job
             </button>
           )}
           {admin && job?.status === "uncertain" && (
@@ -315,33 +526,45 @@ export function PublishingPanel({
               Check provider result
             </button>
           )}
+          {job && !frozen && job.status !== "canceled" && (
+            <button
+              type="button"
+              className={buttonDanger}
+              disabled={busy}
+              onClick={() => void perform("cancel")}
+            >
+              Cancel auto-post
+            </button>
+          )}
         </div>
       )}
+
       {editing && manage && (
         <form
-          className="space-y-3 border-t border-[#2A3446] pt-3"
+          className="space-y-4 border-t border-[#2A3446] pt-4"
           onSubmit={(e) => {
             e.preventDefault();
             void perform("save");
           }}
         >
           <p className="text-xs text-[#97A0B3]">
-            Plan ahead of approval. Changes to the caption or media require the client to approve
-            publishing details again.
+            Only needed to post away from the content calendar slot
+            {calendarAt ? ` (${fmt(calendarAt)})` : ""}. Changes to the caption or media require the
+            client to approve publishing details again.
           </p>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <label className="text-sm">
-              Local date and time
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <span className={labelText}>Local date and time</span>
               <input
                 required
                 type="datetime-local"
-                className={input}
+                className={`${input} [color-scheme:dark]`}
                 value={form.local_time}
                 onChange={(e) => setForm({ ...form, local_time: e.target.value })}
               />
             </label>
-            <label className="text-sm">
-              Timezone (IANA)
+            <label className="block">
+              <span className={labelText}>Timezone (IANA)</span>
               <input
                 required
                 className={input}
@@ -350,39 +573,39 @@ export function PublishingPanel({
                 placeholder="Asia/Kolkata"
               />
             </label>
+            <label className="block">
+              <span className={labelText}>Format</span>
+              <select
+                className={input}
+                value={form.media_type}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    media_type: e.target.value,
+                    caption: e.target.value === "STORIES" ? "" : form.caption,
+                  })
+                }
+              >
+                <option value="IMAGE">Image / poster (JPEG)</option>
+                <option value="REELS">Reel (MP4 / MOV)</option>
+                <option value="STORIES">Story (Business account)</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className={labelText}>Repeated daylight-saving time</span>
+              <select
+                className={input}
+                value={form.fold}
+                onChange={(e) => setForm({ ...form, fold: e.target.value })}
+              >
+                <option value="">Ask if ambiguous</option>
+                <option value="0">First occurrence</option>
+                <option value="1">Second occurrence</option>
+              </select>
+            </label>
           </div>
-          <label className="block text-sm">
-            Repeated daylight-saving time
-            <select
-              className={input}
-              value={form.fold}
-              onChange={(e) => setForm({ ...form, fold: e.target.value })}
-            >
-              <option value="">Ask if ambiguous</option>
-              <option value="0">First occurrence</option>
-              <option value="1">Second occurrence</option>
-            </select>
-          </label>
-          <label className="block text-sm">
-            Format
-            <select
-              className={input}
-              value={form.media_type}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  media_type: e.target.value,
-                  caption: e.target.value === "STORIES" ? "" : form.caption,
-                })
-              }
-            >
-              <option value="IMAGE">Image / poster (JPEG)</option>
-              <option value="REELS">Reel (MP4 / MOV)</option>
-              <option value="STORIES">Story (Business account)</option>
-            </select>
-          </label>
-          <label className="block text-sm">
-            Caption
+          <label className="block">
+            <span className={labelText}>Caption</span>
             <textarea
               maxLength={2200}
               disabled={form.media_type === "STORIES"}
@@ -391,11 +614,24 @@ export function PublishingPanel({
               value={form.caption}
               onChange={(e) => setForm({ ...form, caption: e.target.value })}
             />
+            <span className="mt-1 block text-right text-[10px] text-[#97A0B3]">
+              {form.caption.length}/2200
+            </span>
           </label>
           <div className="flex flex-wrap gap-2">
-            <button className={button} disabled={busy} type="submit">
-              {busy ? "Validating media and saving…" : "Save publishing plan"}
+            <button className={buttonPrimary} disabled={busy} type="submit">
+              {busy ? "Validating media and saving…" : "Save custom time"}
             </button>
+            {calendarAt && (
+              <button
+                className={button}
+                disabled={busy}
+                type="button"
+                onClick={() => void perform(job ? "use_calendar" : "save_calendar")}
+              >
+                Use calendar time
+              </button>
+            )}
             <button
               className={button}
               disabled={busy}
@@ -407,29 +643,42 @@ export function PublishingPanel({
           </div>
         </form>
       )}
+
       {job && (
-        <>
+        <div className="border-t border-[#2A3446] pt-3">
           <button
             type="button"
-            className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/30 text-xs font-semibold text-[#97A0B3] hover:text-white transition-all cursor-pointer shadow-xs mt-1"
+            aria-expanded={showHistory}
+            className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-1 py-1.5 text-xs font-semibold text-[#97A0B3] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]"
             onClick={() => setShowHistory(!showHistory)}
           >
-            <History className="w-3.5 h-3.5 text-[#7FA0D6]" />
-            <span>{showHistory ? "Hide publishing history" : "View publishing history"}</span>
+            <span className="inline-flex items-center gap-2">
+              <History className="size-3.5 text-[#7FA0D6]" /> Publishing history
+            </span>
+            <ChevronDown
+              className={`size-4 transition-transform ${showHistory ? "rotate-180" : ""}`}
+            />
           </button>
           {showHistory && (
-            <div className="text-xs space-y-2">
-              {history.isPending && <p>Loading history…</p>}
-              {history.isError && <p role="alert">{history.error.message}</p>}
+            <ul className="mt-2 space-y-1.5 text-xs text-[#BCCCE6]">
+              {history.isPending && <li>Loading history…</li>}
+              {history.isError && <li role="alert">{history.error.message}</li>}
+              {history.data?.length === 0 && <li className="text-[#97A0B3]">No history yet.</li>}
               {history.data?.map((h, i) => (
-                <p key={`${h.at}-${i}`}>
-                  {new Date(h.at).toLocaleString()} · {h.action.replaceAll("_", " ")}
-                  {h.details?.error_code ? ` · ${h.details.error_code}` : ""}
-                </p>
+                <li
+                  key={`${h.at}-${i}`}
+                  className="flex flex-wrap justify-between gap-2 rounded-lg bg-[#161F2D] px-3 py-2"
+                >
+                  <span className="capitalize">
+                    {h.action.replaceAll("_", " ")}
+                    {h.details?.error_code ? ` · ${h.details.error_code}` : ""}
+                  </span>
+                  <span className="text-[#97A0B3]">{new Date(h.at).toLocaleString()}</span>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-        </>
+        </div>
       )}
     </section>
   );
@@ -438,18 +687,35 @@ export function PublishingPanel({
 export function PublishingControl({ deliverableId }: { deliverableId: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="mt-2">
+    <div className="mt-2 space-y-2">
       <button
         type="button"
-        className="min-h-11 text-xs text-[#BCCCE6] underline"
+        aria-expanded={open}
+        className="inline-flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-[#2A3446] bg-[#161F2D] px-3 text-[11px] font-bold text-[#BCCCE6] transition-colors hover:border-[#7FA0D6]/50 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]"
         onClick={() => setOpen(!open)}
       >
-        {open ? "Hide" : "Instagram schedule & status"}
+        <span className="inline-flex items-center gap-1.5">
+          <Instagram className="size-3.5 text-[#7FA0D6]" />
+          {open ? "Hide Instagram schedule" : "Instagram schedule & status"}
+        </span>
+        <ChevronDown className={`size-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && <PublishingPanel deliverableId={deliverableId} />}
     </div>
   );
 }
+
+const QUEUE_STATUSES = [
+  "pending_approval",
+  "needs_schedule",
+  "scheduled",
+  "processing",
+  "published",
+  "failed",
+  "paused",
+  "uncertain",
+  "canceled",
+];
 
 export function PublishingQueue({
   readOnly = false,
@@ -480,52 +746,71 @@ export function PublishingQueue({
   const rows = (query.data || []).filter(
     (j) => !client || (j.client_name || j.client_id).toLowerCase().includes(client.toLowerCase()),
   );
+  const page = Math.floor(offset / 100) + 1;
   return (
-    <section className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-5 space-y-3 text-white min-w-0">
-      <h2 className="font-bold">Instagram publishing queue</h2>
-      {connection.data && (
-        <p className="text-sm">
-          Instagram:{" "}
-          {connection.data.username ? `@${connection.data.username}` : "No linked account"} ·{" "}
-          {connection.data.status.replaceAll("_", " ")}.{" "}
-          {connection.data.publishing_enabled
-            ? "Automatic publishing enabled."
-            : "Automatic publishing disabled."}{" "}
+    <section className="min-w-0 space-y-4 rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 text-white sm:p-5">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="flex size-9 items-center justify-center rounded-xl border border-[#2A3446] bg-[#0B111C] text-[#7FA0D6]">
+            <Instagram className="size-4" />
+          </span>
+          <div>
+            <h2 className="text-base font-bold leading-tight">Instagram publishing queue</h2>
+            <p className="text-xs text-[#97A0B3]">
+              Publishing times are separate from editorial dates. Only client-approved versions and
+              captions can publish.
+            </p>
+          </div>
+        </div>
+        {connection.data && (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded-full border border-[#2A3446] bg-[#0B111C] px-3 py-1 font-semibold">
+              {connection.data.username ? `@${connection.data.username}` : "No linked account"} ·{" "}
+              <span className="capitalize">{connection.data.status.replaceAll("_", " ")}</span>
+            </span>
+            <span
+              className={`rounded-full border px-3 py-1 font-semibold ${
+                connection.data.publishing_enabled
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                  : "border-slate-500/30 bg-slate-500/10 text-slate-300"
+              }`}
+            >
+              Auto-publishing {connection.data.publishing_enabled ? "on" : "off"}
+            </span>
+          </div>
+        )}
+      </header>
+      {connection.data?.error && (
+        <p
+          role="alert"
+          className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200"
+        >
           {connection.data.error}
         </p>
       )}
       {connection.isError && (
-        <p role="alert" className="text-sm">
+        <p
+          role="alert"
+          className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200"
+        >
           {connection.error.message}
         </p>
       )}
-      <p className="text-xs text-[#97A0B3]">
-        Publishing times are separate from editorial dates. Only client-approved versions and
-        captions can publish.
-      </p>
-      <div className="flex flex-wrap gap-2">
-        <label className="text-xs flex-1 min-w-40">
-          Publishing status
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block">
+          <span className={labelText}>Publishing status</span>
           <select
             className={input}
             value={status}
             onChange={(e) => {
               setStatus(e.target.value);
               setOffset(0);
+              setSelected("");
             }}
           >
             <option value="">All statuses</option>
-            {[
-              "pending_approval",
-              "needs_schedule",
-              "scheduled",
-              "processing",
-              "published",
-              "failed",
-              "paused",
-              "uncertain",
-              "canceled",
-            ].map((s) => (
+            {QUEUE_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {publishingLabel(s)}
               </option>
@@ -533,8 +818,8 @@ export function PublishingQueue({
           </select>
         </label>
         {!readOnly && !clientId && (
-          <label className="text-xs flex-1 min-w-40">
-            Filter clients on this page
+          <label className="block">
+            <span className={labelText}>Filter by client</span>
             <input
               className={input}
               value={client}
@@ -544,60 +829,96 @@ export function PublishingQueue({
           </label>
         )}
       </div>
-      {query.isPending && <output className="text-sm">Loading publishing jobs…</output>}
+
+      {query.isPending && (
+        <output className="flex items-center gap-2 text-sm text-[#97A0B3]">
+          <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> Loading publishing
+          jobs…
+        </output>
+      )}
       {query.isError && (
-        <p role="alert">
-          {query.error.message}{" "}
-          <button type="button" className={button} onClick={() => void query.refetch()}>
-            Retry
-          </button>
-        </p>
-      )}
-      {!query.isPending && !query.isError && !rows.length && (
-        <p className="text-sm text-[#97A0B3]">
-          No publishing jobs match. The team can plan publication from an uploaded deliverable.
-        </p>
-      )}
-      {rows.map((j) => (
-        <div key={j.id} className="border-t border-[#2A3446] pt-3 space-y-2">
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200"
+        >
+          <span className="min-w-0 break-words">{query.error.message}</span>
           <button
             type="button"
-            className="text-left min-h-11 w-full text-sm"
-            onClick={() => setSelected(selected === j.id ? "" : j.id)}
+            className={`${button} flex-none basis-auto`}
+            onClick={() => void query.refetch()}
           >
-            <span className="font-semibold">
-              {j.client_name || "Client"} · {j.title || `Version ${j.version}`} ·{" "}
-              {publishingLabel(j.status)}
-            </span>
-            <br />
-            <span className="text-xs text-[#97A0B3]">
-              {j.scheduled_at
-                ? `${new Date(j.scheduled_at).toLocaleString(undefined, { timeZone: j.timezone })} (${j.timezone})`
-                : "Awaiting future schedule"}
-            </span>
+            Retry
           </button>
-          {selected === j.id && (
-            <PublishingPanel deliverableId={j.deliverable_id} readOnly={readOnly} />
-          )}
         </div>
-      ))}
-      <div className="flex gap-2">
-        <button
-          type="button"
-          className={button}
-          disabled={!offset}
-          onClick={() => setOffset(Math.max(0, offset - 100))}
-        >
-          Previous
-        </button>
-        <button
-          type="button"
-          className={button}
-          disabled={(query.data?.length || 0) < 100}
-          onClick={() => setOffset(offset + 100)}
-        >
-          Next
-        </button>
+      )}
+      {!query.isPending && !query.isError && !rows.length && (
+        <div className="rounded-xl border border-dashed border-[#2A3446] p-8 text-center">
+          <CalendarClock className="mx-auto mb-2 size-6 text-[#97A0B3]" />
+          <p className="text-sm font-semibold">No publishing jobs match</p>
+          <p className="mt-1 text-xs text-[#97A0B3]">
+            The team can plan publication from an uploaded deliverable.
+          </p>
+        </div>
+      )}
+
+      <ul className="space-y-2">
+        {rows.map((j) => {
+          const open = selected === j.id;
+          return (
+            <li key={j.id} className="rounded-xl border border-[#2A3446] bg-[#0B111C]/60">
+              <button
+                type="button"
+                aria-expanded={open}
+                className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl p-3.5 text-left transition-colors hover:bg-[#161F2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]"
+                onClick={() => setSelected(open ? "" : j.id)}
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold">
+                    {j.client_name || "Client"} · {j.title || `Version ${j.version}`}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-[#97A0B3]">
+                    {j.scheduled_at
+                      ? `${new Date(j.scheduled_at).toLocaleString(undefined, { timeZone: j.timezone })} (${j.timezone})`
+                      : "Awaiting future schedule"}
+                  </span>
+                </span>
+                <span className="flex shrink-0 items-center gap-2.5">
+                  <StatusBadge status={j.status} label={publishingLabel(j.status)} />
+                  <ChevronDown
+                    className={`size-4 text-[#97A0B3] transition-transform ${open ? "rotate-180" : ""}`}
+                  />
+                </span>
+              </button>
+              {open && (
+                <div className="px-3.5 pb-3.5">
+                  <PublishingPanel deliverableId={j.deliverable_id} readOnly={readOnly} />
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs text-[#97A0B3]">Page {page}</span>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            className={`${button} flex-none basis-auto`}
+            disabled={!offset}
+            onClick={() => setOffset(Math.max(0, offset - 100))}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            className={`${button} flex-none basis-auto`}
+            disabled={(query.data?.length || 0) < 100}
+            onClick={() => setOffset(offset + 100)}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </section>
   );

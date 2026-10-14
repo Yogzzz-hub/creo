@@ -1,4 +1,4 @@
-import { PublishingControl, PublishingQueue } from "../../components/ops/PublishingPanel";
+import { PublishingControl } from "../../components/ops/PublishingPanel";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
@@ -650,7 +650,6 @@ export function MemberTaskBoardPage() {
             </div>
           </div>
         )}
-        <PublishingQueue />
       </motion.main>
 
       {/* Upload & submit modal */}

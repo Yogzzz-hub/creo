@@ -769,11 +769,27 @@ async def get_client_brand_profile(
     # 2. Access control for non-admin staff
     is_admin_role = actor.role in ("admin", "super_admin")
     if not is_admin_role:
-        # Check that the calling user is assigned to this client
+        # A team lead manages their whole pod, and the Client Allocations list shows every
+        # client assigned to any pod member, so allow those as well as their own.
+        allowed_user_ids: list[uuid.UUID] = [actor.user_id]
+        if str(actor.role) in ("team_lead", UserRole.TEAM_LEAD.value):
+            pod_member_ids = (
+                (
+                    await db.execute(
+                        select(StaffProfile.user_id).where(
+                            StaffProfile.team_lead_id == actor.user_id
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            allowed_user_ids.extend(pod_member_ids)
+
         ca_check = await db.execute(
             select(ClientAssignment.id).where(
                 ClientAssignment.client_id == client_uuid,
-                ClientAssignment.user_id == actor.user_id,
+                ClientAssignment.user_id.in_(allowed_user_ids),
             )
         )
         if not ca_check.scalar_one_or_none():

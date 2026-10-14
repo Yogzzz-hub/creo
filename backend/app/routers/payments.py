@@ -83,10 +83,9 @@ async def list_plans(
                 if active_valid_neg is None:
                     active_valid_neg = n
 
-        custom_plan_stmt = select(Plan).where(
-            Plan.name == f"custom_{client_id.hex[:8]}",
-            Plan.is_active.is_(True),
-        )
+        # `plans.name` is unique and custom plans are only ever deactivated (never
+        # deleted), so look the row up regardless of is_active and reactivate it below.
+        custom_plan_stmt = select(Plan).where(Plan.name == f"custom_{client_id.hex[:8]}")
         custom_plan = (await db.execute(custom_plan_stmt)).scalar_one_or_none()
 
         # If there is NO active valid negotiation for this user account:
@@ -107,39 +106,51 @@ async def list_plans(
             await db.commit()
         else:
             # We have a valid active negotiation for this account!
-            if not custom_plan:
-                final_amt = active_valid_neg.counter_price or active_valid_neg.agreed_amount
-                if not final_amt and active_valid_neg.proposed_offer:
-                    digits = "".join(c for c in str(active_valid_neg.proposed_offer) if c.isdigit())
-                    if digits:
-                        try:
-                            final_amt = int(digits)
-                        except Exception:
-                            pass
-                if not final_amt or final_amt <= 0:
-                    final_amt = 35000
+            final_amt = active_valid_neg.counter_price or active_valid_neg.agreed_amount
+            if not final_amt and active_valid_neg.proposed_offer:
+                digits = "".join(c for c in str(active_valid_neg.proposed_offer) if c.isdigit())
+                if digits:
+                    try:
+                        final_amt = int(digits)
+                    except Exception:
+                        pass
+            if not final_amt or final_amt <= 0:
+                final_amt = 35000
 
-                reel_q = active_valid_neg.reel_quota or 8
-                poster_q = active_valid_neg.poster_quota or 12
-                story_q = active_valid_neg.story_quota or 15
-                display_name = (
-                    f"Agency Counter Proposal ({active_valid_neg.client_name})"
-                    if active_valid_neg.status == "Counter Offered"
-                    else f"Custom Negotiated Retainer ({active_valid_neg.client_name})"
-                )
-                highlights = [
-                    f"{reel_q} Custom Reels",
-                    f"{poster_q} Static Posters",
-                    f"{story_q} Stories / Carousels",
-                    "Negotiated Strategy Agreement",
-                    "Dedicated Creative Pod Lead",
-                ]
+            reel_q = active_valid_neg.reel_quota or 8
+            poster_q = active_valid_neg.poster_quota or 12
+            story_q = active_valid_neg.story_quota or 15
+            display_name = (
+                f"Agency Counter Proposal ({active_valid_neg.client_name})"
+                if active_valid_neg.status == "Counter Offered"
+                else f"Custom Negotiated Retainer ({active_valid_neg.client_name})"
+            )
+            highlights = [
+                f"{reel_q} Custom Reels",
+                f"{poster_q} Static Posters",
+                f"{story_q} Stories / Carousels",
+                "Negotiated Strategy Agreement",
+                "Dedicated Creative Pod Lead",
+            ]
 
+            if custom_plan:
+                # Reuse (and revive) the existing row so a returning client never hits
+                # the unique constraint on plans.name, and refresh it from the
+                # current negotiation so a stale price/quota is never shown.
+                custom_plan.display_name = display_name[:100]
+                custom_plan.monthly_price = Decimal(final_amt)
+                custom_plan.price_minor = int(final_amt * 100)
+                custom_plan.reel_quota = reel_q
+                custom_plan.poster_quota = poster_q
+                custom_plan.story_quota = story_q
+                custom_plan.highlights = highlights
+                custom_plan.is_active = True
+            else:
                 custom_plan = Plan(
                     id=uuid.uuid4(),
                     agency_id=active_valid_neg.agency_id,
                     name=f"custom_{client_id.hex[:8]}",
-                    display_name=display_name,
+                    display_name=display_name[:100],
                     monthly_price=Decimal(final_amt),
                     price_minor=int(final_amt * 100),
                     currency="INR",
@@ -152,8 +163,8 @@ async def list_plans(
                     is_active=True,
                 )
                 db.add(custom_plan)
-                await db.commit()
-                await db.refresh(custom_plan)
+            await db.commit()
+            await db.refresh(custom_plan)
 
         # STRICT ISOLATION & REQUIREMENT:
         # If client has a customized negotiated package, ONLY return that custom plan.

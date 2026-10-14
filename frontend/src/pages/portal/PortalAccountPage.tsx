@@ -25,6 +25,12 @@ import {
   Radio,
   Lock,
 } from "lucide-react";
+import {
+  disconnectInstagram,
+  fetchInstagramStatus,
+  startMetaConnect,
+  verifyInstagram,
+} from "../../lib/instagram-oauth";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
 
@@ -64,10 +70,9 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
   const [errorMessage, setErrorMessage] = useState("");
 
   // Instagram Hub state
-  const [igInput, setIgInput] = useState("");
   const [isConnectingIg, setIsConnectingIg] = useState(false);
   const [isDisconnectingIg, setIsDisconnectingIg] = useState(false);
-  const [isEditingIg, setIsEditingIg] = useState(false);
+  const [isVerifyingIg, setIsVerifyingIg] = useState(false);
   const [confirmDisconnectModal, setConfirmDisconnectModal] = useState(false);
 
   // 2FA state
@@ -102,9 +107,6 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
         company: p.company_name || "",
         phone: p.phone || "",
       });
-      if (p.instagram_username) {
-        setIgInput(p.instagram_username);
-      }
     }
   }, [query.data]);
 
@@ -169,70 +171,61 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
     }
   }
 
-  // Instagram Connect
-  async function handleConnectInstagram(overrideHandle?: string) {
-    const raw = (overrideHandle || igInput || "").trim();
-    if (!raw) {
-      setErrorMessage("Please enter your Instagram handle.");
-      return;
-    }
-    const cleanHandle = raw.startsWith("@") ? raw : `@${raw}`;
+  // Instagram / Meta: real OAuth (Facebook Login). The authoritative state is the
+  // backend connection status, never a typed handle.
+  async function handleConnectInstagram() {
+    if (!user?.id) return;
     setIsConnectingIg(true);
     setErrorMessage("");
-
-    // Optimistically update query caches
-    queryClient.setQueriesData({ queryKey: ["portal-profile"] }, (old: any) =>
-      old ? { ...old, instagram_username: cleanHandle, instagram_connected: true } : old
-    );
-    queryClient.setQueriesData({ queryKey: ["portal-dashboard"] }, (old: any) =>
-      old ? { ...old, instagram_username: cleanHandle } : old
-    );
-
     try {
-      await request("/api/v1/portal/integrations/instagram/connect", {
-        method: "POST",
-        body: JSON.stringify({ username: cleanHandle }),
-      });
-      await queryClient.invalidateQueries({ queryKey: ["portal-profile"] });
-      await queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] });
-      await query.refetch();
-      setIsEditingIg(false);
-      setMessage(`Instagram account ${cleanHandle} connected successfully!`);
+      await startMetaConnect(user.id, "/portal/account?tab=integrations");
+      // The browser is now navigating to Meta; keep the button busy until it unloads.
     } catch (err: any) {
-      setErrorMessage(err?.message || "Failed to connect Instagram account.");
-      await query.refetch();
-    } finally {
+      setErrorMessage(err?.message || "Could not start the Meta connection.");
       setIsConnectingIg(false);
     }
   }
 
-  // Instagram Disconnect
+  async function refreshInstagramViews() {
+    await Promise.allSettled([
+      queryClient.invalidateQueries({ queryKey: ["instagram-connection"] }),
+      queryClient.invalidateQueries({ queryKey: ["portal-profile"] }),
+      queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] }),
+      queryClient.invalidateQueries({ queryKey: ["publishing"] }),
+    ]);
+  }
+
+  async function handleVerifyInstagram() {
+    setIsVerifyingIg(true);
+    setErrorMessage("");
+    try {
+      const data = await verifyInstagram();
+      await refreshInstagramViews();
+      if (data.error) setErrorMessage(data.error);
+      else setMessage("Instagram connection verified.");
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Could not verify the Instagram connection.");
+    } finally {
+      setIsVerifyingIg(false);
+    }
+  }
+
   async function handleDisconnectInstagram() {
     setIsDisconnectingIg(true);
     setErrorMessage("");
-
-    // Optimistically update query caches
-    queryClient.setQueriesData({ queryKey: ["portal-profile"] }, (old: any) =>
-      old ? { ...old, instagram_username: "", instagram_connected: false } : old
-    );
-    queryClient.setQueriesData({ queryKey: ["portal-dashboard"] }, (old: any) =>
-      old ? { ...old, instagram_username: null } : old
-    );
-
     try {
-      await request("/api/v1/portal/integrations/instagram", {
-        method: "DELETE",
-      });
-      await queryClient.invalidateQueries({ queryKey: ["portal-profile"] });
-      await queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] });
-      await query.refetch();
+      const data = await disconnectInstagram();
+      await refreshInstagramViews();
       setConfirmDisconnectModal(false);
-      setIsEditingIg(false);
-      setIgInput("");
-      setMessage("Instagram account disconnected successfully.");
+      setMessage(
+        data.provider_revoked
+          ? "Instagram disconnected. Future publishing is paused."
+          : "Disconnected from Creo. Meta could not confirm revocation; also remove Creo under Facebook Business Integrations.",
+      );
     } catch (err: any) {
+      setConfirmDisconnectModal(false);
       setErrorMessage(err?.message || "Failed to disconnect Instagram account.");
-      await query.refetch();
+      await refreshInstagramViews();
     } finally {
       setIsDisconnectingIg(false);
     }
@@ -257,8 +250,16 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
     }
   }
 
-  const isIgConnected = Boolean(query.data?.instagram_connected || query.data?.instagram_username);
-  const currentIgHandle = (query.data?.instagram_username || "").replace(/^@/, "");
+  const igQuery = useQuery({
+    queryKey: ["instagram-connection", user?.id],
+    queryFn: fetchInstagramStatus,
+    enabled: !!user?.id && !isLocked && user?.role === "client",
+    staleTime: 0,
+  });
+  const ig = igQuery.data;
+  const isIgConnected = Boolean(ig?.connected);
+  const igNeedsReconnect = ig?.status === "reconnect_required";
+  const currentIgHandle = (ig?.username || "").replace(/^@/, "");
 
   return (
     <main className="text-white space-y-6 pb-16 max-w-6xl mx-auto">
@@ -437,14 +438,22 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
 
                     <button
                       type="button"
-                      onClick={() => {
-                        setIgInput(query.data.instagram_username || "");
-                        setIsEditingIg(!isEditingIg);
-                      }}
-                      className="px-4 py-2.5 rounded-full bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6] text-xs font-bold text-[#BCCCE6] hover:text-white transition-all flex items-center gap-2 cursor-pointer"
+                      disabled={isVerifyingIg}
+                      onClick={() => void handleVerifyInstagram()}
+                      className="px-4 py-2.5 rounded-full bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6] text-xs font-bold text-[#BCCCE6] hover:text-white transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
                     >
-                      <Edit3 className="size-3.5" />
-                      <span>{isEditingIg ? "Cancel Edit" : "Change Handle"}</span>
+                      {isVerifyingIg ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}
+                      <span>Verify</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isConnectingIg}
+                      onClick={() => void handleConnectInstagram()}
+                      className="px-4 py-2.5 rounded-full bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6] text-xs font-bold text-[#BCCCE6] hover:text-white transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {isConnectingIg ? <Loader2 className="size-3.5 animate-spin" /> : <Edit3 className="size-3.5" />}
+                      <span>Reconnect</span>
                     </button>
 
                     <button
@@ -458,31 +467,8 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                   </div>
                 </div>
 
-                {/* Inline Edit Handle Form */}
-                {isEditingIg && (
-                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl p-5 space-y-3 animate-in fade-in duration-200">
-                    <p className="text-xs font-bold text-white">Update Connected Instagram Handle</p>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <div className="relative flex-1">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-[#97A0B3]">@</span>
-                        <input
-                          type="text"
-                          value={igInput.replace(/^@/, "")}
-                          onChange={(e) => setIgInput(e.target.value)}
-                          placeholder="new_handle"
-                          className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-[#161F2D] border border-[#2A3446] text-white text-sm focus:border-[#7FA0D6] focus:outline-none"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        disabled={isConnectingIg}
-                        onClick={() => void handleConnectInstagram()}
-                        className="px-6 py-2.5 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-xs hover:bg-white transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        {isConnectingIg ? <Loader2 className="size-4 animate-spin" /> : "Save Handle"}
-                      </button>
-                    </div>
-                  </div>
+                {ig?.error && (
+                  <p role="alert" className="text-xs text-amber-300">{ig.error}</p>
                 )}
 
                 {/* Feature Status Grid */}
@@ -523,7 +509,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
               </div>
             </div>
           ) : (
-            /* STATE 2: NOT CONNECTED YET - CONNECT INSTAGRAM HANDLE */
+            /* STATE 2: NOT CONNECTED - CONNECT WITH META (Facebook Login) */
             <div className="max-w-2xl mx-auto w-full">
               <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 space-y-6">
                 <div className="space-y-4">
@@ -532,59 +518,51 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-white tracking-tight">
-                      Connect Instagram Account
+                      {igNeedsReconnect ? "Reconnect Meta" : "Connect Instagram via Meta"}
                     </h3>
                     <p className="text-xs text-[#97A0B3] mt-1 leading-relaxed">
-                      Enter your brand or company handle below to link your profile to Creo's automated publishing pipeline.
+                      Sign in with Facebook and choose the Instagram Business account linked to a Page you manage. Creo never sees your Instagram password.
                     </p>
                   </div>
-
-                  <div className="space-y-2 pt-2">
-                    <label className="text-xs font-bold text-[#BCCCE6] block">
-                      Instagram Handle
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-[#97A0B3]">@</span>
-                      <input
-                        type="text"
-                        value={igInput.replace(/^@/, "")}
-                        onChange={(e) => setIgInput(e.target.value)}
-                        placeholder="yourbrandname"
-                        className="w-full pl-9 pr-4 py-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
-                      />
-                    </div>
-                    {igInput && (
-                      <p className="text-[11px] text-[#97A0B3]">
-                        Target profile:{" "}
-                        <span className="text-[#BCCCE6] font-mono">
-                          instagram.com/{igInput.replace(/^@/, "")}
-                        </span>
-                      </p>
-                    )}
-                  </div>
+                  {igNeedsReconnect && (
+                    <p role="alert" className="text-xs text-amber-300">
+                      {ig?.error || "Your Meta authorization expired. Reconnect to resume publishing."}
+                    </p>
+                  )}
+                  {ig && !ig.configured && (
+                    <p className="text-xs text-amber-300">
+                      Your agency still needs to finish Instagram setup. Try again once it is ready.
+                    </p>
+                  )}
+                  {igQuery.isError && (
+                    <p role="alert" className="text-xs text-rose-300">
+                      {igQuery.error instanceof Error ? igQuery.error.message : "Could not load connection status."}{" "}
+                      <button type="button" className="underline cursor-pointer" onClick={() => void igQuery.refetch()}>Retry</button>
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-3 pt-4 border-t border-[#2A3446]">
                   <button
                     type="button"
-                    disabled={isConnectingIg || !igInput.trim()}
+                    disabled={isConnectingIg || igQuery.isPending}
                     onClick={() => void handleConnectInstagram()}
                     className="w-full py-3.5 rounded-full bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-40 flex items-center justify-center gap-2 shadow-lg shadow-[#BCCCE6]/10 cursor-pointer"
                   >
                     {isConnectingIg ? (
                       <>
                         <Loader2 className="size-4 animate-spin" />
-                        <span>Connecting Handle…</span>
+                        <span>Redirecting to Meta…</span>
                       </>
                     ) : (
                       <>
                         <Check className="size-4" />
-                        <span>Link Instagram Account</span>
+                        <span>{igNeedsReconnect ? "Reconnect with Meta" : "Connect with Meta"}</span>
                       </>
                     )}
                   </button>
                   <p className="text-[10px] text-center text-[#97A0B3]">
-                    You can disconnect or update your handle at any time.
+                    You can disconnect at any time here or in Facebook Business Integrations.
                   </p>
                 </div>
               </div>

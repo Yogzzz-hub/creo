@@ -5,7 +5,7 @@ import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
 import { PublishingControl } from "../../components/ops/PublishingPanel";
 import { resolveAssetUrl } from "../../lib/media";
 import React, { useState, useEffect, useMemo } from "react";
-import { Link, useParams, useSearchParams, Navigate } from "react-router";
+import { Link, useParams, useSearchParams, Navigate, useNavigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "../../lib/http";
 import {
@@ -201,6 +201,7 @@ export function AdminClientsPage() {
     queryKey: ["plans"],
     queryFn: () => fetchPlans(),
   });
+  const navigate = useNavigate();
   const { clientId } = useParams<{ clientId?: string }>();
   const [searchParams] = useSearchParams();
   const urlClientId = clientId || searchParams.get("clientId") || searchParams.get("client");
@@ -210,6 +211,7 @@ export function AdminClientsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [deliverableSearch, setDeliverableSearch] = useState("");
+  const [deliverableStatus, setDeliverableStatus] = useState<"all" | "review" | "production" | "approved">("all");
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -908,6 +910,14 @@ export function AdminClientsPage() {
   });
 
   const filteredDeliverables = (liveDeliverables || []).filter((d) => {
+    const status = (d.status || "").toUpperCase().replace(/_/g, " ");
+    if (deliverableStatus === "approved" && status !== "APPROVED") return false;
+    if (deliverableStatus === "production" && status !== "IN PRODUCTION") return false;
+    if (
+      deliverableStatus === "review" &&
+      !["IN REVIEW", "PENDING APPROVAL", "INTERNAL QA", "READY FOR REVIEW"].includes(status)
+    )
+      return false;
     if (!deliverableSearch.trim()) return true;
     const searchLower = deliverableSearch.toLowerCase();
     const title = (d.title || "").toLowerCase();
@@ -1886,7 +1896,7 @@ export function AdminClientsPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => showToast(`Connecting to ${activeClient?.pod?.leadName || "Pod Lead"} via Slack/Creo Chat...`)}
+                          onClick={() => navigate("/admin/slack")}
                           className="p-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] shadow-2xs cursor-pointer"
                           title="Chat with Pod Lead"
                         >
@@ -1942,7 +1952,7 @@ export function AdminClientsPage() {
                     <span>Daily Sync: {activeClient?.pod?.dailySyncTime || "11:00 AM IST"}</span>
                     <button
                       type="button"
-                      onClick={() => showToast(`Opening Pod Reallocation Studio for ${activeClient?.pod?.name || "Pod"}...`)}
+                      onClick={() => navigate("/admin/teams")}
                       className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
                     >
                       Reallocate Pod Hours
@@ -1983,9 +1993,16 @@ export function AdminClientsPage() {
                   </div>
                   <button
                     type="button"
+                    title="Cycle status filter"
+                    onClick={() =>
+                      setDeliverableStatus((current) =>
+                        current === "all" ? "review" : current === "review" ? "production" : current === "production" ? "approved" : "all",
+                      )
+                    }
                     className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1 shadow-2xs cursor-pointer"
                   >
-                    <Filter className="w-3.5 h-3.5 text-[#97A0B3]" /> Filter
+                    <Filter className="w-3.5 h-3.5 text-[#97A0B3]" /> Filter:{" "}
+                    {deliverableStatus === "all" ? "All" : deliverableStatus === "review" ? "In review" : deliverableStatus === "production" ? "In production" : "Approved"}
                   </button>
                 </div>
               </div>
@@ -2107,6 +2124,7 @@ export function AdminClientsPage() {
                             <div className="space-y-1.5">
                               <button
                                 type="button"
+                                disabled
                                 className="w-full py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold flex items-center justify-center gap-1 border border-emerald-200 cursor-default"
                               >
                                 <Lock className="w-3.5 h-3.5" /> Auto-Publish Locked
@@ -3913,6 +3931,7 @@ export interface TeamMember {
 export function AdminTeamManagementPage() {
   const [activePodId, setActivePodId] = useState<string | null>(null);
   const [roleCategoryFilter, setRoleCategoryFilter] = useState<string>("all");
+  const [memberSort, setMemberSort] = useState<"default" | "workload" | "name">("default");
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -4706,8 +4725,12 @@ export function AdminTeamManagementPage() {
               <div className="flex items-center justify-between text-xs text-[#97A0B3] font-semibold border-t border-[#2A3446] pt-3">
                 <span>Showing {filteredMembers.length} members assigned to {activePod?.name}</span>
                 <div className="flex items-center gap-3">
-                  <button type="button" className="hover:text-[#F1F5F9] flex items-center gap-1">
-                    <SlidersHorizontal className="w-3.5 h-3.5" /> Advanced Sorting
+                  <button
+                    type="button"
+                    onClick={() => setMemberSort((current) => (current === "default" ? "workload" : current === "workload" ? "name" : "default"))}
+                    className="hover:text-[#F1F5F9] flex items-center gap-1 cursor-pointer"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" /> Sort: {memberSort === "default" ? "Default" : memberSort === "workload" ? "Workload" : "Name"}
                   </button>
                   <button
                     type="button"
@@ -4734,7 +4757,15 @@ export function AdminTeamManagementPage() {
 
             {/* Member Cards Grid matching Screenshot 2 */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredMembers.map((member) => (
+              {[...filteredMembers]
+                .sort((a, b) =>
+                  memberSort === "workload"
+                    ? b.allocatedPct - a.allocatedPct
+                    : memberSort === "name"
+                    ? a.name.localeCompare(b.name)
+                    : 0,
+                )
+                .map((member) => (
                 <div
                   key={member.id}
                   className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-6 space-y-4 flex flex-col justify-between hover:shadow-lg transition-shadow"

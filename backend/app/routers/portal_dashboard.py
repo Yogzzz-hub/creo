@@ -521,7 +521,14 @@ async def _portal_dashboard_snapshot(
         "open_ticket_count": ticket_count,
         "ai_summary_line": profile.brand_summary if profile else "",
         "brand_dna": profile.brand_dna if profile else {},
-        "instagram_username": profile.instagram_username if profile else None,
+        # Publishing status comes from the Meta OAuth connection, not the brand handle typed
+        # in the questionnaire, so disconnecting really clears the dashboard card.
+        "instagram_connected": bool(profile and profile.ig_connection_status == "connected"),
+        "instagram_username": (
+            ((profile.ig_metadata or {}).get("username") or profile.instagram_username)
+            if profile and profile.ig_connection_status == "connected"
+            else None
+        ),
         "active_plan": active_plan,
         "has_active_subscription": sub_check["is_active"],
         "is_subscription_expired": sub_check["is_expired"],
