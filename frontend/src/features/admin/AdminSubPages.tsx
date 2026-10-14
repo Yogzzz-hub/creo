@@ -1,3 +1,4 @@
+import { BillingPauseRequests } from "../../components/admin/BillingPauseRequests";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useAuth } from "../../lib/auth-context";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -6950,6 +6951,7 @@ export function AdminRevenuePage() {
       <AdminTopHeader title="Revenue Engine" activeTab="Revenue" />
 
       <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-6 sm:space-y-8">
+          <BillingPauseRequests />
         {toast && (
           <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">

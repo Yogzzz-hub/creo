@@ -7,6 +7,8 @@ Always returns 200 within 2 seconds.
 
 from __future__ import annotations
 
+import hashlib
+
 import json
 from typing import Any
 
@@ -14,7 +16,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
-from app.db.session import get_db
+from app.db.session import get_db, tenant_session
 from app.models.enums import PaymentProvider
 from app.services import payment_service
 
@@ -46,16 +48,19 @@ async def razorpay_webhook(
         logger.warning("malformed_webhook_payload", error=str(err))
         raise HTTPException(status_code=400, detail="Malformed JSON payload") from err
 
-    event_id = str(payload.get("event_id") or payload.get("id") or "rzp_evt_unknown")
+    event_id = request.headers.get("X-Razorpay-Event-Id") or str(payload.get("event_id") or payload.get("id") or hashlib.sha256(raw_body).hexdigest())
     event_type = str(payload.get("event") or "payment.captured")
 
-    await payment_service.record_and_process_webhook(
-        db=db,
-        provider=PaymentProvider.RAZORPAY,
-        event_id=event_id,
-        event_type=event_type,
-        payload=payload,
-    )
+    # A verified gateway event has no browser agency claim. Resolve its stored
+    # provider subscription across tenants only after signature verification.
+    async with tenant_session(db, agency_id=None, is_platform_admin=True):
+        await payment_service.record_and_process_webhook(
+            db=db,
+            provider=PaymentProvider.RAZORPAY,
+            event_id=event_id,
+            event_type=event_type,
+            payload=payload,
+        )
     return {"status": "ok"}
 
 

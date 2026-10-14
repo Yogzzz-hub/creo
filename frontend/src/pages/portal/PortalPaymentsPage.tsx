@@ -1,3 +1,4 @@
+import { AutoPaySettings } from "../../components/portal/AutoPaySettings";
 import { useState } from "react";
 import { Link } from "react-router";
 import { Download, Loader2, PauseCircle, CheckCircle2, AlertCircle, PhoneCall, ArrowRight } from "lucide-react";
@@ -214,6 +215,7 @@ export function PortalPaymentsPage() {
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full min-w-0 space-y-4">
+      <AutoPaySettings />
       {/* Action Toast / Confirmation Notice */}
       {actionNotice && (
         <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-700/60 text-emerald-300 text-xs font-semibold flex items-center gap-2.5 animate-[fadeIn_0.2s_ease-out]">
@@ -557,12 +559,12 @@ export function PortalPaymentsPage() {
             <div className="space-y-4 mb-8">
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-[#97A0B3]">Method</span>
-                <span className="text-[13px] font-bold text-white">UPI AutoPay • Razorpay</span>
+                <span className="text-[13px] font-bold text-white">{(subData as any)?.autopay?.recurring ? "Razorpay AutoPay" : "No AutoPay mandate"}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-[#97A0B3]">Next charge</span>
                 <span className="text-[13px] font-bold text-white">
-                  {hasActivePlan ? `₹${planPrice.toLocaleString('en-IN')} • ${renewalDate}` : "No upcoming charge (Plan inactive)"}
+                  {isPausedNextMonth ? "Renewal paused" : !(subData as any)?.autopay?.enabled ? "No automatic charge confirmed" : hasActivePlan ? `₹${planPrice.toLocaleString('en-IN')} • ${renewalDate}` : "No upcoming charge (Plan inactive)"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -605,7 +607,7 @@ export function PortalPaymentsPage() {
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["client-subscription", user?.id] });
           queryClient.refetchQueries({ queryKey: ["client-subscription", user?.id] });
-          setActionNotice("Plan scheduled to pause for next month. AutoPay will not charge your account next cycle.");
+          setActionNotice("Pause request sent. AutoPay stays active until an administrator approves.");
           setTimeout(() => setActionNotice(null), 5000);
         }}
         planName={planName}

@@ -10,6 +10,7 @@ export interface RazorpayOptions {
   name: string;
   description: string;
   order_id?: string;
+  subscription_id?: string;
   prefill?: {
     name?: string;
     email?: string;
@@ -33,6 +34,7 @@ export interface RazorpayOptions {
 export interface RazorpayPaymentSuccess {
   razorpay_payment_id: string;
   razorpay_order_id: string;
+  razorpay_subscription_id?: string;
   razorpay_signature: string;
 }
 
@@ -113,6 +115,11 @@ export async function openRazorpayCheckout(
   };
 
   const checkoutOptions: any = { ...options };
+  if (checkoutOptions.subscription_id) {
+    if (!/^sub_[A-Za-z0-9]+$/.test(checkoutOptions.subscription_id)) throw new Error("Invalid subscription checkout.");
+    delete checkoutOptions.order_id;
+    delete checkoutOptions.amount;
+  }
 
   // Sanitize order_id: Razorpay Orders API IDs strictly begin with "order_".
   // If an invalid or client-generated prefix (e.g. "addon_", "auth_") is passed,
@@ -122,7 +129,7 @@ export async function openRazorpayCheckout(
   }
 
   // Ensure minimum valid amount (at least 100 paise / ₹1) to prevent amount validation errors
-  if (!checkoutOptions.amount || checkoutOptions.amount <= 0) {
+  if (!checkoutOptions.subscription_id && (!checkoutOptions.amount || checkoutOptions.amount <= 0)) {
     checkoutOptions.amount = 100;
   }
 

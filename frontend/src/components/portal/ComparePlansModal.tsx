@@ -72,7 +72,8 @@ export function ComparePlansModal({
           currency: order.currency || "INR",
           name: "Creo Digital Marketing",
           description: `Subscription - ${plan.display_name}`,
-          order_id: order.order_id?.startsWith("order_") ? order.order_id : undefined,
+          order_id: order.recurring ? undefined : order.order_id,
+          subscription_id: order.razorpay_subscription_id,
           prefill: {
             name: user?.full_name || undefined,
             email: user?.email || undefined,
@@ -83,15 +84,18 @@ export function ComparePlansModal({
         },
         async (response) => {
           try {
-            await confirmPayment(
+            const confirmation = await confirmPayment(
               user.id,
               order.order_id,
               response.razorpay_payment_id || `pay_sandbox_${Date.now()}`,
               response.razorpay_signature || "sig_sandbox",
               "razorpay"
             );
+            if (confirmation.status !== "active") throw new Error("Your payment is still pending.");
           } catch (err: any) {
-            console.warn("Payment confirmation notice:", err);
+            setErrorNotice(err instanceof Error ? err.message : "Payment has not been confirmed.");
+            setProcessingPlanId(null);
+            return;
           }
           await queryClient.invalidateQueries({ queryKey: ["client-subscription"] });
           setSuccessNotice(`Successfully switched plan to ${plan.display_name}!`);

@@ -17,7 +17,7 @@ def scripts():
 
 
 def test_deploy_has_one_unambiguous_head(scripts):
-    assert scripts.get_heads() == ["0024_test_post_schedule"]
+    assert scripts.get_heads() == ["0025_recurring_billing"]
 
 
 @pytest.mark.parametrize(
@@ -43,6 +43,6 @@ def test_fresh_database_still_has_a_complete_upgrade_path(scripts):
     steps = scripts._upgrade_revs("head", "base")
     revisions = [step.revision.revision for step in steps]
     assert revisions[0] == "0001_initial_schema"
-    assert revisions[-1] == "0024_test_post_schedule"
+    assert revisions[-1] == "0025_recurring_billing"
     assert "0014_manual_payment_requests" in revisions
     assert "0015_payment_state_constraints" in revisions
