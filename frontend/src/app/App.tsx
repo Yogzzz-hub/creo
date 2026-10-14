@@ -404,7 +404,15 @@ function ScrollToTop() {
 
   useEffect(() => {
     if (hash) {
-      const el = document.querySelector(hash);
+      // OAuth providers may append fragments such as #_=_ which are not CSS
+      // selectors. Resolve an anchor by ID so a callback cannot crash rendering.
+      let anchorId = hash.slice(1);
+      try {
+        anchorId = decodeURIComponent(anchorId);
+      } catch {
+        // A malformed percent escape is still safe as a literal element ID.
+      }
+      const el = document.getElementById(anchorId);
       if (el) {
         el.scrollIntoView({ behavior: "smooth" });
         return;
