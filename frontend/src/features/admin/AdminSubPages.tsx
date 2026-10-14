@@ -34,6 +34,7 @@ import {
 import type { PlanNegotiationApiItem, PlanSummaryItem, ManualPaymentRequest } from "../../lib/ops-api";
 import { fetchPlans } from "../../lib/onboarding-api";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import type { ClientRosterItem } from "../../types/ops";
 import {
   BarChart,
@@ -973,7 +974,7 @@ export function AdminClientsPage() {
               <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
                 <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20 shrink-0">
                   <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-                  {clientList.filter(c => c.lifecycleStatus === "onboarded").length} Active · {clientList.length} Total Clients
+                  {rosterQuery.isPending ? "Loading clients…" : `${clientList.filter(c => c.lifecycleStatus === "onboarded").length} Active · ${clientList.length} Total Clients`}
                 </span>
                 <div className="flex items-center gap-1.5">
                   <Filter className="size-4 text-[#97A0B3]" />
@@ -1020,6 +1021,24 @@ export function AdminClientsPage() {
             </div>
 
             {/* Client Cards Grid */}
+            {rosterQuery.isPending ? (
+              <CreoInlineLoader label="Loading clients" />
+            ) : rosterQuery.isError ? (
+              <div role="alert" className="min-h-[55vh] flex flex-col items-center justify-center gap-4 text-center">
+                <AlertTriangle className="size-8 text-[#D8BF9B]" />
+                <h3 className="text-base font-bold text-white">Unable to load clients</h3>
+                <p className="text-sm text-[#97A0B3]">{rosterQuery.error.message}</p>
+                <button type="button" onClick={() => void rosterQuery.refetch()} disabled={rosterQuery.isFetching} className="px-5 py-2 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-semibold disabled:opacity-60">
+                  {rosterQuery.isFetching ? "Retrying…" : "Try again"}
+                </button>
+              </div>
+            ) : filteredClientList.length === 0 ? (
+              <div className="min-h-[55vh] flex flex-col items-center justify-center gap-3 text-center">
+                <Users className="size-8 text-[#7FA0D6]" />
+                <h3 className="text-base font-bold text-white">{clientList.length ? "No matching clients" : "No clients yet"}</h3>
+                <p className="text-sm text-[#97A0B3]">{clientList.length ? "Try another search or change the status filter." : "Onboard your first client to get started."}</p>
+              </div>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6">
               {filteredClientList.map((client) => {
                 const isNotPaidNotOnboarded = client.lifecycleStatus === "not_paid_not_onboarded";
@@ -1186,6 +1205,7 @@ export function AdminClientsPage() {
                 );
               })}
             </div>
+            )}
           </div>
         ) : !activeClient ? (
           <div className="py-20 text-center space-y-4">
