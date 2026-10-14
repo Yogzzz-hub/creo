@@ -726,6 +726,12 @@ export function PublishingQueue({
   const [client, setClient] = useState("");
   const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState("");
+  const clients = useQuery({
+    queryKey: ["publishing", "filter-clients", user?.id],
+    queryFn: () => request<{ client_id: string; company_name: string | null; full_name?: string | null; email: string }[]>("/api/v1/admin/clients"),
+    enabled: !readOnly && !clientId,
+  });
+  const effectiveClientId = clientId || client;
   const connection = useQuery({
     queryKey: ["publishing", "client-connection", user?.id, clientId],
     queryFn: () =>
@@ -736,16 +742,14 @@ export function PublishingQueue({
     refetchInterval: 30000,
   });
   const query = useQuery({
-    queryKey: ["publishing", "queue", user?.id, clientId, status, offset],
+    queryKey: ["publishing", "queue", user?.id, effectiveClientId, status, offset],
     queryFn: () =>
       request<PublishingJob[]>(
-        `/api/v1/publishing/jobs?offset=${offset}${clientId ? `&client_id=${clientId}` : ""}${status ? `&status=${status}` : ""}`,
+        `/api/v1/publishing/jobs?offset=${offset}${effectiveClientId ? `&client_id=${encodeURIComponent(effectiveClientId)}` : ""}${status ? `&status=${status}` : ""}`,
       ),
     refetchInterval: 30000,
   });
-  const rows = (query.data || []).filter(
-    (j) => !client || (j.client_name || j.client_id).toLowerCase().includes(client.toLowerCase()),
-  );
+  const rows = query.data || [];
   const page = Math.floor(offset / 100) + 1;
   return (
     <section className="min-w-0 space-y-4 rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 text-white sm:p-5">
@@ -820,12 +824,16 @@ export function PublishingQueue({
         {!readOnly && !clientId && (
           <label className="block">
             <span className={labelText}>Filter by client</span>
-            <input
+            <select
               className={input}
               value={client}
-              onChange={(e) => setClient(e.target.value)}
-              placeholder="Client name"
-            />
+              disabled={clients.isPending || clients.isError}
+              onChange={(e) => { setClient(e.target.value); setOffset(0); setSelected(""); }}
+            >
+              <option value="">{clients.isPending ? "Loading clients…" : "All clients"}</option>
+              {(clients.data || []).map(c => <option key={c.client_id} value={c.client_id}>{c.company_name || c.full_name || c.email}</option>)}
+            </select>
+            {clients.isError && <p role="alert" className="mt-2 text-sm text-amber-200">Unable to load clients. <button type="button" onClick={() => void clients.refetch()} className="underline">Retry</button></p>}
           </label>
         )}
       </div>
