@@ -435,28 +435,28 @@ export function PodLeadDashboardPage() {
               </div>
 
               {/* Roster Items */}
-              <div className="divide-y divide-slate-100">
+              <div className="space-y-1">
                 {teamRoster.map((member) => (
-                  <div key={member.name} className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:bg-[#0B111C]/50 px-2 rounded-xl transition-colors">
+                  <div key={member.name} className="py-3 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] items-center gap-3 hover:bg-[#0B111C]/50 px-2 rounded-xl transition-colors">
                     <div className="flex items-center gap-2.5 min-w-0 sm:min-w-[200px]">
                       <div className={`size-8 rounded-xl ${member.avatarBg} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs`}>
                         {member.avatar}
                       </div>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="flex flex-col items-start gap-1 min-w-0">
                           <span className="text-xs font-black text-white">{member.name}</span>
                           <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-[#161F2D] text-[#F1F5F9]">
                             {member.role}
                           </span>
                         </div>
-                        <p className="text-[10px] text-[#97A0B3] font-medium truncate max-w-[220px]">
+                        <p className="text-[10px] text-[#97A0B3] font-medium truncate max-w-full">
                           {member.assignment}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 sm:gap-4 flex-1 justify-end">
-                      <span className="text-[11px] font-black text-white shrink-0">{member.tasksCount}</span>
+                    <div className="grid grid-cols-[72px_112px_24px] items-center gap-3 justify-end">
+                      <span className="text-[11px] font-black text-white text-right">{member.tasksCount}</span>
 
                       {/* Workload bar */}
                       <div className="w-28 flex flex-col gap-0.5 shrink-0">
