@@ -791,7 +791,7 @@ async def get_client_brand_profile(
             select(ClientAssignment.id).where(
                 ClientAssignment.client_id == client_uuid,
                 ClientAssignment.user_id.in_(allowed_user_ids),
-            )
+            ).limit(1)
         )
         if not ca_check.scalar_one_or_none():
             raise Forbidden(
