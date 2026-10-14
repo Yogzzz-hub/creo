@@ -6674,7 +6674,13 @@ export function AdminPlansPage() {
     e.preventDefault();
     if (!acceptModalItem) return;
     const target = acceptModalItem;
-    const agreedPrice = parseFloat(acceptPriceInput) || 35000;
+    // A price is money: never substitute a default for a missing or unreadable one.
+    const agreedPrice = parseFloat(acceptPriceInput);
+    if (!Number.isFinite(agreedPrice) || agreedPrice <= 0) {
+      setToast("Enter the agreed monthly price (in ₹) before accepting.");
+      setTimeout(() => setToast(null), 4000);
+      return;
+    }
     const reelQuota = parseInt(acceptReelsInput, 10) || 8;
     const posterQuota = parseInt(acceptPostersInput, 10) || 12;
     const storyQuota = parseInt(acceptStoriesInput, 10) || 15;
@@ -6732,24 +6738,21 @@ export function AdminPlansPage() {
     e.preventDefault();
     if (!declineModalItem) return;
     const target = declineModalItem;
+    const reason = declineReasonInput || "Price outside allowable margin.";
 
-    setNegotiations((prev) =>
-      prev.map((n) =>
-        n.id === target.id
-          ? { ...n, status: "Declined", declineReason: declineReasonInput || "Price outside allowable margin." }
-          : n
-      )
-    );
-    setToast(`Plan Negotiation DECLINED for ${target.clientName}. Notification sent.`);
-    setDeclineModalItem(null);
-    setDeclineReasonInput("");
-
+    // Only show "declined" once the server confirms it: a swallowed failure here used to
+    // leave the admin believing a client was declined while their request stayed open.
     try {
-      await updatePlanNegotiation(target.id, "decline", {
-        decline_reason: declineReasonInput || "Price outside allowable margin.",
-      });
+      await updatePlanNegotiation(target.id, "decline", { decline_reason: reason });
+      setNegotiations((prev) =>
+        prev.map((n) => (n.id === target.id ? { ...n, status: "Declined", declineReason: reason } : n)),
+      );
+      setToast(`Plan Negotiation DECLINED for ${target.clientName}. Notification sent.`);
+      setDeclineModalItem(null);
+      setDeclineReasonInput("");
     } catch (err) {
-      console.warn("Backend decline notice:", err);
+      console.error("Failed to decline negotiation:", err);
+      setToast(`Error declining negotiation: ${err instanceof Error ? err.message : "Unknown error"}`);
     }
     setTimeout(() => setToast(null), 4000);
   };
@@ -6759,7 +6762,12 @@ export function AdminPlansPage() {
     e.preventDefault();
     if (!counterModalItem || !counterPriceInput) return;
     const target = counterModalItem;
-    const price = parseFloat(counterPriceInput) || 40000;
+    const price = Math.round(parseFloat(counterPriceInput));
+    if (!Number.isFinite(price) || price <= 0) {
+      setToast("Enter a valid counter price (in ₹).");
+      setTimeout(() => setToast(null), 4000);
+      return;
+    }
     const reelQuota = parseInt(counterReelsInput, 10) || 8;
     const posterQuota = parseInt(counterPostersInput, 10) || 12;
     const storyQuota = parseInt(counterStoriesInput, 10) || 15;
