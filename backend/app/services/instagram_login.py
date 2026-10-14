@@ -27,11 +27,20 @@ class DirectInstagramClient(RealInstagramClient):
             return "https://graph.instagram.com/access_token"
         return super().request_url(path)
 
-    async def permissions(self, token: str, account_id: str) -> set[str]:
-        data = await self.call("GET", f"{account_id}/permissions", token)
-        granted = {
-            p.get("permission") for p in data.get("data", []) if p.get("status") == "granted"
-        }
+    def exchange_permissions(self, response: dict[str, Any]) -> set[str]:
+        # Instagram Login reports grants in its server-to-server token exchange.
+        # The Facebook-style GET user/permissions edge fails with code 100 here.
+        permissions = response.get("permissions")
+        if isinstance(permissions, str):
+            granted = {scope.strip() for scope in permissions.split(",") if scope.strip()}
+        elif isinstance(permissions, list) and all(isinstance(p, str) for p in permissions):
+            granted = set(permissions)
+        else:
+            raise InstagramError(
+                "Instagram did not return granted permissions. Start a new connection.",
+                "INSTAGRAM_PERMISSION_CHECK_FAILED",
+                reconnect=True,
+            )
         if not LOGIN_SCOPES.issubset(granted):
             raise InstagramError(
                 "Grant Instagram profile and publishing access to connect.",
@@ -76,6 +85,7 @@ class DirectInstagramClient(RealInstagramClient):
             short = rows[0]
         if not short.get("access_token") or not short.get("user_id"):
             raise InstagramError("Instagram did not return an account token.")
+        granted = self.exchange_permissions(short)
         long = await self.call(
             "GET",
             "access_token",
@@ -86,7 +96,6 @@ class DirectInstagramClient(RealInstagramClient):
         token = long.get("access_token")
         if not token or not long.get("expires_in") or int(long["expires_in"]) <= 0:
             raise InstagramError("Instagram did not return a valid long-lived token.")
-        granted = await self.permissions(token, str(short["user_id"]))
         account = await self.call("GET", "me", token, fields="user_id,username,account_type")
         account_id = str(account.get("user_id") or "")
         if account_id != str(short["user_id"]) or account.get("account_type") not in (
@@ -125,7 +134,8 @@ class DirectInstagramClient(RealInstagramClient):
         self, account_id: str, page_id: str, credentials: dict[str, str]
     ) -> dict:
         token = credentials["user_token"]
-        await self.permissions(token, account_id)
+        # Check live account identity and publishing access below. Do not query
+        # the unsupported Facebook permission-list edge with an Instagram token.
         account = await self.call("GET", "me", token, fields="user_id,account_type")
         if str(account.get("user_id")) != account_id:
             raise InstagramError(
