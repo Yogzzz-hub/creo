@@ -32,6 +32,26 @@ If a defect is detected in a new release:
      ```
    - Restart `creo-worker` and `creo-beat` to pick up the previous release SHA.
 
+### 1.3 Startup fails: missing `0014_enhancements` revision
+
+The October 14 deployment reported `Can't locate revision identified by
+'0014_enhancements'` before Uvicorn could start. Read-only database inspection
+confirmed this marker and the canonical authentication, Instagram, pod-call and
+manual-payment prerequisites. The original enhancement migration is absent from
+the available Git history; the database also contains additional legacy schema.
+
+`0014_enhancements.py` recognizes that existing marker without recreating unknown
+DDL. `0016_merge_legacy_enhancements.py` merges it with
+`0015_payment_state_constraints`, leaving one deployable head. Alembic applies the
+missing payment-constraint migration when upgrading the legacy database, then
+checks prerequisite columns transactionally. Extra legacy tables and data remain
+untouched. A fresh database follows the normal migrations before the merge.
+
+Deploy the code containing both reconciliation files and retain the usual
+`alembic upgrade head && uvicorn ...` start command. Do not bypass migrations or
+manually stamp an unverified database as current. If the prerequisite check fails,
+investigate the reported missing schema rather than changing its version marker.
+
 ---
 
 ## 2. Webhook Replay & Idempotency Recovery
