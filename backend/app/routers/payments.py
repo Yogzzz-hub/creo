@@ -11,7 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
-from app.models.billing import PaymentEvent, Plan, Subscription, UsageCounter
+from datetime import UTC, datetime, timedelta
+import uuid
+from decimal import Decimal
+from app.models.user import User
+from app.models.billing import PaymentEvent, Plan, PlanNegotiation, Subscription, UsageCounter
 from app.models.enums import SubscriptionStatus
 from app.schemas.billing import (
     ConfirmPaymentRequest,
@@ -22,14 +26,142 @@ from app.schemas.billing import (
 )
 from app.services import payment_service
 
+from fastapi import APIRouter, Depends, HTTPException, Request
+
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
 
 @router.get("/plans", response_model=list[PlanResponse])
 async def list_plans(
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> list[PlanResponse]:
-    """Retrieve all available subscription plans."""
+    """Retrieve all available subscription plans.
+    If the authenticated client has an approved or counter-offered custom negotiation,
+    returns ONLY that client's custom negotiated plan (the 3 standard tiers are hidden).
+    """
+    client_id: uuid.UUID | None = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:].strip()
+        try:
+            from app.core.security import decode_token
+            payload = decode_token(token, expected_type="access")
+            client_id = uuid.UUID(payload["sub"])
+        except Exception:
+            pass
+
+    query_cid = request.query_params.get("client_id")
+    if not client_id and query_cid:
+        try:
+            client_id = uuid.UUID(query_cid)
+        except Exception:
+            pass
+
+    if client_id:
+        user_stmt = select(User).where(User.id == client_id)
+        current_user = (await db.execute(user_stmt)).scalar_one_or_none()
+        user_created_at = current_user.created_at if current_user else None
+        clean_email = current_user.email.strip().lower() if current_user and current_user.email else ""
+
+        # Query all negotiations linked to this client_id or matching their email
+        neg_filters = [PlanNegotiation.client_id == client_id]
+        if clean_email:
+            neg_filters.append(func.lower(PlanNegotiation.client_email) == clean_email)
+
+        all_negs = (await db.execute(
+            select(PlanNegotiation).where(or_(*neg_filters)).order_by(PlanNegotiation.created_at.desc())
+        )).scalars().all()
+
+        active_valid_neg = None
+        for n in all_negs:
+            # If negotiation was created before this user account was created, it's stale from a deleted account
+            if user_created_at and n.created_at and n.created_at < user_created_at - timedelta(minutes=5):
+                n.status = "ARCHIVED"
+                n.client_id = None
+            elif n.status in ["Accepted", "Counter Offered", "APPROVED"]:
+                if active_valid_neg is None:
+                    active_valid_neg = n
+
+        custom_plan_stmt = select(Plan).where(
+            Plan.name == f"custom_{client_id.hex[:8]}",
+            Plan.is_active.is_(True),
+        )
+        custom_plan = (await db.execute(custom_plan_stmt)).scalar_one_or_none()
+
+        # If there is NO active valid negotiation for this user account:
+        if not active_valid_neg:
+            # Deactivate any custom plan for this client
+            if custom_plan:
+                custom_plan.is_active = False
+                custom_plan = None
+            if clean_email:
+                await db.execute(
+                    update(Plan)
+                    .where(
+                        Plan.name.like("custom_%"),
+                        Plan.display_name.ilike(f"%{clean_email}%"),
+                    )
+                    .values(is_active=False)
+                )
+            await db.commit()
+        else:
+            # We have a valid active negotiation for this account!
+            if not custom_plan:
+                final_amt = active_valid_neg.counter_price or active_valid_neg.agreed_amount
+                if not final_amt and active_valid_neg.proposed_offer:
+                    digits = "".join(c for c in str(active_valid_neg.proposed_offer) if c.isdigit())
+                    if digits:
+                        try:
+                            final_amt = int(digits)
+                        except Exception:
+                            pass
+                if not final_amt or final_amt <= 0:
+                    final_amt = 35000
+
+                reel_q = active_valid_neg.reel_quota or 8
+                poster_q = active_valid_neg.poster_quota or 12
+                story_q = active_valid_neg.story_quota or 15
+                display_name = (
+                    f"Agency Counter Proposal ({active_valid_neg.client_name})"
+                    if active_valid_neg.status == "Counter Offered"
+                    else f"Custom Negotiated Retainer ({active_valid_neg.client_name})"
+                )
+                highlights = [
+                    f"{reel_q} Custom Reels",
+                    f"{poster_q} Static Posters",
+                    f"{story_q} Stories / Carousels",
+                    "Negotiated Strategy Agreement",
+                    "Dedicated Creative Pod Lead",
+                ]
+
+                custom_plan = Plan(
+                    id=uuid.uuid4(),
+                    agency_id=active_valid_neg.agency_id,
+                    name=f"custom_{client_id.hex[:8]}",
+                    display_name=display_name,
+                    monthly_price=Decimal(final_amt),
+                    price_minor=int(final_amt * 100),
+                    currency="INR",
+                    reel_quota=reel_q,
+                    poster_quota=poster_q,
+                    story_quota=story_q,
+                    revision_rounds=2,
+                    has_dedicated_manager=True,
+                    highlights=highlights,
+                    is_active=True,
+                )
+                db.add(custom_plan)
+                await db.commit()
+                await db.refresh(custom_plan)
+
+        # STRICT ISOLATION & REQUIREMENT:
+        # If client has a customized negotiated package, ONLY return that custom plan.
+        # The 3 standard tiers MUST NOT be shown to this client!
+        if custom_plan:
+            return [PlanResponse.model_validate(custom_plan)]
+
+    # Standard public tiers ONLY for clients without custom negotiations
     stmt = (
         select(Plan)
         .where(
@@ -288,7 +420,8 @@ async def get_client_subscription(
     sub = check["subscription"]
     plan = check["plan"]
 
-    # If no active/expired subscription was found, check for an incomplete/pending checkout order
+    # Check if there is an incomplete checkout order, but keep it distinct as pending_checkout
+    pending_checkout = None
     if not sub:
         inc_stmt = (
             select(Subscription, Plan)
@@ -302,7 +435,12 @@ async def get_client_subscription(
         )
         inc_row = (await db.execute(inc_stmt)).first()
         if inc_row:
-            sub, plan = inc_row
+            inc_sub, inc_plan = inc_row
+            pending_checkout = {
+                "id": str(inc_sub.id),
+                "plan_name": inc_plan.display_name,
+                "amount": float(inc_sub.amount if inc_sub.amount is not None else inc_plan.monthly_price),
+            }
 
     counters_stmt = select(UsageCounter).where(UsageCounter.client_id == client_id)
     counters = (await db.execute(counters_stmt)).scalars().all()
@@ -314,7 +452,7 @@ async def get_client_subscription(
         for c in counters
     }
 
-    # Hide incomplete/unpaid checkout orders from invoices table
+    # Only show actual paid/active/canceled subscriptions in invoices, NOT incomplete abandoned checkout orders!
     inv_stmt = (
         select(Subscription, Plan)
         .join(Plan, Subscription.plan_id == Plan.id)
@@ -387,7 +525,8 @@ async def get_client_subscription(
             "poster_quota": plan.poster_quota,
             "reel_quota": plan.reel_quota,
             "story_quota": plan.story_quota,
-        } if plan else None,
+        } if (plan and (check["is_active"] or check["is_expired"])) else None,
+        "pending_checkout": pending_checkout,
         "quotas": quota_map if (sub_data and check["is_active"]) else {},
         "invoices": invoices,
         "is_active": check["is_active"],

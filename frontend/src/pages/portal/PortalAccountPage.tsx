@@ -17,19 +17,23 @@ import {
   AlertCircle,
   Trash2,
   Edit3,
-  Sparkles,
   KeyRound,
   ShieldAlert,
   X,
   Check,
   Loader2,
   Radio,
+  Lock,
 } from "lucide-react";
+import { useOnboardingGate } from "../../lib/useOnboardingGate";
+import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
 
 export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: string }) {
-  const { user } = useAuth();
+  const { user, patchUser, refresh } = useAuth();
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
+  const gate = useOnboardingGate();
+  const isLocked = gate.isClient && !gate.isComplete;
 
   // Read tab from query params
   const rawTab = params.get("tab") || defaultTab;
@@ -44,7 +48,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
   const query = useQuery({
     queryKey: ["portal-profile", user?.id],
     queryFn: () => request<any>("/api/v1/portal/profile"),
-    enabled: !!user?.id,
+    enabled: !!user?.id && !isLocked,
   });
 
   const [form, setForm] = useState({
@@ -110,21 +114,56 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
     setBusy(true);
     setMessage("");
     setErrorMessage("");
+
+    const newFullName = form.name.trim();
+    const newCompany = form.company.trim();
+    const newPhone = form.phone.trim();
+
+    // 1. Instantly patch auth user so sidebar, header, and home greeting update LIVE (0ms latency)
+    patchUser({
+      full_name: newFullName,
+      company_name: newCompany,
+    });
+
+    // 2. Instantly update profile query cache so settings badge updates LIVE
+    queryClient.setQueriesData({ queryKey: ["portal-profile"] }, (old: any) =>
+      old ? { ...old, full_name: newFullName, company_name: newCompany, phone: newPhone } : old
+    );
+    queryClient.setQueriesData({ queryKey: ["portal-dashboard"] }, (old: any) =>
+      old
+        ? {
+            ...old,
+            full_name: newFullName,
+            company_name: newCompany,
+            company: { ...(old?.company || {}), name: newCompany },
+          }
+        : old
+    );
+
     try {
       await request("/api/v1/portal/profile", {
         method: "PUT",
         body: JSON.stringify({
-          full_name: form.name,
-          company_name: form.company,
-          phone: form.phone,
+          full_name: newFullName,
+          company_name: newCompany,
+          phone: newPhone,
         }),
       });
-      await queryClient.invalidateQueries({ queryKey: ["portal-profile"] });
-      await queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] });
-      await query.refetch();
+
+      // 3. Revalidate and synchronize persistent auth profile
+      await Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: ["portal-profile"] }),
+        queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] }),
+        queryClient.refetchQueries({ queryKey: ["portal-profile"] }),
+        queryClient.refetchQueries({ queryKey: ["portal-dashboard"] }),
+        query.refetch(),
+        refresh(),
+      ]);
+
       setMessage("Your account details have been saved successfully.");
     } catch (e) {
       setErrorMessage(e instanceof Error ? e.message : "Changes could not be saved.");
+      await query.refetch();
     } finally {
       setBusy(false);
     }
@@ -140,6 +179,15 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
     const cleanHandle = raw.startsWith("@") ? raw : `@${raw}`;
     setIsConnectingIg(true);
     setErrorMessage("");
+
+    // Optimistically update query caches
+    queryClient.setQueriesData({ queryKey: ["portal-profile"] }, (old: any) =>
+      old ? { ...old, instagram_username: cleanHandle, instagram_connected: true } : old
+    );
+    queryClient.setQueriesData({ queryKey: ["portal-dashboard"] }, (old: any) =>
+      old ? { ...old, instagram_username: cleanHandle } : old
+    );
+
     try {
       await request("/api/v1/portal/integrations/instagram/connect", {
         method: "POST",
@@ -152,6 +200,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
       setMessage(`Instagram account ${cleanHandle} connected successfully!`);
     } catch (err: any) {
       setErrorMessage(err?.message || "Failed to connect Instagram account.");
+      await query.refetch();
     } finally {
       setIsConnectingIg(false);
     }
@@ -161,6 +210,15 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
   async function handleDisconnectInstagram() {
     setIsDisconnectingIg(true);
     setErrorMessage("");
+
+    // Optimistically update query caches
+    queryClient.setQueriesData({ queryKey: ["portal-profile"] }, (old: any) =>
+      old ? { ...old, instagram_username: "", instagram_connected: false } : old
+    );
+    queryClient.setQueriesData({ queryKey: ["portal-dashboard"] }, (old: any) =>
+      old ? { ...old, instagram_username: null } : old
+    );
+
     try {
       await request("/api/v1/portal/integrations/instagram", {
         method: "DELETE",
@@ -174,6 +232,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
       setMessage("Instagram account disconnected successfully.");
     } catch (err: any) {
       setErrorMessage(err?.message || "Failed to disconnect Instagram account.");
+      await query.refetch();
     } finally {
       setIsDisconnectingIg(false);
     }
@@ -217,6 +276,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           >
             <User className="size-4" />
             <span>Profile & Company</span>
+            {isLocked && <Lock className="size-3 text-[#97A0B3] ml-0.5" />}
           </button>
 
           <button
@@ -230,7 +290,9 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           >
             <Instagram className="size-4" />
             <span>Instagram & Integrations</span>
-            {isIgConnected ? (
+            {isLocked ? (
+              <Lock className="size-3 text-[#97A0B3] ml-0.5" />
+            ) : isIgConnected ? (
               <span
                 className={`size-2 rounded-full ml-0.5 ${
                   activeTab === "integrations" ? "bg-emerald-600" : "bg-emerald-400 animate-pulse"
@@ -260,21 +322,22 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           >
             <ShieldCheck className="size-4" />
             <span>Security & Password</span>
+            {isLocked && <Lock className="size-3 text-[#97A0B3] ml-0.5" />}
           </button>
         </nav>
 
         {/* User preview badge */}
-        {query.data && (
+        {(query.data || user) && (
           <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-[#161F2D] border border-[#2A3446] shrink-0">
             <div className="size-8 rounded-full bg-gradient-to-tr from-[#7FA0D6] to-[#BCCCE6] text-[#0B111C] font-black text-xs flex items-center justify-center uppercase shadow-sm">
-              {(query.data.full_name || user?.email || "U").slice(0, 2)}
+              {(query.data?.full_name || user?.full_name || user?.email || "U").slice(0, 2)}
             </div>
             <div className="text-left">
               <p className="text-xs font-bold text-white leading-none truncate max-w-[140px]">
-                {query.data.full_name || "Client Member"}
+                {query.data?.full_name || user?.full_name || "Client Member"}
               </p>
               <p className="text-[10px] text-[#97A0B3] truncate max-w-[140px] mt-0.5">
-                {query.data.email || user?.email}
+                {query.data?.email || user?.email}
               </p>
             </div>
           </div>
@@ -282,14 +345,14 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
       </div>
 
       {/* Loading state */}
-      {query.isPending && (
+      {!isLocked && query.isPending && (
         <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-12 text-center space-y-4">
           <Loader2 className="size-8 text-[#BCCCE6] animate-spin mx-auto" />
           <p className="text-sm font-semibold text-[#97A0B3]">Loading your account settings…</p>
         </div>
       )}
       {/* Error state */}
-      {query.isError && (
+      {!isLocked && query.isError && (
         <div className="bg-rose-500/10 border border-rose-500/30 rounded-3xl p-8 text-center space-y-4">
           <AlertCircle className="size-8 text-rose-400 mx-auto" />
           <p className="text-sm text-rose-200">{query.error.message}</p>
@@ -301,6 +364,27 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           </button>
         </div>
       )}
+
+      {/* Locked state for client before onboarding completion */}
+      {isLocked ? (
+        <SubscriptionLockedState
+          title={
+            activeTab === "integrations"
+              ? "Instagram Integration Locked"
+              : activeTab === "security"
+              ? "Security Settings Locked"
+              : "Profile & Company Locked"
+          }
+          description={
+            activeTab === "integrations"
+              ? "Complete setup to connect your Instagram account for automated publishing."
+              : activeTab === "security"
+              ? "Complete setup to manage your workspace credentials."
+              : "Complete setup to manage your personal and company information."
+          }
+        />
+      ) : (
+        <>
 
       {/* TAB 1: INSTAGRAM & INTEGRATIONS */}
       {query.data && activeTab === "integrations" && (
@@ -439,17 +523,16 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
               </div>
             </div>
           ) : (
-            /* STATE 2: NOT CONNECTED YET - OFFER TO CONNECT OR CREATE AN INSTAGRAM ID */
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Option 1: Link Existing Handle */}
-              <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between">
+            /* STATE 2: NOT CONNECTED YET - CONNECT INSTAGRAM HANDLE */
+            <div className="max-w-2xl mx-auto w-full">
+              <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 space-y-6">
                 <div className="space-y-4">
                   <div className="size-12 rounded-2xl bg-gradient-to-tr from-[#7FA0D6] to-[#BCCCE6] text-[#0B111C] flex items-center justify-center font-black">
                     <Instagram className="size-6 text-[#0B111C]" />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-white tracking-tight">
-                      Already Have an Instagram Account?
+                      Connect Instagram Account
                     </h3>
                     <p className="text-xs text-[#97A0B3] mt-1 leading-relaxed">
                       Enter your brand or company handle below to link your profile to Creo's automated publishing pipeline.
@@ -502,85 +585,6 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                   </button>
                   <p className="text-[10px] text-center text-[#97A0B3]">
                     You can disconnect or update your handle at any time.
-                  </p>
-                </div>
-              </div>
-
-              {/* Option 2: CREATE A NEW INSTAGRAM ID */}
-              <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="size-12 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-[#BCCCE6] flex items-center justify-center shadow-sm">
-                      <Sparkles className="size-6 text-[#7FA0D6]" />
-                    </div>
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#7FA0D6]/15 text-[#BCCCE6] border border-[#7FA0D6]/30">
-                      New Account Setup
-                    </span>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-bold text-white tracking-tight">
-                      Don't Have an Instagram Account Yet?
-                    </h3>
-                    <p className="text-xs text-[#97A0B3] mt-1 leading-relaxed">
-                      Creo publishes high-impact content directly to Instagram. If your business doesn't have an Instagram account yet, create one in 2 minutes for free!
-                    </p>
-                  </div>
-
-                  {/* Quick Steps Guide */}
-                  <div className="space-y-2.5 pt-2">
-                    <div className="flex items-start gap-3 p-3 rounded-xl bg-[#0B111C] border border-[#2A3446]">
-                      <span className="size-5 rounded-full bg-[#7FA0D6]/20 text-[#BCCCE6] font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
-                        1
-                      </span>
-                      <div>
-                        <p className="text-xs font-bold text-white">Create Account on Instagram</p>
-                        <p className="text-[11px] text-[#97A0B3]">
-                          Click the button below to register with your company email or phone.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 p-3 rounded-xl bg-[#0B111C] border border-[#2A3446]">
-                      <span className="size-5 rounded-full bg-[#7FA0D6]/20 text-[#BCCCE6] font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
-                        2
-                      </span>
-                      <div>
-                        <p className="text-xs font-bold text-white">Switch to Professional / Creator</p>
-                        <p className="text-[11px] text-[#97A0B3]">
-                          In the Instagram app: Settings ➔ Account type ➔ Switch to Professional (Free & enables auto-publishing).
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 p-3 rounded-xl bg-[#0B111C] border border-[#2A3446]">
-                      <span className="size-5 rounded-full bg-[#7FA0D6]/20 text-[#BCCCE6] font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
-                        3
-                      </span>
-                      <div>
-                        <p className="text-xs font-bold text-white">Connect Your Handle Here</p>
-                        <p className="text-[11px] text-[#97A0B3]">
-                          Once created, enter your new handle in the box on the left to start publishing.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Direct button to Instagram account registration */}
-                <div className="space-y-3 pt-6 border-t border-[#2A3446]">
-                  <a
-                    href="https://www.instagram.com/accounts/emailsignup/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-3.5 rounded-full bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
-                  >
-                    <Instagram className="size-4" />
-                    <span>Create Instagram Account ↗</span>
-                    <ExternalLink className="size-3.5" />
-                  </a>
-                  <p className="text-[10px] text-center text-[#97A0B3]">
-                    Opens official Instagram registration page in a new secure tab.
                   </p>
                 </div>
               </div>
@@ -765,6 +769,8 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
             </div>
           </div>
         </section>
+      )}
+        </>
       )}
 
       {/* Password Recovery Modal */}

@@ -31,9 +31,9 @@ export function MemberSchedulePTOPage() {
   const tasks = Object.values(pod.data?.tasks ?? {}).flat().filter((task) => task.assigned_to === user?.id && !["completed", "ready_to_publish"].includes(task.status));
   const today = new Date().toISOString().slice(0, 10);
   return <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-slate-100">
-    <AdminTopHeader activeTab="My Schedule & PTO" />
-    <main className="max-w-6xl mx-auto p-3 sm:p-6 pb-24 space-y-5">
-      <header><h1 className="text-2xl font-semibold">My Schedule & Leave</h1><p className="text-sm text-slate-400 mt-1">{pod.data?.pod?.name ?? "Creative team"} • Requests and upcoming assignments</p></header>
+    <AdminTopHeader activeTab="Leave Requests" hideTitle />
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-24 space-y-5">
+      <header><h1 className="text-2xl font-black text-white tracking-tight">Leave Requests</h1><p className="text-sm text-slate-400 mt-1">{pod.data?.pod?.name ?? "Creative team"} • Time off requests and review status</p></header>
       {notice && <p role="status" className="rounded-xl bg-emerald-500/10 text-emerald-300 p-3">{notice}</p>}
       {error && <p role="alert" className="rounded-xl bg-rose-500/10 text-rose-300 p-3">{error instanceof Error ? error.message : "Unable to process the request."}</p>}
       <div className="grid md:grid-cols-2 gap-5">

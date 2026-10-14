@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { request } from "../../lib/http";
+import { useNearViewport } from "../../lib/useNearViewport";
 interface Plan {
   id: string;
   name: string;
@@ -18,16 +19,18 @@ export function PricingCards({
   className = "",
   onChoose,
 }: { className?: string; showBillingToggle?: boolean; defaultCycle?: string; onChoose?: (plan: Plan) => void }) {
+  const { ref, isNear } = useNearViewport<HTMLDivElement>();
   const query = useQuery({
     queryKey: ["public-plans"],
-    queryFn: () => request<Plan[]>("/api/v1/payments/plans"),
-    staleTime: 60_000,
+    queryFn: () => request<Plan[]>("/api/v1/plans"),
+    staleTime: 5 * 60_000,
+    enabled: isNear,
   });
   return (
-    <div className={className}>
+    <div ref={ref} className={className}>
       {query.isPending && (
         <p role="status" className="text-[#97A0B3]">
-          Loading plans?
+          Loading plans…
         </p>
       )}
       {query.isError && (

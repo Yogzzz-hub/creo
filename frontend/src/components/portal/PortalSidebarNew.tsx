@@ -75,15 +75,6 @@ export function PortalSidebarNew() {
     enabled: !!clientId && (user?.onboarding_stage ?? 0) >= 8,
   });
 
-  const companyName = user?.company_name || user?.full_name || "Your Brand";
-  const initials = companyName
-    .split(" ")
-    .filter((w: string) => w.length > 0)
-    .map((w: string) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
   async function handleLogout() {
     const ok = await confirm({
       title: "Sign Out?",
@@ -232,37 +223,9 @@ export function PortalSidebarNew() {
           ))}
         </div>
 
-        {/* Footer: User Profile Card & Direct Sign Out */}
-        <div className="p-3.5 border-t border-[#2A3446] bg-[#0B111C]/80 shrink-0 space-y-2 text-left">
-          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-[#161F2D] border border-[#2A3446]">
-            <div className="size-8 rounded-full bg-[#BCCCE6] text-[#0B111C] font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
-              {initials}
-            </div>
-            <div className="min-w-0 flex-1">
-              <h4 className="text-xs font-bold text-white truncate">{companyName}</h4>
-              <p className="text-[10px] text-[#97A0B3] font-medium truncate">
-                {dashboardData?.active_plan?.tier
-                  ? dashboardData.active_plan.tier.charAt(0).toUpperCase() +
-                    dashboardData.active_plan.tier.slice(1) +
-                    " plan"
-                  : "Growth plan"}{" "}
-                · Pod {dashboardData?.assigned_team?.length ? "Assigned" : "Pending"}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleLogout}
-              disabled={loggingOut}
-              className="p-1.5 rounded-lg text-[#97A0B3] hover:text-[#D8BF9B] hover:bg-[#D8BF9B]/10 transition-colors cursor-pointer"
-              title="Sign Out / Log Out"
-              aria-label="Sign Out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Admin Escape Hatch for staff / admin roles */}
-          {(user?.role === "admin" || user?.role === "super_admin") && (
+        {/* Admin Escape Hatch for staff / admin roles */}
+        {(user?.role === "admin" || user?.role === "super_admin") && (
+          <div className="p-3.5 border-t border-[#2A3446] bg-[#0B111C]/80 shrink-0 text-left">
             <Link
               to="/admin"
               className="w-full flex items-center justify-between text-xs font-bold text-[#7FA0D6] hover:text-white px-3 py-2 rounded-xl bg-[#0B111C] border border-[#7FA0D6]/30 hover:border-[#7FA0D6]/60 transition-colors shadow-xs"
@@ -270,8 +233,8 @@ export function PortalSidebarNew() {
               <span>Admin Dashboard</span>
               <LayoutDashboard className="w-3.5 h-3.5" />
             </Link>
-          )}
-        </div>
+          </div>
+        )}
       </aside>
     </>
   );

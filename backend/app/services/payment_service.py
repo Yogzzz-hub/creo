@@ -179,7 +179,10 @@ async def _activate_subscription(db: AsyncSession, subscription: Subscription) -
                     quota=quota,
                     used=0,
                 )
-                .on_conflict_do_nothing(index_elements=["client_id", "period_start", "kind"])
+                .on_conflict_do_update(
+                    index_elements=["client_id", "period_start", "kind"],
+                    set_={"quota": quota, "period_end": period_end},
+                )
             )
             await db.execute(counter_stmt)
     await db.commit()

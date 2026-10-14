@@ -4,7 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
 import { PublishingControl } from "../../components/ops/PublishingPanel";
 import { resolveAssetUrl } from "../../lib/media";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useParams, useSearchParams, Navigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "../../lib/http";
@@ -23,10 +23,12 @@ import {
   fetchAdminKPIs,
   fetchRevenueTrend,
   fetchAdminTransactions,
+  fetchClientBrandProfile,
   fetchAdminManualPayments,
   approveManualPayment,
   rejectManualPayment,
   directBypassClientPayment,
+  revokeClientBypass,
 } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem, PlanSummaryItem, ManualPaymentRequest } from "../../lib/ops-api";
 import { fetchPlans } from "../../lib/onboarding-api";
@@ -73,7 +75,6 @@ import {
   Video,
   Scissors,
   Palette,
-  RefreshCw,
   Layers,
   Mail,
   Phone,
@@ -111,6 +112,10 @@ export interface ClientDetailData {
   tier: string;
   tierBadge: string;
   status: string;
+  isPaid?: boolean;
+  isOnboarded?: boolean;
+  lifecycleStatus?: "not_paid_not_onboarded" | "paid_not_onboarded" | "onboarded";
+  lifecycleLabel?: string;
   monthlyFee: number;
   onboardingStage?: number;
   addon?: string;
@@ -185,6 +190,11 @@ export function AdminClientsPage() {
     queryFn: () => fetchClientRoster(),
     enabled: !!user,
   });
+  const negotiationsQuery = useQuery({
+    queryKey: ["admin-plan-negotiations-roster"],
+    queryFn: () => fetchPlanNegotiations(),
+    refetchInterval: 30000,
+  });
   const confirm = useConfirm();
   const manualPaymentsQuery = useQuery({
     queryKey: ["admin-manual-payments"],
@@ -212,9 +222,7 @@ export function AdminClientsPage() {
   }, [rosterQuery.data]);
 
   // Active Modals
-  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
-  const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
   const [isCancelClientModalOpen, setIsCancelClientModalOpen] = useState(false);
   const [isOnboardClientModalOpen, setIsOnboardClientModalOpen] = useState(false);
   const [isRemoveClientModalOpen, setIsRemoveClientModalOpen] = useState(false);
@@ -240,13 +248,6 @@ export function AdminClientsPage() {
   const [removeError, setRemoveError] = useState<string | null>(null);
   const [removedClientIds, setRemovedClientIds] = useState<Set<string>>(new Set());
   const [previewDeliverable, setPreviewDeliverable] = useState<any | null>(null);
-
-  const [newRequestForm, setNewRequestForm] = useState({
-    title: "",
-    type: "Reel",
-    priority: "Standard",
-    notes: "",
-  });
 
   const offboardClient = async (id: string, name: string) => {
     if (removingClient) return;
@@ -274,12 +275,40 @@ export function AdminClientsPage() {
       : rawEmailPart;
     const formattedName = rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1) : "Client Account";
     const initials = formattedName.charAt(0).toUpperCase();
-    const tierName = sc.plan_display_name || sc.plan_name || "Enterprise Retainer";
+
+    // Determine lifecycle status:
+    const isPaid = Boolean(
+      (sc.subscription_status && ["active", "trialing", "paid"].includes(sc.subscription_status.toLowerCase())) ||
+      (sc.plan_name && sc.monthly_price && sc.monthly_price > 0)
+    );
+
+    const isOnboarded = Boolean(
+      sc.onboarding_completed_at ||
+      (typeof sc.onboarding_stage === "number" && sc.onboarding_stage >= 4)
+    );
+
+    const lifecycleStatus: "not_paid_not_onboarded" | "paid_not_onboarded" | "onboarded" = 
+      !isOnboarded
+        ? (!isPaid ? "not_paid_not_onboarded" : "paid_not_onboarded")
+        : "onboarded";
+
+    const lifecycleLabel =
+      lifecycleStatus === "not_paid_not_onboarded"
+        ? "user not paid and not onboarded yet"
+        : lifecycleStatus === "paid_not_onboarded"
+          ? "user paid but not onboarded"
+          : "Active Retainer";
+
+    const tierName = isPaid
+      ? (sc.plan_display_name || sc.plan_name || "Enterprise Retainer")
+      : "No Active Plan";
     const tier = tierName.toLowerCase();
+    const tierBadge = isPaid
+      ? (sc.plan_display_name || sc.plan_name || "ACTIVE").toUpperCase()
+      : "UNPAID";
     
     const podConfigs = [
       {
-        letter: "A",
         name: "Pod A",
         tagline: "Enterprise Brand Strategy & Video",
         leadName: "Vikram Malhotra",
@@ -289,9 +318,11 @@ export function AdminClientsPage() {
           { name: "Karthik Raja", role: "Video Editor", hoursPerWeek: 16, avatar: "KR" },
           { name: "Ananya Deshmukh", role: "Graphic Designer", hoursPerWeek: 16, avatar: "AD" },
         ],
+        capacityAllocatedHrs: 32,
+        bandwidthPercent: 80,
+        dailySyncTime: "11:00 AM IST",
       },
       {
-        letter: "B",
         name: "Pod B",
         tagline: "Performance Creative & Motion Ops",
         leadName: "Sarah Connor",
@@ -301,9 +332,11 @@ export function AdminClientsPage() {
           { name: "Karthik Raja", role: "Video Editor", hoursPerWeek: 16, avatar: "KR" },
           { name: "Elena Rostova", role: "Graphic Designer", hoursPerWeek: 16, avatar: "ER" },
         ],
+        capacityAllocatedHrs: 32,
+        bandwidthPercent: 80,
+        dailySyncTime: "11:30 AM IST",
       },
       {
-        letter: "C",
         name: "Pod C",
         tagline: "3D Motion & Visual Design",
         leadName: "Rohan Mehta",
@@ -313,19 +346,38 @@ export function AdminClientsPage() {
           { name: "Tanvi Sen", role: "Video Editor", hoursPerWeek: 16, avatar: "TS" },
           { name: "Arjun Nair", role: "Graphic Designer", hoursPerWeek: 16, avatar: "AN" },
         ],
+        capacityAllocatedHrs: 32,
+        bandwidthPercent: 80,
+        dailySyncTime: "12:00 PM IST",
       },
     ];
     const podIdx = Math.abs(formattedName.charCodeAt(0) || 0) % podConfigs.length;
-    const pod = (podConfigs[podIdx] || podConfigs[0])!;
+    const basePod = (podConfigs[podIdx] || podConfigs[0])!;
 
-    const monthlyFee = sc.monthly_price || (tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000);
+    const assignedPod = !isOnboarded
+      ? {
+          name: isPaid ? "Awaiting Onboarding" : "Not Assigned",
+          tagline: isPaid ? "Intake questionnaire in progress" : "Pending payment & onboarding",
+          leadName: isPaid ? "To be assigned" : "Not Assigned",
+          leadTitle: isPaid ? "Pod Lead Pending" : "Creative Lead Pending",
+          leadAvatar: "—",
+          squad: [],
+          capacityAllocatedHrs: 0,
+          bandwidthPercent: 0,
+          dailySyncTime: "—",
+        }
+      : basePod;
+
+    const monthlyFee = isPaid
+      ? (sc.monthly_price || (tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000))
+      : 0;
     
-    const postsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.quota || 0;
-    const postsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.used || 0;
-    const reelsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.quota || 0;
-    const reelsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.used || 0;
-    const storiesQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.quota || 0;
-    const storiesDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.used || 0;
+    const postsQuota = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "posts")?.quota || 0;
+    const postsDelivered = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "posts")?.used || 0;
+    const reelsQuota = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "reels")?.quota || 0;
+    const reelsDelivered = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "reels")?.used || 0;
+    const storiesQuota = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "stories")?.quota || 0;
+    const storiesDelivered = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "stories")?.used || 0;
 
     // Check for match with existing baseline client
     const existingKey = Object.keys(mergedClientsData).find(
@@ -337,25 +389,87 @@ export function AdminClientsPage() {
 
     const existing = existingKey ? mergedClientsData[existingKey] : undefined;
 
+    const CANONICAL_PALETTE = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"];
+    const CANONICAL_ROLES = [
+      "Primary Brand",
+      "Accent / Secondary",
+      "Surface / Canvas",
+      "Glow / Highlight",
+    ];
+
+    const rawScPalette = Array.isArray((sc as any).brand_dna?.palette) && (sc as any).brand_dna.palette.length > 0
+      ? (sc as any).brand_dna.palette
+      : Array.isArray((sc as any).brand_dna?.visual_direction?.primary_colors) && (sc as any).brand_dna.visual_direction.primary_colors.length > 0
+        ? (sc as any).brand_dna.visual_direction.primary_colors
+        : [];
+
+    const extractedScList: string[] = [];
+    if (Array.isArray(rawScPalette)) {
+      rawScPalette.forEach((item: any) => {
+        const hex = typeof item === "string" ? item.trim() : (item?.hex || item?.color || "").trim();
+        if (hex && hex.startsWith("#")) {
+          extractedScList.push(hex.toUpperCase());
+        }
+      });
+    }
+
+    const finalScHexes: string[] = [0, 1, 2, 3].map((i) => extractedScList[i] || CANONICAL_PALETTE[i] || "#161F2D");
+    if (extractedScList.length > 4) {
+      for (let i = 4; i < extractedScList.length; i++) {
+        if (extractedScList[i]) {
+          finalScHexes.push(extractedScList[i]!);
+        }
+      }
+    }
+
+    const resolvedColors = finalScHexes.map((hex, idx) => ({
+      name: CANONICAL_ROLES[idx] || `Accent Tone ${idx + 1}`,
+      hex: hex || "#161F2D",
+    }));
+
+    const clientStatus =
+      lifecycleStatus === "not_paid_not_onboarded"
+        ? "user not paid and not onboarded yet"
+        : lifecycleStatus === "paid_not_onboarded"
+          ? "user paid but not onboarded"
+          : (sc.subscription_status || sc.account_status || "ACTIVE RETAINER").toUpperCase();
+
     if (existing) {
       const updated: ClientDetailData = {
         ...existing,
         id: sc.client_id || existing.id,
         initials: existing.initials || initials,
         name: existing.name || formattedName,
-        status: (sc.subscription_status || sc.account_status || existing.status).toUpperCase(),
+        industry: (sc as any).industry || (sc as any).brand_dna?.industry || existing.industry || "Digital Growth & Direct-to-Consumer",
+        timezone: (sc as any).timezone || existing.timezone || "Client Time: IST (UTC+5:30)",
+        status: clientStatus,
+        isPaid,
+        isOnboarded,
+        lifecycleStatus,
+        lifecycleLabel,
         onboardingStage: sc.onboarding_stage,
-        totalAssetsDelivered: postsDelivered + reelsDelivered + storiesDelivered,
-        totalAssetsQuota: postsQuota + reelsQuota + storiesQuota,
-        postsDelivered,
-        postsQuota,
-        reelsDelivered,
-        reelsQuota,
-        storiesDelivered,
-        storiesQuota,
+        tier: tierName,
+        tierBadge,
+        monthlyFee,
+        pod: assignedPod,
+        totalAssetsDelivered: isOnboarded ? (postsDelivered + reelsDelivered + storiesDelivered) : 0,
+        totalAssetsQuota: isOnboarded ? (postsQuota + reelsQuota + storiesQuota) : 0,
+        postsDelivered: isOnboarded ? postsDelivered : 0,
+        postsQuota: isOnboarded ? postsQuota : 0,
+        reelsDelivered: isOnboarded ? reelsDelivered : 0,
+        reelsQuota: isOnboarded ? reelsQuota : 0,
+        storiesDelivered: isOnboarded ? storiesDelivered : 0,
+        storiesQuota: isOnboarded ? storiesQuota : 0,
         contact: {
           ...existing.contact,
+          name: sc.full_name || existing.contact.name || formattedName,
           email: sc.email || existing.contact.email,
+          phone: (sc as any).phone || (sc as any).brand_dna?.phone || (isOnboarded && existing.contact.phone && existing.contact.phone !== "+91 98401 23890" && existing.contact.phone !== "Not provided yet" ? existing.contact.phone : "Not provided yet"),
+        },
+        brand: {
+          ...existing.brand,
+          colors: resolvedColors.length > 0 ? resolvedColors : existing.brand.colors,
+          toneSummary: (sc as any).brand_summary || (sc as any).brand_dna?.summary_line || existing.brand.toneSummary,
         },
       };
       if (existingKey) {
@@ -367,69 +481,79 @@ export function AdminClientsPage() {
         id: sc.client_id,
         name: formattedName,
         initials,
-        industry: "Digital Growth & Direct-to-Consumer",
-        timezone: "Client Time: IST (UTC+5:30)",
-        activeSince: "Active Client",
+        industry: (sc as any).industry || (sc as any).brand_dna?.industry || "Digital Growth & Direct-to-Consumer",
+        timezone: (sc as any).timezone || "Client Time: IST (UTC+5:30)",
+        activeSince: isOnboarded ? "Active Client" : isPaid ? "Payment Confirmed" : "Registered Client",
         tier: tierName,
-        tierBadge: tierName.toUpperCase(),
-        status: (sc.subscription_status || sc.account_status || "ACTIVE RETAINER").toUpperCase(),
+        tierBadge,
+        status: clientStatus,
+        isPaid,
+        isOnboarded,
+        lifecycleStatus,
+        lifecycleLabel,
         monthlyFee,
         onboardingStage: sc.onboarding_stage,
-        addon: "Add-on: Creative Pod",
-        nextBilling: "Next Month Cycle",
-        billingMethod: "Direct ACH / Razorpay",
-        totalAssetsDelivered: postsDelivered + reelsDelivered + storiesDelivered,
-        totalAssetsQuota: postsQuota + reelsQuota + storiesQuota,
-        postsDelivered,
-        postsQuota,
-        reelsDelivered,
-        reelsQuota,
-        storiesDelivered,
-        storiesQuota,
-        sprintNumber: 44,
-        daysRemainingInSprint: 14,
+        addon: isPaid && isOnboarded ? "Add-on: Creative Pod" : undefined,
+        nextBilling: isPaid ? "Next Month Cycle" : "—",
+        billingMethod: isPaid ? "Direct ACH / Razorpay" : "Unpaid",
+        totalAssetsDelivered: isOnboarded ? (postsDelivered + reelsDelivered + storiesDelivered) : 0,
+        totalAssetsQuota: isOnboarded ? (postsQuota + reelsQuota + storiesQuota) : 0,
+        postsDelivered: isOnboarded ? postsDelivered : 0,
+        postsQuota: isOnboarded ? postsQuota : 0,
+        reelsDelivered: isOnboarded ? reelsDelivered : 0,
+        reelsQuota: isOnboarded ? reelsQuota : 0,
+        storiesDelivered: isOnboarded ? storiesDelivered : 0,
+        storiesQuota: isOnboarded ? storiesQuota : 0,
+        sprintNumber: isOnboarded ? 44 : 0,
+        daysRemainingInSprint: isOnboarded ? 14 : 0,
         contact: {
-          name: formattedName,
+          name: sc.full_name || formattedName,
           title: "Account Owner & Authorized Contact",
           email: sc.email,
-          phone: "+91 98401 23890",
-          renewedDate: "Current Sprint",
-          termMonths: 12,
+          phone: (sc as any).phone || (sc as any).brand_dna?.phone || "Not provided yet",
+          renewedDate: !isPaid ? "Pending Subscription" : isOnboarded ? "Current Sprint" : "Payment Confirmed",
+          termMonths: isPaid ? 12 : 0,
         },
-        brand: {
-          kitVersion: "Design Kit v2.4",
-          headingsFont: "Plus Jakarta Sans",
-          bodyFont: "Inter Sans",
-          monoFont: "JetBrains Mono",
-          toneSummary: `Dynamic, high-impact social media creatives engineered for ${formattedName}. High-clarity typography with conversion-optimized video hooks.`,
-          toneTags: ["High Conversion", "Brand Authority", "Visual Polish"],
-          colors: [
-            { name: "Primary Deep Navy", hex: "#0B111C" },
-            { name: "Accent Royal Blue", hex: "#7FA0D6" },
-            { name: "Cyan Highlight", hex: "#7FA0D6" },
-            { name: "Clean Neutral", hex: "#F8FAFC", isLight: true },
-          ],
-          social: {
-            handle: sc.instagram_username ? `@${sc.instagram_username}` : `@${emailParts[0] || "client"}`,
-            followers: "API Connected",
-            status: "API CONNECTED",
-            syncInterval: "15m refresh",
-          },
-          brandVaultLink: "Client Brand Vault Drive",
-          figmaLink: "Figma Master Design Kit",
-          lastAuditDate: "This Sprint",
-        },
-        pod: {
-          name: pod.name,
-          tagline: pod.tagline,
-          leadName: pod.leadName,
-          leadTitle: pod.leadTitle,
-          leadAvatar: pod.leadAvatar,
-          squad: pod.squad,
-          capacityAllocatedHrs: 32,
-          bandwidthPercent: 80,
-          dailySyncTime: "11:00 AM IST",
-        },
+        brand: !isOnboarded
+          ? {
+              kitVersion: isPaid ? "Pending Intake Form" : "Pending Onboarding",
+              headingsFont: "Pending Onboarding",
+              bodyFont: "Pending Onboarding",
+              monoFont: "Pending Onboarding",
+              toneSummary: isPaid
+                ? `user paid but not onboarded. Intake questionnaire is in progress for ${formattedName}. Brand guidelines and assets will be generated upon completion.`
+                : `user not paid and not onboarded yet. Brand guidelines and assets will be generated once ${formattedName} subscribes and completes onboarding.`,
+              toneTags: isPaid ? ["Payment Confirmed", "Awaiting Intake"] : ["Unpaid", "Not Onboarded"],
+              colors: isPaid && resolvedColors.length > 0 ? resolvedColors : [],
+              social: {
+                handle: sc.instagram_username ? `@${sc.instagram_username}` : "Not connected",
+                followers: isPaid ? "Awaiting Sync" : "Not Connected",
+                status: isPaid ? "AWAITING SYNC" : "NOT CONNECTED",
+                syncInterval: "—",
+              },
+              brandVaultLink: "Pending Onboarding",
+              figmaLink: "Pending Onboarding",
+              lastAuditDate: "—",
+            }
+          : {
+              kitVersion: "Design Kit v2.4",
+              headingsFont: "Plus Jakarta Sans",
+              bodyFont: "Inter Sans",
+              monoFont: "JetBrains Mono",
+              toneSummary: (sc as any).brand_summary || (sc as any).brand_dna?.summary_line || `Dynamic, high-impact social media creatives engineered for ${formattedName}. High-clarity typography with conversion-optimized video hooks.`,
+              toneTags: ["High Conversion", "Brand Authority", "Visual Polish"],
+              colors: resolvedColors,
+              social: {
+                handle: sc.instagram_username ? `@${sc.instagram_username}` : `@${emailParts[0] || "client"}`,
+                followers: "API Connected",
+                status: "API CONNECTED",
+                syncInterval: "15m refresh",
+              },
+              brandVaultLink: "Client Brand Vault Drive",
+              figmaLink: "Figma Master Design Kit",
+              lastAuditDate: "This Sprint",
+            },
+        pod: assignedPod,
         deliverables: [],
       };
     }
@@ -456,8 +580,8 @@ export function AdminClientsPage() {
         (key) =>
           key.toLowerCase() === urlClientId.toLowerCase() ||
           mergedClientsData[key]?.id?.toLowerCase() === urlClientId.toLowerCase() ||
-          mergedClientsData[key]?.name.toLowerCase() === urlClientId.toLowerCase() ||
-          mergedClientsData[key]?.contact.email.toLowerCase() === urlClientId.toLowerCase() ||
+          mergedClientsData[key]?.name?.toLowerCase() === urlClientId.toLowerCase() ||
+          mergedClientsData[key]?.contact?.email?.toLowerCase() === urlClientId.toLowerCase() ||
           key.includes(urlClientId) ||
           urlClientId.includes(key)
       );
@@ -471,9 +595,9 @@ export function AdminClientsPage() {
     ? mergedClientsData[selectedClientId] ||
       clientList.find(
         (c) =>
-          c.id.toLowerCase() === selectedClientId.toLowerCase() ||
-          c.name.toLowerCase() === selectedClientId.toLowerCase() ||
-          c.contact.email.toLowerCase() === selectedClientId.toLowerCase()
+          c.id?.toLowerCase() === selectedClientId.toLowerCase() ||
+          c.name?.toLowerCase() === selectedClientId.toLowerCase() ||
+          c.contact?.email?.toLowerCase() === selectedClientId.toLowerCase()
       ) ||
       clientList[0] ||
       null
@@ -494,6 +618,109 @@ export function AdminClientsPage() {
     }
   }, [activeClient?.id]);
 
+  const activeClientId = activeClient?.id;
+  const clientBrandQuery = useQuery({
+    queryKey: ["admin-client-brand-profile", activeClientId],
+    queryFn: () => fetchClientBrandProfile(activeClientId!),
+    enabled: !!activeClientId,
+  });
+  const liveBrandProfile = clientBrandQuery.data;
+
+  const [copiedHexIndex, setCopiedHexIndex] = useState<number | null>(null);
+
+  const handleCopyHex = (hex: string, index: number) => {
+    navigator.clipboard.writeText(hex);
+    setCopiedHexIndex(index);
+    setTimeout(() => setCopiedHexIndex(null), 2000);
+  };
+
+  const realColors = useMemo(() => {
+    const CANONICAL_PALETTE = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"];
+    const CANONICAL_ROLES = [
+      "Primary Brand",
+      "Accent / Secondary",
+      "Surface / Canvas",
+      "Glow / Highlight",
+    ];
+
+    const raw =
+      liveBrandProfile?.brand_dna?.palette ||
+      liveBrandProfile?.brand_dna?.visual_direction?.primary_colors ||
+      (activeClient?.brand?.colors && activeClient.brand.colors.length > 0
+        ? activeClient.brand.colors.map((c: any) => (typeof c === "string" ? c : c.hex))
+        : []);
+
+    const extractedList: string[] = [];
+    if (Array.isArray(raw)) {
+      raw.forEach((item: any) => {
+        const hex = typeof item === "string" ? item.trim() : (item?.hex || item?.color || "").trim();
+        if (hex && hex.startsWith("#")) {
+          extractedList.push(hex.toUpperCase());
+        }
+      });
+    }
+
+    // Always pad to 4 tokens minimum to match Client Portal tokens
+    const finalHexes: string[] = [0, 1, 2, 3].map((i) => extractedList[i] || CANONICAL_PALETTE[i] || "#161F2D");
+    if (extractedList.length > 4) {
+      for (let i = 4; i < extractedList.length; i++) {
+        if (extractedList[i]) {
+          finalHexes.push(extractedList[i]!);
+        }
+      }
+    }
+
+    return finalHexes.map((hex, idx) => ({
+      name: CANONICAL_ROLES[idx] || `Accent Tone ${idx + 1}`,
+      hex: hex || "#161F2D",
+    }));
+  }, [liveBrandProfile, activeClient]);
+
+  const realTypography = useMemo(() => {
+    const vis = liveBrandProfile?.brand_dna?.visual_direction;
+    const typo = liveBrandProfile?.brand_dna?.typography;
+    const headings = typo?.headline || vis?.headings_font || activeClient?.brand?.headingsFont || "Inter Display · 700 Bold";
+    const body = typo?.body || vis?.body_font || activeClient?.brand?.bodyFont || "Inter Sans · 400 Regular";
+    return {
+      headingsFont: typeof headings === "string" ? headings : "Inter Display · 700 Bold",
+      bodyFont: typeof body === "string" ? body : "Inter Sans · 400 Regular",
+      monoFont: "JetBrains Mono",
+    };
+  }, [liveBrandProfile, activeClient]);
+
+  const realTone = useMemo(() => {
+    const dna = liveBrandProfile?.brand_dna || {};
+    const toneObj = typeof dna.tone === "object" && dna.tone !== null ? dna.tone : {};
+    const rawTags =
+      Array.isArray(toneObj.voice_words) && toneObj.voice_words.length > 0
+        ? toneObj.voice_words
+        : Array.isArray(dna.tone_keywords) && dna.tone_keywords.length > 0
+          ? dna.tone_keywords
+          : typeof dna.tone === "string" && dna.tone.trim()
+            ? dna.tone.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : (activeClient?.brand?.toneTags || ["Warm", "Premium", "Friendly"]);
+
+    const tags = Array.isArray(rawTags)
+      ? rawTags.map((t: any) => {
+          const str = typeof t === "string" ? t : (t?.name || t?.word || String(t));
+          return str.charAt(0).toUpperCase() + str.slice(1);
+        })
+      : ["Warm", "Premium", "Friendly"];
+
+    const rawSummary =
+      dna.summary_line ||
+      liveBrandProfile?.brand_summary ||
+      dna.positioning ||
+      activeClient?.brand?.toneSummary ||
+      `Engineered brand identity for ${activeClient?.name || "Client"}.`;
+
+    const summary = typeof rawSummary === "string" ? rawSummary : String(rawSummary || "");
+    const audience = dna.audience_segments?.[0]?.description || dna.target_audience || "";
+    const painPoints = dna.audience_segments?.[0]?.core_pain_point || dna.value_propositions || "";
+
+    return { summary, tags, audience, painPoints };
+  }, [liveBrandProfile, activeClient]);
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
@@ -507,13 +734,8 @@ export function AdminClientsPage() {
     showToast(`Revision requested for "${title}". Assigned specialist notified.`);
   };
 
-  const handleCreateRequest = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newRequestForm.title.trim()) return;
-    showToast(`New request "${newRequestForm.title}" submitted to ${activeClient?.pod.name}.`);
-    setIsNewRequestOpen(false);
-    setNewRequestForm({ title: "", type: "Reel", priority: "Standard", notes: "" });
-  };
+
+
 
   const handleApprovePayment = async (req: ManualPaymentRequest) => {
     const ok = await confirm({
@@ -577,7 +799,8 @@ export function AdminClientsPage() {
     e.preventDefault();
     if (!directBypassTargetClient || !directBypassPlanId) return;
 
-    const chosenPlan = plansQuery.data?.find((p) => p.id === directBypassPlanId);
+    const allAvailablePlans = [...(directBypassClientPlans || []), ...(plansQuery.data || [])];
+    const chosenPlan = allAvailablePlans.find((p) => p.id === directBypassPlanId);
     const planName = chosenPlan?.display_name || chosenPlan?.name || "Selected Plan";
     const planPrice = chosenPlan ? `₹${(chosenPlan.price_minor / 100).toLocaleString()}/mo` : "";
 
@@ -607,6 +830,7 @@ export function AdminClientsPage() {
       });
       await queryClient.invalidateQueries({ queryKey: ["admin-client-roster"] });
       await queryClient.invalidateQueries({ queryKey: ["admin-manual-payments"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-client-brand-profile", directBypassTargetClient.id] });
       setIsDirectBypassModalOpen(false);
       setDirectBypassTargetClient(null);
       setDirectBypassNotes("");
@@ -618,23 +842,58 @@ export function AdminClientsPage() {
     }
   };
 
+  const handleRevokeBypass = async (client: { id: string; name: string }) => {
+    const ok = await confirm({
+      title: "Revoke Payment Bypass?",
+      description: `Are you sure you want to revoke the payment bypass for ${client.name}? This will immediately cancel their active subscription, reset monthly deliverable quotas, and return their account to Step 3 (Unpaid / Choose plan).`,
+      confirmText: "Revoke Bypass & Reset to Step 3",
+      cancelText: "Keep Active",
+      tone: "danger",
+    });
+    if (!ok) return;
+
+    try {
+      await revokeClientBypass(client.id);
+      await queryClient.invalidateQueries({ queryKey: ["admin-client-roster"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-manual-payments"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-client-brand-profile", client.id] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-kpis"] });
+      showToast(`Payment bypass revoked for ${client.name}. Account returned to Step 3.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to revoke payment bypass.");
+    }
+  };
+
+
   const filteredClientList = clientList.filter((c) => {
     const matchesSearch =
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.industry.toLowerCase().includes(search.toLowerCase()) ||
       c.contact.email.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || c.status.toLowerCase().includes(statusFilter.toLowerCase());
+    
+    let matchesStatus = true;
+    if (statusFilter === "all") {
+      matchesStatus = true;
+    } else if (statusFilter === "active") {
+      matchesStatus = c.lifecycleStatus === "onboarded";
+    } else if (statusFilter === "paid_not_onboarded") {
+      matchesStatus = c.lifecycleStatus === "paid_not_onboarded";
+    } else if (statusFilter === "not_paid_not_onboarded") {
+      matchesStatus = c.lifecycleStatus === "not_paid_not_onboarded";
+    } else {
+      matchesStatus = c.status.toLowerCase().includes(statusFilter.toLowerCase());
+    }
     return matchesSearch && matchesStatus;
   });
 
-  const filteredDeliverables = liveDeliverables.filter((d) => {
+  const filteredDeliverables = (liveDeliverables || []).filter((d) => {
     if (!deliverableSearch.trim()) return true;
-    return (
-      d.title.toLowerCase().includes(deliverableSearch.toLowerCase()) ||
-      d.description.toLowerCase().includes(deliverableSearch.toLowerCase()) ||
-      d.assignedTo.toLowerCase().includes(deliverableSearch.toLowerCase())
-    );
-  }) || [];
+    const searchLower = deliverableSearch.toLowerCase();
+    const title = (d.title || "").toLowerCase();
+    const desc = (d.description || "").toLowerCase();
+    const assigned = (d.assignedTo || d.assigned_name || "").toLowerCase();
+    return title.includes(searchLower) || desc.includes(searchLower) || assigned.includes(searchLower);
+  });
 
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
@@ -643,7 +902,7 @@ export function AdminClientsPage() {
         activeTab="Client Details"
       />
 
-      <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
+      <main className="flex-1 px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {toast && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
@@ -674,9 +933,9 @@ export function AdminClientsPage() {
                 />
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 shrink-0">
+                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20 shrink-0">
                   <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-                  {clientList.length} Active Retainers
+                  {clientList.filter(c => c.lifecycleStatus === "onboarded").length} Active · {clientList.length} Total Clients
                 </span>
                 <div className="flex items-center gap-1.5">
                   <Filter className="size-4 text-[#97A0B3]" />
@@ -687,8 +946,8 @@ export function AdminClientsPage() {
                     options={[
                       { value: "all", label: "All Statuses" },
                       { value: "active", label: "Active Retainers" },
-                      { value: "enterprise", label: "Enterprise Retainers" },
-                      { value: "growth", label: "Growth Retainers" },
+                      { value: "paid_not_onboarded", label: "User Paid • Not Onboarded" },
+                      { value: "not_paid_not_onboarded", label: "User Not Paid • Not Onboarded" },
                     ]}
                   />
                 </div>
@@ -724,48 +983,150 @@ export function AdminClientsPage() {
 
             {/* Client Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6">
-              {filteredClientList.map((client) => (
-                <div
-                  key={client.id}
-                  onClick={() => setSelectedClientId(client.id)}
-                  className="bg-[#161F2D]/80 backdrop-blur-xl rounded-3xl p-4 sm:p-6 border border-[#2A3446]/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between"
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-[#0B111C] text-white font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
-                          {client.initials}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <h3 className="font-bold text-base text-white group-hover:text-[#7FA0D6] transition-colors">
-                              {client.name}
-                            </h3>
-                            <CheckCircle2 className="w-4 h-4 text-[#7FA0D6] fill-blue-600 text-white" />
+              {filteredClientList.map((client) => {
+                const isNotPaidNotOnboarded = client.lifecycleStatus === "not_paid_not_onboarded";
+                const isPaidNotOnboarded = client.lifecycleStatus === "paid_not_onboarded";
+                const isOnboarded = client.lifecycleStatus === "onboarded";
+
+                return (
+                  <div
+                    key={client.id}
+                    onClick={() => setSelectedClientId(client.id)}
+                    className="bg-[#161F2D]/80 backdrop-blur-xl rounded-3xl p-4 sm:p-6 border border-[#2A3446]/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between"
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-12 h-12 rounded-2xl bg-[#0B111C] text-white font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0">
+                            {client.initials}
                           </div>
-                          <span className="text-[11px] text-[#97A0B3] font-medium block truncate max-w-[200px]">
-                            {client.industry}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <h3 className="font-bold text-base text-white group-hover:text-[#7FA0D6] transition-colors truncate">
+                                {client.name}
+                              </h3>
+                              {isOnboarded && (
+                                <CheckCircle2 className="w-4 h-4 text-[#7FA0D6] fill-blue-600 text-white shrink-0" />
+                              )}
+                            </div>
+                            <span className="text-[11px] text-[#97A0B3] font-medium block truncate max-w-[200px]">
+                              {client.industry}
+                            </span>
+                          </div>
+                        </div>
+
+                        {isNotPaidNotOnboarded ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0 whitespace-nowrap">
+                            user not paid and not onboarded yet
+                          </span>
+                        ) : isPaidNotOnboarded ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-500/15 text-sky-400 border border-sky-500/30 shrink-0 whitespace-nowrap">
+                            user paid but not onboarded
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+                            {client.status.replace(" RETAINER", "") || "ACTIVE"}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="p-3 bg-[#0B111C]/80 rounded-2xl space-y-1.5 text-xs text-[#F1F5F9] border border-[#2A3446]">
+                        <div className="flex justify-between">
+                          <span className="font-medium text-[#97A0B3]">Retainer:</span>
+                          <span className="font-bold text-white">
+                            {isNotPaidNotOnboarded ? "₹0 (Unpaid)" : `₹${(client.monthlyFee ?? 0).toLocaleString()}/mo`}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium text-[#97A0B3]">Assigned Pod:</span>
+                          <span className={`font-bold ${isOnboarded ? "text-[#7FA0D6]" : "text-[#97A0B3]"}`}>
+                            {client.pod?.name || (isPaidNotOnboarded ? "Awaiting Onboarding" : "Not Assigned")}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium text-[#97A0B3]">Primary Contact:</span>
+                          <span className="font-semibold text-white truncate max-w-[170px]">
+                            {client.contact?.name || client.name}
                           </span>
                         </div>
                       </div>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                        {client.status.replace(" RETAINER", "")}
-                      </span>
+
+                      {(() => {
+                        const cardNeg = (negotiationsQuery.data || []).find(
+                          (n) =>
+                            n.status === "Pending Review" &&
+                            ((n.clientId && n.clientId.toLowerCase() === client.id.toLowerCase()) ||
+                             (n.clientEmail && client.contact?.email && n.clientEmail.toLowerCase() === client.contact.email.toLowerCase()) ||
+                             (n.clientName && client.name && n.clientName.toLowerCase() === client.name.toLowerCase()))
+                        );
+                        if (!cardNeg) return null;
+                        return (
+                          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[11px] font-bold">
+                            <span className="flex items-center gap-1.5 truncate">
+                              <Zap className="size-3 text-purple-400 animate-pulse shrink-0" />
+                              <span className="truncate">Negotiation: {cardNeg.proposedOffer || "Pending"}</span>
+                            </span>
+                            <Link
+                              to={`/admin/plans?negId=${cardNeg.id}&clientId=${client.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-purple-300 hover:text-white underline text-[10px] font-black shrink-0 ml-1"
+                            >
+                              Review &rarr;
+                            </Link>
+                          </div>
+                        );
+                      })()}
                     </div>
 
-                    <div className="p-3 bg-[#0B111C]/80 rounded-2xl space-y-1.5 text-xs text-[#F1F5F9] border border-[#2A3446]">
-                      <div className="flex justify-between">
-                        <span className="font-medium text-[#97A0B3]">Retainer:</span>
-                        <span className="font-bold text-white">₹{client.monthlyFee.toLocaleString()}/mo</span>
+                    <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#97A0B3] font-medium">
+                          {isOnboarded
+                            ? `${(client.deliverables || []).length} Deliverables Active`
+                            : isPaidNotOnboarded
+                            ? "Awaiting Onboarding Form"
+                            : "Account Not Onboarded"}
+                        </span>
+                        {isNotPaidNotOnboarded ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDirectBypassTargetClient({
+                                id: client.id,
+                                name: client.name,
+                                email: client.contact?.email || "",
+                              });
+                              setDirectBypassPlanId(plansQuery.data?.[0]?.id || "");
+                              setIsDirectBypassModalOpen(true);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                            title="Bypass payment for client who paid offline"
+                          >
+                            <Banknote className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Bypass Payment</span>
+                          </button>
+                        ) : isPaidNotOnboarded ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRevokeBypass({
+                                id: client.id,
+                                name: client.name,
+                              });
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                            title="Revoke payment bypass and return client to Step 3"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
+                            <span>Revoke Bypass</span>
+                          </button>
+                        ) : null}
                       </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-[#97A0B3]">Assigned Pod:</span>
-                        <span className="font-bold text-[#7FA0D6]">{client.pod.name} ({client.pod.tagline})</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-[#97A0B3]">Primary Contact:</span>
-                        <span className="font-semibold text-white">{client.contact.name}</span>
-                      </div>
+                      <span className="text-[#7FA0D6] font-bold group-hover:underline flex items-center gap-1">
+                        View Client Detail View &rarr;
+                      </span>
                     </div>
                   </div>
 
@@ -814,10 +1175,48 @@ export function AdminClientsPage() {
               ))}
             </div>
           </div>
-        ) : (
-          /* ═════════════════════════════════════════════════════════════════════
-              VIEW 2: DEDICATED CLIENT DETAIL VIEW (MATCHING USER SCREENSHOT)
-          ═════════════════════════════════════════════════════════════════════ */
+        ) : !activeClient ? (
+          <div className="py-20 text-center space-y-4">
+            <div className="inline-block p-4 rounded-2xl bg-[#161F2D] border border-[#2A3446]">
+              <Clock className="w-8 h-8 text-[#7FA0D6] mx-auto animate-pulse" />
+            </div>
+            <h3 className="text-base font-bold text-white">Loading Client Details...</h3>
+            <p className="text-xs text-[#97A0B3]">Synchronizing live roster and brand profile.</p>
+            <button
+              type="button"
+              onClick={() => setSelectedClientId(null)}
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer"
+            >
+              Back to Client Roster
+            </button>
+          </div>
+        ) : (() => {
+            const displayName = liveBrandProfile?.company_name || activeClient?.name || "Client";
+            const displayIndustry = liveBrandProfile?.industry || activeClient?.industry || "Digital Growth & Direct-to-Consumer";
+            const displayTimezone = liveBrandProfile?.timezone || activeClient?.timezone || "Client Time: IST (UTC+5:30)";
+            const displaySignerName = liveBrandProfile?.full_name || activeClient?.contact?.name || activeClient?.name || "Authorized Contact";
+            const displaySignerEmail = liveBrandProfile?.email || activeClient?.contact?.email || "";
+            const displayInitials = (displayName || "C").trim().split(/\s+/).filter(Boolean).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase() || "C";
+
+            const isClientPaid = Boolean(
+              (liveBrandProfile?.subscription?.status && ["active", "trialing", "paid"].includes(liveBrandProfile.subscription.status.toLowerCase())) ||
+              activeClient?.isPaid ||
+              (activeClient?.monthlyFee && activeClient.monthlyFee > 0)
+            );
+            const isClientOnboarded = Boolean(
+              liveBrandProfile?.onboarding_completed_at ||
+              (typeof liveBrandProfile?.onboarding_stage === "number" && liveBrandProfile.onboarding_stage >= 4) ||
+              activeClient?.isOnboarded
+            );
+            const detailLifecycleStatus: "not_paid_not_onboarded" | "paid_not_onboarded" | "onboarded" = 
+              !isClientOnboarded
+                ? (!isClientPaid ? "not_paid_not_onboarded" : "paid_not_onboarded")
+                : "onboarded";
+
+            const isNotPaidNotOnboarded = detailLifecycleStatus === "not_paid_not_onboarded";
+            const isPaidNotOnboarded = detailLifecycleStatus === "paid_not_onboarded";
+
+            return (
           <div className="space-y-4 sm:space-y-6 animate-fade-in">
             {/* Top Breadcrumb & Live Status */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -832,7 +1231,7 @@ export function AdminClientsPage() {
                 <span>/</span>
                 <span className="text-[#97A0B3]">Client Details</span>
                 <span>/</span>
-                <span className="text-white font-black">{activeClient?.name}</span>
+                <span className="text-white font-black">{displayName}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -875,42 +1274,129 @@ export function AdminClientsPage() {
               </div>
             </div>
 
+            {/* Lifecycle Notification Banner */}
+            {activeClientPendingNeg && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-[#161F2D] to-blue-950/40 border-2 border-purple-500/50 text-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg animate-fade-in">
+                <div className="flex items-start gap-3.5">
+                  <div className="size-9 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0 mt-0.5">
+                    <Zap className="size-5 text-purple-400 animate-pulse" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-black uppercase tracking-wider text-purple-300">
+                        Client Plan Negotiation Action Required
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-black">
+                        Offer: {activeClientPendingNeg.proposedOffer || "Custom Offer"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#F1F5F9]">
+                      This client requested custom pricing terms for: <strong>{activeClientPendingNeg.targetTopic}</strong>.
+                      {activeClientPendingNeg.notes && (
+                        <span className="text-[#97A0B3] italic block mt-0.5">
+                          "{activeClientPendingNeg.notes}"
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  to={`/admin/plans?negId=${activeClientPendingNeg.id}&clientId=${activeClient?.id}`}
+                  className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shrink-0 shadow-md transition-all hover:scale-105 active:scale-95"
+                >
+                  Review & Accept Retainer <ArrowUpRight className="w-4 h-4" />
+                </Link>
+              </div>
+            )}
+
+            {isNotPaidNotOnboarded && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-start gap-3.5 shadow-sm">
+                <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h3 className="text-sm font-black uppercase tracking-wider text-amber-400">
+                    user not paid and not onboarded yet
+                  </h3>
+                  <p className="text-xs text-[#F1F5F9] leading-relaxed">
+                    This client account has logged in but has not subscribed or paid for any retainer plan and has not completed the onboarding intake. Mock data has been disabled: retainer fee is ₹0, and no creative pod or design assets are assigned.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {isPaidNotOnboarded && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-300 flex items-start gap-3.5 shadow-sm">
+                <Sparkles className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h3 className="text-sm font-black uppercase tracking-wider text-sky-400">
+                    user paid but not onboarded
+                  </h3>
+                  <p className="text-xs text-[#F1F5F9] leading-relaxed">
+                    Subscription payment is verified and active ({activeClient?.tier || "Paid Plan"}). However, the client has not finalized their brand onboarding questionnaire yet (Stage {liveBrandProfile?.onboarding_stage || 1} of 4). Creative Pod and Brand DNA will be generated once intake is completed.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Client Header Card matching Screenshot */}
             <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-4">
               <div className="flex flex-col gap-6">
                 <div className="flex items-start gap-4 min-w-0">
                   <div className="w-16 h-16 rounded-2xl bg-[#0B111C] text-white font-black text-2xl flex items-center justify-center shadow-lg shrink-0">
-                    {activeClient?.initials}
+                    {displayInitials}
                   </div>
                   <div className="space-y-1.5 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2.5">
                       <h1 className="text-2xl font-black text-white tracking-tight break-words">
-                        {activeClient?.name}
+                        {displayName}
                       </h1>
-                      <CheckCircle2 className="w-5 h-5 text-[#7FA0D6] fill-blue-600 text-white" />
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-[10px] font-black uppercase tracking-wider">
-                        {activeClient?.tierBadge}
-                      </span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        {activeClient?.status}
-                      </span>
+                      {isNotPaidNotOnboarded ? (
+                        <>
+                          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider">
+                            UNPAID
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black tracking-wider flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            user not paid and not onboarded yet
+                          </span>
+                        </>
+                      ) : isPaidNotOnboarded ? (
+                        <>
+                          <span className="px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 text-[10px] font-black uppercase tracking-wider">
+                            {activeClient?.tierBadge || "PAID PLAN"}
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 text-[10px] font-black tracking-wider flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+                            user paid but not onboarded
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-5 h-5 text-[#7FA0D6] fill-blue-600 text-white" />
+                          <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-[10px] font-black uppercase tracking-wider">
+                            {activeClient?.tierBadge || "ACTIVE"}
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            {activeClient?.status || "ACTIVE"}
+                          </span>
+                        </>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-[#97A0B3] font-medium">
                       <span className="flex items-center gap-1">
                         <Folder className="w-3.5 h-3.5 text-[#97A0B3]" />
-                        {activeClient?.industry}
+                        {displayIndustry}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-[#97A0B3]" />
-                        {activeClient?.timezone}
+                        {displayTimezone}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5 text-[#97A0B3]" />
-                        {activeClient?.activeSince}
+                        {activeClient?.activeSince || "Active Retainer"}
                       </span>
                     </div>
                   </div>
@@ -919,31 +1405,17 @@ export function AdminClientsPage() {
                 {/* Header Action Buttons */}
                 <div className="flex flex-wrap items-center gap-2.5 w-full border-t border-[#2A3446] pt-4">
                   <Link
-                    to={`/admin/clients/${activeClient?.id || ""}/brand`}
+                    to={`/admin/clients/${liveBrandProfile?.client_id || activeClient?.id || ""}/brand`}
                     className="px-4 py-2.5 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-xs font-bold text-[#7FA0D6] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
                     <ExternalLink className="w-3.5 h-3.5 text-[#7FA0D6]" /> Brand Brief & Profile
                   </Link>
                   <button
                     type="button"
-                    onClick={() => setIsEditProfileOpen(true)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
-                  >
-                    <Edit3 className="w-3.5 h-3.5 text-[#97A0B3]" /> Edit Profile
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => setIsInvoiceModalOpen(true)}
                     className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
                     <FileText className="w-3.5 h-3.5 text-[#97A0B3]" /> Monthly Invoice
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsNewRequestOpen(true)}
-                    className="px-4 py-2.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
-                  >
-                    <Plus className="w-4 h-4 stroke-[3]" /> New Request
                   </button>
                   <button
                     type="button"
@@ -972,11 +1444,11 @@ export function AdminClientsPage() {
 
                   <div className="flex items-center gap-3.5">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-base flex items-center justify-center shadow-md">
-                      {activeClient?.contact.name[0]}
+                      {displayInitials[0] || "C"}
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-white">{activeClient?.contact.name}</h3>
-                      <p className="text-xs text-[#97A0B3] font-medium">{activeClient?.contact.title}</p>
+                      <h3 className="text-base font-bold text-white">{displaySignerName}</h3>
+                      <p className="text-xs text-[#97A0B3] font-medium">{activeClient?.contact?.title || "Account Owner & Authorized Contact"}</p>
                     </div>
                   </div>
 
@@ -986,8 +1458,8 @@ export function AdminClientsPage() {
                         <Mail className="w-4 h-4 text-[#97A0B3]" />
                         <span>Email</span>
                       </div>
-                      <a href={`mailto:${activeClient?.contact.email}`} className="text-[#7FA0D6] font-bold hover:underline">
-                        {activeClient?.contact.email}
+                      <a href={`mailto:${displaySignerEmail}`} className="text-[#7FA0D6] font-bold hover:underline">
+                        {displaySignerEmail || "N/A"}
                       </a>
                     </div>
 
@@ -996,17 +1468,23 @@ export function AdminClientsPage() {
                         <Phone className="w-4 h-4 text-[#97A0B3]" />
                         <span>Direct Phone</span>
                       </div>
-                      <span className="font-bold text-white font-mono">{activeClient?.contact.phone}</span>
+                      <span className="font-bold text-white font-mono">
+                        {liveBrandProfile?.phone ||
+                          (liveBrandProfile?.brand_dna as any)?.phone ||
+                          (activeClient?.contact?.phone && activeClient.contact.phone !== "+91 98401 23890" && activeClient.contact.phone !== "Not provided yet"
+                            ? activeClient.contact.phone
+                            : "Not provided yet")}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
-                  <span className="flex items-center gap-1 text-emerald-700 font-semibold">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    Contract renewed: {activeClient?.contact.renewedDate}
+                  <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    Contract: {isNotPaidNotOnboarded ? "Pending Subscription" : isPaidNotOnboarded ? "Payment Confirmed" : (activeClient?.contact?.renewedDate || "Current Sprint")}
                   </span>
-                  <span>Term: {activeClient?.contact.termMonths} Mo</span>
+                  <span>Term: {isNotPaidNotOnboarded ? "—" : `${activeClient?.contact?.termMonths ?? 12} Mo`}</span>
                 </div>
               </div>
 
@@ -1017,17 +1495,21 @@ export function AdminClientsPage() {
                     <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                       TIER TERMS & SCOPE
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold border border-[#7FA0D6]/30">
-                      Active Cycle
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${isNotPaidNotOnboarded ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : isPaidNotOnboarded ? "bg-sky-500/15 text-sky-400 border-sky-500/30" : "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30"}`}>
+                      {isNotPaidNotOnboarded ? "Unpaid" : isPaidNotOnboarded ? "Payment Verified" : "Active Cycle"}
                     </span>
                   </div>
 
                   <div className="flex items-baseline justify-between">
                     <div>
-                      <span className="text-3xl font-black text-white">₹{activeClient?.monthlyFee.toLocaleString()}</span>
-                      <span className="text-xs font-bold text-[#97A0B3]"> /mo</span>
+                      <span className="text-3xl font-black text-white">
+                        {isNotPaidNotOnboarded ? "₹0" : `₹${(activeClient?.monthlyFee ?? 0).toLocaleString()}`}
+                      </span>
+                      <span className="text-xs font-bold text-[#97A0B3]">
+                        {isNotPaidNotOnboarded ? " /mo (Unpaid Account)" : " /mo"}
+                      </span>
                     </div>
-                    {activeClient?.addon && (
+                    {activeClient?.addon && isClientOnboarded && (
                       <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 flex items-center gap-1">
                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                         {activeClient.addon}
@@ -1036,48 +1518,61 @@ export function AdminClientsPage() {
                   </div>
 
                   <p className="text-xs text-[#97A0B3]">
-                    Next billing scheduled for {activeClient?.nextBilling} via {activeClient?.billingMethod}.
+                    {isNotPaidNotOnboarded
+                      ? "No active subscription billing scheduled. Client has not subscribed to any plan."
+                      : isPaidNotOnboarded
+                      ? "Subscription payment confirmed. Creative production starts once onboarding is submitted."
+                      : `Next billing scheduled for ${activeClient?.nextBilling || "Next Month"} via ${activeClient?.billingMethod || "Direct ACH"}.`}
                   </p>
 
                   {/* Monthly Output Burn bar */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-[#F1F5F9]">Monthly Output Burn</span>
-                      <span className="text-[#7FA0D6]">
-                        {activeClient?.totalAssetsDelivered} / {activeClient?.totalAssetsQuota} Assets Delivered (
-                        {Math.round(((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100)}%)
-                      </span>
+                  {!isClientOnboarded ? (
+                    <div className="p-3 bg-[#0B111C]/60 rounded-2xl border border-[#2A3446] text-xs text-[#97A0B3]">
+                      <span className="font-bold text-white block mb-0.5">Production Queue Inactive</span>
+                      {isPaidNotOnboarded
+                        ? "Asset deliveries and quota burn will activate as soon as onboarding intake is complete."
+                        : "Asset production and quota burn are inactive because user is not paid and not onboarded yet."}
                     </div>
-                    <div className="w-full bg-[#161F2D] rounded-full h-2.5 overflow-hidden">
-                      <div
-                        className="bg-[#7FA0D6] h-full rounded-full transition-all"
-                        style={{
-                          width: `${Math.min(
-                            (((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100),
-                            100
-                          )}%`,
-                        }}
-                      />
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="text-[#F1F5F9]">Monthly Output Burn</span>
+                        <span className="text-[#7FA0D6]">
+                          {activeClient?.totalAssetsDelivered ?? 0} / {activeClient?.totalAssetsQuota ?? 0} Assets Delivered (
+                          {Math.round((((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100))}%)
+                        </span>
+                      </div>
+                      <div className="w-full bg-[#161F2D] rounded-full h-2.5 overflow-hidden">
+                        <div
+                          className="bg-[#7FA0D6] h-full rounded-full transition-all"
+                          style={{
+                            width: `${Math.min(
+                              (((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100),
+                              100
+                            )}%`,
+                          }}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  {/* 3 Metric Counters matching Screenshot */}
+                  {/* 3 Metric Counters */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 pt-1">
                     <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
                       <span className="text-sm font-black text-white">
-                        {activeClient?.postsDelivered}/{activeClient?.postsQuota}
+                        {isClientOnboarded ? `${activeClient?.postsDelivered ?? 0}/${activeClient?.postsQuota ?? 0}` : "0/0"}
                       </span>
                       <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">POSTS</span>
                     </div>
                     <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
                       <span className="text-sm font-black text-white">
-                        {activeClient?.reelsDelivered}/{activeClient?.reelsQuota}
+                        {isClientOnboarded ? `${activeClient?.reelsDelivered ?? 0}/${activeClient?.reelsQuota ?? 0}` : "0/0"}
                       </span>
                       <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">REELS</span>
                     </div>
                     <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
                       <span className="text-sm font-black text-white">
-                        {activeClient?.storiesDelivered}/{activeClient?.storiesQuota}
+                        {isClientOnboarded ? `${activeClient?.storiesDelivered ?? 0}/${activeClient?.storiesQuota ?? 0}` : "0/0"}
                       </span>
                       <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">STORIES</span>
                     </div>
@@ -1085,10 +1580,14 @@ export function AdminClientsPage() {
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
-                  <span>Sprint {activeClient?.sprintNumber}: {activeClient?.daysRemainingInSprint} days remaining</span>
+                  <span>
+                    {isClientOnboarded
+                      ? `Sprint ${activeClient?.sprintNumber ?? 1}: ${activeClient?.daysRemainingInSprint ?? 14} days remaining`
+                      : "Sprint: Awaiting Onboarding"}
+                  </span>
                   <button
                     type="button"
-                    onClick={() => showToast("Opening Client Quota Ledger...")}
+                    onClick={() => showToast(isClientOnboarded ? "Opening Client Quota Ledger..." : "Quota ledger unavailable for un-onboarded client.")}
                     className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
                   >
                     View Quota Log
@@ -1097,222 +1596,366 @@ export function AdminClientsPage() {
               </div>
 
               {/* CARD 3: CLIENT BRAND ECOSYSTEM & GUIDELINES */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5">
-                <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                  <div className="flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-[#7FA0D6]" />
-                    <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                      Client Brand Ecosystem & Guidelines
-                    </h2>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold">
-                    {activeClient?.brand.kitVersion}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Typography */}
-                  <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs">
-                    <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
-                      TYPOGRAPHY HIERARCHY
-                    </span>
-                    <div className="space-y-1 text-[#F1F5F9]">
-                      <div className="flex justify-between">
-                        <span className="text-[#97A0B3]">Headings:</span>
-                        <span className="font-bold">{activeClient?.brand.headingsFont}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#97A0B3]">Body & Data:</span>
-                        <span className="font-medium">{activeClient?.brand.bodyFont}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#97A0B3]">Monospace:</span>
-                        <span className="font-mono">{activeClient?.brand.monoFont}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Persona & Voice Tone */}
-                  <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs flex flex-col justify-between">
-                    <div>
-                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
-                        PERSONA & VOICE TONE
-                      </span>
-                      <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed">
-                        {activeClient?.brand.toneSummary}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {activeClient?.brand.toneTags.map((tag) => (
-                        <span key={tag} className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[10px] font-bold text-[#F1F5F9] shadow-2xs">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Approved Color Spectrum */}
-                <div className="space-y-2">
-                  <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
-                    APPROVED COLOR SPECTRUM
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-2.5">
-                    {activeClient?.brand.colors.map((c) => (
-                      <div key={c.hex} className="rounded-2xl border border-[#2A3446] overflow-hidden bg-[#161F2D] shadow-2xs space-y-1.5 pb-2">
-                        <div className="h-10 w-full" style={{ backgroundColor: c.hex }} />
-                        <div className="px-2.5">
-                          <span className="text-[11px] font-bold text-white block truncate">{c.name}</span>
-                          <span className="text-[10px] font-mono text-[#97A0B3]">{c.hex}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Social Channel */}
-                <div className="p-3.5 bg-[#0B111C]/80 rounded-2xl border border-[#2A3446] flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center shadow-xs">
-                      <Instagram className="w-5 h-5" />
-                    </div>
-                    <div>
+              {!isClientOnboarded ? (
+                <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs text-white">{activeClient?.brand.social.handle}</span>
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-extrabold uppercase">
-                          {activeClient?.brand.social.status}
-                        </span>
+                        <Palette className={`w-4 h-4 ${isPaidNotOnboarded ? "text-sky-400" : "text-amber-400"}`} />
+                        <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
+                          Client Brand Ecosystem & Guidelines
+                        </h2>
                       </div>
-                      <span className="text-[11px] text-[#97A0B3]">
-                        {activeClient?.brand.social.followers} • Live Sync active ({activeClient?.brand.social.syncInterval})
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${isPaidNotOnboarded ? "bg-sky-500/15 text-sky-400 border-sky-500/30" : "bg-amber-500/15 text-amber-400 border-amber-500/30"}`}>
+                        {isPaidNotOnboarded ? "Awaiting Intake Questionnaire" : "Pending Onboarding"}
                       </span>
                     </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => showToast(`Opening ${activeClient?.brand.social.handle} live analytics...`)}
-                    className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] shadow-2xs cursor-pointer"
-                  >
-                    Launch Channel
-                  </button>
-                </div>
 
-                <div className="flex flex-wrap items-center justify-between text-xs text-[#97A0B3] font-medium pt-3 border-t border-[#2A3446] gap-2">
-                  <div className="flex items-center gap-3 text-[#7FA0D6] font-bold">
-                    <span className="cursor-pointer hover:underline flex items-center gap-1">
-                      <Folder className="w-3.5 h-3.5" /> {activeClient?.brand.brandVaultLink}
-                    </span>
-                    <span>•</span>
-                    <span className="cursor-pointer hover:underline flex items-center gap-1">
-                      <ExternalLink className="w-3.5 h-3.5" /> {activeClient?.brand.figmaLink}
-                    </span>
-                    <span>•</span>
+                    <div className="p-8 text-center space-y-3 bg-[#0B111C]/60 rounded-2xl border border-[#2A3446]">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto border ${isPaidNotOnboarded ? "bg-sky-500/10 border-sky-500/20 text-sky-400" : "bg-amber-500/10 border-amber-500/20 text-amber-400"}`}>
+                        <Palette className="w-6 h-6" />
+                      </div>
+                      <h4 className="text-sm font-bold text-white">
+                        {isPaidNotOnboarded ? "Brand DNA Brief In Progress" : "Brand DNA Not Available"}
+                      </h4>
+                      <p className="text-xs text-[#97A0B3] max-w-md mx-auto leading-relaxed">
+                        {isPaidNotOnboarded
+                          ? "The client has paid for their subscription. Approved brand color palette, typography hierarchy, tone voice, and asset vault will be generated once they complete the onboarding questionnaire."
+                          : "user not paid and not onboarded yet. Brand guidelines, visual spectrum, and drive vaults will be configured after plan activation and onboarding completion."}
+                      </p>
+                      {isPaidNotOnboarded && (
+                        <span className="inline-block mt-2 px-3 py-1 rounded-full text-[11px] font-bold bg-[#161F2D] text-sky-300 border border-sky-500/30">
+                          Onboarding Progress: Stage {liveBrandProfile?.onboarding_stage || 1} of 4
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between text-xs text-[#97A0B3] font-medium pt-3 border-t border-[#2A3446] gap-2">
+                    <span className="text-[#97A0B3]">Brand Kit Status: {isPaidNotOnboarded ? "Awaiting Submission" : "Not Initialized"}</span>
                     <Link
-                    to={`/admin/clients/${activeClient?.id || ""}/brand`}
-                      className="cursor-pointer hover:underline flex items-center gap-1 text-[#7FA0D6]"
+                      to={`/admin/clients/${liveBrandProfile?.client_id || activeClient?.id || ""}/brand`}
+                      className="text-[#7FA0D6] font-bold hover:underline flex items-center gap-1"
                     >
-                      Brand DNA & Brief →
+                      View Brand Intake Overview &rarr;
                     </Link>
                   </div>
-                  <span>Last audit {activeClient?.brand.lastAuditDate}</span>
                 </div>
-              </div>
-
-              {/* CARD 4: ASSIGNED CREATIVE POD */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
-                <div className="space-y-4">
+              ) : (
+                <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5">
                   <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-[#7FA0D6]" />
+                      <Palette className="w-4 h-4 text-[#7FA0D6]" />
                       <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                        Assigned creative pod
+                        Client Brand Ecosystem & Guidelines
                       </h2>
                     </div>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold border border-[#7FA0D6]/30">
-                      {activeClient?.pod.name}: {activeClient?.pod.tagline}
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold">
+                      {activeClient?.brand?.kitVersion || "Design Kit v2.4"}
                     </span>
                   </div>
 
-                  {/* Pod Lead */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
-                      POD LEAD & CREATIVE DIRECTOR
-                    </span>
-                    <div className="p-3 bg-[#0B111C]/70 rounded-2xl flex items-center justify-between border border-[#2A3446]">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
-                          {activeClient?.pod.leadAvatar}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Typography Pairing & System */}
+                    <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs">
+                      <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        <Type className="size-3.5 text-[#7FA0D6]" />
+                        <span>TYPOGRAPHY PAIRING & SYSTEM</span>
+                      </div>
+                      <div className="space-y-2 pt-1 text-[#F1F5F9]">
+                        <div className="p-2.5 bg-[#161F2D]/60 rounded-xl border border-[#2A3446]">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-0.5">
+                            Headlines / Display
+                          </span>
+                          <p className="font-bold text-sm text-white">{realTypography.headingsFont}</p>
+                          <p className="text-[11px] text-[#97A0B3] mt-0.5">Bold, punchy titles optimized for feed stops.</p>
                         </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-white">{activeClient?.pod.leadName}</h4>
-                          <span className="text-[11px] text-[#97A0B3]">{activeClient?.pod.leadTitle}</span>
+                        <div className="p-2.5 bg-[#161F2D]/60 rounded-xl border border-[#2A3446]">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-0.5">
+                            Body Copy / Subtitles
+                          </span>
+                          <p className="font-medium text-xs text-white">{realTypography.bodyFont}</p>
+                          <p className="text-[11px] text-[#97A0B3] mt-0.5">High legibility for reel captions and carousel body copy.</p>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => showToast(`Connecting to ${activeClient?.pod.leadName} via Slack/Creo Chat...`)}
-                        className="p-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] shadow-2xs cursor-pointer"
-                        title="Chat with Pod Lead"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                      </button>
+                    </div>
+
+                    {/* Persona & Voice Tone */}
+                    <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs flex flex-col justify-between">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                          PERSONA & VOICE TONE
+                        </span>
+                        <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed">
+                          {realTone.summary}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        {realTone.audience && (
+                          <div className="pt-2 border-t border-[#2A3446]/60">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block">
+                              Target Audience
+                            </span>
+                            <p className="text-[11px] text-[#F1F5F9] mt-0.5 line-clamp-2">
+                              {realTone.audience}
+                            </p>
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {realTone.tags.map((tag: string, tagIdx: number) => (
+                            <span key={`${tag}-${tagIdx}`} className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[10px] font-bold text-[#F1F5F9] shadow-2xs">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Squad Members */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
-                      SQUAD MEMBERS
-                    </span>
-                    <div className="space-y-1.5">
-                      {activeClient?.pod.squad.map((member) => (
-                        <div key={member.name} className="p-2.5 bg-[#0B111C]/50 rounded-xl flex items-center justify-between text-xs border border-[#2A3446]">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-gray-200 text-[#F1F5F9] font-bold text-[10px] flex items-center justify-center">
-                              {member.avatar}
-                            </div>
-                            <div>
-                              <span className="font-bold text-white block leading-tight">{member.name}</span>
-                              <span className="text-[10px] text-[#97A0B3]">{member.role}</span>
+                  {/* Visual Palette & Tokens */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Palette className="size-3.5 text-[#7FA0D6]" />
+                        <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                          VISUAL PALETTE & TOKENS
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-medium text-[#97A0B3]">
+                        Click swatch to copy hex
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {realColors.map((c, cIdx) => (
+                        <div
+                          key={`${c.hex}-${cIdx}`}
+                          onClick={() => handleCopyHex(c.hex, cIdx)}
+                          className="group relative bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/50 rounded-xl p-2.5 cursor-pointer transition-all hover:scale-[1.02] shadow-sm"
+                          title="Click to copy hex"
+                        >
+                          <div
+                            className="w-full aspect-[4/3] rounded-lg mb-2.5 border border-[#2A3446] shadow-inner relative flex items-center justify-center"
+                            style={{ backgroundColor: c.hex }}
+                          >
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 rounded-md px-2 py-1 flex items-center gap-1 text-[10px] text-white font-medium">
+                              {copiedHexIndex === cIdx ? (
+                                <Check className="size-3 text-emerald-400" />
+                              ) : (
+                                <Copy className="size-3" />
+                              )}
+                              <span>{copiedHexIndex === cIdx ? "Copied" : "Copy"}</span>
                             </div>
                           </div>
-                          <span className="font-mono font-bold text-[11px] text-[#F1F5F9]">{member.hoursPerWeek}h/wk</span>
+                          <p className="text-[11px] font-bold text-white truncate">{c.name}</p>
+                          <p className="font-mono text-[10px] text-[#97A0B3] uppercase tracking-wider mt-0.5">
+                            {c.hex}
+                          </p>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Pod Capacity Commitment */}
-                  <div className="space-y-2 pt-1">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-[#F1F5F9]">Pod Capacity Commitment</span>
-                      <span className="text-[#7FA0D6] font-mono">
-                        {activeClient?.pod.capacityAllocatedHrs} hrs/week allocated
+                  {/* Social Channel */}
+                  <div className="p-3.5 bg-[#0B111C]/80 rounded-2xl border border-[#2A3446] flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center shadow-xs">
+                        <Instagram className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-xs text-white">
+                            {liveBrandProfile?.instagram_username
+                              ? `@${liveBrandProfile.instagram_username}`
+                              : (activeClient?.brand?.social?.handle && activeClient.brand.social.handle !== "Not connected"
+                                  ? activeClient.brand.social.handle
+                                  : "Not connected")}
+                          </span>
+                          {liveBrandProfile?.instagram_username ? (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[9px] font-extrabold uppercase">
+                              CONNECTED
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[9px] font-extrabold uppercase">
+                              NOT CONNECTED
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-[#97A0B3]">
+                          {liveBrandProfile?.instagram_username
+                            ? "Real-time Profile Connected • Verified Brand DNA"
+                            : "Awaiting Instagram handle connection during onboarding"}
+                        </span>
+                      </div>
+                    </div>
+                    {liveBrandProfile?.instagram_username && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const handle = (liveBrandProfile.instagram_username || "").replace("@", "");
+                          if (handle) window.open(`https://instagram.com/${handle}`, "_blank");
+                        }}
+                        className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] shadow-2xs cursor-pointer"
+                      >
+                        Launch Channel
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between text-xs text-[#97A0B3] font-medium pt-3 border-t border-[#2A3446] gap-2">
+                    <div className="flex items-center gap-3 text-[#7FA0D6] font-bold">
+                      <span className="cursor-pointer hover:underline flex items-center gap-1">
+                        <Folder className="w-3.5 h-3.5" /> {activeClient?.brand?.brandVaultLink || "Client Brand Vault Drive"}
                       </span>
+                      <span>•</span>
+                      <span className="cursor-pointer hover:underline flex items-center gap-1">
+                        <ExternalLink className="w-3.5 h-3.5" /> {activeClient?.brand?.figmaLink || "Figma Master Design Kit"}
+                      </span>
+                      <span>•</span>
+                      <Link
+                        to={`/admin/clients/${activeClient?.id || ""}/brand`}
+                        className="cursor-pointer hover:underline flex items-center gap-1 text-[#7FA0D6]"
+                      >
+                        Brand DNA & Brief →
+                      </Link>
                     </div>
-                    <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-[#7FA0D6] h-full rounded-full transition-all"
-                        style={{ width: `${activeClient?.pod.bandwidthPercent}%` }}
-                      />
-                    </div>
-                    <span className="text-[11px] text-[#97A0B3] font-medium block">
-                      Sprint {activeClient?.sprintNumber} • {activeClient?.pod.bandwidthPercent}% bandwidth filled
-                    </span>
+                    <span>Last audit {activeClient?.brand?.lastAuditDate || "This Sprint"}</span>
                   </div>
                 </div>
+              )}
 
-                <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
-                  <span>Daily Sync: {activeClient?.pod.dailySyncTime}</span>
-                  <button
-                    type="button"
-                    onClick={() => showToast(`Opening Pod Reallocation Studio for ${activeClient?.pod.name}...`)}
-                    className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
-                  >
-                    Reallocate Pod Hours
-                  </button>
+              {/* CARD 4: ASSIGNED CREATIVE POD */}
+              {!isClientOnboarded ? (
+                <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                      <div className="flex items-center gap-2">
+                        <Users className={`w-4 h-4 ${isPaidNotOnboarded ? "text-sky-400" : "text-amber-400"}`} />
+                        <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
+                          Assigned creative pod
+                        </h2>
+                      </div>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${isPaidNotOnboarded ? "bg-sky-500/15 text-sky-400 border-sky-500/30" : "bg-amber-500/15 text-amber-400 border-amber-500/30"}`}>
+                        {isPaidNotOnboarded ? "Pending Allocation" : "Not Assigned"}
+                      </span>
+                    </div>
+
+                    <div className="p-8 text-center space-y-3 bg-[#0B111C]/60 rounded-2xl border border-[#2A3446]">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto border ${isPaidNotOnboarded ? "bg-sky-500/10 border-sky-500/20 text-sky-400" : "bg-amber-500/10 border-amber-500/20 text-amber-400"}`}>
+                        <Users className="w-6 h-6" />
+                      </div>
+                      <h4 className="text-sm font-bold text-white">
+                        {isPaidNotOnboarded ? "Creative Pod Allocation in Progress" : "No Creative Pod Allocated"}
+                      </h4>
+                      <p className="text-xs text-[#97A0B3] max-w-md mx-auto leading-relaxed">
+                        {isPaidNotOnboarded
+                          ? "Pod Lead (Creative Director), Video Editor, and Graphic Designer will be allocated to this client once their onboarding brand requirements are submitted."
+                          : "user not paid and not onboarded yet. Creative Pod squad specialists are assigned upon active plan subscription and onboarding intake completion."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
+                    <span>Pod Allocation: {isPaidNotOnboarded ? "Awaiting Onboarding" : "Not Started"}</span>
+                    <span className="text-[#97A0B3] font-mono">0 hrs/wk committed</span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-[#7FA0D6]" />
+                        <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
+                          Assigned creative pod
+                        </h2>
+                      </div>
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold border border-[#7FA0D6]/30">
+                        {activeClient?.pod?.name || "Pod A"}: {activeClient?.pod?.tagline || "Creative Strategy"}
+                      </span>
+                    </div>
+
+                    {/* Pod Lead */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                        POD LEAD & CREATIVE DIRECTOR
+                      </span>
+                      <div className="p-3 bg-[#0B111C]/70 rounded-2xl flex items-center justify-between border border-[#2A3446]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
+                            {activeClient?.pod?.leadAvatar || "CD"}
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-white">{activeClient?.pod?.leadName || "Pod Creative Director"}</h4>
+                            <span className="text-[11px] text-[#97A0B3]">{activeClient?.pod?.leadTitle || "Lead Producer"}</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => showToast(`Connecting to ${activeClient?.pod?.leadName || "Pod Lead"} via Slack/Creo Chat...`)}
+                          className="p-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] shadow-2xs cursor-pointer"
+                          title="Chat with Pod Lead"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Squad Members */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                        SQUAD MEMBERS
+                      </span>
+                      <div className="space-y-1.5">
+                        {(activeClient?.pod?.squad || []).map((member, mIdx) => (
+                          <div key={`${member.name || mIdx}`} className="p-2.5 bg-[#0B111C]/50 rounded-xl flex items-center justify-between text-xs border border-[#2A3446]">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-7 h-7 rounded-full bg-gray-200 text-[#F1F5F9] font-bold text-[10px] flex items-center justify-center">
+                                {member.avatar || "PS"}
+                              </div>
+                              <div>
+                                <span className="font-bold text-white block leading-tight">{member.name}</span>
+                                <span className="text-[10px] text-[#97A0B3]">{member.role}</span>
+                              </div>
+                            </div>
+                            <span className="font-mono font-bold text-[11px] text-[#F1F5F9]">{member.hoursPerWeek}h/wk</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Pod Capacity Commitment */}
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="text-[#F1F5F9]">Pod Capacity Commitment</span>
+                        <span className="text-[#7FA0D6] font-mono">
+                          {activeClient?.pod?.capacityAllocatedHrs ?? 32} hrs/week allocated
+                        </span>
+                      </div>
+                      <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-[#7FA0D6] h-full rounded-full transition-all"
+                          style={{ width: `${activeClient?.pod?.bandwidthPercent ?? 80}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] text-[#97A0B3] font-medium block">
+                        Sprint {activeClient?.sprintNumber ?? 1} • {activeClient?.pod?.bandwidthPercent ?? 80}% bandwidth filled
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
+                    <span>Daily Sync: {activeClient?.pod?.dailySyncTime || "11:00 AM IST"}</span>
+                    <button
+                      type="button"
+                      onClick={() => showToast(`Opening Pod Reallocation Studio for ${activeClient?.pod?.name || "Pod"}...`)}
+                      className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
+                    >
+                      Reallocate Pod Hours
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ═════════════════════════════════════════════════════════════════
@@ -1341,7 +1984,7 @@ export function AdminClientsPage() {
                       placeholder="Filter deliverable..."
                       value={deliverableSearch}
                       onChange={(e) => setDeliverableSearch(e.target.value)}
-                      className="pl-8 pr-3 py-1.5 rounded-xl border border-[#2A3446] text-xs bg-[#0B111C] focus:bg-[#161F2D] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="pl-8 pr-3 py-1.5 rounded-xl border border-[#2A3446] text-xs bg-[#0B111C] focus:bg-[#161F2D] focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
                     />
                   </div>
                   <button
@@ -1357,203 +2000,186 @@ export function AdminClientsPage() {
               {filteredDeliverables.length === 0 ? (
                 <div className="py-12 border border-dashed border-[#2A3446] rounded-2xl text-center space-y-2">
                   <CheckCircle2 className="size-8 text-[#97A0B3] mx-auto opacity-40" />
-                  <p className="text-sm font-bold text-white">No Deliverables in Queue</p>
-                  <p className="text-xs text-[#97A0B3]">No active deliverables requiring attention for this client.</p>
+                  <p className="text-sm font-bold text-white">
+                    {!isClientOnboarded
+                      ? isPaidNotOnboarded
+                        ? "Deliverables Awaiting Onboarding Form"
+                        : "Deliverables Inactive"
+                      : "No Deliverables in Queue"}
+                  </p>
+                  <p className="text-xs text-[#97A0B3]">
+                    {!isClientOnboarded
+                      ? isPaidNotOnboarded
+                        ? "Creative asset drafting begins once the client completes their onboarding intake questionnaire."
+                        : "User not paid and not onboarded yet. Creative deliverables will be scheduled after plan purchase."
+                      : "No active deliverables requiring attention for this client."}
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-                  {filteredDeliverables.map((deliv) => (
-                  <div
-                    key={deliv.id}
-                    className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_2px_15px_rgba(0,0,0,0.03)] p-5 space-y-4 flex flex-col justify-between hover:shadow-lg hover:border-[#7FA0D6]/30 transition-all"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${deliv.statusColor}`}>
-                          {deliv.status}
-                        </span>
-                        <span className="text-[10px] font-mono text-[#97A0B3] font-bold">{deliv.code}</span>
-                      </div>
+                  {filteredDeliverables.map((deliv, delivIdx) => {
+                    const statusUpper = (deliv.status || "").toUpperCase();
+                    const isReview = statusUpper === "IN REVIEW" || statusUpper === "PENDING_APPROVAL" || statusUpper === "INTERNAL_QA" || statusUpper === "READY FOR REVIEW";
+                    const isProduction = statusUpper === "IN PRODUCTION" || statusUpper === "IN_PRODUCTION";
+                    const isApproved = statusUpper === "APPROVED";
+                    const isReadyForReview = statusUpper === "READY FOR REVIEW";
 
-                      <div>
-                        <h4 className="text-sm font-black text-white leading-snug">{deliv.title}</h4>
-                        <p className="text-[11px] text-[#97A0B3] mt-1 line-clamp-2 leading-relaxed">
-                          {deliv.description}
-                        </p>
-                      </div>
-
-                      <div className="p-3 bg-[#0B111C]/70 rounded-2xl space-y-1.5 text-[11px] text-[#F1F5F9] border border-[#2A3446]">
-                        <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Format:</span>
-                          <span className="font-bold text-white">{deliv.format}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Due Date:</span>
-                          <span className="font-bold text-rose-600">{deliv.dueDate}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Assigned:</span>
-                          <span className="font-semibold text-white">{deliv.assignedTo}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="space-y-2 pt-2 border-t border-[#2A3446]">
-                      {deliv.status === "IN REVIEW" && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleApproveDeliverable(deliv.id, deliv.title)}
-                            className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
-                          >
-                            <Check className="w-3.5 h-3.5 stroke-[3]" /> Approve
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeclineDeliverable(deliv.id, deliv.title)}
-                            className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
-                          >
-                            <X className="w-3.5 h-3.5" /> Decline
-                          </button>
-                        </div>
-                      )}
-
-                      {deliv.status === "IN PRODUCTION" && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setPreviewDeliverable(deliv)}
-                            className="w-full py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
-                          >
-                            <Eye className="w-3.5 h-3.5" /> Preview Canvas
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => showToast(`Revision request sent for "${deliv.title}".`)}
-                            className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold cursor-pointer transition-colors"
-                          >
-                            Request Revisions
-                          </button>
-                        </div>
-                      )}
-
-                      {deliv.status === "APPROVED" && (
-                        <div className="space-y-1.5">
-                          <button
-                            type="button"
-                            className="w-full py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold flex items-center justify-center gap-1 border border-emerald-200 cursor-default"
-                          >
-                            <Lock className="w-3.5 h-3.5" /> Auto-Publish Locked
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => showToast("Viewing scheduled metadata...")}
-                            className="w-full py-1.5 text-center text-[11px] font-bold text-[#97A0B3] hover:text-white cursor-pointer"
-                          >
-                            View Scheduled Meta
-                          </button>
-                        </div>
-                      )}
-
-                      {deliv.status === "READY FOR REVIEW" && (
-                        <div className="space-y-1.5">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleApproveDeliverable(deliv.id, deliv.title)}
-                              className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
-                            >
-                              <Check className="w-3.5 h-3.5 stroke-[3]" /> Approve
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => showToast(`Feedback notes opened for "${deliv.title}".`)}
-                              className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" /> Notes
-                            </button>
+                    return (
+                      <div
+                        key={deliv.id || delivIdx}
+                        className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_2px_15px_rgba(0,0,0,0.03)] p-5 space-y-4 flex flex-col justify-between hover:shadow-lg hover:border-[#7FA0D6]/30 transition-all"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                              deliv.statusColor ||
+                              (isApproved
+                                ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                                : isReview
+                                ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                                : "bg-blue-500/15 text-blue-400 border-blue-500/30")
+                            }`}>
+                              {(deliv.status || "IN PRODUCTION").replace(/_/g, " ")}
+                            </span>
+                            <span className="text-[10px] font-mono text-[#97A0B3] font-bold">
+                              {deliv.code || `DEL-${deliv.id ? deliv.id.slice(0, 4) : String(delivIdx + 1).padStart(2, "0")}`}
+                            </span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => setPreviewDeliverable(deliv)}
-                            className="w-full py-1.5 text-center text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer flex items-center justify-center gap-1"
-                          >
-                            <FileText className="w-3.5 h-3.5" /> Open Full Presentation
-                          </button>
-                        </div>
-                      )}
 
-                      {deliv.actions.some((a: string) => a.includes("Preview Video Draft")) && (
-                        <button
-                          type="button"
-                          onClick={() => setPreviewDeliverable(deliv)}
-                          className="w-full py-1.5 text-center text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer flex items-center justify-center gap-1"
-                        >
-                          <Play className="w-3 h-3 fill-blue-600" /> Preview Video Draft (0:45)
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                          <div>
+                            <h4 className="text-sm font-black text-white leading-snug">{deliv.title}</h4>
+                            <p className="text-[11px] text-[#97A0B3] mt-1 line-clamp-2 leading-relaxed">
+                              {deliv.description || "Production asset managed through Creo creative pod."}
+                            </p>
+                          </div>
+
+                          <div className="p-3 bg-[#0B111C]/70 rounded-2xl space-y-1.5 text-[11px] text-[#F1F5F9] border border-[#2A3446]">
+                            <div className="flex justify-between">
+                              <span className="text-[#97A0B3]">Format:</span>
+                              <span className="font-bold text-white">{deliv.format || deliv.type || deliv.deliverable_type || "Asset"}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[#97A0B3]">Due Date:</span>
+                              <span className="font-bold text-rose-500">{deliv.dueDate || deliv.date || "Next Cycle"}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[#97A0B3]">Assigned:</span>
+                              <span className="font-semibold text-white">{deliv.assignedTo || deliv.assigned_name || "Creative Squad"}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="space-y-2 pt-2 border-t border-[#2A3446]">
+                          {isReview && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleApproveDeliverable(deliv.id, deliv.title)}
+                                className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
+                              >
+                                <Check className="w-3.5 h-3.5 stroke-[3]" /> Approve
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeclineDeliverable(deliv.id, deliv.title)}
+                                className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                              >
+                                <X className="w-3.5 h-3.5" /> Decline
+                              </button>
+                            </div>
+                          )}
+
+                          {isProduction && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setPreviewDeliverable(deliv)}
+                                className="w-full py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                              >
+                                <Eye className="w-3.5 h-3.5" /> Preview Canvas
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => showToast(`Revision request sent for "${deliv.title}".`)}
+                                className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold cursor-pointer transition-colors"
+                              >
+                                Request Revisions
+                              </button>
+                            </div>
+                          )}
+
+                          {isApproved && (
+                            <div className="space-y-1.5">
+                              <button
+                                type="button"
+                                className="w-full py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold flex items-center justify-center gap-1 border border-emerald-200 cursor-default"
+                              >
+                                <Lock className="w-3.5 h-3.5" /> Auto-Publish Locked
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => showToast("Viewing scheduled metadata...")}
+                                className="w-full py-1.5 text-center text-[11px] font-bold text-[#97A0B3] hover:text-white cursor-pointer"
+                              >
+                                View Scheduled Meta
+                              </button>
+                            </div>
+                          )}
+
+                          {isReadyForReview && (
+                            <div className="space-y-1.5">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleApproveDeliverable(deliv.id, deliv.title)}
+                                  className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
+                                >
+                                  <Check className="w-3.5 h-3.5 stroke-[3]" /> Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => showToast(`Feedback notes opened for "${deliv.title}".`)}
+                                  className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" /> Notes
+                                </button>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setPreviewDeliverable(deliv)}
+                                className="w-full py-1.5 text-center text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer flex items-center justify-center gap-1"
+                              >
+                                <FileText className="w-3.5 h-3.5" /> Open Full Presentation
+                              </button>
+                            </div>
+                          )}
+
+                          {(deliv.is_video || (Array.isArray(deliv.actions) && deliv.actions.some((a: string) => a.includes("Preview Video Draft")))) && (
+                            <button
+                              type="button"
+                              onClick={() => setPreviewDeliverable(deliv)}
+                              className="w-full py-1.5 text-center text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer flex items-center justify-center gap-1"
+                            >
+                              <Play className="w-3 h-3 fill-blue-600" /> Preview Video Draft (0:45)
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+            );
+          })()}
 
         {/* ═════════════════════════════════════════════════════════════════
             MODALS
         ═════════════════════════════════════════════════════════════════ */}
 
-        {/* 1. Edit Profile Modal */}
-        {isEditProfileOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <h3 className="text-base font-black text-white">Edit Client Profile: {activeClient?.name}</h3>
-                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="space-y-3 text-xs text-[#F1F5F9]">
-                <div>
-                  <label className="block font-bold mb-1">Company / Brand Name</label>
-                  <input type="text" defaultValue={activeClient?.name} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
-                </div>
-                <div>
-                  <label className="block font-bold mb-1">Industry / Category</label>
-                  <input type="text" defaultValue={activeClient?.industry} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                  <div>
-                    <label className="block font-bold mb-1">Primary Signer</label>
-                    <input type="text" defaultValue={activeClient?.contact.name} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
-                  </div>
-                  <div>
-                    <label className="block font-bold mb-1">Signer Email</label>
-                    <input type="email" defaultValue={activeClient?.contact.email} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="px-4 py-2 rounded-xl border text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    showToast("Client profile updated successfully.");
-                    setIsEditProfileOpen(false);
-                  }}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* 2. Monthly Invoice Modal */}
         {isInvoiceModalOpen && (
@@ -1586,7 +2212,7 @@ export function AdminClientsPage() {
                 </div>
                 <div className="flex justify-between pt-2 border-t border-[#2A3446] font-black text-sm">
                   <span>Total Amount:</span>
-                  <span className="text-[#7FA0D6]">₹{activeClient?.monthlyFee.toLocaleString()}.00</span>
+                  <span className="text-[#7FA0D6]">₹{(activeClient?.monthlyFee ?? 0).toLocaleString()}.00</span>
                 </div>
               </div>
               <button
@@ -1603,91 +2229,7 @@ export function AdminClientsPage() {
           </div>
         )}
 
-        {/* 3. New Request Modal */}
-        {isNewRequestOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <div>
-                  <h3 className="text-base font-black text-white">New Content Request</h3>
-                  <p className="text-xs text-[#97A0B3]">Submitting to {activeClient?.pod.name} for {activeClient?.name}</p>
-                </div>
-                <button type="button" onClick={() => setIsNewRequestOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
 
-              <form onSubmit={handleCreateRequest} className="space-y-3.5">
-                <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Asset Title</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Q4 Executive Product Video Hook"
-                    value={newRequestForm.title}
-                    onChange={(e) => setNewRequestForm({ ...newRequestForm, title: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Type</label>
-                    <NativeSelect
-                      value={newRequestForm.type}
-                      onChange={(e) => setNewRequestForm({ ...newRequestForm, type: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
-                    >
-                      <option value="Reel">🎬 Reel / Short</option>
-                      <option value="Carousel">🎨 Carousel (3-5 slides)</option>
-                      <option value="Static Post">🖼️ Static Hero Graphic</option>
-                      <option value="Deck">📊 Presentation Deck</option>
-                    </NativeSelect>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority</label>
-                    <NativeSelect
-                      value={newRequestForm.priority}
-                      onChange={(e) => setNewRequestForm({ ...newRequestForm, priority: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
-                    >
-                      <option value="Standard">Standard (3-4 Days)</option>
-                      <option value="Expedited">Expedited (48 Hours)</option>
-                      <option value="Urgent">Urgent (24 Hours)</option>
-                    </NativeSelect>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Creative Brief Notes</label>
-                  <textarea
-                    rows={3}
-                    placeholder="Specify key talking points, hooks, or assets to reference..."
-                    value={newRequestForm.notes}
-                    onChange={(e) => setNewRequestForm({ ...newRequestForm, notes: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none"
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                  <button
-                    type="button"
-                    onClick={() => setIsNewRequestOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm cursor-pointer"
-                  >
-                    Submit to Production
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
 
         {/* 4. Preview Canvas / Video Modal */}
         {previewDeliverable && (
@@ -1707,13 +2249,13 @@ export function AdminClientsPage() {
                 <div className="w-14 h-14 rounded-full bg-[#161F2D]/20 backdrop-blur-md flex items-center justify-center text-white mb-2 cursor-pointer hover:scale-110 transition-transform">
                   <Play className="w-6 h-6 fill-white ml-0.5" />
                 </div>
-                <span className="text-xs font-bold text-gray-200">{previewDeliverable.format} Preview</span>
-                <span className="text-[10px] text-[#97A0B3] mt-0.5">Assigned Specialist: {previewDeliverable.assignedTo}</span>
+                <span className="text-xs font-bold text-gray-200">{previewDeliverable?.format || "Asset"} Preview</span>
+                <span className="text-[10px] text-[#97A0B3] mt-0.5">Assigned Specialist: {previewDeliverable?.assignedTo || previewDeliverable?.assigned_name || "Creative Specialist"}</span>
               </div>
 
               <div className="p-3.5 bg-[#0B111C] rounded-2xl text-xs text-[#F1F5F9] space-y-1">
-                <div><strong>Creative Scope:</strong> {previewDeliverable.description}</div>
-                <div><strong>Target Delivery:</strong> {previewDeliverable.dueDate}</div>
+                <div><strong>Creative Scope:</strong> {previewDeliverable?.description || "Asset Scope"}</div>
+                <div><strong>Target Delivery:</strong> {previewDeliverable?.dueDate || previewDeliverable?.date || "Current Sprint"}</div>
               </div>
 
               <div className="flex items-center justify-end gap-2">
@@ -1727,7 +2269,7 @@ export function AdminClientsPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    handleApproveDeliverable(previewDeliverable.id, previewDeliverable.title);
+                    handleApproveDeliverable(previewDeliverable?.id, previewDeliverable?.title || "Asset");
                     setPreviewDeliverable(null);
                   }}
                   className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer"
@@ -1758,7 +2300,7 @@ export function AdminClientsPage() {
                   Are you sure you want to cancel the retainer plan for <strong className="text-white">{activeClient?.name}</strong>?
                 </p>
                 <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-300 font-semibold space-y-1">
-                  <div>• Monthly Retainer: ₹{activeClient?.monthlyFee.toLocaleString()}/mo</div>
+                  <div>• Monthly Retainer: ₹{(activeClient?.monthlyFee ?? 0).toLocaleString()}/mo</div>
                   <div>• Status: CANCELLED (Plan & Access Revoked)</div>
                 </div>
               </div>
@@ -2164,7 +2706,7 @@ export function AdminClientsPage() {
                     onChange={(e) => setDirectBypassPlanId(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
                   >
-                    {plansQuery.data?.map((p) => (
+                    {((directBypassClientPlans.length > 0 ? directBypassClientPlans : plansQuery.data) || []).map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.display_name} (₹{(p.price_minor / 100).toLocaleString()}/mo)
                       </option>
@@ -2338,7 +2880,7 @@ export function AdminDeliverablesPage() {
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {/* Toast Notification */}
         {toastMessage && (
           <div className="fixed top-20 right-4 sm:right-8 left-4 sm:left-auto z-50 bg-[#0B111C] text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2.5 animate-bounce">
@@ -2973,7 +3515,7 @@ export function AdminTasksPage() {
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {/* Header Title and Search Filter Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -3907,7 +4449,7 @@ export function AdminTeamManagementPage() {
         activeTab="Team Details"
       />
 
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {toast && (
           <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
@@ -5244,7 +5786,7 @@ export function AdminLeaveApprovalsPage() {
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Team Details" />
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-8">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
           <div className="p-4 bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs font-bold rounded-2xl flex items-center justify-between shadow-xl backdrop-blur-md animate-fade-in">
             <div className="flex items-center gap-2">
@@ -5477,6 +6019,7 @@ export interface TransactionItem {
 
 export interface PlanNegotiationItem {
   id: string;
+  clientId?: string | null;
   clientName: string;
   clientLogo: string;
   clientEmail?: string;
@@ -5488,14 +6031,19 @@ export interface PlanNegotiationItem {
   requestedAt: string | null;
   status: "Pending Review" | "Accepted" | "Declined" | "Counter Offered";
   counterPrice?: number | null;
+  agreedAmount?: number | null;
   counterNote?: string | null;
   declineReason?: string | null;
+  reelQuota?: number | null;
+  posterQuota?: number | null;
+  storyQuota?: number | null;
 }
 
 export function AdminRevenuePage() {
   const [filter, setFilter] = useState<"all" | "paid" | "pending" | "overdue">("all");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState<string | null>(null);
+  const [revenueLayout, setRevenueLayout] = useState<"split" | "enlarged">("enlarged");
 
   // Modals
   const [selectedReceipt, setSelectedReceipt] = useState<TransactionItem | null>(null);
@@ -5552,13 +6100,6 @@ export function AdminRevenuePage() {
     queryFn: () => fetchRevenueTrend("quarter"),
     refetchInterval: 60000,
   });
-
-  const { data: plansData } = useQuery({
-    queryKey: ["admin_plans"],
-    queryFn: () => fetchPlansSummary(),
-    refetchInterval: 60000,
-  });
-  const plans = plansData?.plans || [];
 
   const totalMrr = kpis?.mrr_minor ? kpis.mrr_minor / 100 : 0;
   const totalCollected = totalMrr;
@@ -5632,7 +6173,7 @@ export function AdminRevenuePage() {
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader title="Revenue Engine" activeTab="Revenue" />
 
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6 sm:space-y-8">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-6 sm:space-y-8">
         {toast && (
           <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
@@ -5657,6 +6198,34 @@ export function AdminRevenuePage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {/* View Mode Toggle: Full Width vs Split View */}
+            <div className="flex items-center p-1 bg-[#161F2D] border border-[#2A3446] rounded-xl text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setRevenueLayout("enlarged")}
+                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+                  revenueLayout === "enlarged"
+                    ? "bg-[#7FA0D6] text-white shadow-xs font-black"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+                title="Full-width view: spacious layout showing all row details with zero horizontal scrolling"
+              >
+                <Maximize2 className="w-3.5 h-3.5" /> Full Width (No Scroll)
+              </button>
+              <button
+                type="button"
+                onClick={() => setRevenueLayout("split")}
+                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+                  revenueLayout === "split"
+                    ? "bg-[#7FA0D6] text-white shadow-xs font-black"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+                title="Side-by-side: Compact split view"
+              >
+                <Columns2 className="w-3.5 h-3.5" /> Split View
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={handleExportCSV}
@@ -5723,37 +6292,38 @@ export function AdminRevenuePage() {
         </div>
 
         {/* ─────────────────────────────────────────────────────────────────────────────
-            CHARTS & TIER BREAKDOWN GRID
+            MAIN SECTION: REVENUE GROWTH GRAPH & TRANSACTION HISTORY
+            (Supports dynamic Split View or Full-Width Enlarged Graph)
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-6">
-          {/* Revenue Growth & Trajectory (2 Cols - Bar Chart matching Dashboard) */}
-          <div className="lg:col-span-2 bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-xl space-y-6 flex flex-col justify-between">
+        <div className={revenueLayout === "split" ? "grid grid-cols-1 xl:grid-cols-2 gap-3.5 sm:gap-6 items-stretch" : "space-y-6"}>
+          {/* Revenue Growth & Trajectory Card */}
+          <div className={`bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-xl flex flex-col justify-between ${
+            revenueLayout === "split" ? "p-6 lg:p-7 space-y-6" : "p-6 lg:p-8 space-y-6"
+          }`}>
             <div>
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
                 <div>
                   <h3 className="text-lg font-bold text-white tracking-tight">Revenue Growth & Trajectory</h3>
                   <p className="text-xs text-[#97A0B3]">Live cash flow across retainers & client billing</p>
                 </div>
 
-                <div className="flex items-center gap-4 text-xs font-bold">
+                <div className="flex flex-wrap items-center gap-3 text-xs font-bold">
                   <span className="flex items-center gap-1.5 text-[#7FA0D6]">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]" /> Actual Inflow
                   </span>
                   <span className="flex items-center gap-1.5 text-[#97A0B3]">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#2A3446]" /> Target Baseline
                   </span>
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-[#7FA0D6] text-white shadow-md ml-1" title="Monthly Recurring Revenue">
+                    ₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"} Current MRR
+                  </span>
                 </div>
               </div>
 
-              {/* Peak Marker Badge */}
-              <div className="flex justify-end mb-2">
-                <span className="px-3 py-1 rounded-full text-[11px] font-black bg-[#7FA0D6] text-white shadow-md" title="Monthly Recurring Revenue">
-                  ₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"} Current MRR
-                </span>
-              </div>
-
-              {/* Recharts Bar Chart (Matching Dashboard Bar Graph) */}
-              <div className="w-full h-64 bg-[#0B111C]/60 rounded-2xl p-4 border border-[#2A3446]/60">
+              {/* Recharts Bar Chart (Responsive Height & Width) */}
+              <div className={`w-full bg-[#0B111C]/60 rounded-2xl p-4 border border-[#2A3446]/60 ${
+                revenueLayout === "enlarged" ? "h-80 sm:h-88" : "h-72"
+              }`}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData}
@@ -5784,7 +6354,7 @@ export function AdminRevenuePage() {
                       tick={{ fontSize: 10, fill: "#97A0B3" }}
                       axisLine={false}
                       tickLine={false}
-                      width={36}
+                      width={38}
                       tickFormatter={(v: number) => {
                         const val = v / 100;
                         return val >= 10000000
@@ -5803,7 +6373,7 @@ export function AdminRevenuePage() {
                       labelStyle={{ color: "#97A0B3", fontSize: "11px", fontWeight: "bold" }}
                       cursor={false}
                     />
-                    <Bar dataKey="revenue" radius={[8, 8, 3, 3]} maxBarSize={28}>
+                    <Bar dataKey="revenue" radius={[8, 8, 3, 3]} maxBarSize={revenueLayout === "enlarged" ? 44 : 32}>
                       {chartData.map((entry, index) => {
                         const maxVal = Math.max(...chartData.map((d) => d.revenue));
                         return (
@@ -5821,225 +6391,241 @@ export function AdminRevenuePage() {
             </div>
 
             {/* Bottom Metrics Bar */}
-            <div className="pt-4 border-t border-[#2A3446] grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center">
-              <div className="bg-[#0B111C] p-2 sm:p-3 rounded-2xl border border-[#2A3446]">
+            <div className="pt-4 border-t border-[#2A3446] grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-center">
+              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Invoiced</span>
                 <div className="text-sm font-black text-white">₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-2 sm:p-3 rounded-2xl border border-[#2A3446]">
+              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Direct UPI / Wire</span>
                 <div className="text-sm font-black text-white">₹{totalCollected > 0 ? totalCollected.toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-2 sm:p-3 rounded-2xl border border-[#2A3446]">
+              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Cards / Razorpay</span>
                 <div className="text-sm font-black text-white">₹{totalCollected > 0 ? (totalCollected * 0).toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-2 sm:p-3 rounded-2xl border border-[#2A3446]">
+              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Disputed / Refunded</span>
                 <div className="text-sm font-black text-emerald-400">₹0</div>
               </div>
             </div>
           </div>
 
-          {/* Plan & Tier Distribution (1 Col - Dark Theme Aligned) */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-xl space-y-6 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-4">
+          {/* Recent Transactions Card (Transaction History) */}
+          <div className={`bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-xl flex flex-col justify-between ${
+            revenueLayout === "split" ? "p-6 lg:p-7 space-y-4" : "p-6 lg:p-8 space-y-6"
+          }`}>
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-bold text-white tracking-tight">Plan & Tier Distribution</h3>
-                  <p className="text-xs text-[#97A0B3]">Active monthly retainers by package tier</p>
+                  <h3 className="text-xl font-black text-white tracking-tight">Recent Transactions</h3>
+                  <p className="text-xs text-[#97A0B3]">Client billing roster & payment settlements</p>
                 </div>
-                <button
-                  type="button"
-                  title="Refresh Tiers"
-                  onClick={() => {
-                    setToast("Plan tier metrics refreshed.");
-                    setTimeout(() => setToast(null), 2500);
-                  }}
-                  className="p-2 rounded-xl hover:bg-[#161F2D] text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer transition-colors"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-              </div>
 
-              {/* Tiers List (Dark Ops Color Theme) */}
-              <div className="space-y-4">
-                {plans.length > 0 ? (
-                  plans.map((p, idx) => {
-                    const planMrr = p.monthly_price * p.subscriber_count;
-                    const pct = totalMrr > 0 ? (planMrr / totalMrr) * 100 : 0;
-                    const colors = ["bg-[#7FA0D6]", "bg-[#BCCCE6]", "bg-[#D8BF9B]", "bg-purple-400"];
-                    const textColors = ["text-[#7FA0D6]", "text-[#BCCCE6]", "text-[#D8BF9B]", "text-purple-400"];
-                    const colIdx = idx % colors.length;
-                    return (
-                      <div key={p.id} className="space-y-2 p-3.5 bg-[#0B111C] rounded-2xl border border-[#2A3446]">
-                        <div className="flex items-center justify-between text-xs font-bold">
-                          <span className="flex items-center gap-2 text-white">
-                            <span className={`w-2.5 h-2.5 rounded-full ${colors[colIdx]}`} /> {p.display_name || p.name}
-                          </span>
-                          <span className="text-white font-black">₹{p.monthly_price.toLocaleString('en-IN')} <span className="text-[10px] font-normal text-[#97A0B3]">/ mo</span></span>
-                        </div>
-                        <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
-                          <div className={`${colors[colIdx]} h-full rounded-full`} style={{ width: `${pct}%` }} />
-                        </div>
-                        <div className="flex justify-between text-[11px] text-[#97A0B3] font-semibold">
-                          <span>{p.subscriber_count} Retainer Account{p.subscriber_count !== 1 ? 's' : ''}</span>
-                          <span className={`${textColors[colIdx]} font-bold`}>{pct.toFixed(1)}% of MRR</span>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="p-4 text-center text-[#97A0B3] text-sm bg-[#0B111C] rounded-2xl border border-[#2A3446]">
-                    No active plans found.
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {/* Search */}
+                  <div className="relative min-w-[200px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search client or invoice..."
+                      className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs text-white focus:outline-none focus:border-blue-500"
+                    />
                   </div>
-                )}
-              </div>
-            </div>
 
-            {/* Sub-card: Add-ons & Overages */}
-            <div className="p-4 bg-[#0B111C] rounded-2xl border border-[#2A3446] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center justify-center font-bold shrink-0">
-                  <Layers className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-xs text-white">Add-ons & Overages</h4>
-                  <p className="text-[11px] text-[#97A0B3] font-medium">3 active add-on asset packages</p>
-                </div>
-              </div>
-              <span className="text-base font-black text-[#7FA0D6]">+₹45,000</span>
-            </div>
-          </div>
-        </div>
+                  {/* Status Filter Pills */}
+                  <div className="flex items-center gap-1 bg-[#0B111C] p-1 rounded-xl text-xs font-bold border border-[#2A3446]">
+                    {(["all", "paid", "pending", "overdue"] as const).map((st) => (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => setFilter(st)}
+                        className={`px-2.5 py-1 rounded-lg capitalize transition-all cursor-pointer text-[11px] ${
+                          filter === st ? "bg-[#161F2D] text-white shadow-xs font-black" : "text-[#97A0B3] hover:text-white"
+                        }`}
+                      >
+                        {st}
+                      </button>
+                    ))}
+                  </div>
 
-
-        {/* ─────────────────────────────────────────────────────────────────────────────
-            RECENT TRANSACTIONS ROSTER TABLE (Matching Image 2)
-        ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] p-6 lg:p-8 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h3 className="text-xl font-black text-white tracking-tight">Recent Transactions</h3>
-
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Search */}
-              <div className="relative min-w-[240px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search client or invoice..."
-                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              {/* Status Filter Pills */}
-              <div className="flex items-center gap-1 bg-[#161F2D] p-1 rounded-xl text-xs font-bold">
-                {(["all", "paid", "pending", "overdue"] as const).map((st) => (
+                  {/* Export CSV Button */}
                   <button
-                    key={st}
                     type="button"
-                    onClick={() => setFilter(st)}
-                    className={`px-3 py-1.5 rounded-lg capitalize transition-all cursor-pointer ${
-                      filter === st ? "bg-[#161F2D] text-white shadow-xs font-black" : "text-[#97A0B3] hover:text-white"
-                    }`}
+                    onClick={handleExportCSV}
+                    className="px-3 py-1.5 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-[#7FA0D6]/30 transition-colors"
                   >
-                    {st}
+                    <Download className="w-3.5 h-3.5" /> CSV
                   </button>
-                ))}
+                </div>
               </div>
 
-              {/* Export CSV Button matching Image 2 */}
-              <button
-                type="button"
-                onClick={handleExportCSV}
-                className="px-3.5 py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-[#7FA0D6]/30 transition-colors"
-              >
-                <Download className="w-3.5 h-3.5" /> Export CSV
-              </button>
+              {/* Transactions Table: Complete row visible with zero horizontal scrolling */}
+              <div className={`rounded-2xl border border-[#2A3446] bg-[#0B111C]/40 ${
+                revenueLayout === "split" ? "max-h-[380px] overflow-y-auto overflow-x-hidden" : "overflow-hidden"
+              }`}>
+                <table className="w-full text-left text-xs text-white table-auto">
+                  <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] sticky top-0 z-10">
+                    {revenueLayout === "split" ? (
+                      <tr>
+                        <th className="px-2.5 py-3 w-[36%]">CLIENT & SCOPE</th>
+                        <th className="px-2 py-3 w-[24%]">INVOICE & METHOD</th>
+                        <th className="px-2 py-3 w-[16%] text-right">AMOUNT</th>
+                        <th className="px-2 py-3 w-[14%] text-center">STATUS</th>
+                        <th className="px-2 py-3 w-[10%] text-right pr-3">ACTION</th>
+                      </tr>
+                    ) : (
+                      <tr>
+                        <th className="px-4 py-3">CLIENT & SCOPE</th>
+                        <th className="px-4 py-3">INVOICE #</th>
+                        <th className="px-4 py-3">SETTLED DATE</th>
+                        <th className="px-4 py-3">AMOUNT</th>
+                        <th className="px-4 py-3">PAYMENT METHOD</th>
+                        <th className="px-4 py-3 text-center">STATUS</th>
+                        <th className="px-4 py-3 text-right pr-4">ACTIONS</th>
+                      </tr>
+                    )}
+                  </thead>
+                  <tbody className="divide-y divide-[#2A3446]/40 font-medium bg-[#161F2D]/50">
+                    {filteredTx.length === 0 ? (
+                      <tr>
+                        <td colSpan={revenueLayout === "split" ? 5 : 7} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
+                          No transactions recorded yet
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredTx.map((tx) => (
+                        <tr key={tx.id} className="hover:bg-[#0B111C]/70 transition-colors">
+                          {revenueLayout === "split" ? (
+                            <>
+                              {/* Col 1: Client & Scope */}
+                              <td className="px-2.5 py-3">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className={`w-7 h-7 rounded-lg ${tx.avatarBg} font-black text-[11px] flex items-center justify-center shrink-0`}>
+                                    {tx.clientInitials}
+                                  </div>
+                                  <div className="min-w-0 truncate">
+                                    <div className="font-bold text-xs text-white truncate" title={tx.client}>{tx.client}</div>
+                                    <div className="text-[10px] text-[#97A0B3] truncate" title={tx.scope}>{tx.scope}</div>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Col 2: Invoice # & Method */}
+                              <td className="px-2 py-3">
+                                <div className="font-mono font-bold text-[#F1F5F9] text-[11px]">{tx.id}</div>
+                                <div className="text-[10px] text-[#97A0B3] truncate">{tx.method}</div>
+                              </td>
+
+                              {/* Col 3: Amount */}
+                              <td className="px-2 py-3 font-black text-xs text-white text-right whitespace-nowrap">
+                                ₹{tx.amount.toLocaleString('en-IN')}
+                              </td>
+
+                              {/* Col 4: Status */}
+                              <td className="px-2 py-3 text-center">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border inline-flex items-center gap-1 ${tx.badgeClass}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]"}`} />
+                                  {tx.status}
+                                </span>
+                              </td>
+
+                              {/* Col 5: Action */}
+                              <td className="px-2 py-3 text-right pr-3 whitespace-nowrap">
+                                {tx.status === "Paid" ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedReceipt(tx)}
+                                    className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer text-xs"
+                                  >
+                                    Receipt <ArrowUpRight className="w-3.5 h-3.5" />
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSendReminder(tx)}
+                                    className="px-2 py-1 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <Play className="w-2.5 h-2.5 fill-current" /> Remind
+                                  </button>
+                                )}
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              {/* Full Width Row: All 7 Columns completely visible */}
+                              <td className="px-4 py-3.5">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-8 h-8 rounded-xl ${tx.avatarBg} font-black text-xs flex items-center justify-center shrink-0`}>
+                                    {tx.clientInitials}
+                                  </div>
+                                  <div>
+                                    <div className="font-bold text-xs text-white">{tx.client}</div>
+                                    <div className="text-[11px] text-[#97A0B3]">{tx.scope}</div>
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="px-4 py-3.5 font-mono font-bold text-[#F1F5F9] text-xs">
+                                {tx.id}
+                              </td>
+
+                              <td className="px-4 py-3.5 text-xs text-[#97A0B3] font-medium">
+                                {tx.date}
+                              </td>
+
+                              <td className="px-4 py-3.5 font-black text-sm text-white whitespace-nowrap">
+                                ₹{tx.amount.toLocaleString('en-IN')}
+                              </td>
+
+                              <td className="px-4 py-3.5 text-[#F1F5F9] font-medium text-xs">
+                                <span className="px-2.5 py-1 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[#F1F5F9] inline-block">
+                                  {tx.method}
+                                </span>
+                              </td>
+
+                              <td className="px-4 py-3.5 text-center">
+                                <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border inline-flex items-center gap-1.5 ${tx.badgeClass}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]"}`} />
+                                  {tx.status}
+                                </span>
+                              </td>
+
+                              <td className="px-4 py-3.5 text-right pr-4">
+                                {tx.status === "Paid" ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedReceipt(tx)}
+                                    className="px-3 py-1.5 rounded-xl border border-[#7FA0D6]/30 bg-[#7FA0D6]/10 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold inline-flex items-center gap-1 cursor-pointer text-xs transition-colors"
+                                  >
+                                    View Receipt <ArrowUpRight className="w-3.5 h-3.5" />
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSendReminder(tx)}
+                                    className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 font-bold text-xs inline-flex items-center gap-1 cursor-pointer transition-colors"
+                                  >
+                                    <Play className="w-3 h-3 fill-current" /> Send Reminder
+                                  </button>
+                                )}
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
 
-          {/* Table matching Image 2 */}
-          <div className="overflow-x-auto -mx-1 sm:mx-0">
-            <table className="w-full text-left text-xs text-white">
-              <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
-                <tr>
-                  <th className="px-3 sm:px-5 py-3 sm:py-4">CLIENT & SCOPE</th>
-                  <th className="px-3 sm:px-5 py-3 sm:py-4">INVOICE #</th>
-                  <th className="px-3 sm:px-5 py-3 sm:py-4">AMOUNT</th>
-                  <th className="px-3 sm:px-5 py-3 sm:py-4">PAYMENT METHOD</th>
-                  <th className="px-3 sm:px-5 py-3 sm:py-4">STATUS</th>
-                  <th className="px-5 py-4 text-right">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 font-medium">
-                {filteredTx.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
-                      No transactions recorded yet
-                    </td>
-                  </tr>
-                ) : (
-                  filteredTx.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-[#0B111C]/70 transition-colors">
-                    <td className="px-3 sm:px-5 py-3 sm:py-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-xl ${tx.avatarBg} font-black text-xs flex items-center justify-center shrink-0`}>
-                          {tx.clientInitials}
-                        </div>
-                        <div>
-                          <div className="font-bold text-sm text-white">{tx.client}</div>
-                          <div className="text-[11px] text-[#97A0B3]">{tx.scope}</div>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="px-5 py-4 font-mono font-bold text-[#F1F5F9]">{tx.id}</td>
-
-                    <td className="px-5 py-4 font-black text-sm text-white">
-                      ₹{tx.amount.toLocaleString('en-IN')}
-                    </td>
-
-                    <td className="px-5 py-4 text-[#F1F5F9] font-medium">{tx.method}</td>
-
-                    <td className="px-3 sm:px-5 py-3 sm:py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border flex items-center gap-1.5 w-fit ${tx.badgeClass}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]/150"}`} />
-                        {tx.status} ({tx.date})
-                      </span>
-                    </td>
-
-                    <td className="px-5 py-4 text-right">
-                      {tx.status === "Paid" ? (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedReceipt(tx)}
-                          className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer text-xs"
-                        >
-                          Receipt <ArrowUpRight className="w-3.5 h-3.5" />
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleSendReminder(tx)}
-                          className="px-3 py-1.5 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
-                        >
-                          <Play className="w-3 h-3 fill-current" /> Remind
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Table Footer */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-[#2A3446] text-xs text-[#97A0B3] font-medium">
-            <span>Showing {filteredTx.length} of {transactions.length} transactions</span>
+            {/* Table Footer */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-[#2A3446] text-xs text-[#97A0B3] font-medium">
+              <span>Showing {filteredTx.length} of {transactions.length} transactions</span>
+            </div>
           </div>
         </div>
 
@@ -6219,6 +6805,9 @@ export function AdminRevenuePage() {
 // 9. ADMIN PLANS & PRICING TIERS PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export function AdminPlansPage() {
+  const [searchParams] = useSearchParams();
+  const queryNegId = searchParams.get("negId") || searchParams.get("id");
+  const queryClientId = searchParams.get("clientId");
   const [toast, setToast] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filterTab, setFilterTab] = useState<"all" | "pending" | "accepted" | "counter" | "declined">("all");
@@ -6298,12 +6887,24 @@ export function AdminPlansPage() {
   const [editFeaturesInput, setEditFeaturesInput] = useState("");
 
   const [isNewProposalOpen, setIsNewProposalOpen] = useState(false);
+  const [acceptModalItem, setAcceptModalItem] = useState<PlanNegotiationItem | null>(null);
   const [counterModalItem, setCounterModalItem] = useState<PlanNegotiationItem | null>(null);
   const [declineModalItem, setDeclineModalItem] = useState<PlanNegotiationItem | null>(null);
 
   // Form Inputs
+  const [acceptPriceInput, setAcceptPriceInput] = useState("");
+  const [acceptReelsInput, setAcceptReelsInput] = useState("8");
+  const [acceptPostersInput, setAcceptPostersInput] = useState("12");
+  const [acceptStoriesInput, setAcceptStoriesInput] = useState("15");
+  const [acceptNotesInput, setAcceptNotesInput] = useState("");
+  const [isSubmittingAccept, setIsSubmittingAccept] = useState(false);
+
   const [counterPriceInput, setCounterPriceInput] = useState("");
+  const [counterReelsInput, setCounterReelsInput] = useState("8");
+  const [counterPostersInput, setCounterPostersInput] = useState("12");
+  const [counterStoriesInput, setCounterStoriesInput] = useState("15");
   const [counterNoteInput, setCounterNoteInput] = useState("");
+  const [isSubmittingCounter, setIsSubmittingCounter] = useState(false);
   const [declineReasonInput, setDeclineReasonInput] = useState("");
 
   const [newPropClient, setNewPropClient] = useState("");
@@ -6324,6 +6925,7 @@ export function AdminPlansPage() {
         if (data && data.length > 0) {
           const mapped: PlanNegotiationItem[] = data.map((n) => ({
             id: n.id,
+            clientId: n.clientId,
             clientName: n.clientName,
             clientLogo: n.clientLogo,
             clientEmail: n.clientEmail,
@@ -6335,6 +6937,10 @@ export function AdminPlansPage() {
             requestedAt: n.requestedAt,
             status: n.status,
             counterPrice: n.counterPrice,
+            agreedAmount: n.agreedAmount,
+            reelQuota: n.reelQuota || 8,
+            posterQuota: n.posterQuota || 12,
+            storyQuota: n.storyQuota || 15,
             counterNote: n.counterNote,
             declineReason: n.declineReason,
           }));
@@ -6346,6 +6952,91 @@ export function AdminPlansPage() {
       });
     return () => { cancelled = true; };
   }, []);
+
+  // Actions: OPEN Accept Client Plan Negotiation Modal
+  const handleOpenAcceptModal = (item: PlanNegotiationItem) => {
+    setAcceptModalItem(item);
+    const digits = (item.proposedOffer || "").replace(/[^\d.]/g, "");
+    const parsed = parseFloat(digits);
+    const basePrice = item.counterPrice || (parsed && !isNaN(parsed) ? parsed : 35000);
+    setAcceptPriceInput(String(basePrice));
+    setAcceptReelsInput(String(item.reelQuota || 8));
+    setAcceptPostersInput(String(item.posterQuota || 12));
+    setAcceptStoriesInput(String(item.storyQuota || 15));
+    setAcceptNotesInput(item.counterNote || `Custom negotiated retainer approved for ${item.clientName}. Scope terms confirmed.`);
+  };
+
+  // Actions: OPEN Counter Offer Negotiation Modal
+  const handleOpenCounterModal = (item: PlanNegotiationItem) => {
+    setCounterModalItem(item);
+    const digits = (item.proposedOffer || "").replace(/[^\d.]/g, "");
+    const parsed = parseFloat(digits);
+    const basePrice = item.counterPrice || (parsed && !isNaN(parsed) ? parsed : 40000);
+    setCounterPriceInput(String(basePrice));
+    setCounterReelsInput(String(item.reelQuota || 8));
+    setCounterPostersInput(String(item.posterQuota || 12));
+    setCounterStoriesInput(String(item.storyQuota || 15));
+    setCounterNoteInput(item.counterNote || `We can offer ₹${basePrice.toLocaleString('en-IN')}/mo with a revised custom deliverable scope.`);
+  };
+
+  // Auto-focus negotiation from URL query params (e.g. from notification deep-link)
+  useEffect(() => {
+    if ((queryNegId || queryClientId) && negotiations.length > 0) {
+      const match = negotiations.find(
+        (n) =>
+          (queryNegId && (n.id === queryNegId || String(n.id).includes(queryNegId))) ||
+          (queryClientId && (n.clientId === queryClientId || (n.clientEmail && n.clientEmail.toLowerCase() === queryClientId.toLowerCase())))
+      );
+      if (match) {
+        setFilterTab("all");
+        if (match.status === "Pending Review") {
+          handleOpenAcceptModal(match);
+        }
+      }
+    }
+  }, [queryNegId, queryClientId, negotiations]);
+
+  // Actions: CONFIRM Accept Client Plan Negotiation
+  const handleConfirmAccept = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!acceptModalItem) return;
+    const target = acceptModalItem;
+    const agreedPrice = parseFloat(acceptPriceInput) || 35000;
+    const reelQuota = parseInt(acceptReelsInput, 10) || 8;
+    const posterQuota = parseInt(acceptPostersInput, 10) || 12;
+    const storyQuota = parseInt(acceptStoriesInput, 10) || 15;
+
+    setIsSubmittingAccept(true);
+    try {
+      await updatePlanNegotiation(target.id, "accept", {
+        agreed_price: agreedPrice,
+        agreed_amount: agreedPrice,
+        reel_quota: reelQuota,
+        poster_quota: posterQuota,
+        story_quota: storyQuota,
+        counter_note: acceptNotesInput,
+      });
+
+      setNegotiations((prev) =>
+        prev.map((n) =>
+          n.id === target.id
+            ? { ...n, status: "Accepted", counterPrice: agreedPrice, counterNote: acceptNotesInput }
+            : n
+        )
+      );
+
+      setToast(
+        `Plan Negotiation ACCEPTED for ${target.clientName} at ₹${agreedPrice.toLocaleString('en-IN')}/mo! Custom plan assigned exclusively to this client.`
+      );
+      setAcceptModalItem(null);
+    } catch (err) {
+      console.error("Failed to approve negotiation:", err);
+      setToast(`Error accepting negotiation: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      setIsSubmittingAccept(false);
+      setTimeout(() => setToast(null), 5000);
+    }
+  };
 
   // Active Sales & Retainer Pipeline Deals
   const [deals, setDeals] = useState<
@@ -6362,20 +7053,6 @@ export function AdminPlansPage() {
       expectedClose: string;
     }>
   >([]);
-
-  // Actions: ACCEPT Client Plan Negotiation
-  const handleAcceptNegotiation = async (item: PlanNegotiationItem) => {
-    setNegotiations((prev) =>
-      prev.map((n) => (n.id === item.id ? { ...n, status: "Accepted" } : n))
-    );
-    setToast(`Plan Negotiation ACCEPTED for ${item.clientName}!`);
-    try {
-      await updatePlanNegotiation(item.id, "accept");
-    } catch (err) {
-      console.warn("Backend negotiation update notice:", err);
-    }
-    setTimeout(() => setToast(null), 4000);
-  };
 
   // Actions: DECLINE Client Plan Negotiation
   const handleConfirmDecline = async (e: React.FormEvent) => {
@@ -6409,29 +7086,50 @@ export function AdminPlansPage() {
     e.preventDefault();
     if (!counterModalItem || !counterPriceInput) return;
     const target = counterModalItem;
-    const price = parseFloat(counterPriceInput);
+    const price = parseFloat(counterPriceInput) || 40000;
+    const reelQuota = parseInt(counterReelsInput, 10) || 8;
+    const posterQuota = parseInt(counterPostersInput, 10) || 12;
+    const storyQuota = parseInt(counterStoriesInput, 10) || 15;
 
-    setNegotiations((prev) =>
-      prev.map((n) =>
-        n.id === target.id
-          ? { ...n, status: "Counter Offered", counterPrice: price, counterNote: counterNoteInput }
-          : n
-      )
-    );
-    setToast(`Counter offer of ₹${price.toLocaleString('en-IN')}/mo submitted to ${target.clientName}.`);
-    setCounterModalItem(null);
-    setCounterPriceInput("");
-    setCounterNoteInput("");
-
+    setIsSubmittingCounter(true);
     try {
       await updatePlanNegotiation(target.id, "counter", {
         counter_price: price,
         counter_note: counterNoteInput || undefined,
+        reel_quota: reelQuota,
+        poster_quota: posterQuota,
+        story_quota: storyQuota,
       });
+
+      setNegotiations((prev) =>
+        prev.map((n) =>
+          n.id === target.id
+            ? {
+                ...n,
+                status: "Counter Offered",
+                counterPrice: price,
+                agreedAmount: price,
+                reelQuota,
+                posterQuota,
+                storyQuota,
+                counterNote: counterNoteInput,
+              }
+            : n
+        )
+      );
+      setToast(
+        `Counter offer of ₹${price.toLocaleString('en-IN')}/mo (${reelQuota} Reels, ${posterQuota} Posts, ${storyQuota} Stories) submitted to ${target.clientName}. Custom plan updated in client onboarding.`
+      );
+      setCounterModalItem(null);
+      setCounterPriceInput("");
+      setCounterNoteInput("");
     } catch (err) {
-      console.warn("Backend counter notice:", err);
+      console.error("Failed to submit counter offer:", err);
+      setToast(`Error submitting counter offer: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      setIsSubmittingCounter(false);
+      setTimeout(() => setToast(null), 5000);
     }
-    setTimeout(() => setToast(null), 4000);
   };
 
   // Actions: Create New Proposal Submit
@@ -6612,7 +7310,7 @@ export function AdminPlansPage() {
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Revenue" />
-      <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
+      <main className="flex-1 px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
@@ -6808,92 +7506,140 @@ export function AdminPlansPage() {
                 <p className="text-xs font-bold">No plan negotiations found in this filter.</p>
               </div>
             ) : (
-              filteredNegotiations.map((item) => (
-                <div
-                  key={item.id}
-                  className="p-5 rounded-2xl border border-[#2A3446] bg-[#0B111C]/50 hover:bg-[#161F2D] hover:border-[#2A3446] transition-all shadow-2xs space-y-4"
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    {/* Client Info */}
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-sm flex items-center justify-center shadow-md shrink-0">
-                        {item.clientLogo}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-white">{item.clientName}</h4>
-                          <span className="text-[10px] text-[#97A0B3] font-semibold">{item.requestedAt}</span>
-                        </div>
-                        <p className="text-xs text-[#F1F5F9] font-medium">{item.targetTopic}</p>
-                        {item.clientEmail && <p className="text-[10px] text-[#97A0B3]">{item.clientEmail}</p>}
-                      </div>
-                    </div>
+              filteredNegotiations.map((item) => {
+                const isHighlighted = Boolean(
+                  (queryNegId && (item.id === queryNegId || String(item.id).includes(queryNegId))) ||
+                  (queryClientId && item.clientId && item.clientId.toLowerCase() === queryClientId.toLowerCase()) ||
+                  (queryClientId && item.clientEmail && item.clientEmail.toLowerCase() === queryClientId.toLowerCase())
+                );
 
-                    {/* Negotiation Details */}
-                    <div className="flex items-center gap-4 bg-[#161F2D] p-3 rounded-xl border border-[#2A3446] flex-wrap">
-                      {item.proposedOffer && (
+                return (
+                  <div
+                    key={item.id}
+                    id={`neg-${item.id}`}
+                    className={`p-5 rounded-2xl border transition-all shadow-2xs space-y-4 ${
+                      isHighlighted
+                        ? "border-[#7FA0D6] bg-[#7FA0D6]/10 ring-2 ring-[#7FA0D6] shadow-lg shadow-blue-500/10"
+                        : "border-[#2A3446] bg-[#0B111C]/50 hover:bg-[#161F2D] hover:border-[#2A3446]"
+                    }`}
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      {/* Client Info */}
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-sm flex items-center justify-center shadow-md shrink-0">
+                          {item.clientLogo}
+                        </div>
                         <div>
-                          <span className="text-[10px] text-[#7FA0D6] uppercase block font-bold">Proposed Offer</span>
-                          <span className="text-sm font-black text-emerald-400">{item.proposedOffer}</span>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-sm text-white">{item.clientName}</h4>
+                            <span className="text-[10px] text-[#97A0B3] font-semibold">{item.requestedAt}</span>
+                            {isHighlighted && (
+                              <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-[#7FA0D6] border border-blue-500/30 text-[9px] font-black uppercase">
+                                Selected Target
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-[#F1F5F9] font-medium">{item.targetTopic}</p>
+                          {item.clientEmail && <p className="text-[10px] text-[#97A0B3]">{item.clientEmail}</p>}
                         </div>
-                      )}
-                      <div>
-                        <span className="text-[10px] text-[#97A0B3] uppercase block font-bold">Contact</span>
-                        <span className="text-xs font-bold text-white">{item.phoneNumber}</span>
                       </div>
-                      <div>
-                        <span className="text-[10px] text-[#97A0B3] uppercase block font-bold">Preferred Time</span>
-                        <span className="text-xs font-bold text-white">{item.preferredTime}</span>
-                      </div>
-                    </div>
 
-                    {/* Status & Actions */}
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <span
-                        className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
-                          item.status === "Accepted"
-                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                            : item.status === "Declined"
-                            ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
-                            : item.status === "Counter Offered"
-                            ? "bg-purple-500/15 text-purple-400 border border-purple-500/30"
-                            : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
-                        }`}
-                      >
-                        {item.status === "Pending Review" && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
-                        {item.status}
-                      </span>
-
-                      {/* Functional ACCEPT, DECLINE, and COUNTER buttons */}
-                      {item.status === "Pending Review" && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleAcceptNegotiation(item)}
-                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
-                          >
-                            <Check className="w-3.5 h-3.5 stroke-[3]" /> ACCEPT
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeclineModalItem(item)}
-                            className="px-4 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 font-bold text-xs border border-rose-500/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
-                          >
-                            <X className="w-3.5 h-3.5 stroke-[3]" /> DECLINE
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setCounterModalItem(item);
-                              setCounterPriceInput("");
-                            }}
-                            className="px-4 py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-[#7FA0D6] hover:text-white font-bold text-xs border border-[#7FA0D6]/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
-                          >
-                            <SlidersHorizontal className="w-3.5 h-3.5" /> Counter
-                          </button>
+                      {/* Negotiation Details */}
+                      <div className="flex items-center gap-4 bg-[#161F2D] p-3 rounded-xl border border-[#2A3446] flex-wrap">
+                        {item.proposedOffer && (
+                          <div>
+                            <span className="text-[10px] text-[#7FA0D6] uppercase block font-bold">Client Offer</span>
+                            <span className="text-sm font-black text-emerald-400">{item.proposedOffer}</span>
+                          </div>
+                        )}
+                        {item.status === "Accepted" && (
+                          <div>
+                            <span className="text-[10px] text-emerald-400 uppercase block font-bold">Agreed Retainer</span>
+                            <span className="text-sm font-black text-emerald-300">
+                              ₹{(item.counterPrice || item.agreedAmount || 0).toLocaleString('en-IN')}/mo
+                            </span>
+                          </div>
+                        )}
+                        {item.status === "Counter Offered" && (
+                          <div>
+                            <span className="text-[10px] text-purple-400 uppercase block font-bold">Counter Offer</span>
+                            <span className="text-sm font-black text-purple-300">
+                              ₹{(item.counterPrice || 0).toLocaleString('en-IN')}/mo
+                            </span>
+                          </div>
+                        )}
+                        {(item.status === "Accepted" || item.status === "Counter Offered") && (
+                          <div>
+                            <span className="text-[10px] text-[#7FA0D6] uppercase block font-bold">Deliverables Quota</span>
+                            <span className="text-xs font-bold text-white">
+                              {item.reelQuota || 8} Reels • {item.posterQuota || 12} Posts • {item.storyQuota || 15} Stories
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-[10px] text-[#97A0B3] uppercase block font-bold">Contact</span>
+                          <span className="text-xs font-bold text-white">{item.phoneNumber}</span>
                         </div>
-                      )}
-                    </div>
+                        <div>
+                          <span className="text-[10px] text-[#97A0B3] uppercase block font-bold">Preferred Time</span>
+                          <span className="text-xs font-bold text-white">{item.preferredTime}</span>
+                        </div>
+                      </div>
+
+                      {/* Status & Actions */}
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <span
+                          className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                            item.status === "Accepted"
+                              ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                              : item.status === "Declined"
+                              ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                              : item.status === "Counter Offered"
+                              ? "bg-purple-500/15 text-purple-400 border border-purple-500/30"
+                              : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                          }`}
+                        >
+                          {item.status === "Pending Review" && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
+                          {item.status}
+                        </span>
+
+                        {/* Functional ACCEPT, DECLINE, and COUNTER buttons */}
+                        {item.status === "Pending Review" ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenAcceptModal(item)}
+                              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                            >
+                              <Check className="w-3.5 h-3.5 stroke-[3]" /> ACCEPT
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeclineModalItem(item)}
+                              className="px-4 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 font-bold text-xs border border-rose-500/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                            >
+                              <X className="w-3.5 h-3.5 stroke-[3]" /> DECLINE
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenCounterModal(item)}
+                              className="px-4 py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-[#7FA0D6] hover:text-white font-bold text-xs border border-[#7FA0D6]/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                            >
+                              <SlidersHorizontal className="w-3.5 h-3.5" /> Counter
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenAcceptModal(item)}
+                              className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:border-[#7FA0D6] text-[11px] font-bold text-[#BCCCE6] hover:text-white cursor-pointer transition-all"
+                            >
+                              Edit Scope / Quotas
+                            </button>
+                          </div>
+                        )}
+                      </div>
                   </div>
 
                   {/* Scope Notes */}
@@ -6903,8 +7649,8 @@ export function AdminPlansPage() {
                     </div>
                   )}
                 </div>
-              ))
-            )}
+              );
+            }))}
           </div>
         </div>
 
@@ -6980,6 +7726,161 @@ export function AdminPlansPage() {
           </div>
         </div>
       </main>
+
+      {/* ─────────────────────────────────────────────────────────────────────────────
+          MODAL: ACCEPT CLIENT PLAN NEGOTIATION & CONFIGURE PER-CLIENT RETAINER
+      ───────────────────────────────────────────────────────────────────────────── */}
+      {acceptModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl space-y-5 border border-[#2A3446] max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 font-black text-sm flex items-center justify-center">
+                  <Check className="w-5 h-5 stroke-[3]" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Accept Retainer Negotiation</h3>
+                  <p className="text-[11px] text-[#97A0B3]">Lock in negotiated price strictly for {acceptModalItem.clientName}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAcceptModalItem(null)}
+                className="p-1.5 text-[#97A0B3] hover:text-white rounded-lg hover:bg-[#0B111C]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Negotiation Overview Card */}
+            <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-2.5 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-[#97A0B3] font-medium">Client Account:</span>
+                <span className="font-bold text-white">{acceptModalItem.clientName} ({acceptModalItem.clientEmail || "—"})</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#97A0B3] font-medium">Scope Topic:</span>
+                <span className="font-bold text-[#7FA0D6]">{acceptModalItem.targetTopic}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#97A0B3] font-medium">Client Proposed Budget:</span>
+                <span className="font-black text-emerald-400 text-sm">{acceptModalItem.proposedOffer || "—"}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#97A0B3] font-medium">Contact / Slot:</span>
+                <span className="font-medium text-[#F1F5F9]">{acceptModalItem.phoneNumber} • {acceptModalItem.preferredTime}</span>
+              </div>
+              {acceptModalItem.notes && (
+                <div className="pt-2 border-t border-[#2A3446] text-[#97A0B3]">
+                  <strong className="text-[#F1F5F9]">Client Note:</strong> "{acceptModalItem.notes}"
+                </div>
+              )}
+            </div>
+
+            {/* ISOLATION GUARANTEE CALLOUT */}
+            <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs space-y-1">
+              <div className="flex items-center gap-1.5 font-black uppercase text-[10px] tracking-wider text-emerald-400">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Client Price Isolation Guarantee
+              </div>
+              <p className="text-[11px] text-[#F1F5F9] leading-relaxed">
+                This negotiated price will update <strong>ONLY for {acceptModalItem.clientName}</strong>. Standard agency tiers (Starter ₹25k, Growth ₹50k, Scale ₹1.2L) and all other client retainers remain completely unchanged.
+              </p>
+            </div>
+
+            <form onSubmit={handleConfirmAccept} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-white mb-1">
+                  Agreed Monthly Retainer (₹ INR / month) <span className="text-emerald-400">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white font-bold text-sm">₹</span>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={acceptPriceInput}
+                    onChange={(e) => setAcceptPriceInput(e.target.value)}
+                    className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                    placeholder="e.g. 35000"
+                  />
+                </div>
+              </div>
+
+              {/* Deliverable Quota Inputs */}
+              <div className="grid grid-cols-3 gap-2.5">
+                <div>
+                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Reels / mo</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={acceptReelsInput}
+                    onChange={(e) => setAcceptReelsInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Posters / mo</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={acceptPostersInput}
+                    onChange={(e) => setAcceptPostersInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Stories / mo</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={acceptStoriesInput}
+                    onChange={(e) => setAcceptStoriesInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#F1F5F9] mb-1">
+                  Agreement Notes / Scope Terms
+                </label>
+                <textarea
+                  rows={2}
+                  value={acceptNotesInput}
+                  onChange={(e) => setAcceptNotesInput(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                  placeholder="e.g. Approved custom retainer. Valid for 12 months."
+                />
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+                <button
+                  type="button"
+                  onClick={() => setAcceptModalItem(null)}
+                  disabled={isSubmittingAccept}
+                  className="px-4 py-2.5 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingAccept}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-lg shadow-emerald-600/30 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                >
+                  {isSubmittingAccept ? (
+                    <span>Applying Retainer...</span>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 stroke-[3]" />
+                      Confirm & Assign Retainer (₹{Number(acceptPriceInput || 0).toLocaleString('en-IN')})
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ─────────────────────────────────────────────────────────────────────────────
           MODAL: EDIT TIER TERMS
@@ -7086,35 +7987,95 @@ export function AdminPlansPage() {
               </button>
             </div>
 
-            <form onSubmit={handleConfirmCounter} className="space-y-3 text-xs">
+            {/* ISOLATION GUARANTEE CALLOUT */}
+            <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs space-y-1">
+              <div className="flex items-center gap-1.5 font-black uppercase text-[10px] tracking-wider text-purple-400">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Client Counter Scope Guarantee
+              </div>
+              <p className="text-[11px] text-[#F1F5F9] leading-relaxed">
+                This counter proposal will update <strong>ONLY for {counterModalItem.clientName}</strong> in their client onboarding. Standard agency tiers remain completely unchanged.
+              </p>
+            </div>
+
+            <form onSubmit={handleConfirmCounter} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Counter Proposed Rate (₹ INR / mo)</label>
-                <input
-                  type="number"
-                  required
-                  value={counterPriceInput}
-                  onChange={(e) => setCounterPriceInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-                />
+                <label className="block font-bold text-white mb-1">
+                  Counter Proposed Rate (₹ INR / mo) <span className="text-purple-400">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white font-bold text-sm">₹</span>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={counterPriceInput}
+                    onChange={(e) => setCounterPriceInput(e.target.value)}
+                    className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                    placeholder="e.g. 40000"
+                  />
+                </div>
+              </div>
+
+              {/* Deliverable Quota Inputs */}
+              <div className="grid grid-cols-3 gap-2.5">
+                <div>
+                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Reels / mo</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={counterReelsInput}
+                    onChange={(e) => setCounterReelsInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Posters / mo</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={counterPostersInput}
+                    onChange={(e) => setCounterPostersInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Stories / mo</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={counterStoriesInput}
+                    onChange={(e) => setCounterStoriesInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block font-bold text-[#F1F5F9] mb-1">Counter Offer Notes / Scope Terms</label>
                 <textarea
-                  rows={3}
-                  placeholder="e.g. We can offer ₹85,000/mo with 12-month commitment."
+                  rows={2}
+                  placeholder="e.g. We can offer ₹40,000/mo with custom deliverable package."
                   value={counterNoteInput}
                   onChange={(e) => setCounterNoteInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setCounterModalItem(null)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+                <button
+                  type="button"
+                  onClick={() => setCounterModalItem(null)}
+                  disabled={isSubmittingCounter}
+                  className="px-4 py-2.5 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                >
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-2 rounded-xl bg-purple-600 text-white font-bold hover:bg-purple-700 cursor-pointer">
-                  Submit Counter
+                <button
+                  type="submit"
+                  disabled={isSubmittingCounter}
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs shadow-lg shadow-purple-600/30 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                >
+                  {isSubmittingCounter ? "Submitting Counter..." : `Submit Counter Offer (₹${Number(counterPriceInput || 0).toLocaleString('en-IN')})`}
                 </button>
               </div>
             </form>

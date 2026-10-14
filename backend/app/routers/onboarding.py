@@ -11,6 +11,9 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.logging import get_logger
+logger = get_logger("app.routers.onboarding")
+
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
 from app.models.questionnaire import Questionnaire
@@ -389,6 +392,35 @@ async def resend_onboarding_summary(
     }
 
 
+async def _ensure_manual_payments_table(db: AsyncSession) -> None:
+    stmts = [
+        """CREATE TABLE IF NOT EXISTS manual_payment_requests (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            plan_id UUID NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
+            payment_method VARCHAR(50) NOT NULL DEFAULT 'cash',
+            amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+            reference_note TEXT,
+            status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+            reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+            reviewed_at TIMESTAMP WITH TIME ZONE,
+            admin_notes TEXT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+        );""",
+        "CREATE INDEX IF NOT EXISTS idx_manual_payments_client_id ON manual_payment_requests(client_id);",
+        "CREATE INDEX IF NOT EXISTS idx_manual_payments_status ON manual_payment_requests(status);",
+        "CREATE INDEX IF NOT EXISTS idx_manual_payments_created_at ON manual_payment_requests(created_at);",
+    ]
+    for stmt in stmts:
+        try:
+            await db.execute(text(stmt))
+            await db.commit()
+        except Exception as exc:
+            await db.rollback()
+            logger.debug("ensure_manual_payments_stmt", error=str(exc))
+
+
 @router.post("/manual-payment-request", response_model=ManualPaymentRequestResponse)
 async def create_manual_payment_request(
     body: ManualPaymentRequestCreate,
@@ -397,13 +429,28 @@ async def create_manual_payment_request(
 ) -> ManualPaymentRequestResponse:
     """Client submits an offline/manual payment claim (cash, bank transfer, etc.) to bypass Step 3."""
     client_id = actor.client_id or actor.user_id
+    await _ensure_manual_payments_table(db)
 
-    # Verify plan exists
+    # Verify plan exists (check by UUID, slug name, or custom client plan)
     from app.models.billing import Plan, Subscription
     from app.models.enums import SubscriptionStatus
-    plan_stmt = select(Plan).where(Plan.id == body.plan_id)
-    plan_res = await db.execute(plan_stmt)
-    plan = plan_res.scalar_one_or_none()
+    plan = None
+    try:
+        pid_uuid = uuid.UUID(str(body.plan_id))
+        plan = (await db.execute(select(Plan).where(Plan.id == pid_uuid))).scalar_one_or_none()
+    except (ValueError, TypeError):
+        pass
+
+    if not plan:
+        plan = (await db.execute(
+            select(Plan).where(Plan.name == str(body.plan_id), Plan.is_active.is_(True))
+        )).scalar_one_or_none()
+
+    if not plan:
+        plan = (await db.execute(
+            select(Plan).where(Plan.name == f"custom_{client_id.hex[:8]}", Plan.is_active.is_(True))
+        )).scalar_one_or_none()
+
     if not plan:
         raise HTTPException(status_code=404, detail="Selected plan does not exist")
 
@@ -414,7 +461,7 @@ async def create_manual_payment_request(
             Subscription.status.in_([SubscriptionStatus.TRIALING, SubscriptionStatus.ACTIVE]),
         )
     )
-    if sub_res.scalar_one_or_none():
+    if sub_res.scalars().first():
         raise HTTPException(status_code=400, detail="Client already has an active subscription")
 
     amount = float(plan.monthly_price)
@@ -434,7 +481,7 @@ async def create_manual_payment_request(
             SET plan_id = :pid, payment_method = :pm, amount = :amt, reference_note = :rn, updated_at = NOW()
             WHERE id = :rid
         """), {
-            "pid": body.plan_id,
+            "pid": plan.id,
             "pm": body.payment_method,
             "amt": amount,
             "rn": body.reference_note,
@@ -448,7 +495,7 @@ async def create_manual_payment_request(
         """), {
             "id": req_id,
             "cid": client_id,
-            "pid": body.plan_id,
+            "pid": plan.id,
             "pm": body.payment_method,
             "amt": amount,
             "rn": body.reference_note,
@@ -457,33 +504,37 @@ async def create_manual_payment_request(
     # Fetch client info for notification
     u_res = await db.execute(select(User).where(User.id == client_id))
     u = u_res.scalar_one_or_none()
-    client_name = u.full_name or "Valued Client" if u else "Valued Client"
-    client_email = u.email if u else ""
+    client_name = (u.full_name or "Valued Client") if u else "Valued Client"
+    client_email = (u.email or "") if u else ""
 
-    # Create administrative notification
+    # Create administrative notification for agency admins
     from app.models.ops import Notification
-    admin_notif = Notification(
-        user_id=None,
-        title="Offline Payment Verification Requested",
-        message=f"{client_name} ({client_email}) requested offline payment verification ({body.payment_method.upper()}) for {plan.display_name} (₹{int(amount):,}).",
-        type="billing",
-        payload={
-            "request_id": str(req_id),
-            "client_id": str(client_id),
-            "plan_name": plan.name,
-            "payment_method": body.payment_method,
-            "amount": amount,
-        },
-    )
-    db.add(admin_notif)
+    from app.models.enums import UserRole
+    try:
+        admins_res = await db.execute(
+            select(User.id).where(User.role.in_([UserRole.ADMIN, UserRole.SUPER_ADMIN]))
+        )
+        admin_ids = [row[0] for row in admins_res.fetchall()]
+        for aid in admin_ids:
+            db.add(
+                Notification(
+                    user_id=aid,
+                    title="Offline Payment Verification Requested",
+                    message=f"{client_name} ({client_email}) requested offline payment verification ({body.payment_method.upper()}) for {plan.display_name} (₹{int(amount):,}).",
+                    link="/admin/clients",
+                    is_read=False,
+                )
+            )
+    except Exception as exc:
+        logger.warning("failed_to_notify_admins_in_app", error=str(exc))
 
     # Create client in-app notification
     client_notif = Notification(
         user_id=client_id,
         title="Offline Payment Verification Under Review",
         message=f"Your offline payment request for {plan.display_name} (₹{int(amount):,}) has been received. Our agency team will verify and activate your account shortly.",
-        type="billing",
         link="/onboarding?step=3",
+        is_read=False,
     )
     db.add(client_notif)
     await db.commit()
@@ -543,6 +594,7 @@ async def get_manual_payment_request(
 ) -> ManualPaymentRequestResponse | None:
     """Check current status of the client's offline payment verification request."""
     client_id = actor.client_id or actor.user_id
+    await _ensure_manual_payments_table(db)
     res = await db.execute(text("""
         SELECT r.id, r.client_id, r.plan_id, r.payment_method, r.amount, r.reference_note,
                r.status, r.reviewed_at, r.admin_notes, r.created_at,
@@ -582,6 +634,7 @@ async def cancel_manual_payment_request(
 ) -> dict[str, str]:
     """Client cancels their pending manual payment request to proceed with online payment."""
     client_id = actor.client_id or actor.user_id
+    await _ensure_manual_payments_table(db)
     await db.execute(text("""
         DELETE FROM manual_payment_requests
         WHERE client_id = :cid AND status = 'PENDING'

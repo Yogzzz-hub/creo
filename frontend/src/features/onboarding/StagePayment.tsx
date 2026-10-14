@@ -23,7 +23,6 @@ import { useConfirm } from "../../components/ui/ConfirmDialog";
 import type { Plan } from "../../types/api";
 import {
   Check,
-  Calendar,
   Zap,
   ArrowLeft,
   ArrowRight,
@@ -66,41 +65,41 @@ function PlanCard({
   return (
     <div
       onClick={() => !disabled && onSelect()}
-      className={`relative rounded-2xl p-6 sm:p-7 cursor-pointer transition-all flex flex-col justify-between h-full select-none ${
+      className={`relative rounded-2xl p-5 sm:p-6 cursor-pointer transition-all duration-200 flex flex-col justify-between h-full select-none ${
         selected
-          ? "border-2 border-[#BCCCE6] bg-[#161F2D] shadow-xl shadow-[#7FA0D6]/10 ring-2 ring-[#BCCCE6]/25"
-          : "border border-[#2A3446] bg-[#161F2D]/80 hover:border-[#7FA0D6]/60 hover:bg-[#161F2D]"
+          ? "border-2 border-[#7FA0D6] bg-[#161F2D] shadow-xl shadow-[#7FA0D6]/10 ring-2 ring-[#7FA0D6]/20 -translate-y-1"
+          : "border border-[#2A3446] bg-[#161F2D]/90 hover:border-[#7FA0D6]/50 hover:bg-[#161F2D] hover:-translate-y-0.5"
       } ${disabled ? "pointer-events-none opacity-80" : ""}`}
     >
       {/* Top Tag Slot (fixed height to ensure exact vertical alignment across all 3 cards) */}
-      <div className="h-6 mb-2 flex items-center">
+      <div className="h-7 mb-2 flex items-center">
         {plan.is_recommended ? (
-          <span className="inline-flex items-center gap-1 bg-[#7FA0D6] text-[#0B111C] text-[11px] font-black tracking-wider uppercase px-2.5 py-0.5 rounded-full shadow-sm">
+          <span className="inline-flex items-center gap-1.5 bg-[#7FA0D6] text-[#0B111C] text-[11px] font-black tracking-wider uppercase px-3 py-1 rounded-full shadow-sm">
             <Zap className="size-3 fill-[#0B111C]" /> Most Popular
           </span>
         ) : (
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
+          <span className="inline-flex items-center gap-1.5 bg-[#0B111C] border border-[#2A3446] text-[#97A0B3] text-[11px] font-bold tracking-wider uppercase px-3 py-1 rounded-full">
             Monthly Retainer
           </span>
         )}
       </div>
 
       <div className="flex-1 flex flex-col">
-        <p className="text-xs font-bold tracking-wider text-[#7FA0D6] uppercase mb-1">
+        <p className="text-[11px] font-bold tracking-wider text-[#7FA0D6] uppercase mb-1">
           {plan.name}
         </p>
         <h3 className="text-lg sm:text-xl font-bold font-display text-white mb-2">
-          {plan.display_name}
+          {plan.display_name === "Scale" ? "Scale Enterprise" : plan.display_name}
         </h3>
 
-        <div className="my-3 pb-4 border-b border-[#2A3446] flex items-baseline gap-1.5">
+        <div className="my-2.5 pb-3.5 border-b border-[#2A3446] flex items-baseline gap-1.5">
           <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             {formatINR(plan.price_minor)}
           </span>
           <span className="text-xs text-[#97A0B3] font-medium">/month</span>
         </div>
 
-        <ul className="space-y-3.5 my-4 flex-1">
+        <ul className="space-y-2.5 my-3.5 flex-1">
           {plan.highlights.map((h) => (
             <li key={h} className="text-xs text-[#BCCCE6] flex items-start gap-2.5 leading-relaxed font-medium">
               <div className="size-4 rounded-full bg-emerald-950/60 border border-emerald-800/60 flex items-center justify-center shrink-0 mt-0.5">
@@ -113,9 +112,9 @@ function PlanCard({
       </div>
 
       <div
-        className={`w-full mt-6 py-2.5 px-4 rounded-xl text-sm font-bold text-center transition-all flex items-center justify-center gap-1.5 ${
+        className={`w-full mt-5 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-center transition-all flex items-center justify-center gap-1.5 ${
           selected
-            ? "bg-[#BCCCE6] text-[#0B111C] shadow-md shadow-[#BCCCE6]/20"
+            ? "bg-[#BCCCE6] text-[#0B111C] shadow-md shadow-[#BCCCE6]/20 font-extrabold"
             : "bg-[#0B111C] text-[#97A0B3] border border-[#2A3446] hover:text-white hover:border-[#7FA0D6]"
         }`}
       >
@@ -183,6 +182,11 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
 
   useEffect(() => {
     if (plans && plans.length > 0 && !selectedPlanId) {
+      const first = plans[0];
+      if (plans.length === 1 && first) {
+        setSelectedPlanId(first.id);
+        return;
+      }
       const params = new URLSearchParams(window.location.search);
       const rawPlan = params.get("plan")?.toLowerCase() || (params.get("intent") === "sample" ? "starter" : null);
       if (rawPlan) {
@@ -198,6 +202,8 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
       const recommended = plans.find((p) => p.is_recommended);
       if (recommended) {
         setSelectedPlanId(recommended.id);
+      } else if (first) {
+        setSelectedPlanId(first.id);
       }
     }
   }, [plans, selectedPlanId]);
@@ -414,33 +420,6 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
       animate={{ opacity: 1, y: 0 }}
       className="w-full space-y-4 sm:space-y-5"
     >
-      {/* Header Card */}
-      <div className="rounded-xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-6 shadow-xl">
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7FA0D6]/20 border border-[#7FA0D6]/30 text-[#BCCCE6] text-[11px] font-bold uppercase tracking-wider mb-3 shadow-sm">
-              Step 3 of 5
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight mb-2">
-              Choose Your Retainer Plan
-            </h2>
-            <p className="text-sm text-[#97A0B3] leading-relaxed max-w-xl">
-              Select the subscription tier that matches your creative growth ambition. Upgrade, downgrade, or cancel anytime.
-            </p>
-          </div>
-          
-          <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#2A3446] bg-[#0B111C] text-[#7FA0D6] text-[11px] font-bold shadow-xs">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>30-Day Production Cycle</span>
-            </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-800/50 bg-emerald-950/40 text-emerald-300 text-[11px] font-bold shadow-xs">
-              <Zap className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" />
-              <span>Instant Pod Provisioning</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Confirmation Banner overlay/compact state (never replacing the page with an empty box) */}
       <AnimatePresence>
@@ -502,12 +481,32 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
         </div>
       )}
 
-      {/* Plan Cards Grid: Equal Heights across all 3 cards */}
+      {/* Plan Cards Grid: Dedicated single-card layout for custom negotiated plans, or 3-column grid for standard tiers */}
       {plansLoading ? (
         <div role="status" className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-12 text-center text-[#97A0B3]">
           <Loader2 aria-hidden="true" className="size-7 animate-spin text-[#7FA0D6] mx-auto mb-3 motion-reduce:animate-none" />
           <p className="text-xs font-medium">Loading pricing plans…</p>
         </div>
+      ) : plans && plans.length === 1 && plans[0] ? (
+        (() => {
+          const singlePlan = plans[0]!;
+          return (
+            <div className="max-w-xl mx-auto w-full space-y-3">
+              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="leading-relaxed">
+                  <strong>Approved Commercial Agreement:</strong> Your requested retainer and custom deliverable quota have been approved by Creo leadership. Standard tiers are omitted for your account.
+                </span>
+              </div>
+              <PlanCard
+                plan={singlePlan}
+                selected={selectedPlanId === singlePlan.id}
+                onSelect={() => setSelectedPlanId(singlePlan.id)}
+                disabled={phase === "processing" || phase === "polling" || phase === "confirmed"}
+              />
+            </div>
+          );
+        })()
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {(plans ?? []).map((plan) => (
@@ -531,8 +530,8 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
             disabled={phase === "processing" || phase === "polling"}
             className="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm font-bold text-[#97A0B3] hover:text-white hover:border-[#7FA0D6] shadow-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Service Agreement</span>
+            <ArrowLeft className="w-4 h-4 text-[#7FA0D6]" />
+            <span>Back to Agreement</span>
           </button>
         ) : <div />}
 

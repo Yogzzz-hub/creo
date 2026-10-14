@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Mail,
   Instagram,
+  AlertTriangle,
 } from "lucide-react";
 import { ClientRosterItem } from "@/types/ops";
 
@@ -135,9 +136,18 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
         {/* List Content */}
         <div className="flex flex-col space-y-2 sm:space-y-1.5">
           {filteredClients.map((client, i) => {
-            const tier = client.plan_display_name || client.plan_name || "Custom";
-            const deliverables_total = client.quota_usage.reduce((sum, q) => sum + q.quota, 0);
-            const deliverables_completed = client.quota_usage.reduce((sum, q) => sum + q.used, 0);
+            const isPaid = Boolean(
+              (client.subscription_status && ["active", "trialing", "paid"].includes(client.subscription_status.toLowerCase())) ||
+              (client.plan_name && client.monthly_price && client.monthly_price > 0)
+            );
+            const isOnboarded = Boolean(
+              client.onboarding_completed_at ||
+              (typeof client.onboarding_stage === "number" && client.onboarding_stage >= 4)
+            );
+            const lifecycleStatus = !isOnboarded ? (!isPaid ? "not_paid_not_onboarded" : "paid_not_onboarded") : "onboarded";
+            const tier = isPaid ? (client.plan_display_name || client.plan_name || "Custom") : "Unpaid";
+            const deliverables_total = isOnboarded ? client.quota_usage.reduce((sum, q) => sum + q.quota, 0) : 0;
+            const deliverables_completed = isOnboarded ? client.quota_usage.reduce((sum, q) => sum + q.used, 0) : 0;
             const company_name = getClientDisplayName(client);
             const initials = getInitials(company_name);
             const pod = getPodInfo(company_name);
@@ -155,7 +165,7 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                 <div className="hidden sm:grid grid-cols-12 gap-3 items-center px-4 py-2.5">
                   {/* Client & Tier */}
                   <div className="col-span-4 flex items-center space-x-2.5 min-w-0">
-                    <div className={`flex-shrink-0 w-8 h-8 rounded-lg ${pod.avatarColor} text-white flex items-center justify-center font-bold text-xs shadow-2xs`}>
+                    <div className={`flex-shrink-0 w-8 h-8 rounded-lg ${isOnboarded ? pod.avatarColor : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446]"} text-white flex items-center justify-center font-bold text-xs shadow-2xs`}>
                       {initials}
                     </div>
                     <div className="flex flex-col min-w-0">
@@ -173,46 +183,78 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
 
                   {/* Status */}
                   <div className="col-span-2">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-[#7FA0D6] bg-[#161F2D] border border-[#2A3446]">
-                      <span className="w-1 h-1 rounded-full bg-[#7FA0D6]" />
-                      {client.subscription_status || client.account_status || "active"}
-                    </span>
+                    {lifecycleStatus === "not_paid_not_onboarded" ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-amber-400 bg-amber-500/15 border border-amber-500/30 whitespace-nowrap">
+                        <span className="w-1 h-1 rounded-full bg-amber-400" />
+                        user not paid and not onboarded yet
+                      </span>
+                    ) : lifecycleStatus === "paid_not_onboarded" ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-sky-400 bg-sky-500/15 border border-sky-500/30 whitespace-nowrap">
+                        <span className="w-1 h-1 rounded-full bg-sky-400 animate-pulse" />
+                        user paid but not onboarded
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-emerald-400 bg-emerald-500/15 border border-emerald-500/30">
+                        <span className="w-1 h-1 rounded-full bg-emerald-400" />
+                        {client.subscription_status || client.account_status || "active"}
+                      </span>
+                    )}
                   </div>
 
                   {/* Pod Assigned */}
                   <div className="col-span-3 flex items-center space-x-2">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold text-[10px]">
-                      {pod.letter}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[11px] font-bold text-white tracking-tight">{pod.name}</span>
-                      <span className="text-[9px] text-[#97A0B3] font-medium">{pod.lead}</span>
-                    </div>
+                    {isOnboarded ? (
+                      <>
+                        <div className="flex-shrink-0 w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold text-[10px]">
+                          {pod.letter}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-bold text-white tracking-tight">{pod.name}</span>
+                          <span className="text-[9px] text-[#97A0B3] font-medium">{pod.lead}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex-shrink-0 w-6 h-6 rounded-md bg-[#161F2D] text-[#97A0B3] border border-[#2A3446] flex items-center justify-center font-bold text-[10px]">
+                          —
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-bold text-[#97A0B3] tracking-tight">
+                            {isPaid ? "Awaiting Onboarding" : "Not Assigned"}
+                          </span>
+                          <span className="text-[9px] text-[#97A0B3]/70 font-medium">
+                            {isPaid ? "Intake pending" : "Unpaid client"}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Deliverables & Quick View */}
                   <div className="col-span-3 text-right flex items-center justify-end space-x-2.5">
                     <span className="text-[11px] font-bold text-[#F1F5F9] tracking-tight">
-                      {deliverables_completed}/{deliverables_total} Posts
+                      {isOnboarded ? `${deliverables_completed}/${deliverables_total} Posts` : "Pending Onboarding"}
                     </span>
-                    <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
-                      <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                        <circle cx="18" cy="18" r="16" fill="none" className="stroke-[#2A3446]" strokeWidth="4" />
-                        <circle
-                          cx="18"
-                          cy="18"
-                          r="16"
-                          fill="none"
-                          className="stroke-[#7FA0D6]"
-                          strokeWidth="4"
-                          strokeDasharray="100"
-                          strokeDashoffset={
-                            deliverables_total > 0 ? 100 - (deliverables_completed / deliverables_total) * 100 : 100
-                          }
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </div>
+                    {isOnboarded && (
+                      <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+                        <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                          <circle cx="18" cy="18" r="16" fill="none" className="stroke-[#2A3446]" strokeWidth="4" />
+                          <circle
+                            cx="18"
+                            cy="18"
+                            r="16"
+                            fill="none"
+                            className="stroke-[#7FA0D6]"
+                            strokeWidth="4"
+                            strokeDasharray="100"
+                            strokeDashoffset={
+                              deliverables_total > 0 ? 100 - (deliverables_completed / deliverables_total) * 100 : 100
+                            }
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+                    )}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -232,7 +274,7 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                   {/* Top row: Client + Tier + Status */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`size-8 rounded-lg ${pod.avatarColor} text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs`}>
+                      <div className={`size-8 rounded-lg ${isOnboarded ? pod.avatarColor : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446]"} text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs`}>
                         {initials}
                       </div>
                       <div className="min-w-0">
@@ -242,10 +284,22 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                         <p className="text-[10px] text-[#97A0B3] truncate">{client.email}</p>
                       </div>
                     </div>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-[#7FA0D6] bg-[#161F2D] border border-[#2A3446] shrink-0">
-                      <span className="w-1 h-1 rounded-full bg-[#7FA0D6]" />
-                      {client.subscription_status || client.account_status || "active"}
-                    </span>
+                    {lifecycleStatus === "not_paid_not_onboarded" ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-amber-400 bg-amber-500/15 border border-amber-500/30 shrink-0 whitespace-nowrap">
+                        <span className="w-1 h-1 rounded-full bg-amber-400" />
+                        user not paid and not onboarded yet
+                      </span>
+                    ) : lifecycleStatus === "paid_not_onboarded" ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-sky-400 bg-sky-500/15 border border-sky-500/30 shrink-0 whitespace-nowrap">
+                        <span className="w-1 h-1 rounded-full bg-sky-400 animate-pulse" />
+                        user paid but not onboarded
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 shrink-0">
+                        <span className="w-1 h-1 rounded-full bg-emerald-400" />
+                        {client.subscription_status || client.account_status || "active"}
+                      </span>
+                    )}
                   </div>
 
                   {/* Middle row: Tier + Pod info */}
@@ -254,12 +308,14 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                       <span className={`text-[9px] font-black tracking-wider px-1.5 py-0.5 rounded-md border ${getTierColor(tier)}`}>
                         {tier}
                       </span>
-                      <span className="text-[10px] font-bold text-[#97A0B3]">· {pod.name}</span>
+                      <span className="text-[10px] font-bold text-[#97A0B3]">
+                        · {isOnboarded ? pod.name : isPaid ? "Awaiting Onboarding" : "Not Assigned"}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-bold text-[#F1F5F9]">
-                        {deliverables_completed}/{deliverables_total} Posts
+                        {isOnboarded ? `${deliverables_completed}/${deliverables_total} Posts` : "Pending"}
                       </span>
                       <ChevronRight className="w-3.5 h-3.5 text-[#7FA0D6]" />
                     </div>
@@ -295,16 +351,27 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
       <AnimatePresence>
         {selectedClient && (() => {
           const client = selectedClient;
+          const isPaid = Boolean(
+            (client.subscription_status && ["active", "trialing", "paid"].includes(client.subscription_status.toLowerCase())) ||
+            (client.plan_name && client.monthly_price && client.monthly_price > 0)
+          );
+          const isOnboarded = Boolean(
+            client.onboarding_completed_at ||
+            (typeof client.onboarding_stage === "number" && client.onboarding_stage >= 4)
+          );
+          const lifecycleStatus: "not_paid_not_onboarded" | "paid_not_onboarded" | "onboarded" = 
+            !isOnboarded ? (!isPaid ? "not_paid_not_onboarded" : "paid_not_onboarded") : "onboarded";
+
           const company_name = getClientDisplayName(client);
           const initials = getInitials(company_name);
-          const tier = client.plan_display_name || client.plan_name || "Enterprise Retainer";
+          const tier = isPaid ? (client.plan_display_name || client.plan_name || "Enterprise Retainer") : "No Active Plan";
           const pod = getPodInfo(company_name);
-          const price = getMonthlyPrice(tier);
-          const deliverables_total = client.quota_usage.reduce((sum, q) => sum + q.quota, 0) || 30;
-          const deliverables_completed = client.quota_usage.reduce((sum, q) => sum + q.used, 0);
-          const postsItem = client.quota_usage.find((q) => q.kind.toLowerCase() === "posts") || { quota: 15, used: 0 };
-          const reelsItem = client.quota_usage.find((q) => q.kind.toLowerCase() === "reels") || { quota: 6, used: 0 };
-          const storiesItem = client.quota_usage.find((q) => q.kind.toLowerCase() === "stories") || { quota: 9, used: 0 };
+          const price = isPaid ? (client.monthly_price || getMonthlyPrice(tier)) : 0;
+          const deliverables_total = isOnboarded ? (client.quota_usage.reduce((sum, q) => sum + q.quota, 0) || 30) : 0;
+          const deliverables_completed = isOnboarded ? client.quota_usage.reduce((sum, q) => sum + q.used, 0) : 0;
+          const postsItem = client.quota_usage.find((q) => q.kind.toLowerCase() === "posts") || { quota: 0, used: 0 };
+          const reelsItem = client.quota_usage.find((q) => q.kind.toLowerCase() === "reels") || { quota: 0, used: 0 };
+          const storiesItem = client.quota_usage.find((q) => q.kind.toLowerCase() === "stories") || { quota: 0, used: 0 };
 
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-xs animate-fade-in">
@@ -318,7 +385,7 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                 {/* Modal Top Header */}
                 <div className="p-5 sm:p-6 border-b border-[#2A3446] flex items-start justify-between gap-4 bg-[#0B111C]/60">
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className={`w-12 h-12 rounded-2xl ${pod.avatarColor} text-white font-black text-xl flex items-center justify-center shadow-lg shrink-0`}>
+                    <div className={`w-12 h-12 rounded-2xl ${isOnboarded ? pod.avatarColor : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446]"} text-white font-black text-xl flex items-center justify-center shadow-lg shrink-0`}>
                       {initials}
                     </div>
                     <div className="min-w-0">
@@ -329,10 +396,22 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                         <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${getTierColor(tier)}`}>
                           {tier}
                         </span>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold text-[#7FA0D6] bg-[#0B111C] border border-[#2A3446]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6] animate-pulse" />
-                          {client.subscription_status || client.account_status || "Active"}
-                        </span>
+                        {lifecycleStatus === "not_paid_not_onboarded" ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold text-amber-400 bg-amber-500/15 border border-amber-500/30">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            user not paid and not onboarded yet
+                          </span>
+                        ) : lifecycleStatus === "paid_not_onboarded" ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold text-sky-400 bg-sky-500/15 border border-sky-500/30">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+                            user paid but not onboarded
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            {client.subscription_status || client.account_status || "Active"}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-[#97A0B3] mt-1 font-medium">
                         <span className="flex items-center gap-1 truncate">
@@ -358,6 +437,27 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
 
                 {/* Modal Body */}
                 <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1 custom-scrollbar">
+                  {/* Status Banner in Modal */}
+                  {lifecycleStatus === "not_paid_not_onboarded" && (
+                    <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-2.5">
+                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                      <div>
+                        <span className="font-bold uppercase tracking-wider block text-amber-400 text-[11px]">user not paid and not onboarded yet</span>
+                        <span className="text-[11px] text-[#F1F5F9]">This client has logged in but has not paid for a plan and has not completed onboarding.</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {lifecycleStatus === "paid_not_onboarded" && (
+                    <div className="p-3.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-300 text-xs font-semibold flex items-center gap-2.5">
+                      <Sparkles className="w-4 h-4 text-sky-400 shrink-0" />
+                      <div>
+                        <span className="font-bold uppercase tracking-wider block text-sky-400 text-[11px]">user paid but not onboarded</span>
+                        <span className="text-[11px] text-[#F1F5F9]">Client payment is active. Awaiting completion of the onboarding questionnaire.</span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Grid 1: Retainer & Pod Assignment */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     {/* Retainer Card */}
@@ -368,11 +468,15 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                       </div>
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-2xl font-black text-white">₹{price.toLocaleString()}</span>
-                        <span className="text-xs text-[#97A0B3] font-bold">/month</span>
+                        <span className="text-xs text-[#97A0B3] font-bold">
+                          {isPaid ? "/month" : "/month (Unpaid)"}
+                        </span>
                       </div>
                       <div className="pt-2 border-t border-[#2A3446]/60 flex items-center justify-between text-xs text-[#97A0B3]">
-                        <span>Billing: Active Cycle</span>
-                        <span className="text-emerald-400 font-bold">Priority SLA</span>
+                        <span>{isPaid ? "Billing: Active Cycle" : "Unpaid Account"}</span>
+                        <span className={isPaid ? "text-emerald-400 font-bold" : "text-[#97A0B3] font-bold"}>
+                          {isPaid ? "Priority SLA" : "Plan Not Active"}
+                        </span>
                       </div>
                     </div>
 
@@ -382,19 +486,43 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                         <span>Assigned Pod</span>
                         <Sparkles className="w-3.5 h-3.5 text-blue-400" />
                       </div>
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shrink-0">
-                          {pod.letter}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-white tracking-tight">{pod.name}</p>
-                          <p className="text-[11px] text-[#97A0B3] font-medium">{pod.lead} (Lead)</p>
-                        </div>
-                      </div>
-                      <div className="pt-2 border-t border-[#2A3446]/60 flex items-center justify-between text-xs text-[#97A0B3]">
-                        <span>Daily Sync: 11:00 AM IST</span>
-                        <span className="text-[#7FA0D6] font-bold">3 Specialists</span>
-                      </div>
+                      {isOnboarded ? (
+                        <>
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shrink-0">
+                              {pod.letter}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-white tracking-tight">{pod.name}</p>
+                              <p className="text-[11px] text-[#97A0B3] font-medium">{pod.lead} (Lead)</p>
+                            </div>
+                          </div>
+                          <div className="pt-2 border-t border-[#2A3446]/60 flex items-center justify-between text-xs text-[#97A0B3]">
+                            <span>Daily Sync: 11:00 AM IST</span>
+                            <span className="text-[#7FA0D6] font-bold">3 Specialists</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-[#161F2D] text-[#97A0B3] border border-[#2A3446] font-black text-xs flex items-center justify-center shrink-0">
+                              —
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-white tracking-tight">
+                                {isPaid ? "Awaiting Onboarding Form" : "Not Assigned"}
+                              </p>
+                              <p className="text-[11px] text-[#97A0B3] font-medium">
+                                {isPaid ? "Allocation in progress" : "No Pod Assigned"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="pt-2 border-t border-[#2A3446]/60 flex items-center justify-between text-xs text-[#97A0B3]">
+                            <span>{isPaid ? "Pending intake questionnaire" : "Pending plan purchase"}</span>
+                            <span className="text-[#97A0B3] font-bold">0 Specialists</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -408,7 +536,9 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                         </h4>
                       </div>
                       <span className="text-xs font-bold text-[#7FA0D6]">
-                        {deliverables_completed} of {deliverables_total} Posts ({Math.round((deliverables_completed / deliverables_total) * 100)}%)
+                        {isOnboarded
+                          ? `${deliverables_completed} of ${deliverables_total} Posts (${Math.round((deliverables_completed / deliverables_total) * 100)}%)`
+                          : "0 of 0 Posts (Onboarding Pending)"}
                       </span>
                     </div>
 
@@ -416,7 +546,7 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                     <div className="w-full bg-[#161F2D] rounded-full h-2.5 overflow-hidden border border-[#2A3446]">
                       <div
                         className="bg-[#7FA0D6] h-full rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min((deliverables_completed / deliverables_total) * 100, 100)}%` }}
+                        style={{ width: `${isOnboarded && deliverables_total > 0 ? Math.min((deliverables_completed / deliverables_total) * 100, 100) : 0}%` }}
                       />
                     </div>
 
@@ -424,7 +554,7 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                     <div className="grid grid-cols-3 gap-2.5 pt-1">
                       <div className="p-3 rounded-xl bg-[#161F2D] border border-[#2A3446] text-center">
                         <span className="text-base font-black text-white block">
-                          {postsItem.used}/{postsItem.quota}
+                          {isOnboarded ? `${postsItem.used}/${postsItem.quota}` : "0/0"}
                         </span>
                         <span className="text-[9px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                           Static Posts
@@ -432,7 +562,7 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                       </div>
                       <div className="p-3 rounded-xl bg-[#161F2D] border border-[#2A3446] text-center">
                         <span className="text-base font-black text-white block">
-                          {reelsItem.used}/{reelsItem.quota}
+                          {isOnboarded ? `${reelsItem.used}/${reelsItem.quota}` : "0/0"}
                         </span>
                         <span className="text-[9px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                           9:16 Reels
@@ -440,7 +570,7 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                       </div>
                       <div className="p-3 rounded-xl bg-[#161F2D] border border-[#2A3446] text-center">
                         <span className="text-base font-black text-white block">
-                          {storiesItem.used}/{storiesItem.quota}
+                          {isOnboarded ? `${storiesItem.used}/${storiesItem.quota}` : "0/0"}
                         </span>
                         <span className="text-[9px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                           Stories

@@ -38,7 +38,15 @@ class NegotiationSubmitRequest(BaseModel):
 
 
 class NegotiationApproveRequest(BaseModel):
-    agreed_amount: int = Field(gt=0, description="Agreed amount in INR (e.g. 35000)")
+    agreed_amount: int | None = Field(default=None, description="Agreed amount in INR (e.g. 35000)")
+    agreed_price: Decimal | None = Field(default=None, description="Agreed price alias")
+    action: str | None = "accept"
+    counter_price: int | None = None
+    counter_note: str | None = None
+    decline_reason: str | None = None
+    reel_quota: int | None = None
+    poster_quota: int | None = None
+    story_quota: int | None = None
 
 
 class NegotiationConfirmPaymentRequest(BaseModel):
@@ -49,22 +57,38 @@ class NegotiationConfirmPaymentRequest(BaseModel):
 
 
 def _format_negotiation(n: PlanNegotiation) -> dict[str, Any]:
+    agreed = getattr(n, "agreed_amount", None) or getattr(n, "counter_price", None)
     return {
         "id": str(n.id),
-        "client_id": str(n.client_id),
+        "client_id": str(n.client_id) if n.client_id else None,
+        "clientId": str(n.client_id) if n.client_id else None,
         "client_email": n.client_email,
-        "client_name": n.client_name or n.client_email.split("@")[0],
-        "proposed_budget": n.proposed_budget,
-        "contact_phone": n.contact_phone,
-        "preferred_window": n.preferred_window,
+        "clientEmail": n.client_email,
+        "client_name": n.client_name or (n.client_email.split("@")[0] if n.client_email else "Client"),
+        "clientName": n.client_name or (n.client_email.split("@")[0] if n.client_email else "Client"),
+        "clientLogo": ((n.client_name or n.client_email or "??")[:2].upper()),
+        "proposed_budget": n.proposed_budget if hasattr(n, "proposed_budget") else getattr(n, "proposed_offer", None),
+        "proposedOffer": getattr(n, "proposed_offer", None) or getattr(n, "proposed_budget", None),
+        "contact_phone": getattr(n, "contact_phone", None) or getattr(n, "phone_number", "—"),
+        "phoneNumber": getattr(n, "phone_number", None) or getattr(n, "contact_phone", "—"),
+        "preferred_window": getattr(n, "preferred_window", None) or getattr(n, "preferred_time", "—"),
+        "preferredTime": getattr(n, "preferred_time", None) or getattr(n, "preferred_window", "—"),
         "target_topic": n.target_topic,
+        "targetTopic": n.target_topic,
         "notes": n.notes,
         "status": n.status,
-        "agreed_amount": n.agreed_amount,
-        "razorpay_custom_plan_id": n.razorpay_custom_plan_id,
-        "order_id": n.order_id,
+        "agreed_amount": agreed,
+        "agreedAmount": agreed,
+        "counterPrice": agreed,
+        "counterNote": getattr(n, "counter_note", None),
+        "reelQuota": getattr(n, "reel_quota", None) or 8,
+        "posterQuota": getattr(n, "poster_quota", None) or 12,
+        "storyQuota": getattr(n, "story_quota", None) or 15,
+        "razorpay_custom_plan_id": getattr(n, "razorpay_custom_plan_id", None),
+        "order_id": getattr(n, "order_id", None),
         "created_at": n.created_at.isoformat() if n.created_at else None,
-        "updated_at": n.updated_at.isoformat() if n.updated_at else None,
+        "requestedAt": n.created_at.isoformat() if n.created_at else None,
+        "updated_at": getattr(n, "reviewed_at", None).isoformat() if getattr(n, "reviewed_at", None) else (n.created_at.isoformat() if n.created_at else None),
     }
 
 
@@ -112,7 +136,7 @@ async def submit_negotiation(
     admin_res = await db.execute(admin_stmt)
     admin_ids = admin_res.scalars().all()
 
-    redirect_url = f"/admin/plans-and-negotiations?id={neg_id}"
+    redirect_url = f"/admin/plans?negId={neg_id}&clientId={client_user.id}"
 
     offer_detail = f" • Budget: {payload.proposed_budget}" if payload.proposed_budget else ""
     for aid in admin_ids:
@@ -158,6 +182,7 @@ async def submit_negotiation(
 
 
 @router.patch("/{negotiation_id}/approve", response_model=dict[str, Any])
+@router.post("/{negotiation_id}/approve", response_model=dict[str, Any])
 async def approve_negotiation(
     negotiation_id: uuid.UUID,
     payload: NegotiationApproveRequest,
@@ -169,11 +194,24 @@ async def approve_negotiation(
     if not neg:
         raise NotFound(f"Negotiation {negotiation_id} not found", code="NEGOTIATION_NOT_FOUND")
 
-    client_user = await db.get(User, neg.client_id)
+    client_user = await db.get(User, neg.client_id) if neg.client_id else None
+    if not client_user and neg.client_email:
+        client_user = (await db.execute(select(User).where(func.lower(User.email) == neg.client_email.strip().lower()))).scalar_one_or_none()
+        if client_user:
+            neg.client_id = client_user.id
     if not client_user:
         raise NotFound("Client user associated with negotiation not found", code="USER_NOT_FOUND")
 
-    agreed_amt = payload.agreed_amount
+    # Determine agreed amount
+    raw_amount = payload.agreed_amount or (int(payload.agreed_price) if payload.agreed_price else None)
+    if not raw_amount and neg.proposed_budget:
+        digits = "".join(c for c in str(neg.proposed_budget) if c.isdigit())
+        if digits and len(digits) >= 4:
+            raw_amount = int(digits)
+    if not raw_amount:
+        raw_amount = 40000
+
+    agreed_amt = raw_amount
     amount_minor = agreed_amt * 100
 
     # Razorpay Live Order Creation
@@ -206,8 +244,16 @@ async def approve_negotiation(
             logger.warning("razorpay_order_create_exception", error=str(exc))
 
     # 1. Update negotiation record
+    reel_q = payload.reel_quota if payload.reel_quota is not None else (getattr(neg, "reel_quota", None) or 8)
+    poster_q = payload.poster_quota if payload.poster_quota is not None else (getattr(neg, "poster_quota", None) or 12)
+    story_q = payload.story_quota if payload.story_quota is not None else (getattr(neg, "story_quota", None) or 15)
+
     neg.status = "APPROVED"
     neg.agreed_amount = agreed_amt
+    neg.counter_price = agreed_amt
+    neg.reel_quota = reel_q
+    neg.poster_quota = poster_q
+    neg.story_quota = story_q
     neg.order_id = order_id
     neg.razorpay_custom_plan_id = order_id
     neg.updated_at = datetime.now(UTC)
@@ -217,11 +263,22 @@ async def approve_negotiation(
     plan_stmt = select(Plan).where(Plan.name == plan_key)
     plan = (await db.execute(plan_stmt)).scalar_one_or_none()
 
-    custom_display_name = f"Your Custom Negotiated Plan (₹{agreed_amt:,}/mo)"
+    custom_display_name = f"Custom Negotiated Retainer ({client_user.full_name or 'Client'})"
+    highlights = [
+        f"{reel_q} Custom Reels",
+        f"{poster_q} Static Posters",
+        f"{story_q} Stories / Carousels",
+        "Negotiated Strategy Agreement",
+        "Dedicated Creative Pod Lead",
+    ]
     if plan:
         plan.display_name = custom_display_name
         plan.monthly_price = Decimal(agreed_amt)
         plan.price_minor = amount_minor
+        plan.reel_quota = reel_q
+        plan.poster_quota = poster_q
+        plan.story_quota = story_q
+        plan.highlights = highlights
         plan.is_active = True
     else:
         plan = Plan(
@@ -232,18 +289,12 @@ async def approve_negotiation(
             monthly_price=Decimal(agreed_amt),
             price_minor=amount_minor,
             currency="INR",
-            reel_quota=10,
-            poster_quota=12,
-            story_quota=15,
+            reel_quota=reel_q,
+            poster_quota=poster_q,
+            story_quota=story_q,
             revision_rounds=2,
             has_dedicated_manager=True,
-            highlights=[
-                "10 High-Impact Reels",
-                "12 Static Posters",
-                "15 Story Templates",
-                "Agreed Retainer Scope",
-                "Dedicated Creative Pod Lead",
-            ],
+            highlights=highlights,
             is_active=True,
         )
         db.add(plan)

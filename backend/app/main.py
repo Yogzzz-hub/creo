@@ -103,6 +103,20 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             """))
             await db.execute(text("CREATE INDEX IF NOT EXISTS idx_negotiations_client_id ON plan_negotiations(client_id);"))
             await db.execute(text("CREATE INDEX IF NOT EXISTS idx_negotiations_status ON plan_negotiations(status);"))
+            # Ensure custom quota columns exist in plan_negotiations
+            col_stmts = [
+                "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS agreed_amount bigint;",
+                "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS reel_quota integer DEFAULT 8;",
+                "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS poster_quota integer DEFAULT 12;",
+                "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS story_quota integer DEFAULT 15;",
+                "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS order_id varchar(255);",
+                "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS razorpay_custom_plan_id varchar(255);",
+            ]
+            for col_stmt in col_stmts:
+                try:
+                    await db.execute(text(col_stmt))
+                except Exception:
+                    pass
             # Ensure manual_payment_requests table exists
             await db.execute(text("""
                 CREATE TABLE IF NOT EXISTS manual_payment_requests (
@@ -319,6 +333,7 @@ async def global_unhandled_exception_handler(request: Request, exc: Exception) -
 
 # API v1 feature routers
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(auth.users_router, prefix="/api/v1")
 app.include_router(instagram.router, prefix="/api/v1")
 app.include_router(publishing.router, prefix="/api/v1")
 app.include_router(plans.router, prefix="/api/v1")

@@ -16,9 +16,10 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.dashboard_cache import dashboard_cached, invalidate_dashboard_cache
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
-from app.models.billing import PlanNegotiation
+from app.models.billing import Plan, PlanNegotiation
 from app.models.enums import DeliverableStatus, TicketStatus, UserRole
 from app.models.ops import Announcement, AuditLog, Notification
 from app.models.pod_call import PodCallBooking
@@ -355,6 +356,21 @@ async def get_portal_dashboard(
     else:
         target_client_id = client_id or actor.client_id or actor.user_id
 
+    return await _portal_dashboard_snapshot(
+        target_client_id=target_client_id, current_stage=current_stage, actor=actor, db=db,
+    )
+
+
+@dashboard_cached(ttl=10)
+async def _portal_dashboard_snapshot(
+    target_client_id: uuid.UUID,
+    current_stage: int | None,
+    actor: Actor,
+    db: AsyncSession,
+) -> dict[str, Any]:
+    """Cache aggregation only; the route checks authentication/onboarding each time."""
+    from app.services.onboarding_service import get_current_stage
+
     # If default actor ID was used and no client_id query param, pick the first client with deliverables
     if str(target_client_id) == "00000000-0000-0000-0000-000000000001":
         stmt_first = select(User.id).where(User.role == "client").limit(1)
@@ -599,8 +615,15 @@ async def update_portal_profile(
         profile = ClientProfile(user_id=client_id)
         db.add(profile)
 
+    user = await db.get(User, client_id)
+    if not user:
+        user_stmt = select(User).where(User.id == client_id)
+        user = (await db.execute(user_stmt)).scalar_one_or_none()
+
     if "company_name" in body:
         profile.company_name = body["company_name"]
+        if user:
+            user.company_name = body["company_name"]
     if "instagram_username" in body:
         profile.instagram_username = body["instagram_username"]
     if "brand_summary" in body:
@@ -611,11 +634,8 @@ async def update_portal_profile(
     if "phone" in body:
         profile.brand_dna = {**(profile.brand_dna or {}), "phone": body["phone"]}
 
-    if "full_name" in body:
-        user_stmt = select(User).where(User.id == client_id)
-        user = (await db.execute(user_stmt)).scalar_one_or_none()
-        if user:
-            user.full_name = body["full_name"]
+    if "full_name" in body and user:
+        user.full_name = body["full_name"]
 
     # If questionnaire answers provided, update Questionnaire record too
     if "questionnaire_answers" in body and isinstance(body["questionnaire_answers"], dict):
@@ -633,10 +653,12 @@ async def update_portal_profile(
             db.add(quest)
 
     await db.commit()
+    await invalidate_dashboard_cache()
 
     return {
         "status": "success",
         "message": "Profile updated successfully",
+        "full_name": user.full_name if user else None,
         "company_name": profile.company_name,
         "instagram_username": profile.instagram_username,
         "brand_summary": profile.brand_summary,
@@ -672,14 +694,14 @@ async def change_password(
             "status": "error",
             "message": "This account has no password yet. Use 'Set a password' to verify your email first.",
         }
-    if not verify_password(current_pass, user.hashed_password):
+    if not await asyncio.to_thread(verify_password, current_pass, user.hashed_password):
         return {"status": "error", "message": "Current password is incorrect."}
 
     valid, err = validate_password_strength(new_pass)
     if not valid:
         return {"status": "error", "message": err}
 
-    user.hashed_password = hash_password(new_pass)
+    user.hashed_password = await asyncio.to_thread(hash_password, new_pass)
     await db.commit()
 
     return {"status": "success", "message": "Password changed successfully."}
@@ -937,7 +959,23 @@ async def book_plan_bargain_call(
     if not phone:
         raise HTTPException(status_code=400, detail="Phone number is required to schedule a call.")
 
-    # 1. Notify only this client's agency admins. Legacy unassigned accounts
+    # 1. Create PlanNegotiation record so admin can see it on Plans & Negotiations page
+    neg = PlanNegotiation(
+        agency_id=client_user.agency_id,
+        client_id=actor.user_id,
+        client_name=client_name,
+        client_email=client_user.email,
+        target_topic=payload.target_topic,
+        proposed_offer=payload.proposed_offer,
+        phone_number=phone,
+        preferred_time=payload.preferred_time,
+        notes=payload.notes,
+        status="Pending Review",
+    )
+    db.add(neg)
+    await db.flush()
+
+    # 2. Notify only this client's agency admins. Legacy unassigned accounts
     #    route to one platform super admin instead of broadcasting globally.
     admin_stmt = select(User.id).where(
         User.role.in_([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
@@ -971,6 +1009,7 @@ async def book_plan_bargain_call(
     notifs = []
     offer_str = f" • Proposed Offer: {payload.proposed_offer}" if payload.proposed_offer else ""
     notes_str = f" • Notes: {payload.notes}" if payload.notes else ""
+    redirect_link = f"/admin/plans?negId={neg.id}&clientId={actor.user_id}"
     for aid in admin_ids:
         notifs.append(
             Notification(
@@ -982,13 +1021,13 @@ async def book_plan_bargain_call(
                     f"{payload.target_topic}. Contact: {phone} "
                     f"(Preferred: {payload.preferred_time}){offer_str}{notes_str}"
                 ),
-                link="/admin/plans",
+                link=redirect_link,
             )
         )
     if notifs:
         db.add_all(notifs)
 
-    # 2. Add Audit Log
+    # 3. Add Audit Log
     db.add(
         AuditLog(
             agency_id=client_user.agency_id,
@@ -1005,24 +1044,11 @@ async def book_plan_bargain_call(
                 "offer": payload.proposed_offer,
                 "preferred_time": payload.preferred_time,
                 "notes": payload.notes,
+                "negotiation_id": str(neg.id),
+                "link": redirect_link,
             },
         )
     )
-
-    # 3. Create PlanNegotiation record so admin can see it on Plans & Negotiations page
-    neg = PlanNegotiation(
-        agency_id=client_user.agency_id,
-        client_id=actor.user_id,
-        client_name=client_name,
-        client_email=client_user.email,
-        target_topic=payload.target_topic,
-        proposed_offer=payload.proposed_offer,
-        phone_number=phone,
-        preferred_time=payload.preferred_time,
-        notes=payload.notes,
-        status="Pending Review",
-    )
-    db.add(neg)
 
     await db.commit()
 
@@ -1053,6 +1079,14 @@ async def get_client_negotiations(
     )
     res = await db.execute(stmt)
     rows = res.scalars().all()
+
+    # Also check if client has custom plan to enrich quotas and agreed amount
+    custom_plan_stmt = select(Plan).where(
+        Plan.name == f"custom_{client_id.hex[:8]}",
+        Plan.is_active.is_(True),
+    )
+    custom_plan = (await db.execute(custom_plan_stmt)).scalar_one_or_none()
+
     return [
         {
             "id": str(n.id),
@@ -1062,7 +1096,11 @@ async def get_client_negotiations(
             "preferredTime": n.preferred_time,
             "notes": n.notes,
             "status": n.status,
-            "counterPrice": n.counter_price,
+            "counterPrice": n.counter_price or (int(custom_plan.monthly_price) if custom_plan else getattr(n, "agreed_amount", None)),
+            "agreedAmount": getattr(n, "agreed_amount", None) or n.counter_price or (int(custom_plan.monthly_price) if custom_plan else None),
+            "reelQuota": getattr(n, "reel_quota", None) or (custom_plan.reel_quota if custom_plan else 8),
+            "posterQuota": getattr(n, "poster_quota", None) or (custom_plan.poster_quota if custom_plan else 12),
+            "storyQuota": getattr(n, "story_quota", None) or (custom_plan.story_quota if custom_plan else 15),
             "counterNote": n.counter_note,
             "declineReason": n.decline_reason,
             "requestedAt": n.created_at.isoformat() if n.created_at else None,

@@ -33,11 +33,13 @@ export function apiUrl(path: string): string {
       window.location.hostname === "127.0.0.1" ||
       window.location.hostname.startsWith("192.168."));
 
-  const isWorkersDev = typeof window !== "undefined" && (window.location.hostname.includes("workers.dev") || window.location.hostname.includes("pages.dev"));
+  // The deployed Worker proxies API calls on the site's existing connection.
+  // Pages/Vercel and explicit API overrides keep their original routing.
+  const isPagesDev = typeof window !== "undefined" && window.location.hostname.endsWith(".pages.dev");
 
   const apiBase = (
     import.meta.env.VITE_API_URL ||
-    (isWorkersDev
+    (isPagesDev
       ? "https://creo-api-singapore.onrender.com"
       : (isLocalhost ? "http://localhost:8000" : ""))
   ).replace(/\/$/, "");

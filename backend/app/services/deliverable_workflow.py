@@ -679,13 +679,15 @@ def serialize_for_client(
     }
 
 
-def serialize_for_team(deliverable: Deliverable, request: Any | None = None) -> dict[str, Any]:
+def serialize_for_team(deliverable: Deliverable, request: Any | None = None,
+                       *, media_urls: dict[str, str | None] | None = None) -> dict[str, Any]:
     """Compact deliverable shape for pod boards; includes internal QA notes."""
     return {
         "id": str(deliverable.id),
         "root_id": str(deliverable.root_id),
         "version": deliverable.version,
-        "file_url": storage_service.resolve_media_url(deliverable.file_url, request),
+        "file_url": media_urls.get(deliverable.file_url) if media_urls is not None
+                    else storage_service.resolve_media_url(deliverable.file_url, request),
         "file_type": deliverable.file_type,
         "is_video": is_video(deliverable.file_type, deliverable.file_url),
         "status": _status(deliverable.status).value,

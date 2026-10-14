@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Download, Loader2, PauseCircle, CheckCircle2, AlertCircle, PhoneCall } from "lucide-react";
+import { Link } from "react-router";
+import { Download, Loader2, PauseCircle, CheckCircle2, AlertCircle, PhoneCall, ArrowRight } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
@@ -67,15 +68,18 @@ export function PortalPaymentsPage() {
   }
 
   // Only the server's active flag proves the subscription is paid, current, and unexpired.
-  // A pending checkout or expired subscription may still include plan/subscription data.
-  const hasActivePlan = subData.is_active === true || subData.subscription?.is_active === true;
-  const planName = (subData as any)?.plan?.display_name || subData?.subscription?.name || (hasActivePlan ? "Active Retainer" : "No Active Plan");
-  const planPrice = (subData?.subscription as any)?.amount 
-    ? parseFloat((subData?.subscription as any).amount) 
-    : (subData as any)?.plan?.price_minor ? (subData as any).plan.price_minor / 100 : 0;
-  const renewalDate = subData?.subscription?.current_period_end 
+  const hasActivePlan = Boolean(subData.is_active || subData.subscription?.is_active);
+  const planName = hasActivePlan
+    ? ((subData as any)?.plan?.display_name || subData?.subscription?.name || "Active Retainer")
+    : "No Active Plan";
+  const planPrice = hasActivePlan
+    ? ((subData?.subscription as any)?.amount 
+        ? parseFloat((subData?.subscription as any).amount) 
+        : (subData as any)?.plan?.price_minor ? (subData as any).plan.price_minor / 100 : 0)
+    : 0;
+  const renewalDate = hasActivePlan && subData?.subscription?.current_period_end 
     ? new Date(subData.subscription.current_period_end).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase()
-    : (hasActivePlan ? "NEXT BILLING CYCLE" : "INACTIVE");
+    : "INACTIVE";
 
   const isPausedNextMonth = !!(subData as any)?.is_paused_next_month;
 
@@ -209,21 +213,6 @@ export function PortalPaymentsPage() {
     }
   };
 
-  // No plan yet: show where to resume instead of placeholder plan figures.
-  if (!gate.isPaid && !subData?.subscription) {
-    return (
-      <div className="space-y-6 pb-12">
-        <ResumeOnboardingBanner variant="hero" title="Activate your plan in a few quick steps" />
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 lg:p-8">
-          <h3 className="text-base font-semibold text-[#F8FAFC] mb-1.5">Invoices</h3>
-          <p className="text-sm text-[#97A0B3] leading-relaxed">
-            Receipts and invoices will appear here after your first payment.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full min-w-0 space-y-4">
       {/* Action Toast / Confirmation Notice */}
@@ -242,40 +231,50 @@ export function PortalPaymentsPage() {
         </div>
       )}
 
-      {/* Action Controls */}
-      <div className="flex flex-wrap items-center justify-end gap-3 pb-1">
-        <button 
-          type="button"
-          onClick={() => setCompareModalOpen(true)}
-          className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
-        >
-          Compare plans
-        </button>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-2">
+            {hasActivePlan ? `${planName} PLAN • RENEWS ${renewalDate}` : "NO ACTIVE RETAINER • ONBOARDING INCOMPLETE"}
+          </p>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Plan & billing</h1>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <button 
+            type="button"
+            onClick={() => setCompareModalOpen(true)}
+            className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
+          >
+            Compare plans
+          </button>
           
-          {isPausedNextMonth ? (
-            <button
-              type="button"
-              onClick={handleResumePlan}
-              disabled={resumingSub}
-              className="px-5 py-2.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-[13px] font-bold text-amber-300 hover:bg-amber-500/20 transition-all flex items-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
-            >
-              {resumingSub ? (
-                <Loader2 className="size-4 animate-spin text-amber-400" />
-              ) : (
-                <PauseCircle className="size-4 text-amber-400" />
-              )}
-              <span>Paused for next cycle • Click to resume</span>
-            </button>
-          ) : (
-            <button 
-              type="button"
-              onClick={() => setPauseModalOpen(true)}
-              className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] hover:border-amber-500/40 transition-colors cursor-pointer"
-            >
-              Pause next month
-            </button>
+          {hasActivePlan && (
+            isPausedNextMonth ? (
+              <button
+                type="button"
+                onClick={handleResumePlan}
+                disabled={resumingSub}
+                className="px-5 py-2.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-[13px] font-bold text-amber-300 hover:bg-amber-500/20 transition-all flex items-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                {resumingSub ? (
+                  <Loader2 className="size-4 animate-spin text-amber-400" />
+                ) : (
+                  <PauseCircle className="size-4 text-amber-400" />
+                )}
+                <span>Paused for next cycle • Click to resume</span>
+              </button>
+            ) : (
+              <button 
+                type="button"
+                onClick={() => setPauseModalOpen(true)}
+                className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] hover:border-amber-500/40 transition-colors cursor-pointer"
+              >
+                Pause next month
+              </button>
+            )
           )}
         </div>
+      </div>
 
       {/* Paused for Next Month Notice Banner */}
       {isPausedNextMonth && (
@@ -342,11 +341,31 @@ export function PortalPaymentsPage() {
                 {latestNeg.targetTopic}
                 {latestNeg.proposedOffer ? ` (${latestNeg.proposedOffer})` : ""}
               </p>
+              {latestNeg.status === "Accepted" && (
+                <div className="mt-2 space-y-1">
+                  <p className="text-xs text-emerald-300 font-bold">
+                    Approved Retainer Rate: ₹{(latestNeg.counterPrice || latestNeg.agreedAmount || 0).toLocaleString("en-IN")}/mo
+                    {latestNeg.counterNote ? ` • "${latestNeg.counterNote}"` : ""}
+                  </p>
+                  {(latestNeg.reelQuota || latestNeg.posterQuota || latestNeg.storyQuota) && (
+                    <p className="text-[11px] text-[#BCCCE6] font-semibold">
+                      Agreed Deliverables: {latestNeg.reelQuota || 8} Reels • {latestNeg.posterQuota || 12} Posters • {latestNeg.storyQuota || 15} Stories
+                    </p>
+                  )}
+                </div>
+              )}
               {latestNeg.status === "Counter Offered" && (
-                <p className="text-xs text-blue-300 font-semibold mt-1">
-                  Executive Counter-Offer: ₹{latestNeg.counterPrice?.toLocaleString("en-IN")}/mo
-                  {latestNeg.counterNote ? ` • "${latestNeg.counterNote}"` : ""}
-                </p>
+                <div className="mt-2 space-y-1">
+                  <p className="text-xs text-blue-300 font-bold">
+                    Executive Counter-Offer: ₹{(latestNeg.counterPrice || 0).toLocaleString("en-IN")}/mo
+                    {latestNeg.counterNote ? ` • "${latestNeg.counterNote}"` : ""}
+                  </p>
+                  {(latestNeg.reelQuota || latestNeg.posterQuota || latestNeg.storyQuota) && (
+                    <p className="text-[11px] text-[#BCCCE6] font-semibold">
+                      Proposed Deliverables: {latestNeg.reelQuota || 8} Reels • {latestNeg.posterQuota || 12} Posters • {latestNeg.storyQuota || 15} Stories
+                    </p>
+                  )}
+                </div>
               )}
               {latestNeg.status === "Declined" && latestNeg.declineReason && (
                 <p className="text-xs text-rose-300 mt-1">
@@ -370,36 +389,77 @@ export function PortalPaymentsPage() {
         
         {/* Top Left: Current Plan */}
         <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6 flex flex-col justify-between">
-          <div className="flex justify-between items-start mb-10">
-            <div>
-              <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-1">
-                CURRENT PLAN
-              </p>
-              <h2 className="text-3xl font-bold text-white">{planName}</h2>
-            </div>
-            <div className="text-right">
-              <h2 className="text-3xl font-bold text-white">₹{planPrice.toLocaleString('en-IN')}</h2>
-              <p className="text-xs text-[#97A0B3] mt-1">per month • ₹{costPerAsset.toLocaleString('en-IN')} per asset</p>
-            </div>
-          </div>
-
-          <div className="space-y-6 mb-8">
-            {usageBars.map(item => (
-              <div key={item.label}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[13px] font-bold text-white">{item.label}</span>
-                  <span className="text-[13px] font-medium text-[#97A0B3]">{item.current} / {item.max}</span>
+          {!hasActivePlan ? (
+            <div className="flex flex-col justify-between h-full space-y-5">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span className="text-[11px] uppercase font-bold tracking-[0.16em] text-amber-400">
+                    Status: Pending Activation
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-bold">
+                    Step 3 Pending
+                  </span>
                 </div>
-                <div className="h-1.5 w-full bg-white/[0.05] rounded-full overflow-hidden">
-                  <div className={`h-full ${item.color} rounded-full`} style={{ width: `${(item.current / item.max) * 100}%` }} />
+                <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">No Active Retainer</h2>
+                <p className="text-xs text-[#97A0B3] mt-1.5 leading-relaxed">
+                  You have not completed plan selection or payment yet. Pick a subscription tier to launch your dedicated creative pod.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#0B111C]/80 border border-[#2A3446] space-y-2 text-xs">
+                <p className="text-white font-semibold flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-[#7FA0D6]" />
+                  What unlocks with an active retainer:
+                </p>
+                <ul className="space-y-1.5 text-[#97A0B3] pl-4 list-disc">
+                  <li>Dedicated Creative Director, Copywriter & Motion Lead</li>
+                  <li>Monthly batches of Reels, Posts, and Story creatives</li>
+                  <li>Automated Instagram publishing, scheduling & SLA delivery</li>
+                </ul>
+              </div>
+
+              <Link
+                to="/onboarding?step=3"
+                className="w-full py-3 px-6 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-sm text-center transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mt-auto"
+              >
+                <span>Choose Retainer Plan</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className="flex justify-between items-start mb-10">
+                <div>
+                  <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-1">
+                    CURRENT PLAN
+                  </p>
+                  <h2 className="text-3xl font-bold text-white">{planName}</h2>
+                </div>
+                <div className="text-right">
+                  <h2 className="text-3xl font-bold text-white">₹{planPrice.toLocaleString('en-IN')}</h2>
+                  <p className="text-xs text-[#97A0B3] mt-1">per month • ₹{costPerAsset.toLocaleString('en-IN')} per asset</p>
                 </div>
               </div>
-            ))}
-          </div>
 
-          <p className="text-xs text-[#97A0B3] font-medium leading-relaxed">
-            2 revision rounds per asset • 2 business-day batch SLA • dedicated account director
-          </p>
+              <div className="space-y-6 mb-8">
+                {usageBars.map(item => (
+                  <div key={item.label}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[13px] font-bold text-white">{item.label}</span>
+                      <span className="text-[13px] font-medium text-[#97A0B3]">{item.current} / {item.max}</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-white/[0.05] rounded-full overflow-hidden">
+                      <div className={`h-full ${item.color} rounded-full`} style={{ width: `${(item.current / item.max) * 100}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-xs text-[#97A0B3] font-medium leading-relaxed">
+                2 revision rounds per asset • 2 business-day batch SLA • dedicated account director
+              </p>
+            </>
+          )}
         </div>
 
         {/* Top Right: Add to this cycle */}
@@ -470,13 +530,17 @@ export function PortalPaymentsPage() {
                         </span>
                       </td>
                       <td className="py-4 text-right">
-                        <button 
-                          onClick={() => handleDownload(inv.id)}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
-                        >
-                          {downloadingInv === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <Download className="w-3.5 h-3.5" />}
-                          GST invoice
-                        </button>
+                        {inv.status?.toLowerCase() === "paid" ? (
+                          <button 
+                            onClick={() => handleDownload(inv.id)}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
+                          >
+                            {downloadingInv === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <Download className="w-3.5 h-3.5" />}
+                            GST invoice
+                          </button>
+                        ) : (
+                          <span className="text-xs text-[#97A0B3] italic pr-2">Payment incomplete</span>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -498,7 +562,9 @@ export function PortalPaymentsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-[#97A0B3]">Next charge</span>
-                <span className="text-[13px] font-bold text-white">₹{planPrice.toLocaleString('en-IN')} • {renewalDate}</span>
+                <span className="text-[13px] font-bold text-white">
+                  {hasActivePlan ? `₹${planPrice.toLocaleString('en-IN')} • ${renewalDate}` : "No upcoming charge (Plan inactive)"}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-[#97A0B3]">GSTIN on invoices</span>
@@ -550,7 +616,7 @@ export function PortalPaymentsPage() {
       <ComparePlansModal
         isOpen={compareModalOpen}
         onClose={() => setCompareModalOpen(false)}
-        currentPlanName={planName}
+        currentPlanName={hasActivePlan ? planName : ""}
         onOpenNegotiation={(topic) => {
           setNegotiateTopic(topic);
           setNegotiateModalOpen(true);

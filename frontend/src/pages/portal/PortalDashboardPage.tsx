@@ -210,9 +210,9 @@ export function PortalDashboardPage() {
       {isLocked && <ResumeOnboardingBanner variant="hero" />}
 
       {/* ── Main Content Grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
         {/* Left Column: Batch Status + Asset List (2/3 width) */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 flex flex-col gap-4">
           {/* Batch Status Card */}
           <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
             {/* Header */}
@@ -357,7 +357,7 @@ export function PortalDashboardPage() {
           </div>
 
           {/* Coming Up */}
-          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
+          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-semibold text-white">Coming up</h3>
               <span className="text-xs font-medium text-[#97A0B3]">
@@ -374,9 +374,9 @@ export function PortalDashboardPage() {
             </div>
 
             {/* Table Rows */}
-            <div className="divide-y divide-white/[0.04]">
+            <div className="divide-y divide-white/[0.04] flex-1 flex flex-col">
               {upcomingEntries.length === 0 ? (
-                <div className="py-8 text-center text-[#97A0B3] text-sm">
+                <div className="flex-1 flex items-center justify-center py-8 text-center text-[#97A0B3] text-sm">
                   {isLocked
                     ? "Your 30-day content calendar is generated when setup is complete."
                     : "No upcoming posts scheduled in the next 7 days."}
@@ -414,7 +414,7 @@ export function PortalDashboardPage() {
         </div>
 
         {/* Right Column: Plan + Results + Pod */}
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           {/* Your plan this cycle */}
           <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
             <h3 className="text-base font-semibold text-white mb-5">Your plan this cycle</h3>
@@ -494,8 +494,8 @@ export function PortalDashboardPage() {
           </div>
 
           {/* Results & Instagram Publishing */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
-            <div className="flex items-center justify-between mb-2">
+          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
+            <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-semibold text-white">Results & Publishing</h3>
               {dashboard?.instagram_username && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
@@ -548,29 +548,21 @@ export function PortalDashboardPage() {
                 <p className="text-sm text-[#97A0B3] mb-4 leading-relaxed">
                   Connect Instagram to see reach and saves for every post we publish, and enable direct publishing of approved deliverables.
                 </p>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div>
                   <Link
                     to="/portal/account?tab=integrations"
-                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[#BCCCE6] text-[13px] font-bold text-[#0B111C] hover:bg-white transition-colors w-max"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[#BCCCE6] text-[13px] font-bold text-[#0B111C] hover:bg-white transition-colors w-fit"
                   >
                     <Instagram className="w-4 h-4" />
                     @ Connect Instagram
                   </Link>
-                  <a
-                    href="https://www.instagram.com/accounts/emailsignup/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-[#97A0B3] hover:text-white transition-colors underline flex items-center gap-1"
-                  >
-                    <span>Need an account? Create an Instagram ID ↗</span>
-                  </a>
                 </div>
               </div>
             )}
           </div>
 
           {/* From your pod */}
-          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
+          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-semibold text-white">From your pod</h3>
               {!isLocked && (
@@ -585,10 +577,12 @@ export function PortalDashboardPage() {
 
             {/* Real Pod Team or Empty State */}
             {(!dashboard?.assigned_team || dashboard.assigned_team.length === 0) ? (
-              <div className="py-6 text-center text-sm text-[#97A0B3]">
-                {isLocked
-                  ? "Your dedicated creative pod is assigned when setup is complete."
-                  : "Your dedicated creative pod is being allocated."}
+              <div className="flex-1 flex flex-col justify-center py-2">
+                <p className="text-sm text-[#97A0B3] leading-relaxed">
+                  {isLocked
+                    ? "Your dedicated creative pod is assigned when setup is complete."
+                    : "Your dedicated creative pod is being allocated."}
+                </p>
               </div>
             ) : (
               <div className="space-y-4">

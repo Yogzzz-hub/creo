@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import secrets
 import time
 import urllib.parse
@@ -14,7 +15,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
 import httpx
 from pydantic import BaseModel, EmailStr, Field
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update, or_
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,6 +42,7 @@ from app.services.email_service import send_otp_email
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/auth", tags=["Auth"])
+users_router = APIRouter(prefix="/users", tags=["Users"])
 
 # Ephemeral in-memory OTP storage: key -> [code, expiry_timestamp, attempts]
 _otp_store: dict[str, list[Any]] = {}
@@ -176,6 +179,7 @@ async def _get_user_by_email(db: AsyncSession, email: str) -> User | None:
     """Case-insensitive lookup; the oldest row wins if legacy case-variant duplicates exist."""
     stmt = (
         select(User)
+        .options(selectinload(User.client_profile))
         .where(func.lower(User.email) == _normalize_email(email))
         .order_by(User.created_at.asc())
         .limit(1)
@@ -227,18 +231,49 @@ async def _default_signup_agency_id(db: AsyncSession) -> uuid.UUID | None:
     )
 
 
-def _apply_new_password(user: User, new_password: str) -> None:
+async def _cleanup_stale_client_records(db: AsyncSession, email: str, full_name: str | None = None) -> None:
+    """Clear orphaned negotiations and deactivate custom plans left behind by deleted users with this email."""
+    try:
+        from app.models.billing import PlanNegotiation, Plan
+        clean_email = email.strip().lower()
+        await db.execute(
+            update(PlanNegotiation)
+            .where(func.lower(PlanNegotiation.client_email) == clean_email)
+            .values(status="ARCHIVED", client_id=None)
+        )
+        plan_filter = [Plan.display_name.ilike(f"%{clean_email}%")]
+        if full_name and full_name.strip():
+            plan_filter.append(Plan.display_name.ilike(f"%{full_name.strip()}%"))
+        await db.execute(
+            update(Plan)
+            .where(
+                Plan.name.like("custom_%"),
+                or_(*plan_filter),
+            )
+            .values(is_active=False)
+        )
+    except Exception as e:
+        logger.warning("cleanup_stale_client_records_error", error=str(e))
+
+
+async def _apply_new_password(user: User, new_password: str) -> None:
     """Store a new password and end every session issued before it."""
-    user.hashed_password = hash_password(new_password)
+    user.hashed_password = await asyncio.to_thread(hash_password, new_password)
     user.must_reset_password = False
     user.token_version += 1
 
 
 def _user_payload(user: User, stage: int) -> dict[str, Any]:
+    company_name = (
+        user.client_profile.company_name
+        if "client_profile" in user.__dict__ and user.client_profile
+        else None
+    )
     return {
         "id": str(user.id),
         "email": user.email,
         "full_name": user.full_name,
+        "company_name": company_name,
         "role": user.role.value,
         "account_status": user.account_status.value,
         "must_reset_password": bool(user.must_reset_password),
@@ -367,7 +402,7 @@ async def register_intent(
     otp_code = f"{secrets.randbelow(900000) + 100000}"
     expires_at = time.time() + 600.0  # 10 minutes
     pending_registration = {
-        "password_hash": hash_password(payload.password),
+        "password_hash": await asyncio.to_thread(hash_password, payload.password),
         "full_name": payload.full_name or email_clean.split("@")[0].capitalize(),
     }
     await _deliver_otp_or_raise(email_clean, otp_code)
@@ -460,7 +495,7 @@ async def verify_registration(
         valid, err = validate_password_strength(payload.password)
         if not valid:
             raise HTTPException(status_code=400, detail=err)
-        hashed_pw = hash_password(payload.password)
+        hashed_pw = await asyncio.to_thread(hash_password, payload.password)
         resolved_name = payload.full_name or email_clean.split("@")[0].capitalize()
 
     existing_user = await _get_user_by_email(db, email_clean)
@@ -483,6 +518,7 @@ async def verify_registration(
     try:
         await db.flush()
         db.add(ClientProfile(user_id=user.id))
+        await _cleanup_stale_client_records(db, email_clean, resolved_name)
         await db.commit()
     except IntegrityError as exc:
         await db.rollback()
@@ -606,7 +642,7 @@ async def reset_password(
     if not valid:
         raise HTTPException(status_code=400, detail=err)
 
-    _apply_new_password(user, payload.new_password)
+    await _apply_new_password(user, payload.new_password)
     if user.email_verified_at is None:
         user.email_verified_at = datetime.now(timezone.utc)
     await db.commit()
@@ -639,7 +675,7 @@ async def set_mandatory_password(
     if not valid:
         raise HTTPException(status_code=400, detail=err)
 
-    _apply_new_password(user, payload.new_password)
+    await _apply_new_password(user, payload.new_password)
     await db.commit()
     await db.refresh(user)
 
@@ -690,7 +726,7 @@ async def login(
     if not user.hashed_password:
         raise _password_not_set_error(user)
 
-    if not verify_password(payload.password, user.hashed_password):
+    if not await asyncio.to_thread(verify_password, payload.password, user.hashed_password):
         raise Unauthorized(
             "Invalid email or password. Please check your credentials.",
             code="INVALID_CREDENTIALS",
@@ -791,6 +827,7 @@ async def verify_otp(
     return await _issue_session(db, user)
 
 
+@users_router.get("/me", response_model=dict[str, Any])
 @router.get("/me", response_model=dict[str, Any])
 async def get_me(
     actor: Actor = Depends(get_current_actor),
@@ -833,6 +870,8 @@ async def get_me(
         "id": str(user.id),
         "email": user.email,
         "full_name": user.full_name or user.email.split("@")[0],
+        "company_name": profile.company_name if profile else None,
+        "phone": (profile.brand_dna or {}).get("phone", "") if profile and profile.brand_dna else "",
         "role": user.role.value,
         "account_status": user.account_status.value,
         "must_reset_password": bool(user.must_reset_password),
@@ -841,6 +880,60 @@ async def get_me(
         "terms_accepted": profile.terms_accepted_at is not None if profile else False,
         "has_active_subscription": has_active_sub,
         "access_token": refreshed_token,
+    }
+
+
+class UpdateMeRequest(BaseModel):
+    full_name: str | None = None
+    name: str | None = None
+    phone: str | None = None
+
+
+@users_router.patch("/me", response_model=dict[str, Any])
+@router.patch("/me", response_model=dict[str, Any])
+async def update_me(
+    payload: UpdateMeRequest,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Update active user profile (name, phone) and return updated profile."""
+    user_id = actor.user_id
+    if str(user_id) == "00000000-0000-0000-0000-000000000001" and actor.email is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    stmt = select(User, ClientProfile).outerjoin(
+        ClientProfile, ClientProfile.user_id == User.id
+    ).where(User.id == user_id)
+    row = (await db.execute(stmt)).first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    user, profile = row
+
+    new_name = payload.full_name or payload.name
+    if new_name is not None and new_name.strip():
+        user.full_name = new_name.strip()
+
+    if payload.phone is not None:
+        if not profile:
+            profile = ClientProfile(user_id=user.id)
+            db.add(profile)
+        profile.brand_dna = {**(profile.brand_dna or {}), "phone": payload.phone.strip()}
+
+    await db.commit()
+    await db.refresh(user)
+
+    from app.services.onboarding_service import get_current_stage
+    stage = await get_current_stage(db, user.id) if user.role == UserRole.CLIENT else 5
+
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "phone": (profile.brand_dna or {}).get("phone", "") if profile and profile.brand_dna else "",
+        "role": user.role.value,
+        "account_status": user.account_status.value,
+        "onboarding_stage": stage,
+        "access_token": _access_token_for(user),
     }
 
 
@@ -1033,6 +1126,7 @@ async def _process_google_code(
         try:
             await db.flush()
             db.add(ClientProfile(user_id=user.id))
+            await _cleanup_stale_client_records(db, email, full_name)
             await db.commit()
             await db.refresh(user)
         except IntegrityError as exc:

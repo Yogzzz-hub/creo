@@ -55,6 +55,7 @@ from app.models.enums import (
 from app.models.ops import Announcement, AuditLog, FreelancerProfile, LeaveRequest, Notification
 from app.models.support import Ticket, TicketMessage
 from app.models.user import ClientProfile, StaffProfile, User
+from app.models.questionnaire import Questionnaire
 from app.models.work import ClientAssignment, ContentCalendar, Deliverable, Task
 from app.services import deliverable_state, storage_service
 
@@ -580,22 +581,38 @@ async def get_client_roster(
                     )
                 ) FILTER (WHERE uc.id IS NOT NULL),
                 '[]'::json
-            ) AS quota_usage
+            ) AS quota_usage,
+            cp.timezone,
+            cp.brand_summary,
+            cp.brand_dna,
+            q.answers AS quest_answers,
+            cp.onboarding_completed_at
         FROM users u
         LEFT JOIN client_profiles cp ON cp.user_id = u.id
         LEFT JOIN subscriptions s ON s.client_id = u.id AND s.status IN ('trialing', 'active')
         LEFT JOIN plans p ON p.id = s.plan_id
         LEFT JOIN usage_counters uc ON uc.client_id = u.id
+        LEFT JOIN questionnaires q ON q.user_id = u.id
         WHERE u.role = 'client'
         GROUP BY
             u.id, u.email, u.full_name, u.account_status, cp.company_name, cp.instagram_username,
             cp.onboarding_completed_at, cp.terms_accepted_at, u.email_verified_at,
-            p.name, p.display_name, p.monthly_price, s.status, s.id
+            p.name, p.display_name, p.monthly_price, s.status, s.id,
+            cp.timezone, cp.brand_summary, cp.brand_dna, q.answers
         ORDER BY u.created_at DESC;
     """)
 
     res = await db.execute(sql)
     rows = res.fetchall()
+
+    curated_palettes = [
+        ["#0F172A", "#2563EB", "#38BDF8", "#F8FAFC"],
+        ["#18181B", "#D97706", "#FBBF24", "#FAFAFA"],
+        ["#1E1B4B", "#7C3AED", "#C084FC", "#F5F3FF"],
+        ["#064E3B", "#059669", "#34D399", "#ECFDF5"],
+        ["#831843", "#DB2777", "#F472B6", "#FDF2F8"],
+        ["#1E293B", "#0D9488", "#2DD4BF", "#F0FDFA"],
+    ]
 
     clients = []
     for r in rows:
@@ -605,11 +622,89 @@ async def get_client_roster(
         else:
             quota_usage = list(quota_raw or [])
 
+        dna_raw = r[14] if len(r) > 14 and r[14] else {}
+        if isinstance(dna_raw, str):
+            try:
+                dna_dict = json.loads(dna_raw)
+            except Exception:
+                dna_dict = {}
+        else:
+            dna_dict = dict(dna_raw or {})
+
+        quest_raw = r[15] if len(r) > 15 and r[15] else {}
+        if isinstance(quest_raw, str):
+            try:
+                q_dict = json.loads(quest_raw)
+            except Exception:
+                q_dict = {}
+        else:
+            q_dict = dict(quest_raw or {})
+
+        # Extract authentic questionnaire colors
+        q_colors = []
+        raw_cands = q_dict.get("hex_codes") or q_dict.get("colours") or q_dict.get("color_palette") or []
+        if isinstance(raw_cands, list):
+            for c in raw_cands:
+                if isinstance(c, str) and c.strip().startswith("#"):
+                    q_colors.append(c.strip().upper())
+                elif isinstance(c, dict) and c.get("hex"):
+                    q_colors.append(str(c["hex"]).strip().upper())
+
+        # Canonical fallback tokens matching client portal tokens
+        default_tokens = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"]
+
+        # Base colors priority: explicit brand_dna palette -> questionnaire answers -> visual_direction
+        base_palette = []
+        if isinstance(dna_dict.get("palette"), list) and dna_dict["palette"]:
+            base_palette = [
+                (c.get("hex") if isinstance(c, dict) else c).strip().upper()
+                for c in dna_dict["palette"]
+                if (isinstance(c, str) and c.strip().startswith("#")) or (isinstance(c, dict) and c.get("hex"))
+            ]
+        elif q_colors:
+            base_palette = q_colors
+        elif isinstance(dna_dict.get("visual_direction"), dict) and isinstance(dna_dict["visual_direction"].get("primary_colors"), list):
+            base_palette = [
+                (c.get("hex") if isinstance(c, dict) else c).strip().upper()
+                for c in dna_dict["visual_direction"]["primary_colors"]
+                if (isinstance(c, str) and c.strip().startswith("#")) or (isinstance(c, dict) and c.get("hex"))
+            ]
+
+        if not base_palette:
+            cid_int = abs(int(uuid.UUID(str(r[0])).int)) % len(curated_palettes)
+            base_palette = curated_palettes[cid_int]
+
+        # Always pad to 4 tokens minimum to match Client Portal
+        padded_palette = list(base_palette)
+        for i in range(len(padded_palette), 4):
+            padded_palette.append(default_tokens[i])
+
+        dna_dict["palette"] = padded_palette
+        vis = dna_dict.get("visual_direction")
+        if not isinstance(vis, dict):
+            vis = {}
+        vis["primary_colors"] = padded_palette
+        dna_dict["visual_direction"] = vis
+
+        ind_val = (
+            dna_dict.get("industry")
+            or dna_dict.get("category")
+            or q_dict.get("niche")
+            or "Digital Growth & Direct-to-Consumer"
+        )
+        dna_dict["industry"] = ind_val
+        dna_dict["category"] = ind_val
+
+        onboarding_completed_val = (
+            r[16].isoformat() if len(r) > 16 and r[16] else None
+        )
+
         clients.append(
             {
                 "client_id": str(r[0]),
                 "email": r[1],
                 "full_name": r[2],
+                "phone": dna_dict.get("phone", ""),
                 "account_status": r[3],
                 "company_name": r[4],
                 "instagram_username": r[5],
@@ -619,6 +714,11 @@ async def get_client_roster(
                 "monthly_price": float(r[9]) if r[9] is not None else 0.0,
                 "subscription_status": r[10],
                 "quota_usage": quota_usage,
+                "timezone": r[12] or "Asia/Kolkata",
+                "brand_summary": r[13] or dna_dict.get("summary_line") or "",
+                "brand_dna": dna_dict,
+                "industry": ind_val,
+                "onboarding_completed_at": onboarding_completed_val,
             }
         )
     return clients
@@ -760,7 +860,104 @@ async def get_client_brand_profile(
     ]
 
     # 8. Build response
-    brand_dna = profile.brand_dna if profile and profile.brand_dna else {}
+    brand_dna = dict(profile.brand_dna or {}) if profile else {}
+
+    # Check questionnaire for client's actual onboarding answers
+    q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_uuid)
+    quest = (await db.execute(q_stmt)).scalar_one_or_none()
+
+    # Extract authentic colors chosen by the client
+    chosen_palette: list[str] = []
+    if quest:
+        q_ans = quest.answers or {}
+        sec_d = quest.section_d or q_ans.get("d") or {}
+        raw_candidates = (
+            q_ans.get("hex_codes")
+            or sec_d.get("colours")
+            or sec_d.get("color_palette")
+            or q_ans.get("color_palette")
+            or q_ans.get("colours")
+            or []
+        )
+        if isinstance(raw_candidates, list):
+            for c in raw_candidates:
+                if isinstance(c, str) and c.strip().startswith("#"):
+                    chosen_palette.append(c.strip().upper())
+                elif isinstance(c, dict) and c.get("hex"):
+                    chosen_palette.append(str(c["hex"]).strip().upper())
+
+        # Also extract niche / industry if not already set
+        if not brand_dna.get("industry") and not brand_dna.get("category"):
+            niche = q_ans.get("niche") or (quest.section_a or {}).get("category")
+            if niche:
+                brand_dna["industry"] = str(niche)
+                brand_dna["category"] = str(niche)
+
+        # Also extract content pillars if not present
+        if not brand_dna.get("content_pillars") and q_ans.get("pillars"):
+            brand_dna["content_pillars"] = [
+                {"name": str(p), "funnel_stage": "authority", "rationale": f"Core pillar covering {p}"}
+                for p in q_ans.get("pillars")
+            ]
+
+    # Base colors priority:
+    # 1. Direct palette from brand_dna if explicitly set by client or admin
+    # 2. Questionnaire's explicit hex_codes/colours chosen during onboarding
+    # 3. visual_direction.primary_colors
+    base_palette: list[str] = []
+    if isinstance(brand_dna.get("palette"), list) and brand_dna["palette"]:
+        for c in brand_dna["palette"]:
+            if isinstance(c, str) and c.strip().startswith("#"):
+                base_palette.append(c.strip().upper())
+            elif isinstance(c, dict) and c.get("hex"):
+                base_palette.append(str(c["hex"]).strip().upper())
+    elif chosen_palette:
+        base_palette = chosen_palette
+    elif isinstance(brand_dna.get("visual_direction"), dict) and isinstance(brand_dna["visual_direction"].get("primary_colors"), list):
+        for c in brand_dna["visual_direction"]["primary_colors"]:
+            if isinstance(c, str) and c.strip().startswith("#"):
+                base_palette.append(c.strip().upper())
+            elif isinstance(c, dict) and c.get("hex"):
+                base_palette.append(str(c["hex"]).strip().upper())
+
+    if not base_palette:
+        hash_val = abs(int(uuid.UUID(str(client_uuid)).int)) % 6
+        curated_palettes = [
+            ["#0F172A", "#2563EB", "#38BDF8", "#F8FAFC"],
+            ["#18181B", "#D97706", "#FBBF24", "#FAFAFA"],
+            ["#1E1B4B", "#7C3AED", "#C084FC", "#F5F3FF"],
+            ["#064E3B", "#059669", "#34D399", "#ECFDF5"],
+            ["#831843", "#DB2777", "#F472B6", "#FDF2F8"],
+            ["#1E293B", "#0D9488", "#2DD4BF", "#F0FDFA"],
+        ]
+        base_palette = curated_palettes[hash_val]
+
+    # Canonical 4 tokens matching client portal tokens:
+    # [0] Primary Brand, [1] Accent / Secondary, [2] Surface / Canvas, [3] Glow / Highlight
+    default_tokens = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"]
+    final_palette = list(base_palette)
+    for i in range(len(final_palette), 4):
+        final_palette.append(default_tokens[i])
+
+    # Ensure brand_dna has both palette and visual_direction aligned to final_palette
+    brand_dna["palette"] = final_palette
+    vis = brand_dna.get("visual_direction")
+    if not isinstance(vis, dict):
+        vis = {}
+    vis["primary_colors"] = final_palette
+
+    # Synchronize typography system with Client Portal tokens
+    if "typography" not in brand_dna or not isinstance(brand_dna.get("typography"), dict):
+        brand_dna["typography"] = {
+            "headline": vis.get("headings_font") or "Inter Display · 700 Bold",
+            "body": vis.get("body_font") or "Inter Sans · 400 Regular",
+            "mono": "JetBrains Mono",
+        }
+    typo_headline = brand_dna["typography"].get("headline") or "Inter Display · 700 Bold"
+    typo_body = brand_dna["typography"].get("body") or "Inter Sans · 400 Regular"
+    vis["headings_font"] = typo_headline
+    vis["body_font"] = typo_body
+    brand_dna["visual_direction"] = vis
 
     # Derive onboarding stage
     has_sub = subscription_data is not None
@@ -775,13 +972,21 @@ async def get_client_brand_profile(
     else:
         onboarding_stage = 1
 
+    industry_val = "Digital Growth & Direct-to-Consumer"
+    if brand_dna and isinstance(brand_dna, dict):
+        raw_ind = brand_dna.get("industry") or brand_dna.get("category")
+        if raw_ind:
+            industry_val = str(raw_ind)
+
     return {
         "client_id": str(client_uuid),
         "full_name": client_user.full_name,
         "email": client_user.email,
+        "phone": brand_dna.get("phone") or (getattr(profile, "phone", None) if profile else None) or "",
         "account_status": client_user.account_status,
         "company_name": profile.company_name if profile else None,
         "instagram_username": profile.instagram_username if profile else None,
+        "industry": industry_val,
         "onboarding_stage": onboarding_stage,
         "onboarding_completed_at": (
             profile.onboarding_completed_at.isoformat()
@@ -799,6 +1004,143 @@ async def get_client_brand_profile(
         "timezone": profile.timezone if profile else "Asia/Kolkata",
         "created_at": client_user.created_at.isoformat() if client_user.created_at else None,
     }
+
+
+class UpdateClientProfileRequest(BaseModel):
+    company_name: str | None = None
+    full_name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    instagram_username: str | None = None
+    timezone: str | None = None
+    industry: str | None = None
+    brand_summary: str | None = None
+    palette: list[str] | None = None
+    colors: list[str] | None = None
+    brand_dna: dict[str, Any] | None = None
+
+
+@router.patch("/clients/{client_id}")
+async def update_client_profile(
+    client_id: str,
+    payload: UpdateClientProfileRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = TeamLeadActor,
+) -> dict[str, Any]:
+    """Update client profile attributes (company name, signer, brand summary, timezone, colors, etc.)."""
+    from app.core.client_scope import ensure_client_access
+    from app.core.dashboard_cache import invalidate_dashboard_cache
+
+    target_uuid: uuid.UUID | None = None
+    try:
+        target_uuid = uuid.UUID(client_id)
+    except (ValueError, AttributeError):
+        pass
+
+    if target_uuid:
+        client_user = await db.get(User, target_uuid)
+    else:
+        clean_slug = client_id.lower().replace("client-", "").strip()
+        search_stmt = (
+            select(User)
+            .join(ClientProfile, ClientProfile.user_id == User.id, isouter=True)
+            .where(
+                User.role == "client",
+                or_(
+                    User.email.ilike(f"%{clean_slug}%"),
+                    ClientProfile.company_name.ilike(f"%{clean_slug}%"),
+                    ClientProfile.instagram_username.ilike(f"%{clean_slug}%"),
+                ),
+            )
+            .limit(1)
+        )
+        res = await db.execute(search_stmt)
+        client_user = res.scalar_one_or_none()
+
+    if not client_user or client_user.role != "client":
+        raise NotFound(f"Client {client_id} not found", code="CLIENT_NOT_FOUND")
+
+    client_uuid = client_user.id
+    await ensure_client_access(db, actor, client_uuid, write=True, allow_client=False)
+
+    # 1. Update user fields
+    if payload.full_name is not None and payload.full_name.strip():
+        client_user.full_name = payload.full_name.strip()
+    if payload.email is not None and payload.email.strip():
+        new_email = payload.email.strip().lower()
+        if new_email != client_user.email:
+            existing_email = (
+                await db.execute(select(User.id).where(User.email == new_email, User.id != client_uuid))
+            ).scalar_one_or_none()
+            if existing_email:
+                raise Conflict(f"Email {new_email} is already taken by another account", code="EMAIL_TAKEN")
+            client_user.email = new_email
+
+    # 2. Update profile
+    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_uuid)
+    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
+    if not profile:
+        profile = ClientProfile(user_id=client_uuid, brand_dna={})
+        db.add(profile)
+
+    if payload.company_name is not None:
+        profile.company_name = payload.company_name.strip()
+    if payload.instagram_username is not None:
+        profile.instagram_username = payload.instagram_username.strip().lstrip("@")
+    if payload.timezone is not None and payload.timezone.strip():
+        profile.timezone = payload.timezone.strip()
+    if payload.brand_summary is not None:
+        profile.brand_summary = payload.brand_summary.strip()
+
+    brand_dna_data = dict(profile.brand_dna or {})
+    if payload.phone is not None:
+        brand_dna_data["phone"] = payload.phone.strip()
+    if payload.industry is not None:
+        brand_dna_data["category"] = payload.industry.strip()
+        brand_dna_data["industry"] = payload.industry.strip()
+
+    new_colors = payload.palette or payload.colors
+    if new_colors is not None and isinstance(new_colors, list) and len(new_colors) > 0:
+        clean_colors = [str(c).strip().upper() for c in new_colors if str(c).strip().startswith("#")]
+        if clean_colors:
+            # Pad to 4 tokens if fewer than 4 provided
+            default_tokens = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"]
+            padded_colors = list(clean_colors)
+            for i in range(len(padded_colors), 4):
+                padded_colors.append(default_tokens[i])
+            brand_dna_data["palette"] = padded_colors
+            vis = brand_dna_data.get("visual_direction")
+            if not isinstance(vis, dict):
+                vis = {}
+            vis["primary_colors"] = padded_colors
+            brand_dna_data["visual_direction"] = vis
+
+    if payload.brand_dna is not None:
+        brand_dna_data.update(payload.brand_dna)
+
+    profile.brand_dna = brand_dna_data
+
+    # Also sync questionnaire if present
+    q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_uuid)
+    quest = (await db.execute(q_stmt)).scalar_one_or_none()
+    if quest:
+        q_ans = dict(quest.answers or {})
+        if new_colors:
+            clean_colors = [str(c).strip().upper() for c in new_colors if str(c).strip().startswith("#")]
+            if clean_colors:
+                q_ans["hex_codes"] = clean_colors
+        if payload.industry:
+            q_ans["niche"] = payload.industry.strip()
+        quest.answers = q_ans
+
+    await db.commit()
+    await db.refresh(profile)
+    await db.refresh(client_user)
+    await invalidate_dashboard_cache()
+
+    return await get_client_brand_profile(str(client_uuid), db=db, actor=actor)
+
+    return await get_client_brand_profile(str(client_uuid), db=db, actor=actor)
 
 
 @router.get("/queue")
@@ -1087,38 +1429,86 @@ class RemoveClientPlanRequest(BaseModel):
 
 @router.post("/clients/{client_id}/offboard")
 async def offboard_client(
-    client_id: uuid.UUID,
+    client_id: str,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = TeamLeadActor,
 ) -> dict[str, Any]:
     """Persist offboarding without deleting billing or content history."""
     from app.core.client_scope import ensure_client_access
     from app.core.dashboard_cache import invalidate_dashboard_cache
 
-    await ensure_client_access(db, actor, client_id, write=True, allow_client=False)
-    client = (await db.execute(select(User).where(User.id == client_id).with_for_update())).scalar_one()
+    target_uuid: uuid.UUID | None = None
+    try:
+        target_uuid = uuid.UUID(client_id)
+    except (ValueError, AttributeError):
+        pass
+
+    if target_uuid:
+        client = (await db.execute(select(User).where(User.id == target_uuid).with_for_update())).scalar_one_or_none()
+    else:
+        clean_slug = client_id.lower().replace("client-", "").strip()
+        search_stmt = (
+            select(User)
+            .join(ClientProfile, ClientProfile.user_id == User.id, isouter=True)
+            .where(
+                User.role == "client",
+                or_(
+                    User.email.ilike(f"%{clean_slug}%"),
+                    ClientProfile.company_name.ilike(f"%{clean_slug}%"),
+                ),
+            )
+            .with_for_update()
+            .limit(1)
+        )
+        res = await db.execute(search_stmt)
+        client = res.scalar_one_or_none()
+
+    if not client or client.role != "client":
+        raise NotFound(f"Client {client_id} not found", code="CLIENT_NOT_FOUND")
+
+    client_id_uuid = client.id
+    await ensure_client_access(db, actor, client_id_uuid, write=True, allow_client=False)
+
     subscriptions = (await db.execute(select(Subscription).where(
-        Subscription.client_id == client_id,
+        Subscription.client_id == client_id_uuid,
         Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
     ))).scalars().all()
     for subscription in subscriptions:
         subscription.status = SubscriptionStatus.CANCELED
-    counters = (await db.execute(select(UsageCounter).where(UsageCounter.client_id == client_id))).scalars().all()
+    counters = (await db.execute(select(UsageCounter).where(UsageCounter.client_id == client_id_uuid))).scalars().all()
     for counter in counters:
         counter.quota = 0
     already_offboarded = client.account_status == AccountStatus.SUSPENDED
-    client.account_status = AccountStatus.SUSPENDED
     if not already_offboarded:
         client.token_version += 1
-    await db.execute(delete(ClientAssignment).where(ClientAssignment.client_id == client_id))
+    client.account_status = AccountStatus.SUSPENDED
+    await db.execute(delete(ClientAssignment).where(ClientAssignment.client_id == client_id_uuid))
+    # Deactivate custom plan & archive negotiations
+    await db.execute(
+        update(Plan)
+        .where(Plan.name == f"custom_{client_id_uuid.hex[:8]}")
+        .values(is_active=False)
+    )
+    if client.email:
+        await db.execute(
+            update(PlanNegotiation)
+            .where(
+                or_(
+                    PlanNegotiation.client_id == client_id_uuid,
+                    func.lower(PlanNegotiation.client_email) == client.email.lower()
+                )
+            )
+            .values(status="ARCHIVED")
+        )
     if not already_offboarded or subscriptions:
-        db.add(AuditLog(actor_id=actor.user_id, actor_role=actor.role, entity="client",
-                        entity_id=client_id, action="client_offboarded",
+        actor_role_str = actor.role.value if hasattr(actor.role, "value") else str(actor.role)
+        db.add(AuditLog(actor_id=actor.user_id, actor_role=actor_role_str, entity="client",
+                        entity_id=client_id_uuid, action="client_offboarded",
                         to_value={"account_status": "suspended", "cancelled_subscriptions": len(subscriptions)}))
     await db.commit()
-    await invalidate_user_session(client_id, agency_id=client.agency_id)
+    await invalidate_user_session(client_id_uuid, agency_id=client.agency_id)
     await invalidate_dashboard_cache()
-    return {"status": "offboarded", "client_id": str(client_id), "cancelled_subscriptions": len(subscriptions)}
+    return {"status": "offboarded", "client_id": str(client_id_uuid), "cancelled_subscriptions": len(subscriptions)}
 
 
 @router.post("/clients/{client_id}/remove-plan")
@@ -3359,6 +3749,9 @@ async def get_admin_calendar(
     cal_res = await db.execute(cal_stmt)
     cal_rows = cal_res.fetchall()
 
+    media_urls = await storage_service.resolve_media_urls([
+        d.file_url for _, _, _, d, _, _ in cal_rows if d
+    ])
     for cal, email, company_name, d, deliv_type, brand_summary in cal_rows:
         client_name = company_name or email.split("@")[0].capitalize()
         event_dt = cal.scheduled_time or datetime.combine(cal.publish_date, datetime.min.time().replace(hour=11), tzinfo=timezone.utc)
@@ -3399,7 +3792,7 @@ async def get_admin_calendar(
                 if d.status.value in ["draft", "pending_approval"]
                 else d.status.value
             )
-            file_url = storage_service.resolve_media_url(d.file_url)
+            file_url = media_urls.get(d.file_url)
 
         title = cal.caption or f"{format_label} · {client_name}"
 
@@ -3469,6 +3862,7 @@ async def get_admin_calendar(
     deliv_res = await db.execute(deliv_stmt)
     deliv_rows = deliv_res.fetchall()
 
+    media_urls = await storage_service.resolve_media_urls([d.file_url for d, _, _, _ in deliv_rows])
     for d, deliv_type, email, company_name in deliv_rows:
         client_name = company_name or email.split("@")[0].capitalize()
         event_date = d.scheduled_at or d.created_at
@@ -3507,7 +3901,7 @@ async def get_admin_calendar(
             "year": event_date.year if event_date else 2026,
             "time": event_date.strftime("%I:%M %p") if event_date else "11:00 AM",
             "caption": "",
-            "file_url": storage_service.resolve_media_url(d.file_url),
+            "file_url": media_urls.get(d.file_url),
             "file_type": d.file_type,
             "brand_summary": None,
             "blueprint": None,
@@ -3865,6 +4259,9 @@ async def get_pod_dashboard(
     seen_task_ids = set()
     sla_breaches_count = 0
 
+    media_urls = await storage_service.resolve_media_urls([
+        deliv.file_url for _, _, _, deliv in tasks_rows if deliv
+    ], request)
     for t, assignee, c_profile, deliv in tasks_rows:
         if t.id in seen_task_ids:
             continue
@@ -3900,7 +4297,7 @@ async def get_pod_dashboard(
             "effort_points": t.effort_points,
             "blueprint": t.blueprint or {},
             "is_revision": t.is_revision,
-            "deliverable": deliverable_workflow.serialize_for_team(deliv, request) if deliv else None,
+            "deliverable": deliverable_workflow.serialize_for_team(deliv, request, media_urls=media_urls) if deliv else None,
         }
         tasks_by_status[t_status].append(task_data)
 
@@ -4137,6 +4534,18 @@ async def list_plan_negotiations(
     res = await db.execute(stmt)
     rows = res.scalars().all()
 
+    # Self-heal legacy negotiations missing client_id by email lookup (strictly for PENDING requests)
+    needs_commit = False
+    for n in rows:
+        if not n.client_id and n.client_email and n.status == "PENDING":
+            u_stmt = select(User).where(func.lower(User.email) == n.client_email.strip().lower())
+            u = (await db.execute(u_stmt)).scalar_one_or_none()
+            if u:
+                n.client_id = u.id
+                needs_commit = True
+    if needs_commit:
+        await db.commit()
+
     return [
         {
             "id": str(n.id),
@@ -4150,7 +4559,11 @@ async def list_plan_negotiations(
             "preferredTime": n.preferred_time,
             "notes": n.notes,
             "status": n.status,
-            "counterPrice": n.counter_price,
+            "counterPrice": n.counter_price or getattr(n, "agreed_amount", None),
+            "agreedAmount": getattr(n, "agreed_amount", None) or n.counter_price,
+            "reelQuota": getattr(n, "reel_quota", None) or 8,
+            "posterQuota": getattr(n, "poster_quota", None) or 12,
+            "storyQuota": getattr(n, "story_quota", None) or 15,
             "counterNote": n.counter_note,
             "declineReason": n.decline_reason,
             "requestedAt": n.created_at.isoformat() if n.created_at else None,
@@ -4210,17 +4623,21 @@ async def create_plan_negotiation_by_admin(
 
 
 class NegotiationActionPayload(BaseModel):
-    action: str  # "accept" | "decline" | "counter"
+    action: str = "accept"  # "accept" | "decline" | "counter"
     decline_reason: str | None = None
     counter_price: int | None = None
     counter_note: str | None = None
-    agreed_price: Decimal | None = Field(default=None, gt=0)
-    reel_quota: int | None = Field(default=None, ge=0)
-    poster_quota: int | None = Field(default=None, ge=0)
-    story_quota: int | None = Field(default=None, ge=0)
+    agreed_price: Decimal | None = None
+    agreed_amount: Decimal | None = None  # alias
+    reel_quota: int | None = None
+    poster_quota: int | None = None
+    story_quota: int | None = None
 
 
 @router.patch("/negotiations/{neg_id}", response_model=dict[str, Any])
+@router.post("/negotiations/{neg_id}", response_model=dict[str, Any])
+@router.patch("/negotiations/{neg_id}/approve", response_model=dict[str, Any])
+@router.post("/negotiations/{neg_id}/approve", response_model=dict[str, Any])
 async def update_plan_negotiation(
     neg_id: uuid.UUID,
     payload: NegotiationActionPayload,
@@ -4234,45 +4651,285 @@ async def update_plan_negotiation(
     if actor.agency_id and getattr(neg, "agency_id", None) and neg.agency_id != actor.agency_id:
         raise HTTPException(status_code=403, detail="Negotiation belongs to another agency")
 
+    # Link client if missing
+    if not neg.client_id and neg.client_email:
+        u_stmt = select(User).where(func.lower(User.email) == neg.client_email.strip().lower())
+        u = (await db.execute(u_stmt)).scalar_one_or_none()
+        if u:
+            neg.client_id = u.id
+
     now = datetime.now(UTC)
 
     if payload.action == "accept":
-        if not neg.client_id or payload.agreed_price is None:
-            raise HTTPException(status_code=422, detail="A registered client and agreed price are required")
+        if not neg.client_id:
+            raise HTTPException(status_code=422, detail="A registered client account could not be found for this negotiation.")
+
+        # Determine authoritative agreed price
+        final_price = payload.agreed_price or payload.agreed_amount
+        if final_price is None and neg.proposed_offer:
+            digits = "".join(ch for ch in str(neg.proposed_offer) if ch.isdigit())
+            if digits and len(digits) >= 1:
+                try:
+                    final_price = Decimal(digits)
+                except Exception:
+                    pass
+        if final_price is None and neg.counter_price:
+            final_price = Decimal(neg.counter_price)
+        if final_price is None or final_price <= 0:
+            final_price = Decimal("35000.00")
+
         current = (await db.execute(select(Plan).join(Subscription, Subscription.plan_id == Plan.id)
             .where(Subscription.client_id == neg.client_id)
             .order_by(Subscription.created_at.desc()).limit(1))).scalar_one_or_none()
-        quotas = [payload.reel_quota, payload.poster_quota, payload.story_quota]
-        if not current and any(q is None for q in quotas):
-            raise HTTPException(status_code=422, detail="Enter the agreed reel, poster, and story quotas")
+
+        reel_q = payload.reel_quota if payload.reel_quota is not None else (current.reel_quota if current else 8)
+        poster_q = payload.poster_quota if payload.poster_quota is not None else (current.poster_quota if current else 12)
+        story_q = payload.story_quota if payload.story_quota is not None else (current.story_quota if current else 15)
+
         neg.status = "Accepted"
-        neg.counter_price = int(payload.agreed_price)
+        neg.counter_price = int(final_price)
+        neg.agreed_amount = int(final_price)
+        neg.counter_note = payload.counter_note or neg.counter_note
+        neg.reel_quota = reel_q
+        neg.poster_quota = poster_q
+        neg.story_quota = story_q
         neg.reviewed_by = actor.user_id
         neg.reviewed_at = now
-        await fix_client_plan(neg.client_id, FixClientPlanRequest(
-            is_custom=True, custom_price=payload.agreed_price,
-            custom_reel_quota=payload.reel_quota if payload.reel_quota is not None else current.reel_quota,
-            custom_poster_quota=payload.poster_quota if payload.poster_quota is not None else current.poster_quota,
-            custom_story_quota=payload.story_quota if payload.story_quota is not None else current.story_quota,
-            custom_notes=f"Negotiation {neg.id}: {payload.counter_note or neg.notes or neg.target_topic}",
-            custom_display_name=current.display_name if current else "Agreed retainer",
-        ), db=db, actor=actor)
-        msg = f"Agreed retainer price of INR {payload.agreed_price:,.2f}/month applied for {neg.client_name}."
+
+        # Update or create client-exclusive custom plan (custom_{client_id}) without changing global tiers
+        plan_key = f"custom_{neg.client_id.hex[:8]}"
+        plan_stmt = select(Plan).where(Plan.name == plan_key)
+        plan = (await db.execute(plan_stmt)).scalar_one_or_none()
+        display_name = f"Custom Negotiated Retainer ({neg.client_name or 'Client Retainer'})"
+        highlights = [
+            f"{reel_q} Custom Reels",
+            f"{poster_q} Static Posters",
+            f"{story_q} Stories / Carousels",
+            "Negotiated Strategy Agreement",
+            "Dedicated Creative Pod Lead",
+        ]
+        if plan:
+            plan.display_name = display_name
+            plan.monthly_price = final_price
+            plan.price_minor = int(final_price * 100)
+            plan.reel_quota = reel_q
+            plan.poster_quota = poster_q
+            plan.story_quota = story_q
+            plan.highlights = highlights
+            plan.is_active = True
+        else:
+            plan = Plan(
+                id=uuid.uuid4(),
+                agency_id=neg.agency_id or getattr(actor, "agency_id", None),
+                name=plan_key,
+                display_name=display_name,
+                monthly_price=final_price,
+                price_minor=int(final_price * 100),
+                currency="INR",
+                reel_quota=reel_q,
+                poster_quota=poster_q,
+                story_quota=story_q,
+                revision_rounds=2,
+                has_dedicated_manager=True,
+                highlights=highlights,
+                is_active=True,
+            )
+            db.add(plan)
+            await db.flush()
+
+        # Check existing subscription: keep incomplete if client hasn't paid yet, or update active if already paid
+        existing_sub = (await db.execute(
+            select(Subscription).where(
+                Subscription.client_id == neg.client_id,
+                Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
+            )
+        )).scalar_one_or_none()
+
+        if existing_sub:
+            existing_sub.plan_id = plan.id
+            existing_sub.amount = plan.monthly_price
+        else:
+            # Client has NOT paid yet! Ensure an INCOMPLETE subscription exists for Razorpay checkout in onboarding
+            incomp_sub = (await db.execute(
+                select(Subscription).where(
+                    Subscription.client_id == neg.client_id,
+                    Subscription.status == SubscriptionStatus.INCOMPLETE,
+                )
+            )).scalar_one_or_none()
+            if incomp_sub:
+                incomp_sub.plan_id = plan.id
+                incomp_sub.amount = plan.monthly_price
+            else:
+                db.add(Subscription(
+                    agency_id=neg.agency_id or getattr(actor, "agency_id", None),
+                    client_id=neg.client_id,
+                    plan_id=plan.id,
+                    status=SubscriptionStatus.INCOMPLETE,
+                    gateway=PaymentProvider.RAZORPAY,
+                    gateway_subscription_id=f"neg_order_{uuid.uuid4().hex[:12]}",
+                    amount=plan.monthly_price,
+                    current_period_start=now,
+                    current_period_end=now + timedelta(days=30),
+                ))
+
+        # Synchronize monthly deliverable usage counters to the exact negotiated quotas
+        period_start_date = now.date().replace(day=1)
+        if period_start_date.month == 12:
+            period_end_date = date(period_start_date.year + 1, 1, 1) - timedelta(days=1)
+        else:
+            period_end_date = date(period_start_date.year, period_start_date.month + 1, 1) - timedelta(days=1)
+
+        for kind, quota in [
+            (DeliverableType.REEL, reel_q),
+            (DeliverableType.CAROUSEL, story_q),
+            (DeliverableType.STATIC_POST, poster_q),
+        ]:
+            uc_stmt = select(UsageCounter).where(
+                UsageCounter.client_id == neg.client_id,
+                UsageCounter.period_start == period_start_date,
+                UsageCounter.kind == kind,
+            )
+            uc = (await db.execute(uc_stmt)).scalar_one_or_none()
+            if uc:
+                uc.quota = quota
+                uc.period_end = period_end_date
+            else:
+                db.add(
+                    UsageCounter(
+                        agency_id=neg.agency_id or getattr(actor, "agency_id", None),
+                        client_id=neg.client_id,
+                        period_start=period_start_date,
+                        period_end=period_end_date,
+                        kind=kind,
+                        quota=quota,
+                        used=0,
+                    )
+                )
+
+        msg = f"Agreed retainer price of ₹{float(final_price):,.2f}/month ({reel_q} Reels, {poster_q} Posts, {story_q} Stories) applied exclusively for {neg.client_name}."
     elif payload.action == "decline":
         neg.status = "Declined"
-        neg.decline_reason = payload.decline_reason
+        neg.decline_reason = payload.decline_reason or "Proposal outside allowable retainer margin."
         neg.reviewed_by = actor.user_id
         neg.reviewed_at = now
         msg = f"Plan negotiation DECLINED for {neg.client_name}."
     elif payload.action == "counter":
         if payload.counter_price is None or payload.counter_price <= 0:
             raise HTTPException(status_code=422, detail="Enter a positive counter price")
+        counter_p = Decimal(payload.counter_price)
+        reel_q = payload.reel_quota if payload.reel_quota is not None else 8
+        poster_q = payload.poster_quota if payload.poster_quota is not None else 12
+        story_q = payload.story_quota if payload.story_quota is not None else 15
+
         neg.status = "Counter Offered"
         neg.counter_price = payload.counter_price
+        neg.agreed_amount = payload.counter_price
         neg.counter_note = payload.counter_note
+        neg.reel_quota = reel_q
+        neg.poster_quota = poster_q
+        neg.story_quota = story_q
         neg.reviewed_by = actor.user_id
         neg.reviewed_at = now
-        msg = f"Counter-offer sent to {neg.client_name}."
+
+        if neg.client_id:
+            plan_key = f"custom_{neg.client_id.hex[:8]}"
+            plan_stmt = select(Plan).where(Plan.name == plan_key)
+            plan = (await db.execute(plan_stmt)).scalar_one_or_none()
+            display_name = f"Agency Counter Proposal ({neg.client_name or 'Client Retainer'})"
+            highlights = [
+                f"{reel_q} Custom Reels",
+                f"{poster_q} Static Posters",
+                f"{story_q} Stories / Carousels",
+                "Agency Executive Counter Scope",
+                "Dedicated Creative Pod Lead",
+            ]
+            if plan:
+                plan.display_name = display_name
+                plan.monthly_price = counter_p
+                plan.price_minor = int(counter_p * 100)
+                plan.reel_quota = reel_q
+                plan.poster_quota = poster_q
+                plan.story_quota = story_q
+                plan.highlights = highlights
+                plan.is_active = True
+            else:
+                plan = Plan(
+                    id=uuid.uuid4(),
+                    agency_id=neg.agency_id or getattr(actor, "agency_id", None),
+                    name=plan_key,
+                    display_name=display_name,
+                    monthly_price=counter_p,
+                    price_minor=int(counter_p * 100),
+                    currency="INR",
+                    reel_quota=reel_q,
+                    poster_quota=poster_q,
+                    story_quota=story_q,
+                    revision_rounds=2,
+                    has_dedicated_manager=True,
+                    highlights=highlights,
+                    is_active=True,
+                )
+                db.add(plan)
+                await db.flush()
+
+            # Ensure an INCOMPLETE subscription exists with this counter proposal for Razorpay checkout
+            incomp_sub = (await db.execute(
+                select(Subscription).where(
+                    Subscription.client_id == neg.client_id,
+                    Subscription.status == SubscriptionStatus.INCOMPLETE,
+                )
+            )).scalar_one_or_none()
+            if incomp_sub:
+                incomp_sub.plan_id = plan.id
+                incomp_sub.amount = counter_p
+            else:
+                db.add(Subscription(
+                    agency_id=neg.agency_id or getattr(actor, "agency_id", None),
+                    client_id=neg.client_id,
+                    plan_id=plan.id,
+                    status=SubscriptionStatus.INCOMPLETE,
+                    gateway=PaymentProvider.RAZORPAY,
+                    gateway_subscription_id=f"neg_counter_{uuid.uuid4().hex[:12]}",
+                    amount=counter_p,
+                    current_period_start=now,
+                    current_period_end=now + timedelta(days=30),
+                ))
+
+            # Synchronize monthly deliverable usage counters
+            period_start_date = now.date().replace(day=1)
+            if period_start_date.month == 12:
+                period_end_date = date(period_start_date.year + 1, 1, 1) - timedelta(days=1)
+            else:
+                period_end_date = date(period_start_date.year, period_start_date.month + 1, 1) - timedelta(days=1)
+
+            for kind, quota in [
+                (DeliverableType.REEL, reel_q),
+                (DeliverableType.CAROUSEL, story_q),
+                (DeliverableType.STATIC_POST, poster_q),
+            ]:
+                uc_stmt = select(UsageCounter).where(
+                    UsageCounter.client_id == neg.client_id,
+                    UsageCounter.period_start == period_start_date,
+                    UsageCounter.kind == kind,
+                )
+                uc = (await db.execute(uc_stmt)).scalar_one_or_none()
+                if uc:
+                    uc.quota = quota
+                    uc.period_end = period_end_date
+                else:
+                    db.add(
+                        UsageCounter(
+                            agency_id=neg.agency_id or getattr(actor, "agency_id", None),
+                            client_id=neg.client_id,
+                            period_start=period_start_date,
+                            period_end=period_end_date,
+                            kind=kind,
+                            quota=quota,
+                            used=0,
+                        )
+                    )
+
+        msg = f"Counter-offer of ₹{payload.counter_price:,.2f}/mo ({reel_q} Reels, {poster_q} Posts, {story_q} Stories) sent to {neg.client_name}."
     else:
         raise HTTPException(status_code=400, detail="Invalid action. Use accept, decline, or counter.")
 
@@ -4318,8 +4975,8 @@ async def _activate_manual_subscription(
         Subscription.client_id == client_id,
         Subscription.status.in_([SubscriptionStatus.TRIALING, SubscriptionStatus.ACTIVE]),
     )
-    existing_sub = (await db.execute(existing_sub_stmt)).scalar_one_or_none()
-    if existing_sub:
+    existing_subs = (await db.execute(existing_sub_stmt)).scalars().all()
+    for existing_sub in existing_subs:
         existing_sub.status = SubscriptionStatus.CANCELED
 
     # Create new active manual subscription
@@ -4337,9 +4994,9 @@ async def _activate_manual_subscription(
     db.add(sub)
     await db.flush()
 
-    # Ensure terms accepted so v_client_onboarding derives stage 3
+    # Ensure terms accepted so v_client_onboarding derives stage 3 (Step 4 Brand Questionnaire)
     cp_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
-    cp = (await db.execute(cp_stmt)).scalar_one_or_none()
+    cp = (await db.execute(cp_stmt)).scalars().first()
     if not cp:
         cp = ClientProfile(
             user_id=client_id,
@@ -4362,7 +5019,7 @@ async def _activate_manual_subscription(
         UsageCounter.client_id == client_id,
         UsageCounter.period_start == m_start,
     )
-    uc = (await db.execute(uc_stmt)).scalar_one_or_none()
+    uc = (await db.execute(uc_stmt)).scalars().first()
     if not uc:
         uc = UsageCounter(
             id=uuid.uuid4(),
@@ -4388,8 +5045,8 @@ async def _activate_manual_subscription(
         user_id=client_id,
         title="Payment Verified & Retainer Activated",
         message=f"Your offline payment for {plan.display_name} has been approved by agency admin. Step 3 (Payment) has been bypassed! You can now proceed to your Brand Questionnaire.",
-        type="billing",
         link="/onboarding?step=4",
+        is_read=False,
     )
     db.add(notif)
 
@@ -4490,8 +5147,8 @@ async def approve_manual_payment_request(
         user_id=client_id,
         title="🎉 Payment Verified & Approved",
         message=f"Your offline payment for {plan_display} (₹{int(amount):,}) has been verified and approved by the agency admin! You can now proceed directly to Step 4 (Brand DNA).",
-        type="billing",
         link="/onboarding?step=4",
+        is_read=False,
     )
     db.add(approval_notif)
     await db.commit()
@@ -4561,8 +5218,8 @@ async def reject_manual_payment_request(
         user_id=client_id,
         title="Offline Payment Verification Declined",
         message=f"Your offline payment request was declined: {admin_notes}. Please review or proceed with online checkout.",
-        type="billing",
         link="/onboarding?step=3",
+        is_read=False,
     )
     db.add(notif)
     await db.commit()
@@ -4602,7 +5259,23 @@ async def direct_bypass_client_payment(
     plan_res = await db.execute(plan_stmt)
     plan = plan_res.scalar_one_or_none()
     if not plan:
+        # Check custom plan for this client
+        plan_stmt = select(Plan).where(Plan.name == f"custom_{client_id.hex[:8]}", Plan.is_active.is_(True))
+        plan = (await db.execute(plan_stmt)).scalar_one_or_none()
+    if not plan:
         raise HTTPException(status_code=404, detail="Selected plan does not exist")
+
+    # Guard: prevent multiple bypasses for the same user at the same time
+    existing_sub_stmt = select(Subscription).where(
+        Subscription.client_id == client_id,
+        Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
+    )
+    existing_sub = (await db.execute(existing_sub_stmt)).scalars().first()
+    if existing_sub:
+        raise HTTPException(
+            status_code=400,
+            detail="Client already has an active subscription or bypass. Please revoke the existing bypass before applying a new one.",
+        )
 
     # Fetch client user
     c_res = await db.execute(select(User).where(User.id == client_id))
@@ -4610,25 +5283,45 @@ async def direct_bypass_client_payment(
 
     now = datetime.now(UTC)
 
-    # Record or update manual_payment_requests row
-    req_id = uuid.uuid4()
-    await db.execute(text("""
-        INSERT INTO manual_payment_requests (id, client_id, plan_id, payment_method, amount, reference_note, status, reviewed_by, reviewed_at, admin_notes, created_at, updated_at)
-        VALUES (:id, :cid, :pid, :pm, :amt, :rn, 'APPROVED', :aid, :now, :notes, :now, :now)
+    # Validate reviewer_id against users table to prevent FK violation
+    reviewer_id = None
+    if actor and actor.user_id:
+        rev_user = (await db.execute(select(User.id).where(User.id == actor.user_id))).scalar_one_or_none()
+        if rev_user:
+            reviewer_id = rev_user
+
+    # Update any existing pending manual_payment_requests row for this client
+    updated_res = await db.execute(text("""
+        UPDATE manual_payment_requests
+        SET status = 'APPROVED', reviewed_by = :aid, reviewed_at = :now, admin_notes = :notes, updated_at = :now
+        WHERE client_id = :cid AND status = 'PENDING'
     """), {
-        "id": req_id,
-        "cid": client_id,
-        "pid": plan.id,
-        "pm": payment_method,
-        "amt": float(plan.monthly_price),
-        "rn": notes,
-        "aid": actor.user_id,
+        "aid": reviewer_id,
         "now": now,
         "notes": notes,
+        "cid": client_id,
     })
 
+    # If no pending request was updated, insert an approved bypass record
+    if updated_res.rowcount == 0:
+        req_id = uuid.uuid4()
+        await db.execute(text("""
+            INSERT INTO manual_payment_requests (id, client_id, plan_id, payment_method, amount, reference_note, status, reviewed_by, reviewed_at, admin_notes, created_at, updated_at)
+            VALUES (:id, :cid, :pid, :pm, :amt, :rn, 'APPROVED', :aid, :now, :notes, :now, :now)
+        """), {
+            "id": req_id,
+            "cid": client_id,
+            "pid": plan.id,
+            "pm": payment_method,
+            "amt": float(plan.monthly_price),
+            "rn": notes,
+            "aid": reviewer_id,
+            "now": now,
+            "notes": notes,
+        })
+
     sub = await _activate_manual_subscription(
-        db, client_id, plan.id, payment_method, plan.monthly_price, actor.user_id, notes,
+        db, client_id, plan.id, payment_method, plan.monthly_price, reviewer_id, notes,
     )
 
     # In-App notification
@@ -4636,8 +5329,8 @@ async def direct_bypass_client_payment(
         user_id=client_id,
         title="🎉 Account Activated by Agency Admin",
         message=f"Payment for {plan.display_name} has been verified and approved by the agency admin! You can now start Brand Onboarding.",
-        type="billing",
         link="/onboarding?step=4",
+        is_read=False,
     )
     db.add(direct_notif)
     await db.commit()

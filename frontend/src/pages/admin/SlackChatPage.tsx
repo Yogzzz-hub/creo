@@ -16,13 +16,14 @@ import {
   Users,
 } from "lucide-react";
 import { request } from "../../lib/http";
-import { useSearchParams } from "react-router";
+import { useSearchParams, useLocation } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
 import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
+import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { getAuthToken } from "../../lib/auth-token";
 
 // WhatsApp & Modern Emoji Categories
@@ -277,8 +278,18 @@ export function SlackChatPage() {
   const isTeamMember = !isClient && !isTeamLead && !isAdmin;
 
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const isWorkstation =
+    location.pathname.startsWith("/workstation") ||
+    location.pathname.startsWith("/member") ||
+    location.pathname === "/slack";
+  const gate = useOnboardingGate();
+  const canUseChat = !isClient || gate.isComplete;
+  const locationState = location.state as { draft?: string; dm?: string; leadName?: string } | null;
   const urlDm = searchParams.get("dm");
   const urlChannel = searchParams.get("channel");
+  const urlDraft = searchParams.get("draft") || locationState?.draft || "";
+  const targetDm = urlDm || locationState?.dm || null;
 
   // Client pod channel slug
   const clientChannelSlug = useMemo(() => {
@@ -424,7 +435,7 @@ export function SlackChatPage() {
   }, [isClient, isAdmin, isTeamLead, isTeamMember, clientChannelSlug]);
 
   // Fetch DM contacts from backend
-  const contactsQuery = useQuery<ChatContact[]>({
+  const { data: serverContacts = [] } = useQuery<ChatContact[]>({
     queryKey: ["chat_contacts", user?.id],
     queryFn: () => request<ChatContact[]>("/api/v1/chat/contacts"),
     enabled: !!user?.id && canUseChat,
@@ -539,12 +550,12 @@ export function SlackChatPage() {
 
   // Selected DM Contact ID
   const [activeContactId, setActiveContactId] = useState<string>(() => {
-    if (urlDm) {
+    if (targetDm) {
       const match = contactsList.find(
         (c) =>
-          c.id === urlDm ||
-          c.name.toLowerCase().includes(urlDm.toLowerCase()) ||
-          (urlDm.toLowerCase() === "super-admin" && c.is_super_admin)
+          c.id === targetDm ||
+          c.name.toLowerCase().includes(targetDm.toLowerCase()) ||
+          (targetDm.toLowerCase() === "super-admin" && c.is_super_admin)
       );
       if (match) return match.id;
     }
@@ -601,7 +612,18 @@ export function SlackChatPage() {
   }, [contactsList, searchFilter]);
 
   // Input states
-  const [messageText, setMessageText] = useState("");
+  const [messageText, setMessageText] = useState(urlDraft);
+  const chatInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (urlDraft) {
+      setMessageText(urlDraft);
+      const timer = setTimeout(() => {
+        chatInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [urlDraft]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiCategory, setEmojiCategory] = useState("smileys");
   const [pickerTargetMsgId, setPickerTargetMsgId] = useState<string | null>(null);
@@ -912,7 +934,7 @@ export function SlackChatPage() {
         await request("/api/v1/chat/messages", {
           method: "POST",
           body: JSON.stringify({
-            recipient_id: activeContact.id,
+            recipient_id: contact.id,
             message: taskContent,
             thread_type: "direct",
           }),
@@ -967,7 +989,19 @@ export function SlackChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-full max-h-full min-h-0 flex-1 overflow-hidden -mx-2 sm:-mx-4 -my-2 sm:-my-4">
+    <div
+      className={`flex flex-col ${
+        isClient
+          ? "flex-1 min-h-0 h-full"
+          : isWorkstation
+          ? "pt-6 px-4 sm:px-6 lg:px-8 pb-6 h-[calc(100vh-1.5rem)]"
+          : "h-[calc(100vh-5.5rem)] min-h-[550px]"
+      } overflow-hidden`}
+    >
+      {/* ── Top Header Context Bar (Admin Console Only) ── */}
+      {!isClient && !isWorkstation && (
+        <AdminTopHeader title="Direct Chat Hub" activeTab="Direct Chat" />
+      )}
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-20 right-8 z-[99999] bg-[#161F2D]/95 backdrop-blur-xl border border-[#7FA0D6]/40 text-white px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2.5 text-xs animate-in fade-in slide-in-from-top-2">
@@ -981,13 +1015,13 @@ export function SlackChatPage() {
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="flex-1 flex overflow-hidden p-2 sm:p-3 gap-2 sm:gap-3 min-h-0 h-full max-h-full"
+        className="flex-1 flex overflow-hidden gap-3 sm:gap-4 min-h-0"
       >
         {/* 1. SLACK SIDEBAR (CHANNELS & DIRECT MESSAGES) */}
         <aside
           className={`${
             mobileView === "channels" ? "flex w-full" : "hidden md:flex"
-          } md:w-80 lg:w-88 flex-col shrink-0 bg-[#0B111C]/85 backdrop-blur-2xl rounded-2xl sm:rounded-3xl border border-white/[0.08] overflow-hidden shadow-2xl h-full max-h-full min-h-0`}
+          } md:w-80 lg:w-88 flex-col shrink-0 bg-[#161F2D] rounded-2xl border border-[#2A3446]/80 overflow-hidden shadow-2xs h-full max-h-full min-h-0`}
         >
           {/* Top Brand Bar */}
           <div className="p-3.5 border-b border-white/[0.08] space-y-3 shrink-0">
@@ -1242,11 +1276,11 @@ export function SlackChatPage() {
         <section
           className={`${
             mobileView === "chat" ? "flex w-full" : "hidden md:flex"
-          } flex-1 flex-col min-w-0 bg-[#0B111C]/85 backdrop-blur-2xl rounded-2xl sm:rounded-3xl border border-white/[0.08] overflow-hidden shadow-2xl h-full max-h-full min-h-0`}
+          } flex-1 min-w-0 bg-[#161F2D] rounded-2xl border border-[#2A3446]/80 shadow-2xs flex flex-col overflow-hidden h-full max-h-full min-h-0`}
         >
           {/* Header Bar */}
-          <div className="p-3 sm:p-4 border-b border-white/[0.08] bg-[#0B111C]/60 backdrop-blur-xl flex items-center justify-between gap-3 shrink-0">
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="px-4 sm:px-6 py-3.5 border-b border-[#2A3446]/60 flex items-center justify-between bg-[#161F2D] gap-2 shrink-0">
+            <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
               {/* Back button on mobile */}
               <button
                 onClick={() => setMobileView("channels")}
@@ -1370,8 +1404,39 @@ export function SlackChatPage() {
                     : `This is the start of your direct 1-on-1 thread with ${activeContact?.name || "your teammate"}. Drop project feedback, creative directions, or collaborate in real time.`}
                 </p>
               </div>
-            ) : (
-              serverMessages.map((msg) => {
+              <h3 className="text-base font-black text-white">
+                {activeMode === "channel"
+                  ? `Welcome to #${activeChannel.label}`
+                  : !activeContact
+                  ? "No assigned teammate selected"
+                  : activeContact.is_super_admin
+                  ? "Direct Channel with Creo Super Administration"
+                  : `Direct Conversation with ${activeContact.name}`}
+              </h3>
+              <p className="text-xs text-[#97A0B3] max-w-md mt-1.5 leading-relaxed">
+                {activeMode === "channel"
+                  ? `This is the start of the #${activeChannel.label} channel. Collaborate with your creative team, drop project notes, or review revisions in real time.`
+                  : !activeContact
+                  ? "Your chat list only includes your assigned team and executive support contact."
+                  : activeContact.is_super_admin
+                  ? "This is your private, direct thread with Creo Executive Super Administration. Inquire about your creative pod, retainer adjustments, SLA escalations, or custom requests."
+                  : `This is the start of your direct 1-on-1 thread with ${activeContact.name}. Drop project feedback, creative directions, or collaborate in real time.`}
+              </p>
+              {activeMode === "dm" && activeContact && (
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#161F2D] text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+                    Live 2-Way Sync Active
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div
+              ref={messagesContainerRef}
+              className="flex-1 min-h-0 overflow-y-auto space-y-4 p-4 sm:p-6 bg-[#0B111C]/90"
+            >
+              {serverMessages.map((msg) => {
                 const isUser = msg.sender === currentPersona || msg.sender === (user?.full_name || "You");
                 return (
                   <div
@@ -1449,14 +1514,14 @@ export function SlackChatPage() {
                     </div>
                   </div>
                 );
-              })
-            )}
-            <div ref={chatEndRef} />
-          </div>
+              })}
+              <div ref={chatEndRef} />
+            </div>
+          )}
 
-          {/* Bottom Chat Input Bar */}
-          <div className="p-3 sm:p-4 border-t border-white/[0.08] bg-[#0B111C]/80 backdrop-blur-xl relative shrink-0">
-            {/* WhatsApp Emoji Picker Popover */}
+          {/* Message Input Bar */}
+          <div className="border-t border-[#2A3446]/60 p-4 bg-[#161F2D] relative shrink-0">
+            {/* FULL WHATSAPP EMOJI PICKER POPOVER */}
             {showEmojiPicker && (
               <div className="absolute bottom-20 right-4 z-50 w-80 bg-[#161F2D]/95 backdrop-blur-2xl rounded-2xl p-3 shadow-2xl border border-white/10 space-y-2 animate-in fade-in zoom-in-95">
                 <div className="flex items-center justify-between pb-2 border-b border-white/10">
@@ -1516,6 +1581,7 @@ export function SlackChatPage() {
             <form onSubmit={handleSendMessage} className="space-y-2">
               <div className="relative flex items-center">
                 <input
+                  ref={chatInputRef}
                   type="text"
                   disabled={!activeContact}
                   value={messageText}

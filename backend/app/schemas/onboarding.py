@@ -106,7 +106,7 @@ class OnboardingCompleteResponse(BaseModel):
 class ManualPaymentRequestCreate(BaseModel):
     """Client request for offline payment verification (cash, bank transfer, etc.)."""
 
-    plan_id: uuid.UUID
+    plan_id: str | uuid.UUID
     payment_method: str = Field(default="cash", description="cash | bank_transfer | upi | cheque | existing_contract | other")
     reference_note: str | None = Field(default=None, max_length=1000)
 

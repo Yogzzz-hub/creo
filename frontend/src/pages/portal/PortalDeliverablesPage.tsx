@@ -346,20 +346,25 @@ export function PortalDeliverablesPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0 pb-6">
           {/* Left Column: Batch List */}
           <div className="col-span-1 lg:col-span-3 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-4 flex flex-col overflow-hidden max-h-[420px] lg:max-h-none">
-            <div className="flex flex-wrap gap-1 mb-3" role="tablist" aria-label="Filter deliverables">
-              {FILTERS.map((f) => (
-                <button
-                  key={f.key}
-                  role="tab"
-                  aria-selected={filter === f.key}
-                  onClick={() => setFilter(f.key)}
-                  className={`shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${
-                    filter === f.key ? "bg-white/[0.08] text-white" : "text-[#97A0B3] hover:text-white"
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#0B111C]/80 rounded-xl border border-[#2A3446] mb-3" role="tablist" aria-label="Filter deliverables">
+              {FILTERS.map((f) => {
+                const isActive = filter === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setFilter(f.key)}
+                    className={`w-full py-1.5 px-2.5 rounded-lg text-[11px] font-semibold transition-all text-center flex items-center justify-center cursor-pointer ${
+                      isActive
+                        ? "bg-[#161F2D] text-white border border-[#2A3446] shadow-xs font-bold"
+                        : "text-[#97A0B3] hover:text-white hover:bg-white/[0.03]"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
             </div>
             <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-hide">
               {filter === "deleted" ? (

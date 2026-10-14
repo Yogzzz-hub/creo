@@ -127,6 +127,8 @@ class Settings(BaseSettings):
     # Storage (S3-compatible: AWS S3, Supabase Storage, Cloudflare R2, MinIO)
     STORAGE_BUCKET: str = Field(default="creo")
     STORAGE_REGION: str = Field(default="auto")
+    # Disable when R2 credentials are unavailable; preserves Supabase fallback.
+    STORAGE_S3_ENABLED: bool = Field(default=True)
     AWS_ACCESS_KEY_ID: str = Field(default="")
     AWS_SECRET_ACCESS_KEY: str = Field(default="")
     STORAGE_ENDPOINT_URL: str | None = Field(default=None)  # For non-AWS S3-compatible stores (e.g. Cloudflare R2)

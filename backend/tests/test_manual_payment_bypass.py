@@ -92,3 +92,32 @@ def test_payment_notification_emails_dispatched(monkeypatch: pytest.MonkeyPatch)
     assert len(captured) == 4
     assert "Declined" in captured[3]["html_content"]
 
+
+def test_manual_payment_notifications_valid() -> None:
+    from app.models.ops import Notification
+
+    client_id = uuid.uuid4()
+    admin_id = uuid.uuid4()
+
+    # Admin alert
+    admin_notif = Notification(
+        user_id=admin_id,
+        title="Offline Payment Verification Requested",
+        message="Client requested offline payment verification (CASH) for Scale (₹1,00,000).",
+        link="/admin/clients",
+        is_read=False,
+    )
+    assert admin_notif.user_id == admin_id
+    assert admin_notif.title == "Offline Payment Verification Requested"
+
+    # Client alert
+    client_notif = Notification(
+        user_id=client_id,
+        title="Offline Payment Verification Under Review",
+        message="Your offline payment request has been received.",
+        link="/onboarding?step=3",
+        is_read=False,
+    )
+    assert client_notif.user_id == client_id
+    assert client_notif.is_read is False
+

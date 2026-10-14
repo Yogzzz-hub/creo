@@ -120,6 +120,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id]);
 
+  // Begin the first dashboard request while its route code is downloading.
+  // Use exactly the page's query key so it reuses this request and result.
+  useEffect(() => {
+    if (!user?.id || user.must_reset_password) return;
+    if (user.role === "client" && user.onboarding_stage >= 8) {
+      void queryClient.prefetchQuery({
+        queryKey: ["portal-dashboard", user.id],
+        queryFn: () => request("/api/v1/portal/dashboard"),
+        staleTime: 60_000,
+      });
+    } else if (user.role === "admin" || user.role === "super_admin") {
+      void queryClient.prefetchQuery({
+        queryKey: ["admin_dashboard", user.id, "admin"],
+        queryFn: () => request("/api/v1/admin/kpis"),
+        staleTime: 30_000,
+      });
+    }
+  }, [user?.id, user?.role, user?.onboarding_stage, user?.must_reset_password]);
+
   // Persist the profile for the next page load (and forget it on sign-out)
   useEffect(() => {
     if (!loading) writeCachedUser(user);
