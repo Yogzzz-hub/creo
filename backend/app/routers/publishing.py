@@ -1,6 +1,7 @@
 """Scoped publishing views and actions. Existing deliverable schedule route handles writes."""
 
 import uuid
+from datetime import datetime
 from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query
@@ -24,6 +25,7 @@ router = APIRouter(prefix="/publishing", tags=["Instagram publishing"])
 class TestPostBody(BaseModel):
     request_id: uuid.UUID
     account_id: str = Field(min_length=1, max_length=255)
+    scheduled_at: datetime | None = None
 
 
 @router.get("/test-post/clients")
@@ -57,10 +59,28 @@ async def test_post_clients(actor: Actor = Depends(get_current_actor), db: Async
 async def test_post(client_id: uuid.UUID, body: TestPostBody, background: BackgroundTasks,
                     actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)):
     from app.services import instagram_test_post as test
-    row, created = await test.create(db, actor, client_id, body.request_id, body.account_id)
-    if created:
+    row, created = await test.create(db, actor, client_id, body.request_id, body.account_id, body.scheduled_at)
+    if created and row.scheduled_at is None:
         background.add_task(test.run, row.id, row.agency_id, actor)
     return test.serialize(row)
+
+
+@router.get("/test-post/queue")
+async def test_post_queue(actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)):
+    from app.services import instagram_test_post as test
+    if actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.TEAM_LEAD):
+        raise Forbidden("Only team leads and administrators can view test posts.")
+    query = select(InstagramTestPost, User.full_name).join(User, User.id == InstagramTestPost.client_id)
+    if actor.role != UserRole.SUPER_ADMIN:
+        query = query.where(InstagramTestPost.agency_id == actor.agency_id)
+    result = []
+    for row, name in (await db.execute(query.order_by(InstagramTestPost.created_at.desc()).limit(100))).all():
+        try:
+            await test.authorize(db, actor, row.client_id)
+        except (Forbidden, NotFound):
+            continue
+        result.append({**test.serialize(row), "client_name": name})
+    return result
 
 
 @router.get("/clients/{client_id}/test-post/{request_id}")

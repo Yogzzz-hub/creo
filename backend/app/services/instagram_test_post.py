@@ -45,7 +45,7 @@ async def authorize(db, actor, client_id):
 
 def serialize(row):
     return {key: str(getattr(row, key)) if key == "id" else getattr(row, key)
-            for key in ("id", "status", "account_id", "permalink", "error")}
+            for key in ("id", "status", "account_id", "permalink", "error", "scheduled_at")}
 
 
 def check_connection(profile, account_id, connection_id=None):
@@ -57,7 +57,9 @@ def check_connection(profile, account_id, connection_id=None):
         raise Conflict("The Instagram connection changed or expired. Reconnect and select it again.")
 
 
-async def create(db, actor, client_id, request_id, account_id):
+async def create(db, actor, client_id, request_id, account_id, scheduled_at=None):
+    if scheduled_at is not None and (scheduled_at.tzinfo is None or scheduled_at <= datetime.now(UTC)):
+        raise Conflict("Choose a future time with a timezone for the queued test.")
     if not settings.INSTAGRAM_TEST_POSTING_ENABLED or settings.INSTAGRAM_CLIENT_MODE != "real":
         raise Conflict("Temporary test posting is disabled.")
     client = await authorize(db, actor, client_id)
@@ -78,7 +80,8 @@ async def create(db, actor, client_id, request_id, account_id):
         return row, False
     row = InstagramTestPost(id=request_id, agency_id=client.agency_id, client_id=client_id,
         actor_id=actor.user_id, connection_id=profile.ig_connection_id,
-        account_id=account_id, status="queued")
+        account_id=account_id, status="queued", scheduled_at=scheduled_at,
+        actor_context={"role": str(actor.role), "token_version": actor.token_version})
     db.add(row)
     await db.commit()
     return row, True
@@ -89,7 +92,7 @@ async def run(request_id: uuid.UUID, agency_id: uuid.UUID, actor):
         async with tenant_session(db, agency_id=agency_id):
             row = (await db.execute(select(InstagramTestPost).where(
                 InstagramTestPost.id == request_id).with_for_update())).scalar_one_or_none()
-            if not row or row.status != "queued":
+            if not row or row.status != "queued" or (row.scheduled_at and row.scheduled_at > datetime.now(UTC)):
                 return
             row.status = "processing"
             await db.commit()
@@ -112,6 +115,7 @@ async def run(request_id: uuid.UUID, agency_id: uuid.UUID, actor):
                 row.container_id = await provider.create_media_container(
                     row.account_id, "IMAGE", url, CAPTION, access_token=token)
                 await db.commit()
+
                 for _ in range(15):
                     status = await provider.get_container_status(row.container_id, token)
                     if status == "FINISHED":
@@ -148,3 +152,30 @@ async def run(request_id: uuid.UUID, agency_id: uuid.UUID, actor):
                              str(exc) if isinstance(exc, (InstagramError, Conflict, Forbidden)) else
                              "The test could not complete. Check storage and Instagram setup.")
                 await db.commit()
+
+
+async def dispatch_scheduled_tests():
+    from app.core.rbac import Actor
+    from app.workers.tasks.maintenance import _get_active_agencies
+    for agency_id in await _get_active_agencies():
+        async with async_session_factory() as db:
+            async with tenant_session(db, agency_id=agency_id):
+                rows = (await db.execute(select(InstagramTestPost).where(
+                    InstagramTestPost.status == "queued", InstagramTestPost.scheduled_at <= datetime.now(UTC)
+                ).limit(20))).scalars().all()
+                pending = [(row.id, row.actor_id, dict(row.actor_context)) for row in rows]
+        for request_id, user_id, context in pending:
+            actor = Actor(user_id=user_id, role=UserRole(context["role"]), agency_id=agency_id,
+                          token_version=context.get("token_version"))
+            await run(request_id, agency_id, actor)
+
+
+async def scheduled_test_loop():
+    from app.core.logging import get_logger
+    while True:
+        try:
+            if settings.INSTAGRAM_TEST_POSTING_ENABLED:
+                await dispatch_scheduled_tests()
+        except Exception:
+            get_logger(__name__).warning("scheduled_instagram_test_dispatch_failed")
+        await asyncio.sleep(15)

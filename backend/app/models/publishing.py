@@ -34,6 +34,8 @@ class InstagramTestPost(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     media_id: Mapped[str | None] = mapped_column(String(255))
     permalink: Mapped[str | None] = mapped_column(Text)
     error: Mapped[str | None] = mapped_column(Text)
+    scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    actor_context: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
 
 
 class InstagramOAuth(Base, UUIDPrimaryKeyMixin):

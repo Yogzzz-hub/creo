@@ -18,6 +18,28 @@ def profile(provider="instagram"):
         ig_token_expires_at=datetime.now(UTC) + timedelta(days=1))
 
 
+@pytest.mark.asyncio
+async def test_scheduling_rejects_past_and_naive_times():
+    for when in (datetime.now(), datetime.now(UTC) - timedelta(minutes=1)):
+        with pytest.raises(Conflict):
+            await service.create(None, None, uuid.uuid4(), uuid.uuid4(), "12345", when)
+
+
+@pytest.mark.asyncio
+async def test_worker_does_not_publish_future_test_early():
+    row = SimpleNamespace(status="queued", scheduled_at=datetime.now(UTC) + timedelta(hours=1))
+    db = AsyncMock()
+    db.__aenter__.return_value = db
+    db.execute.return_value = SimpleNamespace(scalar_one_or_none=lambda: row)
+    @asynccontextmanager
+    async def tenant(*args, **kwargs):
+        yield db
+    with patch.object(service, "async_session_factory", return_value=db), patch.object(service, "tenant_session", tenant), patch.object(service, "client_for_provider") as provider:
+        await service.run(uuid.uuid4(), uuid.uuid4(), None)
+    provider.assert_not_called()
+    db.commit.assert_not_awaited()
+
+
 def test_both_connection_providers_are_supported_but_changed_connection_is_rejected():
     for provider in ("instagram", "facebook"):
         p = profile(provider)
@@ -63,7 +85,7 @@ async def test_duplicate_request_returns_original_without_another_submission():
 async def test_publish_uses_correct_provider_token_and_never_retries_ambiguous_submission(provider_name):
     p = profile(provider_name)
     row = SimpleNamespace(id=uuid.uuid4(), client_id=uuid.uuid4(), status="queued",
-        account_id="12345", connection_id=p.ig_connection_id, container_id=None, error=None)
+        account_id="12345", connection_id=p.ig_connection_id, container_id=None, error=None, scheduled_at=None)
     db = AsyncMock()
     db.execute.return_value = SimpleNamespace(scalar_one_or_none=lambda: row)
     db.get.return_value = row

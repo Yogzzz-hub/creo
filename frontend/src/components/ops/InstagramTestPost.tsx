@@ -6,10 +6,13 @@ import { useConfirm } from "../ui/ConfirmDialog";
 import { CreoInlineLoader } from "../ui/CreoLoader";
 
 type Client = { id: string; name: string; username: string; account_id: string };
-type Attempt = { id: string; status: string; permalink?: string; error?: string };
+type Attempt = { id: string; status: string; permalink?: string; error?: string; scheduled_at?: string; client_name?: string };
 
 export function InstagramTestPost() {
   const confirm = useConfirm();
+  const [mode, setMode] = useState("now");
+  const [scheduledAt, setScheduledAt] = useState("");
+  const queue = useQuery({ queryKey: ["instagram-test-queue"], queryFn: () => request<Attempt[]>("/api/v1/publishing/test-post/queue"), refetchInterval: 5000 });
   const [clientId, setClientId] = useState("");
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [sending, setSending] = useState(false);
@@ -27,12 +30,14 @@ export function InstagramTestPost() {
 
   async function publish() {
     if (!selected || busy) return;
-    if (!await confirm({ title: "Publish test to Instagram?", description: `This publishes the sample shown below to @${selected.username}.`, confirmText: "Publish test post", tone: "info" })) return;
+    if (mode === "queue" && (!scheduledAt || new Date(scheduledAt).getTime() <= Date.now())) { setError("Choose a future date and time."); return; }
+    if (!await confirm({ title: mode === "queue" ? "Queue Instagram test?" : "Publish test to Instagram?", description: `This publishes the sample to @${selected.username}${mode === "queue" ? ` at ${new Date(scheduledAt).toLocaleString()}` : ""}.`, confirmText: mode === "queue" ? "Queue test post" : "Publish test post", tone: "info" })) return;
     setSending(true); setError("");
     // Reuse the request ID after a network failure: never silently post twice.
     const id = current?.id || crypto.randomUUID();
     try {
-      setAttempt(await request<Attempt>(`/api/v1/publishing/clients/${selected.id}/test-post`, { method: "POST", body: JSON.stringify({ request_id: id, account_id: selected.account_id }) }));
+      setAttempt(await request<Attempt>(`/api/v1/publishing/clients/${selected.id}/test-post`, { method: "POST", body: JSON.stringify({ request_id: id, account_id: selected.account_id, scheduled_at: mode === "queue" ? new Date(scheduledAt).toISOString() : null }) }));
+      void queue.refetch();
     } catch (err) {
       setAttempt({ id, status: "checking" });
       setError(err instanceof Error ? err.message : "Unable to start the test.");
@@ -46,6 +51,8 @@ export function InstagramTestPost() {
       <div className="space-y-4">
         <label className="block text-sm font-semibold">Client Instagram account<select value={clientId} disabled={busy} onChange={event => { setClientId(event.target.value); setAttempt(null); setError(""); }} className="mt-2 block w-full rounded-xl border border-[#2A3446] bg-[#0B111C] p-3 disabled:opacity-60"><option value="">Choose a client</option>{clients.data?.clients.map(client => <option key={client.id} value={client.id}>{client.name} — @{client.username}</option>)}</select></label>
         {!clients.data?.clients.length && <p className="text-sm text-[#97A0B3]">No connected clients are available. Connect a client’s Instagram account and assign them to your pod first.</p>}
+        <label className="block text-sm font-semibold">Test mode<select value={mode} disabled={busy} onChange={event => setMode(event.target.value)} className="mt-2 block w-full rounded-xl border border-[#2A3446] bg-[#0B111C] p-3"><option value="now">Publish now</option><option value="queue">Queue for later</option></select></label>
+        {mode === "queue" && <label className="block text-sm font-semibold">Publish date and time<input type="datetime-local" value={scheduledAt} disabled={busy} onChange={event => setScheduledAt(event.target.value)} className="mt-2 block w-full rounded-xl border border-[#2A3446] bg-[#0B111C] p-3" /><span className="text-xs text-[#97A0B3]">Your timezone: {Intl.DateTimeFormat().resolvedOptions().timeZone}</span></label>}
         <div className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-4 text-sm"><span className="block text-[#97A0B3] mb-2">Caption</span>Creo test post — checking the Instagram publishing connection.</div>
         {!clients.data?.enabled && <p className="text-[#D8BF9B] text-sm">Test publishing is disabled in this environment.</p>}
         {current?.status === "published" ? <div role="status" className="flex items-center gap-2 text-[#BCCCE6]"><CheckCircle2 className="size-5" />Test post published! {current.permalink && <a href={current.permalink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 underline">View on Instagram<ExternalLink className="size-4" /></a>}</div> : <button type="button" onClick={() => void publish()} disabled={!selected || !clients.data?.enabled || busy || current?.status === "uncertain" || current?.status === "failed"} className="w-full rounded-xl bg-[#BCCCE6] px-5 py-3 font-bold text-[#0B111C] disabled:opacity-50 flex items-center justify-center gap-2"><Instagram className={`size-5 ${busy ? "animate-pulse" : ""}`} />{busy ? "Publishing test post…" : "Publish test post"}</button>}
@@ -54,5 +61,6 @@ export function InstagramTestPost() {
         {current && ["published", "failed"].includes(current.status) && <button type="button" onClick={() => { setAttempt(null); setError(""); }} className="text-sm text-[#BCCCE6] underline">Start another test</button>}
       </div>
     </div>}
+    <div className="mt-6 border-t border-[#2A3446] pt-5 space-y-3"><h2 className="font-bold">Test publishing queue</h2>{queue.isError && <p role="alert" className="text-[#D8BF9B]">{queue.error.message}</p>}{!queue.isPending && !queue.data?.length && <p className="text-sm text-[#97A0B3]">Your queued tests will appear here.</p>}{queue.data?.map(item => <div key={item.id} className="rounded-xl border border-[#2A3446] p-3 flex flex-wrap items-center justify-between gap-2"><div><p className="font-semibold">{item.client_name || "Client"}</p><p className="text-sm text-[#97A0B3]">{item.scheduled_at ? new Date(item.scheduled_at).toLocaleString() : "Immediate test"}</p>{item.error && <p className="text-sm text-[#D8BF9B]">{item.error}</p>}</div><span className="capitalize text-sm">{item.status}</span>{item.permalink && <a href={item.permalink} target="_blank" rel="noopener noreferrer" className="text-sm underline">View post</a>}</div>)}</div>
   </section>;
 }

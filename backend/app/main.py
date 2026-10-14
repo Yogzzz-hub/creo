@@ -141,7 +141,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             await db.commit()
     except Exception as e:
         logger.warning("admin_bootstrap_warning", error=str(e))
-    yield
+    import asyncio
+    from app.services.instagram_test_post import scheduled_test_loop
+    test_scheduler = asyncio.create_task(scheduled_test_loop())
+    try:
+        yield
+    finally:
+        test_scheduler.cancel()
+        from contextlib import suppress
+        with suppress(asyncio.CancelledError):
+            await test_scheduler
     logger.info("server_shutting_down")
     await engine.dispose()
 
