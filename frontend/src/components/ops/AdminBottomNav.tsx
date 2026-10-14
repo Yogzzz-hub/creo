@@ -8,6 +8,7 @@ import {
   Sparkles,
   CalendarCheck,
   CalendarDays,
+  Send,
   LifeBuoy,
   ShieldCheck,
   Layers,
@@ -86,11 +87,14 @@ export function AdminBottomNav() {
 
   // Team Member Workstation Items
   const isMemberRole =
-    user?.role === "team_member" ||
-    user?.role === "editor" ||
-    user?.role === "designer" ||
-    location.pathname.startsWith("/workstation") ||
-    location.pathname.startsWith("/member");
+    user?.role !== "team_lead" &&
+    user?.role !== "admin" &&
+    user?.role !== "super_admin" &&
+    (user?.role === "team_member" ||
+      user?.role === "editor" ||
+      user?.role === "designer" ||
+      location.pathname.startsWith("/workstation") ||
+      location.pathname.startsWith("/member"));
 
   const memberItems = [
     {
@@ -126,6 +130,7 @@ export function AdminBottomNav() {
     { label: "My Schedule & PTO", href: "/workstation/schedule", icon: CalendarCheck, desc: "Request leave & shift schedule" },
     { label: "Asset Handoff QA", href: "/workstation/tasks", icon: CheckSquare, desc: "Submit files for lead sign-off" },
     { label: "Agency Calendar", href: "/admin/calendar", icon: CalendarDays, desc: "View all scheduled content" },
+    { label: "Instagram Publishing", href: "/admin/publishing", icon: Send, desc: "Schedule and track auto-posting" },
   ];
 
   const moreLinks = isMemberRole

@@ -92,6 +92,9 @@ export const PortalSupportPage = lazyPage(() =>
 export const PortalAccountPage = lazyPage(() =>
   import("../pages/portal/PortalAccountPage").then((m) => m.PortalAccountPage),
 );
+export const InstagramCallbackPage = lazyPage(() =>
+  import("../pages/portal/InstagramCallbackPage").then((m) => m.InstagramCallbackPage),
+);
 export const PortalBrandDNAPage = lazyPage(() =>
   import("../pages/portal/PortalBrandDNAPage").then((m) => m.PortalBrandDNAPage),
 );

@@ -14,12 +14,17 @@ import {
   Sparkles,
   RefreshCw,
   Eye,
-  FileCheck,
   Check,
   X,
-  ArrowLeftRight,
   FileText,
 } from "lucide-react";
+
+/** Backlog ages run into hundreds of hours, so show days past a day and keep hours below it. */
+function formatDuration(hours: number): string {
+  if (!Number.isFinite(hours) || hours <= 0) return "0h";
+  if (hours < 24) return `${Math.round(hours * 10) / 10}h`;
+  return `${Math.round(hours / 24)}d`;
+}
 
 export function PodTaskBoardPage() {
   const { user } = useAuth();
@@ -27,8 +32,9 @@ export function PodTaskBoardPage() {
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [newCardTitle, setNewCardTitle] = useState("");
   const [newCardClient, setNewCardClient] = useState("");
+  const [newCardAssignee, setNewCardAssignee] = useState("");
+  const [rerouteTaskId, setRerouteTaskId] = useState("");
 
-  const [workloadModalOpen, setWorkloadModalOpen] = useState(false);
   const [rerouteModalOpen, setRerouteModalOpen] = useState(false);
   const [rerouteTarget, setRerouteTarget] = useState("");
 
@@ -44,6 +50,15 @@ export function PodTaskBoardPage() {
 
   const podName = data?.pod?.name || "Pod Operations";
   const leadName = data?.pod?.lead?.name || user?.full_name || "Pod Lead";
+  // craft_title is the human-readable role; `role` alone is a raw enum key.
+  const memberLabel = (m: any) =>
+    `${m?.full_name || m?.name || m?.email?.split("@")[0] || "Specialist"} · ${
+      m?.craft_title || m?.craft_role || String(m?.role || "Specialist").replace(/_/g, " ")
+    }`;
+  const memberValue = (m: any) => m?.full_name || m?.name || m?.email || "";
+  // Work already in flight is what a lead re-routes when it stalls.
+  const activeTasks = [...(data?.tasks?.in_production || []), ...(data?.tasks?.internal_qa || [])];
+  const rerouteTask = activeTasks.find((t) => t.id === rerouteTaskId) || activeTasks[0];
 
   const showToast = (text: string, type: "success" | "error" = "success") => {
     setToastMessage({ type, text });
@@ -242,11 +257,18 @@ export function PodTaskBoardPage() {
                   <p className="text-xs font-medium text-[#97A0B3]">No backlog tasks</p>
                 </div>
               ) : (
-                data.tasks.backlog.map((task) => (
+                [...data.tasks.backlog]
+                  // Soonest first; tasks without an estimate sink to the bottom.
+                  .sort(
+                    (a, b) =>
+                      (a.hours_remaining ?? Number.POSITIVE_INFINITY) -
+                      (b.hours_remaining ?? Number.POSITIVE_INFINITY),
+                  )
+                  .map((task) => (
                   <div key={task.id} className="bg-[#0B111C] rounded-xl p-3 border border-[#2A3446] shadow-2xs hover:border-[#7FA0D6]/30 transition-all space-y-2">
                     <div className="flex items-center justify-between text-[10.5px] font-bold">
                       <span className="text-[#7FA0D6] truncate max-w-[130px]">{task.client_name || "Client"}</span>
-                      <span className="text-[#97A0B3]">{task.hours_remaining ? `${task.hours_remaining}h` : (task.due_date || "")}</span>
+                      <span className="text-[#97A0B3]">{task.hours_remaining ? formatDuration(task.hours_remaining) : (task.due_date || "")}</span>
                     </div>
                     <h4 className="text-xs font-black text-white leading-snug">
                       {task.blueprint?.concept_name || `${task.client_name || "Sprint"} ${task.deliverable_type?.toUpperCase() || "Asset"}`}
@@ -441,22 +463,10 @@ export function PodTaskBoardPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={() => setWorkloadModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-95"
-            >
-              <ArrowLeftRight className="size-3.5 text-[#7FA0D6]" /> Balance Workload
-            </button>
-            <button
               onClick={() => setRerouteModalOpen(true)}
               className="px-3.5 py-2 rounded-xl bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-95"
             >
               <RefreshCw className="size-3.5 text-[#7FA0D6]" /> Re-route Blocked
-            </button>
-            <button
-              onClick={handleExportSprintCSV}
-              className="px-3.5 py-2 rounded-xl bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-95"
-            >
-              <FileCheck className="size-3.5 text-[#7FA0D6]" /> Export CSV
             </button>
           </div>
         </div>
@@ -511,6 +521,19 @@ export function PodTaskBoardPage() {
                   </NativeSelect>
                 </div>
               </div>
+              <div>
+                <label className="font-bold text-[#F1F5F9] block mb-1">Specialist / Assignee</label>
+                <NativeSelect
+                  value={newCardAssignee}
+                  onChange={(e) => setNewCardAssignee(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white"
+                >
+                  <option value="">Leave unassigned (Backlog)</option>
+                  {(data?.members || []).map((m) => (
+                    <option key={m.id} value={memberValue(m)}>{memberLabel(m)}</option>
+                  ))}
+                </NativeSelect>
+              </div>
             </div>
             <div className="flex justify-end gap-3 pt-3">
               <button
@@ -521,69 +544,19 @@ export function PodTaskBoardPage() {
               </button>
               <button
                 onClick={() => {
-                  showToast(`Added "${newCardTitle || "New Task"}" to Sprint Board`, "success");
+                  showToast(
+                    newCardAssignee
+                      ? `Added "${newCardTitle || "New Task"}" to Sprint Board, assigned to ${newCardAssignee}`
+                      : `Added "${newCardTitle || "New Task"}" to Sprint Board as unassigned backlog`,
+                    "success",
+                  );
                   setAssignModalOpen(false);
                   setNewCardTitle("");
+                  setNewCardAssignee("");
                 }}
                 className="px-5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition"
               >
                 Add Card
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Interactive Workload Balancing Modal */}
-      {workloadModalOpen && (
-        <div className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 shadow-2xl border border-[#2A3446] space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <div className="flex items-center gap-2">
-                <ArrowLeftRight className="size-5 text-[#7FA0D6]" />
-                <h3 className="text-base font-black text-white">Pod Workload Auto-Balancer</h3>
-              </div>
-              <button onClick={() => setWorkloadModalOpen(false)} className="text-[#97A0B3] hover:text-white">
-                <X className="size-5" />
-              </button>
-            </div>
-            <p className="text-xs text-[#97A0B3] font-medium">
-              Analyze capacity across {podName} specialists and balance sprint backlog allocation evenly.
-            </p>
-            <div className="space-y-2 text-xs">
-              {(!data?.members || data.members.length === 0) ? (
-                <div className="p-4 rounded-xl bg-[#0B111C] border border-dashed border-[#2A3446] text-center text-[#97A0B3]">
-                  No specialists registered in this pod.
-                </div>
-              ) : (
-                data.members.map((m) => (
-                  <div key={m.id} className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-white block">{m.full_name} ({m.role})</span>
-                      <span className="text-[10px] font-extrabold text-emerald-400">Available</span>
-                    </div>
-                    <span className="text-xs font-black text-white bg-[#161F2D] px-3 py-1 rounded-lg border border-[#2A3446]">
-                      Active
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="flex justify-end gap-3 pt-3 border-t border-[#2A3446]">
-              <button
-                onClick={() => setWorkloadModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[#F1F5F9] text-xs font-bold hover:bg-[#161F2D] transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  showToast("Workload distribution verified across specialists.", "success");
-                  setWorkloadModalOpen(false);
-                }}
-                className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold transition shadow-md shadow-blue-500/20"
-              >
-                Apply Re-balance
               </button>
             </div>
           </div>
@@ -603,12 +576,53 @@ export function PodTaskBoardPage() {
                 <X className="size-5" />
               </button>
             </div>
-            <div className="p-3.5 rounded-xl bg-amber-950/40 border border-amber-800/50 space-y-1 text-xs">
-              <span className="font-extrabold text-amber-300 block">Blocked Task Re-allocation</span>
-              <p className="text-[11px] text-amber-300/80">Pending client feedback or technical blocker. Re-assign task specialist to unblock workflow.</p>
-            </div>
             <div className="space-y-2 text-xs">
-              <label className="font-bold text-[#F1F5F9] block">Select Target Specialist for Re-routing</label>
+              <label className="font-bold text-[#F1F5F9] block">Blocked task</label>
+              <NativeSelect
+                value={rerouteTaskId || rerouteTask?.id || ""}
+                onChange={(e) => setRerouteTaskId(e.target.value)}
+                className="w-full p-3 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold"
+              >
+                {activeTasks.length === 0 ? (
+                  <option value="">No active tasks to re-route</option>
+                ) : (
+                  activeTasks.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.blueprint?.concept_name || `${t.client_name || "Client"} ${t.deliverable_type}`}
+                    </option>
+                  ))
+                )}
+              </NativeSelect>
+            </div>
+            {rerouteTask ? (
+              <div className="p-3.5 rounded-xl bg-amber-950/40 border border-amber-800/50 space-y-1.5 text-xs">
+                <span className="font-extrabold text-amber-300 block">
+                  {rerouteTask.blueprint?.concept_name ||
+                    `${rerouteTask.client_name || "Client"} ${rerouteTask.deliverable_type}`}
+                </span>
+                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[11px] text-amber-300/80">
+                  <dt className="font-bold">Client</dt>
+                  <dd className="truncate">{rerouteTask.client_name || "Unassigned client"}</dd>
+                  <dt className="font-bold">Format</dt>
+                  <dd className="truncate">{rerouteTask.deliverable_type}</dd>
+                  <dt className="font-bold">Current owner</dt>
+                  <dd className="truncate">
+                    {rerouteTask.assignee?.full_name || rerouteTask.assignee_name || "Unassigned"}
+                  </dd>
+                  <dt className="font-bold">Blocker</dt>
+                  <dd className="truncate">
+                    {rerouteTask.blueprint?.blocker_note ||
+                      (rerouteTask.is_near_sla ? "At risk of breaching SLA" : "Pending client feedback or technical blocker")}
+                  </dd>
+                </dl>
+              </div>
+            ) : (
+              <div className="p-3.5 rounded-xl bg-[#0B111C] border border-dashed border-[#2A3446] text-[11px] text-[#97A0B3]">
+                Nothing is in production or QA right now, so there is no task to re-route.
+              </div>
+            )}
+            <div className="space-y-2 text-xs">
+              <label className="font-bold text-[#F1F5F9] block">Re-route to specialist</label>
               <NativeSelect
                 value={rerouteTarget}
                 onChange={(e) => setRerouteTarget(e.target.value)}
@@ -618,7 +632,7 @@ export function PodTaskBoardPage() {
                   <option value="">No specialists registered</option>
                 ) : (
                   data.members.map((m) => (
-                    <option key={m.id} value={m.full_name}>{m.full_name} ({m.role})</option>
+                    <option key={m.id} value={memberValue(m)}>{memberLabel(m)}</option>
                   ))
                 )}
               </NativeSelect>
@@ -632,8 +646,12 @@ export function PodTaskBoardPage() {
               </button>
               <button
                 onClick={() => {
-                  showToast(`Re-routed blocked task to ${rerouteTarget || "assigned specialist"}. Slack alert sent!`, "success");
+                  const name =
+                    rerouteTask?.blueprint?.concept_name ||
+                    `${rerouteTask?.client_name || "Blocked"} ${rerouteTask?.deliverable_type || "task"}`;
+                  showToast(`Re-routed "${name}" to ${rerouteTarget || "assigned specialist"}. Slack alert sent!`, "success");
                   setRerouteModalOpen(false);
+                  setRerouteTaskId("");
                 }}
                 className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold transition shadow-md shadow-blue-500/20"
               >

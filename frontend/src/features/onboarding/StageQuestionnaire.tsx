@@ -14,6 +14,7 @@ import {
   Camera,
   History,
   BookOpen,
+  Share2,
   Sliders,
   ShieldAlert,
   AlertCircle,
@@ -36,6 +37,8 @@ import {
   completeOnboarding,
 } from "../../lib/onboarding-api";
 import type { AssignedTeamMember } from "../../types/api";
+import { MetaConnectSection } from "./MetaConnectSection";
+import { fetchInstagramStatus } from "../../lib/instagram-oauth";
 interface PaletteColor {
   name: string;
   hex: string;
@@ -436,7 +439,7 @@ interface StageQuestionnaireProps {
   onComplete: (assignedTeam?: AssignedTeamMember[]) => void;
 }
 
-export type SectionKey = "a" | "b" | "c" | "d" | "e" | "f" | "g";
+export type SectionKey = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h";
 
 interface SectionMeta {
   key: SectionKey;
@@ -455,6 +458,8 @@ const SECTIONS: SectionMeta[] = [
   { key: "e", label: "Production", badge: "E", isCore: true, icon: Camera, estMinutes: 3 },
   { key: "f", label: "History", badge: "F", isCore: false, icon: History, estMinutes: 2 },
   { key: "g", label: "Brand Story", badge: "G", isCore: false, icon: BookOpen, estMinutes: 3 },
+  // Section H holds no questionnaire answers: it only connects Meta (never persisted as a section).
+  { key: "h", label: "Connect Meta", badge: "H", isCore: false, icon: Share2, estMinutes: 1 },
 ];
 
 const CATEGORY_OPTIONS = [
@@ -976,7 +981,7 @@ function generateVisualDirectionPreview(
 
 export function StageQuestionnaire({ userId, initialSection, onComplete, isActive = true }: StageQuestionnaireProps) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const validSections: SectionKey[] = ["a", "b", "c", "d", "e", "f", "g"];
+  const validSections: SectionKey[] = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
   const getSavedSection = (): SectionKey | null => {
     // 1. URL search parameters (window.location.search first, then React Router searchParams)
@@ -1187,7 +1192,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
       // Drafts are not completed sections. Apply the same validation used by Continue
       // before trusting a saved URL, browser storage, or the server resume hint.
       for (const section of SECTIONS.filter(section => section.isCore)) {
-        const restored = { ...getCurrentSectionData(section.key), ...qState[`section_${section.key}`] };
+        const restored = { ...getCurrentSectionData(section.key), ...(qState as any)[`section_${section.key}`] };
         if (validateCurrentSection(section.key, restored).valid) completed.add(section.key);
       }
       setCompletedSections(completed);
@@ -1222,6 +1227,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
       case "e": return secE;
       case "f": return secF;
       case "g": return secG;
+      case "h": return {};
     }
   };
 
@@ -1242,6 +1248,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
    * Saves are queued so they reach the server one at a time, in order.
    */
   const persistSection = (secKey: SectionKey): Promise<void> => {
+    if (secKey === "h") return Promise.resolve(); // Connect Meta holds no saved answers.
     const data = getCurrentSectionData(secKey);
     const serialized = JSON.stringify(data);
     const run = async () => {
@@ -1521,6 +1528,21 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
     }
   };
 
+  // Shared with Section H (same key): drives its tab's "done" state.
+  const metaStatus = useQuery({
+    queryKey: ["instagram-connection", userId],
+    queryFn: fetchInstagramStatus,
+    staleTime: 30_000,
+    enabled: activeSection === "h" || completedSections.size > 0,
+  });
+
+  // Save every unsaved answer before leaving the page for Meta.
+  const flushBeforeMetaRedirect = async () => {
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    await Promise.all(SECTIONS.filter(({ key }) => key !== "h" && isSectionDirty(key)).map(({ key }) => persistSection(key)));
+    await saveQueueRef.current;
+  };
+
   const handleSynthesizeAndFinish = async () => {
     if (isSynthesizing) return;
 
@@ -1565,9 +1587,11 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
       await saveQueueRef.current;
       const allSections: SectionKey[] = ["a", "b", "c", "d", "e", "f", "g"];
       const snapshot = Object.fromEntries(allSections.map(key => [key, getCurrentSectionData(key)]));
-      const saved = await saveQuestionnaireSections(userId, snapshot, activeSection);
+      // Section H is not an answer section, so resume markers refer to G at most.
+      const resumeSection = activeSection === "h" ? "g" : activeSection;
+      const saved = await saveQuestionnaireSections(userId, snapshot, resumeSection);
       queryClient.setQueryData(["questionnaire-state", userId], {
-        ...qState, ...saved, last_active_section: activeSection,
+        ...qState, ...saved, last_active_section: resumeSection,
         ...Object.fromEntries(allSections.map(key => [`section_${key}`, snapshot[key]])),
       });
       for (const key of allSections) lastSavedRef.current[key] = JSON.stringify(snapshot[key]);
@@ -1650,10 +1674,14 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
       )}
 
       {/* Horizontal Section Navigation Tabs: Equal-sized, correctly aligned, showing status */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
         {SECTIONS.map((sec) => {
           const isActive = activeSection === sec.key;
-          const isDone = sec.isCore ? dataInitialized && validateCurrentSection(sec.key).valid : completedSections.has(sec.key);
+          const isDone = sec.isCore
+            ? dataInitialized && validateCurrentSection(sec.key).valid
+            : sec.key === "h"
+            ? Boolean(metaStatus.data?.connected)
+            : completedSections.has(sec.key);
           const isUnlocked = canOpenSection(sec.key);
           const Icon = sec.icon;
 
@@ -2994,6 +3022,11 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
           </div>
         )}
 
+        {/* SECTION H: CONNECT META (OPTIONAL) */}
+        {activeSection === "h" && (
+          <MetaConnectSection userId={userId} beforeConnect={flushBeforeMetaRedirect} />
+        )}
+
         {/* Footer Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-[#2A3446] mt-8 gap-4">
           <button
@@ -3007,7 +3040,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
           </button>
 
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
-            {activeSection !== "g" ? (
+            {activeSection !== "h" ? (
               <button
                 type="button"
                 onClick={handleNextSection}
