@@ -8,6 +8,7 @@ import {
 import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 import { HttpError } from "../../lib/http";
+import { whenIdle } from "../../app/lazy-pages";
 
 import { PasswordRecoveryModal } from "../../components/auth/PasswordRecoveryModal";
 
@@ -115,6 +116,24 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
 
   // Forgot password modal state
   const [forgotOpen, setForgotOpen] = useState(false);
+
+  // While the visitor fills in the form, do the work their sign-in will need:
+  // fetch the Google consent URL and download the dashboard code. Both are
+  // cached, so clicking "Continue with Google" or signing in only waits on auth.
+  useEffect(() => {
+    void getGoogleAuthUrl().catch(() => {});
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    if (connection?.saveData || connection?.effectiveType?.includes("2g")) return;
+    return whenIdle(() => {
+      void Promise.allSettled([
+        import("../../components/portal/PortalLayout"),
+        import("../portal/PortalDashboardPage"),
+        import("../../components/ops/OpsLayout"),
+        import("../../features/admin/AdminDashboard"),
+      ]);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     if (location.pathname === "/signup") {
       setMode("signup");

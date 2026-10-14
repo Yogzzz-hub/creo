@@ -4,7 +4,7 @@
  */
 
 import type { ApiErrorResponse } from "../types/api";
-import { getAuthToken, clearAuthToken } from "./auth-token";
+import { getAuthToken, setAuthToken, getRefreshToken, clearAuthToken, isTokenUnexpired } from "./auth-token";
 
 export class HttpError extends Error {
   readonly code: string;
@@ -46,13 +46,65 @@ export function apiUrl(path: string): string {
   return path.startsWith("/api") && apiBase ? `${apiBase}${path}` : path;
 }
 
-async function performRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+/** RequestInit plus an optional per-call timeout (ms) overriding the GET/write defaults. */
+export type RequestOptions = RequestInit & { timeoutMs?: number };
+
+// Paths that establish or renew a session: a 401 there is an answer, not an expired token.
+const AUTH_ENTRY_PATHS = ["/auth/login", "/auth/verify-", "/auth/refresh", "/auth/google/", "/auth/reset-password"];
+const isAuthEntry = (path: string) => AUTH_ENTRY_PATHS.some((entry) => path.includes(entry));
+
+// A 401 with one of these codes is final: renewing cannot bring the session back.
+export const SESSION_ENDED_CODES = ["SESSION_REVOKED", "ACCOUNT_SUSPENDED"];
+
+// Concurrent requests that all hit an expired access token share one renewal.
+let renewal: Promise<boolean> | null = null;
+
+/**
+ * Trade the refresh token for a new access token. Resolves false when it could not be
+ * renewed. The tokens are cleared only if the server rejected the refresh token (the
+ * session is really over); after a network failure or timeout they are kept so the
+ * next attempt can still succeed.
+ */
+function renewAccessToken(): Promise<boolean> {
+  if (renewal) return renewal;
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return Promise.resolve(false);
+  renewal = (async () => {
+    try {
+      const res = await performRequest<{ access_token?: string }>("/api/v1/auth/refresh", {
+        method: "POST",
+        body: JSON.stringify({ refresh_token: refreshToken }),
+        timeoutMs: 15_000,
+      });
+      if (!res?.access_token) return false;
+      setAuthToken(res.access_token);
+      return true;
+    } catch (error) {
+      if (error instanceof HttpError && (error.status === 401 || error.status === 403)) clearAuthToken();
+      return false;
+    } finally {
+      renewal = null;
+    }
+  })();
+  return renewal;
+}
+
+async function performRequest<T>(path: string, options: RequestOptions = {}, renewed = false): Promise<T> {
+  const { timeoutMs, ...fetchOptions } = options;
+  options = fetchOptions;
   const headers = new Headers(options.headers);
   if (options.body != null && !headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
 
-  const token = getAuthToken();
+  let token = getAuthToken();
+  // An expired (or missing) access token with a refresh token to renew it: renew first
+  // rather than spend a round trip on a request the server is certain to reject.
+  if (!renewed && !isAuthEntry(path) && !isTokenUnexpired(token) && getRefreshToken() && !headers.has("Authorization")) {
+    // Whatever the outcome, a failed 401 below must not trigger a second attempt.
+    renewed = true;
+    if (await renewAccessToken()) token = getAuthToken();
+  }
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
   }
@@ -63,7 +115,7 @@ async function performRequest<T>(path: string, options: RequestInit = {}): Promi
   const abortFromCaller = () => controller.abort(options.signal?.reason);
   if (options.signal?.aborted) abortFromCaller();
   else options.signal?.addEventListener("abort", abortFromCaller, { once: true });
-  const timeoutId = setTimeout(() => controller.abort(new DOMException("The request timed out. Please try again.", "TimeoutError")), (options.method || "GET").toUpperCase() === "GET" ? 20_000 : 60_000);
+  const timeoutId = setTimeout(() => controller.abort(new DOMException("The request timed out. Please try again.", "TimeoutError")), timeoutMs ?? ((options.method || "GET").toUpperCase() === "GET" ? 20_000 : 60_000));
 
   try {
     const response = await fetch(requestUrl, {
@@ -106,11 +158,23 @@ async function performRequest<T>(path: string, options: RequestInit = {}): Promi
         // Body was not JSON
       }
 
-      if (response.status === 401) {
-        // If an existing authenticated session expired or token was revoked
-        if (!path.includes("/auth/login") && !path.includes("/auth/verify-")) {
+      if (response.status === 401 && !isAuthEntry(path)) {
+        // The short-lived access token expired: renew it from the refresh token and
+        // replay the request once, so the user never notices.
+        if (SESSION_ENDED_CODES.includes(errorCode)) {
           clearAuthToken();
+        } else if (!renewed && token && getRefreshToken() && getAuthToken()) {
+          const staleToken = token;
+          // Another request may already have renewed it while this one was in flight.
+          const ok = getAuthToken() !== staleToken || (await renewAccessToken());
+          if (ok) {
+            const replayHeaders = new Headers(options.headers);
+            if (replayHeaders.get("Authorization") === `Bearer ${staleToken}`) replayHeaders.delete("Authorization");
+            return performRequest<T>(path, { ...options, headers: replayHeaders, timeoutMs }, true);
+          }
         }
+        // Nothing left to renew with: the session expired or the token was revoked.
+        if (!getRefreshToken()) clearAuthToken();
       }
 
       throw new HttpError(response.status, errorCode, errorMessage, errorDetails);
@@ -127,7 +191,7 @@ async function performRequest<T>(path: string, options: RequestInit = {}): Promi
 // Share only concurrent, identical GETs. Nothing is retained after completion;
 // writes and independently cancellable requests always have their own transport.
 const inFlightReads = new Map<string, Promise<unknown>>();
-export function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+export function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const canShare = (options.method ?? "GET").toUpperCase() === "GET"
     && !options.signal && !options.body
     && Object.keys(options).every(key => ["method", "headers", "credentials"].includes(key));
