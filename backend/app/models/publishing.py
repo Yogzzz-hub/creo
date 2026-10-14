@@ -22,6 +22,20 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
+class InstagramTestPost(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "instagram_test_posts"
+    agency_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agencies.id"))
+    client_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    actor_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    connection_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    account_id: Mapped[str] = mapped_column(String(255))
+    status: Mapped[str] = mapped_column(String(30), default="queued")
+    container_id: Mapped[str | None] = mapped_column(String(255))
+    media_id: Mapped[str | None] = mapped_column(String(255))
+    permalink: Mapped[str | None] = mapped_column(Text)
+    error: Mapped[str | None] = mapped_column(Text)
+
+
 class InstagramOAuth(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "instagram_oauth"
     agency_id: Mapped[uuid.UUID] = mapped_column(

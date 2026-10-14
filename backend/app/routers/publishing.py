@@ -3,7 +3,7 @@
 import uuid
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,12 +13,65 @@ from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
 from app.models.enums import UserRole
 from app.models.ops import AuditLog
-from app.models.publishing import PublishingJob
+from app.models.publishing import InstagramTestPost, PublishingJob
 from app.models.user import ClientProfile, User
 from app.models.work import Deliverable
 from app.services import publishing_service as service
 
 router = APIRouter(prefix="/publishing", tags=["Instagram publishing"])
+
+
+class TestPostBody(BaseModel):
+    request_id: uuid.UUID
+    account_id: str = Field(min_length=1, max_length=255)
+
+
+@router.get("/test-post/clients")
+async def test_post_clients(actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)):
+    from app.config import settings
+    from app.models.enums import AccountStatus
+    from app.services import instagram_test_post as test
+    if actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.TEAM_LEAD):
+        raise Forbidden("Only a team lead or administrator can run this test.")
+    query = select(User, ClientProfile).join(ClientProfile, ClientProfile.user_id == User.id).where(
+        User.role == UserRole.CLIENT, User.account_status == AccountStatus.ACTIVE,
+        ClientProfile.ig_connection_status == "connected",
+    )
+    if actor.role != UserRole.SUPER_ADMIN:
+        if not actor.agency_id:
+            raise Forbidden("An agency is required.")
+        query = query.where(User.agency_id == actor.agency_id)
+    clients = []
+    for user, profile in (await db.execute(query)).all():
+        try:
+            await test.authorize(db, actor, user.id)
+            test.check_connection(profile, profile.instagram_user_id)
+        except (Forbidden, NotFound, Conflict):
+            continue
+        clients.append({"id": str(user.id), "name": profile.company_name or user.full_name or user.email,
+                        "username": profile.instagram_username, "account_id": profile.instagram_user_id})
+    return {"clients": clients, "enabled": settings.INSTAGRAM_TEST_POSTING_ENABLED and settings.INSTAGRAM_CLIENT_MODE == "real"}
+
+
+@router.post("/clients/{client_id}/test-post")
+async def test_post(client_id: uuid.UUID, body: TestPostBody, background: BackgroundTasks,
+                    actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)):
+    from app.services import instagram_test_post as test
+    row, created = await test.create(db, actor, client_id, body.request_id, body.account_id)
+    if created:
+        background.add_task(test.run, row.id, row.agency_id, actor)
+    return test.serialize(row)
+
+
+@router.get("/clients/{client_id}/test-post/{request_id}")
+async def test_post_status(client_id: uuid.UUID, request_id: uuid.UUID,
+                           actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)):
+    from app.services import instagram_test_post as test
+    await test.authorize(db, actor, client_id)
+    row = await db.get(InstagramTestPost, request_id)
+    if not row or row.client_id != client_id:
+        raise NotFound("Test post not found.")
+    return test.serialize(row)
 
 
 class ScheduleBody(BaseModel):

@@ -1,0 +1,58 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Instagram, CheckCircle2, ExternalLink } from "lucide-react";
+import { request } from "../../lib/http";
+import { useConfirm } from "../ui/ConfirmDialog";
+import { CreoInlineLoader } from "../ui/CreoLoader";
+
+type Client = { id: string; name: string; username: string; account_id: string };
+type Attempt = { id: string; status: string; permalink?: string; error?: string };
+
+export function InstagramTestPost() {
+  const confirm = useConfirm();
+  const [clientId, setClientId] = useState("");
+  const [attempt, setAttempt] = useState<Attempt | null>(null);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const clients = useQuery({ queryKey: ["instagram-test-clients"], queryFn: () => request<{ clients: Client[]; enabled: boolean }>("/api/v1/publishing/test-post/clients") });
+  const status = useQuery({
+    queryKey: ["instagram-test-post", clientId, attempt?.id],
+    queryFn: () => request<Attempt>(`/api/v1/publishing/clients/${clientId}/test-post/${attempt!.id}`),
+    enabled: !!attempt,
+    refetchInterval: query => ["published", "failed", "uncertain"].includes(query.state.data?.status || "") ? false : 2500,
+  });
+  const current = status.data || attempt;
+  const busy = sending || !!current && ["queued", "processing", "submitting"].includes(current.status);
+  const selected = clients.data?.clients.find(client => client.id === clientId);
+
+  async function publish() {
+    if (!selected || busy) return;
+    if (!await confirm({ title: "Publish test to Instagram?", description: `This publishes the sample shown below to @${selected.username}.`, confirmText: "Publish test post", tone: "info" })) return;
+    setSending(true); setError("");
+    // Reuse the request ID after a network failure: never silently post twice.
+    const id = current?.id || crypto.randomUUID();
+    try {
+      setAttempt(await request<Attempt>(`/api/v1/publishing/clients/${selected.id}/test-post`, { method: "POST", body: JSON.stringify({ request_id: id, account_id: selected.account_id }) }));
+    } catch (err) {
+      setAttempt({ id, status: "checking" });
+      setError(err instanceof Error ? err.message : "Unable to start the test.");
+    } finally { setSending(false); }
+  }
+
+  return <section className="rounded-3xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-7">
+    <div className="flex items-center gap-3 mb-6"><div className="rounded-2xl bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600 p-3"><Instagram className="size-6 text-white" /></div><div><h1 className="text-xl font-bold">Instagram test publish</h1><p className="text-sm text-[#97A0B3]">Select a connected client and publish this sample to their Instagram feed.</p></div></div>
+    {clients.isPending ? <CreoInlineLoader label="Loading connected clients" /> : clients.isError ? <div role="alert" className="text-[#D8BF9B]">{clients.error.message}<button onClick={() => void clients.refetch()} className="ml-3 underline">Retry</button></div> : <div className="grid gap-6 sm:grid-cols-[220px_1fr]">
+      <img src="/assets/portfolio/botanical_serum.jpg" alt="Sample product photo that will be published" className="aspect-square w-full max-w-[220px] rounded-2xl object-cover border border-[#2A3446]" />
+      <div className="space-y-4">
+        <label className="block text-sm font-semibold">Client Instagram account<select value={clientId} disabled={busy} onChange={event => { setClientId(event.target.value); setAttempt(null); setError(""); }} className="mt-2 block w-full rounded-xl border border-[#2A3446] bg-[#0B111C] p-3 disabled:opacity-60"><option value="">Choose a client</option>{clients.data?.clients.map(client => <option key={client.id} value={client.id}>{client.name} — @{client.username}</option>)}</select></label>
+        {!clients.data?.clients.length && <p className="text-sm text-[#97A0B3]">No connected clients are available. Connect a client’s Instagram account and assign them to your pod first.</p>}
+        <div className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-4 text-sm"><span className="block text-[#97A0B3] mb-2">Caption</span>Creo test post — checking the Instagram publishing connection.</div>
+        {!clients.data?.enabled && <p className="text-[#D8BF9B] text-sm">Test publishing is disabled in this environment.</p>}
+        {current?.status === "published" ? <div role="status" className="flex items-center gap-2 text-[#BCCCE6]"><CheckCircle2 className="size-5" />Test post published! {current.permalink && <a href={current.permalink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 underline">View on Instagram<ExternalLink className="size-4" /></a>}</div> : <button type="button" onClick={() => void publish()} disabled={!selected || !clients.data?.enabled || busy || current?.status === "uncertain" || current?.status === "failed"} className="w-full rounded-xl bg-[#BCCCE6] px-5 py-3 font-bold text-[#0B111C] disabled:opacity-50 flex items-center justify-center gap-2"><Instagram className={`size-5 ${busy ? "animate-pulse" : ""}`} />{busy ? "Publishing test post…" : "Publish test post"}</button>}
+        {(error || current?.error || status.isError) && <p role="alert" className="text-sm text-[#D8BF9B]">{current?.error || error || status.error?.message}</p>}
+        {current?.status === "uncertain" && <p className="text-sm text-[#D8BF9B]">Check Instagram before starting another test; this submission may have succeeded.</p>}
+        {current && ["published", "failed"].includes(current.status) && <button type="button" onClick={() => { setAttempt(null); setError(""); }} className="text-sm text-[#BCCCE6] underline">Start another test</button>}
+      </div>
+    </div>}
+  </section>;
+}

@@ -9,6 +9,8 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
+    # Independent, fixed-sample staff test; ordinary publishing keeps its own gate.
+    INSTAGRAM_TEST_POSTING_ENABLED: bool = True
     model_config = SettingsConfigDict(
         env_file=(".env", "../.env"),
         env_file_encoding="utf-8",
