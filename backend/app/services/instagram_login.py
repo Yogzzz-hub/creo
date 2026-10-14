@@ -27,8 +27,8 @@ class DirectInstagramClient(RealInstagramClient):
             return "https://graph.instagram.com/access_token"
         return super().request_url(path)
 
-    async def permissions(self, token: str) -> set[str]:
-        data = await self.call("GET", "me/permissions", token)
+    async def permissions(self, token: str, account_id: str) -> set[str]:
+        data = await self.call("GET", f"{account_id}/permissions", token)
         granted = {
             p.get("permission") for p in data.get("data", []) if p.get("status") == "granted"
         }
@@ -50,7 +50,7 @@ class DirectInstagramClient(RealInstagramClient):
                     "INSTAGRAM_TOKEN_EXCHANGE_FAILED",
                     reconnect=True,
                 ) from None
-            if path == "me/permissions":
+            if path.endswith("/permissions"):
                 raise InstagramError(
                     "Instagram could not verify your permissions. Grant profile and publishing access and check the account's app access.",
                     "INSTAGRAM_PERMISSION_CHECK_FAILED",
@@ -86,7 +86,7 @@ class DirectInstagramClient(RealInstagramClient):
         token = long.get("access_token")
         if not token or not long.get("expires_in") or int(long["expires_in"]) <= 0:
             raise InstagramError("Instagram did not return a valid long-lived token.")
-        granted = await self.permissions(token)
+        granted = await self.permissions(token, str(short["user_id"]))
         account = await self.call("GET", "me", token, fields="user_id,username,account_type")
         account_id = str(account.get("user_id") or "")
         if account_id != str(short["user_id"]) or account.get("account_type") not in (
@@ -113,11 +113,19 @@ class DirectInstagramClient(RealInstagramClient):
             }
         ]
 
+    async def revoke(self, credentials: dict[str, str]) -> None:
+        token = credentials["user_token"]
+        account = await self.call("GET", "me", token, fields="user_id")
+        account_id = str(account.get("user_id") or "")
+        if not account_id.isdecimal():
+            raise InstagramError("Instagram could not identify the account for revocation.")
+        await self.call("DELETE", f"{account_id}/permissions", token)
+
     async def verify_account(
         self, account_id: str, page_id: str, credentials: dict[str, str]
     ) -> dict:
         token = credentials["user_token"]
-        await self.permissions(token)
+        await self.permissions(token, account_id)
         account = await self.call("GET", "me", token, fields="user_id,account_type")
         if str(account.get("user_id")) != account_id:
             raise InstagramError(

@@ -50,7 +50,7 @@ class DirectLoginTests(unittest.IsolatedAsyncioTestCase):
                 200, json={"access_token": "long-token", "expires_in": self.expiry}
             )
         self.assertEqual(request.headers["Authorization"], "Bearer long-token")
-        if path.endswith("/me/permissions"):
+        if path.endswith("/12345/permissions"):
             result = {"data": [{"permission": scope, "status": "granted"} for scope in self.scopes]}
         elif path.endswith("/me"):
             result = {

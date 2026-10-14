@@ -13,10 +13,11 @@ interface MetaConnectSectionProps {
   userId: string;
   /** Persist any unsaved questionnaire answers before the browser leaves for Meta. */
   beforeConnect: () => Promise<void>;
+  onConnectingChange?: (connecting: boolean) => void;
 }
 
 /** Section H: connect Instagram/Facebook through Meta OAuth (optional). */
-export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSectionProps) {
+export function MetaConnectSection({ userId, beforeConnect, onConnectingChange }: MetaConnectSectionProps) {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const [busy, setBusy] = useState<"connect" | "verify" | "disconnect" | null>(null);
@@ -39,6 +40,7 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
 
   async function connect(provider: "facebook" | "instagram" = "facebook") {
     if (busy !== null) return;
+    onConnectingChange?.(true);
     setConnectingProvider(provider);
     setBusy("connect");
     setMessage(null);
@@ -56,6 +58,7 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
       });
       setBusy(null);
       setConnectingProvider(null);
+      onConnectingChange?.(false);
     }
   }
 
@@ -173,7 +176,7 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
               <p className="mt-3 flex-1 text-xs leading-relaxed text-[#97A0B3]">{description}</p>
               <button type="button" disabled={busy !== null} onClick={() => void connect(provider)}
                 className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#BCCCE6] px-4 py-3 text-sm font-bold text-[#0B111C] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B111C] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-                {busy === "connect" && connectingProvider === provider ? <Loader2 className="size-4 animate-spin" /> : <Icon className="size-4" aria-hidden="true" />}
+                {busy === "connect" && connectingProvider === provider ? <Icon className="size-5 animate-pulse motion-reduce:animate-none" aria-hidden="true" /> : <Icon className="size-4" aria-hidden="true" />}
                 {busy === "connect" && connectingProvider === provider ? "Opening authorization..." : label}
                 {connectingProvider !== provider && <ArrowUpRight className="size-4" aria-hidden="true" />}
               </button>
