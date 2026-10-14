@@ -8,6 +8,8 @@ export interface InstagramStatus {
   status: string;
   connected: boolean;
   configured: boolean;
+  instagram_login_configured?: boolean;
+  provider?: "facebook" | "instagram";
   publishing_enabled: boolean;
   username?: string | null;
   account_id?: string | null;
@@ -34,12 +36,13 @@ export async function startMetaConnect(
   userId: string,
   returnTo: string,
   beforeRedirect: () => Promise<void> = () => Promise.resolve(),
+  provider: "facebook" | "instagram" = "facebook",
 ): Promise<void> {
   // Save answers and create the single-use OAuth flow concurrently. Never leave
   // until both succeed, and never pre-create flows merely on hover or page load.
   const [data] = await Promise.all([
     request<{ url: string; state: string; verifier: string }>(
-      `${INSTAGRAM_ENDPOINT}/connect`,
+      `${INSTAGRAM_ENDPOINT}/connect${provider === "instagram" ? "?provider=instagram" : ""}`,
       { method: "POST" },
     ),
     Promise.resolve().then(beforeRedirect),

@@ -20,6 +20,31 @@ from app.services.instagram_media import validate_metadata
 
 
 class ApprovalAndTimeTests(unittest.TestCase):
+    def test_authorization_uses_business_configuration_without_overriding_permissions(self):
+        from urllib.parse import parse_qs, urlparse
+
+        with (
+            patch.object(settings, "INSTAGRAM_APP_ID", "1540902721134847"),
+            patch.object(settings, "META_LOGIN_CONFIG_ID", "123456789"),
+        ):
+            url = urlparse(connection.authorization_url("browser-bound-state"))
+        params = parse_qs(url.query)
+        self.assertEqual(url.hostname, "www.facebook.com")
+        self.assertEqual(params["client_id"], ["1540902721134847"])
+        self.assertEqual(params["config_id"], ["123456789"])
+        self.assertEqual(params["state"], ["browser-bound-state"])
+        self.assertEqual(params["response_type"], ["code"])
+        self.assertNotIn("scope", params)
+        self.assertNotIn("client_secret", params)
+
+    def test_authorization_preserves_explicit_scopes_for_existing_apps(self):
+        from urllib.parse import parse_qs, urlparse
+
+        with patch.object(settings, "META_LOGIN_CONFIG_ID", ""):
+            params = parse_qs(urlparse(connection.authorization_url("state")).query)
+        self.assertEqual(set(params["scope"][0].split(",")), SCOPES)
+        self.assertNotIn("config_id", params)
+
     def test_connection_configuration_requires_production_callback_and_valid_key(self):
         secure_callback = "https://creo.yogalakshmibaskar20.workers.dev/portal/account/instagram"
         with (

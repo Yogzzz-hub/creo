@@ -37,6 +37,38 @@ version-specific limits and App Review access in Meta before enabling live use.
 
 ### Connection setup troubleshooting
 
+#### Meta returns "Invalid Scopes" (error 100)
+
+The permissions `instagram_basic`, `instagram_content_publish`, `pages_show_list`,
+and `pages_read_engagement` belong to **Instagram API with Facebook Login**.
+They are still used by Meta's [official Facebook Login collection](https://www.postman.com/meta/instagram/folder/u4g5a2a/instagram-api-with-facebook-login).
+Do not replace them with `instagram_business_*` while retaining this Facebook
+token exchange and Page discovery flow: those scopes belong to Instagram Login,
+which is a different integration.
+
+For the app ID shown in the failed login, verify in Meta for Developers that the
+app has the Instagram API with Facebook Login use case and access to all four
+permissions. Use the Meta/Facebook app ID and matching secret, not the separate
+Instagram Login app credentials. Link the client's professional Instagram account
+to a Facebook Page the signing-in person manages. Development-mode testing requires
+the appropriate app/tester roles; connecting external clients requires the applicable
+Live mode and approved access. Changing Creo code cannot grant app permissions.
+
+If the app uses **Facebook Login for Business**, create a configuration in that
+same app, select a **user access token**, and include the four permissions above.
+Set its numeric configuration ID as `META_LOGIN_CONFIG_ID` on the API service.
+Creo sends `config_id` instead of overriding that configuration with `scope`.
+Existing apps can leave it blank to retain the explicit-scope flow. Register exactly
+`https://creo.yogalakshmibaskar20.workers.dev/portal/account/instagram` as a valid
+OAuth redirect URI. Redeploy the API after changing its settings.
+
+The callback recognises Meta's `error_code`/`error_message` format as well as OAuth
+`error`. Rejected permissions show an actionable error and a return button to the
+saved questionnaire section instead of redirecting to account settings or claiming
+success. Provider errors never trigger a token exchange; successful callbacks still
+require matching client, state and browser verifier. No permission errors are hidden
+by silently reducing requested access.
+
 Use `backend/.env.instagram.example` for the server settings. `ENCRYPTION_KEY`
 must be a URL-safe Fernet key; Render's generic `generateValue` secret does not
 satisfy that format. Generate it once with
@@ -270,3 +302,54 @@ Business-account workflow. Creator accounts are not separately classified by thi
 Facebook Login discovery route; verify their Story support with Meta. Provider quotas
 are read dynamically. Missing media links
 after an ambiguous publish cannot always be recovered automatically.
+
+
+## Direct Instagram Login (optional second connection method)
+
+Clients can choose **Connect Instagram directly** in questionnaire Section H or
+Account > Integrations. Business and Creator accounts do not need a Facebook
+Page for this path. Existing Facebook Login connections remain supported.
+A workspace has one connected Instagram account; a successful new connection
+replaces the previous connection and pauses existing schedules for review.
+Failed or canceled authorization does not replace the previous connection.
+
+In the same Meta app, open Instagram > API setup with Instagram login. Enable
+`instagram_business_basic` and `instagram_business_content_publish`, then register
+this exact OAuth redirect URI:
+
+`https://creo.yogalakshmibaskar20.workers.dev/portal/account/instagram`
+
+Set these server-only values on Render API and publishing/maintenance workers:
+
+```dotenv
+INSTAGRAM_LOGIN_APP_ID=<Instagram app ID from Instagram Login setup>
+INSTAGRAM_LOGIN_APP_SECRET=<Instagram app secret from Instagram Login setup>
+```
+
+Do not replace `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET`, or
+`META_LOGIN_CONFIG_ID`: those belong to the existing Facebook Login connection.
+Both paths share `INSTAGRAM_REDIRECT_URI` and the existing Fernet encryption key.
+Keep `INSTAGRAM_PUBLISHING_ENABLED=false` until the actual worker and provider
+connection have been checked. No app secret, password, or provider token is
+returned to the browser. The frontend remains disabled for direct login until
+its backend configuration is ready.
+
+Use Instagram test accounts with the appropriate app roles while developing.
+External clients need Meta's applicable Advanced Access/App Review and publishing
+requirements. This change requests only profile and publishing permissions;
+comments, messaging and analytics are not implemented by this integration.
+
+The provider choice is encoded into the server-generated state and its complete
+value is hashed in the existing single-use OAuth transaction. The callback checks
+the client, verifier, expiry and state before choosing a token exchange endpoint.
+Encrypted credentials retain the provider so verify, disconnect and publishing
+use the right API host. No new database migration is required. The legacy
+`page_token` credential key holds the Instagram User token on direct connections;
+it does not imply a Facebook Page exists. Tokens have an explicit expiry and
+expired/revoked grants require reconnecting; automatic token refresh is not added.
+
+Offline checks: `python -m pytest tests/test_instagram_login.py tests/test_instagram.py -q`
+from backend, and `npm run test:instagram` from the repository root.
+
+References: [Meta Instagram Login guide](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/)
+and [Meta's Instagram API collection](https://www.postman.com/meta/workspace/instagram/overview).

@@ -173,12 +173,12 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
 
   // Instagram / Meta: real OAuth (Facebook Login). The authoritative state is the
   // backend connection status, never a typed handle.
-  async function handleConnectInstagram() {
+  async function handleConnectInstagram(provider: "facebook" | "instagram" = "facebook") {
     if (!user?.id) return;
     setIsConnectingIg(true);
     setErrorMessage("");
     try {
-      await startMetaConnect(user.id, "/portal/account?tab=integrations");
+      await startMetaConnect(user.id, "/portal/account?tab=integrations", undefined, provider);
       // The browser is now navigating to Meta; keep the button busy until it unloads.
     } catch (err: any) {
       setErrorMessage(err?.message || "Could not start the Meta connection.");
@@ -390,6 +390,23 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
       {/* TAB 1: INSTAGRAM & INTEGRATIONS */}
       {query.data && activeTab === "integrations" && (
         <section className="space-y-8 animate-in fade-in duration-300">
+          <div className="rounded-3xl border border-[#2A3446] bg-[#161F2D] p-6 space-y-3">
+            <h3 className="text-lg font-bold text-white">Direct Instagram connection</h3>
+            <p className="text-xs text-[#97A0B3]">
+              Connect a Business or Creator account without a Facebook Page. Sign in on Instagram;
+              your password is never shared with Creo. This replaces the workspace's existing connection.
+            </p>
+            <button type="button"
+              disabled={isConnectingIg || !ig?.instagram_login_configured}
+              onClick={() => void handleConnectInstagram("instagram")}
+              className="min-h-11 px-6 py-3 rounded-full bg-[#BCCCE6] text-[#0B111C] font-bold text-xs hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {isConnectingIg ? "Opening authorization..." : "Connect Instagram directly"}
+            </button>
+            {ig && !ig.instagram_login_configured && (
+              <p className="text-xs text-amber-300">Your agency needs to finish direct Instagram setup.</p>
+            )}
+          </div>
           {/* STATE 1: ALREADY CONNECTED - SHOW RICH CUSTOMER INSTAGRAM PROFILE */}
           {isIgConnected ? (
             <div className="space-y-6">
@@ -557,7 +574,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                     ) : (
                       <>
                         <Check className="size-4" />
-                        <span>{igNeedsReconnect ? "Reconnect with Meta" : "Connect with Meta"}</span>
+                        <span>{igNeedsReconnect ? "Reconnect with Facebook" : "Connect with Facebook"}</span>
                       </>
                     )}
                   </button>

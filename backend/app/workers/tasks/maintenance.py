@@ -46,7 +46,7 @@ async def refresh_expiring_ig_async() -> int:
     from app.config import settings
     from app.services.instagram_connection import configured, verify
 
-    if not configured() or settings.INSTAGRAM_CLIENT_MODE != "real":
+    if not (configured() or configured("instagram")) or settings.INSTAGRAM_CLIENT_MODE != "real":
         return 0
     count = 0
     for agency_id in await _get_active_agencies():
