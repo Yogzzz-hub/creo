@@ -17,6 +17,7 @@ class DirectLoginTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.calls = []
         self.account_id = "12345"
+        self.app_scoped_id = "12345"
         self.account_type = "BUSINESS"
         self.scopes = LOGIN_SCOPES.copy()
         self.wrapped = False
@@ -64,6 +65,7 @@ class DirectLoginTests(unittest.IsolatedAsyncioTestCase):
             result = {"success": True}
         elif path.endswith("/me"):
             result = {
+                "id": self.app_scoped_id,
                 "user_id": self.account_id,
                 "username": "test_brand",
                 "account_type": self.account_type,
@@ -126,11 +128,22 @@ class DirectLoginTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_account_mismatch_is_rejected(self):
         self.account_id = "99999"
+        self.app_scoped_id = "88888"
         with self.assertRaises(InstagramError):
             await self.client.discover_accounts("code")
         with self.assertRaises(InstagramError) as caught:
             await self.client.verify_account("12345", "", {"user_token": "long-token"})
         self.assertEqual(caught.exception.code, "ACCOUNT_CHANGED")
+
+    async def test_oauth_app_scoped_id_resolves_to_professional_publishing_id(self):
+        self.account_id = "17841400000123456"
+        account = (await self.client.discover_accounts("code"))[0]
+        self.assertEqual(account["id"], self.account_id)
+        await self.client.verify_account(
+            self.account_id, "", {"user_token": account["user_token"]}
+        )
+        quota_calls = [r for r in self.calls if r.url.path.endswith("/content_publishing_limit")]
+        self.assertTrue(all(f"/{self.account_id}/" in r.url.path for r in quota_calls))
 
     async def test_invalid_token_expiry_is_rejected(self):
         self.expiry = 0
