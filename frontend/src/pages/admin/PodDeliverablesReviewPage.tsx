@@ -1,3 +1,4 @@
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -186,9 +187,7 @@ export function PodDeliverablesReviewPage() {
         )}
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-20 text-[#97A0B3]">
-            <Loader2 className="size-6 animate-spin" />
-          </div>
+          <CreoInlineLoader />
         ) : !current || !deliverable ? (
           <div className="bg-[#161F2D] rounded-2xl border border-dashed border-[#2A3446] p-12 text-center space-y-3">
             <div className="size-12 rounded-2xl bg-emerald-500/10 text-emerald-400 mx-auto flex items-center justify-center border border-emerald-500/20">

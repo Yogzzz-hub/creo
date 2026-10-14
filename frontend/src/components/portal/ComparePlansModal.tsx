@@ -1,3 +1,4 @@
+import { CreoInlineLoader } from "../ui/CreoLoader";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X, CheckCircle2, PhoneCall, Loader2, Zap } from "lucide-react";
@@ -155,9 +156,7 @@ export function ComparePlansModal({
 
         {/* Plans Grid */}
         {isPlansLoading ? (
-          <div className="py-20 flex items-center justify-center">
-            <Loader2 className="size-8 animate-spin text-[#7FA0D6]" />
-          </div>
+          <CreoInlineLoader />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {plans?.map((plan) => {

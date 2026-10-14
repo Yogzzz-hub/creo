@@ -1,3 +1,4 @@
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { PublishingControl } from "../../components/ops/PublishingPanel";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
@@ -470,9 +471,7 @@ export function MemberTaskBoardPage() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-24 text-[#97A0B3]">
-            <Loader2 className="size-6 animate-spin" />
-          </div>
+          <CreoInlineLoader />
         ) : isError ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
             <div className="size-10 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">

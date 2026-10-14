@@ -1,3 +1,4 @@
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type AllocationStatus, PodAllocationModal } from "./PodAllocationModal";
@@ -1629,7 +1630,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
   if (isLoading || (qState && !dataInitialized)) {
     return (
       <div className="flex flex-col items-center justify-center p-16 space-y-4">
-        <Loader2 className="w-8 h-8 animate-spin text-[#7FA0D6]" />
+        <CreoInlineLoader />
         <p className="text-xs text-[#97A0B3] font-medium">Restoring your brand discovery session...</p>
       </div>
     );

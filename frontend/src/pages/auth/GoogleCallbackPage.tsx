@@ -1,3 +1,4 @@
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import "../../styles/public-responsive.css";
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
@@ -169,9 +170,7 @@ export function GoogleCallbackPage() {
           {/* Status: Loading */}
           {status === "loading" && (
             <div className="flex flex-col items-center w-full">
-              <div className="relative flex items-center justify-center size-14 rounded-full bg-[#0B111C] border border-[#2A3446] mb-6 shadow-xs">
-                <Loader2 className="size-6 text-[#7FA0D6] animate-spin" />
-              </div>
+              <CreoInlineLoader />
 
               <h1 className="text-[30px] sm:text-[32px] font-semibold text-[#F8FAFC] tracking-tight leading-tight">
                 Signing in with Google

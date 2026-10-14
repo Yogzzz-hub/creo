@@ -1,3 +1,4 @@
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -348,7 +349,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
       {/* Loading state */}
       {!isLocked && query.isPending && (
         <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-12 text-center space-y-4">
-          <Loader2 className="size-8 text-[#BCCCE6] animate-spin mx-auto" />
+          <CreoInlineLoader />
           <p className="text-sm font-semibold text-[#97A0B3]">Loading your account settings…</p>
         </div>
       )}
