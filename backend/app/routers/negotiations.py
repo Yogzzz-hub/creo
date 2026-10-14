@@ -3,25 +3,24 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.core.errors import Forbidden, NotFound
+from app.core.errors import NotFound
 from app.core.logging import get_logger
 from app.core.rbac import Actor, get_admin_actor, get_current_actor
 from app.db.session import get_db
-from app.models.billing import Plan, Subscription
-from app.models.enums import AccountStatus, PaymentProvider, SubscriptionStatus, UserRole
+from app.models.billing import Subscription
+from app.models.enums import SubscriptionStatus, UserRole
 from app.models.negotiation import PlanNegotiation
-from app.models.ops import AuditLog, Notification
-from app.models.user import User
+from app.models.ops import AuditLog
+from app.services import payment_service
 from app.services.payment_service import _activate_subscription
 
 logger = get_logger(__name__)
@@ -98,87 +97,27 @@ async def submit_negotiation(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Client submits a custom plan consultation/bargain call request."""
-    client_user = await db.get(User, actor.user_id)
-    if not client_user:
-        raise NotFound("User account not found", code="USER_NOT_FOUND")
+    """Client submits a custom plan consultation/bargain call request.
+
+    Kept for older clients; it files the same record as /portal/book-call so there is one
+    bargain workflow, not two that drift apart.
+    """
+    from app.routers.portal_dashboard import PlanBargainCallRequest, book_plan_bargain_call
 
     phone = payload.contact_phone.strip()
     if not phone:
         raise HTTPException(status_code=400, detail="Contact phone number is required.")
-
-    client_name = client_user.full_name or client_user.email.split("@")[0]
-
-    # Create negotiation record in PENDING state
-    neg_id = uuid.uuid4()
-    neg = PlanNegotiation(
-        id=neg_id,
-        client_id=client_user.id,
-        client_email=client_user.email,
-        client_name=client_name,
-        proposed_budget=payload.proposed_budget,
-        contact_phone=phone,
-        preferred_window=payload.preferred_window,
-        target_topic=payload.target_topic or "Custom Pricing / Retainer Discount",
-        notes=payload.notes,
-        status="PENDING",
-        agreed_amount=None,
-        razorpay_custom_plan_id=None,
-        order_id=None,
+    return await book_plan_bargain_call(
+        PlanBargainCallRequest(
+            target_topic=payload.target_topic or "Custom Pricing / Retainer Discount",
+            proposed_offer=payload.proposed_budget,
+            phone_number=phone,
+            preferred_time=payload.preferred_window,
+            notes=payload.notes,
+        ),
+        actor,
+        db,
     )
-    db.add(neg)
-
-    # Find active Admins and Super Admins
-    admin_stmt = select(User.id).where(
-        User.role.in_([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
-        User.account_status == "active",
-    )
-    admin_res = await db.execute(admin_stmt)
-    admin_ids = admin_res.scalars().all()
-
-    redirect_url = f"/admin/plans?negId={neg_id}&clientId={client_user.id}"
-
-    offer_detail = f" • Budget: {payload.proposed_budget}" if payload.proposed_budget else ""
-    for aid in admin_ids:
-        db.add(
-            Notification(
-                user_id=aid,
-                title=f"📞 Plan Bargain Call: {client_name}",
-                message=f"{client_name} ({client_user.email}) requested a call to bargain plan: {payload.target_topic or 'Custom Pricing'}. Contact: {phone} (Preferred: {payload.preferred_window}){offer_detail}",
-                link=redirect_url,
-            )
-        )
-
-    # Audit log
-    db.add(
-        AuditLog(
-            actor_id=actor.user_id,
-            actor_role=actor.role if isinstance(actor.role, UserRole) else None,
-            entity="plan_negotiation",
-            entity_id=neg_id,
-            action="submit_negotiation_call",
-            to_value={
-                "client_id": str(actor.user_id),
-                "client_name": client_name,
-                "client_email": client_user.email,
-                "phone": phone,
-                "proposed_budget": payload.proposed_budget,
-                "preferred_window": payload.preferred_window,
-                "redirectUrl": redirect_url,
-            },
-        )
-    )
-
-    await db.commit()
-    await db.refresh(neg)
-
-    return {
-        "status": "PENDING",
-        "id": str(neg.id),
-        "negotiation": _format_negotiation(neg),
-        "redirectUrl": redirect_url,
-        "message": f"Custom plan negotiation request submitted. Our Agency Director will reach out at {phone}.",
-    }
 
 
 @router.patch("/{negotiation_id}/approve", response_model=dict[str, Any])
@@ -189,188 +128,30 @@ async def approve_negotiation(
     actor: Actor = Depends(get_admin_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Admin sets the final negotiated amount, triggers Razorpay order generation, and approves plan."""
-    neg = await db.get(PlanNegotiation, negotiation_id)
-    if not neg:
-        raise NotFound(f"Negotiation {negotiation_id} not found", code="NEGOTIATION_NOT_FOUND")
+    """Accept, decline or counter a negotiation.
 
-    client_user = await db.get(User, neg.client_id) if neg.client_id else None
-    if not client_user and neg.client_email:
-        client_user = (await db.execute(select(User).where(func.lower(User.email) == neg.client_email.strip().lower()))).scalar_one_or_none()
-        if client_user:
-            neg.client_id = client_user.id
-    if not client_user:
-        raise NotFound("Client user associated with negotiation not found", code="USER_NOT_FOUND")
+    This used to approve every request regardless of `action`, so a decline that fell back
+    to this route approved the client at a made-up price. It now runs exactly the admin
+    workflow, which honours the action and refuses to invent a price.
+    """
+    from app.routers.admin import NegotiationActionPayload, update_plan_negotiation
 
-    # Determine agreed amount
-    raw_amount = payload.agreed_amount or (int(payload.agreed_price) if payload.agreed_price else None)
-    if not raw_amount and neg.proposed_budget:
-        digits = "".join(c for c in str(neg.proposed_budget) if c.isdigit())
-        if digits and len(digits) >= 4:
-            raw_amount = int(digits)
-    if not raw_amount:
-        raw_amount = 40000
-
-    agreed_amt = raw_amount
-    amount_minor = agreed_amt * 100
-
-    # Razorpay Live Order Creation
-    key_id = getattr(settings, "RAZORPAY_KEY_ID", "rzp_test_TO2r0YMjDZSpuC")
-    key_secret = getattr(settings, "RAZORPAY_KEY_SECRET", "")
-    order_id = f"order_custom_{uuid.uuid4().hex[:12]}"
-
-    if key_id and key_secret:
-        try:
-            import httpx
-            async with httpx.AsyncClient(timeout=8.0) as client:
-                res = await client.post(
-                    "https://api.razorpay.com/v1/orders",
-                    auth=(key_id, key_secret),
-                    json={
-                        "amount": amount_minor,
-                        "currency": "INR",
-                        "receipt": f"neg_{uuid.uuid4().hex[:10]}",
-                        "notes": {
-                            "client_id": str(neg.client_id),
-                            "custom_plan": "true",
-                            "negotiation_id": str(neg.id),
-                        },
-                    },
-                )
-                if res.status_code in (200, 201):
-                    data = res.json()
-                    order_id = data.get("id", order_id)
-        except Exception as exc:
-            logger.warning("razorpay_order_create_exception", error=str(exc))
-
-    # 1. Update negotiation record
-    reel_q = payload.reel_quota if payload.reel_quota is not None else (getattr(neg, "reel_quota", None) or 8)
-    poster_q = payload.poster_quota if payload.poster_quota is not None else (getattr(neg, "poster_quota", None) or 12)
-    story_q = payload.story_quota if payload.story_quota is not None else (getattr(neg, "story_quota", None) or 15)
-
-    neg.status = "APPROVED"
-    neg.agreed_amount = agreed_amt
-    neg.counter_price = agreed_amt
-    neg.reel_quota = reel_q
-    neg.poster_quota = poster_q
-    neg.story_quota = story_q
-    neg.order_id = order_id
-    neg.razorpay_custom_plan_id = order_id
-    neg.updated_at = datetime.now(UTC)
-
-    # 2. Synchronize server-authoritative custom Plan in plans table
-    plan_key = f"custom_{neg.client_id.hex[:8]}"
-    plan_stmt = select(Plan).where(Plan.name == plan_key)
-    plan = (await db.execute(plan_stmt)).scalar_one_or_none()
-
-    custom_display_name = f"Custom Negotiated Retainer ({client_user.full_name or 'Client'})"
-    highlights = [
-        f"{reel_q} Custom Reels",
-        f"{poster_q} Static Posters",
-        f"{story_q} Stories / Carousels",
-        "Negotiated Strategy Agreement",
-        "Dedicated Creative Pod Lead",
-    ]
-    if plan:
-        plan.display_name = custom_display_name
-        plan.monthly_price = Decimal(agreed_amt)
-        plan.price_minor = amount_minor
-        plan.reel_quota = reel_q
-        plan.poster_quota = poster_q
-        plan.story_quota = story_q
-        plan.highlights = highlights
-        plan.is_active = True
-    else:
-        plan = Plan(
-            id=uuid.uuid4(),
-            agency_id=client_user.agency_id,
-            name=plan_key,
-            display_name=custom_display_name,
-            monthly_price=Decimal(agreed_amt),
-            price_minor=amount_minor,
-            currency="INR",
-            reel_quota=reel_q,
-            poster_quota=poster_q,
-            story_quota=story_q,
-            revision_rounds=2,
-            has_dedicated_manager=True,
-            highlights=highlights,
-            is_active=True,
-        )
-        db.add(plan)
-        await db.flush()
-
-    # 3. Synchronize Incomplete Subscription record to match order_id
-    now = datetime.now(UTC)
-    sub_stmt = (
-        select(Subscription)
-        .where(
-            Subscription.client_id == neg.client_id,
-            Subscription.status == SubscriptionStatus.INCOMPLETE,
-        )
-        .order_by(Subscription.created_at.desc())
-        .limit(1)
+    return await update_plan_negotiation(
+        negotiation_id,
+        NegotiationActionPayload(
+            action=(payload.action or "accept").lower(),
+            decline_reason=payload.decline_reason,
+            counter_price=payload.counter_price,
+            counter_note=payload.counter_note,
+            agreed_price=payload.agreed_price,
+            agreed_amount=Decimal(payload.agreed_amount) if payload.agreed_amount else None,
+            reel_quota=payload.reel_quota,
+            poster_quota=payload.poster_quota,
+            story_quota=payload.story_quota,
+        ),
+        actor,
+        db,
     )
-    sub = (await db.execute(sub_stmt)).scalar_one_or_none()
-    if sub:
-        sub.plan_id = plan.id
-        sub.amount = Decimal(agreed_amt)
-        sub.gateway_subscription_id = order_id
-        sub.gateway = PaymentProvider.RAZORPAY
-    else:
-        sub = Subscription(
-            id=uuid.uuid4(),
-            agency_id=client_user.agency_id,
-            client_id=neg.client_id,
-            plan_id=plan.id,
-            status=SubscriptionStatus.INCOMPLETE,
-            gateway=PaymentProvider.RAZORPAY,
-            gateway_subscription_id=order_id,
-            amount=Decimal(agreed_amt),
-            current_period_start=now,
-            current_period_end=now + timedelta(days=30),
-        )
-        db.add(sub)
-
-    # 4. Notify Client Portal
-    db.add(
-        Notification(
-            user_id=neg.client_id,
-            title="🎉 Custom Plan Approved!",
-            message=f"Your custom negotiated plan of ₹{agreed_amt:,}/mo has been approved! You can now subscribe via Razorpay.",
-            link="/portal/settings",
-        )
-    )
-
-    # 5. Audit log
-    db.add(
-        AuditLog(
-            actor_id=actor.user_id,
-            actor_role=actor.role if isinstance(actor.role, UserRole) else None,
-            entity="plan_negotiation",
-            entity_id=neg.id,
-            action="approve_negotiation",
-            to_value={
-                "agreed_amount": agreed_amt,
-                "order_id": order_id,
-                "client_id": str(neg.client_id),
-                "plan_id": str(plan.id),
-            },
-        )
-    )
-
-    await db.commit()
-    await db.refresh(neg)
-
-    return {
-        "status": "APPROVED",
-        "id": str(neg.id),
-        "agreed_amount": agreed_amt,
-        "order_id": order_id,
-        "key_id": key_id,
-        "negotiation": _format_negotiation(neg),
-        "message": f"Negotiation approved at ₹{agreed_amt:,}/mo. Razorpay order {order_id} generated.",
-    }
 
 
 @router.get("", response_model=dict[str, Any])
@@ -389,7 +170,7 @@ async def list_negotiations(
     if negotiation_id:
         query = query.where(PlanNegotiation.id == negotiation_id)
     if status_filter:
-        query = query.where(PlanNegotiation.status == status_filter.upper())
+        query = query.where(func.lower(PlanNegotiation.status) == status_filter.strip().lower())
 
     result = await db.execute(query)
     items = result.scalars().all()
@@ -415,7 +196,7 @@ async def get_my_negotiation(
     items = result.scalars().all()
 
     # Find the latest approved negotiation
-    approved_neg = next((n for n in items if n.status == "APPROVED"), None)
+    approved_neg = next((n for n in items if n.status in ("Accepted", "Counter Offered", "APPROVED")), None)
     latest_neg = items[0] if items else None
 
     key_id = getattr(settings, "RAZORPAY_KEY_ID", "rzp_test_TO2r0YMjDZSpuC")
@@ -435,63 +216,62 @@ async def confirm_negotiation_payment(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Client confirms payment callback after completing Razorpay modal checkout."""
-    client_id = actor.user_id
+    """Client confirms a Razorpay checkout for their negotiated plan.
 
-    # 1. Match subscription by order_id or client_id
-    sub_stmt = (
-        select(Subscription)
-        .where(
-            Subscription.client_id == client_id,
-            Subscription.gateway_subscription_id == payload.razorpay_order_id,
-        )
-    )
-    sub = (await db.execute(sub_stmt)).scalar_one_or_none()
+    The subscription activates only when the checkout signature proves a real payment for
+    this exact order. It used to activate on whatever ids the caller sent, which let any
+    client obtain a plan without paying.
+    """
+    client_id = actor.client_id or actor.user_id
 
-    if not sub:
-        # Fallback to latest incomplete subscription
-        fallback_stmt = (
+    sub = (
+        await db.execute(
             select(Subscription)
             .where(
                 Subscription.client_id == client_id,
-                Subscription.status == SubscriptionStatus.INCOMPLETE,
+                Subscription.gateway_subscription_id == payload.razorpay_order_id,
             )
             .order_by(Subscription.created_at.desc())
             .limit(1)
         )
-        sub = (await db.execute(fallback_stmt)).scalar_one_or_none()
-
+    ).scalars().first()
     if not sub:
         raise NotFound("Subscription order not found", code="SUBSCRIPTION_NOT_FOUND")
 
-    # 2. Activate subscription and account
-    await _activate_subscription(db, sub)
-
-    # 3. Update client account status to active
-    client_user = await db.get(User, client_id)
-    if client_user:
-        client_user.account_status = AccountStatus.ACTIVE
-
-    # 4. Audit Log
-    db.add(
-        AuditLog(
-            actor_id=client_id,
-            actor_role=actor.role if isinstance(actor.role, UserRole) else None,
-            entity="plan_negotiation",
-            entity_id=uuid.UUID(payload.negotiation_id) if payload.negotiation_id else sub.id,
-            action="custom_plan_subscribed_razorpay",
-            to_value={
-                "payment_id": payload.razorpay_payment_id,
-                "order_id": payload.razorpay_order_id,
-                "subscription_id": str(sub.id),
-            },
+    if sub.status not in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING):
+        paid = payment_service.verify_checkout_signature(
+            payload.razorpay_order_id, payload.razorpay_payment_id, payload.razorpay_signature
         )
-    )
+        if not (paid or payment_service.sandbox_confirmation_allowed()):
+            raise HTTPException(status_code=400, detail="Invalid payment signature")
+        await _activate_subscription(db, sub, commit=False)
 
-    await db.commit()
+        db.add(
+            AuditLog(
+                actor_id=client_id,
+                actor_role=actor.role if isinstance(actor.role, UserRole) else None,
+                entity="plan_negotiation",
+                entity_id=uuid.UUID(payload.negotiation_id) if _is_uuid(payload.negotiation_id) else sub.id,
+                action="custom_plan_subscribed_razorpay",
+                to_value={
+                    "payment_id": payload.razorpay_payment_id,
+                    "order_id": payload.razorpay_order_id,
+                    "subscription_id": str(sub.id),
+                },
+            )
+        )
+        await db.commit()
 
     return {
         "status": "active",
         "subscription_id": str(sub.id),
         "message": "Payment verified and subscription activated successfully!",
     }
+
+
+def _is_uuid(value: str | None) -> bool:
+    try:
+        uuid.UUID(str(value))
+    except (ValueError, TypeError):
+        return False
+    return True

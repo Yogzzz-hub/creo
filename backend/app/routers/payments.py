@@ -6,12 +6,12 @@ from typing import Any
 from pydantic import BaseModel
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 import uuid
 from decimal import Decimal
 from app.models.user import User
@@ -41,6 +41,7 @@ async def list_plans(
     returns ONLY that client's custom negotiated plan (the 3 standard tiers are hidden).
     """
     client_id: uuid.UUID | None = None
+    caller_role = ""
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header[7:].strip()
@@ -48,11 +49,15 @@ async def list_plans(
             from app.core.security import decode_token
             payload = decode_token(token, expected_type="access")
             client_id = uuid.UUID(payload["sub"])
+            caller_role = str(payload.get("role") or "").lower()
         except Exception:
             pass
 
+    # Only an admin may look at another client's negotiated plan (the offline-payment
+    # dialog does). For everyone else the id is ignored: honouring it would expose any
+    # client's private price and let strangers trigger the cleanup writes below.
     query_cid = request.query_params.get("client_id")
-    if not client_id and query_cid:
+    if query_cid and caller_role in ("admin", "super_admin"):
         try:
             client_id = uuid.UUID(query_cid)
         except Exception:
@@ -303,8 +308,6 @@ async def confirm_addon_order(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Verify and record a one-time add-on pack purchase, adding to quotas and generating a paid invoice."""
-    import uuid
-    from datetime import UTC, datetime
     from sqlalchemy.orm.attributes import flag_modified
     from app.config import settings as _s
     from app.models.billing import PaymentEvent, UsageCounter
@@ -334,18 +337,38 @@ async def confirm_addon_order(
     cfg = ADDON_CONFIG[body.addon_id]
     amount = cfg["amount"]
 
-    # Verify signature if key secret is available
-    key_secret = getattr(_s, "RAZORPAY_KEY_SECRET", "")
-    if key_secret and body.order_id and body.signature:
-        import hashlib
-        import hmac
-        expected = hmac.new(
-            key_secret.encode("utf-8"),
-            f"{body.order_id}|{body.payment_id}".encode("utf-8"),
-            hashlib.sha256,
-        ).hexdigest()
-        if not hmac.compare_digest(expected, body.signature):
+    # The payment must be proven, not asserted. A valid checkout signature shows the browser
+    # really completed a Razorpay payment for this order; only local development without
+    # gateway keys may skip it.
+    if not payment_service.sandbox_confirmation_allowed():
+        if not payment_service.verify_checkout_signature(body.order_id, body.payment_id, body.signature):
             raise HTTPException(status_code=400, detail="Invalid payment signature")
+        # A signature for a cheap add-on's order must not unlock an expensive one.
+        from app.services.razorpay_orders import fetch_razorpay_order
+
+        order = await fetch_razorpay_order(
+            getattr(_s, "RAZORPAY_KEY_ID", ""), getattr(_s, "RAZORPAY_KEY_SECRET", ""), str(body.order_id),
+        )
+        if order is None:
+            raise HTTPException(
+                status_code=503,
+                detail="We could not verify your payment with the gateway yet. Please retry in a moment.",
+            )
+        if order.get("amount") != int(round(amount * 100)) or order.get("currency") != "INR":
+            raise HTTPException(status_code=400, detail="Payment amount does not match this add-on.")
+
+    # One payment buys one add-on, once.
+    payment_ref = body.payment_id or f"addon_{uuid.uuid4().hex[:8]}"
+    already_applied = (
+        await db.execute(
+            select(PaymentEvent.id).where(
+                PaymentEvent.provider == PaymentProvider.RAZORPAY,
+                PaymentEvent.provider_event_id == payment_ref,
+            )
+        )
+    ).first()
+    if already_applied:
+        raise HTTPException(status_code=409, detail="This payment has already been applied.")
 
     # Increment quota if deliverable type is defined
     if cfg["type"] and cfg["quota_delta"] > 0:
@@ -362,6 +385,14 @@ async def confirm_addon_order(
         if counter:
             counter.quota += cfg["quota_delta"]
             db.add(counter)
+        else:
+            # Paid for, so never silently dropped: open this month's counter with the add-on.
+            month_start = now.date().replace(day=1)
+            next_month = date(month_start.year + (month_start.month == 12), month_start.month % 12 + 1, 1)
+            db.add(UsageCounter(
+                client_id=client_id, period_start=month_start, period_end=next_month - timedelta(days=1),
+                kind=cfg["type"], quota=cfg["quota_delta"], used=0,
+            ))
 
     # Record in ClientProfile
     prof_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
@@ -392,7 +423,7 @@ async def confirm_addon_order(
     # Audit / payment event
     event = PaymentEvent(
         provider=PaymentProvider.RAZORPAY,
-        provider_event_id=body.payment_id or f"addon_{uuid.uuid4().hex[:8]}",
+        provider_event_id=payment_ref,
         event_type="addon.payment.captured",
         payload={
             "client_id": str(client_id),
@@ -617,6 +648,8 @@ async def pause_subscription(
     check = await check_client_subscription(db, client_id)
     sub = check.get("subscription")
     plan = check.get("plan")
+    if not check.get("is_active"):
+        raise HTTPException(status_code=400, detail="There is no active plan to pause.")
 
     prof_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
     prof = (await db.execute(prof_stmt)).scalar_one_or_none()

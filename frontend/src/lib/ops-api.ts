@@ -9,7 +9,7 @@ import type {
   ClientRosterItem,
   SLABreachItem,
 } from "../types/ops";
-import { request } from "./http";
+import { HttpError, request } from "./http";
 export { request };
 export type { ClientRosterItem, AdminDashboardData, AdminKPIs, AdminQueueData, SLABreachItem };
 
@@ -557,22 +557,21 @@ export async function updatePlanNegotiation(
     story_quota: extra?.story_quota,
   };
 
+  type Result = { status: string; message: string; negotiation_id: string; new_status: string };
   try {
-    return await request<{ status: string; message: string; negotiation_id: string; new_status: string }>(
-      `/api/v1/admin/negotiations/${negId}`,
-      {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      }
-    );
-  } catch {
-    return await request<{ status: string; message: string; negotiation_id: string; new_status: string }>(
-      `/api/v1/negotiations/${negId}/approve`,
-      {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      }
-    );
+    return await request<Result>(`/api/v1/admin/negotiations/${negId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    // Only retry through the alternate route when this one does not exist (an older API).
+    // A real answer (validation, permission, conflict) must reach the admin instead of
+    // being retried against a second endpoint.
+    if (!(err instanceof HttpError) || ![404, 405].includes(err.status)) throw err;
+    return await request<Result>(`/api/v1/negotiations/${negId}/approve`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
   }
 }
 

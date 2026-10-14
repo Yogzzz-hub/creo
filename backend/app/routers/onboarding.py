@@ -275,7 +275,7 @@ async def _ensure_manual_payments_table(db: AsyncSession) -> None:
             payment_method VARCHAR(50) NOT NULL DEFAULT 'cash',
             amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
             reference_note TEXT,
-            status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+            status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED')),
             reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
             reviewed_at TIMESTAMP WITH TIME ZONE,
             admin_notes TEXT,
