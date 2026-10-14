@@ -108,20 +108,8 @@ export function MemberAssetHandoffQAPage() {
           </div>
         )}
 
-        {/* 1. Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-[#161F2D] sm:bg-transparent p-4 sm:p-0 rounded-2xl sm:rounded-none border sm:border-0 border-[#2A3446] shadow-xs sm:shadow-none">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#7FA0D6]">
-              <span>POD A - MOTION PIPELINE</span>
-              <span>/</span>
-              <span>QUALITY ASSURANCE GATE</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">
-              Asset Handoff & Quality Assurance
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3 pt-1 sm:pt-0">
+        {/* Top Controls */}
+        <div className="flex items-center justify-end gap-2 sm:gap-3">
             <button
               onClick={() => setAuditLogModalOpen(true)}
               className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1.5 sm:gap-2 shadow-2xs transition-colors cursor-pointer"
@@ -137,7 +125,6 @@ export function MemberAssetHandoffQAPage() {
               <span>+ New Package</span>
             </button>
           </div>
-        </div>
 
         {/* 2. Main Two-Column Layout */}
         <motion.div 

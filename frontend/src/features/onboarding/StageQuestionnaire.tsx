@@ -23,18 +23,23 @@ import {
   Trash2,
   Loader2,
   Check,
+  CheckCircle2,
   RefreshCw,
   Search,
   Pipette,
   X,
+  UploadCloud,
 } from "lucide-react";
 
+import { apiUrl } from "../../lib/http";
 import {
   type QuestionnaireState,
   fetchQuestionnaireState,
   saveQuestionnaireSection,
   saveQuestionnaireSections,
   completeOnboarding,
+  uploadBrandLogo,
+  deleteBrandLogo,
 } from "../../lib/onboarding-api";
 import type { AssignedTeamMember } from "../../types/api";
 import { MetaConnectSection } from "./MetaConnectSection";
@@ -1081,12 +1086,58 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
   const [secA, setSecA] = useState({
     brand_name: "",
     instagram_handle: "",
+    brand_logo_url: "",
     one_liner: "",
     category: "beauty_personal_care",
     products: [{ name: "", description: "", price_band: "mid" }],
     primary_goal: "direct_sales",
     goal_notes: "",
   });
+
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleLogoFileChange = async (file: File) => {
+    setLogoError(null);
+    const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/svg+xml"];
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const validExts = ["png", "jpg", "jpeg", "svg"];
+    if (!validTypes.includes(file.type) && (!ext || !validExts.includes(ext))) {
+      setLogoError("Please upload a valid logo format: PNG, JPG, JPEG, or SVG.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setLogoError("Logo file size exceeds the 10MB limit.");
+      return;
+    }
+    setLogoUploading(true);
+    try {
+      const res = await uploadBrandLogo(file);
+      setSecA((prev) => ({ ...prev, brand_logo_url: res.logo_url }));
+      queryClient.invalidateQueries({ queryKey: ["questionnaire-state", userId] });
+      queryClient.invalidateQueries({ queryKey: ["portal-client-profile"] });
+    } catch (err: any) {
+      setLogoError(err?.message || "Failed to upload brand logo. Please try again.");
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    setLogoError(null);
+    setLogoUploading(true);
+    try {
+      await deleteBrandLogo();
+      setSecA((prev) => ({ ...prev, brand_logo_url: "" }));
+      queryClient.invalidateQueries({ queryKey: ["questionnaire-state", userId] });
+      queryClient.invalidateQueries({ queryKey: ["portal-client-profile"] });
+    } catch (err: any) {
+      setLogoError(err?.message || "Failed to remove logo.");
+    } finally {
+      setLogoUploading(false);
+    }
+  };
 
   const [secB, setSecB] = useState({
     ideal_customer: "",
@@ -1965,6 +2016,127 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   <Plus className="w-4 h-4" /> Add Another Product/Offering
                 </button>
               </div>
+            </div>
+
+            {/* A6: BRAND LOGO ASSET (Requirement 2.2) */}
+            <div id="field-brand_logo" className="space-y-3 pt-3 border-t border-[#2A3446]">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="block text-xs font-semibold text-[#F1F5F9]">
+                    A6: Official Brand Logo Asset
+                  </label>
+                  <p className="text-[11px] text-[#97A0B3]">
+                    Upload your high-resolution brand logo (PNG, JPG, JPEG, SVG · Max 10MB). Stored in your client profile and accessible across creative pods.
+                  </p>
+                </div>
+                {secA.brand_logo_url && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Logo Saved
+                  </span>
+                )}
+              </div>
+
+              {logoError && (
+                <div className="p-2.5 rounded-xl bg-rose-950/40 border border-rose-800/70 text-rose-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                  <span>{logoError}</span>
+                </div>
+              )}
+
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleLogoFileChange(file);
+                  e.target.value = "";
+                }}
+              />
+
+              {secA.brand_logo_url ? (
+                <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-5">
+                  <div className="w-40 h-28 rounded-xl border border-[#2A3446] bg-[radial-gradient(#2A3446_1px,transparent_1px)] [background-size:12px_12px] bg-[#0E1524] flex items-center justify-center p-3 overflow-hidden shadow-inner shrink-0">
+                    <img
+                      src={apiUrl(secA.brand_logo_url)}
+                      alt="Brand Logo Preview"
+                      className="max-h-full max-w-full object-contain filter drop-shadow-sm"
+                    />
+                  </div>
+                  <div className="flex-1 space-y-2 text-center sm:text-left">
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                      <span className="text-xs font-bold text-white">Active Brand Asset</span>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-[#161F2D] text-[#7FA0D6] border border-[#2A3446]">
+                        Synced with Profile & Pod
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#97A0B3] break-all font-mono">
+                      {secA.brand_logo_url.split("/").pop()}
+                    </p>
+                    <div className="flex items-center justify-center sm:justify-start gap-3 pt-1">
+                      <button
+                        type="button"
+                        disabled={logoUploading}
+                        onClick={() => logoInputRef.current?.click()}
+                        className="px-3 py-1.5 rounded-lg bg-[#7FA0D6] text-[#0B111C] hover:bg-[#BCCCE6] text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {logoUploading ? "Updating..." : "Replace Logo"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={logoUploading}
+                        onClick={handleRemoveLogo}
+                        className="px-3 py-1.5 rounded-lg border border-rose-500/30 hover:border-rose-500 text-rose-400 hover:bg-rose-500/10 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => !logoUploading && logoInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) handleLogoFileChange(file);
+                  }}
+                  className={`border-2 border-dashed border-[#2A3446] hover:border-[#7FA0D6] bg-[#0B111C]/60 hover:bg-[#0B111C] rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+                    logoUploading ? "opacity-60 cursor-not-allowed" : ""
+                  }`}
+                >
+                  {logoUploading ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="w-8 h-8 text-[#7FA0D6] animate-spin" />
+                      <p className="text-xs font-semibold text-white">Uploading & validating logo asset...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-12 h-12 rounded-full bg-[#7FA0D6]/10 border border-[#7FA0D6]/30 flex items-center justify-center text-[#7FA0D6] mb-3">
+                        <UploadCloud className="w-6 h-6" />
+                      </div>
+                      <p className="text-sm font-semibold text-white">
+                        Click to upload or drag & drop brand logo
+                      </p>
+                      <p className="text-xs text-[#97A0B3] mt-1">
+                        PNG, JPG, JPEG, or SVG up to 10MB
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-3">
+                        {["PNG", "JPG", "JPEG", "SVG"].map((fmt) => (
+                          <span
+                            key={fmt}
+                            className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#161F2D] text-[#7FA0D6] border border-[#2A3446]"
+                          >
+                            {fmt}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             <div>

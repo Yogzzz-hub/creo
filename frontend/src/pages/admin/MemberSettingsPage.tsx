@@ -125,20 +125,12 @@ export function MemberSettingsPage() {
   return (
     <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
       <main className="flex-1 max-w-[1200px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20 sm:pb-8 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-h-8 pb-4 border-b border-[#2A3446]/60">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight">Account & Team Settings</h1>
-            <p className="text-xs sm:text-sm text-[#97A0B3] mt-0.5">
-              Manage your personal details and view your active creative pod allocation.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6]">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              {formattedRole}
-            </span>
-          </div>
+        {/* Role Badge */}
+        <div className="flex items-center justify-end gap-2 pb-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6]">
+            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+            {formattedRole}
+          </span>
         </div>
 
         {/* Status Notification Banner */}

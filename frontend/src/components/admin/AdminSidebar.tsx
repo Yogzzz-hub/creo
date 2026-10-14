@@ -72,10 +72,12 @@ export function AdminSidebar() {
     user?.role === "team_member" ||
     user?.role === "editor" ||
     user?.role === "designer";
+  const isBDERole = user?.role === "sales" || user?.role === "bde";
+  const isFreelancerRole = user?.role === "freelancer";
 
   const isClientRole =
     user?.role === "client" ||
-    (!isAdminOrSuper && !isTeamLead && !isSpecialist && location.pathname.startsWith("/portal"));
+    (!isAdminOrSuper && !isTeamLead && !isSpecialist && !isBDERole && !isFreelancerRole && location.pathname.startsWith("/portal"));
 
   // A team lead keeps the lead sidebar even on a /workstation URL; only specialists
   // (and unknown roles landing there) get the member layout.
@@ -83,6 +85,8 @@ export function AdminSidebar() {
     !isClientRole &&
     !isAdminOrSuper &&
     !isTeamLead &&
+    !isBDERole &&
+    !isFreelancerRole &&
     (isSpecialist ||
       location.pathname.startsWith("/workstation") ||
       location.pathname.startsWith("/member"));
@@ -141,12 +145,14 @@ export function AdminSidebar() {
       items: [
         { label: "Manage Revenues", href: "/admin/revenue", icon: TrendingUp },
         { label: "Plans & Negotiations", href: "/admin/plans", icon: FileText },
+        { label: "BDE Sales & Outreach", href: "/admin/bde-oversight", icon: Briefcase, badge: "CRM" },
       ],
     },
     {
       label: "Team Management",
       items: [
         { label: "Team Management", href: "/admin/team", icon: Users },
+        { label: "Productivity & Efficiency", href: "/admin/productivity", icon: TrendingUp, badge: "KPIs" },
         { label: "Leave Requests & Approvals", href: "/admin/leaves", icon: CalendarCheck },
       ],
     },
@@ -245,6 +251,42 @@ export function AdminSidebar() {
     },
   ];
 
+  const bdeNavSections: NavSection[] = [
+    {
+      label: "BDE Workspace",
+      items: [
+        { label: "Pipeline & Leads", href: "/bde", icon: Briefcase, badge: "Deals" },
+      ],
+    },
+    {
+      label: "Commercial & Plans",
+      items: [
+        { label: "Rate Cards & Plans", href: "/admin/plans", icon: CreditCard },
+      ],
+    },
+    {
+      label: "Communication",
+      items: [
+        { label: "Team Slack Hub", href: "/slack", icon: MessageSquare, badge: "Chat" },
+      ],
+    },
+  ];
+
+  const freelancerNavSections: NavSection[] = [
+    {
+      label: "Freelancer Studio",
+      items: [
+        { label: "Assigned Workload", href: "/freelancer/tasks", icon: CheckSquare, badge: "Active" },
+      ],
+    },
+    {
+      label: "Communication",
+      items: [
+        { label: "Team Slack Hub", href: "/slack", icon: MessageSquare, badge: "Chat" },
+      ],
+    },
+  ];
+
   const portalPreviewSection: NavSection = {
     label: "Client Portal (Active View)",
     items: [
@@ -258,6 +300,10 @@ export function AdminSidebar() {
 
   const currentNavSections = user?.role === "client"
     ? clientNavSections
+    : isFreelancerRole
+    ? freelancerNavSections
+    : isBDERole
+    ? bdeNavSections
     : isMemberRole
     ? memberNavSections
     : user?.role === "team_lead"
@@ -268,6 +314,10 @@ export function AdminSidebar() {
 
   const homeHref = isAdminOrSuper
     ? "/admin"
+    : isFreelancerRole
+    ? "/freelancer/tasks"
+    : isBDERole
+    ? "/bde"
     : isTeamLead
     ? "/admin/pod-dashboard"
     : isMemberRole
@@ -288,13 +338,21 @@ export function AdminSidebar() {
     user?.full_name ||
     (isClientRole
       ? (user?.company_name || "Client Account")
+      : isFreelancerRole
+      ? "Freelancer Specialist"
+      : isBDERole
+      ? "BDE Specialist"
       : isMemberRole
       ? "Elena Rostova"
       : user?.role === "team_lead"
       ? "Pod Lead"
       : "Creo Admin");
 
-  const roleSubtitle = isMemberRole
+  const roleSubtitle = isFreelancerRole
+    ? "Creative Freelancer · Specialist Roster"
+    : isBDERole
+    ? "Business Development · Sales Hub"
+    : isMemberRole
     ? `${user?.role ? user.role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Specialist"} · Active Workstation`
     : user?.role === "team_lead"
     ? "Pod Lead · Operations"

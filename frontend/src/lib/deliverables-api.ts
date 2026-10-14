@@ -47,15 +47,83 @@ export async function approveDeliverable(
 export async function requestChanges(
   deliverableId: string,
   _clientId: string,
-  rejectionComment: string,
+  rejectionComment?: string,
+  voiceNoteUrl?: string,
+  voiceNoteDuration?: number,
 ): Promise<{ status: string; deliverable_id: string; revision_round: number }> {
   return request<{ status: string; deliverable_id: string; revision_round: number }>(
     `/api/v1/deliverables/${deliverableId}/request-changes`,
     {
       method: "POST",
-      body: JSON.stringify({ rejection_comment: rejectionComment }),
+      body: JSON.stringify({
+        rejection_comment: rejectionComment,
+        voice_note_url: voiceNoteUrl,
+        voice_note_duration: voiceNoteDuration,
+      }),
     },
   );
+}
+
+export async function uploadVoiceNote(
+  deliverableId: string,
+  audioBlob: Blob,
+  durationSeconds?: number,
+): Promise<{ storage_key: string; voice_note_url: string; duration?: number; file_size_bytes: number }> {
+  const token = getAuthToken();
+  const formData = new FormData();
+  formData.append("audio", audioBlob, "voice_feedback.webm");
+  if (durationSeconds !== undefined && durationSeconds !== null) {
+    formData.append("duration", String(durationSeconds));
+  }
+  const res = await fetch(apiUrl(`/api/v1/deliverables/${deliverableId}/upload-voice-note`), {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || err.detail || "Failed to upload voice recording");
+  }
+  return res.json();
+}
+
+export async function postVoiceResponse(
+  deliverableId: string,
+  message?: string,
+  voiceNoteUrl?: string,
+  voiceNoteDuration?: number,
+): Promise<any> {
+  return request<any>(`/api/v1/deliverables/${deliverableId}/voice-response`, {
+    method: "POST",
+    body: JSON.stringify({
+      message,
+      voice_note_url: voiceNoteUrl,
+      voice_note_duration: voiceNoteDuration,
+    }),
+  });
+}
+
+export async function withdrawDeliverable(
+  deliverableId: string,
+  reason: string,
+): Promise<{ status: string; message: string; deliverable_id: string; is_archived: boolean }> {
+  return request<{ status: string; message: string; deliverable_id: string; is_archived: boolean }>(
+    `/api/v1/deliverables/${deliverableId}/withdraw`,
+    {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    },
+  );
+}
+
+export async function fetchDeliverableHistory(
+  deliverableId: string,
+  isClient = false,
+): Promise<any[]> {
+  const endpoint = isClient
+    ? `/api/v1/portal/deliverables/${deliverableId}/history`
+    : `/api/v1/deliverables/${deliverableId}/history`;
+  return request<any[]>(endpoint);
 }
 
 /** Saves every approved deliverable as one ZIP file. */

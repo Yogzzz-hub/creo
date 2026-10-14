@@ -3,27 +3,31 @@ import { PublishingPanel } from "../../components/ops/PublishingPanel";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Check, Clock, Download, Film, ImageIcon, RefreshCw } from "lucide-react";
+import { AlertTriangle, Check, Clock, Download, Film, ImageIcon, RefreshCw, History, Loader2 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import {
   approveDeliverable,
   fetchPortalDeliverable,
   fetchPortalDeliverables,
   requestChanges,
+  uploadVoiceNote,
 } from "../../lib/deliverables-api";
 import { HttpError } from "../../lib/http";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
+import { DeliverableHistoryModal } from "../../components/portal/DeliverableHistoryModal";
+import { VoiceFeedbackRecorder } from "../../components/portal/VoiceFeedbackRecorder";
 
-import type { DeliverableItem } from "../../types/api";
+import type { DeliverableItem, DeletedDeliverableRecord } from "../../types/api";
 
-type Filter = "all" | "needs_you" | "revision" | "approved";
+type Filter = "all" | "needs_you" | "revision" | "approved" | "deleted";
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "All" },
   { key: "needs_you", label: "Needs you" },
   { key: "revision", label: "In revision" },
   { key: "approved", label: "Approved" },
+  { key: "deleted", label: "Archived" },
 ];
 
 const APPROVED_STATUSES = new Set(["approved", "scheduled", "publishing", "published", "publish_failed"]);
@@ -164,13 +168,17 @@ export function PortalDeliverablesPage() {
     refetchInterval: 2 * 60_000,
   });
   const deliverables = listQuery.data?.items ?? [];
+  const deletedRecords: DeletedDeliverableRecord[] = listQuery.data?.deleted_records ?? [];
 
   const [filter, setFilter] = useState<Filter>("all");
   const [viewVersionId, setViewVersionId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
+  const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; duration: number } | null>(null);
+  const [isUploadingVoice, setIsUploadingVoice] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [bulkProgress, setBulkProgress] = useState<string | null>(null);
+  const [historyModalDeliverable, setHistoryModalDeliverable] = useState<{ id: string; title: string } | null>(null);
 
   // A link may name an older version; the detail endpoint resolves it to the current one.
   const detailQuery = useQuery({
@@ -239,10 +247,21 @@ export function PortalDeliverablesPage() {
   });
 
   const requestChangesMutation = useMutation({
-    mutationFn: ({ id, comment }: { id: string; comment: string }) => requestChanges(id, clientId, comment),
+    mutationFn: ({
+      id,
+      comment,
+      voiceNoteUrl,
+      duration,
+    }: {
+      id: string;
+      comment: string;
+      voiceNoteUrl?: string;
+      duration?: number;
+    }) => requestChanges(id, clientId, comment, voiceNoteUrl, duration),
     onSuccess: () => {
       refresh();
       setCommentText("");
+      setRecordedAudio(null);
       setActionError(null);
       showToast("Revision requested — your pod has been notified.");
     },
@@ -364,7 +383,39 @@ export function PortalDeliverablesPage() {
               })}
             </div>
             <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-hide">
-              {visible.length === 0 ? (
+              {filter === "deleted" ? (
+                deletedRecords.length === 0 ? (
+                  <div className="p-4 text-center text-sm text-[#97A0B3]">
+                    No retracted or archived deliverables on record.
+                  </div>
+                ) : (
+                  deletedRecords.map((del) => (
+                    <div
+                      key={del.id}
+                      className="w-full p-3 rounded-2xl border border-rose-500/20 bg-[#0B111C]/40 text-left space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white capitalize">{del.deliverable_type || "Asset"} · v{del.version}</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                          Archived
+                        </span>
+                      </div>
+                      <div className="bg-[#161F2D] p-2.5 rounded-xl border border-[#2A3446]">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-0.5">
+                          Reason for Deletion / Withdrawal:
+                        </p>
+                        <p className="text-xs text-rose-200 leading-snug">
+                          "{del.deletion_reason}"
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-[#97A0B3] pt-0.5">
+                        <span>Retracted by Team Lead</span>
+                        <span className="font-mono">{new Date(del.deleted_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  ))
+                )
+              ) : visible.length === 0 ? (
                 <div className="p-4 text-center text-sm text-[#97A0B3]">
                   No {FILTERS.find((f) => f.key === filter)?.label.toLowerCase()} deliverables match your filter.{" "}
                   <button className="underline text-white" onClick={() => setFilter("all")}>Clear filter</button>
@@ -453,7 +504,17 @@ export function PortalDeliverablesPage() {
                   </p>
                   <h2 className="text-2xl font-normal text-white break-words">{shownItem.title}</h2>
                   <PublishingPanel key={shownItem.id} deliverableId={shownItem.id} onReview={setPublishingReview} />
-                  <div className="mt-2"><StatusBadge item={shownItem} /></div>
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                    <StatusBadge item={shownItem} />
+                    <button
+                      type="button"
+                      onClick={() => setHistoryModalDeliverable({ id: shownItem.id, title: shownItem.title })}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-[#2A3446] bg-[#0B111C] hover:bg-[#161F2D] text-xs font-semibold text-[#7FA0D6] transition-colors cursor-pointer"
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      View Full History & Audit Trail
+                    </button>
+                  </div>
                 </div>
 
                 {viewingOlder && (
@@ -479,7 +540,17 @@ export function PortalDeliverablesPage() {
 
                 {shownItem.rejection_comment && (
                   <div>
-                    <h4 className="text-[13px] font-bold text-white mb-2">Your requested changes</h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-[13px] font-bold text-white">Your requested changes</h4>
+                      <button
+                        type="button"
+                        onClick={() => setHistoryModalDeliverable({ id: shownItem.id, title: shownItem.title || "Deliverable" })}
+                        className="text-xs text-[#7FA0D6] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <History className="w-3.5 h-3.5" />
+                        Full History & Audio
+                      </button>
+                    </div>
                     <p className="text-[13px] text-[#97A0B3] leading-relaxed bg-[#0B111C]/50 rounded-xl p-4 border border-[#2A3446] whitespace-pre-wrap">
                       {shownItem.rejection_comment}
                     </p>
@@ -518,19 +589,58 @@ export function PortalDeliverablesPage() {
                           id="change-request"
                           value={commentText}
                           onChange={(e) => setCommentText(e.target.value)}
-                          placeholder="Tell your creative pod what to change (required)…"
-                          className="w-full bg-[#0B111C]/50 border border-[#2A3446] rounded-xl p-4 text-[13px] text-white placeholder:text-[#97A0B3] resize-none focus:outline-none focus:border-white/[0.2] transition-colors h-24 mb-4"
+                          placeholder="Tell your creative pod what to change (or record voice note below)…"
+                          className="w-full bg-[#0B111C]/50 border border-[#2A3446] rounded-xl p-4 text-[13px] text-white placeholder:text-[#97A0B3] resize-none focus:outline-none focus:border-white/[0.2] transition-colors h-20 mb-3"
                         />
+                        <div className="mb-4">
+                          <VoiceFeedbackRecorder
+                            onRecordingComplete={(blob, duration) => setRecordedAudio({ blob, duration })}
+                            onClearRecording={() => setRecordedAudio(null)}
+                          />
+                        </div>
                       </>
                     )}
                     <div className="flex items-center gap-3">
                       {!lastRoundUsed && (
                         <button
-                          onClick={() => requestChangesMutation.mutate({ id: shownItem.id, comment: commentText.trim() })}
-                          disabled={requestChangesMutation.isPending || !commentText.trim()}
-                          className="flex-1 px-4 py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#0B111C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={async () => {
+                            if (!shownItem) return;
+                            try {
+                              setIsUploadingVoice(true);
+                              let voiceUrl: string | undefined = undefined;
+                              if (recordedAudio?.blob) {
+                                const upRes = await uploadVoiceNote(shownItem.id, recordedAudio.blob, recordedAudio.duration);
+                                voiceUrl = upRes.voice_note_url;
+                              }
+                              await requestChangesMutation.mutateAsync({
+                                id: shownItem.id,
+                                comment: commentText.trim() || "[Voice Feedback Attached]",
+                                voiceNoteUrl: voiceUrl,
+                                duration: recordedAudio?.duration,
+                              });
+                            } catch {
+                              // error set in mutation
+                            } finally {
+                              setIsUploadingVoice(false);
+                            }
+                          }}
+                          disabled={
+                            requestChangesMutation.isPending ||
+                            isUploadingVoice ||
+                            (!commentText.trim() && !recordedAudio?.blob)
+                          }
+                          className="flex-1 px-4 py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#0B111C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                          {requestChangesMutation.isPending ? "Sending..." : "Request change"}
+                          {isUploadingVoice ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin text-[#7FA0D6]" />
+                              Uploading audio...
+                            </>
+                          ) : requestChangesMutation.isPending ? (
+                            "Sending..."
+                          ) : (
+                            "Request change"
+                          )}
                         </button>
                       )}
                       <button
@@ -592,6 +702,16 @@ export function PortalDeliverablesPage() {
           <span className="w-2 h-2 rounded-full bg-[#BCCCE6]" />
           {toastMessage}
         </div>
+      )}
+
+      {historyModalDeliverable && (
+        <DeliverableHistoryModal
+          isOpen={true}
+          onClose={() => setHistoryModalDeliverable(null)}
+          deliverableId={historyModalDeliverable.id}
+          deliverableTitle={historyModalDeliverable.title}
+          isClient={true}
+        />
       )}
     </div>
   );

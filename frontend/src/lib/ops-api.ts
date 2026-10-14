@@ -151,7 +151,14 @@ export async function resolveTaskSla(taskId: string): Promise<any> {
   // Assuming a generic resolution endpoint or status patch
   return request(`/api/v1/tasks/${taskId}/move`, {
     method: "PATCH",
-    body: JSON.stringify({ to_status: "completed" })
+    body: JSON.stringify({ to_status: "ready_to_publish" })
+  });
+}
+
+export async function moveTaskStage(taskId: string, toStatus: string): Promise<any> {
+  return request(`/api/v1/tasks/${taskId}/move`, {
+    method: "PATCH",
+    body: JSON.stringify({ to_status: toStatus })
   });
 }
 

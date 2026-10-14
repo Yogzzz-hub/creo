@@ -45,6 +45,7 @@ from app.routers import (
     negotiations,
     instagram,
     publishing,
+    bde,
 )
 
 logger = get_logger("app.main")
@@ -356,6 +357,7 @@ app.include_router(platform.router, prefix="/api/v1")
 app.include_router(tenant.router, prefix="/api/v1")
 app.include_router(notifications.router, prefix="/api/v1")
 app.include_router(chat.router, prefix="/api/v1")
+app.include_router(bde.router, prefix="/api/v1")
 app.include_router(public.router, prefix="/api/v1")
 app.include_router(public.router)
 

@@ -772,3 +772,213 @@ async def resume_subscription(
         "message": "Your subscription renewal has been resumed. AutoPay remains active.",
         "is_paused_next_month": False,
     }
+
+
+# ── Split Payment Management & Automated Reminders ───────────────────────────
+
+
+class InstalmentInput(BaseModel):
+    instalment_number: int | None = None
+    amount: float
+    due_date: str
+    notes: str | None = None
+
+
+class CreateSplitPackageRequest(BaseModel):
+    client_id: str | None = None  # if admin, can target client
+    title: str
+    total_amount: float
+    currency: str = "INR"
+    notes: str | None = None
+    instalments: list[InstalmentInput]
+
+
+class MarkInstalmentPaidRequest(BaseModel):
+    amount: float | None = None
+    payment_method: str = "manual"
+    transaction_ref: str | None = None
+    notes: str | None = None
+
+
+class UpdateInstalmentDeadlineRequest(BaseModel):
+    due_date: str
+    notes: str | None = None
+
+
+async def _authorize_split_client(db, actor, client_id, *, write=False):
+    from app.models.user import User
+    client = await db.get(User, client_id)
+    if not client or str(client.role) != "client":
+        raise HTTPException(status_code=404, detail="Client not found")
+    if str(actor.role) == "client":
+        if write or actor.user_id != client_id:
+            raise HTTPException(status_code=403, detail="Client access denied")
+    elif str(actor.role) not in ("admin", "super_admin", "sales", "team_lead"):
+        raise HTTPException(status_code=403, detail="Staff permission required")
+    if str(actor.role) != "super_admin" and (not actor.agency_id or client.agency_id != actor.agency_id):
+        raise HTTPException(status_code=403, detail="Client belongs to another agency")
+
+
+async def _authorize_split_instalment(db, actor, instalment_id):
+    from app.models.billing import PaymentInstalment
+    inst = await db.get(PaymentInstalment, instalment_id)
+    if not inst:
+        raise HTTPException(status_code=404, detail="Instalment not found")
+    await _authorize_split_client(db, actor, inst.client_id, write=True)
+    return inst
+
+
+@router.post("/split-packages")
+async def create_split_payment_package(
+    body: CreateSplitPackageRequest,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Agency admin/staff configures total agreed amount and divides it into instalments."""
+    import uuid
+    from app.services import split_payment_service
+
+    if actor.role not in ("admin", "super_admin", "sales", "team_lead"):
+        raise HTTPException(status_code=403, detail="Only agency staff can configure split payment packages")
+
+    target_client_id = uuid.UUID(body.client_id) if body.client_id else (actor.client_id or actor.user_id)
+    await _authorize_split_client(db, actor, target_client_id, write=True)
+    pkg = await split_payment_service.create_split_package(
+        db,
+        agency_id=actor.agency_id,
+        client_id=target_client_id,
+        title=body.title,
+        total_amount=body.total_amount,
+        currency=body.currency,
+        notes=body.notes,
+        instalments_data=[item.model_dump() for item in body.instalments],
+    )
+    return {
+        "status": "ok",
+        "package_id": str(pkg.id),
+        "title": pkg.title,
+        "total_amount": float(pkg.total_amount),
+        "currency": pkg.currency,
+    }
+
+
+@router.get("/split-summary")
+async def get_split_payment_summary(
+    client_id: str | None = None,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Retrieve total package amount, amount paid, pending balance, and upcoming deadlines."""
+    import uuid
+    from app.services import split_payment_service
+
+    target_id: uuid.UUID
+    if actor.role == "client":
+        target_id = actor.client_id or actor.user_id
+    elif client_id:
+        target_id = uuid.UUID(client_id)
+    elif actor.client_id:
+        target_id = actor.client_id
+    else:
+        # If admin without specified client, return empty or first client
+        target_id = actor.user_id
+
+    await _authorize_split_client(db, actor, target_id)
+    return await split_payment_service.get_client_split_summary(db, target_id)
+
+
+@router.post("/instalments/{instalment_id}/mark-paid")
+async def mark_split_instalment_paid(
+    instalment_id: str,
+    body: MarkInstalmentPaidRequest,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Authorized staff marks an instalment paid manually or from gateway webhook."""
+    import uuid
+    from app.services import split_payment_service
+
+    if actor.role not in ("admin", "super_admin", "sales", "team_lead"):
+        raise HTTPException(status_code=403, detail="Staff permission required to update payment status")
+
+    inst_uuid = uuid.UUID(instalment_id)
+    await _authorize_split_instalment(db, actor, inst_uuid)
+    updated = await split_payment_service.mark_instalment_paid(
+        db,
+        inst_uuid,
+        paid_amount=body.amount,
+        payment_method=body.payment_method,
+        transaction_ref=body.transaction_ref,
+        notes=body.notes,
+        actor_id=actor.user_id,
+    )
+    return {
+        "status": "ok",
+        "instalment_id": str(updated.id),
+        "instalment_status": updated.status,
+        "paid_amount": float(updated.paid_amount),
+        "paid_at": updated.paid_at.isoformat() if updated.paid_at else None,
+    }
+
+
+@router.patch("/instalments/{instalment_id}/deadline")
+async def update_split_instalment_deadline(
+    instalment_id: str,
+    body: UpdateInstalmentDeadlineRequest,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Agency sets or updates payment deadline for an instalment."""
+    import uuid
+    from app.services import split_payment_service
+
+    if actor.role not in ("admin", "super_admin", "sales", "team_lead"):
+        raise HTTPException(status_code=403, detail="Staff permission required to set deadline")
+
+    inst_uuid = uuid.UUID(instalment_id)
+    await _authorize_split_instalment(db, actor, inst_uuid)
+    updated = await split_payment_service.update_instalment_deadline(
+        db, inst_uuid, body.due_date, notes=body.notes,
+    )
+    return {
+        "status": "ok",
+        "instalment_id": str(updated.id),
+        "due_date": updated.due_date.isoformat(),
+        "instalment_status": updated.status,
+    }
+
+
+@router.post("/instalments/{instalment_id}/remind")
+async def send_split_instalment_reminder(
+    instalment_id: str,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Trigger manual or automated payment reminder for an upcoming instalment."""
+    import uuid
+    from app.models.billing import PaymentInstalment
+    from app.services import split_payment_service
+
+    inst_uuid = uuid.UUID(instalment_id)
+    await _authorize_split_instalment(db, actor, inst_uuid)
+    inst = await db.get(PaymentInstalment, inst_uuid)
+    if not inst:
+        raise HTTPException(status_code=404, detail="Instalment not found")
+
+    sent = await split_payment_service.send_automated_instalment_reminder(db, inst)
+    return {
+        "status": "ok" if sent else "skipped",
+        "reminder_sent": sent,
+    }
+
+
+@router.post("/split-check-reminders")
+async def trigger_split_payment_reminder_check(
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Automated task checking for approaching deadlines and overdue instalments."""
+    from app.services import split_payment_service
+
+    return await split_payment_service.check_and_dispatch_reminders(db)
+

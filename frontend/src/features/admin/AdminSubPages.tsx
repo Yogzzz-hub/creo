@@ -18,6 +18,7 @@ import {
   rejectLeaveRequest,
   fetchAdminQueue,
   fetchKanbanTasks,
+  moveTaskStage,
   fetchAdminDeliverables,
   fetchPlansSummary,
   fetchAdminKPIs,
@@ -86,15 +87,30 @@ import {
   Folder,
   Lock,
   ShieldCheck,
-  Columns2,
-  Maximize2,
-  Sparkles,
-  Copy,
-  Type,
+  History,
+  Archive,
+  CreditCard,
   RotateCcw,
+  RefreshCw,
+  AlertCircle,
+  Sparkles,
+  Type,
+  Copy,
+  Send,
+  Maximize2,
+  Columns2,
+  IndianRupee,
+  UserCheck,
+  LayoutGrid,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CustomSelect } from "../../components/ui/CustomSelect";
+import { DeliverableHistoryModal } from "../../components/portal/DeliverableHistoryModal";
+import { WithdrawDeliverableModal } from "../../components/portal/WithdrawDeliverableModal";
+import { AdminSplitPaymentModal } from "../../components/admin/AdminSplitPaymentModal";
+import { AdminFreelancerModal } from "../../components/admin/AdminFreelancerModal";
+import { AdminAssignFreelancerModal } from "../../components/admin/AdminAssignFreelancerModal";
+import { fetchFreelancers, updateFreelancerStatus, FreelancerProfileItem } from "../../lib/freelancer-api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. ADMIN CLIENTS PAGE (CLIENT DETAILS & BRAND BRIEF)
@@ -249,6 +265,9 @@ export function AdminClientsPage() {
       setDirectBypassClientPlans([]);
     }
   }, [directBypassTargetClient?.id]);
+
+  const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
+  const [splitPaymentClient, setSplitPaymentClient] = useState<{ id: string; name: string } | null>(null);
 
   const manualPayments = manualPaymentsQuery.data || [];
   const pendingManualPayments = manualPayments.filter((p) => p.status === "PENDING");
@@ -616,18 +635,6 @@ export function AdminClientsPage() {
       null
     : null;
 
-  const activeClientPendingNeg = useMemo(() => {
-    if (!negotiationsQuery.data || !activeClient) return null;
-    return negotiationsQuery.data.find(
-      (n) =>
-        n.status === "Pending Review" &&
-        ((n.clientId && n.clientId.toLowerCase() === activeClient.id.toLowerCase()) ||
-         (n.clientEmail && activeClient.contact?.email && n.clientEmail.toLowerCase() === activeClient.contact.email.toLowerCase()) ||
-         (n.clientName && activeClient.name && n.clientName.toLowerCase() === activeClient.name.toLowerCase()))
-    );
-  }, [negotiationsQuery.data, activeClient]);
-
-  
   const [liveDeliverables, setLiveDeliverables] = useState<any[]>([]);
   useEffect(() => {
     if (activeClient?.id && !activeClient.id.includes('ryze')) {
@@ -1154,6 +1161,22 @@ export function AdminClientsPage() {
                             <span>Revoke Bypass</span>
                           </button>
                         ) : null}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSplitPaymentClient({
+                              id: client.id,
+                              name: client.name,
+                            });
+                            setIsSplitModalOpen(true);
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                          title="Configure split payment instalments & reminders"
+                        >
+                          <CreditCard className="w-3.5 h-3.5 text-blue-400" />
+                          <span>Split Payment</span>
+                        </button>
                       </div>
                       <span className="text-[#7FA0D6] font-bold group-hover:underline flex items-center gap-1">
                         View Client Detail View &rarr;
@@ -1205,6 +1228,14 @@ export function AdminClientsPage() {
             const isNotPaidNotOnboarded = detailLifecycleStatus === "not_paid_not_onboarded";
             const isPaidNotOnboarded = detailLifecycleStatus === "paid_not_onboarded";
 
+            const activeClientPendingNeg = (negotiationsQuery.data || []).find(
+              (n) =>
+                n.status === "Pending Review" &&
+                ((n.clientId && activeClient?.id && n.clientId.toLowerCase() === activeClient.id.toLowerCase()) ||
+                 (n.clientEmail && activeClient?.contact?.email && n.clientEmail.toLowerCase() === activeClient.contact.email.toLowerCase()) ||
+                 (n.clientName && activeClient?.name && n.clientName.toLowerCase() === activeClient.name.toLowerCase()))
+            );
+
             return (
           <div className="space-y-4 sm:space-y-6 animate-fade-in">
             {/* Top Breadcrumb & Live Status */}
@@ -1224,57 +1255,42 @@ export function AdminClientsPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                {isNotPaidNotOnboarded ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!activeClient) return;
-                      setDirectBypassTargetClient({
-                        id: activeClient.id,
-                        name: activeClient.name,
-                        email: activeClient.contact?.email || "",
-                      });
-                      setDirectBypassPlanId(plansQuery.data?.[0]?.id || "");
-                      setIsDirectBypassModalOpen(true);
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
-                  >
-                    <Banknote className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Bypass Step 3 Payment</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!activeClient) return;
-                      handleRevokeBypass({
-                        id: activeClient.id,
-                        name: activeClient.name,
-                      });
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
-                    title="Revoke payment bypass and return client to Step 3"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
-                    <span>Revoke Payment Bypass</span>
-                  </button>
-                )}
-                {isNotPaidNotOnboarded ? (
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1.5 shadow-2xs">
-                    <span className="w-2 h-2 rounded-full bg-amber-400" />
-                    user not paid and not onboarded yet
-                  </span>
-                ) : isPaidNotOnboarded ? (
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-sky-500/15 text-sky-400 border border-sky-500/30 flex items-center gap-1.5 shadow-2xs">
-                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
-                    user paid but not onboarded
-                  </span>
-                ) : (
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#161F2D] text-white border border-[#2A3446] flex items-center gap-1.5 shadow-2xs">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Live Client • Onboarded
-                  </span>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!activeClient) return;
+                    setDirectBypassTargetClient({
+                      id: activeClient.id,
+                      name: activeClient.name,
+                      email: activeClient.contact?.email || "",
+                    });
+                    setDirectBypassPlanId(plansQuery.data?.[0]?.id || "");
+                    setIsDirectBypassModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
+                >
+                  <Banknote className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Bypass Step 3 Payment</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!activeClient) return;
+                    setSplitPaymentClient({
+                      id: activeClient.id,
+                      name: activeClient.name,
+                    });
+                    setIsSplitModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
+                >
+                  <CreditCard className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Split Payment Schedule</span>
+                </button>
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#161F2D] text-white border border-[#2A3446] flex items-center gap-1.5 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Client • v2.4
+                </span>
               </div>
             </div>
 
@@ -2718,7 +2734,7 @@ export function AdminClientsPage() {
                     onChange={(e) => setDirectBypassPlanId(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
                   >
-                    {((directBypassClientPlans.length > 0 ? directBypassClientPlans : plansQuery.data) || []).map((p) => (
+                    {((directBypassClientPlans.length > 0 ? directBypassClientPlans : plansQuery.data) || []).map((p: any) => (
                       <option key={p.id} value={p.id}>
                         {p.display_name} (₹{(p.price_minor / 100).toLocaleString()}/mo)
                       </option>
@@ -2772,6 +2788,15 @@ export function AdminClientsPage() {
             </div>
           </div>
         )}
+        {isSplitModalOpen && splitPaymentClient && (
+          <AdminSplitPaymentModal
+            isOpen={true}
+            onClose={() => setIsSplitModalOpen(false)}
+            clientId={splitPaymentClient.id}
+            clientName={splitPaymentClient.name}
+            onSuccess={() => showToast("Split payment package updated successfully.")}
+          />
+        )}
       </main>
     </div>
   );
@@ -2792,6 +2817,8 @@ export function AdminDeliverablesPage() {
 
   const [revisionItem, setRevisionItem] = useState<{ id: string; title: string } | null>(null);
   const [revisionReason, setRevisionReason] = useState("");
+  const [withdrawModalItem, setWithdrawModalItem] = useState<{ id: string; title: string } | null>(null);
+  const [historyModalItem, setHistoryModalItem] = useState<{ id: string; title: string } | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const deliverablesQuery = useQuery({ queryKey: ["admin-uploaded-deliverables", user?.id], enabled: !!user, queryFn: () => fetchAdminDeliverables(), retry: false });
@@ -3112,21 +3139,43 @@ export function AdminDeliverablesPage() {
 
                 {/* Action Buttons */}
                 <div className="flex items-center gap-2 pt-1">
+                  {item.status === "pending_qa" ? (
+                    <>
+                      <button
+                        type="button"
+                        disabled={reviewBusy || !item.previewUrl}
+                        onClick={() => void handleApprove(item.id, item.title)}
+                        className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" /> Approve
+                      </button>
+                      <button
+                        type="button"
+                        disabled={reviewBusy || !item.previewUrl}
+                        onClick={() => handleDecline(item.id, item.title)}
+                        className="flex-1 py-2.5 bg-[#161F2D] hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <X className="w-3.5 h-3.5 stroke-[2.5]" /> Request Edit
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={reviewBusy || item.is_archived}
+                      onClick={() => setWithdrawModalItem({ id: item.id, title: item.title })}
+                      className="flex-1 py-2 bg-[#161F2D] hover:bg-rose-500/10 border border-rose-500/30 hover:border-rose-500 text-rose-400 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40"
+                      title="Withdraw deliverable with minor issues even after approval"
+                    >
+                      <Archive className="w-3.5 h-3.5" /> Withdraw / Delete
+                    </button>
+                  )}
                   <button
                     type="button"
-                    disabled={reviewBusy || item.status !== "pending_qa" || !item.previewUrl}
-                    onClick={() => void handleApprove(item.id, item.title)}
-                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    onClick={() => setHistoryModalItem({ id: item.id, title: item.title })}
+                    className="p-2.5 bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] rounded-xl text-[#7FA0D6] hover:text-white transition-colors cursor-pointer shrink-0"
+                    title="View Activity & Version History"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" /> Approve
-                  </button>
-                  <button
-                    type="button"
-                    disabled={reviewBusy || item.status !== "pending_qa" || !item.previewUrl}
-                    onClick={() => handleDecline(item.id, item.title)}
-                    className="flex-1 py-2.5 bg-[#161F2D] hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    <X className="w-3.5 h-3.5 stroke-[2.5]" /> Request Edit
+                    <History className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -3236,6 +3285,29 @@ export function AdminDeliverablesPage() {
             </div>
           </div>
         )}
+
+        {withdrawModalItem && (
+          <WithdrawDeliverableModal
+            isOpen={true}
+            onClose={() => setWithdrawModalItem(null)}
+            deliverableId={withdrawModalItem.id}
+            deliverableTitle={withdrawModalItem.title}
+            onSuccess={() => {
+              deliverablesQuery.refetch();
+              showToast("Deliverable safely withdrawn and archived. Deletion record logged with client visibility.");
+            }}
+          />
+        )}
+
+        {historyModalItem && (
+          <DeliverableHistoryModal
+            isOpen={true}
+            onClose={() => setHistoryModalItem(null)}
+            deliverableId={historyModalItem.id}
+            deliverableTitle={historyModalItem.title}
+            isClient={false}
+          />
+        )}
       </main>
     </div>
   );
@@ -3244,15 +3316,56 @@ export function AdminDeliverablesPage() {
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. ADMIN TASKS & DISPATCH QUEUE PAGE
 // ─────────────────────────────────────────────────────────────────────────────
+interface AdminTaskItem {
+  id: string;
+  column: "todo" | "in_progress" | "under_review" | "approved";
+  rawStatus: string;
+  client: string;
+  clientPill: string;
+  priority: "Normal" | "High" | "Urgent";
+  priorityPill: string;
+  title: string;
+  type: string;
+  avatar: string;
+  avatarBg: string;
+  assigneeName: string;
+  assigneeEmail?: string;
+  isFreelancer: boolean;
+  freelancerId?: string;
+  freelancerSpecialty?: string;
+  milestoneFee?: number;
+  instructions?: string;
+  sp: number;
+  due: string;
+  dueDateRaw?: string;
+  pod: string;
+  blueprint?: Record<string, any>;
+  deliverables?: any[];
+}
+
 export function AdminTasksPage() {
+  const [searchParams] = useSearchParams();
+  const isFreelancerParam = searchParams.get("view") === "freelancers" || searchParams.get("view") === "freelancer_roster";
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPod, setSelectedPod] = useState("all");
   const [selectedClient, setSelectedClient] = useState("all");
   const [priorityFilter, _setPriorityFilter] = useState<"all" | "urgent" | "high">("all"); void _setPriorityFilter;
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [previewTask, setPreviewTask] = useState<any | null>(null);
+  const [assigneeTypeFilter, setAssigneeTypeFilter] = useState<"all" | "freelancers" | "in_house">(
+    isFreelancerParam ? "freelancers" : "all"
+  );
+  const [selectedFreelancer, setSelectedFreelancer] = useState("all");
+  const [viewMode, setViewMode] = useState<"kanban" | "freelancer_roster">(
+    isFreelancerParam ? "freelancer_roster" : "kanban"
+  );
   const [mobileKanbanCol, setMobileKanbanCol] = useState<"all" | "todo" | "in_progress" | "under_review" | "approved">("all");
+  const [toast, setToast] = useState<string | null>(null);
+  const [previewTask, setPreviewTask] = useState<any | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isAssignPickerOpen, setIsAssignPickerOpen] = useState(false);
+  const [assignFreelancerTarget, setAssignFreelancerTarget] = useState<FreelancerProfileItem | null>(null);
+  const [isAdvancingStage, setIsAdvancingStage] = useState(false);
 
+  // In-house creation form state
   const [newTaskForm, setNewTaskForm] = useState({
     title: "",
     client: "Ryze Mushroom Coffee",
@@ -3265,191 +3378,303 @@ export function AdminTasksPage() {
     column: "todo",
   });
 
-  const [kanbanTasks, setKanbanTasks] = useState<any[]>([
+  // Queries
+  const {
+    data: kanbanData,
+    isFetching: isTasksFetching,
+    refetch: refetchTasks,
+  } = useQuery({
+    queryKey: ["admin-kanban-tasks"],
+    queryFn: () => fetchKanbanTasks(),
+    refetchInterval: 15000,
+  });
+
+  const {
+    data: freelancersList = [],
+    refetch: refetchFreelancers,
+  } = useQuery({
+    queryKey: ["admin-freelancers-queue"],
+    queryFn: () => fetchFreelancers(),
+  });
+
+  // Auto clear toast
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  // Default fallback tasks for offline / empty state
+  const defaultTasks: AdminTaskItem[] = useMemo(() => [
     {
       id: "task-101",
-      column: "in_progress",
+      column: "in_progress" as const,
+      rawStatus: "in_production",
       client: "Ryze Mushroom Coffee",
       clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "Urgent",
+      priority: "Urgent" as const,
       priorityPill: "bg-rose-600 text-white font-black",
       title: "3D Product Render & Motion Hook (15s Reel)",
       type: "3D Render / Blender",
       avatar: "VM",
       avatarBg: "bg-blue-600",
       assigneeName: "Vikram Malhotra",
+      isFreelancer: false,
       sp: 8,
       due: "Today, 6:00 PM",
       pod: "Pod A",
     },
     {
       id: "task-102",
-      column: "todo",
+      column: "todo" as const,
+      rawStatus: "backlog",
       client: "Ryze Mushroom Coffee",
       clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "High",
+      priority: "High" as const,
       priorityPill: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
       title: "DTC Ad Hook Variations (15s Reel Clips)",
       type: "Performance Editing",
       avatar: "SC",
       avatarBg: "bg-purple-600",
       assigneeName: "Sarah Connor",
+      isFreelancer: false,
       sp: 5,
       due: "Tomorrow, 2:00 PM",
       pod: "Pod B",
     },
     {
       id: "task-103",
-      column: "under_review",
+      column: "under_review" as const,
+      rawStatus: "internal_qa",
       client: "Acme Corp",
       clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "High",
+      priority: "High" as const,
       priorityPill: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
       title: "Instagram Story Templates (1080x1920 Figma Kit)",
       type: "Visual Design",
       avatar: "ER",
       avatarBg: "bg-emerald-600",
       assigneeName: "Elena Rostova",
+      isFreelancer: false,
       sp: 3,
       due: "Oct 5, 2026",
       pod: "Pod A",
     },
     {
       id: "task-104",
-      column: "approved",
+      column: "approved" as const,
+      rawStatus: "ready_to_publish",
       client: "Kavya Organics",
       clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "Normal",
+      priority: "Normal" as const,
       priorityPill: "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
       title: "Brand Guidelines & Color Palette Audit (v2.0)",
       type: "Brand Strategy",
       avatar: "MB",
       avatarBg: "bg-amber-600",
       assigneeName: "Marcus Brody",
+      isFreelancer: false,
       sp: 4,
       due: "Oct 3, 2026",
       pod: "Pod C",
     },
-    {
-      id: "task-105",
-      column: "in_progress",
-      client: "Ryze Mushroom Coffee",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "High",
-      priorityPill: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
-      title: "TikTok Motion Hook (Rec.709 Color Grading)",
-      type: "Color Grading",
-      avatar: "AR",
-      avatarBg: "bg-[#7FA0D6]",
-      assigneeName: "Alex Rivera",
-      sp: 6,
-      due: "Today, 8:00 PM",
-      pod: "Pod B",
-    },
-    {
-      id: "task-106",
-      column: "todo",
-      client: "Acme Corp",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "Urgent",
-      priorityPill: "bg-rose-600 text-white font-black",
-      title: "Motion Graphics Carousel Post (5 Slides)",
-      type: "Motion Graphics",
-      avatar: "VM",
-      avatarBg: "bg-blue-600",
-      assigneeName: "Vikram Malhotra",
-      sp: 4,
-      due: "Tomorrow, 11:00 AM",
-      pod: "Pod C",
-    },
-  ]);
+  ], []);
 
-  useEffect(() => {
-    fetchKanbanTasks()
-      .then((data) => {
-        if (!data) return;
-        const all = [
-          ...(data.backlog || []).map((t: any) => ({ ...t, column: "todo" })),
-          ...(data.in_production || []).map((t: any) => ({ ...t, column: "in_progress" })),
-          ...(data.internal_qa || []).map((t: any) => ({ ...t, column: "under_review" })),
-          ...(data.client_review || []).map((t: any) => ({ ...t, column: "under_review" })),
-          ...(data.ready_to_publish || []).map((t: any) => ({ ...t, column: "approved" })),
-        ].map((t: any) => ({
-          id: t.id,
-          column: t.column,
-          client: t.client_name || "Client",
-          clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-          priority: t.is_near_sla ? "Urgent" : (t.priority || "Normal"),
-          priorityPill: t.is_near_sla ? "bg-rose-600 text-white font-black" : "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
-          title: t.deliverable?.title || t.deliverable_type || "Design Task",
-          type: t.deliverable_type || "Design",
-          avatar: t.assignee_name ? t.assignee_name.split(" ").map((n: string) => n[0]).join("").slice(0,2).toUpperCase() : "UN",
-          avatarBg: "bg-blue-600",
-          assigneeName: t.assignee_name || "Unassigned",
-          sp: t.effort_points || 4,
-          due: t.due_date ? new Date(t.due_date).toLocaleDateString() : "No Date",
-          pod: "Pod A",
-        }));
-        setKanbanTasks(all);
-      })
-      .catch(console.error);
-  }, []);
+  // Normalize server tasks
+  const tasks: AdminTaskItem[] = useMemo(() => {
+    if (!kanbanData) return defaultTasks;
 
-  const handleCreateTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTaskForm.title.trim()) return;
+    const allRaw = [
+      ...(kanbanData.backlog || []).map((t: any) => ({ ...t, column: "todo", mappedStatus: "backlog" })),
+      ...(kanbanData.in_production || []).map((t: any) => ({ ...t, column: "in_progress", mappedStatus: "in_production" })),
+      ...(kanbanData.internal_qa || []).map((t: any) => ({ ...t, column: "under_review", mappedStatus: "internal_qa" })),
+      ...(kanbanData.client_review || []).map((t: any) => ({ ...t, column: "under_review", mappedStatus: "client_review" })),
+      ...(kanbanData.ready_to_publish || []).map((t: any) => ({ ...t, column: "approved", mappedStatus: "ready_to_publish" })),
+    ];
 
-    const newTask = {
-      id: `task-${Date.now()}`,
-      column: newTaskForm.column,
-      client: newTaskForm.client,
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: newTaskForm.priority,
-      priorityPill:
-        newTaskForm.priority === "Urgent"
+    if (allRaw.length === 0) return defaultTasks;
+
+    return allRaw.map((t: any) => {
+      const isFreelancer = Boolean(
+        t.assignee?.role === "freelancer" ||
+        t.assignee_role === "freelancer" ||
+        t.blueprint?.is_freelancer ||
+        t.blueprint?.freelancer_id ||
+        t.assignee?.is_freelancer
+      );
+
+      const freelancerName =
+        t.blueprint?.freelancer_name ||
+        (isFreelancer ? t.assignee_name || t.assignee?.full_name : null);
+
+      const freelancerEmail =
+        t.blueprint?.freelancer_email ||
+        (isFreelancer ? t.assignee_email || t.assignee?.email : null);
+
+      const freelancerSpecialty =
+        t.blueprint?.specialty ||
+        t.freelancer_specialty ||
+        t.assignee?.specialty ||
+        (isFreelancer ? "External Specialist" : undefined);
+
+      const milestoneFee =
+        t.blueprint?.milestone_fee ||
+        t.freelancer_rate ||
+        t.assignee?.hourly_rate;
+
+      const title =
+        t.blueprint?.title ||
+        t.blueprint?.concept_name ||
+        t.deliverable?.title ||
+        t.title ||
+        (t.deliverable_type ? `${String(t.deliverable_type).toUpperCase()} Production` : "Creative Task");
+
+      const clientName =
+        t.client_company ||
+        t.client_name ||
+        (t.client_email ? t.client_email.split("@")[0] : null) ||
+        "Creo Client";
+
+      const priority = (t.blueprint?.priority || (t.is_near_sla ? "Urgent" : t.priority || "Normal")) as "Normal" | "High" | "Urgent";
+
+      const priorityPill =
+        priority === "Urgent"
           ? "bg-rose-600 text-white font-black"
-          : newTaskForm.priority === "High"
-          ? "bg-rose-50 text-rose-600 border-rose-100"
-          : "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
-      title: newTaskForm.title.trim(),
-      type: newTaskForm.category,
-      avatar: newTaskForm.assignee
+          : priority === "High"
+          ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+          : "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]";
+
+      const initials = (freelancerName || t.assignee_name || "UN")
         .split(" ")
-        .map((n) => n[0])
+        .map((n: string) => n[0])
         .join("")
         .slice(0, 2)
-        .toUpperCase(),
-      avatarBg: "bg-blue-600",
-      assigneeName: newTaskForm.assignee,
-      sp: Number(newTaskForm.sp) || 4,
-      due: newTaskForm.dueDate || "Tomorrow",
-      pod: newTaskForm.pod,
-    };
+        .toUpperCase();
 
-    setKanbanTasks((prev) => [newTask, ...prev]);
-    setIsCreateModalOpen(false);
-    setNewTaskForm({
-      title: "",
-      client: "Ryze",
-      pod: "Pod A",
-      category: "3D Render / Blender",
-      sp: 4,
-      dueDate: "Tomorrow",
-      priority: "High",
-      assignee: "Lead Producer",
-      column: "todo",
+      return {
+        id: String(t.id),
+        column: t.column,
+        rawStatus: t.status || t.mappedStatus || "in_production",
+        client: clientName,
+        clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+        priority,
+        priorityPill,
+        title,
+        type: t.deliverable_type ? String(t.deliverable_type).replace(/_/g, " ").toUpperCase() : "VIDEO PRODUCTION",
+        avatar: initials,
+        avatarBg: isFreelancer ? "bg-gradient-to-tr from-purple-600 to-indigo-600" : "bg-blue-600",
+        assigneeName: freelancerName || t.assignee_name || "Unassigned",
+        assigneeEmail: freelancerEmail || t.assignee_email,
+        isFreelancer,
+        freelancerId: t.blueprint?.freelancer_id || t.assigned_to,
+        freelancerSpecialty,
+        milestoneFee: milestoneFee ? Number(milestoneFee) : undefined,
+        instructions: t.blueprint?.instructions || "",
+        sp: t.effort_points || 4,
+        due: t.due_date ? new Date(t.due_date).toLocaleDateString() : "Flexible",
+        dueDateRaw: t.due_date,
+        pod: t.pod || (isFreelancer ? "Outsourced" : "Pod A"),
+        blueprint: t.blueprint,
+        deliverables: t.deliverables || [],
+      };
     });
+  }, [kanbanData, defaultTasks]);
+
+  // Stage advancing handler
+  const handleAdvanceStage = async (taskId: string, targetStatus: string) => {
+    setIsAdvancingStage(true);
+    try {
+      await moveTaskStage(taskId, targetStatus);
+      setToast(`Task successfully moved to ${targetStatus.replace(/_/g, " ").toUpperCase()}!`);
+      await refetchTasks();
+      if (previewTask && previewTask.id === taskId) {
+        setPreviewTask((prev: any) => ({
+          ...prev,
+          rawStatus: targetStatus,
+          column:
+            targetStatus === "backlog"
+              ? "todo"
+              : targetStatus === "in_production"
+              ? "in_progress"
+              : targetStatus === "ready_to_publish"
+              ? "approved"
+              : "under_review",
+        }));
+      }
+    } catch (err: any) {
+      setToast(err?.message || "Failed to advance stage.");
+    } finally {
+      setIsAdvancingStage(false);
+    }
   };
 
-  const filteredTasks = kanbanTasks.filter((t) => {
+  // Dynamic filter dropdown options
+  const clientOptions = useMemo(() => {
+    const set = new Set<string>();
+    tasks.forEach((t) => {
+      if (t.client) set.add(t.client);
+    });
+    return [
+      { value: "all", label: "All Clients" },
+      ...Array.from(set).map((c) => ({ value: c, label: c })),
+    ];
+  }, [tasks]);
+
+  const freelancerFilterOptions = useMemo(() => {
+    const list = freelancersList || [];
+    return [
+      { value: "all", label: "All Freelancers / Specialists" },
+      ...list.map((f: FreelancerProfileItem) => ({
+        value: String(f.id),
+        label: `${f.full_name} (${f.specialty || "Specialist"})`,
+      })),
+    ];
+  }, [freelancersList]);
+
+  // Calculations for KPI strip
+  const freelancerTasks = useMemo(() => tasks.filter((t) => t.isFreelancer), [tasks]);
+  const inHouseTasks = useMemo(() => tasks.filter((t) => !t.isFreelancer), [tasks]);
+
+  const inProductionFreelancersCount = freelancerTasks.filter(
+    (t) => t.column === "in_progress" || t.rawStatus === "in_production"
+  ).length;
+
+  const underReviewFreelancersCount = freelancerTasks.filter(
+    (t) => t.column === "under_review" || t.rawStatus === "internal_qa" || t.rawStatus === "client_review"
+  ).length;
+
+  const approvedFreelancersCount = freelancerTasks.filter(
+    (t) => t.column === "approved" || t.rawStatus === "ready_to_publish"
+  ).length;
+
+  const totalFreelancerPayout = freelancerTasks.reduce(
+    (sum, t) => sum + (t.milestoneFee || 0),
+    0
+  );
+
+  // Filter tasks
+  const filteredTasks = tasks.filter((t) => {
     const matchesSearch =
       !searchQuery.trim() ||
       t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.client.toLowerCase().includes(searchQuery.toLowerCase());
+      t.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.assigneeName.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesPod = selectedPod === "all" || t.pod === selectedPod;
     const matchesClient =
       selectedClient === "all" || t.client.toLowerCase().includes(selectedClient.toLowerCase());
+
+    const matchesAssigneeType =
+      assigneeTypeFilter === "all"
+        ? true
+        : assigneeTypeFilter === "freelancers"
+        ? t.isFreelancer
+        : !t.isFreelancer;
+
+    const matchesFreelancer =
+      selectedFreelancer === "all"
+        ? true
+        : (String(t.freelancerId) === selectedFreelancer || t.assigneeName.toLowerCase().includes(selectedFreelancer.toLowerCase()));
 
     const matchesPriority =
       priorityFilter === "all"
@@ -3460,7 +3685,7 @@ export function AdminTasksPage() {
         ? t.priority === "High" || t.priority === "Urgent"
         : true;
 
-    return matchesSearch && matchesPod && matchesClient && matchesPriority;
+    return matchesSearch && matchesPod && matchesClient && matchesAssigneeType && matchesFreelancer && matchesPriority;
   });
 
   const todoTasks = filteredTasks.filter((t) => t.column === "todo");
@@ -3468,30 +3693,195 @@ export function AdminTasksPage() {
   const underReviewTasks = filteredTasks.filter((t) => t.column === "under_review");
   const approvedTasks = filteredTasks.filter((t) => t.column === "approved");
 
+  const handleCreateTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskForm.title.trim()) return;
+
+    setToast(`Task '${newTaskForm.title}' queued for production.`);
+    setIsCreateModalOpen(false);
+    setNewTaskForm({
+      title: "",
+      client: "Ryze Mushroom Coffee",
+      pod: "Pod A",
+      category: "3D Render / Blender",
+      sp: 4,
+      dueDate: "Tomorrow",
+      priority: "High",
+      assignee: "Lead Producer",
+      column: "todo",
+    });
+  };
+
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
-        {/* Header Title and Search Filter Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
-              <span className="w-2 h-2 rounded-full bg-[#7FA0D6] animate-pulse" />
+
+      {/* Floating Notification Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[99999] bg-[#161F2D] border border-emerald-500/40 text-emerald-300 px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 text-xs font-semibold animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toast}</span>
+        </div>
+      )}
+
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1550px] w-full mx-auto space-y-5 sm:space-y-6">
+        
+        {/* Global Controls & View Switcher */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+              <span className={`w-2 h-2 rounded-full bg-[#7FA0D6] ${isTasksFetching ? "animate-spin" : "animate-pulse"}`} />
               Live Sync
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            <div className="relative w-full sm:w-64">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* View Switcher: Kanban vs Freelancer Table */}
+            <div className="p-1 bg-[#161F2D] rounded-2xl border border-[#2A3446] flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setViewMode("kanban")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  viewMode === "kanban"
+                    ? "bg-[#7FA0D6] text-white shadow-sm"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" /> Pipeline Board
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setViewMode("freelancer_roster");
+                  setAssigneeTypeFilter("freelancers");
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  viewMode === "freelancer_roster"
+                    ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                    : "text-purple-300/80 hover:text-white"
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                Freelancer Queue
+                <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-purple-500/30 text-purple-200">
+                  {freelancerTasks.length}
+                </span>
+              </button>
+            </div>
+
+            {/* Quick Refresh Button */}
+            <button
+              type="button"
+              onClick={() => {
+                refetchTasks();
+                refetchFreelancers();
+                setToast("Tasks synchronized with server.");
+              }}
+              className="p-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#97A0B3] hover:text-white transition-colors"
+              title="Refresh Task Queue"
+            >
+              <RefreshCw className={`w-4 h-4 ${isTasksFetching ? "animate-spin text-purple-400" : ""}`} />
+            </button>
+
+            {/* Assign Freelancer Task CTA */}
+            <button
+              type="button"
+              onClick={() => setIsAssignPickerOpen(true)}
+              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer transition-all"
+            >
+              <UserCheck className="w-4 h-4 stroke-[2.5]" />
+              Assign Freelancer
+            </button>
+
+            {/* Create Production Task */}
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-3.5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              Create Task
+            </button>
+          </div>
+        </div>
+
+        {/* Filter Bar with Assignee Category Segmented Tabs */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 bg-[#161F2D]/60 p-3 rounded-2xl border border-[#2A3446]/80 backdrop-blur-md">
+          {/* Assignee Category Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
+            <button
+              type="button"
+              onClick={() => {
+                setAssigneeTypeFilter("all");
+                setSelectedFreelancer("all");
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                assigneeTypeFilter === "all"
+                  ? "bg-white/10 text-white border border-white/20 shadow-sm"
+                  : "text-[#97A0B3] hover:text-white"
+              }`}
+            >
+              <span>All Workload</span>
+              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-[#0B111C] text-[#97A0B3]">
+                {tasks.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAssigneeTypeFilter("freelancers")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                assigneeTypeFilter === "freelancers"
+                  ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                  : "text-purple-300 hover:text-white hover:bg-purple-500/10"
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+              <span>Outsourced Freelancers</span>
+              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-purple-950 text-purple-200 border border-purple-500/40">
+                {freelancerTasks.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAssigneeTypeFilter("in_house")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                assigneeTypeFilter === "in_house"
+                  ? "bg-[#7FA0D6] text-white shadow-sm"
+                  : "text-[#97A0B3] hover:text-white"
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>In-House Team</span>
+              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-[#0B111C] text-[#97A0B3]">
+                {inHouseTasks.length}
+              </span>
+            </button>
+          </div>
+
+          {/* Secondary Controls: Search & Dropdowns */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="relative w-full sm:w-60">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
               <input
                 type="text"
-                placeholder="Filter deliverables, tags, owners..."
+                placeholder="Search tasks, specialists, clients..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 w-full rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium text-white placeholder-[#97A0B3] focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                className="pl-9 pr-3 py-2 w-full rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white placeholder-[#97A0B3] focus:outline-none focus:border-purple-400"
               />
             </div>
+
+            {/* If viewing freelancers or all, show Freelancer specialist filter */}
+            {(assigneeTypeFilter === "freelancers" || assigneeTypeFilter === "all") && (
+              <CustomSelect
+                value={selectedFreelancer}
+                onChange={setSelectedFreelancer}
+                ariaLabel="Filter Freelancer Specialist"
+                options={freelancerFilterOptions}
+              />
+            )}
 
             <CustomSelect
               value={selectedPod}
@@ -3500,263 +3890,596 @@ export function AdminTasksPage() {
               options={[
                 { value: "all", label: "All Pods (A, B, C)" },
                 { value: "Pod A", label: "Pod A (Brand Strategy)" },
-                { value: "Pod B", label: "Pod B (Performance & Video)" },
-                { value: "Pod C", label: "Pod C (3D Motion & Design)" },
+                { value: "Pod B", label: "Pod B (Performance Video)" },
+                { value: "Pod C", label: "Pod C (3D Motion)" },
               ]}
             />
 
             <CustomSelect
               value={selectedClient}
               onChange={setSelectedClient}
-              ariaLabel="Filter Task Client"
-              options={[
-                { value: "all", label: "All Clients" },
-                { value: "Ryze", label: "Ryze Mushroom Coffee" },
-              ]}
+              ariaLabel="Filter Client Brand"
+              options={clientOptions}
             />
-
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" /> Create Task
-            </button>
           </div>
         </div>
 
-        {/* Mobile Kanban Column Switcher Pills */}
-        <div className="sm:hidden flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {[
-            { id: "all", label: "All Columns", count: filteredTasks.length },
-            { id: "todo", label: "To Do", count: todoTasks.length },
-            { id: "in_progress", label: "In Progress", count: inProgressTasks.length },
-            { id: "under_review", label: "Review", count: underReviewTasks.length },
-            { id: "approved", label: "Done", count: approvedTasks.length },
-          ].map((col) => (
-            <button
-              key={col.id}
-              type="button"
-              onClick={() => setMobileKanbanCol(col.id as any)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
-                mobileKanbanCol === col.id
-                  ? "bg-[#7FA0D6] text-white shadow-sm"
-                  : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446]"
-              }`}
-            >
-              <span>{col.label}</span>
-              <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
-                mobileKanbanCol === col.id ? "bg-white/20 text-white" : "bg-[#0B111C] text-[#97A0B3]"
+        {/* Freelancer Operations KPI Strip (Visible when Freelancers tab or Table view active) */}
+        {(assigneeTypeFilter === "freelancers" || viewMode === "freelancer_roster") && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
+            <div className="bg-gradient-to-br from-[#161F2D] to-[#121A26] rounded-2xl p-4 border border-purple-500/20 shadow-lg">
+              <div className="flex items-center justify-between text-[#97A0B3] text-xs">
+                <span>Active Outsourced</span>
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+              </div>
+              <div className="text-2xl font-black text-white mt-1.5 flex items-center gap-2">
+                <span>{freelancerTasks.length}</span>
+                <span className="text-[11px] font-bold text-purple-300">Deliverables</span>
+              </div>
+              <p className="text-[10px] text-[#97A0B3] mt-1">Assigned to verified creators</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-[#161F2D] to-[#121A26] rounded-2xl p-4 border border-blue-500/20 shadow-lg">
+              <div className="flex items-center justify-between text-[#97A0B3] text-xs">
+                <span>In Process / WIP</span>
+                <span className="w-2 h-2 rounded-full bg-blue-400" />
+              </div>
+              <div className="text-2xl font-black text-white mt-1.5 flex items-center gap-2">
+                <span>{inProductionFreelancersCount}</span>
+                <span className="text-[11px] font-bold text-blue-300">Active Cuts</span>
+              </div>
+              <p className="text-[10px] text-[#97A0B3] mt-1">Specialists actively producing</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-[#161F2D] to-[#121A26] rounded-2xl p-4 border border-amber-500/20 shadow-lg">
+              <div className="flex items-center justify-between text-[#97A0B3] text-xs">
+                <span>Awaiting TL Review</span>
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+              </div>
+              <div className="text-2xl font-black text-white mt-1.5 flex items-center gap-2">
+                <span>{underReviewFreelancersCount}</span>
+                <span className="text-[11px] font-bold text-amber-300">Pending QA</span>
+              </div>
+              <p className="text-[10px] text-[#97A0B3] mt-1">Work submitted by freelancers</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-[#161F2D] to-[#121A26] rounded-2xl p-4 border border-emerald-500/20 shadow-lg">
+              <div className="flex items-center justify-between text-[#97A0B3] text-xs">
+                <span>Committed Budget</span>
+                <IndianRupee className="w-3.5 h-3.5 text-emerald-400" />
+              </div>
+              <div className="text-2xl font-black text-emerald-400 mt-1.5">
+                ₹{totalFreelancerPayout.toLocaleString()}
+              </div>
+              <p className="text-[10px] text-[#97A0B3] mt-1">{approvedFreelancersCount} completed deliverables</p>
+            </div>
+          </div>
+        )}
+
+        {/* View Mode 1: KANBAN PIPELINE */}
+        {viewMode === "kanban" && (
+          <div className="space-y-4">
+            {/* Mobile Column Switcher */}
+            <div className="sm:hidden flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {[
+                { id: "all", label: "All Columns", count: filteredTasks.length },
+                { id: "todo", label: "To Do", count: todoTasks.length },
+                { id: "in_progress", label: "In Process", count: inProgressTasks.length },
+                { id: "under_review", label: "Review", count: underReviewTasks.length },
+                { id: "approved", label: "Done", count: approvedTasks.length },
+              ].map((col) => (
+                <button
+                  key={col.id}
+                  type="button"
+                  onClick={() => setMobileKanbanCol(col.id as any)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                    mobileKanbanCol === col.id
+                      ? "bg-[#7FA0D6] text-white shadow-sm"
+                      : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446]"
+                  }`}
+                >
+                  <span>{col.label}</span>
+                  <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                    mobileKanbanCol === col.id ? "bg-white/20 text-white" : "bg-[#0B111C] text-[#97A0B3]"
+                  }`}>
+                    {col.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* 4 Pipeline Columns */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              {/* Column 1: TO DO (Backlog / Assigned) */}
+              <div className={`bg-[#161F2D]/50 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
+                mobileKanbanCol !== "all" && mobileKanbanCol !== "todo" ? "hidden sm:flex flex-col" : "flex flex-col"
               }`}>
-                {col.count}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* 4 Kanban Columns */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-          {/* Column 1: TO DO */}
-          <div className={`bg-[#161F2D]/40 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
-            mobileKanbanCol !== "all" && mobileKanbanCol !== "todo" ? "hidden sm:flex flex-col" : "flex flex-col"
-          }`}>
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
-                <h3 className="text-xs font-black text-white tracking-wider uppercase">
-                  TO DO
-                </h3>
-              </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[11px] font-bold border border-[#2A3446] shadow-2xs">
-                {todoTasks.length}
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {todoTasks.map((task) => (
-                <div
-                  key={task.id}
-                  onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
-                      {task.client}
-                    </span>
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.priorityPill}`}>
-                      {task.priority}
-                    </span>
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+                    <h3 className="text-xs font-black text-white tracking-wider uppercase">
+                      TO DO / QUEUE
+                    </h3>
                   </div>
-                  <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
-                  {task.imageUrl && (
-                    <div className="h-24 rounded-xl overflow-hidden bg-[#161F2D]">
-                      <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
+                  <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[11px] font-bold border border-[#2A3446]">
+                    {todoTasks.length}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {todoTasks.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-[#97A0B3] bg-[#0B111C]/40 rounded-2xl border border-dashed border-[#2A3446]">
+                      No backlog tasks matching filter
                     </div>
+                  ) : (
+                    todoTasks.map((task) => (
+                      <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
+                    ))
                   )}
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
-                    <div className="flex items-center gap-1.5">
-                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
-                        {task.avatar}
-                      </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
-                    </div>
-                    <span className="font-bold text-[#7FA0D6] font-mono">{task.sp} SP</span>
-                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Column 2: IN PROGRESS */}
-          <div className={`bg-[#161F2D]/40 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
-            mobileKanbanCol !== "all" && mobileKanbanCol !== "in_progress" ? "hidden sm:flex flex-col" : "flex flex-col"
-          }`}>
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]/150 animate-pulse" />
-                <h3 className="text-xs font-black text-white tracking-wider uppercase">
-                  IN PROGRESS
-                </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#7FA0D6] text-[11px] font-bold border border-[#2A3446] shadow-2xs">
-                {inProgressTasks.length}
-              </span>
-            </div>
 
-            <div className="space-y-3">
-              {inProgressTasks.map((task) => (
-                <div
-                  key={task.id}
-                  onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
-                      {task.client}
-                    </span>
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.priorityPill}`}>
-                      {task.priority}
-                    </span>
+              {/* Column 2: IN PRODUCTION (Active WIP / In Process) */}
+              <div className={`bg-[#161F2D]/50 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
+                mobileKanbanCol !== "all" && mobileKanbanCol !== "in_progress" ? "hidden sm:flex flex-col" : "flex flex-col"
+              }`}>
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+                    <h3 className="text-xs font-black text-white tracking-wider uppercase">
+                      IN PRODUCTION
+                    </h3>
                   </div>
-                  <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
-                  {task.imageUrl && (
-                    <div className="h-24 rounded-xl overflow-hidden bg-[#161F2D]">
-                      <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
+                  <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[11px] font-bold border border-blue-500/30">
+                    {inProgressTasks.length}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {inProgressTasks.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-[#97A0B3] bg-[#0B111C]/40 rounded-2xl border border-dashed border-[#2A3446]">
+                      No active production tasks
                     </div>
+                  ) : (
+                    inProgressTasks.map((task) => (
+                      <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
+                    ))
                   )}
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
-                    <div className="flex items-center gap-1.5">
-                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
-                        {task.avatar}
-                      </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
-                    </div>
-                    <span className="font-bold text-rose-400">{task.due}</span>
-                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Column 3: UNDER REVIEW */}
-          <div className={`bg-[#161F2D]/40 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
-            mobileKanbanCol !== "all" && mobileKanbanCol !== "under_review" ? "hidden sm:flex flex-col" : "flex flex-col"
-          }`}>
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                <h3 className="text-xs font-black text-white tracking-wider uppercase">
-                  UNDER REVIEW
-                </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-amber-400 text-[11px] font-bold border border-[#2A3446] shadow-2xs">
-                {underReviewTasks.length}
-              </span>
-            </div>
 
-            <div className="space-y-3">
-              {underReviewTasks.map((task) => (
-                <div
-                  key={task.id}
-                  onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
-                      {task.client}
-                    </span>
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.priorityPill}`}>
-                      {task.priority}
-                    </span>
+              {/* Column 3: UNDER REVIEW (Internal QA & Client Review) */}
+              <div className={`bg-[#161F2D]/50 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
+                mobileKanbanCol !== "all" && mobileKanbanCol !== "under_review" ? "hidden sm:flex flex-col" : "flex flex-col"
+              }`}>
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                    <h3 className="text-xs font-black text-white tracking-wider uppercase">
+                      QA &amp; REVIEW
+                    </h3>
                   </div>
-                  <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
-                    <div className="flex items-center gap-1.5">
-                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
-                        {task.avatar}
-                      </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
-                    </div>
-                    <span className="font-bold text-amber-400">{task.pod}</span>
-                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-bold border border-amber-500/30">
+                    {underReviewTasks.length}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Column 4: APPROVED */}
-          <div className={`bg-[#161F2D]/40 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
-            mobileKanbanCol !== "all" && mobileKanbanCol !== "approved" ? "hidden sm:flex flex-col" : "flex flex-col"
-          }`}>
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                <h3 className="text-xs font-black text-white tracking-wider uppercase">
-                  APPROVED
-                </h3>
-              </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-emerald-600 text-[11px] font-bold border border-[#2A3446] shadow-2xs">
-                {approvedTasks.length}
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {approvedTasks.map((task) => (
-                <div
-                  key={task.id}
-                  onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
-                      {task.client}
-                    </span>
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.priorityPill}`}>
-                      {task.priority}
-                    </span>
-                  </div>
-                  <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
-                  {task.imageUrl && (
-                    <div className="h-24 rounded-xl overflow-hidden bg-[#161F2D]">
-                      <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
+                <div className="space-y-3">
+                  {underReviewTasks.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-[#97A0B3] bg-[#0B111C]/40 rounded-2xl border border-dashed border-[#2A3446]">
+                      No tasks awaiting review
                     </div>
+                  ) : (
+                    underReviewTasks.map((task) => (
+                      <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
+                    ))
                   )}
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
-                    <div className="flex items-center gap-1.5">
-                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
-                        {task.avatar}
-                      </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
-                    </div>
-                    <span className="font-bold text-emerald-600 font-mono">Completed</span>
-                  </div>
                 </div>
-              ))}
+              </div>
+
+              {/* Column 4: APPROVED / DONE */}
+              <div className={`bg-[#161F2D]/50 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
+                mobileKanbanCol !== "all" && mobileKanbanCol !== "approved" ? "hidden sm:flex flex-col" : "flex flex-col"
+              }`}>
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <h3 className="text-xs font-black text-white tracking-wider uppercase">
+                      APPROVED / DONE
+                    </h3>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold border border-emerald-500/30">
+                    {approvedTasks.length}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {approvedTasks.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-[#97A0B3] bg-[#0B111C]/40 rounded-2xl border border-dashed border-[#2A3446]">
+                      No completed tasks
+                    </div>
+                  ) : (
+                    approvedTasks.map((task) => (
+                      <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
+                    ))
+                  )}
+                </div>
+              </div>
+
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Create Task Modal */}
+        {/* View Mode 2: DEDICATED FREELANCER WORK ROSTER (TABLE VIEW) */}
+        {viewMode === "freelancer_roster" && (
+          <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] overflow-hidden shadow-2xl space-y-4 p-5 sm:p-6 animate-fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2A3446] pb-4">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  Outsourced Specialist Task Roster
+                </h3>
+                <p className="text-xs text-[#97A0B3] mt-0.5">
+                  Complete real-time monitoring of all deliverables assigned to external freelancers
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAssignPickerOpen(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow-md shadow-purple-600/30"
+              >
+                <Plus className="w-3.5 h-3.5" /> Assign Another Task
+              </button>
+            </div>
+
+            {freelancerTasks.length === 0 ? (
+              <div className="p-12 text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center mx-auto">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <h4 className="text-sm font-bold text-white">No Freelancer Assignments Yet</h4>
+                <p className="text-xs text-[#97A0B3] max-w-sm mx-auto">
+                  Assign tasks to external video editors and designers to track WIP, review submitted cuts, and approve payouts.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsAssignPickerOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold cursor-pointer"
+                >
+                  Assign Freelancer Task Now
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-[#2A3446] text-[#97A0B3] font-semibold text-[11px] uppercase tracking-wider">
+                      <th className="py-3 px-3">Deliverable / Task</th>
+                      <th className="py-3 px-3">Client</th>
+                      <th className="py-3 px-3">Assigned Freelancer</th>
+                      <th className="py-3 px-3">Process / Stage</th>
+                      <th className="py-3 px-3">Milestone Fee</th>
+                      <th className="py-3 px-3">Delivery SLA</th>
+                      <th className="py-3 px-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#2A3446]/50">
+                    {freelancerTasks.map((t) => (
+                      <tr key={t.id} className="hover:bg-[#0B111C]/40 transition-colors">
+                        <td className="py-3.5 px-3">
+                          <div className="font-bold text-white">{t.title}</div>
+                          <div className="text-[10px] text-[#7FA0D6] uppercase tracking-wider font-mono mt-0.5">
+                            {t.type}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-3">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                            {t.client}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-bold text-[10px] flex items-center justify-center">
+                              {t.avatar}
+                            </div>
+                            <div>
+                              <div className="font-bold text-white">{t.assigneeName}</div>
+                              <div className="text-[10px] text-[#97A0B3]">{t.freelancerSpecialty || "Specialist"}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-3">
+                          {t.rawStatus === "in_production" ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                              In Process (Editing)
+                            </span>
+                          ) : t.rawStatus === "internal_qa" || t.column === "under_review" ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                              Submitted for QA Review
+                            </span>
+                          ) : t.rawStatus === "ready_to_publish" || t.column === "approved" ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                              Approved &amp; Done
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-500/20 text-slate-300 border border-slate-500/30">
+                              Pending Start
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-3 font-mono font-bold text-emerald-400">
+                          {t.milestoneFee ? `₹${t.milestoneFee.toLocaleString()}` : "Hourly"}
+                        </td>
+                        <td className="py-3.5 px-3 text-[#97A0B3] font-mono">
+                          {t.due}
+                        </td>
+                        <td className="py-3.5 px-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => setPreviewTask(t)}
+                            className="px-2.5 py-1 rounded-lg bg-[#0B111C] hover:bg-purple-600/20 text-[#7FA0D6] hover:text-white border border-[#2A3446] transition-colors font-medium cursor-pointer"
+                          >
+                            Inspect Brief
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Task Details & Progress Drawer / Modal */}
+        {previewTask && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in overflow-y-auto"
+            onClick={() => setPreviewTask(null)}
+          >
+            <div
+              className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-[#2A3446] text-white my-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between border-b border-[#2A3446] pb-3.5">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-[#7FA0D6] uppercase font-mono">
+                      {previewTask.type || "Deliverable"}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${previewTask.priorityPill}`}>
+                      {previewTask.priority}
+                    </span>
+                    {previewTask.isFreelancer && (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">
+                        <Sparkles className="w-2.5 h-2.5" /> Outsourced
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-base font-black text-white mt-1">{previewTask.title}</h3>
+                  <p className="text-xs text-[#97A0B3]">Client: <strong className="text-white">{previewTask.client}</strong></p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPreviewTask(null)}
+                  className="p-1.5 rounded-xl text-[#97A0B3] hover:text-white hover:bg-[#0B111C] transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Progress Stepper */}
+              <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]/60 space-y-2">
+                <div className="text-[11px] font-bold text-[#97A0B3] uppercase tracking-wider">
+                  Production Pipeline Stage
+                </div>
+                <div className="grid grid-cols-4 gap-1.5 text-center text-[10px] font-bold">
+                  <div className={`p-1.5 rounded-xl border ${
+                    previewTask.column === "todo" || previewTask.column === "in_progress" || previewTask.column === "under_review" || previewTask.column === "approved"
+                      ? "bg-purple-600/20 text-purple-300 border-purple-500/40"
+                      : "bg-[#161F2D] text-[#97A0B3] border-[#2A3446]"
+                  }`}>
+                    1. Queued
+                  </div>
+                  <div className={`p-1.5 rounded-xl border ${
+                    previewTask.column === "in_progress" || previewTask.column === "under_review" || previewTask.column === "approved"
+                      ? "bg-blue-600/20 text-blue-300 border-blue-500/40"
+                      : "bg-[#161F2D] text-[#97A0B3] border-[#2A3446]"
+                  }`}>
+                    2. In Process
+                  </div>
+                  <div className={`p-1.5 rounded-xl border ${
+                    previewTask.column === "under_review" || previewTask.column === "approved"
+                      ? "bg-amber-600/20 text-amber-300 border-amber-500/40"
+                      : "bg-[#161F2D] text-[#97A0B3] border-[#2A3446]"
+                  }`}>
+                    3. QA Review
+                  </div>
+                  <div className={`p-1.5 rounded-xl border ${
+                    previewTask.column === "approved"
+                      ? "bg-emerald-600/20 text-emerald-300 border-emerald-500/40"
+                      : "bg-[#161F2D] text-[#97A0B3] border-[#2A3446]"
+                  }`}>
+                    4. Done
+                  </div>
+                </div>
+              </div>
+
+              {/* Personnel Block */}
+              <div className="p-3.5 bg-[#0B111C] rounded-2xl border border-[#2A3446]/60 space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#97A0B3]">Assigned To:</span>
+                  <div className="flex items-center gap-1.5 font-bold text-white">
+                    <div className={`w-5 h-5 rounded-full ${previewTask.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
+                      {previewTask.avatar}
+                    </div>
+                    <span>{previewTask.assigneeName}</span>
+                  </div>
+                </div>
+                {previewTask.isFreelancer && (
+                  <>
+                    <div className="flex items-center justify-between text-[#97A0B3]">
+                      <span>Role &amp; Specialty:</span>
+                      <span className="text-purple-300 font-medium">{previewTask.freelancerSpecialty || "Creative Specialist"}</span>
+                    </div>
+                    {previewTask.assigneeEmail && (
+                      <div className="flex items-center justify-between text-[#97A0B3]">
+                        <span>Contact Email:</span>
+                        <span className="text-white font-mono text-[11px]">{previewTask.assigneeEmail}</span>
+                      </div>
+                    )}
+                    {previewTask.milestoneFee && (
+                      <div className="flex items-center justify-between text-[#97A0B3]">
+                        <span>Agreed Compensation:</span>
+                        <span className="text-emerald-400 font-bold font-mono">₹{previewTask.milestoneFee.toLocaleString()}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+                <div className="flex items-center justify-between text-[#97A0B3]">
+                  <span>Delivery SLA Due:</span>
+                  <span className="text-white font-mono">{previewTask.due}</span>
+                </div>
+              </div>
+
+              {/* Technical Instructions & Brief */}
+              {previewTask.instructions && (
+                <div className="space-y-1.5">
+                  <div className="text-[11px] font-bold text-[#97A0B3] uppercase tracking-wider">
+                    Execution Instructions &amp; Brief
+                  </div>
+                  <div className="p-3 bg-[#0B111C] rounded-2xl border border-[#2A3446]/60 text-xs text-[#F1F5F9] whitespace-pre-wrap max-h-36 overflow-y-auto leading-relaxed">
+                    {previewTask.instructions}
+                  </div>
+                </div>
+              )}
+
+              {/* Advance Stage Controls */}
+              <div className="space-y-1.5 pt-2 border-t border-[#2A3446]">
+                <div className="text-[11px] font-bold text-[#97A0B3] uppercase tracking-wider mb-2">
+                  Update Stage / Advance Process
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    disabled={isAdvancingStage || previewTask.column === "in_progress"}
+                    onClick={() => handleAdvanceStage(previewTask.id, "in_production")}
+                    className="py-2 px-2 rounded-xl text-xs font-bold bg-blue-600/20 text-blue-300 hover:bg-blue-600 hover:text-white border border-blue-500/30 transition-all disabled:opacity-40 cursor-pointer"
+                  >
+                    In Process
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isAdvancingStage || previewTask.column === "under_review"}
+                    onClick={() => handleAdvanceStage(previewTask.id, "internal_qa")}
+                    className="py-2 px-2 rounded-xl text-xs font-bold bg-amber-600/20 text-amber-300 hover:bg-amber-600 hover:text-white border border-amber-500/30 transition-all disabled:opacity-40 cursor-pointer"
+                  >
+                    Submit for QA
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isAdvancingStage || previewTask.column === "approved"}
+                    onClick={() => handleAdvanceStage(previewTask.id, "ready_to_publish")}
+                    className="py-2 px-2 rounded-xl text-xs font-bold bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600 hover:text-white border border-emerald-500/30 transition-all disabled:opacity-40 cursor-pointer"
+                  >
+                    Mark Done
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPreviewTask(null)}
+                className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] cursor-pointer transition-colors"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Assign Freelancer Picker Modal */}
+        {isAssignPickerOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in"
+            onClick={() => setIsAssignPickerOpen(false)}
+          >
+            <div
+              className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#2A3446] space-y-4 text-white"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <div className="flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-purple-400" />
+                  <h3 className="text-base font-bold text-white">Select Freelancer Specialist</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAssignPickerOpen(false)}
+                  className="p-1 rounded-lg text-[#97A0B3] hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-[#97A0B3]">
+                Choose an active onboarded freelancer to assign deliverable instructions and agreed milestone fees:
+              </p>
+
+              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                {freelancersList.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-[#97A0B3]">No active freelancers found.</div>
+                ) : (
+                  freelancersList.map((f: FreelancerProfileItem) => (
+                    <div
+                      key={f.id}
+                      onClick={() => {
+                        setIsAssignPickerOpen(false);
+                        setAssignFreelancerTarget(f);
+                      }}
+                      className="p-3 rounded-2xl bg-[#0B111C] hover:bg-purple-950/40 border border-[#2A3446] hover:border-purple-500/50 cursor-pointer transition-all flex items-center justify-between group"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center">
+                          {f.full_name.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="font-bold text-white text-xs group-hover:text-purple-300 transition-colors">
+                            {f.full_name}
+                          </div>
+                          <div className="text-[10px] text-[#97A0B3]">{f.specialty || "Creative Specialist"}</div>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-mono font-bold text-emerald-400">
+                        {f.hourly_rate ? `₹${f.hourly_rate.toLocaleString()}/hr` : "Active"}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Full Freelancer Task Assignment Modal */}
+        {assignFreelancerTarget && (
+          <AdminAssignFreelancerModal
+            isOpen={true}
+            onClose={() => setAssignFreelancerTarget(null)}
+            freelancer={assignFreelancerTarget}
+            onSuccess={() => {
+              refetchTasks();
+              setToast(`Task successfully assigned to ${assignFreelancerTarget.full_name}!`);
+            }}
+          />
+        )}
+
+        {/* Create In-House Task Modal */}
         {isCreateModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
             <div className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
@@ -3780,7 +4503,7 @@ export function AdminTasksPage() {
                     placeholder="e.g. 3D Hero Animation for Brand Launch"
                     value={newTaskForm.title}
                     onChange={(e) => setNewTaskForm({ ...newTaskForm, title: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs text-white bg-[#0B111C] focus:outline-none focus:border-purple-400"
                   />
                 </div>
 
@@ -3793,6 +4516,7 @@ export function AdminTasksPage() {
                       className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
                     >
                       <option value="Ryze Mushroom Coffee">Ryze Mushroom Coffee</option>
+                      <option value="Acme Corp">Acme Corp</option>
                     </NativeSelect>
                   </div>
                   <div>
@@ -3830,7 +4554,7 @@ export function AdminTasksPage() {
                       max="20"
                       value={newTaskForm.sp}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, sp: Number(e.target.value) })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C]"
                     />
                   </div>
                 </div>
@@ -3855,46 +4579,76 @@ export function AdminTasksPage() {
           </div>
         )}
 
-        {/* Task Preview Drawer */}
-        {previewTask && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <div>
-                  <span className="text-[10px] font-bold text-[#7FA0D6] uppercase font-mono">
-                    {previewTask.pod} • {previewTask.due}
-                  </span>
-                  <h3 className="text-base font-black text-white mt-0.5">{previewTask.title}</h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setPreviewTask(null)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+      </main>
+    </div>
+  );
+}
 
-              <div className="space-y-2.5 text-xs text-[#F1F5F9]">
-                <div className="p-3 bg-[#0B111C] rounded-2xl space-y-1">
-                  <div><strong>Client:</strong> {previewTask.client}</div>
-                  <div><strong>Assignee:</strong> {previewTask.assigneeName}</div>
-                  <div><strong>Priority:</strong> {previewTask.priority}</div>
-                  <div><strong>Effort:</strong> {previewTask.sp} Story Points</div>
-                </div>
-              </div>
+// ─────────────────────────────────────────────────────────────────────────────
+// Subcomponent: Kanban Task Card with Freelancer Identification
+// ─────────────────────────────────────────────────────────────────────────────
+function TaskCard({ task, onSelect }: { task: any; onSelect: () => void }) {
+  return (
+    <div
+      onClick={onSelect}
+      className={`rounded-2xl p-4 border transition-all cursor-pointer space-y-2.5 shadow-sm hover:shadow-xl hover:-translate-y-0.5 ${
+        task.isFreelancer
+          ? "bg-gradient-to-br from-[#181C2E] to-[#161F2D] border-purple-500/40 hover:border-purple-400"
+          : "bg-[#161F2D] border-[#2A3446]/70 hover:border-[#7FA0D6]/60"
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
+          {task.client}
+        </span>
+        <div className="flex items-center gap-1.5">
+          {task.isFreelancer && task.milestoneFee && (
+            <span className="px-1.5 py-0.2 rounded-md text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              ₹{task.milestoneFee.toLocaleString()}
+            </span>
+          )}
+          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.priorityPill}`}>
+            {task.priority}
+          </span>
+        </div>
+      </div>
 
-              <button
-                type="button"
-                onClick={() => setPreviewTask(null)}
-                className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
+      <div>
+        <h4 className="text-xs font-bold text-white line-clamp-2 leading-snug">{task.title}</h4>
+        {task.isFreelancer && (
+          <div className="flex items-center gap-1.5 mt-1 text-[10px] text-purple-300 font-medium">
+            <Sparkles className="w-3 h-3 text-purple-400 shrink-0" />
+            <span className="truncate">{task.freelancerSpecialty || "Outsourced"}</span>
+            <span className="text-purple-400 font-bold">•</span>
+            <span className="text-white/80 font-mono">
+              {task.rawStatus === "in_production"
+                ? "⚡ In Process"
+                : task.rawStatus === "internal_qa"
+                ? "🔍 In Review"
+                : task.rawStatus === "ready_to_publish"
+                ? "✅ Approved"
+                : "Queued"}
+            </span>
           </div>
         )}
-      </main>
+      </div>
+
+      <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
+        <div className="flex items-center gap-1.5">
+          <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center shrink-0`}>
+            {task.avatar}
+          </div>
+          <span className="font-medium text-[#F1F5F9] truncate max-w-[110px]">
+            {task.assigneeName}
+          </span>
+          {task.isFreelancer && (
+            <span className="px-1 py-0.2 rounded text-[8px] font-black uppercase bg-purple-500/25 text-purple-300 border border-purple-500/30">
+              Ext
+            </span>
+          )}
+        </div>
+        <span className="font-mono text-[10px] font-bold text-[#7FA0D6]">{task.due}</span>
+      </div>
     </div>
   );
 }
@@ -3934,6 +4688,29 @@ export function AdminTeamManagementPage() {
   const [memberSort, setMemberSort] = useState<"default" | "workload" | "name">("default");
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [teamTab, setTeamTab] = useState<"internal" | "freelancers">("internal");
+  const [isAddFreelancerOpen, setIsAddFreelancerOpen] = useState(false);
+  const [assignFreelancerTarget, setAssignFreelancerTarget] = useState<FreelancerProfileItem | null>(null);
+
+  const freelancersQuery = useQuery({
+    queryKey: ["admin-freelancers-list"],
+    queryFn: () => fetchFreelancers(),
+    refetchOnMount: "always",
+    staleTime: 0,
+  });
+
+  const handleToggleFreelancerStatus = async (
+    freelancerId: string,
+    newStatus: "ACTIVE" | "INACTIVE" | "REVOKED"
+  ) => {
+    try {
+      await updateFreelancerStatus(freelancerId, newStatus);
+      await freelancersQuery.refetch();
+      setToast(`Freelancer status updated to ${newStatus}`);
+    } catch (err: any) {
+      setToast(err?.message || "Failed to update freelancer status");
+    }
+  };
 
   const { data: queueData } = useQuery({
     queryKey: ["admin_queue"],
@@ -4398,10 +5175,293 @@ export function AdminTeamManagementPage() {
           </div>
         )}
 
-        {/* ─────────────────────────────────────────────────────────────────────────────
+        {/* Network & Role Switcher */}
+        <div className="flex items-center gap-2 border-b border-[#2A3446] pb-3">
+          <button
+            type="button"
+            onClick={() => setTeamTab("internal")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              teamTab === "internal"
+                ? "bg-[#7FA0D6] text-white shadow-md"
+                : "text-[#97A0B3] hover:text-white hover:bg-[#161F2D]"
+            }`}
+          >
+            <Users className="w-4 h-4" /> Internal Sprint Pods
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTeamTab("freelancers");
+              freelancersQuery.refetch();
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              teamTab === "freelancers"
+                ? "bg-purple-600 text-white shadow-md"
+                : "text-[#97A0B3] hover:text-white hover:bg-[#161F2D]"
+            }`}
+          >
+            <Sparkles className="w-4 h-4" /> Freelancer Network & Role Access
+            {freelancersQuery.data && freelancersQuery.data.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-purple-950 text-purple-200 text-[10px] font-black">
+                {freelancersQuery.data.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {teamTab === "freelancers" ? (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <span>Freelancer Network & Role-Based Access</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[10px] font-black uppercase">
+                    Scoped Collaboration
+                  </span>
+                </h3>
+                <p className="text-xs text-[#97A0B3]">
+                  Provision external video editors, animators, and designers with restricted access to assigned deliverables.
+                </p>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => freelancersQuery.refetch()}
+                  disabled={freelancersQuery.isFetching}
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
+                  title="Refresh Freelancer Roster"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${freelancersQuery.isFetching ? "animate-spin text-purple-400" : "text-[#97A0B3]"}`} />
+                  <span>Refresh</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAddFreelancerOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md shadow-purple-500/20 cursor-pointer transition-all shrink-0"
+                >
+                  <Plus className="w-4 h-4" /> Onboard Freelancer
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-purple-500/10 border border-purple-500/25 rounded-2xl flex items-start gap-3 text-xs text-purple-200">
+              <ShieldCheck className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+              <div>
+                <strong>Role-Based Security Boundary:</strong> Freelancer accounts are strictly isolated. They cannot access client billing records, agency financials, team member personal data, or unrelated client project repositories.
+              </div>
+            </div>
+
+            {(() => {
+              const list = freelancersQuery.data || [];
+              const activeCount = list.filter((f) => f.status === "ACTIVE").length;
+              const totalAssigned = list.reduce((acc, f) => acc + (f.assigned_tasks_count || 0), 0);
+              const totalActive = list.reduce((acc, f) => acc + (f.active_tasks_count || 0), 0);
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-6">
+                  <div className="bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-purple-500/30 transition-all shadow-xl flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        FREELANCER ROSTER
+                      </span>
+                      <div className="w-9 h-9 rounded-2xl bg-purple-500/15 text-purple-400 flex items-center justify-center">
+                        <Users className="w-5 h-5" />
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black text-white tracking-tight">{list.length} Specialists</span>
+                      <span className="text-xs font-semibold text-emerald-400">{activeCount} Active</span>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-[#2A3446] text-xs font-bold text-purple-400 flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5" /> On-demand outsourced capacity
+                    </div>
+                  </div>
+
+                  <div className="bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-purple-500/30 transition-all shadow-xl flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        ACTIVE ASSIGNMENTS
+                      </span>
+                      <div className="w-9 h-9 rounded-2xl bg-blue-500/15 text-blue-400 flex items-center justify-center">
+                        <CheckSquare className="w-5 h-5" />
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black text-white tracking-tight">{totalActive} Deliverables</span>
+                      <span className="text-xs font-semibold text-[#97A0B3]">in production</span>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-[#2A3446] text-xs font-medium text-[#97A0B3] flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" /> {totalAssigned} Total assignments logged
+                    </div>
+                  </div>
+
+                  <div className="bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-purple-500/30 transition-all shadow-xl flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        ACCESS ENFORCEMENT
+                      </span>
+                      <div className="w-9 h-9 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
+                        <Lock className="w-5 h-5" />
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black text-emerald-400 tracking-tight">100% Isolated</span>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-[#2A3446] text-xs font-bold text-emerald-400 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5" /> Zero financial / admin leakage
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {freelancersQuery.isLoading ? (
+              <div className="text-center py-12 text-sm text-[#97A0B3] flex items-center justify-center gap-2">
+                <RefreshCw className="w-4 h-4 text-purple-400 animate-spin" />
+                <span>Loading freelancer roster...</span>
+              </div>
+            ) : freelancersQuery.isError ? (
+              <div className="bg-[#161F2D] rounded-3xl p-8 text-center border border-rose-500/30 space-y-3">
+                <AlertCircle className="w-10 h-10 text-rose-400 mx-auto" />
+                <h4 className="text-base font-bold text-white">Failed to Load Freelancer Network</h4>
+                <p className="text-xs text-rose-300 max-w-sm mx-auto">
+                  {(freelancersQuery.error as any)?.message || "An error occurred while fetching the freelancer roster."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => freelancersQuery.refetch()}
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold cursor-pointer"
+                >
+                  Retry Loading
+                </button>
+              </div>
+            ) : !freelancersQuery.data || freelancersQuery.data.length === 0 ? (
+              <div className="bg-[#161F2D] rounded-3xl p-12 text-center border border-[#2A3446] space-y-3">
+                <Users className="w-10 h-10 text-[#97A0B3] mx-auto opacity-40" />
+                <h4 className="text-base font-bold text-white">No Freelancers Registered Yet</h4>
+                <p className="text-xs text-[#97A0B3] max-w-sm mx-auto">
+                  Click "Onboard Freelancer" above to invite an external video editor or graphic designer with individual credentials.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {freelancersQuery.data.map((freelancer) => (
+                  <div
+                    key={freelancer.id}
+                    className="bg-[#161F2D] rounded-3xl p-5 sm:p-6 border border-[#2A3446] hover:border-purple-500/40 transition-all shadow-lg flex flex-col justify-between space-y-4"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-purple-400 font-black text-base flex items-center justify-center">
+                            {freelancer.full_name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .slice(0, 2)
+                              .toUpperCase()}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-sm text-white">{freelancer.full_name}</h4>
+                            <span className="text-[11px] text-[#97A0B3] block truncate max-w-[180px]">
+                              {freelancer.email}
+                            </span>
+                          </div>
+                        </div>
+
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                            freelancer.status === "ACTIVE"
+                              ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                              : freelancer.status === "REVOKED"
+                              ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
+                              : "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                          }`}
+                        >
+                          {freelancer.status}
+                        </span>
+                      </div>
+
+                      <div className="p-3 bg-[#0B111C] rounded-2xl space-y-1.5 text-xs text-[#F1F5F9] border border-[#2A3446]">
+                        <div className="flex justify-between">
+                          <span className="text-[#97A0B3]">Specialty:</span>
+                          <span className="font-bold text-white">{freelancer.specialty || "Creative Specialist"}</span>
+                        </div>
+                        {freelancer.hourly_rate ? (
+                          <div className="flex justify-between">
+                            <span className="text-[#97A0B3]">Agreed Rate:</span>
+                            <span className="font-bold text-purple-300">₹{freelancer.hourly_rate.toLocaleString()}/hr</span>
+                          </div>
+                        ) : null}
+                        <div className="flex justify-between">
+                          <span className="text-[#97A0B3]">Assigned Tasks:</span>
+                          <span className="font-bold text-white">
+                            {freelancer.active_tasks_count} active / {freelancer.assigned_tasks_count} total
+                          </span>
+                        </div>
+                      </div>
+
+                      {freelancer.skills && freelancer.skills.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {freelancer.skills.map((skill, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[10px] text-purple-300 font-medium"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {freelancer.portfolio_link && (
+                        <a
+                          href={freelancer.portfolio_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] text-purple-400 hover:text-purple-300 font-bold hover:underline"
+                        >
+                          <ExternalLink className="w-3 h-3" /> View Portfolio
+                        </a>
+                      )}
+                    </div>
+
+                    <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <select
+                          value={freelancer.status}
+                          onChange={(e) =>
+                            handleToggleFreelancerStatus(
+                              freelancer.id,
+                              e.target.value as "ACTIVE" | "INACTIVE" | "REVOKED"
+                            )
+                          }
+                          className="px-2 py-1 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[11px] font-bold text-white focus:outline-none"
+                        >
+                          <option value="ACTIVE">Active</option>
+                          <option value="INACTIVE">Deactivate</option>
+                          <option value="REVOKED">Revoke Access</option>
+                        </select>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setAssignFreelancerTarget(freelancer)}
+                        className="px-3 py-1 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all flex items-center gap-1"
+                      >
+                        <Send className="w-3 h-3" /> Assign Task
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+        /* ─────────────────────────────────────────────────────────────────────────────
             VIEW 1: MAIN TEAM DETAILS & MANAGEMENT OVERVIEW (Matching Screenshot 1)
-        ───────────────────────────────────────────────────────────────────────────── */}
-        {!activePodId ? (
+        ───────────────────────────────────────────────────────────────────────────── */
+        !activePodId ? (
           <div className="space-y-6">
             {/* Top Controls Bar */}
             <div className="flex items-center justify-between gap-4">
@@ -4865,6 +5925,7 @@ export function AdminTeamManagementPage() {
               ))}
             </div>
           </div>
+        )
         )}
 
         {/* ─────────────────────────────────────────────────────────────────────────────
@@ -5405,6 +6466,28 @@ export function AdminTeamManagementPage() {
               </form>
             </div>
           </div>
+        )}
+        {/* Modals for Freelancer Management */}
+        {isAddFreelancerOpen && (
+          <AdminFreelancerModal
+            isOpen={true}
+            onClose={() => setIsAddFreelancerOpen(false)}
+            onSuccess={() => {
+              freelancersQuery.refetch();
+              setToast("Freelancer account created successfully with role-based credentials!");
+            }}
+          />
+        )}
+        {assignFreelancerTarget && (
+          <AdminAssignFreelancerModal
+            isOpen={true}
+            onClose={() => setAssignFreelancerTarget(null)}
+            freelancer={assignFreelancerTarget}
+            onSuccess={() => {
+              freelancersQuery.refetch();
+              setToast(`Task successfully assigned to ${assignFreelancerTarget.full_name}!`);
+            }}
+          />
         )}
       </main>
     </div>
