@@ -30,11 +30,20 @@ export const fetchInstagramStatus = () => request<InstagramStatus>(INSTAGRAM_END
  * `returnTo` is where the callback page sends the client afterwards, so the same
  * flow works from the portal and from the onboarding questionnaire.
  */
-export async function startMetaConnect(userId: string, returnTo: string): Promise<void> {
-  const data = await request<{ url: string; state: string; verifier: string }>(
-    `${INSTAGRAM_ENDPOINT}/connect`,
-    { method: "POST" },
-  );
+export async function startMetaConnect(
+  userId: string,
+  returnTo: string,
+  beforeRedirect: () => Promise<void> = () => Promise.resolve(),
+): Promise<void> {
+  // Save answers and create the single-use OAuth flow concurrently. Never leave
+  // until both succeed, and never pre-create flows merely on hover or page load.
+  const [data] = await Promise.all([
+    request<{ url: string; state: string; verifier: string }>(
+      `${INSTAGRAM_ENDPOINT}/connect`,
+      { method: "POST" },
+    ),
+    Promise.resolve().then(beforeRedirect),
+  ]);
   sessionStorage.setItem(
     FLOW_KEY,
     JSON.stringify({ state: data.state, verifier: data.verifier, userId }),

@@ -38,7 +38,7 @@ export function InstagramCallbackPage() {
     void cache.invalidateQueries({ queryKey: ["portal-profile"] });
     void cache.invalidateQueries({ queryKey: ["portal-dashboard"] });
     setDone(true);
-    window.setTimeout(() => navigate(returnPath.current, { replace: true }), 1200);
+    navigate(returnPath.current, { replace: true });
   };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs once per callback; finish() only uses refs and stable setters

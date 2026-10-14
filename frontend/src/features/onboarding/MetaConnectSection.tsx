@@ -40,11 +40,10 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
     setBusy("connect");
     setMessage(null);
     try {
-      await beforeConnect();
       // Meta sends the client back to the same questionnaire tab.
       const params = new URLSearchParams(window.location.search);
       params.set("section", "h");
-      await startMetaConnect(userId, `${window.location.pathname}?${params.toString()}`);
+      await startMetaConnect(userId, `${window.location.pathname}?${params.toString()}`, beforeConnect);
       // Leaving the page; keep the button busy.
     } catch (e) {
       setMessage({
