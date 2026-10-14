@@ -80,7 +80,8 @@ export function InstagramCallbackPage() {
     setBusy(true);
     setError("");
     try {
-      await selectAccount(selection.selection_id, accountId);
+      const result = await selectAccount(selection.selection_id, accountId);
+      if (!result.connected) throw new Error(result.error || "The account did not connect. Try again.");
       setSelection(null);
       finish();
     } catch (e) {
