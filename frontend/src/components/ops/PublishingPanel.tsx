@@ -19,6 +19,7 @@ import { request } from "../../lib/http";
 import { useConfirm } from "../ui/ConfirmDialog";
 
 export interface PublishingJob {
+  stage?: string;
   id: string;
   client_id: string;
   client_name?: string;
@@ -496,7 +497,7 @@ export function PublishingPanel({
               Resume schedule
             </button>
           )}
-          {admin && job?.status === "scheduled" && (
+          {lead && job && ["scheduled", "processing"].includes(job.status) && job.stage !== "submitting" && (
             <button
               type="button"
               className={button}

@@ -115,6 +115,63 @@ class ActionBody(BaseModel):
     ]
 
 
+class TimingRequestBody(BaseModel):
+    requested_at: datetime
+    reason: str = Field(default="", max_length=1000)
+
+
+@router.post("/plan-calendar")
+async def plan_calendar(actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)):
+    from app.models.enums import DeliverableStatus
+    if actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.TEAM_LEAD):
+        raise Forbidden("A lead or administrator must plan calendar posts.")
+    query = select(Deliverable.id).where(Deliverable.status == DeliverableStatus.APPROVED, Deliverable.deleted_at.is_(None), Deliverable.is_archived.is_(False))
+    if actor.role != UserRole.SUPER_ADMIN:
+        if not actor.agency_id:
+            raise Forbidden("An agency is required.")
+        query = query.where(Deliverable.agency_id == actor.agency_id)
+    ids = (await db.execute(query.order_by(Deliverable.created_at.desc()).limit(100))).scalars().all()
+    planned, skipped = 0, 0
+    for deliverable_id in ids:
+        try:
+            d = await db.get(Deliverable, deliverable_id)
+            await service.access(db, actor, d, write=True)
+            existing = await service.job_for(db, d)
+            if existing or not d.file_url or not await service.calendar_plan(db, d):
+                skipped += 1
+                continue
+            is_video = (d.file_type or "").startswith("video/") or str(d.file_url).split("?")[0].lower().endswith((".mp4", ".mov"))
+            await service.schedule(db, actor, d, timezone="Asia/Kolkata", caption="", media_type="REELS" if is_video else "IMAGE")
+            planned += 1
+        except (Forbidden, Conflict):
+            await db.rollback()
+            skipped += 1
+    return {"planned": planned, "skipped": skipped}
+
+
+@router.post("/deliverables/{deliverable_id}/timing-request")
+async def request_timing(deliverable_id: uuid.UUID, body: TimingRequestBody,
+                         actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)):
+    from datetime import UTC
+    d = await deliverable(db, actor, deliverable_id)
+    if actor.role != UserRole.CLIENT or actor.user_id != d.client_id:
+        raise Forbidden("Only the client can request a timing change.")
+    if body.requested_at.tzinfo is None or body.requested_at <= datetime.now(UTC):
+        raise Conflict("Choose a future time with a timezone.")
+    profile = await service.lock_profile(db, d.client_id)
+    job = await service.job_for(db, d)
+    if not job or job.status in service.FINAL | {"uncertain"} or job.stage in ("submitting", "confirmed", "confirmed_container"):
+        raise Conflict("This post can no longer be changed. Contact your team.")
+    job.status = "paused"
+    job.lease_id, job.lease_until = None, None
+    job.next_attempt_at = None
+    job.last_error = f"Client requested {body.requested_at.isoformat()}: {body.reason}"
+    await service.audit(db, job, "client_timing_requested", actor)
+    await service.notify(db, job, "Client requested a publishing time change", job.last_error)
+    await db.commit()
+    return {"status": "paused", "message": "Your team has been notified. Automatic posting is paused pending review."}
+
+
 async def deliverable(db, actor, deliverable_id):
     d = await db.get(Deliverable, deliverable_id)
     if not d:

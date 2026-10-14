@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import or_, select
@@ -269,7 +269,8 @@ def set_ready(job: PublishingJob, d: Deliverable, profile: ClientProfile) -> Non
             profile.ig_connection_id,
             profile.instagram_user_id,
         )
-    job.next_attempt_at = job.scheduled_at
+    # Reserve time for media fetching, validation and Instagram transcoding.
+    job.next_attempt_at = job.scheduled_at - timedelta(minutes=30) if job.scheduled_at else None
 
 
 async def on_deliverable_transition(
@@ -470,11 +471,12 @@ async def action(db: AsyncSession, actor: Actor, d: Deliverable, operation: str)
     await access(db, actor, d, write=True)
     profile = await lock_profile(db, d.client_id)
     job = await job_for(db, d)
-    if not job or job.status in BUSY | {"published"}:
+    safe_preparation_pause = job and operation == "pause" and job.status == "processing" and job.stage not in ("submitting", "confirmed", "confirmed_container")
+    if not job or (job.status in BUSY | {"published"} and not safe_preparation_pause):
         raise Conflict(
             "This job is processing, published or requires reconciliation; it cannot be changed."
         )
-    if operation in ("pause", "retry") and actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
+    if operation in ("pause", "retry") and actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.TEAM_LEAD):
         raise Forbidden("An administrator must pause or retry publishing.")
     if operation == "publish_now" and actor.role not in (
         UserRole.ADMIN,
@@ -486,6 +488,7 @@ async def action(db: AsyncSession, actor: Actor, d: Deliverable, operation: str)
         job.status = "canceled"
     elif operation == "pause":
         job.status = "paused"
+        job.lease_id, job.lease_until = None, None
     elif operation in ("resume", "retry"):
         if operation == "resume" and job.status != "paused":
             raise Conflict("Only a paused job can be resumed.")

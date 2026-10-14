@@ -10,7 +10,7 @@ import asyncio
 import concurrent.futures
 import logging
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from collections.abc import Coroutine
 from typing import Any, TypeVar
 
@@ -64,7 +64,7 @@ async def dispatch_due_publishes_async() -> list[uuid.UUID]:
                     .where(
                         PublishingJob.agency_id == agency_id,
                         PublishingJob.status.in_(["scheduled", "processing"]),
-                        PublishingJob.scheduled_at <= now,
+                        PublishingJob.scheduled_at <= now + timedelta(minutes=30),
                         or_(
                             PublishingJob.next_attempt_at.is_(None),
                             PublishingJob.next_attempt_at <= now,
