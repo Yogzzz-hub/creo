@@ -113,6 +113,9 @@ class DirectLoginTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(query["client_id"], ["1055855437409043"])
         self.assertEqual(set(query["scope"][0].split(",")), LOGIN_SCOPES)
         self.assertEqual(query["state"], ["ig:random-state"])
+        self.assertNotIn("force_reauth", query)
+        self.assertEqual(query["enable_fb_login"], ["false"])
+        self.assertEqual(url.path, "/oauth/authorize/")
         self.assertNotIn("client_secret", query)
         self.assertNotIn("config_id", query)
 

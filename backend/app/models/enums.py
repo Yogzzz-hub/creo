@@ -26,6 +26,9 @@ class UserRole(StrEnum):
     TEAM_LEAD = "team_lead"
     EDITOR = "editor"
     DESIGNER = "designer"
+    # Existing deployment records use this role. Recognize it when reading
+    # staff/assignee rows; authorization remains explicitly allowlisted.
+    FREELANCER = "freelancer"
     CLIENT = "client"
     INVESTOR_RELATIONS = "investor_relations"
 

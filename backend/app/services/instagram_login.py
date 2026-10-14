@@ -40,6 +40,24 @@ class DirectInstagramClient(RealInstagramClient):
             )
         return granted
 
+    async def call(self, method, path, token=None, **params):
+        try:
+            return await super().call(method, path, token, **params)
+        except InstagramError as exc:
+            if path in ("oauth/access_token", "access_token"):
+                raise InstagramError(
+                    "Instagram could not complete authorization. Check the Instagram Login app secret and exact registered redirect URI, then start a new connection.",
+                    "INSTAGRAM_TOKEN_EXCHANGE_FAILED",
+                    reconnect=True,
+                ) from None
+            if path == "me/permissions":
+                raise InstagramError(
+                    "Instagram could not verify your permissions. Grant profile and publishing access and check the account's app access.",
+                    "INSTAGRAM_PERMISSION_CHECK_FAILED",
+                    reconnect=True,
+                ) from None
+            raise
+
     async def discover_accounts(self, code: str) -> list[dict[str, Any]]:
         short = await self.call(
             "POST",

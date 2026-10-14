@@ -288,14 +288,14 @@ async def pause_jobs(db: AsyncSession, profile: ClientProfile, reason: str) -> N
 def authorization_url(state: str, provider: str = "facebook") -> str:
     """Build the matching provider dialog without exposing app secrets."""
     if provider == "instagram":
-        return "https://www.instagram.com/oauth/authorize?" + urlencode(
+        return "https://www.instagram.com/oauth/authorize/?" + urlencode(
             {
                 "client_id": settings.INSTAGRAM_LOGIN_APP_ID.strip(),
                 "redirect_uri": settings.INSTAGRAM_REDIRECT_URI,
                 "response_type": "code",
                 "scope": ",".join(sorted(LOGIN_SCOPES)),
                 "state": state,
-                "enable_fb_login": "0",
+                "enable_fb_login": "false",
             }
         )
     params = {

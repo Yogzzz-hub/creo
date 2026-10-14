@@ -20,6 +20,7 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const [busy, setBusy] = useState<"connect" | "verify" | "disconnect" | null>(null);
+  const [connectingProvider, setConnectingProvider] = useState<"facebook" | "instagram" | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const status = useQuery({
@@ -37,12 +38,15 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
   };
 
   async function connect(provider: "facebook" | "instagram" = "facebook") {
+    if (busy !== null) return;
+    setConnectingProvider(provider);
     setBusy("connect");
     setMessage(null);
     try {
       // Meta sends the client back to the same questionnaire tab.
       const params = new URLSearchParams(window.location.search);
       params.set("section", "h");
+      if (window.location.pathname === "/onboarding") params.set("step", "4");
       await startMetaConnect(userId, `${window.location.pathname}?${params.toString()}`, beforeConnect, provider);
       // Leaving the page; keep the button busy.
     } catch (e) {
@@ -51,6 +55,7 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
         text: e instanceof Error ? e.message : "Could not start the Meta connection.",
       });
       setBusy(null);
+      setConnectingProvider(null);
     }
   }
 
@@ -168,9 +173,9 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
               <p className="mt-3 flex-1 text-xs leading-relaxed text-[#97A0B3]">{description}</p>
               <button type="button" disabled={busy !== null} onClick={() => void connect(provider)}
                 className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#BCCCE6] px-4 py-3 text-sm font-bold text-[#0B111C] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B111C] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-                {busy === "connect" ? <Loader2 className="size-4 animate-spin" /> : <Icon className="size-4" aria-hidden="true" />}
-                {busy === "connect" ? "Opening authorization..." : label}
-                {busy !== "connect" && <ArrowUpRight className="size-4" aria-hidden="true" />}
+                {busy === "connect" && connectingProvider === provider ? <Loader2 className="size-4 animate-spin" /> : <Icon className="size-4" aria-hidden="true" />}
+                {busy === "connect" && connectingProvider === provider ? "Opening authorization..." : label}
+                {connectingProvider !== provider && <ArrowUpRight className="size-4" aria-hidden="true" />}
               </button>
             </section>
           ))}

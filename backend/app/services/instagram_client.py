@@ -227,8 +227,7 @@ class RealInstagramClient:
                 break
         if not result:
             raise InstagramError(
-                "No eligible Instagram Business account linked to a managed Facebook "
-                "Page was found.",
+                "Facebook did not return an Instagram account you can publish to. Link your Business or Creator account to a Facebook Page, grant this app access to both, and sign in with a user who can create Page content.",
                 "NO_BUSINESS_ACCOUNT",
             )
         return result
