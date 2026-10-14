@@ -132,14 +132,50 @@ export function AdminClientBrandPage() {
   const {
     data: serverClient,
     isLoading,
+    isError,
+    error,
+    refetch,
   } = useQuery<ClientBrandProfile>({
     queryKey: ["client-brand-profile", clientId],
     queryFn: () => fetchClientBrandProfile(clientId!),
     enabled: !!clientId,
   });
 
-  if (isLoading || !serverClient) {
+  if (isLoading) {
     return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Brand DNA" />;
+  }
+
+  // A failed or empty fetch previously fell through to the loading screen, which then
+  // span forever. Surface the reason and a way out instead.
+  if (isError || !serverClient) {
+    return (
+      <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white">
+        <AdminTopHeader title="Client Details" activeTab="Client Details" />
+        <main className="mx-auto flex min-h-[60vh] w-full max-w-xl flex-col items-center justify-center gap-4 px-4 text-center">
+          <h1 className="text-lg font-black">This client profile could not be loaded</h1>
+          <p role="alert" className="text-sm text-[#97A0B3]">
+            {error instanceof Error
+              ? error.message
+              : "The client was not found, or you are not assigned to them."}
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="min-h-10 rounded-xl bg-[#BCCCE6] px-5 text-xs font-bold text-[#0B111C] hover:bg-white cursor-pointer"
+            >
+              Try again
+            </button>
+            <Link
+              to="/lead/clients"
+              className="inline-flex min-h-10 items-center rounded-xl border border-[#2A3446] bg-[#161F2D] px-5 text-xs font-bold text-[#BCCCE6] hover:text-white cursor-pointer"
+            >
+              Back to client allocations
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   const client: ClientBrandProfile = serverClient;

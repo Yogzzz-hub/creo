@@ -136,6 +136,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
   const Container = embedded ? "section" : "main";
   const Heading = embedded ? "h2" : "h1";
   const { user } = useAuth();
+  const canSchedulePublication = user?.role === "admin" || user?.role === "super_admin";
   const queryClient = useQueryClient();
 
   // Calendar State
@@ -146,7 +147,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
   // Filter State
   const [selectedClient, setSelectedClient] = useState("all");
-  const [formatFilter, setFormatFilter] = useState<"all" | "reel" | "poster" | "story" | "carousel">("all");
+  const [formatFilter, setFormatFilter] = useState<"all" | "reel" | "poster" | "story">("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -252,8 +253,13 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
       if (formatFilter !== "all") {
         const typeKey = ev.type?.toLowerCase() || "";
         if (formatFilter === "reel" && !typeKey.includes("reel") && !typeKey.includes("video")) return false;
-        if (formatFilter === "story" && !typeKey.includes("story")) return false;
-        if (formatFilter === "carousel" && !typeKey.includes("carousel")) return false;
+        // "story" covers carousels too, mirroring the Stories & Carousels metric card.
+        if (
+          formatFilter === "story" &&
+          !typeKey.includes("story") &&
+          !typeKey.includes("carousel")
+        )
+          return false;
         if (formatFilter === "poster" && (typeKey.includes("reel") || typeKey.includes("story") || typeKey.includes("carousel"))) return false;
       }
       // Status filter
@@ -340,16 +346,18 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             Schedule Story & Approval
           </button>
 
-          <button
-            onClick={() => {
-              if (clientRoster.length > 0 && clientRoster[0]?.client_id) setNewClient(clientRoster[0].client_id);
-              setIsScheduleOpen(true);
-            }}
-            className="min-h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer hover:shadow-blue-500/20"
-          >
-            <Plus size={15} strokeWidth={2.5} />
-            Schedule Publication
-          </button>
+          {canSchedulePublication && (
+            <button
+              onClick={() => {
+                if (clientRoster.length > 0 && clientRoster[0]?.client_id) setNewClient(clientRoster[0].client_id);
+                setIsScheduleOpen(true);
+              }}
+              className="min-h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer hover:shadow-blue-500/20"
+            >
+              <Plus size={15} strokeWidth={2.5} />
+              Schedule Publication
+            </button>
+          )}
 
           <button
             onClick={() => void calendarQuery.refetch()}
@@ -464,19 +472,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             }`}
           >
             <Sparkles className="size-3.5 text-amber-400" />
-            Stories ({monthlyMetrics.stories})
-          </button>
-
-          <button
-            onClick={() => setFormatFilter("carousel")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer ${
-              formatFilter === "carousel"
-                ? "bg-emerald-600 text-white shadow-xs"
-                : "bg-emerald-500/10 text-emerald-300 hover:text-white border border-emerald-500/20"
-            }`}
-          >
-            <Layers className="size-3.5 text-emerald-400" />
-            Carousels ({monthlyMetrics.carousels})
+            Stories &amp; Carousels ({monthlyMetrics.stories + monthlyMetrics.carousels})
           </button>
         </div>
 
@@ -721,17 +717,19 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               <div className="flex flex-col items-center justify-center min-h-[260px] p-6 text-[#97A0B3] text-sm font-bold bg-[#0B111C]/60 rounded-[1.5rem] border-2 border-dashed border-[#2A3446] text-center shadow-inner">
                 <CalendarIcon className="size-8 text-[#2A3446] mb-3" />
                 No events scheduled for this day.
-                <button
-                  onClick={() => {
-                    const mm = String(monthNumber).padStart(2, "0");
-                    const dd = String(selectedDay).padStart(2, "0");
-                    setNewDate(`${year}-${mm}-${dd}`);
-                    setIsScheduleOpen(true);
-                  }}
-                  className="mt-3 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <Plus size={13} /> Schedule for Day {selectedDay}
-                </button>
+                {canSchedulePublication && (
+                  <button
+                    onClick={() => {
+                      const mm = String(monthNumber).padStart(2, "0");
+                      const dd = String(selectedDay).padStart(2, "0");
+                      setNewDate(`${year}-${mm}-${dd}`);
+                      setIsScheduleOpen(true);
+                    }}
+                    className="mt-3 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <Plus size={13} /> Schedule for Day {selectedDay}
+                  </button>
+                )}
               </div>
             ) : (
               selectedDayEvents.map((event) => {
@@ -838,7 +836,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
       </div>
 
       {/* MODAL 1: Schedule Publication (Admin Need) */}
-      {isScheduleOpen && (
+      {isScheduleOpen && canSchedulePublication && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs">
           <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl relative">
             <div className="flex items-center justify-between pb-4 border-b border-[#2A3446] mb-5">

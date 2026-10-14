@@ -449,7 +449,13 @@ function SlackUniversalRedirect() {
   if (user?.role === "client") {
     return <Navigate to="/portal/slack" replace />;
   }
-  if (user?.role === "admin" || user?.role === "super_admin" || user?.role === "ops_admin") {
+  // Team leads have chat inside their own pod portal; only specialists use the Workstation.
+  if (
+    user?.role === "admin" ||
+    user?.role === "super_admin" ||
+    user?.role === "ops_admin" ||
+    user?.role === "team_lead"
+  ) {
     return <Navigate to="/admin/slack" replace />;
   }
   if (user) {

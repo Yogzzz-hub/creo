@@ -87,11 +87,14 @@ export function AdminBottomNav() {
 
   // Team Member Workstation Items
   const isMemberRole =
-    user?.role === "team_member" ||
-    user?.role === "editor" ||
-    user?.role === "designer" ||
-    location.pathname.startsWith("/workstation") ||
-    location.pathname.startsWith("/member");
+    user?.role !== "team_lead" &&
+    user?.role !== "admin" &&
+    user?.role !== "super_admin" &&
+    (user?.role === "team_member" ||
+      user?.role === "editor" ||
+      user?.role === "designer" ||
+      location.pathname.startsWith("/workstation") ||
+      location.pathname.startsWith("/member"));
 
   const memberItems = [
     {

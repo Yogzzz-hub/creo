@@ -17,6 +17,21 @@ from app.models.enums import UserRole
 from app.models.ops import Notification
 from app.models.user import User
 
+# Shared staff rooms with no client attached. They are keyed only by thread_type, so a
+# client_id must not be required to read them.
+STAFF_CHANNELS = frozenset(
+    {"general", "deliverables-handoff", "urgent-escalations", "all-pod-leads"}
+)
+
+
+def _is_staff_channel(channel: str | None) -> bool:
+    """Staff rooms: the fixed set above plus per-pod rooms such as `pod-beta-team`."""
+    if not channel:
+        return False
+    return channel in STAFF_CHANNELS or (
+        channel.startswith("pod-") and channel.endswith("-team")
+    )
+
 router = APIRouter(prefix="/chat", tags=["Chat"])
 POD_CHAT_ROLES = ("team_lead", "video_editor", "editor", "graphic_designer", "designer")
 
@@ -499,14 +514,22 @@ async def get_messages(
     else:
         # Channel query
         is_client_user = str(actor.role).lower() in ("client",)
-        if is_client_user and channel in ("general", "deliverables-handoff", "urgent-escalations"):
+        if is_client_user and _is_staff_channel(channel):
             return []
 
         effective_client_id = (
             actor.user_id if is_client_user else client_id
         )
 
-        if effective_client_id and channel and (
+        # Staff-only rooms carry no client, so they are keyed by thread_type alone.
+        if _is_staff_channel(channel):
+            stmt = (
+                select(DirectMessage)
+                .where(DirectMessage.thread_type == channel)
+                .order_by(DirectMessage.created_at.asc())
+                .limit(200)
+            )
+        elif effective_client_id and channel and (
             channel.startswith("client-")
             or channel in ("pod-direct-chat", "pod-creative", "pod-creative-hub", "client-pod-thread", "pod-team-chat")
         ):
@@ -601,7 +624,9 @@ async def send_message(
     if payload.channel:
         # Enforce channel permissions:
         # Client can ONLY post in their dedicated client pod channel (#pod-creative-hub or client-*)
-        if is_sender_client and payload.channel in ("general", "deliverables-handoff", "urgent-escalations", "pod-team-chat"):
+        if is_sender_client and (
+            _is_staff_channel(payload.channel) or payload.channel == "pod-team-chat"
+        ):
             raise HTTPException(
                 status_code=403,
                 detail="Clients can only message in their dedicated Pod Hub channel (#pod-creative-hub)."

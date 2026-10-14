@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { request } from "../../lib/http";
+import { useAuth } from "../../lib/auth-context";
 import {
   ArrowLeft,
   Shield,
@@ -81,6 +82,9 @@ export function AdminTicketDetailPage() {
   } | null>(null);
 
   // Modals & Menus
+  const { user } = useAuth();
+  // Ticket ownership across pods is an admin responsibility; leads only work their queue.
+  const canReassignTickets = user?.role === "admin" || user?.role === "super_admin";
   const [reassignModalOpen, setReassignModalOpen] = useState(false);
   const [escalateModalOpen, setEscalateModalOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
@@ -645,14 +649,16 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
           <div className="flex items-center gap-2.5 shrink-0 flex-wrap relative">
             {ticketData?.title !== "Client Pod Thread" && (
               <>
-                <button
-                  type="button"
-                  onClick={() => setReassignModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] shadow-2xs transition-all cursor-pointer"
-                >
-                  <UserCheck className="size-3.5 text-[#97A0B3]" />
-                  Reassign
-                </button>
+                {canReassignTickets && (
+                  <button
+                    type="button"
+                    onClick={() => setReassignModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] shadow-2xs transition-all cursor-pointer"
+                  >
+                    <UserCheck className="size-3.5 text-[#97A0B3]" />
+                    Reassign
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setEscalateModalOpen(true)}
@@ -722,16 +728,6 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                   >
                     <Download className="size-4 text-[#7FA0D6]" />
                     Download Incident Audit (CSV)
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMoreMenuOpen(false);
-                      handleDownloadPayloadDump();
-                    }}
-                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] flex items-center gap-2.5 transition-colors cursor-pointer"
-                  >
-                    <FileText className="size-4 text-purple-600" />
-                    Export Telemetry Logs (JSON)
                   </button>
                   <button
                     onClick={() => {
@@ -1272,7 +1268,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
       {/* ─────────────────────────────────────────────────────────────────────────────
           1. REASSIGN TICKET MODAL
       ───────────────────────────────────────────────────────────────────────────── */}
-      {reassignModalOpen && (
+      {reassignModalOpen && canReassignTickets && (
         <div
           role="dialog"
           aria-modal="true"

@@ -77,8 +77,12 @@ export function AdminSidebar() {
     user?.role === "client" ||
     (!isAdminOrSuper && !isTeamLead && !isSpecialist && location.pathname.startsWith("/portal"));
 
+  // A team lead keeps the lead sidebar even on a /workstation URL; only specialists
+  // (and unknown roles landing there) get the member layout.
   const isMemberRole =
     !isClientRole &&
+    !isAdminOrSuper &&
+    !isTeamLead &&
     (isSpecialist ||
       location.pathname.startsWith("/workstation") ||
       location.pathname.startsWith("/member"));
