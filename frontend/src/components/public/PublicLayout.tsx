@@ -11,27 +11,28 @@ import "../../styles/public-responsive.css";
 export function PublicLayout() {
   const { pathname } = useLocation();
   const reduce = useReducedMotion();
+  const landing = pathname === "/";
 
   return (
     <div className="public-site flex min-h-[100svh] flex-col bg-[#050810] text-[#F8FAFC]">
       <a href="#main-content" className="public-skip-link">Skip to content</a>
       <SmoothScroll />
       <ScrollProgressBar />
-      <Navbar />
+      <Navbar landing={landing} />
       <main id="main-content" className="min-w-0 flex-1">
         <Suspense fallback={<CreoInlineLoader className="min-h-[70vh]" />}>
           {/* Soft cross-fade + rise between marketing pages */}
           <motion.div
             key={pathname}
-            initial={false}
+            initial={landing && !reduce ? { opacity: 0, y: 14 } : false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: reduce ? 0 : 0.15 }}
+            transition={landing ? { duration: reduce ? 0 : 0.55, ease: [0.16, 1, 0.3, 1] } : { duration: reduce ? 0 : 0.15 }}
           >
             <Outlet />
           </motion.div>
         </Suspense>
       </main>
-      <Footer />
+      <Footer landing={landing} />
     </div>
   );
 }

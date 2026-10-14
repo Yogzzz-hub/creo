@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams, Link } from "react-router";
 import { Check, AlertCircle, ArrowRight, Lock, Loader2 } from "lucide-react";
 import { request } from "../../lib/http";
 import { GOOGLE_OAUTH_STATE_KEY, useAuth } from "../../lib/auth-context";
+import type { SessionResponse } from "../../lib/auth-context";
 import { setAuthToken } from "../../lib/auth-token";
 import type { AuthUser } from "../../lib/auth-context";
 import { getRoleHome } from "../../components/auth/ProtectedRoute";
@@ -12,7 +13,7 @@ import { getPostLoginRedirect } from "../../lib/useRouteMemory";
 export function GoogleCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { refresh, user } = useAuth();
+  const { refresh, completeSignIn, user } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [authenticatedUser, setAuthenticatedUser] = useState<AuthUser | null>(null);
@@ -43,16 +44,11 @@ export function GoogleCallbackPage() {
       refresh()
         .then(() => {
           setStatus("success");
-          setTimeout(() => {
-            const destination = getPostLoginRedirect("client", null, "/portal");
-            navigate(destination);
-          }, 900);
+          navigate(getPostLoginRedirect("client", null, "/portal"), { replace: true });
         })
         .catch(() => {
           setStatus("success");
-          setTimeout(() => {
-            navigate("/portal");
-          }, 900);
+          navigate("/portal", { replace: true });
         });
       return;
     }
@@ -86,25 +82,25 @@ export function GoogleCallbackPage() {
     const exchangeCode = async () => {
       try {
         const redirectUri = window.location.origin + window.location.pathname;
-        const res = await request<{ access_token: string; user: AuthUser }>(
+        // The code is single-use, so a hung exchange is not worth waiting a full
+        // minute on: fail fast and let the visitor start over.
+        const res = await request<SessionResponse>(
           "/api/v1/auth/google/callback",
           {
             method: "POST",
             body: JSON.stringify({ code, redirect_uri: redirectUri }),
+            timeoutMs: 25_000,
           },
         );
 
         if (res.access_token) {
-          setAuthToken(res.access_token);
-          setAuthenticatedUser(res.user);
-          localStorage.setItem("creo_auth_user", JSON.stringify(res.user));
-          await refresh();
+          // The response already carries the profile: adopt it directly instead of
+          // spending another /auth/me round trip, and go straight to the workspace.
+          const signedIn = completeSignIn(res);
+          setAuthenticatedUser(signedIn);
           setStatus("success");
-          setTimeout(() => {
-            const defaultHome = getRoleHome(res.user.role);
-            const destination = getPostLoginRedirect(res.user.role, null, defaultHome);
-            navigate(destination);
-          }, 900);
+          const defaultHome = getRoleHome(signedIn.role);
+          navigate(getPostLoginRedirect(signedIn.role, null, defaultHome), { replace: true });
         }
       } catch (err: unknown) {
         setStatus("error");
@@ -115,7 +111,7 @@ export function GoogleCallbackPage() {
     };
 
     exchangeCode();
-  }, [searchParams, navigate, refresh]);
+  }, [searchParams, navigate, refresh, completeSignIn]);
 
   return (
     <div className="auth-page min-h-[100svh] w-full bg-[#050810] flex flex-col items-center justify-center p-4 sm:p-6 select-none relative overflow-hidden font-sans">

@@ -1,10 +1,11 @@
 """Payment service handling orders, confirmations, and replay-resilient webhook processing.
 
 CRITICAL INVARIANT:
-Client-side confirmation (/payments/confirm) ONLY polls the internal database.
-It NEVER activates subscriptions directly.
-The webhook processing path (process_event) is the ONLY path that activates subscriptions,
-ensuring payment capture is verified by the payment gateway.
+A subscription is activated only by evidence the payment gateway signed: either the
+webhook for a *successful* payment (process_event) or the checkout signature the browser
+returns (confirm_order), verified with the gateway secret. Nothing the client merely
+asserts can activate a plan. Admin-approved offline payments are the one other path, and
+they require an authenticated admin.
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ import uuid
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,6 +30,52 @@ from app.models.user import User
 from app.schemas.billing import ConfirmPaymentResponse, CreateOrderResponse
 
 logger = get_logger(__name__)
+
+
+# Gateway events that mean money was actually captured. Anything else (payment.failed,
+# order.created, payment.authorized, refunds...) must never activate a subscription.
+SUCCESS_EVENT_TYPES = frozenset({
+    "payment.captured",
+    "order.paid",
+    "payment_intent.succeeded",
+    "checkout.session.completed",
+    "invoice.paid",
+})
+
+# Secrets that ship in the repository or tests. They authenticate nothing in production.
+_PLACEHOLDER_WEBHOOK_SECRETS = frozenset({
+    "webhook_secret_creo-26",
+    "test_rzp_webhook_secret_key_12345",
+    "whsec_test_stripe_secret_key_12345",
+    "fallback_secret",
+})
+
+
+# How long /payments/confirm waits for the gateway webhook when the browser's own signature
+# could not be verified.
+CONFIRM_POLL_SECONDS = 6.0
+
+
+def is_production() -> bool:
+    return getattr(settings, "ENVIRONMENT", "development") in ("production", "prod")
+
+
+def verify_checkout_signature(order_id: str | None, payment_id: str | None, signature: str | None) -> bool:
+    """Verify the HMAC Razorpay Checkout returns: sha256(secret, "<order_id>|<payment_id>")."""
+    key_secret = getattr(settings, "RAZORPAY_KEY_SECRET", "")
+    if not (key_secret and order_id and payment_id and signature):
+        return False
+    expected = hmac.new(
+        key_secret.encode("utf-8"),
+        f"{order_id}|{payment_id}".encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+
+def sandbox_confirmation_allowed() -> bool:
+    """Local development without gateway keys may confirm without a signature; production never."""
+    return not is_production() and not getattr(settings, "RAZORPAY_KEY_SECRET", "")
 
 
 async def create_order(
@@ -132,60 +179,75 @@ async def create_order(
     )
 
 
-async def _activate_subscription(db: AsyncSession, subscription: Subscription) -> None:
-    """Activate subscription, client account status, and seed monthly quotas."""
+async def _seed_usage_counters(db: AsyncSession, client_id: uuid.UUID, plan: Plan, now: datetime) -> None:
+    """Set this month's quotas to the plan's. Work already used is never taken back, so a
+    downgrade mid-month cannot push `used` above `quota` (ck_usage_bounds)."""
+    period_start = now.date().replace(day=1)
+    if period_start.month == 12:
+        period_end = date(period_start.year + 1, 1, 1) - timedelta(days=1)
+    else:
+        period_end = date(period_start.year, period_start.month + 1, 1) - timedelta(days=1)
+
+    for kind, quota in [
+        (DeliverableType.REEL, plan.reel_quota),
+        (DeliverableType.CAROUSEL, plan.story_quota),
+        (DeliverableType.STATIC_POST, plan.poster_quota),
+    ]:
+        insert_stmt = pg_insert(UsageCounter).values(
+            id=uuid.uuid4(),
+            agency_id=plan.agency_id,
+            client_id=client_id,
+            period_start=period_start,
+            period_end=period_end,
+            kind=kind,
+            quota=quota,
+            used=0,
+        )
+        await db.execute(
+            insert_stmt.on_conflict_do_update(
+                index_elements=["client_id", "period_start", "kind"],
+                set_={
+                    "quota": func.greatest(insert_stmt.excluded.quota, UsageCounter.used),
+                    "period_end": period_end,
+                },
+            )
+        )
+
+
+async def _activate_subscription(db: AsyncSession, subscription: Subscription, *, commit: bool = True) -> None:
+    """Activate subscription, client account status, and seed monthly quotas. Idempotent."""
     now = datetime.now(UTC)
+
+    # At most one active subscription per client is enforced by a unique index, so the
+    # superseded ones must be gone (flushed) before this one becomes active; the order
+    # of two UPDATEs in one flush is not defined.
+    prev_subs_stmt = select(Subscription).where(
+        Subscription.client_id == subscription.client_id,
+        Subscription.id != subscription.id,
+        Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
+    )
+    for prev in (await db.execute(prev_subs_stmt)).scalars().all():
+        prev.status = SubscriptionStatus.CANCELED
+    await db.flush()
+
+    already_active = subscription.status in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING)
     subscription.status = SubscriptionStatus.ACTIVE
-    subscription.current_period_start = now
-    subscription.current_period_end = now + timedelta(days=30)
+    if not already_active:
+        # A repeated confirmation or webhook must not extend a period that was already granted.
+        subscription.current_period_start = now
+        subscription.current_period_end = now + timedelta(days=30)
 
     user_stmt = select(User).where(User.id == subscription.client_id)
     user = (await db.execute(user_stmt)).scalar_one_or_none()
     if user:
         user.account_status = AccountStatus.ACTIVE
 
-    # Supersede any previous active subscriptions for this client when switching/upgrading plans
-    prev_subs_stmt = select(Subscription).where(
-        Subscription.client_id == subscription.client_id,
-        Subscription.id != subscription.id,
-        Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
-    )
-    prev_subs = (await db.execute(prev_subs_stmt)).scalars().all()
-    for prev in prev_subs:
-        prev.status = SubscriptionStatus.CANCELED
-
     plan_stmt = select(Plan).where(Plan.id == subscription.plan_id)
     plan = (await db.execute(plan_stmt)).scalar_one_or_none()
     if plan:
-        period_start = now.date().replace(day=1)
-        if period_start.month == 12:
-            period_end = date(period_start.year + 1, 1, 1) - timedelta(days=1)
-        else:
-            period_end = date(period_start.year, period_start.month + 1, 1) - timedelta(days=1)
-
-        for kind, quota in [
-            (DeliverableType.REEL, plan.reel_quota),
-            (DeliverableType.CAROUSEL, plan.story_quota),
-            (DeliverableType.STATIC_POST, plan.poster_quota),
-        ]:
-            counter_stmt = (
-                pg_insert(UsageCounter)
-                .values(
-                    id=uuid.uuid4(),
-                    client_id=subscription.client_id,
-                    period_start=period_start,
-                    period_end=period_end,
-                    kind=kind,
-                    quota=quota,
-                    used=0,
-                )
-                .on_conflict_do_update(
-                    index_elements=["client_id", "period_start", "kind"],
-                    set_={"quota": quota, "period_end": period_end},
-                )
-            )
-            await db.execute(counter_stmt)
-    await db.commit()
+        await _seed_usage_counters(db, subscription.client_id, plan, now)
+    if commit:
+        await db.commit()
 
 
 async def confirm_order(
@@ -216,26 +278,16 @@ async def confirm_order(
     if sub.status in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING):
         return ConfirmPaymentResponse(status="active", subscription_id=sub.id)
 
-    # Razorpay signature verification
-    key_secret = getattr(settings, "RAZORPAY_KEY_SECRET", "")
-    is_valid_signature = False
-    if gateway == PaymentProvider.RAZORPAY and key_secret and payment_id and signature:
-        expected = hmac.new(
-            key_secret.encode("utf-8"),
-            f"{order_id}|{payment_id}".encode("utf-8"),
-            hashlib.sha256,
-        ).hexdigest()
-        is_valid_signature = hmac.compare_digest(expected, signature)
-
-    # Direct activation if signature matches or verified sandbox confirmation in non-production
-    is_non_prod = getattr(settings, "ENVIRONMENT", "development") not in ("production", "prod")
-    sandbox_bypass = is_non_prod and not key_secret
-    if is_valid_signature or sandbox_bypass:
+    # Razorpay signature verification (the browser can only produce it for a real payment)
+    is_valid_signature = gateway == PaymentProvider.RAZORPAY and verify_checkout_signature(
+        order_id, payment_id, signature
+    )
+    if is_valid_signature or sandbox_confirmation_allowed():
         await _activate_subscription(db, sub)
         return ConfirmPaymentResponse(status="active", subscription_id=sub.id)
 
-    # Poll internal DB for up to 6 seconds waiting for asynchronous webhook
-    deadline = asyncio.get_event_loop().time() + 6.0
+    # Poll internal DB briefly, waiting for the asynchronous webhook
+    deadline = asyncio.get_event_loop().time() + CONFIRM_POLL_SECONDS
     while asyncio.get_event_loop().time() < deadline:
         await db.refresh(sub)
         if sub.status in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING):
@@ -261,6 +313,11 @@ def verify_webhook_signature(
         else getattr(settings, "STRIPE_WEBHOOK_SECRET", "whsec_test_stripe_secret_key_12345")
     )
     webhook_secret: str = str(raw_secret or "fallback_secret")
+    if is_production() and webhook_secret in _PLACEHOLDER_WEBHOOK_SECRETS:
+        # A secret that is public in the repository authenticates nothing: anyone could
+        # forge a "payment captured" event. Refuse until a real secret is configured.
+        logger.error("webhook_secret_not_configured", provider=provider.value)
+        return False
 
     if provider == PaymentProvider.RAZORPAY:
         expected = hmac.new(
@@ -351,7 +408,7 @@ async def record_and_process_webhook(
 
 
 async def process_event(db: AsyncSession, event_id: uuid.UUID) -> None:
-    """The ONLY path that activates subscriptions and seeds monthly usage counters."""
+    """Activate the subscription a *successful* gateway event paid for; ignore every other event."""
     event_stmt = select(PaymentEvent).where(PaymentEvent.id == event_id)
     event = (await db.execute(event_stmt)).scalar_one_or_none()
     if not event or event.processed_at is not None:
@@ -359,10 +416,12 @@ async def process_event(db: AsyncSession, event_id: uuid.UUID) -> None:
 
     payload = event.payload
     # Extract order_id / gateway_subscription_id
+    razorpay_body = payload.get("payload", {})
     order_id = (
         payload.get("order_id")
         or payload.get("data", {}).get("object", {}).get("id")
-        or payload.get("payload", {}).get("payment", {}).get("entity", {}).get("order_id")
+        or razorpay_body.get("payment", {}).get("entity", {}).get("order_id")
+        or razorpay_body.get("order", {}).get("entity", {}).get("id")
     )
     client_id_raw = payload.get("client_id") or payload.get("data", {}).get("object", {}).get(
         "client_id"
@@ -370,7 +429,12 @@ async def process_event(db: AsyncSession, event_id: uuid.UUID) -> None:
 
     subscription: Subscription | None = None
     if order_id:
-        sub_stmt = select(Subscription).where(Subscription.gateway_subscription_id == str(order_id))
+        sub_stmt = (
+            select(Subscription)
+            .where(Subscription.gateway_subscription_id == str(order_id))
+            .order_by(Subscription.created_at.desc())
+            .limit(1)
+        )
         subscription = (await db.execute(sub_stmt)).scalar_one_or_none()
 
     if not subscription and client_id_raw:
@@ -383,49 +447,10 @@ async def process_event(db: AsyncSession, event_id: uuid.UUID) -> None:
         subscription = (await db.execute(sub_stmt)).scalar_one_or_none()
 
     now = datetime.now(UTC)
-    if subscription:
-        # Activate subscription
-        subscription.status = SubscriptionStatus.ACTIVE
-        subscription.current_period_start = now
-        subscription.current_period_end = now + timedelta(days=30)
-
-        # Activate user account
-        user_stmt = select(User).where(User.id == subscription.client_id)
-        user = (await db.execute(user_stmt)).scalar_one_or_none()
-        if user:
-            user.account_status = AccountStatus.ACTIVE
-
-        # Fetch plan quotas
-        plan_stmt = select(Plan).where(Plan.id == subscription.plan_id)
-        plan = (await db.execute(plan_stmt)).scalar_one()
-
-        # Seed monthly usage counters using ON CONFLICT DO NOTHING
-        period_start = now.date().replace(day=1)
-        # End of current month
-        if period_start.month == 12:
-            period_end = date(period_start.year + 1, 1, 1) - timedelta(days=1)
-        else:
-            period_end = date(period_start.year, period_start.month + 1, 1) - timedelta(days=1)
-
-        for kind, quota in [
-            (DeliverableType.REEL, plan.reel_quota),
-            (DeliverableType.CAROUSEL, plan.story_quota),
-            (DeliverableType.STATIC_POST, plan.poster_quota),
-        ]:
-            counter_stmt = (
-                pg_insert(UsageCounter)
-                .values(
-                    id=uuid.uuid4(),
-                    client_id=subscription.client_id,
-                    period_start=period_start,
-                    period_end=period_end,
-                    kind=kind,
-                    quota=quota,
-                    used=0,
-                )
-                .on_conflict_do_nothing(index_elements=["client_id", "period_start", "kind"])
-            )
-            await db.execute(counter_stmt)
+    if subscription and event.event_type in SUCCESS_EVENT_TYPES:
+        await _activate_subscription(db, subscription, commit=False)
+    elif subscription:
+        logger.info("payment_event_ignored_not_a_capture", event_type=event.event_type, event_id=str(event_id))
 
     # Mark event processed
     event.processed_at = now

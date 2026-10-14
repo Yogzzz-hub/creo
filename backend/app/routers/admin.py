@@ -23,7 +23,7 @@ from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile, status
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, delete, func, or_, select, text
+from sqlalchemy import and_, delete, func, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, selectinload
 
@@ -770,11 +770,27 @@ async def get_client_brand_profile(
     # 2. Access control for non-admin staff
     is_admin_role = actor.role in ("admin", "super_admin")
     if not is_admin_role:
-        # Check that the calling user is assigned to this client
+        # A team lead manages their whole pod, and the Client Allocations list shows every
+        # client assigned to any pod member, so allow those as well as their own.
+        allowed_user_ids: list[uuid.UUID] = [actor.user_id]
+        if str(actor.role) in ("team_lead", UserRole.TEAM_LEAD.value):
+            pod_member_ids = (
+                (
+                    await db.execute(
+                        select(StaffProfile.user_id).where(
+                            StaffProfile.team_lead_id == actor.user_id
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            allowed_user_ids.extend(pod_member_ids)
+
         ca_check = await db.execute(
             select(ClientAssignment.id).where(
                 ClientAssignment.client_id == client_uuid,
-                ClientAssignment.user_id == actor.user_id,
+                ClientAssignment.user_id.in_(allowed_user_ids),
             )
         )
         if not ca_check.scalar_one_or_none():
@@ -4622,6 +4638,29 @@ async def create_plan_negotiation_by_admin(
     }
 
 
+def _parse_offer_amount(text_value: str | None) -> Decimal | None:
+    """Read a rupee amount out of free text like "₹30,000", "30000/month", "50k" or "1.5 lakh".
+
+    Returns None when no amount can be read, so the caller asks the admin instead of
+    guessing (a plain digit grab turned "20k" into ₹20).
+    """
+    import re
+
+    match = re.search(r"(\d[\d,]*(?:\.\d+)?)\s*(lakhs?|lacs?|l|k|thousand)?\b", (text_value or "").lower())
+    if not match:
+        return None
+    try:
+        amount = Decimal(match.group(1).replace(",", ""))
+    except Exception:
+        return None
+    unit = match.group(2) or ""
+    if unit.startswith(("lakh", "lac")) or unit == "l":
+        amount *= 100_000
+    elif unit in ("k", "thousand"):
+        amount *= 1_000
+    return amount if amount > 0 else None
+
+
 class NegotiationActionPayload(BaseModel):
     action: str = "accept"  # "accept" | "decline" | "counter"
     decline_reason: str | None = None
@@ -4664,19 +4703,15 @@ async def update_plan_negotiation(
         if not neg.client_id:
             raise HTTPException(status_code=422, detail="A registered client account could not be found for this negotiation.")
 
-        # Determine authoritative agreed price
+        # Determine authoritative agreed price: what the admin typed, else the client's own
+        # offer, else the last counter. Never an invented default.
         final_price = payload.agreed_price or payload.agreed_amount
-        if final_price is None and neg.proposed_offer:
-            digits = "".join(ch for ch in str(neg.proposed_offer) if ch.isdigit())
-            if digits and len(digits) >= 1:
-                try:
-                    final_price = Decimal(digits)
-                except Exception:
-                    pass
+        if final_price is None:
+            final_price = _parse_offer_amount(neg.proposed_offer)
         if final_price is None and neg.counter_price:
             final_price = Decimal(neg.counter_price)
         if final_price is None or final_price <= 0:
-            final_price = Decimal("35000.00")
+            raise HTTPException(status_code=422, detail="Enter the agreed monthly price to accept this proposal.")
 
         current = (await db.execute(select(Plan).join(Subscription, Subscription.plan_id == Plan.id)
             .where(Subscription.client_id == neg.client_id)
@@ -4743,19 +4778,20 @@ async def update_plan_negotiation(
                 Subscription.client_id == neg.client_id,
                 Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
             )
-        )).scalar_one_or_none()
+        )).scalars().first()
 
         if existing_sub:
             existing_sub.plan_id = plan.id
             existing_sub.amount = plan.monthly_price
         else:
             # Client has NOT paid yet! Ensure an INCOMPLETE subscription exists for Razorpay checkout in onboarding
+            # Every "Proceed to checkout" leaves an INCOMPLETE row, so there can be several.
             incomp_sub = (await db.execute(
                 select(Subscription).where(
                     Subscription.client_id == neg.client_id,
                     Subscription.status == SubscriptionStatus.INCOMPLETE,
-                )
-            )).scalar_one_or_none()
+                ).order_by(Subscription.created_at.desc()).limit(1)
+            )).scalars().first()
             if incomp_sub:
                 incomp_sub.plan_id = plan.id
                 incomp_sub.amount = plan.monthly_price
@@ -4791,7 +4827,7 @@ async def update_plan_negotiation(
             )
             uc = (await db.execute(uc_stmt)).scalar_one_or_none()
             if uc:
-                uc.quota = quota
+                uc.quota = max(quota, uc.used)  # ck_usage_bounds: used may not exceed quota
                 uc.period_end = period_end_date
             else:
                 db.add(
@@ -4873,12 +4909,13 @@ async def update_plan_negotiation(
                 await db.flush()
 
             # Ensure an INCOMPLETE subscription exists with this counter proposal for Razorpay checkout
+            # Every "Proceed to checkout" leaves an INCOMPLETE row, so there can be several.
             incomp_sub = (await db.execute(
                 select(Subscription).where(
                     Subscription.client_id == neg.client_id,
                     Subscription.status == SubscriptionStatus.INCOMPLETE,
-                )
-            )).scalar_one_or_none()
+                ).order_by(Subscription.created_at.desc()).limit(1)
+            )).scalars().first()
             if incomp_sub:
                 incomp_sub.plan_id = plan.id
                 incomp_sub.amount = counter_p
@@ -4914,7 +4951,7 @@ async def update_plan_negotiation(
                 )
                 uc = (await db.execute(uc_stmt)).scalar_one_or_none()
                 if uc:
-                    uc.quota = quota
+                    uc.quota = max(quota, uc.used)  # ck_usage_bounds: used may not exceed quota
                     uc.period_end = period_end_date
                 else:
                     db.add(
@@ -4953,6 +4990,14 @@ async def update_plan_negotiation(
 # MANUAL & OFFLINE PAYMENT BYPASS SYSTEM
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _assert_client_in_scope(actor: Actor, client: User | None) -> None:
+    """An agency admin may only handle money for their own agency's clients."""
+    if client is None:
+        raise HTTPException(status_code=404, detail="Client not found")
+    if actor.role != UserRole.SUPER_ADMIN and actor.agency_id and client.agency_id != actor.agency_id:
+        raise HTTPException(status_code=403, detail="Client belongs to another agency")
+
+
 async def _activate_manual_subscription(
     db: AsyncSession,
     client_id: uuid.UUID,
@@ -4978,6 +5023,8 @@ async def _activate_manual_subscription(
     existing_subs = (await db.execute(existing_sub_stmt)).scalars().all()
     for existing_sub in existing_subs:
         existing_sub.status = SubscriptionStatus.CANCELED
+    # One active subscription per client is a unique index: retire the old one first.
+    await db.flush()
 
     # Create new active manual subscription
     sub = Subscription(
@@ -5007,38 +5054,12 @@ async def _activate_manual_subscription(
     elif cp.terms_accepted_at is None:
         cp.terms_accepted_at = now
 
-    # Initialize monthly UsageCounter
-    today = now.date()
-    m_start = date(today.year, today.month, 1)
-    if today.month == 12:
-        m_end = date(today.year + 1, 1, 1) - timedelta(days=1)
-    else:
-        m_end = date(today.year, today.month + 1, 1) - timedelta(days=1)
+    # Seed this month's quotas from the plan (never below what is already used)
+    from app.services.payment_service import _seed_usage_counters
+    await _seed_usage_counters(db, client_id, plan, now)
 
-    uc_stmt = select(UsageCounter).where(
-        UsageCounter.client_id == client_id,
-        UsageCounter.period_start == m_start,
-    )
-    uc = (await db.execute(uc_stmt)).scalars().first()
-    if not uc:
-        uc = UsageCounter(
-            id=uuid.uuid4(),
-            client_id=client_id,
-            subscription_id=sub.id,
-            period_start=m_start,
-            period_end=m_end,
-            posters_used=0,
-            reels_used=0,
-            stories_used=0,
-            revisions_used=0,
-        )
-        db.add(uc)
-
-    # Invalidate session caches
-    try:
-        await invalidate_user_session(client_id)
-    except Exception:
-        pass
+    # No session invalidation here: that helper marks the account as suspended in Redis,
+    # which would lock out the very client who was just activated.
 
     # Notify client
     notif = Notification(
@@ -5069,8 +5090,9 @@ async def list_manual_payment_requests(
         JOIN plans p ON p.id = r.plan_id
         JOIN users u ON u.id = r.client_id
         LEFT JOIN users reviewer ON reviewer.id = r.reviewed_by
+        WHERE (CAST(:agency AS uuid) IS NULL OR u.agency_id = CAST(:agency AS uuid))
         ORDER BY CASE WHEN r.status = 'PENDING' THEN 0 ELSE 1 END, r.created_at DESC
-    """))
+    """), {"agency": str(actor.agency_id) if actor.agency_id and actor.role != UserRole.SUPER_ADMIN else None})
     items = []
     for row in res.all():
         items.append({
@@ -5105,6 +5127,7 @@ async def approve_manual_payment_request(
         SELECT id, client_id, plan_id, payment_method, amount, status
         FROM manual_payment_requests
         WHERE id = :rid
+        FOR UPDATE
     """), {"rid": request_id})
     row = res.fetchone()
     if not row:
@@ -5114,7 +5137,16 @@ async def approve_manual_payment_request(
     plan_id = row[2]
     payment_method = row[3]
     amount = Decimal(str(row[4]))
-    admin_notes = (payload or {}).get("admin_notes", "Approved by Agency Admin")
+    admin_notes = (payload or {}).get("admin_notes") or "Approved by Agency Admin"
+
+    # Only a pending claim can be approved. Approving it twice would grant a second period
+    # for one payment, and approving a rejected/cancelled one would resurrect it.
+    if row[5] != "PENDING":
+        raise HTTPException(
+            status_code=409,
+            detail=f"This payment request was already {str(row[5]).lower()}.",
+        )
+    _assert_client_in_scope(actor, await db.get(User, client_id))
 
     now = datetime.now(UTC)
 
@@ -5183,15 +5215,16 @@ async def reject_manual_payment_request(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Admin declines offline payment request."""
-    admin_notes = (payload or {}).get("admin_notes", "Declined by Agency Admin")
+    admin_notes = (payload or {}).get("admin_notes") or "Declined by Agency Admin"
     now = datetime.now(UTC)
 
     res = await db.execute(text("""
-        SELECT r.id, r.client_id, r.plan_id, p.display_name, u.email, u.full_name
+        SELECT r.id, r.client_id, r.plan_id, p.display_name, u.email, u.full_name, r.status
         FROM manual_payment_requests r
         LEFT JOIN plans p ON p.id = r.plan_id
         LEFT JOIN users u ON u.id = r.client_id
         WHERE r.id = :rid
+        FOR UPDATE OF r
     """), {"rid": request_id})
     row = res.fetchone()
     if not row:
@@ -5201,6 +5234,12 @@ async def reject_manual_payment_request(
     plan_display = row[3] or "Selected Plan"
     client_email = row[4]
     client_name = row[5] or "Valued Client"
+    if row[6] != "PENDING":
+        raise HTTPException(
+            status_code=409,
+            detail=f"This payment request was already {str(row[6]).lower()}.",
+        )
+    _assert_client_in_scope(actor, await db.get(User, client_id))
 
     await db.execute(text("""
         UPDATE manual_payment_requests
@@ -5251,9 +5290,14 @@ async def direct_bypass_client_payment(
     raw_plan_id = payload.get("plan_id")
     if not raw_plan_id:
         raise HTTPException(status_code=422, detail="plan_id is required")
-    plan_id = uuid.UUID(str(raw_plan_id))
-    payment_method = payload.get("payment_method", "cash")
-    notes = payload.get("notes", "Directly bypassed by Agency Admin")
+    try:
+        plan_id = uuid.UUID(str(raw_plan_id))
+    except ValueError:
+        raise HTTPException(status_code=422, detail="plan_id must be a valid plan id") from None
+    payment_method = str(payload.get("payment_method") or "cash")[:50]
+    notes = payload.get("notes") or "Directly bypassed by Agency Admin"
+
+    _assert_client_in_scope(actor, await db.get(User, client_id))
 
     plan_stmt = select(Plan).where(Plan.id == plan_id)
     plan_res = await db.execute(plan_stmt)
@@ -5354,6 +5398,88 @@ async def direct_bypass_client_payment(
         "message": f"Payment successfully bypassed for client on {plan.display_name}. Subscription activated.",
         "subscription_id": str(sub.id),
         "client_id": str(client_id),
+    }
+
+
+@router.post("/clients/{client_id}/revoke-bypass")
+async def revoke_client_bypass(
+    client_id: uuid.UUID,
+    actor: Actor = AdminActor,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Revoke payment bypass: cancels active subscription, cancels manual requests, resets quotas, returns client to Step 3."""
+    _assert_client_in_scope(actor, await db.get(User, client_id))
+    # 1. Cancel all active/trialing subscriptions for this client
+    # Only offline (admin-granted) subscriptions can be revoked here: a plan the client
+    # paid for through the gateway is real money and must not disappear with a bypass.
+    sub_stmt = select(Subscription).where(
+        Subscription.client_id == client_id,
+        Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
+        Subscription.gateway == PaymentProvider.MANUAL,
+    )
+    active_subs = (await db.execute(sub_stmt)).scalars().all()
+    if not active_subs:
+        raise HTTPException(status_code=409, detail="This client has no offline payment bypass to revoke.")
+    now = datetime.now(UTC)
+    cancelled_ids = []
+    for sub in active_subs:
+        sub.status = SubscriptionStatus.CANCELED
+        cancelled_ids.append(str(sub.id))
+
+    # 2. Cancel/reject manual payment requests
+    await db.execute(text("""
+        UPDATE manual_payment_requests
+        SET status = 'CANCELLED', updated_at = :now, admin_notes = 'Payment bypass revoked by Admin'
+        WHERE client_id = :cid AND status IN ('PENDING', 'APPROVED')
+    """), {"cid": client_id, "now": now})
+
+    # 3. Reset usage quotas to zero
+    usage_stmt = select(UsageCounter).where(UsageCounter.client_id == client_id)
+    counters = (await db.execute(usage_stmt)).scalars().all()
+    for counter in counters:
+        counter.quota = 0
+        counter.used = 0
+
+    # 4. Add audit log
+    reviewer_id = None
+    if actor and actor.user_id:
+        rev_user = (await db.execute(select(User.id).where(User.id == actor.user_id))).scalar_one_or_none()
+        if rev_user:
+            reviewer_id = rev_user
+
+    audit = AuditLog(
+        actor_id=reviewer_id,
+        actor_role=actor.role if actor else "admin",
+        entity="client_subscription",
+        entity_id=client_id,
+        action="admin_revoke_payment_bypass",
+        to_value={
+            "client_id": str(client_id),
+            "cancelled_subscription_ids": cancelled_ids,
+        },
+    )
+    db.add(audit)
+
+    # 5. Notify client
+    db.add(
+        Notification(
+            user_id=client_id,
+            title="⚠️ Retainer Subscription Revoked",
+            message="Your payment bypass has been revoked by administration. Please select a plan on Step 3 to continue.",
+            link="/onboarding?step=3",
+            is_read=False,
+        )
+    )
+
+    await db.commit()
+    from app.core.dashboard_cache import invalidate_dashboard_cache
+    await invalidate_dashboard_cache()
+
+    return {
+        "status": "success",
+        "message": "Payment bypass successfully revoked. Client returned to Step 3 (Unpaid).",
+        "client_id": str(client_id),
+        "cancelled_subscriptions": len(cancelled_ids),
     }
 
 

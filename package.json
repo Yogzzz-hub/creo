@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test:worker": "node --test tests/worker.test.mjs",
+    "test:worker": "node --test tests/worker.test.mjs tests/http-session.test.mjs",
     "build": "cd frontend && npm install && npm run build",
     "deploy": "wrangler deploy"
   }

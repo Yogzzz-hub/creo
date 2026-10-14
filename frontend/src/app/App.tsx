@@ -14,8 +14,8 @@ import {
   AboutPage,
   AuthPage,
   ClientsPage,
-  FaqPage,
   GoogleCallbackPage,
+  InstagramCallbackPage,
   OnboardingView,
   PortalAccountPage,
   PortalCalendarPage,
@@ -126,6 +126,9 @@ const MemberTaskBoardPage = lazyModule(() =>
   import("../pages/admin/MemberTaskBoardPage").then((m) => ({ default: m.MemberTaskBoardPage }))
 );
 
+const PublishingPage = lazyModule(() =>
+  import("../pages/admin/PublishingPage").then((m) => ({ default: m.PublishingPage }))
+);
 const MemberSchedulePTOPage = lazyModule(() =>
   import("../pages/admin/MemberSchedulePTOPage").then((m) => ({ default: m.MemberSchedulePTOPage }))
 );
@@ -282,7 +285,6 @@ const dashboardRoutes = {
   "/portfolio": PortfolioPage,
   "/clients": ClientsPage,
   "/about": AboutPage,
-  "/faq": FaqPage,
   "/terms": TermsPage,
   "/privacy": PrivacyPage,
   "/login": AuthPage,
@@ -445,7 +447,13 @@ function SlackUniversalRedirect() {
   if (user?.role === "client") {
     return <Navigate to="/portal/slack" replace />;
   }
-  if (user?.role === "admin" || user?.role === "super_admin" || user?.role === "ops_admin") {
+  // Team leads have chat inside their own pod portal; only specialists use the Workstation.
+  if (
+    user?.role === "admin" ||
+    user?.role === "super_admin" ||
+    user?.role === "ops_admin" ||
+    user?.role === "team_lead"
+  ) {
     return <Navigate to="/admin/slack" replace />;
   }
   if (user) {
@@ -475,7 +483,7 @@ export function App() {
                 <Route path="/portfolio" element={<PortfolioPage />} />
                 <Route path="/clients" element={<ClientsPage />} />
                 <Route path="/about" element={<AboutPage />} />
-                <Route path="/faq" element={<FaqPage />} />
+                <Route path="/faq" element={<Navigate to="/#faq" replace />} />
                 <Route path="/terms" element={<TermsPage />} />
                 <Route path="/privacy" element={<PrivacyPage />} />
               </Route>
@@ -509,6 +517,17 @@ export function App() {
               <Route path="/auth/callback/google" element={<GoogleCallbackPage />} />
               <Route path="/verifying" element={<CreoLoader />} />
               <Route path="/loader-preview" element={<CreoLoader />} />
+
+              {/* Meta OAuth return: outside the onboarding gate so it also works mid-onboarding.
+                  Registered as the exact INSTAGRAM_REDIRECT_URI path. */}
+              <Route
+                path="/portal/account/instagram"
+                element={
+                  <ProtectedRoute allowedRoles={["client"]}>
+                    <InstagramCallbackPage />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* 3. Onboarding Multi-stage Flow (Client + Admin) */}
               <Route
@@ -554,7 +573,6 @@ export function App() {
                 <Route path="support/:ticketId" element={<ClientTicketDetailPage />} />
 
                 <Route path="account" element={<PortalAccountPage />} />
-                <Route path="account/instagram" element={<PortalAccountPage defaultTab="instagram" />} />
                 <Route path="brand" element={<PortalBrandDNAPage />} />
                 <Route path="brand-dna" element={<PortalBrandDNAPage />} />
                 <Route path="library" element={<PortalLibraryPage />} />
@@ -769,6 +787,17 @@ export function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/admin/publishing"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer"]}>
+                      <PublishingPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/lead/publishing" element={<Navigate to="/admin/publishing" replace />} />
+                <Route path="/workstation/publishing" element={<Navigate to="/admin/publishing" replace />} />
+                <Route path="/member/publishing" element={<Navigate to="/admin/publishing" replace />} />
                 <Route
                   path="/lead/tasks"
                   element={

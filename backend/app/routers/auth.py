@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import secrets
 import time
 import urllib.parse
@@ -16,7 +17,7 @@ from fastapi.responses import RedirectResponse
 import httpx
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select, func, update, or_
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -179,7 +180,7 @@ async def _get_user_by_email(db: AsyncSession, email: str) -> User | None:
     """Case-insensitive lookup; the oldest row wins if legacy case-variant duplicates exist."""
     stmt = (
         select(User)
-        .options(selectinload(User.client_profile))
+        .options(joinedload(User.client_profile))
         .where(func.lower(User.email) == _normalize_email(email))
         .order_by(User.created_at.asc())
         .limit(1)
@@ -999,8 +1000,47 @@ async def get_google_auth_url(redirect_uri: str | None = None) -> dict[str, Any]
     return {"url": url, "state": state, "client_id": client_id}
 
 
+# One long-lived client keeps the TLS connection to Google warm, so a sign-in
+# does not pay a fresh DNS + TCP + TLS handshake (hundreds of ms) every time.
+_google_http: httpx.AsyncClient | None = None
+_GOOGLE_TIMEOUT = httpx.Timeout(10.0, connect=4.0)
+
+
+def _google_client() -> httpx.AsyncClient:
+    global _google_http
+    if _google_http is None or _google_http.is_closed:
+        _google_http = httpx.AsyncClient(timeout=_GOOGLE_TIMEOUT)
+    return _google_http
+
+
+def _profile_from_id_token(id_token: str | None) -> dict[str, Any]:
+    """Read the identity claims Google returned straight from its token endpoint.
+
+    The token arrives over TLS from Google itself, so its payload can be trusted
+    without a signature check (OIDC Core 3.1.3.7). This replaces a second
+    round trip to the userinfo endpoint.
+    """
+    if not id_token:
+        return {}
+    try:
+        payload_b64 = id_token.split(".")[1]
+        payload = json.loads(base64.urlsafe_b64decode(payload_b64 + "=" * (-len(payload_b64) % 4)))
+    except Exception:
+        return {}
+    if not isinstance(payload, dict) or not payload.get("email"):
+        return {}
+    return {
+        "id": payload.get("sub"),
+        "email": payload["email"],
+        "verified_email": payload.get("email_verified"),
+        "name": payload.get("name"),
+        "given_name": payload.get("given_name"),
+        "family_name": payload.get("family_name"),
+    }
+
+
 async def _fetch_google_profile(code: str, redirect_uri: str) -> dict[str, Any]:
-    """Exchange a Google authorization code for the account's userinfo profile."""
+    """Exchange a Google authorization code for the account's profile."""
     if code == "mock_code":
         if settings.ENVIRONMENT != "test":
             raise HTTPException(status_code=400, detail="Invalid Google authorization code")
@@ -1013,53 +1053,71 @@ async def _fetch_google_profile(code: str, redirect_uri: str) -> dict[str, Any]:
 
     client_id = settings.GOOGLE_CLIENT_ID
     client_secret = settings.GOOGLE_CLIENT_SECRET
-    user_info: dict[str, Any] = {}
+    if not (client_id and client_secret):
+        return {}
 
-    if client_id and client_secret:
-        # Check primary redirect URI and candidate fallback URIs in case
-        # Google Console registered the root or api path
-        candidate_uris = [redirect_uri]
-        for fallback in [
-            settings.GOOGLE_REDIRECT_URI,
-            "https://creo.yogalakshmibaskar20.workers.dev",
-            "https://creo.yogalakshmibaskar20.workers.dev/auth/google/callback",
-            "https://creo-dsxr.onrender.com",
-            "https://creo-dsxr.onrender.com/api/v1/auth/google/callback",
-            "https://creo-dsxr.onrender.com/auth/google/callback",
-            "http://localhost:5173/auth/google/callback",
-        ]:
-            if fallback and fallback not in candidate_uris:
-                candidate_uris.append(fallback)
+    # The redirect URI the browser actually used goes first. The other candidates
+    # only matter when Google Console registered a different URI, and they are tried
+    # solely after Google reports a redirect_uri_mismatch: any other failure (an
+    # expired or already-used code) cannot be fixed by trying more URIs.
+    candidate_uris = [redirect_uri]
+    for fallback in [
+        settings.GOOGLE_REDIRECT_URI,
+        "https://creo.yogalakshmibaskar20.workers.dev",
+        "https://creo.yogalakshmibaskar20.workers.dev/auth/google/callback",
+        "https://creo-dsxr.onrender.com",
+        "https://creo-dsxr.onrender.com/api/v1/auth/google/callback",
+        "https://creo-dsxr.onrender.com/auth/google/callback",
+        "http://localhost:5173/auth/google/callback",
+    ]:
+        if fallback and fallback not in candidate_uris:
+            candidate_uris.append(fallback)
 
-        try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                for uri in candidate_uris:
-                    token_resp = await client.post(
-                        "https://oauth2.googleapis.com/token",
-                        data={
-                            "code": code,
-                            "client_id": client_id,
-                            "client_secret": client_secret,
-                            "redirect_uri": uri,
-                            "grant_type": "authorization_code",
-                        },
+    client = _google_client()
+    try:
+        async with asyncio.timeout(15):
+            for uri in candidate_uris:
+                token_resp = await client.post(
+                    "https://oauth2.googleapis.com/token",
+                    data={
+                        "code": code,
+                        "client_id": client_id,
+                        "client_secret": client_secret,
+                        "redirect_uri": uri,
+                        "grant_type": "authorization_code",
+                    },
+                )
+                if token_resp.status_code == 200:
+                    token_data = token_resp.json()
+                    profile = _profile_from_id_token(token_data.get("id_token"))
+                    if profile:
+                        return profile
+                    info_resp = await client.get(
+                        "https://www.googleapis.com/oauth2/v2/userinfo",
+                        headers={"Authorization": f"Bearer {token_data.get('access_token')}"},
                     )
-                    if token_resp.status_code == 200:
-                        token_data = token_resp.json()
-                        access_token = token_data.get("access_token")
-                        info_resp = await client.get(
-                            "https://www.googleapis.com/oauth2/v2/userinfo",
-                            headers={"Authorization": f"Bearer {access_token}"},
-                        )
-                        if info_resp.status_code == 200:
-                            user_info = info_resp.json()
-                            break
-                    else:
-                        logger.debug("google_token_exchange_try", uri=uri, status=token_resp.status_code)
-        except Exception as e:
-            logger.warning("google_oauth_exchange_failed", error=str(e))
+                    return info_resp.json() if info_resp.status_code == 200 else {}
 
-    return user_info
+                try:
+                    error = token_resp.json().get("error")
+                except Exception:
+                    error = None
+                logger.debug("google_token_exchange_try", uri=uri, status=token_resp.status_code, error=error)
+                if error != "redirect_uri_mismatch":
+                    break
+    except TimeoutError:
+        logger.warning("google_oauth_exchange_timeout")
+        raise HTTPException(
+            status_code=504,
+            detail="Google took too long to respond. Please try signing in again.",
+        ) from None
+    except httpx.HTTPError as e:
+        logger.warning("google_oauth_exchange_failed", error=str(e))
+        raise HTTPException(
+            status_code=502,
+            detail="We couldn't reach Google to finish signing you in. Please try again.",
+        ) from e
+    return {}
 
 
 async def _process_google_code(

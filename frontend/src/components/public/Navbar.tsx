@@ -10,11 +10,10 @@ const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Work", href: "/work" },
   { label: "Pricing", href: "/pricing" },
-  { label: "FAQ", href: "/faq" },
   { label: "About", href: "/about" },
 ];
 
-export function Navbar() {
+export function Navbar({ landing = false }: { landing?: boolean }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -84,7 +83,7 @@ export function Navbar() {
           : "h-16 bg-deep-surface border-b border-hairline"
       }`}
     >
-      <nav className="mx-auto flex w-full max-w-[1440px] h-full items-center justify-between px-6 sm:px-8 lg:px-12">
+      <nav className={`mx-auto flex w-full h-full items-center justify-between ${landing ? "max-w-[1240px] px-4 sm:px-6" : "max-w-[1440px] px-6 sm:px-8 lg:px-12"}`}>
         <div className="flex items-center">
           <Link to="/" className="group text-2xl font-black tracking-tight text-off-white flex items-baseline">
             creo

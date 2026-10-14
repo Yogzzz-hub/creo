@@ -1,4 +1,3 @@
-import { PublishingQueue } from "../../components/ops/PublishingPanel";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -157,7 +156,7 @@ export function PodLeadDashboardPage() {
 
   const handleDispatchTask = () => {
     const clientName = assignForm.client || data?.clients?.[0]?.name || "Client";
-    const assigneeName = assignForm.assignee || data?.members?.[0]?.name || "Specialist";
+    const assigneeName = assignForm.assignee || memberName(data?.members?.[0]);
     const title = assignForm.title.trim() || `${clientName} ${assignForm.format} Concept`;
     const newDeliverable = {
       id: `del-${Date.now()}`,
@@ -186,19 +185,31 @@ export function PodLeadDashboardPage() {
 
   const leadName = data?.pod?.lead?.name || user?.full_name || "Pod Lead";
   const podName = data?.pod?.name || "Pod Operations";
+  const podChannel = podName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "pod";
+
+  // The pod dashboard returns full_name and craft_title; `name`/`role` alone are missing
+  // or raw enum keys, which left dropdowns blank and showed values like "video_editor".
+  const memberName = (m: any) =>
+    m?.name || m?.full_name || m?.email?.split("@")[0] || "Specialist";
+  const memberRole = (m: any) =>
+    m?.craft_title ||
+    m?.craft_role ||
+    String(m?.role || "Specialist")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c: string) => c.toUpperCase());
 
   // Dynamic Team Roster mapped from backend data
   const teamRoster = (data?.members || []).map((member: any) => {
-    const memberName = member?.name || member?.full_name || member?.email?.split("@")[0] || "Specialist";
+    const displayName = memberName(member);
     const tasksCount = member?.tasks_count || member?.assigned_tasks_count || 0;
     const capacity = member?.capacity || member?.daily_capacity || 5;
     const pct = Math.min(100, Math.round((tasksCount / (capacity > 0 ? capacity : 5)) * 100));
     return {
-      name: memberName,
-      avatar: (memberName || "SP").slice(0, 2).toUpperCase(),
+      name: displayName,
+      avatar: displayName.slice(0, 2).toUpperCase(),
       avatarBg: "bg-[#7FA0D6]",
-      role: member?.role || member?.craft_title || "Specialist",
-      assignment: `${member?.role || member?.craft_title || "Specialist"} · ${podName} Active`,
+      role: memberRole(member),
+      assignment: `${memberRole(member)} · ${podName} Active`,
       tasksCount: `${tasksCount} Tasks`,
       loadLabel: `${pct}% Load`,
       loadColor: pct > 80 ? "bg-rose-500" : pct > 50 ? "bg-amber-500" : "bg-emerald-500",
@@ -778,7 +789,6 @@ export function PodLeadDashboardPage() {
             </div>
           </div>
         </div>
-        <PublishingQueue />
       </main>
 
       {/* Revision Modal */}
@@ -824,7 +834,7 @@ export function PodLeadDashboardPage() {
         <div className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
           <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-black text-white">Log Pod A Daily Standup</h3>
+              <h3 className="text-base font-black text-white">Log {podName} Daily Standup</h3>
               <button onClick={() => setStandupModalOpen(false)} className="text-[#97A0B3] hover:text-[#F1F5F9]">
                 <X className="size-5" />
               </button>
@@ -848,7 +858,7 @@ export function PodLeadDashboardPage() {
               </button>
               <button
                 onClick={() => {
-                  showToast("Daily Standup logged and synced to Slack #pod-a", "success");
+                  showToast(`Daily Standup logged and synced to Slack #${podChannel}`, "success");
                   setStandupModalOpen(false);
                   setStandupNote("");
                 }}
@@ -922,7 +932,9 @@ export function PodLeadDashboardPage() {
                       <option value="">No specialists registered</option>
                     ) : (
                       data.members.map((m) => (
-                        <option key={m.id} value={m.name}>{m.name} ({m.role})</option>
+                        <option key={m.id} value={memberName(m)}>
+                          {memberName(m)} · {memberRole(m)}
+                        </option>
                       ))
                     )}
                   </NativeSelect>

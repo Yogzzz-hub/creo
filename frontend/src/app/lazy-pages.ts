@@ -52,9 +52,6 @@ export const ClientsPage = lazyPage(() =>
 export const AboutPage = lazyPage(() =>
   import("../pages/public/AboutPage").then((m) => m.AboutPage),
 );
-export const FaqPage = lazyPage(() =>
-  import("../pages/public/FaqPage").then((m) => m.FaqPage),
-);
 export const TermsPage = lazyPage(() =>
   import("../pages/public/TermsPrivacyPages").then((m) => m.TermsPage),
 );
@@ -91,6 +88,9 @@ export const PortalSupportPage = lazyPage(() =>
 );
 export const PortalAccountPage = lazyPage(() =>
   import("../pages/portal/PortalAccountPage").then((m) => m.PortalAccountPage),
+);
+export const InstagramCallbackPage = lazyPage(() =>
+  import("../pages/portal/InstagramCallbackPage").then((m) => m.InstagramCallbackPage),
 );
 export const PortalBrandDNAPage = lazyPage(() =>
   import("../pages/portal/PortalBrandDNAPage").then((m) => m.PortalBrandDNAPage),

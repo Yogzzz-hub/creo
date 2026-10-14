@@ -327,7 +327,11 @@ export function ClientsPage() {
                 <div className="bg-[#0A0F18]/80 border border-[#2A3446]/40 text-[#97A0B3] text-[10px] font-mono px-3 py-2 rounded-xl flex-1 sm:w-48 truncate">
                   https://ryze-works.app/review/7f9a3c...
                 </div>
-                <button className="bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-[#F8FAFC] text-[10px] font-semibold px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors shrink-0">
+                <button
+                  type="button"
+                  onClick={() => void navigator.clipboard?.writeText("https://ryze-works.app/review/7f9a3c...")}
+                  className="bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-[#F8FAFC] text-[10px] font-semibold px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors shrink-0 cursor-pointer"
+                >
                   <Copy className="size-3" /> Copy Link
                 </button>
               </div>
