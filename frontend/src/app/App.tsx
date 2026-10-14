@@ -14,7 +14,6 @@ import {
   AboutPage,
   AuthPage,
   ClientsPage,
-  FaqPage,
   GoogleCallbackPage,
   InstagramCallbackPage,
   OnboardingView,
@@ -286,7 +285,6 @@ const dashboardRoutes = {
   "/portfolio": PortfolioPage,
   "/clients": ClientsPage,
   "/about": AboutPage,
-  "/faq": FaqPage,
   "/terms": TermsPage,
   "/privacy": PrivacyPage,
   "/login": AuthPage,
@@ -485,7 +483,7 @@ export function App() {
                 <Route path="/portfolio" element={<PortfolioPage />} />
                 <Route path="/clients" element={<ClientsPage />} />
                 <Route path="/about" element={<AboutPage />} />
-                <Route path="/faq" element={<FaqPage />} />
+                <Route path="/faq" element={<Navigate to="/#faq" replace />} />
                 <Route path="/terms" element={<TermsPage />} />
                 <Route path="/privacy" element={<PrivacyPage />} />
               </Route>
