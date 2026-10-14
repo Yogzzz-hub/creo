@@ -46,6 +46,12 @@ services:
         sync: false
       - key: INSTAGRAM_APP_SECRET
         sync: false
+      - key: INSTAGRAM_LOGIN_APP_ID
+        sync: false
+      - key: INSTAGRAM_LOGIN_APP_SECRET
+        sync: false
+      - key: META_LOGIN_CONFIG_ID
+        sync: false
       - key: INSTAGRAM_REDIRECT_URI
         value: https://creo.yogalakshmibaskar20.workers.dev/portal/account/instagram
       - key: INSTAGRAM_CLIENT_MODE

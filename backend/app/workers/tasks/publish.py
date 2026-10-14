@@ -18,6 +18,7 @@ from app.models.work import Deliverable
 from app.services import instagram_connection as connection
 from app.services import publishing_service as publishing
 from app.services.instagram_client import InstagramError, get_instagram_client
+from app.services.instagram_login import client_for_provider
 from app.services.instagram_media import inspect_media
 from app.workers.celery_app import celery_app
 
@@ -26,7 +27,7 @@ def enabled() -> bool:
     return (
         settings.INSTAGRAM_PUBLISHING_ENABLED
         and settings.INSTAGRAM_CLIENT_MODE == "real"
-        and connection.configured()
+        and (connection.configured() or connection.configured("instagram"))
     )
 
 
@@ -176,6 +177,8 @@ async def execute_publish_job(job_id: uuid.UUID, agency_id: uuid.UUID) -> dict:
                     credentials = connection.unseal(profile.ig_token_encrypted)
                 else:
                     credentials = await eligible(db, job, d, profile)
+                if credentials.get("provider") == "instagram":
+                    provider = client_for_provider("instagram")
                 await provider.verify_account(
                     job.instagram_account_id, profile.ig_metadata["page_id"], credentials
                 )

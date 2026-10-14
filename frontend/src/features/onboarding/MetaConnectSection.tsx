@@ -36,15 +36,14 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
     void queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] });
   };
 
-  async function connect() {
+  async function connect(provider: "facebook" | "instagram" = "facebook") {
     setBusy("connect");
     setMessage(null);
     try {
-      await beforeConnect();
       // Meta sends the client back to the same questionnaire tab.
       const params = new URLSearchParams(window.location.search);
       params.set("section", "h");
-      await startMetaConnect(userId, `${window.location.pathname}?${params.toString()}`);
+      await startMetaConnect(userId, `${window.location.pathname}?${params.toString()}`, beforeConnect, provider);
       // Leaving the page; keep the button busy.
     } catch (e) {
       setMessage({
@@ -112,8 +111,8 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
           </span>
         </div>
         <p className="text-xs text-[#97A0B3] mt-1">
-          Sign in with Facebook so approved posts can be auto-published to your Instagram Business
-          account. You can also do this later from Account settings.
+          Connect your Instagram Business or Creator account directly, or use Facebook with a linked
+          Page. Your password stays with Instagram or Facebook. You can also connect later in Account settings.
         </p>
       </div>
 
@@ -134,6 +133,23 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
         <output className="text-xs text-[#97A0B3] flex items-center gap-2">
           <Loader2 className="size-3.5 animate-spin" /> Checking connection…
         </output>
+      )}
+      {data && (
+        <div className="rounded-2xl border border-[#2A3446] bg-[#0B111C] p-5 space-y-3">
+          <button
+            type="button"
+            disabled={busy !== null || !data.instagram_login_configured}
+            onClick={() => void connect("instagram")}
+            className="min-h-11 px-6 py-3 rounded-xl bg-[#BCCCE6] text-[#0B111C] text-sm font-bold hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {busy === "connect" ? "Opening authorization..." : "Connect Instagram directly"}
+          </button>
+          <p className="text-xs text-[#97A0B3]">
+            {data.instagram_login_configured
+              ? "No Facebook Page needed. Connecting replaces this workspace's existing Instagram connection."
+              : "Direct Instagram connection will be available once your agency finishes setup."}
+          </p>
+        </div>
       )}
       {status.isError && (
         <p role="alert" className="text-xs text-rose-300 flex items-center gap-2">
@@ -213,7 +229,7 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
             )}
             <button
               type="button"
-              disabled={busy !== null || !data.configured}
+              disabled={busy !== null}
               onClick={() => void connect()}
               className="w-full sm:w-auto min-w-[240px] px-6 py-3 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-sm font-bold transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
@@ -226,8 +242,8 @@ export function MetaConnectSection({ userId, beforeConnect }: MetaConnectSection
                 {busy === "connect"
                   ? "Redirecting to Meta…"
                   : needsReconnect
-                    ? "Reconnect with Meta"
-                    : "Connect with Meta"}
+                    ? "Reconnect with Facebook"
+                    : "Connect with Facebook"}
               </span>
             </button>
             <p className="text-[11px] text-[#97A0B3]">

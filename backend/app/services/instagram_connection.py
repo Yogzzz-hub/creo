@@ -23,8 +23,10 @@ from app.models.ops import AuditLog, Notification
 from app.models.publishing import InstagramOAuth, PublishingJob
 from app.models.user import ClientProfile, User
 from app.services.instagram_client import SCOPES, InstagramError, get_instagram_client
+from app.services.instagram_login import LOGIN_SCOPES, client_for_provider
 
 logger = get_logger(__name__)
+
 
 def cipher() -> Fernet:
     try:
@@ -55,7 +57,7 @@ def unseal(value: bytes | None):
         ) from None
 
 
-def configured() -> bool:
+def configured(provider: str = "facebook") -> bool:
     try:
         uri = urlparse(settings.INSTAGRAM_REDIRECT_URI.strip())
         callback_is_safe = (
@@ -73,7 +75,17 @@ def configured() -> bool:
                 )
             )
         )
-        if not settings.INSTAGRAM_APP_ID.strip() or not settings.INSTAGRAM_APP_SECRET.strip():
+        app_id = (
+            settings.INSTAGRAM_LOGIN_APP_ID
+            if provider == "instagram"
+            else settings.INSTAGRAM_APP_ID
+        )
+        secret = (
+            settings.INSTAGRAM_LOGIN_APP_SECRET
+            if provider == "instagram"
+            else settings.INSTAGRAM_APP_SECRET
+        )
+        if provider not in ("facebook", "instagram") or not app_id.strip() or not secret.strip():
             return False
         if not callback_is_safe:
             return False
@@ -83,11 +95,12 @@ def configured() -> bool:
         return False
 
 
-def require_configuration() -> None:
-    if not configured():
+def require_configuration(provider: str = "facebook") -> None:
+    if not configured(provider):
         logger.error(
             "instagram_not_configured",
-            hint="Set INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET, a Fernet ENCRYPTION_KEY, "
+            provider=provider,
+            hint="Set the selected login provider app ID/secret, a Fernet ENCRYPTION_KEY, "
             "and the exact HTTPS INSTAGRAM_REDIRECT_URI registered with Meta.",
         )
         raise Conflict(
@@ -144,6 +157,8 @@ def public_status(profile: ClientProfile) -> dict:
         else None,
         "timezone": profile.timezone,
         "configured": configured(),
+        "instagram_login_configured": configured("instagram"),
+        "provider": meta.get("provider", "facebook"),
         "publishing_enabled": settings.INSTAGRAM_PUBLISHING_ENABLED
         and settings.INSTAGRAM_CLIENT_MODE == "real",
     }
@@ -252,12 +267,42 @@ async def pause_jobs(db: AsyncSession, profile: ClientProfile, reason: str) -> N
         job.lease_id, job.lease_until = None, None
 
 
-async def start(db: AsyncSession, actor: Actor) -> dict:
-    require_configuration()
+def authorization_url(state: str, provider: str = "facebook") -> str:
+    """Build the matching provider dialog without exposing app secrets."""
+    if provider == "instagram":
+        return "https://www.instagram.com/oauth/authorize?" + urlencode(
+            {
+                "client_id": settings.INSTAGRAM_LOGIN_APP_ID,
+                "redirect_uri": settings.INSTAGRAM_REDIRECT_URI,
+                "response_type": "code",
+                "scope": ",".join(sorted(LOGIN_SCOPES)),
+                "state": state,
+                "enable_fb_login": "0",
+            }
+        )
+    params = {
+        "client_id": settings.INSTAGRAM_APP_ID,
+        "redirect_uri": settings.INSTAGRAM_REDIRECT_URI,
+        "response_type": "code",
+        "state": state,
+    }
+    if settings.META_LOGIN_CONFIG_ID:
+        params["config_id"] = settings.META_LOGIN_CONFIG_ID
+    else:
+        params["scope"] = ",".join(sorted(SCOPES))
+        params["auth_type"] = "rerequest"
+    return f"https://www.facebook.com/{settings.META_GRAPH_API_VERSION}/dialog/oauth?{urlencode(params)}"
+
+
+async def start(db: AsyncSession, actor: Actor, provider: str = "facebook") -> dict:
+    require_configuration(provider)
     user, _ = await owner(db, actor)
     # Each browser flow is short lived; reconnect invalidates previous attempts.
     await db.execute(delete(InstagramOAuth).where(InstagramOAuth.client_id == user.id))
-    state, verifier = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
+    state, verifier = (
+        ("ig:" if provider == "instagram" else "fb:") + secrets.token_urlsafe(32),
+        secrets.token_urlsafe(32),
+    )
     db.add(
         InstagramOAuth(
             agency_id=user.agency_id,
@@ -268,16 +313,8 @@ async def start(db: AsyncSession, actor: Actor) -> dict:
         )
     )
     await db.commit()
-    params = {
-        "client_id": settings.INSTAGRAM_APP_ID,
-        "redirect_uri": settings.INSTAGRAM_REDIRECT_URI,
-        "response_type": "code",
-        "scope": ",".join(sorted(SCOPES)),
-        "state": state,
-        "auth_type": "rerequest",
-    }
     return {
-        "url": f"https://www.facebook.com/{settings.META_GRAPH_API_VERSION}/dialog/oauth?{urlencode(params)}",
+        "url": authorization_url(state, provider),
         "state": state,
         "verifier": verifier,
     }
@@ -286,7 +323,6 @@ async def start(db: AsyncSession, actor: Actor) -> dict:
 async def callback(
     db: AsyncSession, actor: Actor, *, state: str, verifier: str, code: str | None, denied: bool
 ) -> dict:
-    require_configuration()
     user, _ = await owner(db, actor)
     flow = (
         await db.execute(
@@ -317,7 +353,10 @@ async def callback(
             "Instagram authorization was declined. Your existing connection is unchanged.",
             code="OAUTH_DENIED",
         )
-    accounts = await get_instagram_client().discover_accounts(code)
+    provider = "instagram" if state.startswith("ig:") else "facebook"
+    require_configuration(provider)
+    client = client_for_provider(provider) if provider == "instagram" else get_instagram_client()
+    accounts = await client.discover_accounts(code)
     flow = (
         await db.execute(
             select(InstagramOAuth).where(InstagramOAuth.id == flow.id).with_for_update()
@@ -355,7 +394,13 @@ async def select_account(
     if not account:
         raise Forbidden("This account was not authorized by this client.")
     credentials = {k: account[k] for k in ("page_token", "user_token")}
-    await get_instagram_client().verify_account(account_id, account["page_id"], credentials)
+    credentials["provider"] = account.get("provider", "facebook")
+    client = (
+        client_for_provider("instagram")
+        if credentials["provider"] == "instagram"
+        else get_instagram_client()
+    )
+    await client.verify_account(account_id, account["page_id"], credentials)
     await pause_jobs(
         db,
         profile,
@@ -393,10 +438,16 @@ async def verify(db: AsyncSession, profile: ClientProfile) -> dict:
             raise InstagramError(
                 "Instagram authorization expired. Reconnect.", "RECONNECT_REQUIRED", reconnect=True
             )
-        await get_instagram_client().verify_account(
+        credentials = unseal(profile.ig_token_encrypted)
+        client = (
+            client_for_provider("instagram")
+            if credentials.get("provider") == "instagram"
+            else get_instagram_client()
+        )
+        await client.verify_account(
             profile.instagram_user_id or "",
             (profile.ig_metadata or {}).get("page_id", ""),
-            unseal(profile.ig_token_encrypted),
+            credentials,
         )
         profile.ig_metadata = {
             **(profile.ig_metadata or {}),
@@ -436,7 +487,12 @@ async def disconnect(db: AsyncSession, actor: Actor) -> dict:
     revoked = True
     if credentials:
         try:
-            await get_instagram_client().revoke(credentials)
+            client = (
+                client_for_provider("instagram")
+                if credentials.get("provider") == "instagram"
+                else get_instagram_client()
+            )
+            await client.revoke(credentials)
         except InstagramError:
             revoked = False
     return {**public_status(profile), "provider_revoked": revoked}

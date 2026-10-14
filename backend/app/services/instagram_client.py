@@ -57,6 +57,13 @@ class RealInstagramClient:
     def base_url(self) -> str:
         return f"https://graph.facebook.com/{settings.META_GRAPH_API_VERSION}"
 
+    @property
+    def app_secret(self) -> str:
+        return settings.INSTAGRAM_APP_SECRET
+
+    def request_url(self, path: str) -> str:
+        return f"{self.base_url}/{path.lstrip('/')}"
+
     async def call(
         self,
         method: str,
@@ -69,14 +76,15 @@ class RealInstagramClient:
         headers = {}
         if token:
             headers["Authorization"] = f"Bearer {token}"
-            params["appsecret_proof"] = hmac.new(
-                settings.INSTAGRAM_APP_SECRET.encode(), token.encode(), hashlib.sha256
-            ).hexdigest()
+            if self.app_secret:
+                params["appsecret_proof"] = hmac.new(
+                    self.app_secret.encode(), token.encode(), hashlib.sha256
+                ).hexdigest()
         try:
             async with httpx.AsyncClient(timeout=30, transport=self.transport) as client:
                 response = await client.request(
                     method,
-                    f"{self.base_url}/{path.lstrip('/')}",
+                    self.request_url(path),
                     headers=headers,
                     **({"params": params} if method == "GET" else {"data": params}),
                 )

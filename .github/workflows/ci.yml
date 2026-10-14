@@ -101,9 +101,9 @@ jobs:
         working-directory: ./frontend
         run: npx tsc --noEmit
 
-      - name: Test Worker API Routing and Cache Isolation
+      - name: Test Frontend Integration and Worker Regressions
         working-directory: ./frontend
-        run: node --test ../tests/worker.test.mjs
+        run: node --test ../tests/worker.test.mjs ../tests/http-session.test.mjs ../tests/instagram-callback.test.mjs ../tests/instagram-redirect.test.mjs
 
       - name: Build Frontend Bundle
         working-directory: ./frontend

@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router";
 import { useAuth } from "../../lib/auth-context";
+import { parseInstagramCallback } from "../../lib/instagram-callback";
 import {
   type InstagramSelection,
   completeCallback,
@@ -21,12 +22,7 @@ export function InstagramCallbackPage() {
   const navigate = useNavigate();
   const cache = useQueryClient();
   const started = useRef(false);
-  const hasParams = useRef(
-    (() => {
-      const p = new URLSearchParams(window.location.search);
-      return p.has("code") || p.has("error");
-    })(),
-  );
+  const [callback] = useState(() => parseInstagramCallback(window.location.search));
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
@@ -38,17 +34,25 @@ export function InstagramCallbackPage() {
     void cache.invalidateQueries({ queryKey: ["portal-profile"] });
     void cache.invalidateQueries({ queryKey: ["portal-dashboard"] });
     setDone(true);
-    window.setTimeout(() => navigate(returnPath.current, { replace: true }), 1200);
+    navigate(returnPath.current, { replace: true });
   };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs once per callback; finish() only uses refs and stable setters
   useEffect(() => {
-    if (!user || started.current || !hasParams.current) return;
+    if (!user || started.current || !callback.hasResponse) return;
     started.current = true;
-    const params = new URLSearchParams(window.location.search);
-    window.history.replaceState(null, "", window.location.pathname);
-    returnPath.current = takeReturnPath(DEFAULT_RETURN);
-    const flow = takeSavedFlow(user.id, params.get("state"));
+    window.history.replaceState(window.history.state, "", window.location.pathname);
+    returnPath.current = takeReturnPath(
+      user.onboarding_stage < 8 ? "/onboarding?step=4&section=h" : DEFAULT_RETURN,
+    );
+    const flow = takeSavedFlow(user.id, callback.state);
+    // Provider failures may omit state entirely. Show them without exchanging a code
+    // or claiming success; a successful callback still requires the saved verifier.
+    if (callback.error) {
+      setError(callback.error);
+      setBusy(false);
+      return;
+    }
     if (!flow) {
       setError(
         "Authorization state is missing or expired. Start the connection again in this browser.",
@@ -59,12 +63,13 @@ export function InstagramCallbackPage() {
     completeCallback({
       state: flow.state,
       verifier: flow.verifier,
-      code: params.get("code"),
-      denied: params.has("error"),
+      code: callback.code,
+      denied: false,
     })
       .then((data) => {
         if ("accounts" in data) setSelection(data);
-        else finish();
+        else if (data.connected) finish();
+        else setError(data.error || "Meta did not connect an Instagram account. Try again.");
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Connection failed. Try again."))
       .finally(() => setBusy(false));
@@ -85,7 +90,7 @@ export function InstagramCallbackPage() {
     }
   }
 
-  if (!hasParams.current) return <Navigate to={DEFAULT_RETURN} replace />;
+  if (!callback.hasResponse) return <Navigate to={DEFAULT_RETURN} replace />;
 
   return (
     <main className="min-h-screen bg-[#0B111C] text-white flex items-center justify-center p-4">

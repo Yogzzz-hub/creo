@@ -1,6 +1,7 @@
 """Client-owned Instagram connection routes; Meta callback is separate from Creo login."""
 
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
@@ -34,8 +35,12 @@ async def connection_status(
 
 
 @router.post("/connect")
-async def connect(actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)):
-    return await service.start(db, actor)
+async def connect(
+    provider: Literal["facebook", "instagram"] = "facebook",
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+):
+    return await service.start(db, actor, provider)
 
 
 @router.post("/callback")

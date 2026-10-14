@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
+import { startMetaConnect } from "../../lib/instagram-oauth";
 import { PublishingQueue } from "../ops/PublishingPanel";
 import { useConfirm } from "../ui/ConfirmDialog";
 
@@ -10,6 +11,7 @@ interface Connection {
   status: string;
   connected: boolean;
   configured: boolean;
+  instagram_login_configured?: boolean;
   publishing_enabled: boolean;
   username?: string;
   account_id?: string;
@@ -82,7 +84,7 @@ export function InstagramConnection() {
       .finally(() => setBusy(false));
   }, [user, invalidate]);
 
-  async function perform(action: "connect" | "verify" | "disconnect", accountId?: string) {
+  async function perform(action: "connect" | "instagram" | "verify" | "disconnect", accountId?: string) {
     if (
       action === "disconnect" &&
       !(await confirm({
@@ -103,6 +105,9 @@ export function InstagramConnection() {
         });
         setSelection(null);
         setMessage("Instagram connected.");
+      } else if (action === "instagram") {
+        if (!user) return;
+        await startMetaConnect(user.id, "/portal/account?tab=integrations", undefined, "instagram");
       } else if (action === "connect") {
         const data = await request<{ url: string; state: string; verifier: string }>(
           `${endpoint}/connect`,
@@ -148,11 +153,26 @@ export function InstagramConnection() {
           </Link>
         </div>
         <p className="text-sm text-[#97A0B3]">
-          Connect an Instagram Business account linked to a Facebook Page you manage. Approve
+          Connect an Instagram Business or Creator account directly, or through a linked Facebook Page. Approve
           content in Creo, then your authorized team schedules it. Your Instagram password is never
           shared with the team.
         </p>
         {query.isPending && <output>Checking connection…</output>}
+        {query.data && (
+          <div className="space-y-2">
+            <button type="button" className={button}
+              disabled={busy || !query.data.instagram_login_configured}
+              onClick={() => void perform("instagram")}
+            >
+              {busy ? "Opening authorization..." : "Connect Instagram directly"}
+            </button>
+            <p className="text-xs text-[#97A0B3]">
+              {query.data.instagram_login_configured
+                ? "No Facebook Page needed. Replaces this workspace's existing Instagram connection."
+                : "Your agency needs to finish direct Instagram setup before you can use this option."}
+            </p>
+          </div>
+        )}
         {query.isError && (
           <p role="alert">
             {query.error.message}{" "}
