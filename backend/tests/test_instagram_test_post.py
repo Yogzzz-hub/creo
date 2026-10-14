@@ -85,7 +85,7 @@ async def test_duplicate_request_returns_original_without_another_submission():
 async def test_publish_uses_correct_provider_token_and_never_retries_ambiguous_submission(provider_name):
     p = profile(provider_name)
     row = SimpleNamespace(id=uuid.uuid4(), client_id=uuid.uuid4(), status="queued",
-        account_id="12345", connection_id=p.ig_connection_id, container_id=None, error=None, scheduled_at=None)
+        account_id="12345", connection_id=p.ig_connection_id, container_id=None, error=None, scheduled_at=None, actor_context={"caption": "Custom queued caption"})
     db = AsyncMock()
     db.execute.return_value = SimpleNamespace(scalar_one_or_none=lambda: row)
     db.get.return_value = row
@@ -108,4 +108,5 @@ async def test_publish_uses_correct_provider_token_and_never_retries_ambiguous_s
          patch.object(service, "inspect_media", AsyncMock(return_value=("https://media.example/sample.jpg", {}))):
         await service.run(row.id, uuid.uuid4(), SimpleNamespace())
     assert row.status == "uncertain"
+    assert provider.create_media_container.call_args.args[3] == "Custom queued caption"
     provider.publish_container.assert_awaited_once_with("12345", "container", "user" if provider_name == "instagram" else "page")

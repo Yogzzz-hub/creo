@@ -10,6 +10,7 @@ type Attempt = { id: string; status: string; permalink?: string; error?: string;
 
 export function InstagramTestPost() {
   const confirm = useConfirm();
+  const [caption, setCaption] = useState("Creo test post ? checking the Instagram publishing connection.");
   const [mode, setMode] = useState("now");
   const [scheduledAt, setScheduledAt] = useState("");
   const queue = useQuery({ queryKey: ["instagram-test-queue"], queryFn: () => request<Attempt[]>("/api/v1/publishing/test-post/queue"), refetchInterval: 5000 });
@@ -36,7 +37,7 @@ export function InstagramTestPost() {
     // Reuse the request ID after a network failure: never silently post twice.
     const id = current?.id || crypto.randomUUID();
     try {
-      setAttempt(await request<Attempt>(`/api/v1/publishing/clients/${selected.id}/test-post`, { method: "POST", body: JSON.stringify({ request_id: id, account_id: selected.account_id, scheduled_at: mode === "queue" ? new Date(scheduledAt).toISOString() : null }) }));
+      setAttempt(await request<Attempt>(`/api/v1/publishing/clients/${selected.id}/test-post`, { method: "POST", body: JSON.stringify({ request_id: id, account_id: selected.account_id, caption, scheduled_at: mode === "queue" ? new Date(scheduledAt).toISOString() : null }) }));
       void queue.refetch();
     } catch (err) {
       setAttempt({ id, status: "checking" });
@@ -53,7 +54,7 @@ export function InstagramTestPost() {
         {!clients.data?.clients.length && <p className="text-sm text-[#97A0B3]">No connected clients are available. Connect a client’s Instagram account and assign them to your pod first.</p>}
         <label className="block text-sm font-semibold">Test mode<select value={mode} disabled={busy} onChange={event => setMode(event.target.value)} className="mt-2 block w-full rounded-xl border border-[#2A3446] bg-[#0B111C] p-3"><option value="now">Publish now</option><option value="queue">Queue for later</option></select></label>
         {mode === "queue" && <label className="block text-sm font-semibold">Publish date and time<input type="datetime-local" value={scheduledAt} disabled={busy} onChange={event => setScheduledAt(event.target.value)} className="mt-2 block w-full rounded-xl border border-[#2A3446] bg-[#0B111C] p-3" /><span className="text-xs text-[#97A0B3]">Your timezone: {Intl.DateTimeFormat().resolvedOptions().timeZone}</span></label>}
-        <div className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-4 text-sm"><span className="block text-[#97A0B3] mb-2">Caption</span>Creo test post — checking the Instagram publishing connection.</div>
+        <label className="block text-sm font-semibold">Caption<textarea value={caption} onChange={event => setCaption(event.target.value)} disabled={busy} maxLength={2200} rows={4} className="mt-2 block w-full resize-y rounded-xl border border-[#2A3446] bg-[#0B111C] p-4 text-white disabled:opacity-60" /><span className="mt-1 block text-right text-xs text-[#97A0B3]">{caption.length}/2,200</span></label>
         {!clients.data?.enabled && <p className="text-[#D8BF9B] text-sm">Test publishing is disabled in this environment.</p>}
         {current?.status === "published" ? <div role="status" className="flex items-center gap-2 text-[#BCCCE6]"><CheckCircle2 className="size-5" />Test post published! {current.permalink && <a href={current.permalink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 underline">View on Instagram<ExternalLink className="size-4" /></a>}</div> : <button type="button" onClick={() => void publish()} disabled={!selected || !clients.data?.enabled || busy || current?.status === "uncertain" || current?.status === "failed"} className="w-full rounded-xl bg-[#BCCCE6] px-5 py-3 font-bold text-[#0B111C] disabled:opacity-50 flex items-center justify-center gap-2"><Instagram className={`size-5 ${busy ? "animate-pulse" : ""}`} />{busy ? "Publishing test post…" : "Publish test post"}</button>}
         {(error || current?.error || status.isError) && <p role="alert" className="text-sm text-[#D8BF9B]">{current?.error || error || status.error?.message}</p>}

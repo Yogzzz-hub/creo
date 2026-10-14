@@ -57,7 +57,9 @@ def check_connection(profile, account_id, connection_id=None):
         raise Conflict("The Instagram connection changed or expired. Reconnect and select it again.")
 
 
-async def create(db, actor, client_id, request_id, account_id, scheduled_at=None):
+async def create(db, actor, client_id, request_id, account_id, scheduled_at=None, caption=CAPTION):
+    if len(caption) > 2200:
+        raise Conflict("Caption must be 2,200 characters or fewer.")
     if scheduled_at is not None and (scheduled_at.tzinfo is None or scheduled_at <= datetime.now(UTC)):
         raise Conflict("Choose a future time with a timezone for the queued test.")
     if not settings.INSTAGRAM_TEST_POSTING_ENABLED or settings.INSTAGRAM_CLIENT_MODE != "real":
@@ -81,7 +83,7 @@ async def create(db, actor, client_id, request_id, account_id, scheduled_at=None
     row = InstagramTestPost(id=request_id, agency_id=client.agency_id, client_id=client_id,
         actor_id=actor.user_id, connection_id=profile.ig_connection_id,
         account_id=account_id, status="queued", scheduled_at=scheduled_at,
-        actor_context={"role": str(actor.role), "token_version": actor.token_version})
+        actor_context={"role": str(actor.role), "token_version": actor.token_version, "caption": caption})
     db.add(row)
     await db.commit()
     return row, True
@@ -113,7 +115,7 @@ async def run(request_id: uuid.UUID, agency_id: uuid.UUID, actor):
                         key, sample, "image/jpeg", SAMPLE.stat().st_size)
                 url, _ = await inspect_media(stored, "IMAGE")
                 row.container_id = await provider.create_media_container(
-                    row.account_id, "IMAGE", url, CAPTION, access_token=token)
+                    row.account_id, "IMAGE", url, (row.actor_context or {}).get("caption", CAPTION), access_token=token)
                 await db.commit()
 
                 for _ in range(15):

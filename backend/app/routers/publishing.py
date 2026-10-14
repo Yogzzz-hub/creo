@@ -26,6 +26,7 @@ class TestPostBody(BaseModel):
     request_id: uuid.UUID
     account_id: str = Field(min_length=1, max_length=255)
     scheduled_at: datetime | None = None
+    caption: str = Field(default="Creo test post ? checking the Instagram publishing connection.", max_length=2200)
 
 
 @router.get("/test-post/clients")
@@ -59,7 +60,7 @@ async def test_post_clients(actor: Actor = Depends(get_current_actor), db: Async
 async def test_post(client_id: uuid.UUID, body: TestPostBody, background: BackgroundTasks,
                     actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)):
     from app.services import instagram_test_post as test
-    row, created = await test.create(db, actor, client_id, body.request_id, body.account_id, body.scheduled_at)
+    row, created = await test.create(db, actor, client_id, body.request_id, body.account_id, body.scheduled_at, body.caption)
     if created and row.scheduled_at is None:
         background.add_task(test.run, row.id, row.agency_id, actor)
     return test.serialize(row)
