@@ -14,41 +14,7 @@ import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 
 export function AdminSLAPerformancePage() {
   const navigate = useNavigate();
-  const podLeaderboard = [
-    {
-      pod: "Pod A",
-      lead: "Vikram Malhotra",
-      bg: "bg-[#161F2D]",
-      text: "text-[#7FA0D6]",
-      slaMet: "99.4%",
-      avgResponse: "6.2m",
-      resolved: "42 tickets",
-      status: "OPTIMAL",
-      statusBg: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-    },
-    {
-      pod: "Pod B",
-      lead: "Sarah Connor",
-      bg: "bg-[#161F2D]",
-      text: "text-[#7FA0D6]",
-      slaMet: "98.8%",
-      avgResponse: "7.8m",
-      resolved: "38 tickets",
-      status: "OPTIMAL",
-      statusBg: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-    },
-    {
-      pod: "Pod C",
-      lead: "Rohan Mehta",
-      bg: "bg-[#161F2D]",
-      text: "text-[#D8BF9B]",
-      slaMet: "97.5%",
-      avgResponse: "9.1m",
-      resolved: "35 tickets",
-      status: "OPTIMAL",
-      statusBg: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-    },
-  ];
+  const podLeaderboard: any[] = [];
 
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col justify-between">
@@ -276,7 +242,7 @@ export function AdminSLAPerformancePage() {
                   <p className="text-xs text-[#97A0B3]">Operational velocity across client dedicated pods</p>
                 </div>
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
-                  5 ACTIVE PODS
+                  {podLeaderboard.length} ACTIVE PODS
                 </span>
               </div>
 
@@ -292,7 +258,14 @@ export function AdminSLAPerformancePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#2A3446] font-medium">
-                    {podLeaderboard.map((item) => (
+                    {podLeaderboard.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-[#97A0B3]">
+                          No active creative pods currently configured.
+                        </td>
+                      </tr>
+                    ) : (
+                      podLeaderboard.map((item) => (
                       <tr key={item.pod} className="hover:bg-[#0B111C] transition-colors">
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-3">
@@ -318,7 +291,7 @@ export function AdminSLAPerformancePage() {
                           </span>
                         </td>
                       </tr>
-                    ))}
+                    )))}
                   </tbody>
                 </table>
               </div>

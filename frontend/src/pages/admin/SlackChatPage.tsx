@@ -132,135 +132,7 @@ interface ChatMessage {
   reactions: { emoji: string; count: number; users: string[] }[];
 }
 
-const SEED_WORKSPACE_MESSAGES: Record<string, ChatMessage[]> = {
-  "all-pod-leads": [
-    {
-      id: "seed-leads-1",
-      sender: "Creo Super Admin",
-      role: "Super Admin",
-      avatar: "SA",
-      avatarBg: "bg-amber-500",
-      content: "👑 Leadership Council Hub: All Pod Leads please sync daily sprint velocity, member capacities, and client escalations here.",
-      timestamp: "08:45 AM",
-      reactions: [{ emoji: "🚀", count: 3, users: ["Lead"] }],
-    },
-    {
-      id: "seed-leads-2",
-      sender: "Sarah Connor (Lead - Pod B)",
-      role: "Team Lead & Account Director",
-      avatar: "SC",
-      avatarBg: "bg-[#7FA0D6]",
-      content: "Pod Beta capacity report: 6 approved reel cuts in final color grade for client review by 3 PM.",
-      timestamp: "09:05 AM",
-      reactions: [{ emoji: "✅", count: 2, users: ["Admin"] }],
-    },
-  ],
-  "pod-beta-team": [
-    {
-      id: "seed-pod-b-1",
-      sender: "Sarah Connor (Lead - Pod B)",
-      role: "Team Lead & Account Director",
-      avatar: "SC",
-      avatarBg: "bg-[#7FA0D6]",
-      content: "⚡ Pod Beta Standup: @David Kim focusing on 4K reel grading, @Elena Rostova finishing carousel slides. Admin is monitoring priority handoffs.",
-      timestamp: "09:15 AM",
-      reactions: [{ emoji: "🔥", count: 4, users: ["Team"] }],
-    },
-    {
-      id: "seed-pod-b-2",
-      sender: "David Kim (Editor - Pod B)",
-      role: "Lead Video Editor",
-      avatar: "DK",
-      avatarBg: "bg-[#7FA0D6]",
-      content: "Sound design and kinetic subtitles rendered. Uploading master package now.",
-      timestamp: "09:40 AM",
-      reactions: [{ emoji: "👍", count: 2, users: ["Sarah Connor"] }],
-    },
-  ],
-  "pod-alpha-team": [
-    {
-      id: "seed-pod-a-1",
-      sender: "Alex Rivera (Lead - Pod A)",
-      role: "Team Lead & Account Director",
-      avatar: "AR",
-      avatarBg: "bg-[#7FA0D6]",
-      content: "Pod Alpha standup: Identity guidelines & typography tokens locked for enterprise client.",
-      timestamp: "09:20 AM",
-      reactions: [{ emoji: "✨", count: 2, users: ["Admin"] }],
-    },
-  ],
-  "pod-gamma-team": [
-    {
-      id: "seed-pod-c-1",
-      sender: "Marcus Vance (Lead - Pod C)",
-      role: "Team Lead & Account Director",
-      avatar: "MV",
-      avatarBg: "bg-[#7FA0D6]",
-      content: "Pod Gamma standup: 3D Blender sequences and octane lighting passes running on render farm.",
-      timestamp: "09:30 AM",
-      reactions: [{ emoji: "🎬", count: 3, users: ["Admin"] }],
-    },
-  ],
-  general: [
-    {
-      id: "seed-gen-1",
-      sender: "Sarah Connor (Lead - Pod B)",
-      role: "Pod Lead",
-      avatar: "SC",
-      avatarBg: "bg-[#7FA0D6]",
-      content: "👋 Good morning team! Standup update: All active client sprint deliverables are on track for today's review.",
-      timestamp: "09:00 AM",
-      reactions: [
-        { emoji: "🚀", count: 3, users: ["Sarah Connor", "Admin"] },
-        { emoji: "👍", count: 2, users: ["Specialist"] },
-      ],
-    },
-    {
-      id: "seed-gen-2",
-      sender: "Creo Super Admin",
-      role: "Super Admin",
-      avatar: "SA",
-      avatarBg: "bg-amber-500",
-      content: "📢 Retainer & milestone review checkpoints are now active. Drop any priority requests directly in the channel or DM.",
-      timestamp: "09:30 AM",
-      reactions: [{ emoji: "✅", count: 4, users: ["Team Lead"] }],
-    },
-  ],
-  "deliverables-handoff": [
-    {
-      id: "seed-del-1",
-      sender: "David Kim (Editor - Pod B)",
-      role: "Lead Video Editor",
-      avatar: "DK",
-      avatarBg: "bg-[#7FA0D6]",
-      content: "📦 Handoff Drop: High-conversion reel assets and exported 4K masters are packaged and uploaded to the review portal.",
-      timestamp: "10:30 AM",
-      reactions: [{ emoji: "🔥", count: 3, users: ["Lead"] }],
-    },
-    {
-      id: "seed-del-2",
-      sender: "Elena Rostova (Designer - Pod B)",
-      role: "Lead Graphic Designer",
-      avatar: "ER",
-      avatarBg: "bg-[#7FA0D6]",
-      content: "🎨 Figma design system components and carousel slide deck exports ready for client approval.",
-      timestamp: "11:15 AM",
-      reactions: [{ emoji: "✨", count: 2, users: ["Lead"] }],
-    },
-  ],
-  "urgent-escalations": [
-    {
-      id: "seed-urg-1",
-      sender: "System Alert",
-      role: "Automation Bot",
-      avatar: "SB",
-      avatarBg: "bg-rose-500",
-      content: "⚡ SLA Monitor: Priority 1 deliverable review queue is currently clear. Excellent turnaround time across all pods!",
-      timestamp: "11:00 AM",
-      reactions: [{ emoji: "⭐", count: 2, users: ["Admin"] }],
-    },
-  ],
-};
+const SEED_WORKSPACE_MESSAGES: Record<string, ChatMessage[]> = {};
 
 const LOCAL_STORAGE_CHANNEL_MESSAGES_KEY = "creo_slack_channels_v3";
 
@@ -296,7 +168,7 @@ export function SlackChatPage() {
     if (user?.company_name) {
       return `client-${user.company_name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
     }
-    return "client-kameshwari-rajkumar";
+    return user?.id ? `client-${user.id}` : "client-pod";
   }, [user]);
 
   // Channels definitions strictly filtered per user role:
@@ -453,36 +325,11 @@ export function SlackChatPage() {
       is_super_admin: true,
       online: true,
     };
-    const teamLead: ChatContact = {
-      id: "00000000-0000-0000-0000-0000000000b1",
-      name: "Sarah Connor (Lead - Pod B)",
-      role: "Team Lead & Account Director",
-      email: "lead.beta@creo.agency",
-      online: true,
-    };
-    const clientRep: ChatContact = {
-      id: "1a5ef9ac-e43e-4fa0-918d-de31d44e8c7a",
-      name: "Kameshwari Rajkumar",
-      role: "Client",
-      email: "kameshwari.r2824@gmail.com",
-      is_client: true,
-      online: true,
-    };
 
-    if (isClient) {
-      // RULE 1: CLIENT ONLY MESSAGES TL AND ADMIN (2 CHATS)
-      return [superAdmin, teamLead];
-    }
-    if (isTeamLead) {
-      // RULE 2: TL MESSAGES ADMIN AND CLIENTS
-      return [superAdmin, clientRep];
-    }
-    if (isTeamMember) {
-      // RULE 3: TEAM MEMBERS MESSAGE ADMIN ONLY
+    if (isClient || isTeamMember || isTeamLead) {
       return [superAdmin];
     }
-    // RULE 4: ADMIN MESSAGES ALL POD LEADS AND CLIENTS (NO ADMIN, NO MEMBERS)
-    return [teamLead, clientRep];
+    return [];
   }, [isClient, isTeamLead, isTeamMember]);
 
   const contactsList: ChatContact[] = useMemo(() => {

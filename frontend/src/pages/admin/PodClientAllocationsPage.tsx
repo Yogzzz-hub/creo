@@ -918,7 +918,7 @@ export function PodClientAllocationsPage() {
                       <option key={c.id} value={c.name}>{c.name}</option>
                     ))
                   ) : (
-                    <option value="Ryze">Ryze Mushroom Coffee</option>
+                    <option value="" disabled>No active accounts</option>
                   )}
                 </NativeSelect>
               </div>

@@ -1253,9 +1253,13 @@ async def get_dispatch_queue(
                 WHERE l.user_id = sp.user_id
                   AND l.status = 'approved'
                   AND CURRENT_DATE BETWEEN l.start_date AND l.end_date
-            ) AS on_leave_today
+            ) AS on_leave_today,
+            sp.team_lead_id,
+            t.name AS team_name,
+            u.role
         FROM staff_profiles sp
         JOIN users u ON u.id = sp.user_id
+        LEFT JOIN teams t ON t.id = u.owning_team_id
         LEFT JOIN staff_wip w ON w.assigned_to = sp.user_id
         ORDER BY active_wip DESC;
     """)
@@ -1274,6 +1278,9 @@ async def get_dispatch_queue(
             "wip_stories": r[9],
             "wip_reels": r[10],
             "on_leave_today": r[11],
+            "team_lead_id": str(r[12]) if r[12] else None,
+            "team_name": r[13],
+            "role": r[14].value if hasattr(r[14], "value") else str(r[14]),
             "capacity_by_type": {
                 "posters": {"wip": r[8], "max": max(1, r[5])},
                 "stories": {"wip": r[9], "max": max(1, r[5] * 2)},
@@ -2600,35 +2607,7 @@ async def update_admin_settings(
 
 # --- Sales Pipeline Endpoints ---
 
-_CUSTOM_DEALS: list[dict[str, Any]] = [
-    {
-        "id": "deal-001",
-        "client_name": "Acme Global Brands",
-        "contact_email": "partnerships@acmeglobal.com",
-        "requested_plan": "Scale Tier + 4 Extra Reels",
-        "offered_price_inr": 79000,
-        "standard_price_inr": 99000,
-        "status": "pending",
-    },
-    {
-        "id": "deal-002",
-        "client_name": "Zenith Retail",
-        "contact_email": "marketing@zenithretail.in",
-        "requested_plan": "Growth Tier Custom Bundle",
-        "offered_price_inr": 42000,
-        "standard_price_inr": 49000,
-        "status": "pending",
-    },
-    {
-        "id": "deal-003",
-        "client_name": "Luxe Botanicals",
-        "contact_email": "founder@luxebotanicals.co",
-        "requested_plan": "Enterprise 360 Production",
-        "offered_price_inr": 129000,
-        "standard_price_inr": 149000,
-        "status": "pending",
-    },
-]
+_CUSTOM_DEALS: list[dict[str, Any]] = []
 
 
 @router.get("/sales")
@@ -2648,24 +2627,24 @@ async def get_admin_sales(
             "name": "growth",
             "display_name": "Growth Tier",
             "monthly_price": 49000,
-            "active_subs": sub_counts.get(uuid.UUID("11111111-1111-1111-1111-111111111111"), 2),
-            "scarcity_slots": 2,
+            "active_subs": sub_counts.get(uuid.UUID("11111111-1111-1111-1111-111111111111"), 0),
+            "scarcity_slots": 0,
         },
         {
             "id": "plan-scale",
             "name": "scale",
             "display_name": "Scale Tier",
             "monthly_price": 89000,
-            "active_subs": sub_counts.get(uuid.UUID("22222222-2222-2222-2222-222222222222"), 3),
-            "scarcity_slots": 1,
+            "active_subs": sub_counts.get(uuid.UUID("22222222-2222-2222-2222-222222222222"), 0),
+            "scarcity_slots": 0,
         },
         {
             "id": "plan-enterprise",
             "name": "enterprise",
             "display_name": "Enterprise Custom",
             "monthly_price": 149000,
-            "active_subs": sub_counts.get(uuid.UUID("33333333-3333-3333-3333-333333333333"), 1),
-            "scarcity_slots": 2,
+            "active_subs": sub_counts.get(uuid.UUID("33333333-3333-3333-3333-333333333333"), 0),
+            "scarcity_slots": 0,
         },
     ]
 

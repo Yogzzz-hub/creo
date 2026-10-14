@@ -24,7 +24,6 @@ import {
   Link2,
   List,
   X,
-  Check,
   BellOff,
   Share2,
   Archive,
@@ -91,11 +90,11 @@ export function AdminTicketDetailPage() {
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
 
   // Form states for modals
-  const [selectedLead, setSelectedLead] = useState({
-    name: "Vikram Malhotra",
-    pod: "Pod A (Brand & Video)",
-    initials: "VM",
-    role: "Pod Lead",
+  const [selectedLead] = useState({
+    name: "Support Desk",
+    pod: "General Queue",
+    initials: "SD",
+    role: "Support Lead",
   });
   const [reassignReason, setReassignReason] = useState("");
 
@@ -125,43 +124,6 @@ export function AdminTicketDetailPage() {
 
   useEffect(() => {
     const fetchData = () => {
-      // Special predefined details for ticket 1781
-      if (activeId === "1781" || activeId.includes("1781")) {
-        setTicketData({
-          id: "1781",
-          client: "Sushmitaa",
-          email: "sushmitaa1407@gmail.com",
-          tier: "Enterprise Acceleration",
-          title: "deliverables not received on time, checkout",
-          description: "I've not received my deliverables which was scheduled yesterday",
-          priority: "High",
-          status: "Resolved",
-          time: "Yesterday, 4:15 PM",
-        });
-        setIsResolved(true);
-        setMessages([
-          {
-            id: "msg-1781-1",
-            author: "Sushmitaa",
-            role: "Enterprise Acceleration • Client",
-            avatar: "S",
-            avatarBg: "bg-blue-600",
-            timestamp: "Yesterday at 4:15 PM",
-            text: "I've not received my deliverables which was scheduled yesterday",
-          },
-          {
-            id: "msg-1781-2",
-            author: "Pod Lead",
-            role: "Pod Lead • Creative Pod Alpha",
-            avatar: "PL",
-            avatarBg: "bg-[#0B111C]",
-            timestamp: "Yesterday at 4:48 PM",
-            text: "Hi Sushmitaa, we apologize for the short delay! The final 4K color grade has been expedited and is now ready in your Deliverables tab.",
-          },
-        ]);
-        return;
-      }
-
       // Try shared storage
       try {
         const stored = JSON.parse(localStorage.getItem("creo_support_tickets") || "[]");
@@ -1297,34 +1259,9 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
               <div>
                 <label className="block font-bold text-[#F1F5F9] mb-1.5">Select Pod & Lead Specialist</label>
                 <div className="space-y-2">
-                  {[
-                    { name: "Vikram Malhotra", pod: "Pod A (Brand Strategy & Video)", initials: "VM", role: "Pod Lead" },
-                    { name: "Sarah Connor", pod: "Pod B (Performance & Motion)", initials: "SC", role: "Pod Lead" },
-                    { name: "Rohan Mehta", pod: "Pod C (3D Motion & Design)", initials: "RM", role: "Pod Lead" },
-                  ].map((lead) => (
-                    <div
-                      key={lead.name}
-                      onClick={() => setSelectedLead(lead)}
-                      className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
-                        selectedLead.name === lead.name
-                          ? "border-blue-600 bg-[#7FA0D6]/15/50 shadow-xs"
-                          : "border-[#2A3446] hover:border-[#2A3446] bg-[#161F2D]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="size-8 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center text-xs">
-                          {lead.initials}
-                        </span>
-                        <div>
-                          <p className="font-black text-white">{lead.name}</p>
-                          <p className="text-[11px] text-[#97A0B3] font-medium">{lead.pod}</p>
-                        </div>
-                      </div>
-                      {selectedLead.name === lead.name && (
-                        <Check className="size-4 text-[#7FA0D6]" />
-                      )}
-                    </div>
-                  ))}
+                  <p className="text-xs text-[#97A0B3] p-4 text-center border border-[#2A3446] rounded-2xl bg-[#161F2D]">
+                    No pod leads currently available to reassign.
+                  </p>
                 </div>
               </div>
 

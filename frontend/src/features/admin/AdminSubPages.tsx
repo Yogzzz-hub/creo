@@ -29,6 +29,7 @@ import {
   rejectManualPayment,
   directBypassClientPayment,
   revokeClientBypass,
+  fetchPodDashboard,
 } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem, PlanSummaryItem, ManualPaymentRequest } from "../../lib/ops-api";
 import { fetchPlans } from "../../lib/onboarding-api";
@@ -254,8 +255,8 @@ export function AdminClientsPage() {
   const pendingManualPayments = manualPayments.filter((p) => p.status === "PENDING");
   const [newClientNameInput, setNewClientNameInput] = useState("");
   const [newClientIndustryInput, setNewClientIndustryInput] = useState("");
-  const [newClientPodInput, setNewClientPodInput] = useState("Pod A (Creative & Brand Strategy)");
-  const [clientToRemoveInput, setClientToRemoveInput] = useState("Ryze");
+  const [newClientPodInput, setNewClientPodInput] = useState("Creative Pod");
+  const [clientToRemoveInput, setClientToRemoveInput] = useState("");
   const [customClients, setCustomClients] = useState<Record<string, ClientDetailData>>({});
   const [removingClient, setRemovingClient] = useState(false);
   const [removeError, setRemoveError] = useState<string | null>(null);
@@ -3255,114 +3256,17 @@ export function AdminTasksPage() {
 
   const [newTaskForm, setNewTaskForm] = useState({
     title: "",
-    client: "Ryze Mushroom Coffee",
-    pod: "Pod A",
-    category: "3D Render / Blender",
+    client: "",
+    pod: "",
+    category: "Design",
     sp: 4,
-    dueDate: "Tomorrow",
-    priority: "High",
-    assignee: "Vikram Malhotra",
+    dueDate: "",
+    priority: "Normal",
+    assignee: "",
     column: "todo",
   });
 
-  const [kanbanTasks, setKanbanTasks] = useState<any[]>([
-    {
-      id: "task-101",
-      column: "in_progress",
-      client: "Ryze Mushroom Coffee",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "Urgent",
-      priorityPill: "bg-rose-600 text-white font-black",
-      title: "3D Product Render & Motion Hook (15s Reel)",
-      type: "3D Render / Blender",
-      avatar: "VM",
-      avatarBg: "bg-blue-600",
-      assigneeName: "Vikram Malhotra",
-      sp: 8,
-      due: "Today, 6:00 PM",
-      pod: "Pod A",
-    },
-    {
-      id: "task-102",
-      column: "todo",
-      client: "Ryze Mushroom Coffee",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "High",
-      priorityPill: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
-      title: "DTC Ad Hook Variations (15s Reel Clips)",
-      type: "Performance Editing",
-      avatar: "SC",
-      avatarBg: "bg-purple-600",
-      assigneeName: "Sarah Connor",
-      sp: 5,
-      due: "Tomorrow, 2:00 PM",
-      pod: "Pod B",
-    },
-    {
-      id: "task-103",
-      column: "under_review",
-      client: "Acme Corp",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "High",
-      priorityPill: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
-      title: "Instagram Story Templates (1080x1920 Figma Kit)",
-      type: "Visual Design",
-      avatar: "ER",
-      avatarBg: "bg-emerald-600",
-      assigneeName: "Elena Rostova",
-      sp: 3,
-      due: "Oct 5, 2026",
-      pod: "Pod A",
-    },
-    {
-      id: "task-104",
-      column: "approved",
-      client: "Kavya Organics",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "Normal",
-      priorityPill: "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
-      title: "Brand Guidelines & Color Palette Audit (v2.0)",
-      type: "Brand Strategy",
-      avatar: "MB",
-      avatarBg: "bg-amber-600",
-      assigneeName: "Marcus Brody",
-      sp: 4,
-      due: "Oct 3, 2026",
-      pod: "Pod C",
-    },
-    {
-      id: "task-105",
-      column: "in_progress",
-      client: "Ryze Mushroom Coffee",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "High",
-      priorityPill: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
-      title: "TikTok Motion Hook (Rec.709 Color Grading)",
-      type: "Color Grading",
-      avatar: "AR",
-      avatarBg: "bg-[#7FA0D6]",
-      assigneeName: "Alex Rivera",
-      sp: 6,
-      due: "Today, 8:00 PM",
-      pod: "Pod B",
-    },
-    {
-      id: "task-106",
-      column: "todo",
-      client: "Acme Corp",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "Urgent",
-      priorityPill: "bg-rose-600 text-white font-black",
-      title: "Motion Graphics Carousel Post (5 Slides)",
-      type: "Motion Graphics",
-      avatar: "VM",
-      avatarBg: "bg-blue-600",
-      assigneeName: "Vikram Malhotra",
-      sp: 4,
-      due: "Tomorrow, 11:00 AM",
-      pod: "Pod C",
-    },
-  ]);
+  const [kanbanTasks, setKanbanTasks] = useState<any[]>([]);
 
   useEffect(() => {
     fetchKanbanTasks()
@@ -3430,13 +3334,13 @@ export function AdminTasksPage() {
     setIsCreateModalOpen(false);
     setNewTaskForm({
       title: "",
-      client: "Ryze",
-      pod: "Pod A",
-      category: "3D Render / Blender",
+      client: "",
+      pod: "",
+      category: "Design",
       sp: 4,
-      dueDate: "Tomorrow",
-      priority: "High",
-      assignee: "Lead Producer",
+      dueDate: "",
+      priority: "Normal",
+      assignee: "",
       column: "todo",
     });
   };
@@ -3511,7 +3415,6 @@ export function AdminTasksPage() {
               ariaLabel="Filter Task Client"
               options={[
                 { value: "all", label: "All Clients" },
-                { value: "Ryze", label: "Ryze Mushroom Coffee" },
               ]}
             />
 
@@ -3792,7 +3695,7 @@ export function AdminTasksPage() {
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, client: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
                     >
-                      <option value="Ryze Mushroom Coffee">Ryze Mushroom Coffee</option>
+                      <option value="" disabled>No active clients</option>
                     </NativeSelect>
                   </div>
                   <div>
@@ -3940,226 +3843,87 @@ export function AdminTeamManagementPage() {
     queryFn: () => fetchAdminQueue(),
   });
 
+  const { data: podData } = useQuery({
+    queryKey: ["admin_pod_dashboard", activePodId],
+    queryFn: () => fetchPodDashboard(activePodId || undefined),
+  });
+
+  const [pods, setPods] = useState<any[]>([]);
+  const [membersList, setMembersList] = useState<TeamMember[]>([]);
+
+  useEffect(() => {
+    if (podData?.available_pods && podData.available_pods.length > 0) {
+      const dynamicPods = podData.available_pods.map((p: any) => {
+        const isCurrent = p.id === (podData.pod?.id || activePodId);
+        const stats = isCurrent && podData.pod?.stats ? podData.pod.stats : null;
+        const normalizedPodId = p.letter.toLowerCase() === "a" ? "pod-a" : p.letter.toLowerCase() === "b" ? "pod-b" : "pod-c";
+        return {
+          id: normalizedPodId,
+          rawId: p.id,
+          name: p.name,
+          letter: p.letter,
+          lead: p.lead_name || "Pod Lead",
+          leadRole: "Pod Lead & Creative Director",
+          membersCount: 3,
+          velocityPct: stats?.sla_compliance_pct ?? 100,
+          tasksClosed: stats?.completed ?? 0,
+          pendingReview: stats?.internal_qa ?? 0,
+          allocatedHours: 0,
+          totalHours: 120,
+          color: p.color || "bg-blue-600",
+          textColor: p.textColor || "text-blue-600",
+          pillBg: `${p.badgeColor || "bg-blue-50 text-blue-600"}`,
+          squadLoad: stats?.total_wip ? Math.min(100, stats.total_wip * 15) : 0,
+          activeEngagements: stats?.active_clients_count ?? 0,
+          readyReview: stats?.internal_qa ?? 0,
+          description: `${p.name} dedicated creative pod: Lead, Video Editor, and Graphic Designer.`,
+        };
+      });
+      setPods(dynamicPods);
+    }
+  }, [podData, activePodId]);
+
   useEffect(() => {
     if (queueData?.staff && queueData.staff.length > 0) {
-      const mapped = queueData.staff.map((s, idx) => ({
-        id: s.user_id || `staff-${idx}`,
-        podId: idx % 3 === 0 ? "pod-a" : idx % 3 === 1 ? "pod-b" : "pod-c",
-        name: String(s.full_name || (s.email ? s.email.split("@")[0] : "Team Member")),
-        role: s.department ? `${s.department.toUpperCase()} Specialist` : "Creative Specialist",
-        category: (s.department === "lead" ? "lead" : "editor") as "editor" | "designer" | "lead" | "videographer" | "photographer",
-        isLead: s.department === "lead",
-        email: s.email || "staff@creo.agency",
-        handle: String(s.email ? `@${s.email.split("@")[0]}` : "@member"),
-        status: (s.on_leave_today ? "On Leave" : s.is_accepting_work ? "Accepting Work" : "Fully Booked") as "Pod Lead" | "Accepting Work" | "Fully Booked" | "On Leave" | "Sprint Ready",
-        statusColor: s.on_leave_today ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-emerald-50 text-emerald-700 border-emerald-200",
-        allocatedPct: Math.min(100, Math.round((s.active_wip / Math.max(1, s.daily_capacity)) * 100)),
-        projectsCount: s.active_wip,
-        capabilities: s.skills && s.skills.length > 0 ? s.skills : ["Creative Design", "Content Operations"],
-      }));
+      const mapped = queueData.staff.map((s, idx) => {
+        const email = (s.email || "").toLowerCase();
+        let podId = "pod-a";
+        if (email.includes(".alpha")) podId = "pod-a";
+        else if (email.includes(".beta") || email === "lead@creo.agency") podId = "pod-b";
+        else if (email.includes(".gamma")) podId = "pod-c";
+        else if (s.team_name) {
+          const tn = s.team_name.toLowerCase();
+          if (tn.includes("b")) podId = "pod-beta";
+          else if (tn.includes("c")) podId = "pod-gamma";
+          else podId = "pod-a";
+        } else {
+          podId = idx % 3 === 0 ? "pod-a" : idx % 3 === 1 ? "pod-b" : "pod-c";
+        }
+
+        const isLead = s.role === "team_lead" || (s.department === "creative" && (s.full_name?.toLowerCase().includes("lead") ?? false));
+        const isDesigner = s.role === "designer" || s.department === "design";
+        const isEditor = s.role === "editor" || s.department === "video";
+        const category: TeamMember["category"] = isLead ? "lead" : isDesigner ? "designer" : "editor";
+
+        return {
+          id: s.user_id || `staff-${idx}`,
+          podId,
+          name: String(s.full_name || (s.email ? s.email.split("@")[0] : "Team Member")),
+          role: isLead ? "Pod Team Lead & Director" : isDesigner ? "Graphic Designer" : isEditor ? "Video Editor" : (s.department ? `${s.department.toUpperCase()} Specialist` : "Creative Specialist"),
+          category,
+          isLead,
+          email: s.email || "staff@creo.agency",
+          handle: String(s.email ? `@${s.email.split("@")[0]}` : "@member"),
+          status: (s.on_leave_today ? "On Leave" : s.is_accepting_work ? "Accepting Work" : "Fully Booked") as TeamMember["status"],
+          statusColor: s.on_leave_today ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-emerald-50 text-emerald-700 border-emerald-200",
+          allocatedPct: Math.min(100, Math.round((s.active_wip / Math.max(1, s.daily_capacity)) * 100)),
+          projectsCount: s.active_wip,
+          capabilities: s.skills && s.skills.length > 0 ? s.skills : ["Creative Design", "Content Operations"],
+        };
+      });
       setMembersList(mapped);
     }
   }, [queueData]);
-
-  const [pods, setPods] = useState([
-    {
-      id: "pod-a",
-      name: "Pod A",
-      letter: "A",
-      lead: "Vikram Malhotra",
-      leadRole: "Pod Lead & Creative Director",
-      membersCount: 3,
-      velocityPct: 100,
-      tasksClosed: 0,
-      pendingReview: 0,
-      allocatedHours: 120,
-      totalHours: 120,
-      color: "bg-blue-600",
-      textColor: "text-[#7FA0D6]",
-      pillBg: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      squadLoad: 40,
-      activeEngagements: 1,
-      readyReview: 0,
-      description: "Pod Alpha specializes in DTC brand acceleration, static visual identity, and cinematic reel production.",
-    },
-    {
-      id: "pod-b",
-      name: "Pod B",
-      letter: "B",
-      lead: "Sarah Connor",
-      leadRole: "Pod Lead & Creative Strategist",
-      membersCount: 3,
-      velocityPct: 100,
-      tasksClosed: 0,
-      pendingReview: 0,
-      allocatedHours: 120,
-      totalHours: 120,
-      color: "bg-[#7FA0D6]",
-      textColor: "text-[#7FA0D6]",
-      pillBg: "bg-sky-50 text-sky-600 border-sky-100",
-      squadLoad: 40,
-      activeEngagements: 1,
-      readyReview: 0,
-      description: "Pod Beta executes performance marketing, viral reel mechanics, and high-impact wellness narratives.",
-    },
-    {
-      id: "pod-c",
-      name: "Pod C",
-      letter: "C",
-      lead: "Rohan Mehta",
-      leadRole: "Pod Lead & Design Director",
-      membersCount: 3,
-      velocityPct: 100,
-      tasksClosed: 0,
-      pendingReview: 0,
-      allocatedHours: 120,
-      totalHours: 120,
-      color: "bg-emerald-600",
-      textColor: "text-emerald-600",
-      pillBg: "bg-emerald-50 text-emerald-600 border-emerald-100",
-      squadLoad: 40,
-      activeEngagements: 1,
-      readyReview: 0,
-      description: "Pod Gamma drives luxury lifestyle aesthetics, minimal typography, and 3D visual motion.",
-    },
-  ]);
-
-  const [membersList, setMembersList] = useState<TeamMember[]>([
-    // --- POD A (Pod Alpha) ---
-    {
-      id: "m-101",
-      podId: "pod-a",
-      name: "Vikram Malhotra",
-      role: "Pod Lead & Creative Director",
-      category: "lead",
-      isLead: true,
-      email: "lead.alpha@creo.agency",
-      handle: "@vikram",
-      status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      allocatedPct: 60,
-      projectsCount: 1,
-      capabilities: ["Creative Direction", "Brand Systems", "Campaign Strategy"],
-    },
-    {
-      id: "m-102",
-      podId: "pod-a",
-      name: "Karthik Raja",
-      role: "Video Editor & Motion Designer",
-      category: "editor",
-      email: "editor.alpha@creo.agency",
-      handle: "@karthik",
-      status: "Sprint Ready",
-      statusColor: "bg-sky-50 text-sky-700 border-sky-200",
-      allocatedPct: 50,
-      projectsCount: 1,
-      capabilities: ["Premiere Pro", "After Effects", "Reels Editing"],
-    },
-    {
-      id: "m-103",
-      podId: "pod-a",
-      name: "Ananya Deshmukh",
-      role: "Brand Graphic Designer",
-      category: "designer",
-      email: "designer.alpha@creo.agency",
-      handle: "@ananya",
-      status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      allocatedPct: 40,
-      projectsCount: 1,
-      capabilities: ["Figma", "Photoshop", "Brand Design", "Posters"],
-    },
-
-    // --- POD B (Pod Beta) ---
-    {
-      id: "m-201",
-      podId: "pod-b",
-      name: "Sarah Connor",
-      role: "Pod Lead & Creative Strategist",
-      category: "lead",
-      isLead: true,
-      email: "lead.beta@creo.agency",
-      handle: "@sarah",
-      status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      allocatedPct: 60,
-      projectsCount: 1,
-      capabilities: ["Campaign Architecture", "Creative Direction", "Viral Hooks"],
-    },
-    {
-      id: "m-202",
-      podId: "pod-b",
-      name: "Dev Sharma",
-      role: "Video Editor & Reel Specialist",
-      category: "editor",
-      email: "editor.beta@creo.agency",
-      handle: "@davidk",
-      status: "Sprint Ready",
-      statusColor: "bg-sky-50 text-sky-700 border-sky-200",
-      allocatedPct: 50,
-      projectsCount: 1,
-      capabilities: ["DaVinci Resolve", "Sound Design", "Mobile 9:16 Reels"],
-    },
-    {
-      id: "m-203",
-      podId: "pod-b",
-      name: "Elena Rostova",
-      role: "Visual & Poster Designer",
-      category: "designer",
-      email: "designer.beta@creo.agency",
-      handle: "@elena",
-      status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      allocatedPct: 40,
-      projectsCount: 1,
-      capabilities: ["Typography", "Social Banners", "Carousel Design"],
-    },
-
-    // --- POD C (Pod Gamma) ---
-    {
-      id: "m-301",
-      podId: "pod-c",
-      name: "Rohan Mehta",
-      role: "Pod Lead & Design Director",
-      category: "lead",
-      isLead: true,
-      email: "lead.gamma@creo.agency",
-      handle: "@rohan",
-      status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      allocatedPct: 60,
-      projectsCount: 1,
-      capabilities: ["Art Direction", "Minimal Aesthetics", "Design Systems"],
-    },
-    {
-      id: "m-302",
-      podId: "pod-c",
-      name: "Tanvi Sen",
-      role: "Video & Motion Editor",
-      category: "editor",
-      email: "editor.gamma@creo.agency",
-      handle: "@tanvi",
-      status: "Sprint Ready",
-      statusColor: "bg-sky-50 text-sky-700 border-sky-200",
-      allocatedPct: 50,
-      projectsCount: 1,
-      capabilities: ["Motion Graphics", "Color Grading", "Short-Form Video"],
-    },
-    {
-      id: "m-303",
-      podId: "pod-c",
-      name: "Arjun Nair",
-      role: "Graphic & UI Specialist",
-      category: "designer",
-      email: "designer.gamma@creo.agency",
-      handle: "@arjun",
-      status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      allocatedPct: 40,
-      projectsCount: 1,
-      capabilities: ["Illustrations", "Figma", "Social Banners"],
-    },
-  ]);
 
   const activePod = pods.find((p) => p.id === activePodId);
 
@@ -4199,12 +3963,12 @@ export function AdminTeamManagementPage() {
   const [assignModalMember, setAssignModalMember] = useState<TeamMember | null>(null);
   const [scheduleModalMember, setScheduleModalMember] = useState<TeamMember | null>(null);
   const [assignForm, setAssignForm] = useState({
-    taskTitle: "Brand Repositioning Sprint Deliverable",
-    client: "Ryze",
-    priority: "High",
+    taskTitle: "",
+    client: "",
+    priority: "Normal",
     allocationIncrease: 15,
-    deadline: "Friday (Sprint 08)",
-    brief: "Deliver key creative assets, revisions, and Figma handoff tokens according to brief specifications.",
+    deadline: "",
+    brief: "",
   });
   const [newMemberForm, setNewMemberForm] = useState({
     name: "",
@@ -4293,10 +4057,10 @@ export function AdminTeamManagementPage() {
     setAssignModalMember(member);
     setAssignForm({
       taskTitle: `Sprint Deliverables for ${member.name.split(" ")[0]}`,
-      client: "Ryze",
-      priority: "High",
+      client: "",
+      priority: "Normal",
       allocationIncrease: member.allocatedPct >= 80 ? 10 : 15,
-      deadline: "Friday (Sprint 08)",
+      deadline: "",
       brief: `Execute sprint milestones and deliverables aligned with ${member.role} scope.`,
     });
   };
@@ -4960,10 +4724,7 @@ export function AdminTeamManagementPage() {
                       onChange={(e) => setAssignForm({ ...assignForm, client: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
                     >
-                      <option value="Ryze">Ryze (Starter)</option>
-                      <option value="Shanmugaraj">Shanmugaraj (Growth)</option>
-                      <option value="Aravindan">Aravindan (Custom Retainer)</option>
-                      <option value="Luma">Luma Global (Enterprise)</option>
+                      <option value="" disabled>No active clients</option>
                     </NativeSelect>
                   </div>
 
@@ -5109,53 +4870,18 @@ export function AdminTeamManagementPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-white">
                   <span>Weekly Time Allocation (Mon – Fri)</span>
-                  <span className="text-[#7FA0D6] font-semibold">38.0h Total Booked</span>
+                  <span className="text-[#97A0B3] font-semibold">0.0h Total Booked</span>
                 </div>
-                <div className="grid grid-cols-5 gap-2">
-                  {[
-                    { day: "Mon", hours: "8.0h", task: "Ryze 3D Renders", bg: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30" },
-                    { day: "Tue", hours: "7.5h", task: "Aravindan Motion", bg: "bg-purple-50 text-purple-700 border-purple-200" },
-                    { day: "Wed", hours: "8.0h", task: "Shanmugaraj Intro", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-                    { day: "Thu", hours: "8.0h", task: "Luma Teaser", bg: "bg-amber-50 text-amber-700 border-amber-200" },
-                    { day: "Fri", hours: "6.5h", task: "Sprint Quality QA", bg: "bg-sky-50 text-sky-700 border-sky-200" },
-                  ].map((item) => (
-                    <div key={item.day} className="p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] flex flex-col justify-between text-center gap-1.5">
-                      <span className="text-[11px] font-black text-[#F1F5F9]">{item.day}</span>
-                      <span className="text-xs font-black text-white">{item.hours}</span>
-                      <span className={`text-[9px] font-bold p-1 rounded-md border truncate ${item.bg}`}>
-                        {item.task}
-                      </span>
-                    </div>
-                  ))}
+                <div className="p-4 rounded-xl border border-[#2A3446] bg-[#0B111C] text-center text-xs text-[#97A0B3]">
+                  No sprint hours currently booked for this member.
                 </div>
               </div>
 
               {/* Active Deliverables Breakdown */}
               <div className="space-y-2.5">
                 <h4 className="text-xs font-bold text-white">Active Deliverables & Status</h4>
-                <div className="space-y-2">
-                  {[
-                    { client: "Ryze", name: "3D Asset Render Batch #12", due: "Due in 2 days", progress: 90, color: "bg-blue-600" },
-                    { client: "Vanguard Mobility", name: "4K Motion Sequence & Audio Sync", due: "Due Friday", progress: 65, color: "bg-purple-600" },
-                    { client: "Aravindan", name: "Brand Intro Animation Loop", due: "Due Next Tue", progress: 35, color: "bg-emerald-600" },
-                    { client: "Shanmugaraj", name: "Product Showcase 9:16 Cut", due: "Due Next Fri", progress: 15, color: "bg-amber-600" },
-                  ].map((proj) => (
-                    <div key={proj.name} className="p-3 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:border-[#2A3446] transition-colors flex items-center justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-white truncate">{proj.name}</span>
-                          <span className="text-[10px] font-bold text-[#97A0B3]">({proj.client})</span>
-                        </div>
-                        <div className="w-full bg-[#161F2D] rounded-full h-1.5 mt-2 overflow-hidden">
-                          <div className={`h-full rounded-full ${proj.color}`} style={{ width: `${proj.progress}%` }} />
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="text-[10px] font-bold text-[#97A0B3] block">{proj.due}</span>
-                        <span className="text-xs font-black text-white">{proj.progress}%</span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="p-4 rounded-xl border border-[#2A3446] bg-[#161F2D] text-center text-xs text-[#97A0B3]">
+                  No active deliverables in progress.
                 </div>
               </div>
 
@@ -6493,7 +6219,7 @@ export function AdminPlansPage() {
       display_name: "Starter",
       price_monthly: 25000,
       currency: "INR",
-      subscribers: 1,
+      subscribers: 0,
       features: [
         "8 Static Posters / Month",
         "4 Short Video Reels / Month",
@@ -6522,7 +6248,7 @@ export function AdminPlansPage() {
       display_name: "Scale",
       price_monthly: 120000,
       currency: "INR",
-      subscribers: 1,
+      subscribers: 0,
       features: [
         "30 Static Posters / Month",
         "16 High-Production Video Reels",

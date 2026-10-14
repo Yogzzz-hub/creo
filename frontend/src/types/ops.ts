@@ -56,6 +56,9 @@ export interface StaffQueueItem {
   is_accepting_work: boolean;
   active_wip: number;
   on_leave_today: boolean;
+  team_lead_id?: string | null;
+  team_name?: string | null;
+  role?: string | null;
 }
 
 export interface AdminQueueData {
