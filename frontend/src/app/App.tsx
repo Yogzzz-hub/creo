@@ -124,6 +124,9 @@ const MemberTaskBoardPage = lazyModule(() =>
 const MemberSchedulePTOPage = lazyModule(() =>
   import("../pages/admin/MemberSchedulePTOPage").then((m) => ({ default: m.MemberSchedulePTOPage }))
 );
+const FreelancerTasksPage = lazyModule(() =>
+  import("../pages/freelancer/FreelancerTasksPage").then((m) => ({ default: m.FreelancerTasksPage }))
+);
 const SlackChatPage = lazyModule(() =>
   import("../pages/admin/SlackChatPage").then((m) => ({ default: m.SlackChatPage }))
 );
@@ -792,6 +795,17 @@ export function App() {
                 {/* Team & Admin Slack Hub */}
                 <Route path="/workstation/slack" element={<SlackChatPage />} />
                 <Route path="/admin/slack" element={<SlackChatPage />} />
+
+                {/* Freelancer Workstation Surface */}
+                <Route path="/freelancer" element={<Navigate to="/freelancer/tasks" replace />} />
+                <Route
+                  path="/freelancer/tasks"
+                  element={
+                    <ProtectedRoute allowedRoles={["freelancer", "admin", "super_admin", "team_lead"]}>
+                      <FreelancerTasksPage />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Redirect legacy Kanban routes to Task Queue */}
                 <Route path="/dashboard" element={<Navigate to="/admin/pod-dashboard" replace />} />

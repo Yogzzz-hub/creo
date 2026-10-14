@@ -174,3 +174,29 @@ class EscalationState(Base, UUIDPrimaryKeyMixin):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
+
+class FreelancerProfile(Base, UUIDPrimaryKeyMixin):
+    __tablename__ = "freelancer_profiles"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    specialty: Mapped[str] = mapped_column(String(100), default="Video Editor", nullable=False)
+    hourly_rate: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    status: Mapped[str] = mapped_column(String(50), default="active", nullable=False)  # active, inactive, revoked
+    skills: Mapped[list[str]] = mapped_column(JSONB, default=list, nullable=False)
+    portfolio_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+

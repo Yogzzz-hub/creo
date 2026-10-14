@@ -13,6 +13,7 @@ export const ROLE_HOMES: Record<string, string> = {
   admin: "/admin",
   super_admin: "/admin",
   investor_relations: "/admin/reports",
+  freelancer: "/freelancer/tasks",
 };
 
 export function getRoleHome(role?: string | null): string {

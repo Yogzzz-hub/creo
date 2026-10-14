@@ -38,6 +38,7 @@ from app.core.rbac import (
     StaffActor,
     TeamLeadActor,
     get_admin_actor,
+    get_current_actor,
 )
 from app.db.session import get_db
 from app.models.billing import Plan, Subscription, UsageCounter
@@ -51,7 +52,7 @@ from app.models.enums import (
     TicketStatus,
     UserRole,
 )
-from app.models.ops import Announcement, AuditLog, LeaveRequest, Notification
+from app.models.ops import Announcement, AuditLog, FreelancerProfile, LeaveRequest, Notification
 from app.models.support import Ticket, TicketMessage
 from app.models.user import ClientProfile, StaffProfile, User
 from app.models.work import ClientAssignment, ContentCalendar, Deliverable, Task
@@ -4661,6 +4662,346 @@ async def direct_bypass_client_payment(
         "subscription_id": str(sub.id),
         "client_id": str(client_id),
     }
+
+
+# ============================================================================
+# 2.6 FREELANCER MANAGEMENT & ROLE-BASED ACCESS
+# ============================================================================
+
+class CreateFreelancerRequest(BaseModel):
+    email: str
+    full_name: str
+    password: str | None = None
+    specialty: str = "Video Editor"
+    hourly_rate: int | None = None
+    skills: list[str] = Field(default_factory=list)
+    portfolio_url: str | None = None
+    notes: str | None = None
+
+
+class UpdateFreelancerStatusRequest(BaseModel):
+    status: str = Field(..., pattern="^(active|inactive|revoked)$")
+
+
+class AssignFreelancerRequest(BaseModel):
+    task_id: uuid.UUID | None = None
+    client_id: uuid.UUID | None = None
+    deliverable_id: uuid.UUID | None = None
+    role_description: str | None = None
+    due_date: date | None = None
+
+
+class FreelancerSubmitWorkRequest(BaseModel):
+    task_id: uuid.UUID | None = None
+    deliverable_id: uuid.UUID | None = None
+    title: str
+    storage_path: str
+    thumbnail_url: str | None = None
+    notes: str | None = None
+
+
+@router.post("/freelancers", status_code=status.HTTP_201_CREATED)
+async def create_freelancer(
+    payload: CreateFreelancerRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = TeamLeadActor,
+) -> dict[str, Any]:
+    """Create a new freelancer account with credentials and profile (Admin / TL only)."""
+    from app.core.security import hash_password
+
+    clean_email = payload.email.lower().strip()
+    existing = (await db.execute(select(User).where(User.email == clean_email))).scalar_one_or_none()
+    if existing:
+        raise HTTPException(status_code=400, detail="A user with this email address already exists.")
+
+    chosen_password = payload.password.strip() if payload.password and payload.password.strip() else f"Creo@{uuid.uuid4().hex[:8]}"
+
+    new_user = User(
+        auth_id=f"auth-free-{uuid.uuid4().hex[:12]}",
+        email=clean_email,
+        full_name=payload.full_name.strip(),
+        role=UserRole.FREELANCER,
+        account_status=AccountStatus.ACTIVE,
+        hashed_password=hash_password(chosen_password),
+    )
+    db.add(new_user)
+    await db.flush()
+
+    freelancer_profile = FreelancerProfile(
+        user_id=new_user.id,
+        agency_id=actor.agency_id,
+        specialty=payload.specialty.strip(),
+        hourly_rate=payload.hourly_rate,
+        status="active",
+        skills=payload.skills,
+        portfolio_url=payload.portfolio_url.strip() if payload.portfolio_url else None,
+        notes=payload.notes.strip() if payload.notes else None,
+    )
+    db.add(freelancer_profile)
+    await db.commit()
+
+    return {
+        "status": "success",
+        "message": f"Freelancer {new_user.full_name} created successfully.",
+        "freelancer": {
+            "id": str(new_user.id),
+            "email": new_user.email,
+            "full_name": new_user.full_name,
+            "specialty": freelancer_profile.specialty,
+            "hourly_rate": freelancer_profile.hourly_rate,
+            "status": freelancer_profile.status,
+            "skills": freelancer_profile.skills,
+            "portfolio_url": freelancer_profile.portfolio_url,
+            "temporary_password": chosen_password if not payload.password else None,
+        },
+    }
+
+
+@router.get("/freelancers")
+async def list_freelancers(
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = TeamLeadActor,
+) -> list[dict[str, Any]]:
+    """List all freelancers with their assignment counts, specialty, and profile details."""
+    query = (
+        select(User, FreelancerProfile)
+        .outerjoin(FreelancerProfile, FreelancerProfile.user_id == User.id)
+        .where(User.role == UserRole.FREELANCER)
+        .order_by(User.created_at.desc())
+    )
+    res = await db.execute(query)
+    rows = res.all()
+
+    freelancers = []
+    for user, profile in rows:
+        tasks_res = await db.execute(
+            select(
+                func.count(Task.id),
+                func.count(Task.id).filter(Task.status.in_([TaskStatus.IN_PROGRESS, TaskStatus.IN_REVIEW, TaskStatus.QA_REVIEW])),
+            ).where(Task.assigned_to == user.id)
+        )
+        total_tasks, active_tasks = tasks_res.one()
+
+        freelancers.append({
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "avatar_url": user.avatar_url,
+            "account_status": user.account_status.value if hasattr(user.account_status, "value") else str(user.account_status),
+            "profile_status": profile.status if profile else "active",
+            "specialty": profile.specialty if profile else "Video Editor",
+            "hourly_rate": profile.hourly_rate if profile else None,
+            "skills": profile.skills if profile else [],
+            "portfolio_url": profile.portfolio_url if profile else None,
+            "notes": profile.notes if profile else None,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "total_tasks_assigned": total_tasks,
+            "active_tasks": active_tasks,
+        })
+    return freelancers
+
+
+@router.patch("/freelancers/{freelancer_id}/status")
+async def update_freelancer_status(
+    freelancer_id: uuid.UUID,
+    payload: UpdateFreelancerStatusRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Activate, deactivate, or revoke freelancer access (Admin only)."""
+    user_res = await db.execute(select(User).where(User.id == freelancer_id, User.role == UserRole.FREELANCER))
+    user = user_res.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Freelancer user not found.")
+
+    prof_res = await db.execute(select(FreelancerProfile).where(FreelancerProfile.user_id == freelancer_id))
+    profile = prof_res.scalar_one_or_none()
+    if not profile:
+        profile = FreelancerProfile(user_id=user.id, specialty="Freelancer")
+        db.add(profile)
+
+    profile.status = payload.status
+    if payload.status == "revoked":
+        user.account_status = AccountStatus.SUSPENDED
+        await invalidate_user_session(user.id)
+    elif payload.status == "inactive":
+        user.account_status = AccountStatus.INACTIVE
+    else:
+        user.account_status = AccountStatus.ACTIVE
+
+    await db.commit()
+    return {
+        "status": "success",
+        "freelancer_id": str(freelancer_id),
+        "profile_status": profile.status,
+        "account_status": user.account_status.value if hasattr(user.account_status, "value") else str(user.account_status),
+    }
+
+
+@router.post("/freelancers/{freelancer_id}/assign")
+async def assign_freelancer_to_task(
+    freelancer_id: uuid.UUID,
+    payload: AssignFreelancerRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = TeamLeadActor,
+) -> dict[str, Any]:
+    """Assign freelancer to a task or deliverable (Admin / TL only)."""
+    user = (await db.execute(select(User).where(User.id == freelancer_id, User.role == UserRole.FREELANCER))).scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Freelancer not found.")
+
+    if payload.task_id:
+        task = (await db.execute(select(Task).where(Task.id == payload.task_id))).scalar_one_or_none()
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found.")
+        task.assigned_to = freelancer_id
+        if payload.due_date:
+            task.due_date = payload.due_date
+        if task.status == TaskStatus.BACKLOG:
+            task.status = TaskStatus.IN_PROGRESS
+
+        notif = Notification(
+            user_id=freelancer_id,
+            title="📌 New Task Assigned",
+            message=f"You have been assigned to task {task.deliverable_type.value if hasattr(task.deliverable_type, 'value') else str(task.deliverable_type)}.",
+            type="task_assignment",
+            link="/freelancer/tasks",
+        )
+        db.add(notif)
+        await db.commit()
+        return {
+            "status": "success",
+            "message": f"Freelancer assigned to task {task.id}.",
+            "task_id": str(task.id),
+            "freelancer_id": str(freelancer_id),
+        }
+
+    if payload.deliverable_id:
+        deliv = (await db.execute(select(Deliverable).where(Deliverable.id == payload.deliverable_id))).scalar_one_or_none()
+        if not deliv:
+            raise HTTPException(status_code=404, detail="Deliverable not found.")
+        deliv.assignee_id = freelancer_id
+        await db.commit()
+        return {
+            "status": "success",
+            "message": f"Freelancer assigned to deliverable {deliv.id}.",
+            "deliverable_id": str(deliv.id),
+            "freelancer_id": str(freelancer_id),
+        }
+
+    raise HTTPException(status_code=400, detail="Either task_id or deliverable_id must be provided.")
+
+
+@router.get("/freelancer/my-tasks")
+async def get_freelancer_my_tasks(
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> list[dict[str, Any]]:
+    """Retrieve assigned tasks, deadlines, briefs, and deliverables for the authenticated freelancer."""
+    if actor.role != UserRole.FREELANCER and actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
+        raise HTTPException(status_code=403, detail="Only freelancers can access this portal view.")
+
+    tasks_res = await db.execute(
+        select(Task, User)
+        .outerjoin(User, Task.client_id == User.id)
+        .where(Task.assigned_to == actor.user_id)
+        .order_by(Task.due_date.asc().nulls_last(), Task.created_at.desc())
+    )
+    rows = tasks_res.all()
+
+    items = []
+    for task, client_user in rows:
+        d_res = await db.execute(
+            select(Deliverable).where(Deliverable.task_id == task.id, Deliverable.is_archived.is_(False))
+        )
+        deliverables = d_res.scalars().all()
+
+        items.append({
+            "id": str(task.id),
+            "deliverable_type": task.deliverable_type.value if hasattr(task.deliverable_type, "value") else str(task.deliverable_type),
+            "status": task.status.value if hasattr(task.status, "value") else str(task.status),
+            "due_date": task.due_date.isoformat() if task.due_date else None,
+            "sla_due_at": task.sla_due_at.isoformat() if task.sla_due_at else None,
+            "is_revision": task.is_revision,
+            "blueprint": task.blueprint,
+            "client_name": client_user.full_name if client_user else "Client",
+            "deliverables": [
+                {
+                    "id": str(d.id),
+                    "version": d.version,
+                    "status": d.status.value if hasattr(d.status, "value") else str(d.status),
+                    "storage_path": d.storage_path,
+                    "thumbnail_url": d.thumbnail_url,
+                    "created_at": d.created_at.isoformat() if d.created_at else None,
+                }
+                for d in deliverables
+            ],
+        })
+    return items
+
+
+@router.post("/freelancer/submit-work")
+async def freelancer_submit_work(
+    payload: FreelancerSubmitWorkRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Allow freelancer to upload completed work for review & approval by Team Lead."""
+    if actor.role != UserRole.FREELANCER and actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
+        raise HTTPException(status_code=403, detail="Only freelancers can submit work via this endpoint.")
+
+    if not payload.task_id:
+        raise HTTPException(status_code=400, detail="task_id is required.")
+
+    task = (await db.execute(select(Task).where(Task.id == payload.task_id, Task.assigned_to == actor.user_id))).scalar_one_or_none()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found or not assigned to you.")
+
+    d_res = await db.execute(
+        select(Deliverable).where(Deliverable.task_id == task.id).order_by(Deliverable.version.desc())
+    )
+    latest_deliv = d_res.scalars().first()
+
+    next_version = (latest_deliv.version + 1) if latest_deliv else 1
+    root_id = latest_deliv.root_id if latest_deliv else uuid.uuid4()
+
+    new_deliv = Deliverable(
+        agency_id=actor.agency_id,
+        root_id=root_id,
+        version=next_version,
+        client_id=task.client_id,
+        task_id=task.id,
+        assignee_id=actor.user_id,
+        status=DeliverableStatus.IN_QA,
+        storage_path=payload.storage_path,
+        thumbnail_url=payload.thumbnail_url,
+        is_archived=False,
+    )
+    db.add(new_deliv)
+    task.status = TaskStatus.QA_REVIEW
+    await db.flush()
+
+    from app.services.deliverable_workflow import record_deliverable_history
+    await record_deliverable_history(
+        db=db,
+        deliverable_id=new_deliv.id,
+        action="submitted",
+        user_id=actor.user_id,
+        user_name="Freelancer",
+        user_role="freelancer",
+        reason=payload.notes or "Freelancer submitted work for team lead QA review.",
+        agency_id=actor.agency_id,
+        metadata_extra={"task_id": str(task.id), "title": payload.title},
+    )
+
+    await db.commit()
+    return {
+        "status": "success",
+        "message": "Work submitted successfully for Team Lead review.",
+        "deliverable_id": str(new_deliv.id),
+        "version": new_deliv.version,
+    }
+
 
 
 

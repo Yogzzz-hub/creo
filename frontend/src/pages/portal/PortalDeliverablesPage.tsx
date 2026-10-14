@@ -2,7 +2,7 @@ import { PublishingPanel } from "../../components/ops/PublishingPanel";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Check, Clock, Download, Film, ImageIcon, Loader2, RefreshCw } from "lucide-react";
+import { AlertTriangle, Check, Clock, Download, Film, ImageIcon, Loader2, RefreshCw, History, Archive } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import {
   approveDeliverable,
@@ -13,16 +13,18 @@ import {
 import { HttpError } from "../../lib/http";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
+import { DeliverableHistoryModal } from "../../components/portal/DeliverableHistoryModal";
 
-import type { DeliverableItem } from "../../types/api";
+import type { DeliverableItem, DeletedDeliverableRecord } from "../../types/api";
 
-type Filter = "all" | "needs_you" | "revision" | "approved";
+type Filter = "all" | "needs_you" | "revision" | "approved" | "deleted";
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "All" },
   { key: "needs_you", label: "Needs you" },
   { key: "revision", label: "In revision" },
   { key: "approved", label: "Approved" },
+  { key: "deleted", label: "Archived" },
 ];
 
 const APPROVED_STATUSES = new Set(["approved", "scheduled", "publishing", "published", "publish_failed"]);
@@ -163,6 +165,7 @@ export function PortalDeliverablesPage() {
     refetchInterval: 2 * 60_000,
   });
   const deliverables = listQuery.data?.items ?? [];
+  const deletedRecords: DeletedDeliverableRecord[] = listQuery.data?.deleted_records ?? [];
 
   const [filter, setFilter] = useState<Filter>("all");
   const [viewVersionId, setViewVersionId] = useState<string | null>(null);
@@ -170,6 +173,7 @@ export function PortalDeliverablesPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [bulkProgress, setBulkProgress] = useState<string | null>(null);
+  const [historyModalDeliverable, setHistoryModalDeliverable] = useState<{ id: string; title: string } | null>(null);
 
   // A link may name an older version; the detail endpoint resolves it to the current one.
   const detailQuery = useQuery({
@@ -358,7 +362,39 @@ export function PortalDeliverablesPage() {
               ))}
             </div>
             <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-hide">
-              {visible.length === 0 ? (
+              {filter === "deleted" ? (
+                deletedRecords.length === 0 ? (
+                  <div className="p-4 text-center text-sm text-[#97A0B3]">
+                    No retracted or archived deliverables on record.
+                  </div>
+                ) : (
+                  deletedRecords.map((del) => (
+                    <div
+                      key={del.id}
+                      className="w-full p-3 rounded-2xl border border-rose-500/20 bg-[#0B111C]/40 text-left space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white capitalize">{del.deliverable_type || "Asset"} · v{del.version}</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                          Archived
+                        </span>
+                      </div>
+                      <div className="bg-[#161F2D] p-2.5 rounded-xl border border-[#2A3446]">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-0.5">
+                          Reason for Deletion / Withdrawal:
+                        </p>
+                        <p className="text-xs text-rose-200 leading-snug">
+                          "{del.deletion_reason}"
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-[#97A0B3] pt-0.5">
+                        <span>Retracted by Team Lead</span>
+                        <span className="font-mono">{new Date(del.deleted_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  ))
+                )
+              ) : visible.length === 0 ? (
                 <div className="p-4 text-center text-sm text-[#97A0B3]">
                   No {FILTERS.find((f) => f.key === filter)?.label.toLowerCase()} deliverables match your filter.{" "}
                   <button className="underline text-white" onClick={() => setFilter("all")}>Clear filter</button>
@@ -447,7 +483,17 @@ export function PortalDeliverablesPage() {
                   </p>
                   <h2 className="text-2xl font-normal text-white break-words">{shownItem.title}</h2>
                   <PublishingPanel key={shownItem.id} deliverableId={shownItem.id} onReview={setPublishingReview} />
-                  <div className="mt-2"><StatusBadge item={shownItem} /></div>
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                    <StatusBadge item={shownItem} />
+                    <button
+                      type="button"
+                      onClick={() => setHistoryModalDeliverable({ id: shownItem.id, title: shownItem.title })}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-[#2A3446] bg-[#0B111C] hover:bg-[#161F2D] text-xs font-semibold text-[#7FA0D6] transition-colors cursor-pointer"
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      View Full History & Audit Trail
+                    </button>
+                  </div>
                 </div>
 
                 {viewingOlder && (
@@ -586,6 +632,16 @@ export function PortalDeliverablesPage() {
           <span className="w-2 h-2 rounded-full bg-[#BCCCE6]" />
           {toastMessage}
         </div>
+      )}
+
+      {historyModalDeliverable && (
+        <DeliverableHistoryModal
+          isOpen={true}
+          onClose={() => setHistoryModalDeliverable(null)}
+          deliverableId={historyModalDeliverable.id}
+          deliverableTitle={historyModalDeliverable.title}
+          isClient={true}
+        />
       )}
     </div>
   );

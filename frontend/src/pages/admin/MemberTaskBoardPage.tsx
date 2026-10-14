@@ -33,6 +33,7 @@ import {
 } from "../../lib/deliverables-api";
 import { fetchPodDashboard, type PodDashboardData, type PodTask } from "../../lib/ops-api";
 import { StoryApprovalModal } from "../../components/ops/StoryApprovalModal";
+import { getEligibleDeliverableTypes, shouldShowTaskForUser } from "../../lib/creative-roles";
 
 type Column = "assigned" | "production" | "qa" | "review";
 
@@ -787,7 +788,7 @@ export function MemberTaskBoardPage() {
               <div>
                 <label htmlFor="task-format" className="block font-bold text-[#F1F5F9] mb-1">Format</label>
                 <NativeSelect id="task-format" value={newType} onChange={(e) => setNewType(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C]">
-                  {availableFormats.map((fmt) => (
+                  {availableFormats.map((fmt: string) => (
                     <option key={fmt} value={fmt}>
                       {formatLabel(fmt)}
                     </option>

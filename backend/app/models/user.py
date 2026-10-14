@@ -102,6 +102,7 @@ class ClientProfile(Base, TimestampMixin):
         primary_key=True,
     )
     company_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    brand_logo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     instagram_username: Mapped[str | None] = mapped_column(String(255), nullable=True)
     instagram_user_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     ig_token_encrypted: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)

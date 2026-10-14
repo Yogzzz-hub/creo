@@ -10,6 +10,8 @@ import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { PausePlanModal } from "../../components/portal/PausePlanModal";
 import { ComparePlansModal } from "../../components/portal/ComparePlansModal";
 import { PlanBargainCallModal } from "../../components/portal/PlanBargainCallModal";
+import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
+import { SplitPaymentCard } from "../../components/portal/SplitPaymentCard";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
 
 import type { InvoiceData } from "../../lib/pdf-invoice";
@@ -360,6 +362,9 @@ export function PortalPaymentsPage() {
           </div>
         </div>
       )}
+
+      {/* Split Payment & Instalment Plan Card (Requirement 2.3) */}
+      <SplitPaymentCard />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         

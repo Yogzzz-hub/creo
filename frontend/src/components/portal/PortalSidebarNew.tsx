@@ -12,13 +12,11 @@ import {
   HelpCircle,
   Settings,
   LogOut,
-  Lock,
   X,
   MessageSquare,
   LayoutDashboard,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
-import { usePortalNavigationLocks } from "../../lib/usePortalNavigationLocks";
 import { useConfirm } from "../ui/ConfirmDialog";
 import { useAdminSidebar } from "../admin/AdminSidebarContext";
 
@@ -66,7 +64,6 @@ export function PortalSidebarNew() {
   }, [mobileOpen, setMobileOpen]);
 
   const { user, logout } = useAuth();
-  const lockReason = usePortalNavigationLocks();
   const [loggingOut, setLoggingOut] = useState(false);
   const confirm = useConfirm();
 

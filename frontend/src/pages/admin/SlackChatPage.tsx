@@ -21,6 +21,7 @@ import { useAuth } from "../../lib/auth-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
+import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
 import { getAuthToken } from "../../lib/auth-token";
 
@@ -269,6 +270,8 @@ export function SlackChatPage() {
   // User role classification
   const roleStr = (user?.role || "").toLowerCase();
   const isClient = roleStr === "client";
+  const gate = useOnboardingGate();
+  const canUseChat = !isClient || gate.isComplete;
   const isTeamLead = roleStr === "team_lead" || roleStr === "lead";
   const isAdmin = ["admin", "super_admin", "ops_admin"].includes(roleStr);
   const isTeamMember = !isClient && !isTeamLead && !isAdmin;
@@ -427,6 +430,7 @@ export function SlackChatPage() {
     enabled: !!user?.id && canUseChat,
     staleTime: 15_000,
   });
+  const serverContacts = contactsQuery.data || [];
 
   // Fallback contacts strictly enforcing role permissions:
   // - Client: ONLY 2 CHATS (Admin & Pod Lead)
@@ -479,11 +483,11 @@ export function SlackChatPage() {
 
     // Strict frontend filter ensuring no unauthorized contacts leak through
     return rawList
-      .map((c) => ({
+      .map((c: ChatContact) => ({
         ...c,
         role: (c.role || "").replace(/Client Representative/gi, "Client"),
       }))
-      .filter((c) => {
+      .filter((c: ChatContact) => {
         // Exclude self if somehow present
         if (c.id === user?.id || (c.email && c.email.toLowerCase() === (user?.email || "").toLowerCase())) {
           return false;
@@ -551,10 +555,6 @@ export function SlackChatPage() {
   const activeContact = useMemo(() => {
     return contactsList.find((contact) => contact.id === activeContactId) ?? null;
   }, [contactsList, activeContactId]);
-  const superAdminContact = useMemo(
-    () => contactsList.find((contact) => contact.is_super_admin) ?? null,
-    [contactsList],
-  );
 
   // Active channel object
   const activeChannel = useMemo(() => {
@@ -675,21 +675,21 @@ export function SlackChatPage() {
 
       const formattedServer = serverItems.map((m: any) => {
         const isSelf = m.sender_id === user?.id;
-        const senderName = isSelf ? (user?.full_name || "You") : (m.sender_name || (activeMode === "dm" ? activeContact.name : "Team Specialist"));
+        const senderName = isSelf ? (user?.full_name || "You") : (m.sender_name || (activeMode === "dm" ? (activeContact?.name || "Teammate") : "Team Specialist"));
         const senderRole = isSelf
           ? (user?.role === "super_admin" || user?.role === "admin"
               ? "Super Admin"
               : user?.role === "client"
               ? "Client"
               : "Specialist")
-          : (activeMode === "dm" ? (activeContact.role || "").replace(/Client Representative/gi, "Client") : "Creative Pod");
+          : (activeMode === "dm" ? ((activeContact?.role || "").replace(/Client Representative/gi, "Client")) : "Creative Pod");
 
         return {
           id: m.id,
           sender: senderName,
           role: senderRole,
           avatar: (senderName || "U").slice(0, 2).toUpperCase(),
-          avatarBg: isSelf ? "bg-[#7FA0D6]" : (activeMode === "dm" && activeContact.is_super_admin ? "bg-amber-500" : "bg-[#64748B]"),
+          avatarBg: isSelf ? "bg-[#7FA0D6]" : (activeMode === "dm" && activeContact?.is_super_admin ? "bg-amber-500" : "bg-[#64748B]"),
           content: m.message,
           timestamp: m.created_at
             ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -936,6 +936,35 @@ export function SlackChatPage() {
       showToast("Could not assign task", "info");
     }
   };
+
+  if (isClient && gate.error) {
+    return (
+      <div role="alert" className="p-6 text-sm text-[#BCCCE6]">
+        Could not verify onboarding status.{" "}
+        <button type="button" className="underline" onClick={() => void gate.refetch()}>
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (isClient && !gate.isReady) {
+    return <CreoLoadingScreen fullScreen={false} label="Checking workspace access" className="min-h-[45vh]" />;
+  }
+
+  if (isClient && !gate.isComplete) {
+    return (
+      <div className="flex flex-1 min-h-0 flex-col py-2 sm:py-4">
+        <ResumeOnboardingBanner variant="compact" />
+        <div className="flex flex-1 items-center justify-center py-6 sm:py-10">
+          <SubscriptionLockedState
+            title="Direct Chat Locked"
+            description="Your private chat with the assigned creative pod unlocks after you complete workspace setup. Resume setup above to continue where you left off."
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full max-h-full min-h-0 flex-1 overflow-hidden -mx-2 sm:-mx-4 -my-2 sm:-my-4">
@@ -1331,14 +1360,14 @@ export function SlackChatPage() {
                     ? `Welcome to #${activeChannel.label}`
                     : activeContact?.is_super_admin
                     ? "Direct Channel with Creo Super Administration"
-                    : `Direct Conversation with ${activeContact.name}`}
+                    : `Direct Conversation with ${activeContact?.name || "Teammate"}`}
                 </h3>
                 <p className="text-xs text-[#97A0B3] max-w-md mt-1.5 leading-relaxed">
                   {activeMode === "channel"
                     ? `This is the start of the #${activeChannel.label} channel. Collaborate with your creative team, drop project notes, or review revisions in real time.`
                     : activeContact?.is_super_admin
                     ? "This is your private, direct thread with Creo Executive Super Administration. Inquire about your creative pod, retainer adjustments, SLA escalations, or custom requests."
-                    : `This is the start of your direct 1-on-1 thread with ${activeContact.name}. Drop project feedback, creative directions, or collaborate in real time.`}
+                    : `This is the start of your direct 1-on-1 thread with ${activeContact?.name || "your teammate"}. Drop project feedback, creative directions, or collaborate in real time.`}
                 </p>
               </div>
             ) : (

@@ -20,8 +20,6 @@ import {
   Eye,
   Check,
   Edit3,
-  AlertTriangle,
-  FileText,
 } from "lucide-react";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useAuth } from "../../lib/auth-context";

@@ -92,6 +92,7 @@ TRANSITIONS: dict[str, set[str]] = {
 _STAFF_ROLES = {
     UserRole.EDITOR,
     UserRole.DESIGNER,
+    UserRole.FREELANCER,
     UserRole.TEAM_LEAD,
     UserRole.ADMIN,
     UserRole.SUPER_ADMIN,

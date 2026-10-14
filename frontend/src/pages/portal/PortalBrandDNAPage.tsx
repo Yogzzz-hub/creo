@@ -70,6 +70,17 @@ export function PortalBrandDNAPage() {
     queryFn: () => request("/api/v1/portal/profile"),
   });
 
+  const { data: logoData } = useQuery({
+    queryKey: ["brand-logo-asset"],
+    queryFn: async () => {
+      try {
+        return await request<{ brand_logo_url: string | null }>("/api/v1/onboarding/questionnaire/logo");
+      } catch {
+        return { brand_logo_url: null };
+      }
+    },
+  });
+
   const gate = useOnboardingGate();
   const isBrandTab = tab === "brand" || tab === "edit-brand";
 
@@ -849,6 +860,49 @@ export function PortalBrandDNAPage() {
                 </div>
               </div>
             </div>
+
+            {/* Official Brand Logo Asset (Requirement 2.2) */}
+            {(logoData?.brand_logo_url || profile?.brand_logo_url) && (
+              <div className="pt-4 border-t border-[#2A3446]/80 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="size-3.5 text-[#7FA0D6]" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
+                      Official Brand Logo Asset
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    Production Asset
+                  </span>
+                </div>
+                <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 flex items-center gap-4">
+                  <div className="w-20 h-14 rounded-lg border border-[#2A3446] bg-[radial-gradient(#2A3446_1px,transparent_1px)] [background-size:8px_8px] bg-[#0E1524] flex items-center justify-center p-2 shrink-0">
+                    <img
+                      src={resolveAssetUrl(logoData?.brand_logo_url || profile?.brand_logo_url)}
+                      alt="Brand Logo"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-white truncate">
+                      {(logoData?.brand_logo_url || profile?.brand_logo_url)?.split("/").pop()}
+                    </p>
+                    <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                      Accessible to assigned pod designers, editors & creative leads.
+                    </p>
+                  </div>
+                  <a
+                    href={resolveAssetUrl(logoData?.brand_logo_url || profile?.brand_logo_url)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2 rounded-lg bg-[#161F2D] hover:bg-[#2A3446] text-[#7FA0D6] border border-[#2A3446] transition-colors"
+                    title="View Logo Asset"
+                  >
+                    <Download className="size-3.5" />
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

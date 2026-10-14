@@ -85,9 +85,18 @@ import {
   Folder,
   Lock,
   ShieldCheck,
+  History,
+  Archive,
+  CreditCard,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CustomSelect } from "../../components/ui/CustomSelect";
+import { DeliverableHistoryModal } from "../../components/portal/DeliverableHistoryModal";
+import { WithdrawDeliverableModal } from "../../components/portal/WithdrawDeliverableModal";
+import { AdminSplitPaymentModal } from "../../components/admin/AdminSplitPaymentModal";
+import { AdminFreelancerModal } from "../../components/admin/AdminFreelancerModal";
+import { AdminAssignFreelancerModal } from "../../components/admin/AdminAssignFreelancerModal";
+import { fetchFreelancers, updateFreelancerStatus, FreelancerProfileItem } from "../../lib/freelancer-api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. ADMIN CLIENTS PAGE (CLIENT DETAILS & BRAND BRIEF)
@@ -217,6 +226,8 @@ export function AdminClientsPage() {
   const [directBypassNotes, setDirectBypassNotes] = useState<string>("");
   const [processingPaymentId, setProcessingPaymentId] = useState<string | null>(null);
   const [directBypassBusy, setDirectBypassBusy] = useState(false);
+  const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
+  const [splitPaymentClient, setSplitPaymentClient] = useState<{ id: string; name: string } | null>(null);
 
   const manualPayments = manualPaymentsQuery.data || [];
   const pendingManualPayments = manualPayments.filter((p) => p.status === "PENDING");
@@ -468,7 +479,8 @@ export function AdminClientsPage() {
       null
     : null;
 
-  
+  const [splitPaymentClient, setSplitPaymentClient] = useState<{ id: string; name: string } | null>(null);
+  const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
   const [liveDeliverables, setLiveDeliverables] = useState<any[]>([]);
   useEffect(() => {
     if (activeClient?.id && !activeClient.id.includes('ryze')) {
@@ -758,24 +770,42 @@ export function AdminClientsPage() {
                   </div>
 
                   <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDirectBypassTargetClient({
-                          id: client.id,
-                          name: client.name,
-                          email: client.contact?.email || "",
-                        });
-                        setDirectBypassPlanId(plansQuery.data?.[0]?.id || "");
-                        setIsDirectBypassModalOpen(true);
-                      }}
-                      className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                      title="Bypass payment for client who paid offline"
-                    >
-                      <Banknote className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Bypass Payment</span>
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDirectBypassTargetClient({
+                            id: client.id,
+                            name: client.name,
+                            email: client.contact?.email || "",
+                          });
+                          setDirectBypassPlanId(plansQuery.data?.[0]?.id || "");
+                          setIsDirectBypassModalOpen(true);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                        title="Bypass payment for client who paid offline"
+                      >
+                        <Banknote className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Bypass Payment</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSplitPaymentClient({
+                            id: client.id,
+                            name: client.name,
+                          });
+                          setIsSplitModalOpen(true);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                        title="Configure split payment instalments & reminders"
+                      >
+                        <CreditCard className="w-3.5 h-3.5 text-blue-400" />
+                        <span>Split Payment</span>
+                      </button>
+                    </div>
                     <span className="text-[#7FA0D6] font-bold group-hover:underline flex items-center gap-1">
                       View Client Detail View &rarr;
                     </span>
@@ -822,6 +852,21 @@ export function AdminClientsPage() {
                 >
                   <Banknote className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Bypass Step 3 Payment</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!activeClient) return;
+                    setSplitPaymentClient({
+                      id: activeClient.id,
+                      name: activeClient.name,
+                    });
+                    setIsSplitModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
+                >
+                  <CreditCard className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Split Payment Schedule</span>
                 </button>
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#161F2D] text-white border border-[#2A3446] flex items-center gap-1.5 shadow-2xs">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -2173,6 +2218,15 @@ export function AdminClientsPage() {
             </div>
           </div>
         )}
+        {isSplitModalOpen && splitPaymentClient && (
+          <AdminSplitPaymentModal
+            isOpen={true}
+            onClose={() => setIsSplitModalOpen(false)}
+            clientId={splitPaymentClient.id}
+            clientName={splitPaymentClient.name}
+            onSuccess={() => showToast("Split payment package updated successfully.")}
+          />
+        )}
       </main>
     </div>
   );
@@ -2193,6 +2247,8 @@ export function AdminDeliverablesPage() {
 
   const [revisionItem, setRevisionItem] = useState<{ id: string; title: string } | null>(null);
   const [revisionReason, setRevisionReason] = useState("");
+  const [withdrawModalItem, setWithdrawModalItem] = useState<{ id: string; title: string } | null>(null);
+  const [historyModalItem, setHistoryModalItem] = useState<{ id: string; title: string } | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const deliverablesQuery = useQuery({ queryKey: ["admin-uploaded-deliverables", user?.id], enabled: !!user, queryFn: () => fetchAdminDeliverables(), retry: false });
@@ -2513,21 +2569,43 @@ export function AdminDeliverablesPage() {
 
                 {/* Action Buttons */}
                 <div className="flex items-center gap-2 pt-1">
+                  {item.status === "pending_qa" ? (
+                    <>
+                      <button
+                        type="button"
+                        disabled={reviewBusy || !item.previewUrl}
+                        onClick={() => void handleApprove(item.id, item.title)}
+                        className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" /> Approve
+                      </button>
+                      <button
+                        type="button"
+                        disabled={reviewBusy || !item.previewUrl}
+                        onClick={() => handleDecline(item.id, item.title)}
+                        className="flex-1 py-2.5 bg-[#161F2D] hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <X className="w-3.5 h-3.5 stroke-[2.5]" /> Request Edit
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={reviewBusy || item.is_archived}
+                      onClick={() => setWithdrawModalItem({ id: item.id, title: item.title })}
+                      className="flex-1 py-2 bg-[#161F2D] hover:bg-rose-500/10 border border-rose-500/30 hover:border-rose-500 text-rose-400 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40"
+                      title="Withdraw deliverable with minor issues even after approval"
+                    >
+                      <Archive className="w-3.5 h-3.5" /> Withdraw / Delete
+                    </button>
+                  )}
                   <button
                     type="button"
-                    disabled={reviewBusy || item.status !== "pending_qa" || !item.previewUrl}
-                    onClick={() => void handleApprove(item.id, item.title)}
-                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    onClick={() => setHistoryModalItem({ id: item.id, title: item.title })}
+                    className="p-2.5 bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] rounded-xl text-[#7FA0D6] hover:text-white transition-colors cursor-pointer shrink-0"
+                    title="View Activity & Version History"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" /> Approve
-                  </button>
-                  <button
-                    type="button"
-                    disabled={reviewBusy || item.status !== "pending_qa" || !item.previewUrl}
-                    onClick={() => handleDecline(item.id, item.title)}
-                    className="flex-1 py-2.5 bg-[#161F2D] hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    <X className="w-3.5 h-3.5 stroke-[2.5]" /> Request Edit
+                    <History className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -2636,6 +2714,29 @@ export function AdminDeliverablesPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {withdrawModalItem && (
+          <WithdrawDeliverableModal
+            isOpen={true}
+            onClose={() => setWithdrawModalItem(null)}
+            deliverableId={withdrawModalItem.id}
+            deliverableTitle={withdrawModalItem.title}
+            onSuccess={() => {
+              deliverablesQuery.refetch();
+              showToast("Deliverable safely withdrawn and archived. Deletion record logged with client visibility.");
+            }}
+          />
+        )}
+
+        {historyModalItem && (
+          <DeliverableHistoryModal
+            isOpen={true}
+            onClose={() => setHistoryModalItem(null)}
+            deliverableId={historyModalItem.id}
+            deliverableTitle={historyModalItem.title}
+            isClient={false}
+          />
         )}
       </main>
     </div>
@@ -3334,6 +3435,27 @@ export function AdminTeamManagementPage() {
   const [roleCategoryFilter, setRoleCategoryFilter] = useState<string>("all");
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [teamTab, setTeamTab] = useState<"internal" | "freelancers">("internal");
+  const [isAddFreelancerOpen, setIsAddFreelancerOpen] = useState(false);
+  const [assignFreelancerTarget, setAssignFreelancerTarget] = useState<FreelancerProfileItem | null>(null);
+
+  const freelancersQuery = useQuery({
+    queryKey: ["admin-freelancers-list"],
+    queryFn: () => fetchFreelancers(),
+  });
+
+  const handleToggleFreelancerStatus = async (
+    freelancerId: string,
+    newStatus: "ACTIVE" | "INACTIVE" | "REVOKED"
+  ) => {
+    try {
+      await updateFreelancerStatus(freelancerId, newStatus);
+      await freelancersQuery.refetch();
+      setToast(`Freelancer status updated to ${newStatus}`);
+    } catch (err: any) {
+      setToast(err?.message || "Failed to update freelancer status");
+    }
+  };
 
   const { data: queueData } = useQuery({
     queryKey: ["admin_queue"],
@@ -3798,10 +3920,262 @@ export function AdminTeamManagementPage() {
           </div>
         )}
 
-        {/* ─────────────────────────────────────────────────────────────────────────────
+        {/* Network & Role Switcher */}
+        <div className="flex items-center gap-2 border-b border-[#2A3446] pb-3">
+          <button
+            type="button"
+            onClick={() => setTeamTab("internal")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              teamTab === "internal"
+                ? "bg-[#7FA0D6] text-white shadow-md"
+                : "text-[#97A0B3] hover:text-white hover:bg-[#161F2D]"
+            }`}
+          >
+            <Users className="w-4 h-4" /> Internal Sprint Pods
+          </button>
+          <button
+            type="button"
+            onClick={() => setTeamTab("freelancers")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              teamTab === "freelancers"
+                ? "bg-purple-600 text-white shadow-md"
+                : "text-[#97A0B3] hover:text-white hover:bg-[#161F2D]"
+            }`}
+          >
+            <Sparkles className="w-4 h-4" /> Freelancer Network & Role Access
+            {freelancersQuery.data && freelancersQuery.data.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-purple-950 text-purple-200 text-[10px] font-black">
+                {freelancersQuery.data.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {teamTab === "freelancers" ? (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <span>Freelancer Network & Role-Based Access</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[10px] font-black uppercase">
+                    Scoped Collaboration
+                  </span>
+                </h3>
+                <p className="text-xs text-[#97A0B3]">
+                  Provision external video editors, animators, and designers with restricted access to assigned deliverables.
+                </p>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsAddFreelancerOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md shadow-purple-500/20 cursor-pointer transition-all shrink-0"
+                >
+                  <Plus className="w-4 h-4" /> Onboard Freelancer
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-purple-500/10 border border-purple-500/25 rounded-2xl flex items-start gap-3 text-xs text-purple-200">
+              <ShieldCheck className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+              <div>
+                <strong>Role-Based Security Boundary:</strong> Freelancer accounts are strictly isolated. They cannot access client billing records, agency financials, team member personal data, or unrelated client project repositories.
+              </div>
+            </div>
+
+            {(() => {
+              const list = freelancersQuery.data || [];
+              const activeCount = list.filter((f) => f.status === "ACTIVE").length;
+              const totalAssigned = list.reduce((acc, f) => acc + (f.assigned_tasks_count || 0), 0);
+              const totalActive = list.reduce((acc, f) => acc + (f.active_tasks_count || 0), 0);
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-6">
+                  <div className="bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-purple-500/30 transition-all shadow-xl flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        FREELANCER ROSTER
+                      </span>
+                      <div className="w-9 h-9 rounded-2xl bg-purple-500/15 text-purple-400 flex items-center justify-center">
+                        <Users className="w-5 h-5" />
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black text-white tracking-tight">{list.length} Specialists</span>
+                      <span className="text-xs font-semibold text-emerald-400">{activeCount} Active</span>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-[#2A3446] text-xs font-bold text-purple-400 flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5" /> On-demand outsourced capacity
+                    </div>
+                  </div>
+
+                  <div className="bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-purple-500/30 transition-all shadow-xl flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        ACTIVE ASSIGNMENTS
+                      </span>
+                      <div className="w-9 h-9 rounded-2xl bg-blue-500/15 text-blue-400 flex items-center justify-center">
+                        <CheckSquare className="w-5 h-5" />
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black text-white tracking-tight">{totalActive} Deliverables</span>
+                      <span className="text-xs font-semibold text-[#97A0B3]">in production</span>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-[#2A3446] text-xs font-medium text-[#97A0B3] flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" /> {totalAssigned} Total assignments logged
+                    </div>
+                  </div>
+
+                  <div className="bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-purple-500/30 transition-all shadow-xl flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        ACCESS ENFORCEMENT
+                      </span>
+                      <div className="w-9 h-9 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
+                        <Lock className="w-5 h-5" />
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black text-emerald-400 tracking-tight">100% Isolated</span>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-[#2A3446] text-xs font-bold text-emerald-400 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5" /> Zero financial / admin leakage
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {freelancersQuery.isLoading ? (
+              <div className="text-center py-12 text-sm text-[#97A0B3]">Loading freelancer roster...</div>
+            ) : !freelancersQuery.data || freelancersQuery.data.length === 0 ? (
+              <div className="bg-[#161F2D] rounded-3xl p-12 text-center border border-[#2A3446] space-y-3">
+                <Users className="w-10 h-10 text-[#97A0B3] mx-auto opacity-40" />
+                <h4 className="text-base font-bold text-white">No Freelancers Registered Yet</h4>
+                <p className="text-xs text-[#97A0B3] max-w-sm mx-auto">
+                  Click "Onboard Freelancer" above to invite an external video editor or graphic designer with individual credentials.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {freelancersQuery.data.map((freelancer) => (
+                  <div
+                    key={freelancer.id}
+                    className="bg-[#161F2D] rounded-3xl p-5 sm:p-6 border border-[#2A3446] hover:border-purple-500/40 transition-all shadow-lg flex flex-col justify-between space-y-4"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-purple-400 font-black text-base flex items-center justify-center">
+                            {freelancer.full_name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .slice(0, 2)
+                              .toUpperCase()}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-sm text-white">{freelancer.full_name}</h4>
+                            <span className="text-[11px] text-[#97A0B3] block truncate max-w-[180px]">
+                              {freelancer.email}
+                            </span>
+                          </div>
+                        </div>
+
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                            freelancer.status === "ACTIVE"
+                              ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                              : freelancer.status === "REVOKED"
+                              ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
+                              : "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                          }`}
+                        >
+                          {freelancer.status}
+                        </span>
+                      </div>
+
+                      <div className="p-3 bg-[#0B111C] rounded-2xl space-y-1.5 text-xs text-[#F1F5F9] border border-[#2A3446]">
+                        <div className="flex justify-between">
+                          <span className="text-[#97A0B3]">Specialty:</span>
+                          <span className="font-bold text-white">{freelancer.specialty || "Creative Specialist"}</span>
+                        </div>
+                        {freelancer.hourly_rate ? (
+                          <div className="flex justify-between">
+                            <span className="text-[#97A0B3]">Agreed Rate:</span>
+                            <span className="font-bold text-purple-300">₹{freelancer.hourly_rate.toLocaleString()}/hr</span>
+                          </div>
+                        ) : null}
+                        <div className="flex justify-between">
+                          <span className="text-[#97A0B3]">Assigned Tasks:</span>
+                          <span className="font-bold text-white">
+                            {freelancer.active_tasks_count} active / {freelancer.assigned_tasks_count} total
+                          </span>
+                        </div>
+                      </div>
+
+                      {freelancer.skills && freelancer.skills.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {freelancer.skills.map((skill, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[10px] text-purple-300 font-medium"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {freelancer.portfolio_link && (
+                        <a
+                          href={freelancer.portfolio_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] text-purple-400 hover:text-purple-300 font-bold hover:underline"
+                        >
+                          <ExternalLink className="w-3 h-3" /> View Portfolio
+                        </a>
+                      )}
+                    </div>
+
+                    <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <select
+                          value={freelancer.status}
+                          onChange={(e) =>
+                            handleToggleFreelancerStatus(
+                              freelancer.id,
+                              e.target.value as "ACTIVE" | "INACTIVE" | "REVOKED"
+                            )
+                          }
+                          className="px-2 py-1 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[11px] font-bold text-white focus:outline-none"
+                        >
+                          <option value="ACTIVE">Active</option>
+                          <option value="INACTIVE">Deactivate</option>
+                          <option value="REVOKED">Revoke Access</option>
+                        </select>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setAssignFreelancerTarget(freelancer)}
+                        className="px-3 py-1 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all flex items-center gap-1"
+                      >
+                        <Send className="w-3 h-3" /> Assign Task
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+        /* ─────────────────────────────────────────────────────────────────────────────
             VIEW 1: MAIN TEAM DETAILS & MANAGEMENT OVERVIEW (Matching Screenshot 1)
-        ───────────────────────────────────────────────────────────────────────────── */}
-        {!activePodId ? (
+        ───────────────────────────────────────────────────────────────────────────── */
+        !activePodId ? (
           <div className="space-y-6">
             {/* Top Controls Bar */}
             <div className="flex items-center justify-between gap-4">
@@ -4253,6 +4627,7 @@ export function AdminTeamManagementPage() {
               ))}
             </div>
           </div>
+        )
         )}
 
         {/* ─────────────────────────────────────────────────────────────────────────────
@@ -4793,6 +5168,28 @@ export function AdminTeamManagementPage() {
               </form>
             </div>
           </div>
+        )}
+        {/* Modals for Freelancer Management */}
+        {isAddFreelancerOpen && (
+          <AdminFreelancerModal
+            isOpen={true}
+            onClose={() => setIsAddFreelancerOpen(false)}
+            onSuccess={() => {
+              freelancersQuery.refetch();
+              setToast("Freelancer account created successfully with role-based credentials!");
+            }}
+          />
+        )}
+        {assignFreelancerTarget && (
+          <AdminAssignFreelancerModal
+            isOpen={true}
+            onClose={() => setAssignFreelancerTarget(null)}
+            freelancer={assignFreelancerTarget}
+            onSuccess={() => {
+              freelancersQuery.refetch();
+              setToast(`Task successfully assigned to ${assignFreelancerTarget.full_name}!`);
+            }}
+          />
         )}
       </main>
     </div>

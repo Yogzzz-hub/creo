@@ -37,7 +37,7 @@ from app.models.enums import (
 )
 from app.models.ops import AuditLog, Notification
 from app.models.user import ClientProfile, StaffProfile, User
-from app.models.work import ClientAssignment, Deliverable, Task
+from app.models.work import ClientAssignment, Deliverable, DeliverableHistory, Task
 from app.services import deliverable_state, storage_service
 
 log = structlog.get_logger(__name__)
@@ -75,7 +75,7 @@ TYPE_LABELS: dict[str, str] = {
     DeliverableType.SHOOT_DAY.value: "Shoot day",
 }
 
-_CREATIVE_ROLES = (UserRole.EDITOR, UserRole.DESIGNER)
+_CREATIVE_ROLES = (UserRole.EDITOR, UserRole.DESIGNER, UserRole.FREELANCER)
 
 _CLIENT_STATUS_LABELS: dict[str, str] = {
     DeliverableStatus.PENDING_APPROVAL.value: "Pending approval",
@@ -454,6 +454,10 @@ async def submit_task_deliverable(
                   "task_id": str(task.id), "notes": notes},
     ))
 
+    await record_deliverable_history(
+        db, deliverable, "submitted", actor, reason=notes, client_visible=False,
+    )
+
     label = TYPE_LABELS.get(DeliverableType(task.deliverable_type).value, "Deliverable")
     client_label = await _client_label(db, task.client_id)
     message = f"v{version} uploaded for {client_label}."
@@ -526,12 +530,18 @@ async def qa_decide(
                 "label": f"{verb}{label}".strip().capitalize(),
                 "link": f"{settings.FRONTEND_URL.rstrip('/')}{link}",
             }
+        await record_deliverable_history(
+            db, deliverable, "qa_approved", actor, reason=notes, client_visible=True,
+        )
     else:
         if not (notes or "").strip():
             raise Conflict("QA notes are required to send work back", code="MISSING_QA_NOTES")
         await deliverable_state.transition(
             db, deliverable, DeliverableStatus.QA_REJECTED,
             actor_id=actor.user_id, actor_role=actor.role, qa_notes=notes.strip(), commit=False,
+        )
+        await record_deliverable_history(
+            db, deliverable, "qa_rejected", actor, reason=notes.strip(), client_visible=False,
         )
         creative = (task.assigned_to if task is not None else None) or deliverable.submitted_by
         _notify(
@@ -572,6 +582,9 @@ async def client_approve(
         _notify(db, user_id, f"Client approved: {label}",
                 f"{client_label} approved v{deliverable.version}.",
                 "/workstation/tasks", deliverable.agency_id)
+    await record_deliverable_history(
+        db, deliverable, "client_approved", actor, client_visible=True,
+    )
     await db.commit()
     await db.refresh(deliverable)
     return deliverable
@@ -597,6 +610,9 @@ async def client_request_changes(
         task.last_sla_notified_at = None
     label = type_label(task, deliverable)
     client_label = await _client_label(db, deliverable.client_id)
+    await record_deliverable_history(
+        db, deliverable, "revision_requested", actor, reason=comment, client_visible=True,
+    )
     for user_id in await _team_recipients(db, deliverable, task):
         _notify(db, user_id, f"Revision requested: {label}",
                 f"{client_label} on v{deliverable.version}: {comment}",
@@ -675,5 +691,121 @@ def serialize_for_team(deliverable: Deliverable, request: Any | None = None) -> 
         "status": _status(deliverable.status).value,
         "revision_round": deliverable.revision_round or 0,
         "rejection_comment": deliverable.rejection_comment,
+        "is_archived": getattr(deliverable, "is_archived", False),
+        "deleted_at": deliverable.deleted_at.isoformat() if getattr(deliverable, "deleted_at", None) else None,
+        "deletion_reason": getattr(deliverable, "deletion_reason", None),
         "created_at": deliverable.created_at.isoformat() if deliverable.created_at else None,
     }
+
+
+async def record_deliverable_history(
+    db: AsyncSession,
+    deliverable: Deliverable,
+    action: str,
+    actor: Actor | None,
+    *,
+    reason: str | None = None,
+    client_visible: bool = True,
+) -> DeliverableHistory:
+    actor_name = None
+    actor_role = None
+    if actor and actor.user_id:
+        u = await db.get(User, actor.user_id)
+        if u:
+            actor_name = u.full_name or u.email
+            actor_role = u.role
+        else:
+            actor_role = actor.role.value if hasattr(actor.role, "value") else str(actor.role)
+
+    history = DeliverableHistory(
+        agency_id=deliverable.agency_id,
+        deliverable_id=deliverable.id,
+        root_id=deliverable.root_id,
+        version=deliverable.version,
+        action=action,
+        actor_id=actor.user_id if actor else None,
+        actor_name=actor_name,
+        actor_role=actor_role,
+        reason=reason,
+        file_url=deliverable.file_url,
+        client_visible=client_visible,
+    )
+    db.add(history)
+    return history
+
+
+async def withdraw_approved_deliverable(
+    db: AsyncSession,
+    actor: Actor,
+    deliverable: Deliverable,
+    *,
+    reason: str,
+) -> Deliverable:
+    """Withdraw or delete an approved deliverable with a recorded reason.
+    
+    Permits team lead and admin to withdraw an approved deliverable containing minor
+    issues, archiving the file, resetting the task to in_production for corrections,
+    and recording a full audit and deletion history entry visible to the client.
+    """
+    if actor.role not in (UserRole.TEAM_LEAD, UserRole.ADMIN, UserRole.SUPER_ADMIN):
+        raise Forbidden("Only Team Leads and Administrators can withdraw or delete approved deliverables",
+                        code="WITHDRAW_FORBIDDEN")
+    
+    clean_reason = reason.strip()
+    if not clean_reason:
+        raise Conflict("A reason is required to withdraw or delete an approved deliverable",
+                       code="MISSING_WITHDRAW_REASON")
+
+    current_st = _status(deliverable.status)
+    if current_st not in (DeliverableStatus.APPROVED, DeliverableStatus.SCHEDULED, DeliverableStatus.PENDING_APPROVAL):
+        raise Conflict(f"Cannot withdraw deliverable in state '{current_st.value}'",
+                       code="CANNOT_WITHDRAW_STATUS")
+
+    now = datetime.now(UTC)
+    deliverable.is_archived = True
+    deliverable.deleted_at = now
+    deliverable.deleted_by = actor.user_id
+    deliverable.deletion_reason = clean_reason
+
+    # Transition to ARCHIVED via state machine
+    await deliverable_state.transition(
+        db, deliverable, DeliverableStatus.ARCHIVED,
+        actor_id=actor.user_id, actor_role=actor.role,
+        reason=f"Withdrawn/deleted: {clean_reason}", commit=False,
+    )
+
+    # Re-open or reset the associated task to in_production so creative can fix it
+    task = await db.get(Task, deliverable.task_id) if deliverable.task_id else None
+    if task is not None:
+        task.status = TaskStatus.IN_PRODUCTION
+        task.is_revision = True
+        task.sla_due_at = add_business_hours(now, REVISION_SLA_BUSINESS_HOURS)
+
+    # Record history entry (client_visible=True so deletion record is visible to client)
+    await record_deliverable_history(
+        db, deliverable, action="withdrawn_deleted", actor=actor,
+        reason=clean_reason, client_visible=True,
+    )
+
+    # Notify client and creative team
+    label = type_label(task, deliverable)
+    client_label = await _client_label(db, deliverable.client_id)
+    _notify(
+        db, deliverable.client_id,
+        f"Deliverable updated: {label}",
+        f"v{deliverable.version} was withdrawn by your team lead for revision. Reason: {clean_reason}",
+        "/portal/deliverables", deliverable.agency_id,
+    )
+    for uid in await _team_recipients(db, deliverable, task):
+        if uid != actor.user_id:
+            _notify(
+                db, uid,
+                f"Deliverable withdrawn: {label}",
+                f"v{deliverable.version} for {client_label} was withdrawn by {actor.role.value}. Reason: {clean_reason}",
+                "/workstation/tasks", deliverable.agency_id,
+            )
+
+    await db.commit()
+    await db.refresh(deliverable)
+    return deliverable
+

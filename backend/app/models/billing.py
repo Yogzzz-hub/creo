@@ -266,3 +266,73 @@ class PlanNegotiation(Base, UUIDPrimaryKeyMixin):
     __table_args__ = (
         Index("idx_plan_neg_status", "status", "created_at"),
     )
+
+
+class SplitPaymentPackage(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "split_payment_packages"
+
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    total_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), default="INR", nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(50), default="active", nullable=False)  # active, completed, cancelled
+
+    client: Mapped[User] = relationship("User", foreign_keys=[client_id])
+    instalments: Mapped[list[PaymentInstalment]] = relationship(
+        "PaymentInstalment", back_populates="package", cascade="all, delete-orphan", order_by="PaymentInstalment.instalment_number.asc()"
+    )
+
+
+class PaymentInstalment(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "payment_instalments"
+
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    package_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("split_payment_packages.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    instalment_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    due_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    paid_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0.00, nullable=False)
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(String(50), default="pending", nullable=False)  # pending, paid, partially_paid, overdue
+    payment_method: Mapped[str | None] = mapped_column(String(50), nullable=True)  # razorpay, stripe, bank_transfer, manual, upi
+    transaction_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    agency_notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    recorded_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
+    package: Mapped[SplitPaymentPackage] = relationship("SplitPaymentPackage", back_populates="instalments")
+    client: Mapped[User] = relationship("User", foreign_keys=[client_id])
+    recorder: Mapped[User | None] = relationship("User", foreign_keys=[recorded_by])

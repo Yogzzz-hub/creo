@@ -58,6 +58,29 @@ export async function requestChanges(
   );
 }
 
+export async function withdrawDeliverable(
+  deliverableId: string,
+  reason: string,
+): Promise<{ status: string; message: string; deliverable_id: string; is_archived: boolean }> {
+  return request<{ status: string; message: string; deliverable_id: string; is_archived: boolean }>(
+    `/api/v1/deliverables/${deliverableId}/withdraw`,
+    {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    },
+  );
+}
+
+export async function fetchDeliverableHistory(
+  deliverableId: string,
+  isClient = false,
+): Promise<any[]> {
+  const endpoint = isClient
+    ? `/api/v1/portal/deliverables/${deliverableId}/history`
+    : `/api/v1/deliverables/${deliverableId}/history`;
+  return request<any[]>(endpoint);
+}
+
 /** Saves every approved deliverable as one ZIP file. */
 export async function downloadApprovedZip(): Promise<void> {
   const token = getAuthToken();

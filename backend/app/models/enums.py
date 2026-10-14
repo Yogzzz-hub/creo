@@ -26,6 +26,7 @@ class UserRole(StrEnum):
     TEAM_LEAD = "team_lead"
     EDITOR = "editor"
     DESIGNER = "designer"
+    FREELANCER = "freelancer"
     CLIENT = "client"
     INVESTOR_RELATIONS = "investor_relations"
 
