@@ -6,7 +6,9 @@ import pytest
 from alembic.script import ScriptDirectory
 
 MIGRATIONS = Path(__file__).resolve().parents[1] / "alembic"
-HEAD = "0016_merge_legacy_enhancements"
+MERGE = "0016_merge_legacy_enhancements"
+VOICE = "0018_voice_feedback_support"
+HEAD = "0019_reconcile_voice_history"
 
 
 @pytest.fixture
@@ -21,11 +23,13 @@ def test_deploy_has_one_unambiguous_head(scripts):
 @pytest.mark.parametrize(
     "current, expected",
     [
-        ("0014_enhancements", {"0015_payment_state_constraints", HEAD}),
-        ("0015_payment_state_constraints", {"0014_enhancements", HEAD}),
+        (VOICE, {HEAD}),
+        (MERGE, {VOICE, HEAD}),
+        ("0014_enhancements", {"0015_payment_state_constraints", MERGE, VOICE, HEAD}),
+        ("0015_payment_state_constraints", {"0014_enhancements", MERGE, VOICE, HEAD}),
         (
             "0014_manual_payment_requests",
-            {"0014_enhancements", "0015_payment_state_constraints", HEAD},
+            {"0014_enhancements", "0015_payment_state_constraints", MERGE, VOICE, HEAD},
         ),
     ],
 )
