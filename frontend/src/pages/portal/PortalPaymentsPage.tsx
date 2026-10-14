@@ -11,7 +11,6 @@ import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { PausePlanModal } from "../../components/portal/PausePlanModal";
 import { ComparePlansModal } from "../../components/portal/ComparePlansModal";
 import { PlanBargainCallModal } from "../../components/portal/PlanBargainCallModal";
-import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
 import { SplitPaymentCard } from "../../components/portal/SplitPaymentCard";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
 

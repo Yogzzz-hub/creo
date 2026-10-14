@@ -591,12 +591,19 @@ async def client_approve(
 
 
 async def client_request_changes(
-    db: AsyncSession, actor: Actor, deliverable: Deliverable, comment: str
+    db: AsyncSession,
+    actor: Actor,
+    deliverable: Deliverable,
+    comment: str,
+    voice_note_url: str | None = None,
+    voice_note_duration: int | None = None,
 ) -> Deliverable:
-    """Journey 2 steps 4-5: required comment, revision task, 24-business-hour clock."""
-    comment = comment.strip()
+    """Journey 2 steps 4-5: required comment or voice note, revision task, 24-business-hour clock."""
+    comment = (comment or "").strip()
+    if not comment and not voice_note_url:
+        raise Conflict("Please provide text feedback or record a voice note", code="MISSING_REJECTION_COMMENT")
     if not comment:
-        raise Conflict("Please describe what should change", code="MISSING_REJECTION_COMMENT")
+        comment = "[Voice Feedback Attached]"
     task = await db.get(Task, deliverable.task_id) if deliverable.task_id else None
     await deliverable_state.transition(
         db, deliverable, DeliverableStatus.REVISION_REQUESTED,
@@ -611,11 +618,21 @@ async def client_request_changes(
     label = type_label(task, deliverable)
     client_label = await _client_label(db, deliverable.client_id)
     await record_deliverable_history(
-        db, deliverable, "revision_requested", actor, reason=comment, client_visible=True,
+        db,
+        deliverable,
+        "revision_requested",
+        actor,
+        reason=comment,
+        voice_note_url=voice_note_url,
+        voice_note_duration=voice_note_duration,
+        client_visible=True,
     )
+    notice_text = f"{client_label} on v{deliverable.version}: {comment}"
+    if voice_note_url:
+        notice_text += " [Audio recording attached]"
     for user_id in await _team_recipients(db, deliverable, task):
         _notify(db, user_id, f"Revision requested: {label}",
-                f"{client_label} on v{deliverable.version}: {comment}",
+                notice_text,
                 "/workstation/tasks", deliverable.agency_id)
     await db.commit()
     await db.refresh(deliverable)
@@ -707,6 +724,8 @@ async def record_deliverable_history(
     actor: Actor | None,
     *,
     reason: str | None = None,
+    voice_note_url: str | None = None,
+    voice_note_duration: int | None = None,
     client_visible: bool = True,
 ) -> DeliverableHistory:
     actor_name = None
@@ -729,6 +748,8 @@ async def record_deliverable_history(
         actor_name=actor_name,
         actor_role=actor_role,
         reason=reason,
+        voice_note_url=voice_note_url,
+        voice_note_duration=voice_note_duration,
         file_url=deliverable.file_url,
         client_visible=client_visible,
     )

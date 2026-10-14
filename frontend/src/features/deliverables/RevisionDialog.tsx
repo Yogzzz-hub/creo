@@ -1,14 +1,16 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { AlertCircle, ArrowUpRight, CheckCircle2, MessageSquare, X } from "lucide-react";
+import { AlertCircle, ArrowUpRight, CheckCircle2, MessageSquare, X, Loader2 } from "lucide-react";
 import { useState } from "react";
 import type { DeliverableItem } from "../../types/api";
 import { useAlert } from "../../components/ui/ConfirmDialog";
+import { uploadVoiceNote } from "../../lib/deliverables-api";
+import { VoiceFeedbackRecorder } from "../../components/portal/VoiceFeedbackRecorder";
 
 interface RevisionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   deliverable: DeliverableItem | null;
-  onSubmit: (comment: string) => Promise<void>;
+  onSubmit: (comment: string, voiceNoteUrl?: string, duration?: number) => Promise<void>;
   onApproveAsIs: () => void;
   isSubmitting?: boolean;
 }
@@ -23,16 +25,25 @@ export function RevisionDialog({
 }: RevisionDialogProps) {
   const alert = useAlert();
   const [comment, setComment] = useState("");
+  const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; duration: number } | null>(null);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!comment.trim()) return;
+    if (!comment.trim() && !recordedAudio?.blob) return;
 
     try {
+      setIsUploadingAudio(true);
       setErrorStatus(null);
-      await onSubmit(comment.trim());
+      let voiceUrl: string | undefined = undefined;
+      if (recordedAudio?.blob && deliverable) {
+        const upRes = await uploadVoiceNote(deliverable.id, recordedAudio.blob, recordedAudio.duration);
+        voiceUrl = upRes.voice_note_url;
+      }
+      await onSubmit(comment.trim() || "[Voice Note Attached]", voiceUrl, recordedAudio?.duration);
       setComment("");
+      setRecordedAudio(null);
       onOpenChange(false);
     } catch (err: unknown) {
       const errorObj = err as { code?: string; message?: string };
@@ -41,6 +52,8 @@ export function RevisionDialog({
       } else {
         setErrorStatus(errorObj?.message || "Failed to submit revision request.");
       }
+    } finally {
+      setIsUploadingAudio(false);
     }
   };
 
@@ -222,12 +235,11 @@ export function RevisionDialog({
                     marginBottom: 6,
                   }}
                 >
-                  FEEDBACK & DIRECTIONS *
+                  WRITTEN DIRECTIONS (OPTIONAL IF RECORDING VOICE NOTE)
                 </label>
                 <textarea
                   id="revision-comment-input"
-                  required
-                  rows={4}
+                  rows={3}
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   placeholder="e.g. Please change the headline font to Bricolage Grotesque, raise music volume by 20%, and trim the first 2 seconds."
@@ -246,6 +258,12 @@ export function RevisionDialog({
                   }}
                 />
               </div>
+
+              {/* Voice Note Recording Option */}
+              <VoiceFeedbackRecorder
+                onRecordingComplete={(blob, duration) => setRecordedAudio({ blob, duration })}
+                onClearRecording={() => setRecordedAudio(null)}
+              />
 
               {errorStatus && !isRevisionLimitReached && (
                 <div style={{ color: "var(--color-blocked)", fontSize: "0.8125rem" }}>
@@ -280,11 +298,11 @@ export function RevisionDialog({
 
                 <button
                   type="submit"
-                  disabled={!comment.trim() || isSubmitting}
+                  disabled={(!comment.trim() && !recordedAudio?.blob) || isSubmitting || isUploadingAudio}
                   style={{
                     padding: "8px 18px",
                     background:
-                      comment.trim() && !isSubmitting
+                      (comment.trim() || recordedAudio?.blob) && !isSubmitting && !isUploadingAudio
                         ? "var(--color-waiting)"
                         : "rgba(240, 162, 2, 0.3)",
                     border: "none",
@@ -292,14 +310,23 @@ export function RevisionDialog({
                     fontWeight: 600,
                     borderRadius: 8,
                     fontSize: "0.875rem",
-                    cursor: comment.trim() && !isSubmitting ? "pointer" : "not-allowed",
+                    cursor: (comment.trim() || recordedAudio?.blob) && !isSubmitting && !isUploadingAudio ? "pointer" : "not-allowed",
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
                   }}
                 >
-                  <MessageSquare size={16} />
-                  {isSubmitting ? "Submitting..." : "Ask for changes"}
+                  {isUploadingAudio ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Uploading voice feedback...
+                    </>
+                  ) : (
+                    <>
+                      <MessageSquare size={16} />
+                      {isSubmitting ? "Submitting..." : "Ask for changes"}
+                    </>
+                  )}
                 </button>
               </div>
             </form>

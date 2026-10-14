@@ -283,8 +283,6 @@ export function SlackChatPage() {
     location.pathname.startsWith("/workstation") ||
     location.pathname.startsWith("/member") ||
     location.pathname === "/slack";
-  const gate = useOnboardingGate();
-  const canUseChat = !isClient || gate.isComplete;
   const locationState = location.state as { draft?: string; dm?: string; leadName?: string } | null;
   const urlDm = searchParams.get("dm");
   const urlChannel = searchParams.get("channel");
@@ -441,7 +439,6 @@ export function SlackChatPage() {
     enabled: !!user?.id && canUseChat,
     staleTime: 15_000,
   });
-  const serverContacts = contactsQuery.data || [];
 
   // Fallback contacts strictly enforcing role permissions:
   // - Client: ONLY 2 CHATS (Admin & Pod Lead)
@@ -1392,51 +1389,33 @@ export function SlackChatPage() {
                 <h3 className="text-base font-black text-white">
                   {activeMode === "channel"
                     ? `Welcome to #${activeChannel.label}`
-                    : activeContact?.is_super_admin
+                    : !activeContact
+                    ? "No assigned teammate selected"
+                    : activeContact.is_super_admin
                     ? "Direct Channel with Creo Super Administration"
-                    : `Direct Conversation with ${activeContact?.name || "Teammate"}`}
+                    : `Direct Conversation with ${activeContact.name}`}
                 </h3>
                 <p className="text-xs text-[#97A0B3] max-w-md mt-1.5 leading-relaxed">
                   {activeMode === "channel"
                     ? `This is the start of the #${activeChannel.label} channel. Collaborate with your creative team, drop project notes, or review revisions in real time.`
-                    : activeContact?.is_super_admin
+                    : !activeContact
+                    ? "Your chat list only includes your assigned team and executive support contact."
+                    : activeContact.is_super_admin
                     ? "This is your private, direct thread with Creo Executive Super Administration. Inquire about your creative pod, retainer adjustments, SLA escalations, or custom requests."
-                    : `This is the start of your direct 1-on-1 thread with ${activeContact?.name || "your teammate"}. Drop project feedback, creative directions, or collaborate in real time.`}
+                    : `This is the start of your direct 1-on-1 thread with ${activeContact.name}. Drop project feedback, creative directions, or collaborate in real time.`}
                 </p>
+                {activeMode === "dm" && activeContact && (
+                  <div className="mt-4 flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#161F2D] text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                      <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+                      Live 2-Way Sync Active
+                    </span>
+                  </div>
+                )}
               </div>
-              <h3 className="text-base font-black text-white">
-                {activeMode === "channel"
-                  ? `Welcome to #${activeChannel.label}`
-                  : !activeContact
-                  ? "No assigned teammate selected"
-                  : activeContact.is_super_admin
-                  ? "Direct Channel with Creo Super Administration"
-                  : `Direct Conversation with ${activeContact.name}`}
-              </h3>
-              <p className="text-xs text-[#97A0B3] max-w-md mt-1.5 leading-relaxed">
-                {activeMode === "channel"
-                  ? `This is the start of the #${activeChannel.label} channel. Collaborate with your creative team, drop project notes, or review revisions in real time.`
-                  : !activeContact
-                  ? "Your chat list only includes your assigned team and executive support contact."
-                  : activeContact.is_super_admin
-                  ? "This is your private, direct thread with Creo Executive Super Administration. Inquire about your creative pod, retainer adjustments, SLA escalations, or custom requests."
-                  : `This is the start of your direct 1-on-1 thread with ${activeContact.name}. Drop project feedback, creative directions, or collaborate in real time.`}
-              </p>
-              {activeMode === "dm" && activeContact && (
-                <div className="mt-4 flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#161F2D] text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
-                    <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-                    Live 2-Way Sync Active
-                  </span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div
-              ref={messagesContainerRef}
-              className="flex-1 min-h-0 overflow-y-auto space-y-4 p-4 sm:p-6 bg-[#0B111C]/90"
-            >
-              {serverMessages.map((msg) => {
+            ) : (
+              <>
+                {serverMessages.map((msg) => {
                 const isUser = msg.sender === currentPersona || msg.sender === (user?.full_name || "You");
                 return (
                   <div
@@ -1516,8 +1495,9 @@ export function SlackChatPage() {
                 );
               })}
               <div ref={chatEndRef} />
-            </div>
+            </>
           )}
+        </div>
 
           {/* Message Input Bar */}
           <div className="border-t border-[#2A3446]/60 p-4 bg-[#161F2D] relative shrink-0">

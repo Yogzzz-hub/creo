@@ -77,9 +77,9 @@ export function ContactSheet({ clientId }: ContactSheetProps) {
     });
   };
 
-  const handleRequestChanges = async (comment: string) => {
+  const handleRequestChanges = async (comment: string, voiceNoteUrl?: string, duration?: number) => {
     if (!selectedItem) return;
-    await requestChanges(selectedItem.id, clientId, comment);
+    await requestChanges(selectedItem.id, clientId, comment, voiceNoteUrl, duration);
     queryClient.invalidateQueries({ queryKey: ["portal", "deliverables", clientId] });
     setSelectedItem(null);
   };

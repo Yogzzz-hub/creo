@@ -132,11 +132,23 @@ const PublishingPage = lazyModule(() =>
 const MemberSchedulePTOPage = lazyModule(() =>
   import("../pages/admin/MemberSchedulePTOPage").then((m) => ({ default: m.MemberSchedulePTOPage }))
 );
+const MemberSettingsPage = lazyModule(() =>
+  import("../pages/admin/MemberSettingsPage").then((m) => ({ default: m.MemberSettingsPage }))
+);
 const FreelancerTasksPage = lazyModule(() =>
   import("../pages/freelancer/FreelancerTasksPage").then((m) => ({ default: m.FreelancerTasksPage }))
 );
 const SlackChatPage = lazyModule(() =>
   import("../pages/admin/SlackChatPage").then((m) => ({ default: m.SlackChatPage }))
+);
+const AdminProductivityDashboardPage = lazyModule(() =>
+  import("../pages/admin/AdminProductivityDashboardPage").then((m) => ({ default: m.AdminProductivityDashboardPage }))
+);
+const BDEDashboardPage = lazyModule(() =>
+  import("../pages/bde/BDEDashboardPage").then((m) => ({ default: m.BDEDashboardPage }))
+);
+const AdminBDEOversightPage = lazyModule(() =>
+  import("../pages/admin/AdminBDEOversightPage").then((m) => ({ default: m.AdminBDEOversightPage }))
 );
 
 function RouteLoading() {
@@ -591,7 +603,7 @@ export function App() {
               <Route
                 element={
                   <ProtectedRoute
-                    allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer", "sales", "investor_relations"]}
+                    allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer", "sales", "bde", "investor_relations", "freelancer"]}
                   >
                     <OpsLayout />
                   </ProtectedRoute>
@@ -670,8 +682,64 @@ export function App() {
                 <Route path="/admin/leave" element={<AdminLeaveApprovalsPage />} />
                 <Route path="/admin/leaves" element={<AdminLeaveApprovalsPage />} />
                 <Route path="/admin/announcements" element={<Navigate to="/admin" replace />} />
-                <Route path="/admin/reports" element={<Navigate to="/admin" replace />} />
-                <Route path="/admin/kpi" element={<Navigate to="/admin" replace />} />
+                <Route
+                  path="/admin/productivity"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
+                      <SimpleErrorBoundary name="Team Productivity & Efficiency">
+                        <AdminProductivityDashboardPage />
+                      </SimpleErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/reports"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
+                      <SimpleErrorBoundary name="Team Reports">
+                        <AdminProductivityDashboardPage />
+                      </SimpleErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/kpi"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
+                      <SimpleErrorBoundary name="Team KPIs">
+                        <AdminProductivityDashboardPage />
+                      </SimpleErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/bde"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <SimpleErrorBoundary name="BDE Outreach Oversight">
+                        <AdminBDEOversightPage />
+                      </SimpleErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/bde-oversight"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <SimpleErrorBoundary name="BDE Outreach Oversight">
+                        <AdminBDEOversightPage />
+                      </SimpleErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/bde"
+                  element={
+                    <ProtectedRoute allowedRoles={["sales", "bde"]}>
+                      <BDEDashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/admin/revenue"
                   element={
@@ -877,7 +945,7 @@ export function App() {
                 <Route
                   path="/freelancer/tasks"
                   element={
-                    <ProtectedRoute allowedRoles={["freelancer", "admin", "super_admin", "team_lead"]}>
+                    <ProtectedRoute allowedRoles={["freelancer"]}>
                       <FreelancerTasksPage />
                     </ProtectedRoute>
                   }

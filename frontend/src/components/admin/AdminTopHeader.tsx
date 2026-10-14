@@ -104,6 +104,10 @@ export function AdminTopHeader({
       ? "Team Details"
       : location.pathname.includes("/lead/clients")
       ? "Client Details"
+      : location.pathname.includes("/admin/productivity")
+      ? "Team Productivity & Efficiency"
+      : location.pathname.includes("/admin/bde") || location.pathname.startsWith("/bde")
+      ? "BDE Prospect Pipeline"
       : location.pathname.includes("/admin/revenue")
       ? "Revenue Engine"
       : location.pathname.includes("/admin/plans") || location.pathname.includes("/admin/sales")

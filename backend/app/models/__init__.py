@@ -47,6 +47,7 @@ from app.models.user import ClientProfile, ClientRoleRequirement, StaffProfile, 
 from app.models.work import ClientAssignment, ContentCalendar, Deliverable, DeliverableHistory, Task
 from app.models.chat import DirectMessage
 from app.models.pod_call import PodCallBooking
+from app.models.crm import Lead, LeadActivity
 
 __all__ = [
     # Enums
@@ -108,4 +109,7 @@ __all__ = [
     "TeamMember",
     # Questionnaire
     "Questionnaire",
+    # CRM
+    "Lead",
+    "LeadActivity",
 ]

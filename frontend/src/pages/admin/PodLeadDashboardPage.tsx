@@ -268,13 +268,13 @@ export function PodLeadDashboardPage() {
           </div>
         )}
 
-        {/* 1. Header Welcome Bar */}
+        {/* Top Controls & Pod Selector */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
           <div className="flex items-center gap-2">
             <span className="size-2 sm:size-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/40 animate-pulse shrink-0" />
-            <h1 className="text-lg sm:text-2xl font-black text-white tracking-tight">
-              Hi, Welcome back, {leadName}
-            </h1>
+            <span className="text-xs sm:text-sm font-bold text-white tracking-tight">
+              Active Shift • {leadName}
+            </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">

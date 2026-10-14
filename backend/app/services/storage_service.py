@@ -52,6 +52,11 @@ ALLOWED_MIMES: dict[str, str] = {
     "font/woff2": "woff2",
     "application/msword": "doc",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "audio/webm": "webm",
+    "audio/mp4": "m4a",
+    "audio/mpeg": "mp3",
+    "audio/ogg": "ogg",
+    "audio/wav": "wav",
 }
 
 # App Flow 6.4: 10 MB for images, 500 MB for videos.

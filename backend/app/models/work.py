@@ -333,6 +333,8 @@ class DeliverableHistory(Base, UUIDPrimaryKeyMixin):
     actor_role: Mapped[str | None] = mapped_column(String(50), nullable=True)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     file_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    voice_note_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    voice_note_duration: Mapped[int | None] = mapped_column(Integer, nullable=True)
     client_visible: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

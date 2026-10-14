@@ -2,18 +2,20 @@ import { PublishingPanel } from "../../components/ops/PublishingPanel";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Check, Clock, Download, Film, ImageIcon, Loader2, RefreshCw, History, Archive } from "lucide-react";
+import { AlertTriangle, Check, Clock, Download, Film, ImageIcon, Loader2, RefreshCw, History } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import {
   approveDeliverable,
   fetchPortalDeliverable,
   fetchPortalDeliverables,
   requestChanges,
+  uploadVoiceNote,
 } from "../../lib/deliverables-api";
 import { HttpError } from "../../lib/http";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
 import { DeliverableHistoryModal } from "../../components/portal/DeliverableHistoryModal";
+import { VoiceFeedbackRecorder } from "../../components/portal/VoiceFeedbackRecorder";
 
 import type { DeliverableItem, DeletedDeliverableRecord } from "../../types/api";
 
@@ -170,6 +172,8 @@ export function PortalDeliverablesPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [viewVersionId, setViewVersionId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
+  const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; duration: number } | null>(null);
+  const [isUploadingVoice, setIsUploadingVoice] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [bulkProgress, setBulkProgress] = useState<string | null>(null);
@@ -242,10 +246,21 @@ export function PortalDeliverablesPage() {
   });
 
   const requestChangesMutation = useMutation({
-    mutationFn: ({ id, comment }: { id: string; comment: string }) => requestChanges(id, clientId, comment),
+    mutationFn: ({
+      id,
+      comment,
+      voiceNoteUrl,
+      duration,
+    }: {
+      id: string;
+      comment: string;
+      voiceNoteUrl?: string;
+      duration?: number;
+    }) => requestChanges(id, clientId, comment, voiceNoteUrl, duration),
     onSuccess: () => {
       refresh();
       setCommentText("");
+      setRecordedAudio(null);
       setActionError(null);
       showToast("Revision requested — your pod has been notified.");
     },
@@ -524,7 +539,17 @@ export function PortalDeliverablesPage() {
 
                 {shownItem.rejection_comment && (
                   <div>
-                    <h4 className="text-[13px] font-bold text-white mb-2">Your requested changes</h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-[13px] font-bold text-white">Your requested changes</h4>
+                      <button
+                        type="button"
+                        onClick={() => setHistoryModalDeliverable({ id: shownItem.id, title: shownItem.title || "Deliverable" })}
+                        className="text-xs text-[#7FA0D6] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <History className="w-3.5 h-3.5" />
+                        Full History & Audio
+                      </button>
+                    </div>
                     <p className="text-[13px] text-[#97A0B3] leading-relaxed bg-[#0B111C]/50 rounded-xl p-4 border border-[#2A3446] whitespace-pre-wrap">
                       {shownItem.rejection_comment}
                     </p>
@@ -563,19 +588,58 @@ export function PortalDeliverablesPage() {
                           id="change-request"
                           value={commentText}
                           onChange={(e) => setCommentText(e.target.value)}
-                          placeholder="Tell your creative pod what to change (required)…"
-                          className="w-full bg-[#0B111C]/50 border border-[#2A3446] rounded-xl p-4 text-[13px] text-white placeholder:text-[#97A0B3] resize-none focus:outline-none focus:border-white/[0.2] transition-colors h-24 mb-4"
+                          placeholder="Tell your creative pod what to change (or record voice note below)…"
+                          className="w-full bg-[#0B111C]/50 border border-[#2A3446] rounded-xl p-4 text-[13px] text-white placeholder:text-[#97A0B3] resize-none focus:outline-none focus:border-white/[0.2] transition-colors h-20 mb-3"
                         />
+                        <div className="mb-4">
+                          <VoiceFeedbackRecorder
+                            onRecordingComplete={(blob, duration) => setRecordedAudio({ blob, duration })}
+                            onClearRecording={() => setRecordedAudio(null)}
+                          />
+                        </div>
                       </>
                     )}
                     <div className="flex items-center gap-3">
                       {!lastRoundUsed && (
                         <button
-                          onClick={() => requestChangesMutation.mutate({ id: shownItem.id, comment: commentText.trim() })}
-                          disabled={requestChangesMutation.isPending || !commentText.trim()}
-                          className="flex-1 px-4 py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#0B111C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={async () => {
+                            if (!shownItem) return;
+                            try {
+                              setIsUploadingVoice(true);
+                              let voiceUrl: string | undefined = undefined;
+                              if (recordedAudio?.blob) {
+                                const upRes = await uploadVoiceNote(shownItem.id, recordedAudio.blob, recordedAudio.duration);
+                                voiceUrl = upRes.voice_note_url;
+                              }
+                              await requestChangesMutation.mutateAsync({
+                                id: shownItem.id,
+                                comment: commentText.trim() || "[Voice Feedback Attached]",
+                                voiceNoteUrl: voiceUrl,
+                                duration: recordedAudio?.duration,
+                              });
+                            } catch {
+                              // error set in mutation
+                            } finally {
+                              setIsUploadingVoice(false);
+                            }
+                          }}
+                          disabled={
+                            requestChangesMutation.isPending ||
+                            isUploadingVoice ||
+                            (!commentText.trim() && !recordedAudio?.blob)
+                          }
+                          className="flex-1 px-4 py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#0B111C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                          {requestChangesMutation.isPending ? "Sending..." : "Request change"}
+                          {isUploadingVoice ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin text-[#7FA0D6]" />
+                              Uploading audio...
+                            </>
+                          ) : requestChangesMutation.isPending ? (
+                            "Sending..."
+                          ) : (
+                            "Request change"
+                          )}
                         </button>
                       )}
                       <button

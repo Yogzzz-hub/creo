@@ -12,9 +12,11 @@ import {
   User,
   ShieldCheck,
   Loader2,
+  Mic,
 } from "lucide-react";
 import { fetchDeliverableHistory } from "../../lib/deliverables-api";
 import type { DeliverableHistoryEntry } from "../../types/api";
+import { VoicePlayer } from "./VoicePlayer";
 
 export interface DeliverableHistoryModalProps {
   isOpen: boolean;
@@ -68,6 +70,13 @@ export function DeliverableHistoryModal({
           badge: "bg-amber-500/15 text-amber-400 border-amber-500/30",
           icon: RefreshCw,
           color: "text-amber-400",
+        };
+      case "voice_response":
+        return {
+          label: "Voice Response / Clarification",
+          badge: "bg-indigo-500/15 text-indigo-400 border-indigo-500/30",
+          icon: Mic,
+          color: "text-indigo-400",
         };
       case "deleted":
       case "withdrawn":
@@ -180,9 +189,9 @@ export function DeliverableHistoryModal({
                       {/* User Attribution */}
                       <div className="flex items-center gap-2 text-xs text-[#97A0B3]">
                         <User className="w-3.5 h-3.5 text-[#7FA0D6]" />
-                        <span className="text-white font-semibold">{entry.user_name || "Team Member"}</span>
+                        <span className="text-white font-semibold">{entry.actor_name || entry.user_name || "Team Member"}</span>
                         <span className="px-1.5 py-0.2 rounded text-[10px] uppercase font-mono bg-[#161F2D] text-[#7FA0D6] border border-[#2A3446]">
-                          {entry.user_role || "Staff"}
+                          {entry.actor_role || entry.user_role || "Staff"}
                         </span>
                       </div>
 
@@ -195,6 +204,17 @@ export function DeliverableHistoryModal({
                           <p className="text-xs text-white leading-relaxed whitespace-pre-wrap">
                             "{entry.reason}"
                           </p>
+                        </div>
+                      )}
+
+                      {/* Voice Note Audio Recording */}
+                      {entry.voice_note_url && (
+                        <div className="mt-2">
+                          <VoicePlayer
+                            audioUrl={entry.voice_note_url}
+                            durationSeconds={entry.voice_note_duration}
+                            authorName={entry.actor_name || entry.user_name}
+                          />
                         </div>
                       )}
                     </div>

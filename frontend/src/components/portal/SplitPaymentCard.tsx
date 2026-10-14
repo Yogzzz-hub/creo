@@ -2,15 +2,10 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CreditCard,
-  Calendar,
   CheckCircle2,
   Clock,
-  AlertTriangle,
-  Receipt,
   ArrowRight,
   Loader2,
-  DollarSign,
-  ShieldCheck,
 } from "lucide-react";
 import { request } from "../../lib/http";
 import { openRazorpayCheckout } from "../../lib/razorpay";
@@ -109,28 +104,27 @@ export function SplitPaymentCard() {
     setPayingInstalmentId(instalment.id);
     setActionMessage(null);
     try {
-      await openRazorpayCheckout({
-        amount_minor: Math.round(instalment.amount * 100),
-        currency: currency || "INR",
-        name: `Creo · ${active_package.title}`,
-        description: `Payment for Instalment #${instalment.instalment_number}`,
-        notes: {
-          instalment_id: instalment.id,
-          package_id: active_package.id,
+      await openRazorpayCheckout(
+        {
+          key: (import.meta.env.VITE_RAZORPAY_KEY_ID as string) || "rzp_test_placeholder",
+          amount: Math.round(instalment.amount * 100),
+          currency: currency || "INR",
+          name: `Creo · ${active_package.title}`,
+          description: `Payment for Instalment #${instalment.instalment_number}`,
         },
-        onSuccess: async (paymentId: string) => {
+        async (res) => {
           await request(`/api/v1/payments/instalments/${instalment.id}/mark-paid`, {
             method: "POST",
-            body: JSON.stringify({ transaction_id: paymentId, notes: "Paid via integrated gateway" }),
+            body: JSON.stringify({ transaction_id: res.razorpay_payment_id, notes: "Paid via integrated gateway" }),
           });
           queryClient.invalidateQueries({ queryKey: ["split-payment-summary"] });
           queryClient.invalidateQueries({ queryKey: ["client-subscription"] });
           setActionMessage(`Payment confirmed! Instalment #${instalment.instalment_number} marked paid.`);
         },
-        onError: (err: any) => {
-          setActionMessage(err?.message || "Payment cancelled or failed.");
-        },
-      });
+        () => {
+          setPayingInstalmentId(null);
+        }
+      );
     } catch (err: any) {
       setActionMessage(err?.message || "Could not launch payment gateway.");
     } finally {

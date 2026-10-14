@@ -28,7 +28,6 @@ import {
   Pipette,
   X,
   UploadCloud,
-  Image as ImageIcon,
 } from "lucide-react";
 
 import { apiUrl } from "../../lib/http";

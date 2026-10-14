@@ -7,10 +7,8 @@ import {
   UploadCloud,
   CheckCircle2,
   AlertCircle,
-  FileText,
   ExternalLink,
   Shield,
-  Layers,
   Sparkles,
   History,
   X,
@@ -20,7 +18,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { fetchMyFreelancerTasks, submitFreelancerWork, FreelancerAssignedTask } from "../../lib/freelancer-api";
-import { fetchDeliverableHistory } from "../../lib/deliverables-api";
 import { DeliverableHistoryModal } from "../../components/portal/DeliverableHistoryModal";
 
 export function FreelancerTasksPage() {
@@ -38,7 +35,7 @@ export function FreelancerTasksPage() {
   // History modal
   const [historyDeliverable, setHistoryDeliverable] = useState<{ id: string; title: string } | null>(null);
 
-  const { data: tasks, isLoading, error, refetch } = useQuery({
+  const { data: tasks, isLoading, refetch } = useQuery({
     queryKey: ["freelancer-my-tasks"],
     queryFn: () => fetchMyFreelancerTasks(),
   });
@@ -65,6 +62,7 @@ export function FreelancerTasksPage() {
     try {
       await submitFreelancerWork({
         deliverable_id: selectedTaskForSubmit.deliverable_id,
+        task_id: selectedTaskForSubmit.id,
         asset_url: assetUrl.trim(),
         submission_notes: submissionNotes.trim() || undefined,
       });
@@ -116,19 +114,11 @@ export function FreelancerTasksPage() {
       {/* Header & Role Scoping Notification */}
       <div className="bg-[#161F2D] rounded-3xl p-6 sm:p-8 border border-[#2A3446] shadow-xl relative overflow-hidden space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                Freelancer Workstation
-              </span>
-              <span className="text-xs text-[#97A0B3]">Signed in as {user?.email}</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Assigned Tasks & Deliverables
-            </h1>
-            <p className="text-xs text-[#97A0B3]">
-              Review creative briefs, download reference assets, and submit completed deliverables for Team Lead approval.
-            </p>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
+              Freelancer Workstation
+            </span>
+            <span className="text-xs text-[#97A0B3]">Signed in as {user?.email}</span>
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -272,7 +262,7 @@ export function FreelancerTasksPage() {
               <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between gap-2">
                 <button
                   type="button"
-                  onClick={() => setHistoryDeliverable({ id: task.deliverable_id, title: task.title })}
+                  onClick={() => setHistoryDeliverable({ id: task.deliverable_id || task.id, title: task.title })}
                   className="px-3 py-1.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#97A0B3] hover:text-white hover:bg-[#0B111C] flex items-center gap-1.5 cursor-pointer"
                 >
                   <History className="w-3.5 h-3.5 text-[#97A0B3]" /> History
