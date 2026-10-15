@@ -8,7 +8,7 @@ from typing import Any
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
@@ -439,7 +439,6 @@ async def get_manual_payment_request(
 ) -> ManualPaymentRequestResponse | None:
     """Check current status of the client's offline payment verification request."""
     client_id = actor.client_id or actor.user_id
-    await _ensure_manual_payments_table(db)
     res = await db.execute(text("""
         SELECT r.id, r.client_id, r.plan_id, r.payment_method, r.amount, r.reference_note,
                r.status, r.reviewed_at, r.admin_notes, r.created_at,
@@ -479,7 +478,6 @@ async def cancel_manual_payment_request(
 ) -> dict[str, str]:
     """Client cancels their pending manual payment request to proceed with online payment."""
     client_id = actor.client_id or actor.user_id
-    await _ensure_manual_payments_table(db)
     await db.execute(text("""
         DELETE FROM manual_payment_requests
         WHERE client_id = :cid AND status = 'PENDING'

@@ -5,6 +5,37 @@ from typing import Any
 import httpx
 from app.config import settings
 from app.core.errors import AppError, Conflict
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
+
+
+def rejected_response(status: int, data: dict, operation: str) -> AppError:
+    error = data.get("error") if isinstance(data.get("error"), dict) else {}
+    description = str(error.get("description") or "").lower()
+    field = error.get("field")
+    if field not in {"total_count", "customer_notify", "plan_id", "amount", "item.amount", "quantity", "period", "interval", "start_at", "notes", "currency"}:
+        field = None
+    code = "RAZORPAY_REQUEST_REJECTED"
+    message = "Razorpay rejected recurring checkout. Please contact your agency to check the billing setup."
+    if status == 401 or "authentication failed" in description:
+        code = "RAZORPAY_CREDENTIALS_INVALID"
+        message = "Razorpay rejected the agency’s payment credentials. Please ask your agency to correct its billing setup."
+    elif status == 403 or ("subscription" in description and any(word in description for word in ("not enabled", "not activated", "enable", "not allowed", "not available"))):
+        code = "RAZORPAY_SUBSCRIPTIONS_DISABLED"
+        message = "Recurring payments are not enabled for this Razorpay account. Your agency must enable Razorpay Subscriptions before checkout."
+    elif status == 429 or status >= 500:
+        code = "RAZORPAY_TEMPORARILY_UNAVAILABLE"
+        message = "Razorpay is temporarily unavailable. Please retry shortly."
+    # Safe, bounded diagnostics only. Never log provider descriptions, request
+    # payloads, URLs containing IDs, authorization headers, API keys or secrets.
+    provider_code = error.get("code")
+    if provider_code not in {"BAD_REQUEST_ERROR", "GATEWAY_ERROR", "SERVER_ERROR", "AUTHENTICATION_ERROR"}:
+        provider_code = "UNKNOWN"
+    logger.warning("razorpay_subscription_rejected", operation=operation, http_status=status,
+        provider_code=provider_code, field=field, classification=code)
+    return AppError(message, code=code, status_code=503 if status in (401, 403, 429) or status >= 500 else 409,
+        details={"operation": operation, "provider_http_status": status, "field": field})
 
 
 def identifier(value: str, prefix: str) -> str:
@@ -14,19 +45,30 @@ def identifier(value: str, prefix: str) -> str:
 
 
 async def call(method: str, path: str, payload: dict | None = None) -> dict[str, Any]:
+    operation = "create_plan" if method == "POST" and path == "plans" else "create_subscription" if method == "POST" and path == "subscriptions" else "pause_subscription" if path.endswith("/pause") else "resume_subscription" if path.endswith("/resume") else "fetch_subscription" if path.startswith("subscriptions/") else "fetch_plan"
     if not settings.RAZORPAY_KEY_ID or not settings.RAZORPAY_KEY_SECRET:
         raise AppError("Razorpay recurring billing is unavailable. Contact your agency.", code="PAYMENT_GATEWAY_UNAVAILABLE", status_code=503)
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             response = await client.request(method, "https://api.razorpay.com/v1/" + path,
                 auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET), json=payload)
-            response.raise_for_status()
-            data = response.json()
+            try:
+                data = response.json()
+            except ValueError:
+                if not response.is_error:
+                    raise
+                data = {}
+            if response.is_error or isinstance(data, dict) and "error" in data:
+                raise rejected_response(response.status_code, data if isinstance(data, dict) else {}, operation)
             if not isinstance(data, dict):
                 raise ValueError()
             return data
-    except (httpx.HTTPError, ValueError):
-        raise AppError("Razorpay did not confirm this billing change. Retry to check its status; billing has not been marked changed in CREO.", code="RAZORPAY_UNCONFIRMED", status_code=503) from None
+    except httpx.HTTPError:
+        logger.warning("razorpay_subscription_network_error", operation=operation)
+        raise AppError("Could not reach Razorpay. Please retry shortly; no payment has been confirmed.", code="RAZORPAY_NETWORK_ERROR", status_code=503) from None
+    except (ValueError, TypeError):
+        logger.warning("razorpay_subscription_invalid_response", operation=operation)
+        raise AppError("Razorpay returned an invalid billing response. Please retry shortly.", code="RAZORPAY_INVALID_RESPONSE", status_code=503) from None
 
 
 async def create(plan, client_id) -> str:
