@@ -613,7 +613,7 @@ function RevenueCRMWorkspace() {
                   </h2>
                   <Icon className="size-4 shrink-0 text-[#8FAEDC]" />
                 </div>
-                <p className="break-words text-2xl font-bold tracking-tight tabular-nums">
+                <p title={String(value)} className="overflow-x-auto whitespace-nowrap text-base font-bold tracking-tight tabular-nums sm:text-2xl">
                   {value}
                 </p>
                 <p className="mt-2 text-xs leading-relaxed text-[#8292AB]">{description}</p>
