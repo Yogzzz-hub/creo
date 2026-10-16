@@ -30,7 +30,7 @@ export function AdminTopHeader({
   kpis: _kpis,
   refreshing: _refreshing,
   handleRefreshKpis: _handleRefreshKpis,
-  showBackButton = false,
+  showBackButton: _showBackButton = false,
 }: AdminTopHeaderProps) {
   const location = useLocation();
   const navigate = useNavigate();

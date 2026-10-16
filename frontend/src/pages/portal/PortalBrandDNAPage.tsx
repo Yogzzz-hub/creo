@@ -106,7 +106,7 @@ export function PortalBrandDNAPage() {
       document.body.style.overflow = originalOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [isSuccessModalOpen, isEditModalOpen, isVersionModalOpen]);
+  }, [isSuccessModalOpen, isEditModalOpen]);
 
   const brandFiles: any[] = profile?.brand_dna?.files || [];
 
