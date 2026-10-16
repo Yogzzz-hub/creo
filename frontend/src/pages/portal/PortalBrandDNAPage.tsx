@@ -616,17 +616,6 @@ export function PortalBrandDNAPage() {
         document.body
       )}
 
-      {/* Action Bar */}
-      <div className="flex items-center justify-end gap-3 pb-3">
-        <button
-          type="button"
-          onClick={() => setIsEditModalOpen(true)}
-          className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs sm:text-[13px] font-bold hover:bg-white transition-all shadow-sm active:scale-95 cursor-pointer"
-        >
-          <Edit3 className="size-3.5" /> Suggest an edit
-        </button>
-      </div>
-
       {/* Bento Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {/* ── CARD 1: BRAND VOICE & PERSONALITY ── */}
@@ -638,7 +627,14 @@ export function PortalBrandDNAPage() {
               </div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-white">Brand Voice & Personality</h3>
             </div>
-            <span className="text-[11px] font-medium text-[#7FA0D6]">Verified Guidelines</span>
+            <button
+              type="button"
+              onClick={() => setIsEditModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs font-bold hover:bg-white transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
+            >
+              <Edit3 className="size-3.5" />
+              <span>Suggest an edit</span>
+            </button>
           </div>
 
           <div className="p-5 sm:p-6 space-y-5">
