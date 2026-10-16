@@ -52,7 +52,8 @@ export function PodDeliverablesReviewPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<PodDashboardData>({
     queryKey: ["pod_dashboard", user?.id, undefined],
     queryFn: () => fetchPodDashboard(),
-    staleTime: 30_000,
+    staleTime: 10_000,
+    refetchInterval: 15_000,
     enabled: !!user?.id,
   });
 
@@ -158,9 +159,9 @@ export function PodDeliverablesReviewPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3">
           {[
-            { label: "Pending lead sign-off", value: queue.length, note: `${queue.filter((t) => t.is_near_sla).length} due within 24h`, icon: FileCheck2 },
-            { label: "With the client", value: withClient, note: "awaiting client approval", icon: Users },
-            { label: "Revisions in progress", value: inRevision, note: "returned by QA or the client", icon: AlertTriangle },
+            { label: "Pending lead sign-off", value: isLoading ? "..." : isError ? "Unavailable" : queue.length, note: `${queue.filter((t) => t.is_near_sla).length} due within 24h`, icon: FileCheck2 },
+            { label: "With the client", value: isLoading ? "..." : isError ? "Unavailable" : withClient, note: "awaiting client approval", icon: Users },
+            { label: "Revisions in progress", value: isLoading ? "..." : isError ? "Unavailable" : inRevision, note: "returned by QA or the client", icon: AlertTriangle },
           ].map((card, i) => (
             <motion.div
               key={card.label}
@@ -188,14 +189,14 @@ export function PodDeliverablesReviewPage() {
 
         {isLoading ? (
           <CreoInlineLoader />
-        ) : !current || !deliverable ? (
+        ) : isError ? null : !current || !deliverable ? (
           <div className="bg-[#161F2D] rounded-2xl border border-dashed border-[#2A3446] p-12 text-center space-y-3">
             <div className="size-12 rounded-2xl bg-emerald-500/10 text-emerald-400 mx-auto flex items-center justify-center border border-emerald-500/20">
               <Check className="size-6" />
             </div>
             <h3 className="text-base font-black text-white">Nothing waiting for QA</h3>
             <p className="text-xs text-[#97A0B3] max-w-md mx-auto">
-              When a creative uploads a finished file it appears here. Approving sends it to the client's review queue; requesting a revision sends your notes back to the creative.
+              There are {data?.tasks?.in_production.length || 0} tasks in production. When a creative uploads a finished file it appears here. Approving sends it to the client's review queue; requesting a revision sends your notes back to the creative.
             </p>
           </div>
         ) : (

@@ -785,6 +785,7 @@ export function App() {
                   element={<Navigate to="/admin" replace />}
                 />
                 <Route path="/lead" element={<Navigate to="/lead/dashboard" replace />} />
+                <Route path="/freelance-management" element={<Navigate to="/lead/tasks" replace />} />
                 <Route path="/pod-lead" element={<Navigate to="/lead/dashboard" replace />} />
                 <Route
                   path="/admin/pod-dashboard"

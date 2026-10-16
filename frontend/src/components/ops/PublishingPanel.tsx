@@ -723,6 +723,19 @@ export function PublishingQueue({
   clientId,
 }: { readOnly?: boolean; clientId?: string }) {
   const { user } = useAuth();
+  const confirm = useConfirm();
+  const queryClient = useQueryClient();
+  const [canceling, setCanceling] = useState("");
+  const [cancelError, setCancelError] = useState("");
+  async function cancelJob(job: PublishingJob) {
+    if (!await confirm({ title: "Cancel auto-post?", description: "The approved asset stays in Creo. This stops its scheduled publication.", confirmText: "Cancel auto-post", tone: "danger" })) return;
+    setCanceling(job.id); setCancelError("");
+    try {
+      await request(`/api/v1/publishing/deliverables/${job.deliverable_id}/action`, { method: "POST", body: JSON.stringify({ action: "cancel" }) });
+      await queryClient.invalidateQueries({ queryKey: ["publishing"] });
+    } catch (err) { setCancelError(err instanceof Error ? err.message : "Unable to cancel publication."); }
+    finally { setCanceling(""); }
+  }
   const [status, setStatus] = useState("");
   const [client, setClient] = useState("");
   const [offset, setOffset] = useState(0);
@@ -870,6 +883,7 @@ export function PublishingQueue({
         </div>
       )}
 
+      {cancelError && <p role="alert" className="text-sm text-amber-200">{cancelError}</p>}
       <ul className="space-y-2">
         {rows.map((j) => {
           const open = selected === j.id;
@@ -898,6 +912,7 @@ export function PublishingQueue({
                   />
                 </span>
               </button>
+              {!readOnly && ["admin", "super_admin", "team_lead"].includes(user?.role || "") && !["published", "canceled", "processing", "uncertain"].includes(j.status) && <div className="px-3.5 pb-3"><button type="button" disabled={!!canceling} onClick={() => void cancelJob(j)} className={`${buttonDanger} flex-none`}>{canceling === j.id ? "Canceling..." : "Cancel auto-post"}</button></div>}
               {open && (
                 <div className="px-3.5 pb-3.5">
                   <PublishingPanel deliverableId={j.deliverable_id} readOnly={readOnly} />

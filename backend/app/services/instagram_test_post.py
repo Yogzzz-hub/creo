@@ -11,6 +11,7 @@ from app.core.errors import Conflict, Forbidden, NotFound
 from app.db.session import async_session_factory, tenant_session
 from app.models.enums import AccountStatus, UserRole
 from app.models.publishing import InstagramTestPost
+from app.models.ops import AuditLog
 from app.models.user import User
 from app.services import deliverable_workflow as workflow
 from app.services import instagram_connection as connection
@@ -44,8 +45,28 @@ async def authorize(db, actor, client_id):
 
 
 def serialize(row):
-    return {key: str(getattr(row, key)) if key == "id" else getattr(row, key)
-            for key in ("id", "status", "account_id", "permalink", "error", "scheduled_at")}
+    return {key: str(getattr(row, key)) if key in ("id", "client_id") else getattr(row, key)
+            for key in ("id", "client_id", "status", "account_id", "permalink", "error", "scheduled_at")}
+
+
+async def cancel(db, actor, client_id, request_id):
+    await authorize(db, actor, client_id)
+    row = (await db.execute(select(InstagramTestPost).where(
+        InstagramTestPost.id == request_id, InstagramTestPost.client_id == client_id
+    ).with_for_update())).scalar_one_or_none()
+    if not row:
+        raise NotFound("Test post not found.")
+    if row.status == "canceled":
+        return row
+    if row.status != "queued":
+        raise Conflict("Only queued tests can be canceled. Processing or submitted posts cannot be removed here.")
+    row.status = "canceled"
+    row.error = None
+    db.add(AuditLog(actor_id=actor.user_id, actor_role=actor.role,
+        agency_id=row.agency_id, entity="instagram_test_post", entity_id=row.id,
+        action="test_post_canceled"))
+    await db.commit()
+    return row
 
 
 def check_connection(profile, account_id, connection_id=None):

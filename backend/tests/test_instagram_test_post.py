@@ -12,6 +12,48 @@ from app.services import instagram_test_post as service
 from app.services.instagram_client import InstagramError
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("state", ["queued", "processing", "submitting", "published", "uncertain", "canceled"])
+async def test_cancel_only_queued_posts_and_lock_against_worker(state):
+    row = SimpleNamespace(status=state, error="old", agency_id=uuid.uuid4(), id=uuid.uuid4())
+    db = SimpleNamespace(execute=AsyncMock(return_value=SimpleNamespace(scalar_one_or_none=lambda: row)),
+        commit=AsyncMock(), add=lambda _: None)
+    actor = SimpleNamespace(user_id=uuid.uuid4(), role=UserRole.TEAM_LEAD)
+    with patch.object(service, "authorize", AsyncMock()):
+        if state in ("queued", "canceled"):
+            result = await service.cancel(db, actor, uuid.uuid4(), row.id)
+            assert result.status == "canceled"
+            assert db.commit.await_count == (1 if state == "queued" else 0)
+        else:
+            with pytest.raises(Conflict):
+                await service.cancel(db, actor, uuid.uuid4(), row.id)
+            db.commit.assert_not_awaited()
+    assert db.execute.call_args.args[0]._for_update_arg is not None
+
+
+@pytest.mark.asyncio
+async def test_cancel_checks_pod_access_before_reading_post():
+    db = AsyncMock()
+    with patch.object(service, "authorize", AsyncMock(side_effect=Forbidden("Outside pod"))):
+        with pytest.raises(Forbidden):
+            await service.cancel(db, None, uuid.uuid4(), uuid.uuid4())
+    db.execute.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_worker_never_starts_canceled_post():
+    db = AsyncMock()
+    db.__aenter__.return_value = db
+    db.execute.return_value = SimpleNamespace(scalar_one_or_none=lambda: SimpleNamespace(status="canceled"))
+    @asynccontextmanager
+    async def tenant(*args, **kwargs):
+        yield db
+    with patch.object(service, "async_session_factory", return_value=db), patch.object(service, "tenant_session", tenant), patch.object(service, "client_for_provider") as provider:
+        await service.run(uuid.uuid4(), uuid.uuid4(), None)
+    provider.assert_not_called()
+    db.commit.assert_not_awaited()
+
+
 def profile(provider="instagram"):
     return SimpleNamespace(ig_connection_status="connected", ig_token_encrypted=b"sealed",
         ig_metadata={"provider": provider}, instagram_user_id="12345", ig_connection_id=uuid.uuid4(),

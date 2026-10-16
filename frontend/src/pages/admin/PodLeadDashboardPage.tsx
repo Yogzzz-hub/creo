@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchPodDashboard,
+  createPodTask,
   submitPodQAReview,
   approveLeaveRequest,
   rejectLeaveRequest,
@@ -32,6 +33,7 @@ import {
   TrendingUp,
   Sparkles,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../ui/Dialog";
 import { StoryApprovalModal } from "../../components/ops/StoryApprovalModal";
 
 export function PodLeadDashboardPage() {
@@ -44,6 +46,7 @@ export function PodLeadDashboardPage() {
   const [standupModalOpen, setStandupModalOpen] = useState(false);
   const [standupNote, setStandupNote] = useState("");
   const [storyApprovalOpen, setStoryApprovalOpen] = useState(false);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [assignForm, setAssignForm] = useState({
     title: "",
@@ -58,10 +61,11 @@ export function PodLeadDashboardPage() {
   const [reinforcementsModalOpen, setReinforcementsModalOpen] = useState(false);
   const [reinforceForm, setReinforceForm] = useState({ role: "3D Motion Designer", hours: "+20 hrs/week", urgency: "Immediate (Today)", notes: "" });
 
-  const { data, isLoading } = useQuery<PodDashboardData>({
+  const { data, isLoading, isError, error, refetch } = useQuery<PodDashboardData>({
     queryKey: ["pod_dashboard", user?.id, selectedPodKey],
     queryFn: () => fetchPodDashboard(selectedPodKey),
-    staleTime: 30_000,
+    staleTime: 10_000,
+    refetchInterval: 15_000,
   });
 
   const showToast = (text: string, type: "success" | "error" | "info" = "success") => {
@@ -83,7 +87,7 @@ export function PodLeadDashboardPage() {
     },
   });
 
-  const [pendingLeaveRequests, setPendingLeaveRequests] = useState<any[]>([]);
+  const pendingLeaveRequests = (data?.notifications || []).filter(n => n.type === "leave_request" && n.leave_id).map(n => ({ id: n.leave_id!, name: n.title.replace("Leave Request: ", ""), avatar: n.title.replace("Leave Request: ", "").slice(0, 2).toUpperCase(), note: n.message }));
 
   const leaveApproveMutation = useMutation({
     mutationFn: approveLeaveRequest,
@@ -91,7 +95,7 @@ export function PodLeadDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
     },
     onError: () => {
-      // optimistic
+      showToast("Unable to update leave request. Try again.", "error");
     },
   });
 
@@ -101,12 +105,11 @@ export function PodLeadDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
     },
     onError: () => {
-      // optimistic
+      showToast("Unable to update leave request. Try again.", "error");
     },
   });
 
   const handleApproveLeave = (id: string, name: string) => {
-    setPendingLeaveRequests((prev) => prev.filter((l) => l.id !== id));
     showToast(`Leave request for ${name} approved & coverage confirmed`, "success");
     try {
       leaveApproveMutation.mutate(id);
@@ -116,7 +119,6 @@ export function PodLeadDashboardPage() {
   };
 
   const handleDeclineLeave = (id: string, name: string) => {
-    setPendingLeaveRequests((prev) => prev.filter((l) => l.id !== id));
     showToast(`Leave request for ${name} declined`, "info");
     try {
       leaveDeclineMutation.mutate(id);
@@ -128,10 +130,14 @@ export function PodLeadDashboardPage() {
   const isSuperOrAdmin = user?.role === "admin" || user?.role === "super_admin";
 
   // Deliverables Pending Lead Sign-off
-  const [deliverablesList, setDeliverablesList] = useState<any[]>([]);
+  const deliverablesList = (data?.tasks?.internal_qa || []).filter(t => t.deliverable?.status === "pending_qa").map(t => ({
+    id: t.id, client: t.client_name, title: t.blueprint?.concept_name || t.deliverable_type,
+    talent: t.assignee_name, due: t.due_date || "No deadline", dueUrgent: t.is_near_sla,
+    notes: t.blueprint?.brief || "Ready for lead review", tags: [t.deliverable_type, "Pending QA"],
+    clientBadgeColor: "bg-blue-500/10 text-blue-300 border-blue-500/30",
+  }));
 
   const handleApproveDeliverable = (del: { id: string; title: string; client: string }) => {
-    setDeliverablesList((prev) => prev.filter((d) => d.id !== del.id));
     showToast(`Approved "${del.title}" & dispatched to ${del.client} portal`, "success");
     qaMutation.mutate({
       taskId: del.id,
@@ -143,7 +149,6 @@ export function PodLeadDashboardPage() {
   const handleConfirmRevision = () => {
     if (!revisionModalItem) return;
     const item = revisionModalItem;
-    setDeliverablesList((prev) => prev.filter((d) => d.id !== item.id));
     setRevisionModalItem(null);
     showToast(`Revision request sent to talent for "${item.title}"`, "info");
     qaMutation.mutate({
@@ -154,34 +159,22 @@ export function PodLeadDashboardPage() {
     setRevisionFeedback("");
   };
 
-  const handleDispatchTask = () => {
-    const clientName = assignForm.client || data?.clients?.[0]?.name || "Client";
-    const assigneeName = assignForm.assignee || memberName(data?.members?.[0]);
-    const title = assignForm.title.trim() || `${clientName} ${assignForm.format} Concept`;
-    const newDeliverable = {
-      id: `del-${Date.now()}`,
-      client: clientName.toUpperCase(),
-      clientBadgeColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      talent: assigneeName,
-      format: assignForm.format,
-      due: "Due in 24h",
-      dueUrgent: false,
-      title: title,
-      tags: [assignForm.format, "In Production", "Assigned by Lead", "9:16 Vertical"],
-      notes: assignForm.notes || "Assigned via Pod Quick Actions.",
-    };
-    setDeliverablesList((prev) => [newDeliverable, ...prev]);
-    showToast(`Assigned "${title}" to ${assigneeName} (${clientName})`, "success");
-    setAssignModalOpen(false);
-    setAssignForm({
-      title: "",
-      format: "Reel",
-      assignee: "",
-      client: "",
-      deadline: "Today 5:00 PM",
-      notes: "",
-    });
-  };
+  const dispatchMutation = useMutation({
+    mutationFn: () => createPodTask({
+      client_id: assignForm.client || data!.clients[0]!.id,
+      assignee_id: assignForm.assignee || data!.members[0]!.id,
+      deliverable_type: ({ Reel: "reel", Story: "story", Post: "static_post" })[assignForm.format] || "reel",
+      title: assignForm.title.trim(), brief: assignForm.notes,
+    }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
+      setAssignModalOpen(false);
+      setAssignForm({ title: "", format: "Reel", assignee: "", client: "", deadline: "", notes: "" });
+      showToast("Task saved and assigned. It is now in the production queue.");
+    },
+    onError: (error: Error) => showToast(error.message || "Could not save task", "error"),
+  });
+  const handleDispatchTask = () => { if (!dispatchMutation.isPending) dispatchMutation.mutate(); };
 
   const leadName = data?.pod?.lead?.name || user?.full_name || "Pod Lead";
   const podName = data?.pod?.name || "Pod Operations";
@@ -201,10 +194,11 @@ export function PodLeadDashboardPage() {
   // Dynamic Team Roster mapped from backend data
   const teamRoster = (data?.members || []).map((member: any) => {
     const displayName = memberName(member);
-    const tasksCount = member?.tasks_count || member?.assigned_tasks_count || 0;
+    const tasksCount = member?.active_wip ?? 0;
     const capacity = member?.capacity || member?.daily_capacity || 5;
     const pct = Math.min(100, Math.round((tasksCount / (capacity > 0 ? capacity : 5)) * 100));
     return {
+      id: member.id,
       name: displayName,
       avatar: displayName.slice(0, 2).toUpperCase(),
       avatarBg: "bg-[#7FA0D6]",
@@ -241,12 +235,21 @@ export function PodLeadDashboardPage() {
     showToast(`Downloaded ${podName} Weekly Lead Summary CSV report`, "success");
   };
 
+  if (isError) return <div role="alert" className="p-8 text-amber-200">{error.message}<button onClick={() => void refetch()} className="ml-3 underline">Retry</button></div>;
   if (isLoading || !data) {
     return <CreoLoadingScreen fullScreen={false} label="Loading Pod Operations" className="min-h-[45vh]" />;
   }
 
   return (
     <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
+      <Dialog open={!!selectedMemberId} onOpenChange={open => { if (!open) setSelectedMemberId(null); }}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto bg-[#161F2D] text-white border-[#2A3446]">
+          <DialogTitle>{teamRoster.find(m => m.id === selectedMemberId)?.name} workload</DialogTitle>
+          <DialogDescription>Current tasks assigned to this pod member.</DialogDescription>
+          <div className="space-y-3">{Object.values(data.tasks).flat().filter(t => t.assigned_to === selectedMemberId).map(t => <article key={t.id} className="rounded-xl border border-[#2A3446] p-3"><h3 className="font-semibold">{t.blueprint?.concept_name || t.deliverable_type}</h3><p className="text-sm text-[#97A0B3]">{t.client_name} / {t.status.replaceAll("_", " ")}</p><p className="text-xs text-[#97A0B3]">Due: {t.due_date || "No date set"}</p></article>)}
+          {!Object.values(data.tasks).flat().some(t => t.assigned_to === selectedMemberId) && <p className="text-sm text-[#97A0B3]">No tasks assigned.</p>}</div>
+        </DialogContent>
+      </Dialog>
       {/* Top Header Navigation */}
       <AdminTopHeader title="Team Details" activeTab="Team Details" />
 
@@ -419,7 +422,7 @@ export function PodLeadDashboardPage() {
                   <div>
                     <h2 className="text-sm font-black text-white">{podName} Team Roster & Live Workload</h2>
                     <p className="text-[11px] text-[#97A0B3] font-medium">
-                      4 Core talents deployed across active sprints
+                      {teamRoster.length} members in this pod
                     </p>
                   </div>
                 </div>
@@ -471,9 +474,9 @@ export function PodLeadDashboardPage() {
                         </div>
                       </div>
 
-                      <Link to="/lead/tasks" className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg hover:bg-[#161F2D] transition-colors">
+                      <button type="button" aria-label={`View ${member.name} workload`} onClick={() => setSelectedMemberId(member.id)} className="p-1 text-[#97A0B3] hover:text-white rounded-lg">
                         <ArrowRight className="size-3.5" />
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -666,14 +669,13 @@ export function PodLeadDashboardPage() {
                         </div>
                         <div>
                           <h4 className="text-xs font-black text-white">{leave.name}</h4>
-                          <span className="text-[9px] text-[#97A0B3] font-bold">{leave.type}</span>
+                          <span className="text-[9px] text-[#97A0B3] font-bold">Leave request</span>
                         </div>
                       </div>
-                      <span className="text-[9px] font-bold text-[#97A0B3]">{leave.dates}</span>
+                      <span className="text-[9px] font-bold text-[#97A0B3]">Pending approval</span>
                     </div>
 
                     <div className="text-[10px] text-[#F1F5F9] bg-[#161F2D] p-2 rounded-lg border border-[#2A3446] font-medium">
-                      <span className="font-bold text-[#F1F5F9] block mb-0.5">Cover: {leave.cover}</span>
                       "{leave.note}"
                     </div>
 
@@ -916,7 +918,7 @@ export function PodLeadDashboardPage() {
                       <option value="">No clients assigned</option>
                     ) : (
                       data.clients.map((c) => (
-                        <option key={c.id} value={c.name}>{c.name}</option>
+                        <option key={c.id} value={c.id}>{c.name}</option>
                       ))
                     )}
                   </NativeSelect>
@@ -932,7 +934,7 @@ export function PodLeadDashboardPage() {
                       <option value="">No specialists registered</option>
                     ) : (
                       data.members.map((m) => (
-                        <option key={m.id} value={memberName(m)}>
+                        <option key={m.id} value={m.id}>
                           {memberName(m)} · {memberRole(m)}
                         </option>
                       ))
@@ -952,9 +954,10 @@ export function PodLeadDashboardPage() {
               <button
                 type="button"
                 onClick={handleDispatchTask}
+                disabled={dispatchMutation.isPending || !assignForm.title.trim() || !data.clients.length || !data.members.length}
                 className="px-5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition cursor-pointer shadow-md shadow-blue-500/20"
               >
-                Dispatch Task
+                {dispatchMutation.isPending ? "Saving task..." : "Dispatch Task"}
               </button>
             </div>
           </div>
@@ -1009,7 +1012,7 @@ export function PodLeadDashboardPage() {
                       <option value="">No clients assigned</option>
                     ) : (
                       data.clients.map((c) => (
-                        <option key={c.id} value={c.name}>{c.name}</option>
+                        <option key={c.id} value={c.id}>{c.name}</option>
                       ))
                     )}
                   </NativeSelect>

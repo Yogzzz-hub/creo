@@ -884,6 +884,7 @@ export function SlackChatPage() {
         // BroadcastChannel fallback
       }
     } catch (err: any) {
+      setMessageText(text);
       console.error("Message send error:", err);
       showToast(err?.message || "Failed to send message. Please retry.", "info");
     }
@@ -1369,7 +1370,7 @@ export function SlackChatPage() {
             ref={messagesContainerRef}
             className="flex-1 min-h-0 max-h-full overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-4 bg-[#0B111C]/90 backdrop-blur-xl flex flex-col"
           >
-            {!activeContact || serverMessages.length === 0 ? (
+            {(activeMode === "dm" && !activeContact) || serverMessages.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-auto">
                 <div
                   className={`size-16 rounded-3xl flex items-center justify-center mb-4 border ${
@@ -1563,7 +1564,7 @@ export function SlackChatPage() {
                 <input
                   ref={chatInputRef}
                   type="text"
-                  disabled={!activeContact}
+                  disabled={activeMode === "dm" && !activeContact}
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   placeholder={
@@ -1576,7 +1577,7 @@ export function SlackChatPage() {
                 <div className="absolute right-2 flex items-center gap-1">
                   <button
                     type="button"
-                    disabled={!activeContact}
+                    disabled={activeMode === "dm" && !activeContact}
                     onClick={() => setShowEmojiPicker((prev) => !prev)}
                     className="p-1.5 text-[#97A0B3] hover:text-[#7FA0D6] rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                     title="Add Emoji"
@@ -1585,7 +1586,7 @@ export function SlackChatPage() {
                   </button>
                   <button
                     type="button"
-                    disabled={!activeContact}
+                    disabled={activeMode === "dm" && !activeContact}
                     onClick={() => showToast("Attachment upload ready", "info")}
                     className="p-1.5 text-[#97A0B3] hover:text-white rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                     title="Attach file"
@@ -1594,7 +1595,7 @@ export function SlackChatPage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={!activeContact || !messageText.trim()}
+                    disabled={(activeMode === "dm" && !activeContact) || !messageText.trim()}
                     className="p-2 rounded-xl bg-[#7FA0D6] hover:bg-white text-[#0B111C] disabled:opacity-40 transition cursor-pointer font-bold"
                   >
                     <Send className="size-4" />

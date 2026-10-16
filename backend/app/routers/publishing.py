@@ -95,6 +95,13 @@ async def test_post_status(client_id: uuid.UUID, request_id: uuid.UUID,
     return test.serialize(row)
 
 
+@router.post("/clients/{client_id}/test-post/{request_id}/cancel")
+async def cancel_test_post(client_id: uuid.UUID, request_id: uuid.UUID,
+                           actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)):
+    from app.services import instagram_test_post as test
+    return test.serialize(await test.cancel(db, actor, client_id, request_id))
+
+
 class ScheduleBody(BaseModel):
     # Omit local_time to follow the deliverable's content calendar slot.
     local_time: str | None = Field(default=None, max_length=40)
