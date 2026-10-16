@@ -24,12 +24,12 @@ export function OpsLayout() {
 
           {/* Main Content Area: Offset on desktop to sit beside the permanent sidebar */}
           <div className={isSlack ? "flex-1 min-w-0 md:pl-64 lg:pl-72 flex flex-col h-screen max-h-screen overflow-hidden" : "flex-1 min-w-0 md:pl-64 lg:pl-72 flex flex-col min-h-screen"}>
-            <div className={isSlack ? "flex-1 min-h-0 flex flex-col overflow-hidden p-2 sm:p-3" : "flex-1 pb-20 lg:pb-0"}>
+            <div className={isSlack ? "flex-1 min-h-0 flex flex-col overflow-hidden p-2 sm:p-3 pb-20 lg:pb-0" : "flex-1 pb-20 lg:pb-0"}>
               <SimpleErrorBoundary name="Admin Operations">
                 <Suspense fallback={<CreoInlineLoader label="Loading workspace" />}><Outlet /></Suspense>
               </SimpleErrorBoundary>
             </div>
-            {!isSlack && <AdminBottomNav />}
+            <AdminBottomNav />
           </div>
         </div>
       </AdminSidebarProvider>

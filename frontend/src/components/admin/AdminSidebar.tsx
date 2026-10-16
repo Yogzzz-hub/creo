@@ -27,6 +27,7 @@ import { useAuth } from "../../lib/auth-context";
 import { useAdminSidebar } from "./AdminSidebarContext";
 import { useConfirm } from "../ui/ConfirmDialog";
 import { NotificationMenu } from "../ui/NotificationMenu";
+import { WorkstationSidebar } from "../workstation/WorkstationSidebar";
 
 interface NavItem {
   label: string;
@@ -83,13 +84,16 @@ export function AdminSidebar() {
   // (and unknown roles landing there) get the member layout.
   const isMemberRole =
     !isClientRole &&
-    !isAdminOrSuper &&
     !isTeamLead &&
     !isBDERole &&
     !isFreelancerRole &&
     (isSpecialist ||
       location.pathname.startsWith("/workstation") ||
       location.pathname.startsWith("/member"));
+
+  if (isMemberRole) {
+    return <WorkstationSidebar />;
+  }
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -216,9 +220,14 @@ export function AdminSidebar() {
 
   const memberNavSections: NavSection[] = [
     {
-      label: "",
+      label: "OVERVIEW",
       items: [
         { label: "Dashboard", href: "/workstation", icon: LayoutDashboard },
+      ],
+    },
+    {
+      label: "WORKSPACE",
+      items: [
         { label: "Tasks", href: "/workstation/tasks", icon: CheckSquare },
         { label: "Instagram Publishing", href: "/admin/publishing", icon: Send },
         { label: "Leave Requests", href: "/workstation/schedule", icon: Calendar },
