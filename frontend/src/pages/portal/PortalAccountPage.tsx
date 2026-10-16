@@ -1,4 +1,3 @@
-import { AutoPaySettings } from "../../components/portal/AutoPaySettings";
 import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
@@ -268,7 +267,6 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
 
   return (
     <main className="text-white space-y-6 pb-16 max-w-6xl mx-auto">
-      <AutoPaySettings />
       {/* Tab Navigation & User Preview Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#2A3446]/60">
         <nav aria-label="Account Settings Tabs" className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">

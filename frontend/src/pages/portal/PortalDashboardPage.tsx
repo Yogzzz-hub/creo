@@ -182,7 +182,6 @@ export function PortalDashboardPage() {
 
   return (
     <div className="w-full min-w-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      {!isLocked && <UpcomingAutoPosts />}
       {/* ── Top Header Bar ── */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
@@ -695,4 +694,3 @@ export function PortalDashboardPage() {
     </div>
   );
 }
-import { UpcomingAutoPosts } from "../../components/ops/UpcomingAutoPosts";
