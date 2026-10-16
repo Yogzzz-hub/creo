@@ -16,7 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { request } from "../../lib/http";
-import { useSearchParams, useLocation } from "react-router";
+import { useSearchParams, useLocation, Link } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
@@ -992,8 +992,8 @@ export function SlackChatPage() {
         isClient
           ? "flex-1 min-h-0 h-full"
           : isWorkstation
-          ? "pt-6 px-4 sm:px-6 lg:px-8 pb-6 h-[calc(100vh-1.5rem)]"
-          : "h-[calc(100vh-5.5rem)] min-h-[550px]"
+          ? "flex-1 min-h-0 h-full lg:pt-6 lg:px-8 lg:pb-6"
+          : "flex-1 min-h-0 h-full"
       } overflow-hidden`}
     >
       {/* ── Top Header Context Bar (Admin Console Only) ── */}
@@ -1025,7 +1025,15 @@ export function SlackChatPage() {
           <div className="p-3.5 border-b border-white/[0.08] space-y-3 shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="size-7 rounded-xl bg-gradient-to-br from-[#7FA0D6] to-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                <Link
+                  to={isWorkstation ? "/workstation" : isClient ? "/portal" : "/admin"}
+                  className="md:hidden p-1.5 rounded-xl bg-white/[0.06] text-slate-300 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+                  aria-label="Back to dashboard"
+                  title="Back to dashboard"
+                >
+                  <ArrowLeft className="size-4" />
+                </Link>
+                <div className="size-7 rounded-xl bg-gradient-to-br from-[#7FA0D6] to-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
                   <MessageSquare className="size-3.5" />
                 </div>
                 <div>

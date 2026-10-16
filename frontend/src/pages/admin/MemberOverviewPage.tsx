@@ -20,6 +20,9 @@ import {
   Loader2,
   AlertTriangle,
   MessageSquare,
+  Copy,
+  Check,
+  Settings,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchPodDashboard, type PodDashboardData, type PodTask } from "../../lib/ops-api";
@@ -31,6 +34,7 @@ import {
   isCreativeRole,
   isTaskAssignedToUser,
 } from "../../lib/creative-roles";
+import { MemberMobileDashboard } from "../../components/workstation/MemberMobileDashboard";
 
 interface LeadNoteItem {
   id: string;
@@ -46,7 +50,9 @@ interface LeadNoteItem {
   badgeColor?: string;
 }
 
-const STANDUP_MEETING_URL = "https://zoom.us/j/9814421990?pwd=creo";
+const DEFAULT_ZOOM_URL = "https://zoom.us/join";
+const DEFAULT_MEET_URL = "https://meet.google.com";
+const DEFAULT_MEET_CODE = "";
 
 export function MemberOverviewPage() {
   const navigate = useNavigate();
@@ -62,11 +68,19 @@ export function MemberOverviewPage() {
   const leadMember = members.find((m) => m.role?.toLowerCase().includes("lead"));
   const leadName = leadMember?.full_name || "Pod Lead";
   const clients = data?.clients || [];
-  const inProdTasks = data?.tasks?.in_production || [];
-  const qaTasks = data?.tasks?.internal_qa || [];
-  const activeSprintTasks = [...inProdTasks, ...qaTasks];
+  const getDueTimestamp = (t: PodTask) => {
+    const d = t.due_date || t.sla_due_at;
+    if (!d) return Number.MAX_SAFE_INTEGER;
+    const time = new Date(d).getTime();
+    return isNaN(time) ? Number.MAX_SAFE_INTEGER : time;
+  };
+  const sortByDueDate = (a: PodTask, b: PodTask) => getDueTimestamp(a) - getDueTimestamp(b);
+
+  const inProdTasks = (data?.tasks?.in_production || []).slice().sort(sortByDueDate);
+  const qaTasks = (data?.tasks?.internal_qa || []).slice().sort(sortByDueDate);
+  const activeSprintTasks = [...inProdTasks, ...qaTasks].sort(sortByDueDate);
   const completedTasks = data?.tasks?.completed || [];
-  const allEligibleTasks: PodTask[] = [...inProdTasks, ...qaTasks, ...(data?.tasks?.backlog || [])];
+  const allEligibleTasks: PodTask[] = [...inProdTasks, ...qaTasks, ...(data?.tasks?.backlog || [])].sort(sortByDueDate);
 
   const isAssignedToCurrentUser = (task: PodTask) => isTaskAssignedToUser(task, user);
 
@@ -146,6 +160,35 @@ export function MemberOverviewPage() {
   const [handoffConfirmOpen, setHandoffConfirmOpen] = useState(false);
   const [zoomModalOpen, setZoomModalOpen] = useState(false);
 
+  // Standup Meeting State (Google Meet & Zoom Direct Redirects)
+  const [meetingPlatform, setMeetingPlatform] = useState<"meet" | "zoom">("meet");
+  const [customMeetUrl, setCustomMeetUrl] = useState(() => {
+    const saved = localStorage.getItem("creo_member_meet_url");
+    if (!saved || saved.includes("creo-standup-sync")) return DEFAULT_MEET_URL;
+    return saved;
+  });
+  const [customMeetCode, setCustomMeetCode] = useState(() => {
+    const saved = localStorage.getItem("creo_member_meet_code");
+    if (saved === "creo-standup-sync") return "";
+    return saved || DEFAULT_MEET_CODE;
+  });
+  const [customZoomUrl, setCustomZoomUrl] = useState(() => {
+    return localStorage.getItem("creo_member_zoom_url") || DEFAULT_ZOOM_URL;
+  });
+  const [isEditingMeeting, setIsEditingMeeting] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  const userInitials = (user?.full_name || "SC")
+    .replace(/\(.*?\)/g, "")
+    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase() || "SC";
+
   // Clean real lead feedback notes (zero mock data)
   const [notesList, setNotesList] = useState<LeadNoteItem[]>([]);
 
@@ -191,6 +234,63 @@ export function MemberOverviewPage() {
   const showToast = (text: string, type: "success" | "info" = "success") => {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleCopyMeetCode = async (code: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = code;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        textArea.remove();
+      }
+      setCopiedCode(true);
+      showToast(`Meet code "${code}" copied to clipboard!`, "success");
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch {
+      showToast("Failed to copy meet code", "info");
+    }
+  };
+
+  const handleSaveMeetingConfig = (newCode: string, newMeetUrl: string, newZoomUrl: string) => {
+    const trimmedCode = newCode.trim();
+    const trimmedMeetUrl = newMeetUrl.trim() || (trimmedCode ? `https://meet.google.com/${trimmedCode}` : DEFAULT_MEET_URL);
+    const trimmedZoomUrl = newZoomUrl.trim() || DEFAULT_ZOOM_URL;
+
+    setCustomMeetCode(trimmedCode);
+    setCustomMeetUrl(trimmedMeetUrl);
+    setCustomZoomUrl(trimmedZoomUrl);
+
+    if (trimmedCode) {
+      localStorage.setItem("creo_member_meet_code", trimmedCode);
+    } else {
+      localStorage.removeItem("creo_member_meet_code");
+    }
+    localStorage.setItem("creo_member_meet_url", trimmedMeetUrl);
+    localStorage.setItem("creo_member_zoom_url", trimmedZoomUrl);
+
+    setIsEditingMeeting(false);
+    showToast("Meeting configuration updated successfully!", "success");
+  };
+
+  const handleResetMeetingConfig = () => {
+    setCustomMeetCode(DEFAULT_MEET_CODE);
+    setCustomMeetUrl(DEFAULT_MEET_URL);
+    setCustomZoomUrl(DEFAULT_ZOOM_URL);
+
+    localStorage.removeItem("creo_member_meet_code");
+    localStorage.removeItem("creo_member_meet_url");
+    localStorage.removeItem("creo_member_zoom_url");
+
+    setIsEditingMeeting(false);
+    showToast("Meeting settings restored to defaults", "info");
   };
 
   const handleSendQuickReply = (e: React.FormEvent) => {
@@ -330,7 +430,7 @@ export function MemberOverviewPage() {
   return (
     <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
       {/* Main Container */}
-      <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20 sm:pb-8 space-y-6">
+      <main className="flex-1 max-w-[1440px] w-full mx-auto px-3.5 sm:px-6 lg:px-8 pt-0 sm:pt-6 pb-20 sm:pb-8 space-y-3 sm:space-y-6">
         {/* Toast Alert */}
         {toastMessage && (
           <div
@@ -350,26 +450,40 @@ export function MemberOverviewPage() {
           </div>
         )}
 
-        {/* 1. Quick Action & Shift Status Strip */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#161F2D] p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-[#2A3446]/80 shadow-2xs">
-          <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-black text-white tracking-tight">{podName.toUpperCase()} ACTIVE SHIFT</span>
-            <span className="text-[11px] text-[#97A0B3] font-medium hidden sm:inline">• {user?.full_name || "Specialist"} ({user?.role?.replace("_", " ") || "Creative Specialist"})</span>
-          </div>
+        {/* ── MOBILE DASHBOARD VIEW (< md) ── */}
+        <MemberMobileDashboard
+          podName={podName}
+          leadName={leadName}
+          user={user}
+          userInitials={userInitials}
+          metricActiveTasks={metricActiveTasks}
+          displayInProdTasks={displayInProdTasks}
+          displayQaTasks={displayQaTasks}
+          dueTodayCount={dueTodayCount}
+          deliverablesScope={deliverablesScope}
+          setDeliverablesScope={setDeliverablesScope}
+          deliverablesTab={deliverablesTab}
+          setDeliverablesTab={setDeliverablesTab}
+          displayActiveTasks={displayActiveTasks}
+          displayCompletedTasks={displayCompletedTasks}
+          currentTasks={currentTasks}
+          allEligibleTasks={allEligibleTasks}
+          allNotes={allNotes}
+          members={members}
+          quickReplyText={quickReplyText}
+          setQuickReplyText={setQuickReplyText}
+          handleSendQuickReply={handleSendQuickReply}
+          setLogHoursModalOpen={setLogHoursModalOpen}
+          setZoomModalOpen={setZoomModalOpen}
+          setSelectedTaskId={setSelectedTaskId}
+          setUploadModalOpen={setUploadModalOpen}
+          openPreviewModal={openPreviewModal}
+          showToast={showToast}
+        />
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setLogHoursModalOpen(true)}
-              className="px-3 py-1.5 rounded-lg bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <Clock className="size-3 text-[#97A0B3]" />
-              <span>Log Hours</span>
-            </button>
-          </div>
-        </div>
-
-        {/* ROW 1: Production Focus & Lead Feedback */}
+        {/* ── DESKTOP DASHBOARD VIEW (>= md) ── */}
+        <div className="hidden md:block space-y-6">
+          {/* ROW 1: Production Focus & Lead Feedback */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch w-full">
           {/* Left (2 cols - xl:col-span-2 flex flex-col space-y-6) */}
           <div className="xl:col-span-2 flex flex-col space-y-6">
@@ -1006,7 +1120,7 @@ export function MemberOverviewPage() {
               <div className="p-2.5 rounded-xl bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 flex items-center justify-between gap-2">
                 <div>
                   <div className="text-[11px] font-black text-white">10:00 AM Daily Standup</div>
-                  <div className="text-[10px] text-[#7FA0D6] font-medium">Zoom link active in 25m</div>
+                  <div className="text-[10px] text-[#7FA0D6] font-medium">Google Meet & Zoom • Active in 25m</div>
                 </div>
                 <button
                   onClick={() => setZoomModalOpen(true)}
@@ -1053,6 +1167,7 @@ export function MemberOverviewPage() {
             </div>
           </div>
         </div>
+      </div>
 
       </main>
 
@@ -1516,19 +1631,23 @@ export function MemberOverviewPage() {
         </div>
       )}
 
-      {/* MODAL 5: ZOOM MEETING JOIN */}
+      {/* MODAL 5: STANDUP MEETING JOIN (GOOGLE MEET / ZOOM) */}
       {zoomModalOpen && (
         <div
           className="fixed inset-0 w-screen h-screen z-[99999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
-          onClick={() => setZoomModalOpen(false)}
+          onClick={() => {
+            setZoomModalOpen(false);
+            setIsEditingMeeting(false);
+          }}
         >
           <div
             className="w-full max-w-md bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="size-12 rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto font-black">
+            <div className="size-12 rounded-2xl bg-blue-500/15 text-[#7FA0D6] border border-blue-500/30 flex items-center justify-center mx-auto font-black">
               <Video className="size-6" />
             </div>
+
             <div>
               <h3 className="text-base font-black text-white">{podName} Daily Standup Session</h3>
               <p className="text-xs text-[#97A0B3] mt-1 leading-relaxed">
@@ -1536,35 +1655,213 @@ export function MemberOverviewPage() {
               </p>
             </div>
 
-            <a
-              href={STANDUP_MEETING_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3 bg-[#0B111C] rounded-2xl border border-[#2A3446] text-xs font-mono text-[#7FA0D6] hover:underline block break-all transition-colors"
-            >
-              {STANDUP_MEETING_URL}
-            </a>
+            {/* Platform Selector Tabs */}
+            <div className="flex items-center justify-center p-1 rounded-xl bg-[#0B111C] border border-[#2A3446]">
+              <button
+                type="button"
+                onClick={() => setMeetingPlatform("meet")}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  meetingPlatform === "meet"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+              >
+                <Video className="size-3.5" />
+                <span>Google Meet (Redirect)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMeetingPlatform("zoom")}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  meetingPlatform === "zoom"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+              >
+                <ExternalLink className="size-3.5" />
+                <span>Zoom (Redirect)</span>
+              </button>
+            </div>
 
+            {/* Content for Google Meet */}
+            {meetingPlatform === "meet" && !isEditingMeeting && (
+              <div className="space-y-3">
+                <div className="p-3 bg-[#0B111C] rounded-2xl border border-[#2A3446] text-left">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1">
+                    Google Meet Direct Redirect
+                  </div>
+                  <a
+                    href={customMeetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-mono text-[#7FA0D6] hover:underline flex items-center justify-between transition-colors break-all"
+                  >
+                    <span className="truncate">{customMeetUrl}</span>
+                    <ExternalLink className="size-3.5 shrink-0 ml-2 text-[#97A0B3]" />
+                  </a>
+                  <p className="text-[11px] text-[#97A0B3] mt-2 leading-relaxed">
+                    Redirects directly to Google Meet (meet.google.com) to join or start your pod standup session.
+                  </p>
+                </div>
+
+                {customMeetCode ? (
+                  <div className="flex items-center justify-between p-3 bg-[#0B111C] rounded-2xl border border-[#2A3446]">
+                    <div className="text-left">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Meet Code</div>
+                      <div className="text-sm font-mono font-bold text-white mt-0.5">{customMeetCode}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyMeetCode(customMeetCode)}
+                      className="px-3 py-1.5 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-xs font-semibold text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      {copiedCode ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5 text-[#7FA0D6]" />}
+                      <span>{copiedCode ? "Copied" : "Copy Code"}</span>
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            {/* Content for Zoom */}
+            {meetingPlatform === "zoom" && !isEditingMeeting && (
+              <div className="space-y-3">
+                <div className="p-3 bg-[#0B111C] rounded-2xl border border-[#2A3446] text-left">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1">Zoom Direct Redirect</div>
+                  <a
+                    href={customZoomUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-mono text-[#7FA0D6] hover:underline flex items-center justify-between transition-colors break-all"
+                  >
+                    <span className="truncate">{customZoomUrl}</span>
+                    <ExternalLink className="size-3.5 shrink-0 ml-2 text-[#97A0B3]" />
+                  </a>
+                  <p className="text-[11px] text-[#97A0B3] mt-2 leading-relaxed">
+                    Redirects directly to Zoom's official join portal rather than an expired or broken private link.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Edit / Customize Section */}
+            {isEditingMeeting && (
+              <div className="p-3.5 bg-[#0B111C] rounded-2xl border border-[#2A3446] text-left space-y-3">
+                <div className="text-xs font-bold text-white flex items-center justify-between">
+                  <span>Custom Meeting Settings</span>
+                  <button
+                    type="button"
+                    onClick={handleResetMeetingConfig}
+                    className="text-[10px] text-rose-400 hover:underline cursor-pointer"
+                  >
+                    Reset Defaults
+                  </button>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-[#97A0B3] block mb-1">Google Meet Code</label>
+                  <input
+                    type="text"
+                    value={customMeetCode}
+                    onChange={(e) => {
+                      const val = e.target.value.trim();
+                      setCustomMeetCode(val);
+                      if (val) setCustomMeetUrl(`https://meet.google.com/${val}`);
+                    }}
+                    placeholder="e.g. creo-standup-sync"
+                    className="w-full px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-[#97A0B3] block mb-1">Google Meet URL</label>
+                  <input
+                    type="text"
+                    value={customMeetUrl}
+                    onChange={(e) => {
+                      const val = e.target.value.trim();
+                      setCustomMeetUrl(val);
+                    }}
+                    placeholder="https://meet.google.com/..."
+                    className="w-full px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-[#97A0B3] block mb-1">Zoom Redirect URL</label>
+                  <input
+                    type="text"
+                    value={customZoomUrl}
+                    onChange={(e) => setCustomZoomUrl(e.target.value.trim())}
+                    placeholder="https://zoom.us/join"
+                    className="w-full px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleSaveMeetingConfig(customMeetCode, customMeetUrl, customZoomUrl)}
+                    className="px-3 py-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Configure toggle */}
+            <div className="flex items-center justify-between text-[11px] text-[#97A0B3] pt-1">
+              <button
+                type="button"
+                onClick={() => setIsEditingMeeting(!isEditingMeeting)}
+                className="hover:text-[#7FA0D6] transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <Settings className="size-3" />
+                <span>{isEditingMeeting ? "Close Settings" : "Configure Meeting Link / Code"}</span>
+              </button>
+            </div>
+
+            {/* Action Buttons */}
             <div className="flex items-center justify-center gap-2 pt-2 border-t border-[#2A3446]">
               <button
                 type="button"
-                onClick={() => setZoomModalOpen(false)}
+                onClick={() => {
+                  setZoomModalOpen(false);
+                  setIsEditingMeeting(false);
+                }}
                 className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-xs text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
               >
                 Dismiss
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  window.open(STANDUP_MEETING_URL, "_blank", "noopener,noreferrer");
-                  setZoomModalOpen(false);
-                  showToast(`Connecting to ${podName} Standup video room...`, "info");
-                }}
-                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 cursor-pointer transition-colors flex items-center gap-1.5"
-              >
-                <Video className="size-3.5" />
-                <span>Open Video Room</span>
-              </button>
+
+              {meetingPlatform === "meet" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.open(customMeetUrl, "_blank", "noopener,noreferrer");
+                    setZoomModalOpen(false);
+                    showToast(`Redirecting to Google Meet...`, "info");
+                  }}
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 cursor-pointer transition-colors flex items-center gap-1.5"
+                >
+                  <Video className="size-3.5" />
+                  <span>Redirect to Google Meet</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.open(customZoomUrl, "_blank", "noopener,noreferrer");
+                    setZoomModalOpen(false);
+                    showToast(`Redirecting to Zoom join portal...`, "info");
+                  }}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 cursor-pointer transition-colors flex items-center gap-1.5"
+                >
+                  <ExternalLink className="size-3.5" />
+                  <span>Redirect to Zoom</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
