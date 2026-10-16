@@ -123,7 +123,14 @@ export function AdminBottomNav() {
     },
   ];
 
-  const activeItems = isMemberRole ? memberItems : isTeamLead ? leadItems : adminItems;
+  const isBDE = ["sales", "bde", "bde_head"].includes(user?.role || "");
+  const bdeItems: { label: string; href: string; icon: typeof Users; exact?: boolean; isActive?: boolean }[] = [
+    { label: "Today", href: "/bde/crm/overview", icon: LayoutDashboard },
+    { label: "Leads", href: "/bde/crm/leads", icon: Users },
+    { label: "Tasks", href: "/bde/crm/tasks", icon: CalendarCheck },
+    { label: "Proposals", href: "/bde/crm/proposals", icon: Layers },
+  ];
+  const activeItems = isBDE ? bdeItems : isMemberRole ? memberItems : isTeamLead ? leadItems : adminItems;
 
   const memberMoreLinks = [
     { label: "Slack Workspace Hub", href: "/workstation/slack", icon: MessageSquare, desc: "Team & project communication" },
@@ -135,6 +142,14 @@ export function AdminBottomNav() {
 
   const moreLinks = isMemberRole
     ? memberMoreLinks
+    : isBDE
+    ? [
+        { label: "Pipeline", href: "/bde/crm/pipeline", icon: Layers, desc: "Follow deals by stage" },
+        { label: "Referrals", href: "/bde/crm/referrals", icon: Users, desc: "Track sourced opportunities" },
+        { label: "Messages", href: "/bde/crm/messages", icon: MessageSquare, desc: "CRM conversation drafts" },
+        { label: "AI workspace", href: "/bde/crm/discovery", icon: Sparkles, desc: "Evidence-based draft assistance" },
+        { label: "Reports", href: "/bde/crm/reports", icon: IndianRupee, desc: "Your revenue and scorecards" },
+      ]
     : isTeamLead
     ? [
         { label: "Slack Workspace Hub", href: "/slack", icon: MessageSquare, desc: "Pod chat & in-channel task assignment" },

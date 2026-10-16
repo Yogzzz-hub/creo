@@ -11,6 +11,7 @@ export const ROLE_HOMES: Record<string, string> = {
   designer: "/workstation",
   sales: "/bde",
   bde: "/bde",
+  bde_head: "/bde/crm/overview",
   admin: "/admin",
   super_admin: "/admin",
   investor_relations: "/admin/reports",
