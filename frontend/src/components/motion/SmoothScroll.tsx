@@ -1,4 +1,5 @@
 import Lenis from "lenis";
+import { cancelFrame, frame } from "motion/react";
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router";
 
@@ -30,18 +31,24 @@ export function SmoothScroll() {
     if (reduce || touch) return;
 
     const lenis = new Lenis({
-      duration: 1.15,
-      easing: (t: number) => Math.min(1, 1.001 - 2 ** (-10 * t)),
+      // Proportional easing toward the target each frame: silky, with no fixed-length glides
+      lerp: 0.085,
+      wheelMultiplier: 0.95,
       smoothWheel: true,
       anchors: { offset: -80 },
-      autoRaf: true,
+      autoRaf: false,
       // Let nested scroll areas (tables, dialogs, dropdowns) scroll natively
       prevent: (node: Element) =>
         node.closest("[data-lenis-prevent], [role='dialog'], .overflow-x-auto") !== null,
     });
     lenisRef.current = lenis;
     activeLenis = lenis;
+    // Step Lenis inside Motion's frame loop so scroll-linked animations read the
+    // same scroll position in the same frame (no one-frame lag / jitter)
+    const tick = ({ timestamp }: { timestamp: number }) => lenis.raf(timestamp);
+    frame.update(tick, true);
     return () => {
+      cancelFrame(tick);
       lenis.destroy();
       lenisRef.current = null;
       if (activeLenis === lenis) activeLenis = null;

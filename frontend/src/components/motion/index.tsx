@@ -20,6 +20,7 @@ import {
   useVelocity,
 } from "motion/react";
 import {
+  type CSSProperties,
   type ElementType,
   type PointerEvent,
   type ReactNode,
@@ -439,6 +440,241 @@ export function Marquee({
   );
 }
 
+// ── Media inside type ───────────────────────────────────────────────────────
+
+const MONTAGE_STEP = 3;
+
+/**
+ * Giant headline with footage playing inside the letters. Without a video it
+ * runs a slow pan-and-crossfade montage of the given photos. Lines drift in
+ * opposite directions as the block scrolls past.
+ *
+ * Technique: media at the bottom, then a black plate with white text set to
+ * multiply (media survives only inside the letters), then a page-coloured
+ * layer set to lighten so the plate's black matches the background.
+ */
+export function MediaInText({
+  lines,
+  images,
+  videoSrc,
+  className = "",
+}: {
+  lines: string[];
+  images: string[];
+  videoSrc?: string;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const driftA = useTransform(scrollYProgress, [0, 1], ["7%", "-7%"]);
+  const driftB = useTransform(scrollYProgress, [0, 1], ["-7%", "7%"]);
+  const cycle = `${images.length * MONTAGE_STEP}s`;
+
+  return (
+    <div
+      ref={ref}
+      className={`relative isolate overflow-hidden [mask-image:linear-gradient(transparent,#000_7%,#000_93%,transparent)] ${className}`}
+    >
+      <div aria-hidden="true" className="creo-montage absolute inset-0">
+        {videoSrc ? (
+          <video src={videoSrc} autoPlay muted loop playsInline className="size-full object-cover" />
+        ) : (
+          images.map((src, i) => (
+            <img
+              key={src}
+              src={src}
+              alt=""
+              loading="lazy"
+              className="creo-montage-frame"
+              style={
+                {
+                  animationDelay: `${i * MONTAGE_STEP}s`,
+                  "--creo-montage-length": cycle,
+                } as CSSProperties
+              }
+            />
+          ))
+        )}
+        {/* Push the footage toward the brand blues */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#3B6BFF]/45 via-transparent to-[#7DD3FC]/35 mix-blend-screen" />
+      </div>
+
+      <h2 className="relative bg-black py-14 text-center sm:py-20 font-black uppercase leading-[0.84] tracking-[-0.05em] text-white mix-blend-multiply">
+        {lines.map((line, i) => (
+          <motion.span
+            key={line}
+            style={reduce ? undefined : { x: i % 2 ? driftB : driftA }}
+            className="block whitespace-nowrap text-[13.5vw] lg:text-[11.5rem]"
+          >
+            {line}
+          </motion.span>
+        ))}
+      </h2>
+
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[#050A1A] mix-blend-lighten" />
+    </div>
+  );
+}
+
+// ── Micro-interactions ──────────────────────────────────────────────────────
+
+/**
+ * Button label that rolls letter by letter on hover: the text slides up out of
+ * view while a fresh copy rolls in beneath it. Put it inside an element with
+ * the `group` class (the button or link).
+ */
+export function RollText({ children, className = "" }: { children: string; className?: string }) {
+  const chars = Array.from(children);
+  const line = (copy: boolean) => (
+    <span aria-hidden="true" data-copy={copy || undefined} className="creo-roll-line">
+      {chars.map((char, i) => (
+        <span
+          // biome-ignore lint/suspicious/noArrayIndexKey: characters repeat; order is fixed
+          key={i}
+          className="creo-roll-char"
+          style={{ transitionDelay: `${i * 0.014}s` }}
+        >
+          {char}
+        </span>
+      ))}
+    </span>
+  );
+  return (
+    <span className={`creo-roll ${className}`}>
+      <span className="sr-only">{children}</span>
+      {line(false)}
+      {line(true)}
+    </span>
+  );
+}
+
+const SCRAMBLE_GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&*+/<>";
+
+/**
+ * Text that decodes from random glyphs into its real letters, left to right,
+ * the first time it scrolls into view.
+ */
+export function ScrambleText({
+  text,
+  className = "",
+  duration = 0.9,
+}: {
+  text: string;
+  className?: string;
+  duration?: number;
+}) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "0px 0px -10% 0px" });
+  const reduce = useReducedMotion();
+  const [display, setDisplay] = useState(text);
+
+  useEffect(() => {
+    if (!inView || reduce) {
+      setDisplay(text);
+      return;
+    }
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / (duration * 1000), 1);
+      const locked = Math.floor(p * text.length);
+      let out = "";
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i] ?? "";
+        out +=
+          i < locked || ch === " "
+            ? ch
+            : (SCRAMBLE_GLYPHS[Math.floor(Math.random() * SCRAMBLE_GLYPHS.length)] ?? ch);
+      }
+      setDisplay(out);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, reduce, text, duration]);
+
+  return (
+    <span ref={ref} className={className}>
+      <span className="sr-only">{text}</span>
+      <span aria-hidden="true">{display}</span>
+    </span>
+  );
+}
+
+function LitWord({
+  children,
+  progress,
+  range,
+  accent,
+}: {
+  children: string;
+  progress: MotionValue<number>;
+  range: [number, number];
+  accent: boolean;
+}) {
+  const opacity = useTransform(progress, range, [0.12, 1]);
+  const y = useTransform(progress, range, [6, 0]);
+  return (
+    <motion.span
+      style={{ opacity, y }}
+      className={`mr-[0.24em] inline-block ${accent ? "creo-text-gradient" : ""}`}
+    >
+      {children}
+    </motion.span>
+  );
+}
+
+/**
+ * Statement paragraph whose words light up one after another as it scrolls
+ * through the viewport, like a line being read aloud.
+ */
+export function ScrollLitText({
+  text,
+  className = "",
+  accent = [],
+}: {
+  text: string;
+  className?: string;
+  accent?: string[];
+}) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.85", "end 0.5"] });
+  const words = text.split(" ");
+  const bare = (w: string) => w.replace(/[.,!?]/g, "");
+  const accentWords = accent.map(bare);
+
+  return (
+    <p ref={ref} className={className}>
+      <span className="sr-only">{text}</span>
+      <span aria-hidden="true">
+        {words.map((word, i) =>
+          reduce ? (
+            <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: words can repeat; order is stable
+              key={i}
+              className={`mr-[0.24em] inline-block ${accentWords.includes(bare(word)) ? "creo-text-gradient" : ""}`}
+            >
+              {word}
+            </span>
+          ) : (
+            <LitWord
+              // biome-ignore lint/suspicious/noArrayIndexKey: words can repeat; order is stable
+              key={i}
+              progress={scrollYProgress}
+              range={[i / words.length, (i + 1) / words.length]}
+              accent={accentWords.includes(bare(word))}
+            >
+              {word}
+            </LitWord>
+          ),
+        )}
+      </span>
+    </p>
+  );
+}
+
 /** Keeps `v` inside [min, max) by wrapping around, for seamless loops. */
 function wrapRange(min: number, max: number, v: number) {
   const range = max - min;
@@ -476,9 +712,12 @@ export function VelocityMarquee({
   const direction = useRef(1);
   const hovered = useRef(false);
   const speed = useRef(1);
+  const rowRef = useRef<HTMLDivElement>(null);
+  // No per-frame work while the row is off-screen
+  const onScreen = useInView(rowRef, { margin: "200px 0px" });
 
   useAnimationFrame((_, delta) => {
-    if (reduce) return;
+    if (reduce || !onScreen) return;
     // Glide between full speed and a hover crawl instead of snapping
     speed.current += ((hovered.current ? 0.18 : 1) - speed.current) * 0.08;
     const factor = velocityFactor.get();
@@ -491,6 +730,7 @@ export function VelocityMarquee({
 
   return (
     <div
+      ref={rowRef}
       className={`flex overflow-hidden whitespace-nowrap ${className}`}
       onPointerEnter={() => {
         hovered.current = true;
@@ -584,72 +824,102 @@ export function MaskReveal({
 }
 
 /**
- * Scroll-linked section transition: the panel starts as an inset rounded card
- * and opens out to its full width as it scrolls into view.
+ * Scroll-linked section transition: the band's background starts as a
+ * narrower rounded sheet and widens to full bleed as the section arrives.
+ * Only a background layer is transformed (GPU-composited), so the section's
+ * content never repaints while scrolling.
  */
 export function ScrollMask({
   children,
   className = "",
+  background = "",
   inset = 6,
   radius = 40,
-  endRadius = 0,
 }: {
   children: ReactNode;
   className?: string;
-  /** Horizontal inset (%) at the start of the transition */
+  /** Classes for the band's background layer (e.g. a gradient) */
+  background?: string;
+  /** Horizontal inset (%) of each side at the start of the transition */
   inset?: number;
   radius?: number;
-  endRadius?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "start 0.3"] });
-  const p = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.35 });
-  const x = useTransform(p, [0, 1], [inset, 0]);
-  const r = useTransform(p, [0, 1], [radius, endRadius]);
-  const clipPath = useMotionTemplate`inset(0% ${x}% 0% ${x}% round ${r}px)`;
+  const scaleX = useTransform(scrollYProgress, [0, 1], [1 - (inset * 2) / 100, 1]);
   return (
-    <motion.div ref={ref} className={className} style={reduce ? undefined : { clipPath }}>
+    <div ref={ref} className={`relative isolate ${className}`}>
+      <motion.div
+        aria-hidden="true"
+        className={`absolute inset-0 -z-10 will-change-transform ${background}`}
+        style={{ scaleX: reduce ? 1 : scaleX, borderRadius: radius }}
+      />
       {children}
-    </motion.div>
+    </div>
   );
 }
 
+const SPOTLIGHT_SIZE = 560;
+
 /**
- * Grid texture that only shows inside a soft circle following the cursor.
+ * Brighter grid that shows only inside a soft circle trailing the cursor.
  * Place inside a `relative` parent; it listens to pointer moves on that parent.
+ * The circle is a small layer moved with transforms (no full-section repaint).
  */
 export function CursorSpotlight({ className = "" }: { className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const fine = useFinePointer();
   const reduce = useReducedMotion();
+  const enabled = fine && !reduce;
+  const spring = { stiffness: 140, damping: 22, mass: 0.6 };
+  const x = useSpring(0, spring);
+  const y = useSpring(0, spring);
+  const opacity = useSpring(0, { stiffness: 120, damping: 22 });
+  const half = SPOTLIGHT_SIZE / 2;
+  const tx = useTransform(x, (v) => v - half);
+  const ty = useTransform(y, (v) => v - half);
+  // Shift the texture against the movement so its lines stay locked to the page grid
+  const bx = useTransform(x, (v) => half - v);
+  const by = useTransform(y, (v) => half - v);
+  const backgroundPosition = useMotionTemplate`${bx}px ${by}px`;
 
   useEffect(() => {
-    const el = ref.current;
-    const host = el?.parentElement;
-    if (!el || !host || !fine || reduce) return;
-    let raf = 0;
+    const host = ref.current?.parentElement;
+    if (!host || !enabled) return;
+    let first = true;
     const onMove = (e: globalThis.PointerEvent) => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const r = host.getBoundingClientRect();
-        el.style.setProperty("--mx", `${e.clientX - r.left}px`);
-        el.style.setProperty("--my", `${e.clientY - r.top}px`);
-      });
+      const r = host.getBoundingClientRect();
+      const px = e.clientX - r.left;
+      const py = e.clientY - r.top;
+      if (first) {
+        x.jump(px);
+        y.jump(py);
+        first = false;
+      } else {
+        x.set(px);
+        y.set(py);
+      }
+      opacity.set(1);
     };
+    const onLeave = () => opacity.set(0);
     host.addEventListener("pointermove", onMove, { passive: true });
+    host.addEventListener("pointerleave", onLeave);
     return () => {
       host.removeEventListener("pointermove", onMove);
-      cancelAnimationFrame(raf);
+      host.removeEventListener("pointerleave", onLeave);
     };
-  }, [fine, reduce]);
+  }, [enabled, x, y, opacity]);
 
   return (
-    <div
-      ref={ref}
-      aria-hidden="true"
-      className={`creo-spotlight-grid pointer-events-none absolute inset-0 ${className}`}
-    />
+    <div ref={ref} aria-hidden="true" className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}>
+      {enabled && (
+        <motion.div
+          className="creo-spotlight absolute left-0 top-0"
+          style={{ width: SPOTLIGHT_SIZE, height: SPOTLIGHT_SIZE, x: tx, y: ty, opacity, backgroundPosition }}
+        />
+      )}
+    </div>
   );
 }
 

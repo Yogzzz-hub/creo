@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "motion/react";
@@ -67,11 +68,13 @@ export function PricingCards({
               whileInView={{ opacity: 1, y: 0, clipPath: "inset(0% 0% 0% 0% round 28px)", transitionEnd: { clipPath: "none" } }}
               viewport={{ once: true, margin: "0px 0px -10% 0px" }}
               transition={{ duration: 0.9, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+              // Stagger the edge light so the cards don't flash in unison
+              style={{ "--creo-beam-delay": `-${index * 2.1}s` } as CSSProperties}
               whileHover={reduce ? undefined : { y: -6 }}
               className={`group relative rounded-[28px] p-8 sm:p-9 flex flex-col gap-6 text-white transition-shadow duration-500 ${
                 featured
                   ? "creo-featured-border shadow-[0_30px_80px_-30px_rgba(59,107,255,0.8)] lg:-my-3 lg:py-12"
-                  : "creo-glass hover:shadow-[0_30px_70px_-30px_rgba(59,107,255,0.45)]"
+                  : "creo-glass creo-beam hover:shadow-[0_30px_70px_-30px_rgba(59,107,255,0.45)]"
               }`}
             >
               {featured && (

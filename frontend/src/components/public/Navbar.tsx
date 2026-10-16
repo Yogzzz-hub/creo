@@ -5,6 +5,7 @@ import { ArrowRight, ArrowUpRight, LogOut } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { useConfirm } from "../ui/ConfirmDialog";
 import { getRoleHome } from "../auth/ProtectedRoute";
+import { RollText } from "../motion";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -111,7 +112,7 @@ export function Navbar() {
       >
         <nav
           aria-label="Primary"
-          className={`relative mx-auto flex h-[56px] items-center justify-between rounded-full pl-5 pr-2 transition-[max-width,box-shadow] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] sm:pl-6 ${
+          className={`relative mx-auto flex h-[56px] items-center justify-between rounded-full pl-5 pr-2 backdrop-blur-xl backdrop-saturate-150 transition-[max-width,box-shadow] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] sm:pl-6 ${
             scrolled || sheetOpen ? "creo-glass-strong max-w-[1080px]" : "creo-glass max-w-[1320px]"
           }`}
         >
@@ -135,7 +136,7 @@ export function Navbar() {
                     to={link.href}
                     aria-current={isActive ? "page" : undefined}
                     onMouseEnter={() => setHovered(link.href)}
-                    className={`relative z-10 block rounded-full px-4 py-2 text-[13.5px] tracking-[-0.01em] transition-colors duration-300 ${
+                    className={`group relative z-10 block rounded-full px-4 py-2 text-[13.5px] tracking-[-0.01em] transition-colors duration-300 ${
                       isActive ? "font-semibold text-white" : "font-medium text-[#B4BFDA] hover:text-white"
                     }`}
                   >
@@ -146,7 +147,7 @@ export function Navbar() {
                         transition={{ type: "spring", stiffness: 420, damping: 34 }}
                       />
                     )}
-                    {link.label}
+                    <RollText>{link.label}</RollText>
                     {isActive && (
                       <motion.span
                         layoutId="nav-active-dot"
@@ -176,7 +177,7 @@ export function Navbar() {
                   to={userHome}
                   className="creo-btn-primary group inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-[13px] font-semibold"
                 >
-                  {userPortalLabel}
+                  <RollText>{userPortalLabel}</RollText>
                   <ArrowUpRight className="size-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                 </Link>
               </>
@@ -184,15 +185,15 @@ export function Navbar() {
               <>
                 <Link
                   to="/login"
-                  className="rounded-full px-4 py-2 text-[13.5px] font-medium text-[#B4BFDA] transition-colors hover:text-white"
+                  className="group rounded-full px-4 py-2 text-[13.5px] font-medium text-[#B4BFDA] transition-colors hover:text-white"
                 >
-                  Log in
+                  <RollText>Log in</RollText>
                 </Link>
                 <Link
                   to="/signup"
                   className="creo-btn-primary group inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-[13px] font-semibold"
                 >
-                  Get started
+                  <RollText>Get started</RollText>
                   <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
                 </Link>
               </>

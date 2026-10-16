@@ -9,12 +9,16 @@ import {
   CursorSpotlight,
   EASE_OUT_EXPO,
   HighlightSweep,
+  MediaInText,
   Magnetic,
   MaskReveal,
   MaskedTextZoom,
   Parallax,
   Reveal,
   ScrollDrawLine,
+  RollText,
+  ScrambleText,
+  ScrollLitText,
   ScrollMask,
   SplitText,
   Stagger,
@@ -22,6 +26,8 @@ import {
   TiltCard,
   VelocityMarquee,
 } from "../../components/motion";
+import { DistortImage } from "../../components/motion/DistortImage";
+import { type Reel, ReelCarousel } from "../../components/motion/ReelCarousel";
 import { whenIdle } from "../../app/lazy-pages";
 
 // three.js only loads on the landing page, after the hero text is on screen
@@ -41,6 +47,33 @@ const MARQUEE_ITEMS = [
   "Activewear",
   "Home & living",
 ];
+const reelImage = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=480&h=854&q=75`;
+
+// Sample deliverables shown in the 3D reel wall
+const REELS: Reel[] = [
+  { src: reelImage("1517838277536-f5f99be501cd"), title: "Strength drop teaser", format: "Reel · 9:16" },
+  { src: reelImage("1608248543803-ba4f8c70ae0b"), title: "Serum launch countdown", format: "Story" },
+  { src: reelImage("1509440159596-0249088772ff"), title: "Sourdough, step by step", format: "Carousel" },
+  { src: reelImage("1515886657613-9f3515b0c78f"), title: "Spring lookbook", format: "Reel · 9:16" },
+  { src: reelImage("1600210492486-724fe5c67fb0"), title: "Living room refresh", format: "Carousel" },
+  { src: reelImage("1509198397868-475647b2a1e5"), title: "Unboxing in 15 seconds", format: "Reel · 9:16" },
+  { src: reelImage("1523275335684-37898b6baf30"), title: "Watch detail shots", format: "Product shoot" },
+  { src: reelImage("1600585154340-be6161a56a0c"), title: "Home tour highlights", format: "Story" },
+  { src: reelImage("1534528741775-53994a69daeb"), title: "Creator UGC edit", format: "UGC" },
+  { src: reelImage("1492691527719-9d1e07e534b4"), title: "Behind the shoot", format: "Reel · 9:16" },
+];
+
+// Photos that play inside the giant "REELS. CAROUSELS. STORIES." type (same files as the hero)
+const MONTAGE_IMAGES = [
+  "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80",
+];
+
 // Front ribbon carries the formats we ship, back ribbon the brand side
 const FORMAT_ITEMS = MARQUEE_ITEMS.slice(0, 6);
 const NICHE_ITEMS = MARQUEE_ITEMS.slice(6);
@@ -66,20 +99,22 @@ function CollageTile({
   label?: string;
 }) {
   return (
+    <div data-cursor="View">
     <TiltCard max={9} lift={30} glow="rgba(125,162,255,0.18)" className={`relative ${aspect} rounded-2xl border border-white/10 overflow-hidden bg-[#0D1530] shadow-[0_24px_50px_-20px_rgba(1,4,16,0.9)]`}>
-      <img
+      <DistortImage
         src={src}
         alt={alt}
-        loading="lazy"
-        className="w-full h-full object-cover block transition-transform duration-[900ms] ease-out group-hover/tilt:scale-[1.06]"
+        className="size-full"
+        imgClassName="w-full h-full object-cover block"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#050A1A]/70 via-[#050A1A]/5 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#050A1A]/70 via-[#050A1A]/5 to-transparent" />
       {label && (
-        <div className="creo-glass absolute bottom-2 left-2 sm:bottom-3 sm:left-3 z-[2] px-2.5 py-1 rounded-full text-[11px] font-semibold text-white [transform:translateZ(30px)]">
+        <div className="creo-glass backdrop-blur-md pointer-events-none absolute bottom-2 left-2 sm:bottom-3 sm:left-3 z-[2] px-2.5 py-1 rounded-full text-[11px] font-semibold text-white [transform:translateZ(30px)]">
           {label}
         </div>
       )}
     </TiltCard>
+    </div>
   );
 }
 
@@ -98,7 +133,7 @@ function SectionHeading({
   return (
     <div className="text-center max-w-3xl mx-auto mb-14 sm:mb-16">
       <Reveal>
-        <span className="creo-eyebrow">{eyebrow}</span>
+        <span className="creo-eyebrow"><ScrambleText text={eyebrow} /></span>
       </Reveal>
       <SplitText
         as="h2"
@@ -257,7 +292,7 @@ export function HomePage() {
                 transition={{ duration: 0.8, ease: EASE_OUT_EXPO }}
                 className="mb-7"
               >
-                <span className="creo-eyebrow">A creative pod for D2C brands</span>
+                <span className="creo-eyebrow"><ScrambleText text="A creative pod for D2C brands" duration={1.1} /></span>
               </motion.div>
 
               <h1 className="text-[2.6rem] sm:text-6xl md:text-7xl lg:text-[4.75rem] xl:text-[5.6rem] font-black tracking-[-0.045em] leading-[0.98] text-[#F4F7FF]">
@@ -287,7 +322,7 @@ export function HomePage() {
                       to="/signup?intent=sample"
                       className="creo-btn-primary group font-semibold text-base px-8 py-4 rounded-full w-full sm:w-auto text-center inline-flex items-center justify-center gap-2.5 cursor-pointer"
                     >
-                      <span>Get a free sample batch</span>
+                      <RollText>Get a free sample batch</RollText>
                       <ArrowRight className="size-4.5 transition-transform duration-300 group-hover:translate-x-1" />
                     </Link>
                   </Magnetic>
@@ -295,7 +330,7 @@ export function HomePage() {
                     to="/portal"
                     className="creo-btn-ghost group font-semibold text-base px-8 py-4 rounded-full w-full sm:w-auto text-center inline-flex items-center justify-center gap-2"
                   >
-                    Explore the portal first
+                    <RollText>Explore the portal first</RollText>
                     <ArrowUpRight className="size-4 text-[#7DA2FF] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                   </Link>
                 </div>
@@ -424,7 +459,7 @@ export function HomePage() {
         eyebrow="Scroll to step inside"
       >
         <div className="max-w-3xl">
-          <span className="creo-eyebrow">Inside the pod</span>
+          <span className="creo-eyebrow"><ScrambleText text="Inside the pod" /></span>
           <h2 className="mt-6 text-4xl sm:text-6xl lg:text-7xl font-black tracking-[-0.04em] leading-[1.0] text-white">
             One pod. One portal.{" "}
             <span className="italic font-serif font-normal tracking-[-0.02em] text-[#DCE8FF]">Every week.</span>
@@ -436,14 +471,36 @@ export function HomePage() {
             to="/work"
             className="creo-btn-ghost group mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold"
           >
-            See the work
+            <RollText>See the work</RollText>
             <ArrowUpRight className="size-4 text-[#7DA2FF] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </Link>
         </div>
       </MaskedTextZoom>
 
+      {/* 1.9 Statement — words light up one by one as the reader scrolls */}
+      <section className="mx-auto max-w-[1240px] px-6 py-28 sm:px-8 sm:py-40 lg:px-12">
+        <span className="creo-eyebrow"><ScrambleText text="Why brands switch" /></span>
+        <ScrollLitText
+          text="No cluttered email threads. No lost files. No guessing when content lands. Just one pod that learns your brand, ships every week, and shows you the clock."
+          accent={["one", "pod", "every", "week", "clock"]}
+          className="mt-8 text-[1.9rem] font-black leading-[1.12] tracking-[-0.035em] text-[#F4F7FF] sm:text-5xl lg:text-[4rem]"
+        />
+      </section>
+
+      {/* 1.95 The reel wall — 3D ring of deliverables; drag to spin, scroll to speed it up */}
+      <section className="relative pb-20 sm:pb-28">
+        <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12">
+          <SectionHeading eyebrow="The reel wall" title="Every format. Every week." accent={["Every", "week."]}>
+            Reels, carousels and stories from the pod, organised and ready for your portal. Drag the wall to spin it.
+          </SectionHeading>
+        </div>
+        <Reveal>
+          <ReelCarousel reels={REELS} />
+        </Reveal>
+      </section>
+
       {/* 2. The Studio Ledger — band opens out of a rounded mask as it arrives */}
-      <ScrollMask inset={5} radius={48} endRadius={0} className="relative bg-gradient-to-b from-[#081130] to-[#060C24]">
+      <ScrollMask inset={5} radius={48} background="bg-gradient-to-b from-[#081130] to-[#060C24]">
         <section className="relative py-20 sm:py-28">
           <div aria-hidden="true" className="absolute inset-0 creo-grid-bg [mask-image:radial-gradient(60%_50%_at_50%_0%,#000,transparent)] opacity-70" />
           <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12">
@@ -452,7 +509,7 @@ export function HomePage() {
             </SectionHeading>
 
             <MaskReveal from="bottom" zoom={1.04} className="max-w-5xl mx-auto">
-              <div className="creo-glass rounded-3xl overflow-hidden">
+              <div className="creo-glass creo-beam rounded-3xl overflow-hidden">
                 <div className="grid grid-cols-4 bg-white/[0.03] border-b border-white/[0.08] p-5 sm:p-6 items-center">
                   <div className="text-[11px] sm:text-xs font-bold text-[#B4BFDA] uppercase tracking-[0.16em]">Asset / Batch</div>
                   <div className="text-[11px] sm:text-xs font-bold text-[#B4BFDA] uppercase tracking-[0.16em]">Milestone</div>
@@ -528,7 +585,7 @@ export function HomePage() {
           </Reveal>
 
           <MaskReveal from="center" zoom={1.06} duration={1.3}>
-          <div className="creo-glass rounded-3xl p-6 sm:p-10 relative overflow-hidden">
+          <div className="creo-glass creo-beam rounded-3xl p-6 sm:p-10 relative overflow-hidden" style={{ "--creo-beam-delay": "-2s" } as React.CSSProperties}>
             <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-white/[0.08]">
               <div className="font-black tracking-[-0.02em] text-[#F4F7FF] text-xl sm:text-2xl">Batch 04 · Active Review</div>
               <div className="text-sm font-semibold text-[#93A0BF] flex items-center gap-4">
@@ -565,13 +622,13 @@ export function HomePage() {
                 >
                   {/* Thumbnail */}
                   <div className="relative overflow-hidden">
-                    <img
+                    <DistortImage
                       src={idx === 0 ? "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80" : idx === 1 ? "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80" : "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=600&q=80"}
                       alt={asset.name}
-                      loading="lazy"
-                      className="h-52 sm:h-60 object-cover w-full transition-transform duration-700 group-hover:scale-105"
+                      className="h-52 sm:h-60 w-full"
+                      imgClassName="size-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#081028] via-transparent to-transparent" />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#081028] via-transparent to-transparent" />
                   </div>
 
                   <div className="p-5 flex-1 flex flex-col">
@@ -650,8 +707,13 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* 4.5 Footage playing inside the giant format names */}
+      <section aria-label="Formats we produce" className="pb-16 sm:pb-24">
+        <MediaInText lines={["Reels.", "Carousels.", "Stories."]} images={MONTAGE_IMAGES} />
+      </section>
+
       {/* 5. Pricing Cards (Synchronized with Pricing Page) */}
-      <ScrollMask inset={5} radius={48} endRadius={0} className="relative bg-gradient-to-b from-[#060C24] via-[#081130] to-[#050A1A]">
+      <ScrollMask inset={5} radius={48} background="bg-gradient-to-b from-[#060C24] via-[#081130] to-[#050A1A]">
         <section className="relative py-20 sm:py-28">
           <div aria-hidden="true" className="absolute left-1/2 top-0 h-[420px] w-[min(900px,100vw)] -translate-x-1/2 rounded-full bg-[#3B6BFF]/[0.12] blur-[120px]" />
           <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12">
@@ -680,7 +742,7 @@ export function HomePage() {
             return (
               <StaggerItem
                 key={idx}
-                className={`rounded-2xl p-5 sm:p-7 transition-[box-shadow,background-color] duration-500 ${isOpen ? "creo-glass-strong creo-glow-ring" : "creo-glass hover:bg-white/[0.03]"}`}
+                className={`rounded-2xl p-5 sm:p-7 transition-[box-shadow,background-color] duration-500 ${isOpen ? "creo-glass creo-glow-ring creo-beam" : "creo-glass hover:bg-white/[0.03]"}`}
               >
                 <button
                   type="button"
@@ -736,12 +798,12 @@ export function HomePage() {
       </section>
 
       {/* 6. "Try Us Before You Pay Us" Lead Capture Section */}
-      <ScrollMask inset={6} radius={56} endRadius={0} className="relative">
-        <section className="relative isolate overflow-hidden bg-gradient-to-br from-[#0F2063] via-[#0A1642] to-[#060C26] py-24 sm:py-32 creo-grain">
+      <ScrollMask inset={6} radius={56} background="bg-gradient-to-br from-[#0F2063] via-[#0A1642] to-[#060C26]">
+        <section className="relative isolate overflow-hidden py-24 sm:py-32 creo-grain">
           <div aria-hidden="true" className="absolute inset-0 -z-10 creo-grid-bg [mask-image:radial-gradient(60%_60%_at_50%_40%,#000,transparent)]" />
           <div aria-hidden="true" className="absolute -top-32 left-1/2 -z-10 size-[620px] -translate-x-1/2 rounded-full bg-[#4F7BFF]/25 blur-[130px]" />
           <Reveal className="max-w-4xl mx-auto px-6 sm:px-8 text-center">
-            <span className="creo-eyebrow">Free sample batch</span>
+            <span className="creo-eyebrow"><ScrambleText text="Free sample batch" /></span>
             <SplitText
               as="h2"
               text="Try us before you pay us."
@@ -771,7 +833,7 @@ export function HomePage() {
             ) : (
               <form
                 onSubmit={handleRequestSample}
-                className="creo-glass-strong flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-3xl mx-auto p-3 rounded-[28px]"
+                className="creo-glass-strong creo-beam flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-3xl mx-auto p-3 rounded-[28px]"
               >
                 <div className="relative flex-1">
                   <Instagram className="absolute left-4 top-1/2 -translate-y-1/2 size-4.5 text-[#7DA2FF]" />
@@ -800,9 +862,9 @@ export function HomePage() {
                 <button
                   type="submit"
                   disabled={sampleSubmitting}
-                  className="creo-btn-primary font-semibold text-base px-8 py-3.5 rounded-2xl shrink-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="creo-btn-primary group font-semibold text-base px-8 py-3.5 rounded-2xl shrink-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
-                  {sampleSubmitting ? <Loader2 className="size-5 animate-spin" /> : "Request Sample"}
+                  {sampleSubmitting ? <Loader2 className="size-5 animate-spin" /> : <RollText>Request Sample</RollText>}
                   <ArrowRight className="size-4.5" />
                 </button>
               </form>

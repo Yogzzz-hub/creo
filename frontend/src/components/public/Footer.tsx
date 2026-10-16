@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, ArrowUp, ArrowUpRight, Check, Clock, MapPin, MessageCircle, Phone } from "lucide-react";
-import { MaskReveal, SplitText } from "../motion";
+import { MaskReveal, RollText, ScrambleText, SplitText } from "../motion";
 import { smoothScrollTo } from "../motion/SmoothScroll";
 
 const WHATSAPP_URL = "https://wa.me/919941999415";
@@ -106,7 +106,7 @@ export function Footer() {
       <div className="mx-auto max-w-[1440px] px-6 pt-16 sm:px-8 sm:pt-24 lg:px-12">
         {/* 1. Closing call to action */}
         <MaskReveal from="bottom" zoom={1.04} duration={1.1} className="rounded-[32px]">
-          <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-[#10205A] via-[#0A1640] to-[#060C26] px-6 py-12 sm:px-12 sm:py-16 lg:px-16 lg:py-20">
+          <div className="creo-beam relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-[#10205A] via-[#0A1640] to-[#060C26] px-6 py-12 sm:px-12 sm:py-16 lg:px-16 lg:py-20">
             <div
               aria-hidden="true"
               className="creo-grid-bg absolute inset-0 [mask-image:radial-gradient(70%_80%_at_85%_10%,#000,transparent)]"
@@ -122,7 +122,7 @@ export function Footer() {
 
             <div className="relative grid grid-cols-1 items-end gap-10 lg:grid-cols-12">
               <div className="lg:col-span-7">
-                <span className="creo-eyebrow">Ready when you are</span>
+                <span className="creo-eyebrow"><ScrambleText text="Ready when you are" /></span>
                 <SplitText
                   as="h2"
                   text="Stop managing the chaos. Start operating the momentum."
@@ -141,17 +141,17 @@ export function Footer() {
                     to="/pricing"
                     className="creo-btn-primary group inline-flex items-center justify-center gap-2 rounded-full px-7 py-4 text-sm font-semibold"
                   >
-                    Deploy CREO in your agency
+                    <RollText>Deploy CREO in your agency</RollText>
                     <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </Link>
                   <a
                     href={WHATSAPP_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="creo-btn-ghost inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 text-sm font-semibold"
+                    className="creo-btn-ghost group inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 text-sm font-semibold"
                   >
                     <MessageCircle className="size-4 text-[#7DD3FC]" />
-                    Schedule a live demo
+                    <RollText>Schedule a live demo</RollText>
                   </a>
                 </div>
                 <ul className="flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-[#93A0BF] lg:justify-end">
