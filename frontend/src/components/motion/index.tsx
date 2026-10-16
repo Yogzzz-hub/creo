@@ -440,6 +440,83 @@ export function Marquee({
   );
 }
 
+// ── Data graphics ───────────────────────────────────────────────────────────
+
+/**
+ * Progress bar fill that grows to `value`% when scrolled into view.
+ * Uses a scale transform (no layout work). Place inside a track element.
+ */
+export function GrowBar({
+  value,
+  className = "",
+  vertical = false,
+  delay = 0,
+}: {
+  value: number;
+  className?: string;
+  vertical?: boolean;
+  delay?: number;
+}) {
+  const reduce = useReducedMotion();
+  const size = `${value}%`;
+  return (
+    <motion.div
+      className={`rounded-[inherit] ${vertical ? "w-full" : "h-full"} ${className}`}
+      style={vertical ? { height: size, originY: 1 } : { width: size, originX: 0 }}
+      initial={reduce ? false : vertical ? { scaleY: 0 } : { scaleX: 0 }}
+      whileInView={vertical ? { scaleY: 1 } : { scaleX: 1 }}
+      viewport={{ once: true, margin: "0px 0px -8% 0px" }}
+      transition={{ duration: 1.3, delay, ease: EASE_OUT_EXPO }}
+    />
+  );
+}
+
+/** Ring chart that draws itself up to `value`% when it scrolls into view. */
+export function DonutRing({
+  value,
+  size = 64,
+  stroke = 4,
+  children,
+  className = "",
+}: {
+  value: number;
+  size?: number;
+  stroke?: number;
+  children?: ReactNode;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+  const gradientId = `creo-ring-${useId().replace(/:/g, "")}`;
+  return (
+    <span className={`relative block shrink-0 ${className}`} style={{ width: size, height: size }}>
+      <svg viewBox="0 0 36 36" className="size-full -rotate-90" aria-hidden="true">
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#7DA2FF" />
+            <stop offset="100%" stopColor="#3B6BFF" />
+          </linearGradient>
+        </defs>
+        <circle cx="18" cy="18" r="15.9155" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
+        <motion.circle
+          cx="18"
+          cy="18"
+          r="15.9155"
+          fill="none"
+          stroke={`url(#${gradientId})`}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          initial={reduce ? false : { pathLength: 0 }}
+          whileInView={{ pathLength: value / 100 }}
+          viewport={{ once: true, margin: "0px 0px -8% 0px" }}
+          transition={{ duration: 1.6, ease: EASE_OUT_EXPO }}
+          style={reduce ? { pathLength: value / 100 } : undefined}
+        />
+      </svg>
+      {children && <span className="absolute inset-0 flex flex-col items-center justify-center">{children}</span>}
+    </span>
+  );
+}
+
 // ── Media inside type ───────────────────────────────────────────────────────
 
 const MONTAGE_STEP = 3;

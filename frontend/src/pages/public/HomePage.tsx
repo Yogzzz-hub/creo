@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { AnimatePresence, motion, useReducedMotion, useScroll } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, AlertCircle, ArrowRight, ArrowUpRight, Layers, User, Database, ChevronDown, Zap, Loader2, Instagram, Mail, Check, Layout, Clock } from "lucide-react";
+import { SectionHeading } from "../../components/public/PageBlocks";
 import { PricingCards } from "../../components/public/PricingCards";
 import { request } from "../../lib/http";
 import {
@@ -114,38 +115,6 @@ function CollageTile({
         </div>
       )}
     </TiltCard>
-    </div>
-  );
-}
-
-/** Eyebrow + masked headline + intro copy used by every homepage section */
-function SectionHeading({
-  eyebrow,
-  title,
-  accent,
-  children,
-}: {
-  eyebrow: string;
-  title: string;
-  accent?: string[];
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="text-center max-w-3xl mx-auto mb-14 sm:mb-16">
-      <Reveal>
-        <span className="creo-eyebrow"><ScrambleText text={eyebrow} /></span>
-      </Reveal>
-      <SplitText
-        as="h2"
-        text={title}
-        accent={accent}
-        className="block mt-6 text-[2rem] sm:text-5xl lg:text-[3.75rem] font-black tracking-[-0.035em] leading-[1.04] text-[#F4F7FF] mb-5"
-      />
-      {children && (
-        <Reveal delay={0.15}>
-          <p className="text-base sm:text-lg text-[#93A0BF] leading-relaxed max-w-2xl mx-auto">{children}</p>
-        </Reveal>
-      )}
     </div>
   );
 }

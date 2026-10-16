@@ -32,6 +32,12 @@
   color: var(--creo-ink);
 }
 
+/* Entrance animations start elements slightly off to the side; never let that
+   (or decorative glows) widen the page. `clip` keeps position: sticky working. */
+.public-site main {
+  overflow-x: clip;
+}
+
 /* Ambient light that sits behind every public page */
 .public-site::before {
   content: "";

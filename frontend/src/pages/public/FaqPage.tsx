@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { ChevronDown, HelpCircle, ArrowRight } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { ChevronDown, ArrowRight } from "lucide-react";
 import { SEOHead } from "../../components/public/SEOHead";
-import { SplitText, Reveal } from "../../components/motion";
+import { PageHero } from "../../components/public/PageBlocks";
+import { EASE_OUT_EXPO, MaskReveal, RollText, Stagger, StaggerItem } from "../../components/motion";
 
 const FAQ_ITEMS = [
   {
@@ -48,78 +50,116 @@ export function FaqPage() {
   };
 
   return (
-    <div className="w-full bg-[#050A1A] text-[#F4F7FF] min-h-screen py-12 sm:py-16 font-sans selection:bg-[#4F7BFF]/30">
+    <div className="min-h-screen w-full pb-12 font-sans text-[#F4F7FF] sm:pb-16">
       <SEOHead
         title="Frequently Asked Questions | Creo D2C Content Pods"
         description="Learn how Creo content pods deliver weekly reels, carousels, and stories for D2C brands with transparent SLAs and clear monthly tiers."
         jsonLd={jsonLd}
       />
 
-      <div className="max-w-[900px] mx-auto px-4 sm:px-6">
-        <div className="text-center mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0F1A3A] border border-[#223058] text-[#4F7BFF] text-xs font-bold uppercase tracking-wider mb-4">
-            <HelpCircle className="size-4" />
-            <span>HELP & KNOWLEDGE BASE</span>
-          </div>
-          <SplitText
-            as="h1"
-            text="Frequently Asked Questions"
-            className="block text-4xl sm:text-5xl font-black tracking-tight text-white mb-4"
-          />
-          <p className="text-sm sm:text-base text-[#93A0BF] max-w-lg mx-auto leading-relaxed">
-            Everything you need to know about Creo content pods, deliverable SLAs, and monthly retainer tiers for D2C brands.
-          </p>
-        </div>
+      <PageHero
+        eyebrow="Help & knowledge base"
+        title="Frequently Asked Questions"
+        accent={["Questions"]}
+        lead="Everything you need to know about Creo content pods, deliverable SLAs, and monthly retainer tiers for D2C brands."
+      />
 
-        <Reveal>
-          <div className="space-y-4">
-            {FAQ_ITEMS.map((item, index) => {
-              const isOpen = openIndex === index;
-              return (
-                <div
-                  key={item.q}
-                  className="rounded-2xl bg-[#0F1A3A] border border-[#223058] overflow-hidden transition-colors hover:border-[#4F7BFF]/40"
-                >
+      <section className="mx-auto max-w-[920px] px-6 sm:px-8">
+        <Stagger className="space-y-3.5" gap={0.08}>
+          {FAQ_ITEMS.map((item, index) => {
+            const isOpen = openIndex === index;
+            const panelId = `faq-panel-${index}`;
+            const buttonId = `faq-button-${index}`;
+            return (
+              <StaggerItem
+                key={item.q}
+                className={`rounded-2xl transition-[box-shadow,background-color] duration-500 ${
+                  isOpen ? "creo-glass creo-glow-ring creo-beam" : "creo-glass hover:bg-white/[0.03]"
+                }`}
+              >
+                <h3>
                   <button
+                    id={buttonId}
                     type="button"
+                    aria-expanded={isOpen}
+                    aria-controls={panelId}
                     onClick={() => setOpenIndex(isOpen ? null : index)}
-                    className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none"
+                    className="flex w-full cursor-pointer items-center justify-between gap-4 p-5 text-left sm:p-6"
                   >
-                    <span className="text-base sm:text-lg font-bold text-white leading-snug">
-                      {item.q}
+                    <span className="flex items-baseline gap-4">
+                      <span
+                        className={`font-mono text-xs transition-colors duration-300 ${isOpen ? "text-[#7DA2FF]" : "text-[#4F7BFF]/70"}`}
+                      >
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <span className="text-base font-semibold leading-snug tracking-[-0.01em] text-white sm:text-lg">
+                        {item.q}
+                      </span>
                     </span>
-                    <ChevronDown
-                      className={`size-5 text-[#4F7BFF] shrink-0 transition-transform duration-300 ${
-                        isOpen ? "rotate-180" : ""
+                    <motion.span
+                      animate={{ rotate: isOpen ? 180 : 0 }}
+                      transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
+                      className={`flex size-9 shrink-0 items-center justify-center rounded-full border transition-colors duration-300 ${
+                        isOpen ? "border-[#4F7BFF]/60 bg-[#4F7BFF]/15 text-white" : "border-white/10 text-[#93A0BF]"
                       }`}
-                    />
+                    >
+                      <ChevronDown className="size-4" />
+                    </motion.span>
                   </button>
+                </h3>
 
+                <AnimatePresence initial={false}>
                   {isOpen && (
-                    <div className="px-5 sm:px-6 pb-6 text-sm text-[#93A0BF] leading-relaxed border-t border-[#223058]/50 pt-4">
-                      {item.a}
-                    </div>
+                    <motion.section
+                      key="answer"
+                      id={panelId}
+                      aria-labelledby={buttonId}
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.45, ease: EASE_OUT_EXPO }}
+                      className="overflow-hidden"
+                    >
+                      <p className="px-5 pb-6 pl-[3.6rem] text-[15px] leading-relaxed text-[#B4BFDA] sm:px-6 sm:pl-[4.1rem]">
+                        {item.a}
+                      </p>
+                    </motion.section>
                   )}
-                </div>
-              );
-            })}
-          </div>
-        </Reveal>
+                </AnimatePresence>
+              </StaggerItem>
+            );
+          })}
+        </Stagger>
 
-        <div className="mt-14 text-center p-5 sm:p-8 rounded-2xl bg-[#0F1A3A] border border-[#223058] shadow-xl">
-          <h3 className="text-xl font-bold text-white mb-2">Have a specific question about your brand?</h3>
-          <p className="text-sm text-[#93A0BF] mb-6 max-w-md mx-auto">
-            Get a free custom sample batch of reels and carousels engineered specifically for your brand identity.
-          </p>
-          <Link
-            to="/signup?intent=sample"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#DCE8FF] text-[#070E24] font-bold text-sm hover:bg-white transition-all shadow-md"
-          >
-            <span>Start with a free sample</span>
-            <ArrowRight className="size-4" />
-          </Link>
-        </div>
-      </div>
+        {/* Closing prompt */}
+        <MaskReveal from="bottom" zoom={1.04} className="mt-16 rounded-[32px]">
+          <div className="creo-glass creo-beam relative overflow-hidden rounded-[32px] px-6 py-12 text-center sm:px-12 sm:py-14">
+            <div aria-hidden="true" className="creo-grid-bg absolute inset-0 opacity-60 [mask-image:radial-gradient(60%_80%_at_50%_0%,#000,transparent)]" />
+            <div aria-hidden="true" className="absolute -top-24 left-1/2 size-[380px] -translate-x-1/2 rounded-full bg-[#4F7BFF]/20 blur-[100px]" />
+            <h2 className="relative text-2xl font-black tracking-[-0.03em] text-white sm:text-3xl">
+              Have a specific question about your brand?
+            </h2>
+            <p className="relative mx-auto mb-8 mt-3 max-w-md text-[15px] leading-relaxed text-[#93A0BF]">
+              Get a free custom sample batch of reels and carousels engineered specifically for your brand identity.
+            </p>
+            <div className="relative flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+              <Link
+                to="/signup?intent=sample"
+                className="creo-btn-primary group inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold"
+              >
+                <RollText>Start with a free sample</RollText>
+                <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+              <Link
+                to="/pricing"
+                className="creo-btn-ghost group inline-flex items-center justify-center rounded-full px-7 py-3.5 text-sm font-semibold"
+              >
+                <RollText>Compare plans</RollText>
+              </Link>
+            </div>
+          </div>
+        </MaskReveal>
+      </section>
     </div>
   );
 }
