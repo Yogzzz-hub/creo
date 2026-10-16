@@ -309,7 +309,9 @@ async def on_deliverable_transition(
             )
         job.approved_by = actor_id if review_fingerprint else None
         job.approved_fingerprint = review_fingerprint
-        if job.status != "canceled":
+        if job.status != "canceled" or job.error_code == "VERSION_INVALIDATED" or job.last_error == (
+            "This version was rejected or superseded. The revised version requires approval."
+        ):
             set_ready(job, d, profile)
         await audit(db, job, "client_approved")
         await notify(
@@ -318,13 +320,21 @@ async def on_deliverable_transition(
             "Approved content ready for scheduling",
             "Client approval is recorded. Publication follows the configured future schedule.",
         )
-    elif target not in ("approved", "scheduled", "publishing", "published"):
+    elif target in ("qa_rejected", "revision_requested", "archived"):
         job.approved_fingerprint, job.approved_by = None, None
         job.status = "canceled"
+        job.error_code = "VERSION_INVALIDATED"
         job.last_error = (
             "This version was rejected or superseded. The revised version requires approval."
         )
         await audit(db, job, "version_invalidated")
+    elif target != "approved":
+        # Moving through production/QA/client review is not a rejection.
+        job.approved_fingerprint, job.approved_by = None, None
+        if job.status != "canceled":
+            job.status = "pending_approval"
+            job.last_error, job.error_code = None, None
+        await audit(db, job, "awaiting_client_approval")
 
 
 async def calendar_plan(
@@ -486,6 +496,8 @@ async def action(db: AsyncSession, actor: Actor, d: Deliverable, operation: str)
         raise Forbidden("An administrator or team lead must publish ahead of schedule.")
     if operation == "cancel":
         job.status = "canceled"
+        job.last_error, job.error_code = None, None
+        job.next_attempt_at = None
     elif operation == "pause":
         job.status = "paused"
         job.lease_id, job.lease_until = None, None

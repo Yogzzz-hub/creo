@@ -143,14 +143,19 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.warning("admin_bootstrap_warning", error=str(e))
     import asyncio
     from app.services.instagram_test_post import scheduled_test_loop
+    from app.workers.tasks.scheduler import publishing_recovery_loop
     test_scheduler = asyncio.create_task(scheduled_test_loop())
+    publishing_scheduler = asyncio.create_task(publishing_recovery_loop())
     try:
         yield
     finally:
         test_scheduler.cancel()
+        publishing_scheduler.cancel()
         from contextlib import suppress
         with suppress(asyncio.CancelledError):
             await test_scheduler
+        with suppress(asyncio.CancelledError):
+            await publishing_scheduler
     logger.info("server_shutting_down")
     await engine.dispose()
 

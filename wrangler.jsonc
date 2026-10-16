@@ -4,8 +4,11 @@
   "main": "worker.ts",
   "compatibility_date": "2026-09-08",
   "observability": {
-    "enabled": true
+    "enabled": true,
+    "traces": { "enabled": true }
   },
+  "triggers": { "crons": ["* * * * *"] },
+  "secrets": { "required": ["PUBLISHING_DISPATCH_SECRET"] },
   "vars": {
     "API_ORIGIN": "https://creo-api-singapore.onrender.com"
   },

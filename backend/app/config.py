@@ -154,6 +154,7 @@ class Settings(BaseSettings):
     META_LOGIN_CONFIG_ID: str = Field(default="", pattern=r"^\d*$")
     META_GRAPH_API_VERSION: str = Field(default="v26.0", pattern=r"^v\d+\.0$")
     INSTAGRAM_PUBLISHING_ENABLED: bool = Field(default=False)
+    PUBLISHING_DISPATCH_SECRET: str = Field(default="")
     INSTAGRAM_FFPROBE_PATH: str = Field(default="ffprobe")
     INSTAGRAM_MAX_LATENESS_MINUTES: int = Field(default=30, ge=1, le=1440)
     INSTAGRAM_REDIRECT_URI: str = Field(default="http://localhost:5173/portal/account/instagram")
