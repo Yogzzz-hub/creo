@@ -134,7 +134,6 @@ export function getFormatConfig(type?: string) {
 
 export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } = {}) {
   const Container = embedded ? "section" : "main";
-  const Heading = embedded ? "h2" : "h1";
   const { user } = useAuth();
   const canSchedulePublication = user?.role === "admin" || user?.role === "super_admin";
   const queryClient = useQueryClient();
@@ -323,46 +322,32 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
 
   const content = (
     <div className="flex flex-col gap-6 w-full max-w-[1440px] mx-auto text-white">
-      {/* Top Header & Admin Actions */}
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <Heading className="text-[20px] sm:text-[24px] font-black text-white tracking-tight flex items-center gap-2.5">
-            <CalendarIcon className="size-6 text-[#7FA0D6]" />
-            Content Calendar
-          </Heading>
-          <p className="text-xs sm:text-sm text-[#97A0B3] font-medium mt-0.5">
-            Cross-client editorial schedule, production pipeline & real-time delivery status
-          </p>
-        </div>
+      {/* Top Admin Actions */}
+      <div className="flex flex-wrap items-center justify-end gap-2.5">
+        <button
+          onClick={() => {
+            setSelectedSlotForEdit(null);
+            setStoryModalOpen(true);
+          }}
+          className="min-h-9 px-3.5 rounded-xl border border-blue-500/30 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+        >
+          <Plus size={15} strokeWidth={2.5} />
+          Schedule Story & Approval
+        </button>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        {canSchedulePublication && (
           <button
             onClick={() => {
-              setSelectedSlotForEdit(null);
-              setStoryModalOpen(true);
+              if (clientRoster.length > 0 && clientRoster[0]?.client_id) setNewClient(clientRoster[0].client_id);
+              setIsScheduleOpen(true);
             }}
-            className="min-h-9 px-3.5 rounded-xl border border-blue-500/30 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+            className="min-h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer hover:shadow-blue-500/20"
           >
             <Plus size={15} strokeWidth={2.5} />
-            Schedule Story & Approval
+            Schedule Publication
           </button>
-
-          {canSchedulePublication && (
-            <button
-              onClick={() => {
-                if (clientRoster.length > 0 && clientRoster[0]?.client_id) setNewClient(clientRoster[0].client_id);
-                setIsScheduleOpen(true);
-              }}
-              className="min-h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer hover:shadow-blue-500/20"
-            >
-              <Plus size={15} strokeWidth={2.5} />
-              Schedule Publication
-            </button>
-          )}
-
-
-        </div>
-      </header>
+        )}
+      </div>
 
       {/* Monthly Operational KPI Banner */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">

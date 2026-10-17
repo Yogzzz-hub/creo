@@ -3866,101 +3866,139 @@ export function AdminTasksPage() {
         </div>
 
         {/* Filter Bar with Assignee Category Segmented Tabs */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 bg-[#161F2D]/60 p-3 rounded-2xl border border-[#2A3446]/80 backdrop-blur-md">
-          {/* Assignee Category Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
-            <button
-              type="button"
-              onClick={() => {
-                setAssigneeTypeFilter("all");
-                setSelectedFreelancer("all");
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
-                assigneeTypeFilter === "all"
-                  ? "bg-white/10 text-white border border-white/20 shadow-sm"
-                  : "text-[#97A0B3] hover:text-white"
-              }`}
-            >
-              <span>All Workload</span>
-              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-[#0B111C] text-[#97A0B3]">
-                {tasks.length}
-              </span>
-            </button>
+        <div className="bg-[#161F2D]/60 p-3 sm:p-3.5 rounded-2xl border border-[#2A3446]/80 backdrop-blur-md space-y-3">
+          {/* Top Row: Assignee Category Segmented Tabs & Active Results Counter */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+              <button
+                type="button"
+                onClick={() => {
+                  setAssigneeTypeFilter("all");
+                  setSelectedFreelancer("all");
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                  assigneeTypeFilter === "all"
+                    ? "bg-white/10 text-white border border-white/20 shadow-sm"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+              >
+                <span>All Workload</span>
+                <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-[#0B111C] text-[#97A0B3]">
+                  {tasks.length}
+                </span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setAssigneeTypeFilter("freelancers")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
-                assigneeTypeFilter === "freelancers"
-                  ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
-                  : "text-purple-300 hover:text-white hover:bg-purple-500/10"
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              <span>Outsourced Freelancers</span>
-              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-purple-950 text-purple-200 border border-purple-500/40">
-                {freelancerTasks.length}
-              </span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setAssigneeTypeFilter("freelancers")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                  assigneeTypeFilter === "freelancers"
+                    ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                    : "text-purple-300 hover:text-white hover:bg-purple-500/10"
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                <span>Outsourced Freelancers</span>
+                <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-purple-950 text-purple-200 border border-purple-500/40">
+                  {freelancerTasks.length}
+                </span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setAssigneeTypeFilter("in_house")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
-                assigneeTypeFilter === "in_house"
-                  ? "bg-[#7FA0D6] text-white shadow-sm"
-                  : "text-[#97A0B3] hover:text-white"
-              }`}
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>In-House Team</span>
-              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-[#0B111C] text-[#97A0B3]">
-                {inHouseTasks.length}
-              </span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setAssigneeTypeFilter("in_house")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                  assigneeTypeFilter === "in_house"
+                    ? "bg-[#7FA0D6] text-white shadow-sm"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>In-House Team</span>
+                <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-[#0B111C] text-[#97A0B3]">
+                  {inHouseTasks.length}
+                </span>
+              </button>
+            </div>
+
+            {/* Quick Status / Reset Filters */}
+            <div className="flex items-center gap-2 text-xs">
+              {(searchQuery || selectedFreelancer !== "all" || selectedPod !== "all" || selectedClient !== "all") ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedFreelancer("all");
+                    setSelectedPod("all");
+                    setSelectedClient("all");
+                  }}
+                  className="px-2.5 py-1 rounded-lg text-xs font-semibold text-[#7FA0D6] hover:text-white hover:bg-[#7FA0D6]/10 transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Reset Filters</span>
+                  <span className="text-[10px] text-[#97A0B3]">({filteredTasks.length} of {tasks.length})</span>
+                </button>
+              ) : (
+                <span className="text-xs font-semibold text-[#97A0B3]">
+                  Showing <span className="text-white font-bold">{filteredTasks.length}</span> {filteredTasks.length === 1 ? "task" : "tasks"}
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* Secondary Controls: Search & Dropdowns */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="relative w-full sm:w-60">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+          {/* Bottom Row: Search & Dropdowns in a unified, aligned row */}
+          <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2.5 pt-2.5 border-t border-[#2A3446]/60">
+            {/* Search Input */}
+            <div className="relative w-full sm:flex-1 sm:min-w-[220px]">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
               <input
                 type="text"
                 placeholder="Search tasks, specialists, clients..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3 py-2 w-full rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white placeholder-[#97A0B3] focus:outline-none focus:border-purple-400"
+                className="pl-9 pr-3 h-[42px] w-full rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs sm:text-sm font-medium text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-2 focus:ring-[#7FA0D6]/20 transition-all"
+              />
+            </div>
+
+            {/* Client Filter */}
+            <div className="w-full sm:w-auto shrink-0 min-w-[150px]">
+              <CustomSelect
+                value={selectedClient}
+                onChange={setSelectedClient}
+                ariaLabel="Filter Client Brand"
+                options={clientOptions}
+                className="!min-h-[42px] !h-[42px] !text-xs sm:!text-sm w-full"
+              />
+            </div>
+
+            {/* Pod Filter */}
+            <div className="w-full sm:w-auto shrink-0 min-w-[160px]">
+              <CustomSelect
+                value={selectedPod}
+                onChange={setSelectedPod}
+                ariaLabel="Filter Task Pod"
+                options={[
+                  { value: "all", label: "All Pods (A, B, C)" },
+                  { value: "Pod A", label: "Pod A (Brand Strategy)" },
+                  { value: "Pod B", label: "Pod B (Performance Video)" },
+                  { value: "Pod C", label: "Pod C (3D Motion)" },
+                ]}
+                className="!min-h-[42px] !h-[42px] !text-xs sm:!text-sm w-full"
               />
             </div>
 
             {/* If viewing freelancers or all, show Freelancer specialist filter */}
             {(assigneeTypeFilter === "freelancers" || assigneeTypeFilter === "all") && (
-              <CustomSelect
-                value={selectedFreelancer}
-                onChange={setSelectedFreelancer}
-                ariaLabel="Filter Freelancer Specialist"
-                options={freelancerFilterOptions}
-              />
+              <div className="w-full sm:w-auto shrink-0 min-w-[200px]">
+                <CustomSelect
+                  value={selectedFreelancer}
+                  onChange={setSelectedFreelancer}
+                  ariaLabel="Filter Freelancer Specialist"
+                  options={freelancerFilterOptions}
+                  className="!min-h-[42px] !h-[42px] !text-xs sm:!text-sm w-full"
+                />
+              </div>
             )}
-
-            <CustomSelect
-              value={selectedPod}
-              onChange={setSelectedPod}
-              ariaLabel="Filter Task Pod"
-              options={[
-                { value: "all", label: "All Pods (A, B, C)" },
-                { value: "Pod A", label: "Pod A (Brand Strategy)" },
-                { value: "Pod B", label: "Pod B (Performance Video)" },
-                { value: "Pod C", label: "Pod C (3D Motion)" },
-              ]}
-            />
-
-            <CustomSelect
-              value={selectedClient}
-              onChange={setSelectedClient}
-              ariaLabel="Filter Client Brand"
-              options={clientOptions}
-            />
           </div>
         </div>
 
