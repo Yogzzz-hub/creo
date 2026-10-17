@@ -151,7 +151,14 @@ async def get_kanban_board(
             SELECT
                 t.id,
                 t.client_id,
-                t.assigned_to,
+                COALESCE(
+                    t.assigned_to,
+                    CASE 
+                        WHEN t.deliverable_type IN ('reel', 'shoot_day') THEN ca_editor.user_id
+                        ELSE ca_designer.user_id
+                    END,
+                    ca_lead.user_id
+                ) AS assigned_to,
                 t.deliverable_type,
                 t.status,
                 t.due_date,
@@ -159,14 +166,29 @@ async def get_kanban_board(
                 t.last_sla_notified_at,
                 t.created_at,
                 t.updated_at,
-                u.email AS assignee_email,
-                u.full_name AS assignee_name,
+                COALESCE(
+                    u.email,
+                    CASE 
+                        WHEN t.deliverable_type IN ('reel', 'shoot_day') THEN u_editor.email
+                        ELSE u_designer.email
+                    END,
+                    u_lead.email
+                ) AS assignee_email,
+                COALESCE(
+                    u.full_name,
+                    CASE 
+                        WHEN t.deliverable_type IN ('reel', 'shoot_day') THEN u_editor.full_name
+                        ELSE u_designer.full_name
+                    END,
+                    u_lead.full_name
+                ) AS assignee_name,
                 jsonb_build_object(
-                    'id', u.id,
-                    'full_name', u.full_name,
-                    'email', u.email,
-                    'role', u.role
+                    'id', COALESCE(u.id, CASE WHEN t.deliverable_type IN ('reel', 'shoot_day') THEN u_editor.id ELSE u_designer.id END, u_lead.id),
+                    'full_name', COALESCE(u.full_name, CASE WHEN t.deliverable_type IN ('reel', 'shoot_day') THEN u_editor.full_name ELSE u_designer.full_name END, u_lead.full_name),
+                    'email', COALESCE(u.email, CASE WHEN t.deliverable_type IN ('reel', 'shoot_day') THEN u_editor.email ELSE u_designer.email END, u_lead.email),
+                    'role', COALESCE(u.role, CASE WHEN t.deliverable_type IN ('reel', 'shoot_day') THEN u_editor.role ELSE u_designer.role END, u_lead.role)
                 ) AS assignee,
+                COALESCE(t_pod.name, 'Pod A') AS pod,
                 c.email AS client_email,
                 cp.company_name AS client_company,
                 cp.brand_summary,
@@ -177,6 +199,13 @@ async def get_kanban_board(
             LEFT JOIN users u ON u.id = t.assigned_to
             LEFT JOIN users c ON c.id = t.client_id
             LEFT JOIN client_profiles cp ON cp.user_id = t.client_id
+            LEFT JOIN client_assignments ca_editor ON ca_editor.client_id = t.client_id AND ca_editor.role = 'video_editor'
+            LEFT JOIN users u_editor ON u_editor.id = ca_editor.user_id
+            LEFT JOIN client_assignments ca_designer ON ca_designer.client_id = t.client_id AND ca_designer.role = 'graphic_designer'
+            LEFT JOIN users u_designer ON u_designer.id = ca_designer.user_id
+            LEFT JOIN client_assignments ca_lead ON ca_lead.client_id = t.client_id AND ca_lead.role = 'team_lead'
+            LEFT JOIN users u_lead ON u_lead.id = ca_lead.user_id
+            LEFT JOIN teams t_pod ON t_pod.lead_id = ca_lead.user_id
             {where_sql}
             ORDER BY t.created_at DESC
         ) t;

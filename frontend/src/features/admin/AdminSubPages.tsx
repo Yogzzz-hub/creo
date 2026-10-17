@@ -351,8 +351,8 @@ export function AdminClientsPage() {
         leadTitle: "Pod A Lead Producer",
         leadAvatar: "VM",
         squad: [
-          { name: "Karthik Raja", role: "Video Editor", hoursPerWeek: 16, avatar: "KR" },
-          { name: "Ananya Deshmukh", role: "Graphic Designer", hoursPerWeek: 16, avatar: "AD" },
+          { name: "Marcus Chen", role: "Video Editor", hoursPerWeek: 16, avatar: "MC" },
+          { name: "Elena Rostova", role: "Graphic Designer", hoursPerWeek: 16, avatar: "ER" },
         ],
         capacityAllocatedHrs: 32,
         bandwidthPercent: 80,
@@ -365,8 +365,8 @@ export function AdminClientsPage() {
         leadTitle: "Pod B Lead Producer",
         leadAvatar: "SC",
         squad: [
-          { name: "Karthik Raja", role: "Video Editor", hoursPerWeek: 16, avatar: "KR" },
-          { name: "Elena Rostova", role: "Graphic Designer", hoursPerWeek: 16, avatar: "ER" },
+          { name: "Rajini", role: "Video Editor", hoursPerWeek: 16, avatar: "RJ" },
+          { name: "Chloe Bennett", role: "Graphic Designer", hoursPerWeek: 16, avatar: "CB" },
         ],
         capacityAllocatedHrs: 32,
         bandwidthPercent: 80,
@@ -3604,7 +3604,19 @@ export function AdminTasksPage() {
           ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
           : "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]";
 
-      const initials = (freelancerName || t.assignee_name || "UN")
+      const isVideo = (t.deliverable_type ? String(t.deliverable_type).toLowerCase() : "").includes("reel") ||
+                      (t.type ? String(t.type).toLowerCase() : "").includes("video");
+
+      let resolvedAssigneeName = freelancerName || t.assignee_name;
+      if (!resolvedAssigneeName || resolvedAssigneeName === "Unassigned") {
+        if (!isFreelancer) {
+          resolvedAssigneeName = isVideo ? "Marcus Chen" : "Elena Rostova";
+        } else {
+          resolvedAssigneeName = "Unassigned";
+        }
+      }
+
+      const initials = (resolvedAssigneeName || "UN")
         .split(" ")
         .map((n: string) => n[0])
         .join("")
@@ -3623,7 +3635,7 @@ export function AdminTasksPage() {
         type: t.deliverable_type ? String(t.deliverable_type).replace(/_/g, " ").toUpperCase() : "VIDEO PRODUCTION",
         avatar: initials,
         avatarBg: isFreelancer ? "bg-gradient-to-tr from-purple-600 to-indigo-600" : "bg-blue-600",
-        assigneeName: freelancerName || t.assignee_name || "Unassigned",
+        assigneeName: resolvedAssigneeName,
         assigneeEmail: freelancerEmail || t.assignee_email,
         isFreelancer,
         freelancerId: t.blueprint?.freelancer_id || t.assigned_to,
