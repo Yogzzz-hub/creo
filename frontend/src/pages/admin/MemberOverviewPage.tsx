@@ -25,6 +25,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { request } from "../../lib/http";
 import { fetchPodDashboard, type PodDashboardData, type PodTask } from "../../lib/ops-api";
 import { uploadTaskDeliverable, validateUploadFile, UPLOAD_ACCEPT } from "../../lib/deliverables-api";
 import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
@@ -134,6 +135,7 @@ export function MemberOverviewPage() {
 
   // State for interactive actions
   const [quickReplyText, setQuickReplyText] = useState("");
+  const [isSendingQuickReply, setIsSendingQuickReply] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "info" } | null>(null);
 
   // Modals
@@ -191,9 +193,18 @@ export function MemberOverviewPage() {
 
   // Clean real lead feedback notes (zero mock data)
   const [notesList, setNotesList] = useState<LeadNoteItem[]>([]);
+  const [dismissedNoteIds, setDismissedNoteIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("creo_dismissed_feedback_notes");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Merge real QA feedback from assigned/pod tasks with notesList
   const allNotes = useMemo(() => {
+    const dismissedSet = new Set(dismissedNoteIds);
     const realNotes: LeadNoteItem[] = [];
     allEligibleTasks.forEach((t) => {
       const comment =
@@ -201,7 +212,8 @@ export function MemberOverviewPage() {
         (t as any).rejection_comment ||
         (t as any).qa_feedback ||
         (t as any).feedback;
-      if (comment) {
+      const noteId = `task-qa-${t.id}`;
+      if (comment && !dismissedSet.has(noteId) && !dismissedSet.has(t.id)) {
         const cleanLeadInitials = leadName
           .replace(/\(.*?\)/g, "")
           .replace(/[^a-zA-Z0-9\s]/g, "")
@@ -214,7 +226,7 @@ export function MemberOverviewPage() {
           .toUpperCase() || "PL";
 
         realNotes.push({
-          id: `task-qa-${t.id}`,
+          id: noteId,
           taskId: t.id,
           author: leadName,
           role: `${t.client_name || "Pod QA"} · QA Review`,
@@ -228,8 +240,8 @@ export function MemberOverviewPage() {
     });
     const existingIds = new Set(notesList.map((n) => n.id));
     const fresh = realNotes.filter((n) => !existingIds.has(n.id));
-    return [...fresh, ...notesList];
-  }, [allEligibleTasks, leadName, notesList]);
+    return [...fresh, ...notesList].filter((n) => !dismissedSet.has(n.id));
+  }, [allEligibleTasks, leadName, notesList, dismissedNoteIds]);
 
   const showToast = (text: string, type: "success" | "info" = "success") => {
     setToastMessage({ text, type });
@@ -293,39 +305,88 @@ export function MemberOverviewPage() {
     showToast("Meeting settings restored to defaults", "info");
   };
 
-  const handleSendQuickReply = (e: React.FormEvent) => {
+  const handleSendQuickReply = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = quickReplyText.trim();
-    const leadId = leadMember?.id || "lead";
 
-    if (trimmed) {
-      setNotesList([
-        {
-          id: `note-${Date.now()}`,
-          author: user?.full_name || "Specialist",
-          role: `${user?.role ? user.role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Specialist"} (You) • Just now`,
-          badge: "Slack Reply",
-          badgeColor: "bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30",
-          content: trimmed,
-          avatarBg: "bg-[#7FA0D6]",
-          avatar: (user?.full_name || "U").split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase(),
-        },
-        ...notesList,
-      ]);
+    if (!trimmed) {
+      navigate("/workstation/slack?channel=pod-beta-team", {
+        state: { channel: "pod-beta-team" },
+      });
+      return;
     }
 
-    const targetUrl = trimmed
-      ? `/workstation/slack?dm=${encodeURIComponent(leadId)}&draft=${encodeURIComponent(trimmed)}`
-      : `/workstation/slack?dm=${encodeURIComponent(leadId)}`;
+    setIsSendingQuickReply(true);
 
-    navigate(targetUrl, {
-      state: {
-        draft: trimmed,
-        dm: leadId,
-        leadName,
-      },
-    });
-    setQuickReplyText("");
+    try {
+      // 1. Post real message to backend for pod-beta-team channel
+      await request("/api/v1/chat/messages", {
+        method: "POST",
+        body: JSON.stringify({
+          channel: "pod-beta-team",
+          message: trimmed,
+        }),
+      });
+
+      // 2. Buffer locally to Slack channels storage key so Slack page displays it instantly
+      const LOCAL_STORAGE_CHANNEL_MESSAGES_KEY = "creo_slack_channels_v3";
+      try {
+        const saved = localStorage.getItem(LOCAL_STORAGE_CHANNEL_MESSAGES_KEY);
+        const parsed = saved ? JSON.parse(saved) : {};
+        const currentPersona = user?.full_name || "Specialist";
+        const newMsg = {
+          id: `local-${Date.now()}`,
+          sender: currentPersona,
+          role: "Specialist",
+          avatar: currentPersona.slice(0, 2).toUpperCase(),
+          avatarBg: "bg-[#7FA0D6]",
+          content: trimmed,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          reactions: [],
+        };
+        parsed["pod-beta-team"] = [...(parsed["pod-beta-team"] || []), newMsg];
+        localStorage.setItem(LOCAL_STORAGE_CHANNEL_MESSAGES_KEY, JSON.stringify(parsed));
+      } catch {
+        // ignore
+      }
+
+      // 3. Broadcast real-time message notification
+      try {
+        const bc = new BroadcastChannel("creo_chat_channel");
+        bc.postMessage({ type: "NEW_MESSAGE", timestamp: Date.now() });
+        bc.close();
+      } catch {
+        // ignore
+      }
+
+      // 4. Invalidate React Query chat messages cache
+      queryClient.invalidateQueries({ queryKey: ["chat_messages"] });
+
+      // 5. Dismiss feedback notes so they disappear from the dashboard once replied
+      const noteIdsToDismiss = allNotes.map((n) => n.id);
+      if (noteIdsToDismiss.length > 0) {
+        setDismissedNoteIds((prev) => {
+          const updated = Array.from(new Set([...prev, ...noteIdsToDismiss]));
+          try {
+            localStorage.setItem("creo_dismissed_feedback_notes", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+      }
+      setNotesList([]);
+      setQuickReplyText("");
+      showToast("Message sent to Pod Beta Team via Slack!", "success");
+
+      // 6. Redirect to Pod Beta Team in Slack
+      navigate("/workstation/slack?channel=pod-beta-team", {
+        state: { channel: "pod-beta-team" },
+      });
+    } catch (err: any) {
+      console.error("Failed to send reply to Pod Beta Team:", err);
+      showToast(err?.message || "Failed to send message to Pod Beta Team. Please retry.", "info");
+    } finally {
+      setIsSendingQuickReply(false);
+    }
   };
 
   const handleConfirmHandoff = () => {
@@ -472,6 +533,7 @@ export function MemberOverviewPage() {
           members={members}
           quickReplyText={quickReplyText}
           setQuickReplyText={setQuickReplyText}
+          isSendingQuickReply={isSendingQuickReply}
           handleSendQuickReply={handleSendQuickReply}
           setLogHoursModalOpen={setLogHoursModalOpen}
           setZoomModalOpen={setZoomModalOpen}
@@ -757,15 +819,23 @@ export function MemberOverviewPage() {
                   <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-[#7FA0D6]/15 text-[#7FA0D6]">
                     {allNotes.length} Updates
                   </span>
-                  <Link
-                    to={`/workstation/slack?dm=${encodeURIComponent(leadMember?.id || "lead")}`}
-                    state={{ dm: leadMember?.id || "lead", leadName }}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      if (quickReplyText.trim()) {
+                        handleSendQuickReply(e);
+                      } else {
+                        navigate("/workstation/slack?channel=pod-beta-team", {
+                          state: { channel: "pod-beta-team" },
+                        });
+                      }
+                    }}
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#0B111C] hover:bg-[#162338] border border-[#2A3446] text-[#7FA0D6] hover:text-white text-[10px] font-bold transition-colors cursor-pointer"
-                    title={`Open Slack Chat with ${leadName}`}
+                    title="Open Pod Beta Team in Slack"
                   >
                     <MessageSquare className="size-2.5" />
                     <span>Slack Hub</span>
-                  </Link>
+                  </button>
                 </div>
               </div>
 
@@ -812,6 +882,23 @@ export function MemberOverviewPage() {
                           <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${note.badgeColor || "bg-[#7FA0D6]/20 text-[#7FA0D6]"}`}>
                             {note.badge}
                           </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDismissedNoteIds((prev) => {
+                                const updated = Array.from(new Set([...prev, note.id]));
+                                try {
+                                  localStorage.setItem("creo_dismissed_feedback_notes", JSON.stringify(updated));
+                                } catch {}
+                                return updated;
+                              });
+                            }}
+                            className="size-4 rounded hover:bg-slate-700/60 flex items-center justify-center text-[#97A0B3] hover:text-white transition-colors cursor-pointer"
+                            title="Dismiss feedback"
+                          >
+                            <X className="size-2.5" />
+                          </button>
                           {note.taskId && (
                             <ArrowRight className="size-3 text-[#7FA0D6] opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 transition-transform" />
                           )}
@@ -836,7 +923,7 @@ export function MemberOverviewPage() {
                 <div className="flex items-center justify-between text-[10px]">
                   <span className="text-[#97A0B3] flex items-center gap-1">
                     <MessageSquare className="size-3 text-[#7FA0D6]" />
-                    <span>Reply to <strong className="text-white font-medium">{leadName}</strong> via Slack</span>
+                    <span>Reply to <strong className="text-white font-medium">Pod Beta Team</strong> via Slack</span>
                   </span>
                   <span className="text-[9px] text-[#7FA0D6] font-semibold">Instant Sync</span>
                 </div>
@@ -845,16 +932,27 @@ export function MemberOverviewPage() {
                     type="text"
                     value={quickReplyText}
                     onChange={(e) => setQuickReplyText(e.target.value)}
-                    placeholder={`Reply to ${leadName} via Slack...`}
-                    className="flex-1 px-2.5 py-1.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[11px] font-medium text-white placeholder:text-[#97A0B3] focus:outline-none focus:bg-[#161F2D] focus:ring-1 focus:ring-blue-500"
+                    placeholder="Reply to Pod Beta Team via Slack..."
+                    disabled={isSendingQuickReply}
+                    className="flex-1 px-2.5 py-1.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[11px] font-medium text-white placeholder:text-[#97A0B3] focus:outline-none focus:bg-[#161F2D] focus:ring-1 focus:ring-blue-500 disabled:opacity-60"
                   />
                   <button
                     type="submit"
-                    title="Send via Slack Chat"
-                    className="h-7 px-2.5 rounded-lg bg-[#7FA0D6] hover:bg-blue-600 active:scale-95 text-white flex items-center gap-1 text-[11px] font-bold transition-all shadow-2xs cursor-pointer shrink-0"
+                    disabled={!quickReplyText.trim() || isSendingQuickReply}
+                    title="Send to Pod Beta Team via Slack"
+                    className="h-7 px-2.5 rounded-lg bg-[#7FA0D6] hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 text-white flex items-center gap-1 text-[11px] font-bold transition-all shadow-2xs cursor-pointer shrink-0"
                   >
-                    <span>Slack</span>
-                    <Send className="size-2.5" />
+                    {isSendingQuickReply ? (
+                      <>
+                        <Loader2 className="size-2.5 animate-spin" />
+                        <span>Sending...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Slack</span>
+                        <Send className="size-2.5" />
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
