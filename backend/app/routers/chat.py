@@ -621,7 +621,7 @@ async def send_message(
     is_sender_client = sender_role in ("client",)
     is_sender_tm = not (is_sender_admin or is_sender_tl or is_sender_client)
 
-    websocket_recipients: set[uuid.UUID] = {current_user_id}
+    websocket_recipients: set[Any] = {current_user_id}
 
     if payload.channel:
         # Enforce channel permissions:
@@ -682,6 +682,8 @@ async def send_message(
         )
         db.add(new_msg)
 
+        # Broadcast live channel messages to all connected active connections as well as relevant recipients
+        websocket_recipients = set(ws_manager.active_connections.keys()) | {current_user_id}
         recipients.discard(current_user_id)
         websocket_recipients.update(recipients)
 
@@ -690,9 +692,9 @@ async def send_message(
                 user_id=recipient_id,
                 title=f"New message from {sender_name} in #{payload.channel}",
                 message=payload.message[:100] + ("..." if len(payload.message) > 100 else ""),
-                link=f"/portal/slack?channel={payload.channel}"
-                if recipient_id == client_id and not is_client_user
-                else f"/slack?channel={payload.channel}",
+                link=f"/slack?channel={payload.channel}"
+                if is_client_user
+                else f"/portal/slack?channel={payload.channel}",
                 is_read=False,
             )
             db.add(notification)
