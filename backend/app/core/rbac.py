@@ -160,3 +160,14 @@ AdminActor = Depends(get_admin_actor)
 SuperAdminActor = Depends(require_roles(UserRole.SUPER_ADMIN))
 SalesActor = Depends(require_roles(UserRole.SALES, UserRole.ADMIN, UserRole.SUPER_ADMIN))
 InvestorActor = Depends(require_roles(UserRole.INVESTOR_RELATIONS, UserRole.ADMIN, UserRole.SUPER_ADMIN))
+FreelancerActor = Depends(require_roles(UserRole.FREELANCER, UserRole.ADMIN, UserRole.SUPER_ADMIN))
+FreelancerOrStaffActor = Depends(
+    require_roles(
+        UserRole.FREELANCER,
+        UserRole.EDITOR,
+        UserRole.DESIGNER,
+        UserRole.TEAM_LEAD,
+        UserRole.ADMIN,
+        UserRole.SUPER_ADMIN,
+    )
+)

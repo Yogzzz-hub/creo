@@ -1,3 +1,4 @@
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { PublishingControl } from "../../components/ops/PublishingPanel";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
@@ -21,7 +22,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams, useLocation } from "react-router";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
-import { CustomSelect } from "../../components/ui/CustomSelect";
 import { useAuth } from "../../lib/auth-context";
 import {
   UPLOAD_ACCEPT,
@@ -32,8 +32,8 @@ import {
   validateUploadFile,
 } from "../../lib/deliverables-api";
 import { fetchPodDashboard, type PodDashboardData, type PodTask } from "../../lib/ops-api";
-import { StoryApprovalModal } from "../../components/ops/StoryApprovalModal";
 import { getEligibleDeliverableTypes, shouldShowTaskForUser } from "../../lib/creative-roles";
+import { MemberMobileTaskBoard } from "../../components/workstation/MemberMobileTaskBoard";
 
 type Column = "assigned" | "production" | "qa" | "review";
 
@@ -103,6 +103,20 @@ function isHighPriority(task: PodTask): boolean {
   return task.is_near_sla || (task.hours_remaining ?? 1) < 0 || !!task.is_revision;
 }
 
+function getTaskDueTimestamp(task: PodTask): number {
+  const d = task.due_date || task.sla_due_at;
+  if (!d) return Number.MAX_SAFE_INTEGER;
+  const time = new Date(d).getTime();
+  return isNaN(time) ? Number.MAX_SAFE_INTEGER : time;
+}
+
+function compareTaskDueDates(a: PodTask, b: PodTask): number {
+  const timeA = getTaskDueTimestamp(a);
+  const timeB = getTaskDueTimestamp(b);
+  if (timeA !== timeB) return timeA - timeB;
+  return taskTitle(a).localeCompare(taskTitle(b));
+}
+
 export function MemberTaskBoardPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -137,7 +151,7 @@ export function MemberTaskBoardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClient, setSelectedClient] = useState<string>("all");
   const [urgencyFilter, setUrgencyFilter] = useState<string>("All");
-  const [mobileKanbanTab, setMobileKanbanTab] = useState<"all" | Column>("production");
+  const [mobileKanbanTab, setMobileKanbanTab] = useState<Column>("assigned");
 
   useEffect(() => {
     if (targetedTaskId && tasks.length > 0) {
@@ -228,7 +242,6 @@ export function MemberTaskBoardPage() {
 
   // ── New task modal ──
   const [createOpen, setCreateOpen] = useState(false);
-  const [storyApprovalModalOpen, setStoryApprovalModalOpen] = useState(false);
   const [newClientId, setNewClientId] = useState("");
   const eligibleFormats = getEligibleDeliverableTypes(user?.role);
   const availableFormats = eligibleFormats && eligibleFormats.length > 0
@@ -300,37 +313,66 @@ export function MemberTaskBoardPage() {
   }, [clients, tasks]);
 
   // ── Derived lists ──
-  const filtered = tasks.filter(({ task }) => {
+  const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      !q ||
-      taskTitle(task).toLowerCase().includes(q) ||
-      task.client_name.toLowerCase().includes(q) ||
-      formatLabel(task.deliverable_type).toLowerCase().includes(q);
-    const matchesClient =
-      selectedClient === "all" ||
-      selectedClient === "All Clients" ||
-      task.client_id === selectedClient ||
-      task.client_name === selectedClient;
-    const matchesUrgency =
-      urgencyFilter === "All" || (urgencyFilter === "High" ? isHighPriority(task) : !isHighPriority(task));
-    return matchesSearch && matchesClient && matchesUrgency;
-  });
-  const byColumn = (column: Column) => filtered.filter((t) => t.column === column).map((t) => t.task);
+    const result = tasks.filter(({ task }) => {
+      const matchesSearch =
+        !q ||
+        taskTitle(task).toLowerCase().includes(q) ||
+        task.client_name.toLowerCase().includes(q) ||
+        formatLabel(task.deliverable_type).toLowerCase().includes(q);
+      const matchesClient =
+        selectedClient === "all" ||
+        selectedClient === "All Clients" ||
+        task.client_id === selectedClient ||
+        task.client_name === selectedClient;
+      const matchesUrgency =
+        urgencyFilter === "All" || (urgencyFilter === "High" ? isHighPriority(task) : !isHighPriority(task));
+      return matchesSearch && matchesClient && matchesUrgency;
+    });
+    return result.sort((a, b) => compareTaskDueDates(a.task, b.task));
+  }, [tasks, searchQuery, selectedClient, urgencyFilter]);
+
+  const byColumn = (column: Column) =>
+    filtered
+      .filter((t) => t.column === column)
+      .map((t) => t.task)
+      .sort(compareTaskDueDates);
+
   const assigned = byColumn("assigned");
   const production = byColumn("production");
   const qa = byColumn("qa");
   const review = byColumn("review");
 
-  const columnClass = (column: Column) =>
-    `${mobileKanbanTab === "all" || mobileKanbanTab === column ? "flex" : "hidden md:flex"} flex-col h-full bg-[#161F2D]/60 rounded-2xl p-3 border border-[#2A3446]/70 space-y-2.5 min-h-0`;
+  const userInitials = (user?.full_name || "SC")
+    .replace(/\(.*?\)/g, "")
+    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase() || "SC";
+
+  const currentMobileTasks =
+    mobileKanbanTab === "assigned"
+      ? assigned
+      : mobileKanbanTab === "production"
+      ? production
+      : mobileKanbanTab === "qa"
+      ? qa
+      : review;
+
+  const columnClass = (_column: Column) =>
+    "h-full flex flex-col min-h-0 bg-[#161F2D]/60 rounded-2xl p-3 border border-[#2A3446]/70 space-y-3";
 
   const clientBadge = (task: PodTask) => (
     <span className="text-[#7FA0D6]">{task.client_name.toUpperCase()}</span>
   );
 
   const emptyColumn = (text: string) => (
-    <div className="text-center py-4 text-xs text-[#97A0B3] font-medium bg-[#161F2D]/50 rounded-xl border border-dashed border-[#2A3446]">
+    <div className="text-center py-8 px-4 text-xs text-[#97A0B3] font-medium bg-[#161F2D]/50 rounded-xl border border-dashed border-[#2A3446]">
       {text}
     </div>
   );
@@ -340,14 +382,51 @@ export function MemberTaskBoardPage() {
   const pickedMime = file ? uploadMimeType(file) : null;
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
+    <div data-surface="ops" className="flex-1 flex flex-col min-h-[calc(100vh-theme(spacing.16))] md:h-[calc(100vh-4rem)] bg-[#0B0F17] text-white font-sans md:overflow-hidden">
       <AdminTopHeader activeTab="My Tasks" />
 
+      {/* ── MOBILE TASK BOARD VIEW (< md) ── */}
+      <MemberMobileTaskBoard
+        user={user}
+        userInitials={userInitials}
+        leadName={leadName}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedClient={selectedClient}
+        setSelectedClient={setSelectedClient}
+        urgencyFilter={urgencyFilter}
+        setUrgencyFilter={setUrgencyFilter}
+        mobileKanbanTab={mobileKanbanTab}
+        setMobileKanbanTab={setMobileKanbanTab}
+        tasks={tasks}
+        availableClients={availableClients}
+        assigned={assigned}
+        production={production}
+        qa={qa}
+        review={review}
+        currentMobileTasks={currentMobileTasks}
+        targetedTaskId={targetedTaskId}
+        toastMessage={toastMessage}
+        setToastMessage={setToastMessage}
+        showToast={showToast}
+        startMutation={startMutation}
+        openUpload={openUpload}
+        setCreateOpen={setCreateOpen}
+        setNewClientId={setNewClientId}
+        isAdmin={isAdmin}
+        clients={clients}
+        formatLabel={formatLabel}
+        taskTitle={taskTitle}
+        dueText={dueText}
+        feedbackFor={feedbackFor}
+      />
+
+      {/* ── DESKTOP TASK BOARD VIEW (>= md) ── */}
       <motion.main
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="flex-1 max-w-[1440px] w-full mx-auto px-3 sm:px-5 lg:px-6 py-3.5 pb-20 sm:pb-6 space-y-3.5"
+        className="hidden md:flex flex-1 flex-col min-h-[calc(100vh-theme(spacing.16))] h-[calc(100vh-4rem)] w-full mx-auto px-3 sm:px-5 lg:px-6 pt-3.5 pb-4 space-y-3.5 min-h-0 overflow-hidden"
       >
         {toastMessage && (
           <div
@@ -382,7 +461,7 @@ export function MemberTaskBoardPage() {
         )}
 
         {/* Filter & action bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#161F2D] sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none border sm:border-0 border-[#2A3446] w-full">
+        <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#161F2D] sm:bg-transparent p-2.5 sm:p-0 rounded-2xl sm:rounded-none border sm:border-0 border-[#2A3446] w-full">
           <div className="relative flex-1 max-w-md w-full">
             <Search className="size-3.5 text-[#97A0B3] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
@@ -390,89 +469,67 @@ export function MemberTaskBoardPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter tasks by client, format or title..."
-              className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#161F2D] border border-[#2A3446]/80 text-xs font-medium placeholder:text-[#97A0B3] focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#0B111C] sm:bg-[#161F2D] border border-[#2A3446]/80 text-xs font-medium placeholder:text-[#97A0B3] focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-            {/* Client Filter Dropdown */}
-            <select
-              value={selectedClient}
-              onChange={(e) => setSelectedClient(e.target.value)}
-              aria-label="Filter by client"
-              className="bg-[#161F2D] border border-[#2A3446] text-white text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-[#7FA0D6] transition-colors cursor-pointer"
-            >
-              <option value="all">All Clients ({tasks.length})</option>
-              {availableClients.map((client) => {
-                const clientTaskCount = tasks.filter(
-                  (t) => t.task.client_id === client.id || t.task.client_name === client.name,
-                ).length;
-                return (
-                  <option key={client.id} value={client.id}>
-                    {client.name} ({clientTaskCount})
-                  </option>
-                );
-              })}
-            </select>
-
-            <CustomSelect
-              value={urgencyFilter}
-              onChange={setUrgencyFilter}
-              options={[
-                { value: "All", label: "Urgency: All" },
-                { value: "High", label: "Due soon / revisions" },
-                { value: "Normal", label: "Normal" },
-              ]}
-            />
-
-            {!isAdmin && (
-              <button
-                onClick={() => {
-                  setNewClientId(clients[0]?.id || "");
-                  setCreateOpen(true);
-                }}
-                disabled={clients.length === 0}
-                className="px-3 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+            {/* Filters Row */}
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+              {/* Client Filter Dropdown */}
+              <select
+                value={selectedClient}
+                onChange={(e) => setSelectedClient(e.target.value)}
+                aria-label="Filter by client"
+                className="w-full sm:w-auto bg-[#0B111C] sm:bg-[#161F2D] border border-[#2A3446] text-white text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-[#7FA0D6] transition-colors cursor-pointer truncate"
               >
-                <Plus className="size-3.5" />
-                <span>Add Task</span>
-              </button>
+                <option value="all">All Clients ({tasks.length})</option>
+                {availableClients.map((client) => {
+                  const clientTaskCount = tasks.filter(
+                    (t) => t.task.client_id === client.id || t.task.client_name === client.name,
+                  ).length;
+                  return (
+                    <option key={client.id} value={client.id}>
+                      {client.name} ({clientTaskCount})
+                    </option>
+                  );
+                })}
+              </select>
+
+              {/* Urgency Filter Dropdown */}
+              <select
+                value={urgencyFilter}
+                onChange={(e) => setUrgencyFilter(e.target.value)}
+                aria-label="Filter by urgency"
+                className="w-full sm:w-auto bg-[#0B111C] sm:bg-[#161F2D] border border-[#2A3446] text-white text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-[#7FA0D6] transition-colors cursor-pointer truncate"
+              >
+                <option value="All">All Urgency</option>
+                <option value="High">Due soon / revisions</option>
+                <option value="Normal">Normal</option>
+              </select>
+            </div>
+
+            {/* Actions Row */}
+            {!isAdmin && (
+              <div className="flex sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+                <button
+                  onClick={() => {
+                    setNewClientId(clients[0]?.id || "");
+                    setCreateOpen(true);
+                  }}
+                  disabled={clients.length === 0}
+                  className="w-full sm:w-auto px-3 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs"
+                >
+                  <Plus className="size-3.5 shrink-0" />
+                  <span className="truncate">Add Task</span>
+                </button>
+              </div>
             )}
-
-            <button
-              type="button"
-              onClick={() => setStoryApprovalModalOpen(true)}
-              className="px-3 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] hover:border-[#7FA0D6]/50 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shadow-2xs"
-            >
-              <Sparkles className="size-3.5 text-[#7FA0D6]" />
-              <span>Story & Approval Request</span>
-            </button>
           </div>
-        </div>
-
-        {/* Mobile column tabs */}
-        <div className="flex md:hidden items-center bg-[#161F2D] p-1 rounded-xl border border-[#2A3446] text-xs font-bold overflow-x-auto no-scrollbar gap-1">
-          {([
-            ["all", `All (${filtered.length})`],
-            ["assigned", `Queued (${assigned.length})`],
-            ["production", `Active (${production.length})`],
-            ["qa", `Lead QA (${qa.length})`],
-            ["review", `Client (${review.length})`],
-          ] as const).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setMobileKanbanTab(key)}
-              className={`px-2.5 py-1 rounded-lg transition-all shrink-0 ${mobileKanbanTab === key ? "bg-blue-600 text-white font-bold" : "text-[#F1F5F9]"}`}
-            >
-              {label}
-            </button>
-          ))}
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-24 text-[#97A0B3]">
-            <Loader2 className="size-6 animate-spin" />
-          </div>
+          <CreoInlineLoader />
         ) : isError ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
             <div className="size-10 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
@@ -487,18 +544,18 @@ export function MemberTaskBoardPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5 items-stretch h-[560px] sm:h-[600px] lg:h-[calc(100vh-270px)] min-h-[500px]">
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 min-h-0 pb-4">
             {/* 1. Assigned & queued */}
             <div className={columnClass("assigned")}>
-              <ColumnHeader dot="bg-slate-400" title="Assigned & Queued" count={assigned.length} />
-              <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar min-h-0">
+              <ColumnHeader dot="bg-slate-400" title="ASSIGNED & QUEUED" count={assigned.length} />
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar min-h-0">
                 {assigned.map((task) => {
                   const due = dueText(task);
                   return (
                     <div
                       key={task.id}
                       id={`task-card-${task.id}`}
-                      className={`bg-[#161F2D] rounded-xl p-3 border space-y-2 transition-all ${
+                      className={`bg-[#161F2D] rounded-xl p-3.5 border space-y-3 transition-all ${
                         targetedTaskId === task.id ? "ring-2 ring-[#7FA0D6] border-[#7FA0D6] shadow-lg shadow-blue-500/20" : "border-[#2A3446]/80"
                       }`}
                     >
@@ -528,8 +585,8 @@ export function MemberTaskBoardPage() {
 
             {/* 2. In production */}
             <div className={columnClass("production")}>
-              <ColumnHeader dot="bg-blue-600 animate-pulse" title="In Production" count={production.length} />
-              <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar min-h-0">
+              <ColumnHeader dot="bg-sky-400 animate-pulse" title="IN PRODUCTION" count={production.length} />
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar min-h-0">
                 {production.map((task) => {
                   const due = dueText(task);
                   const feedback = feedbackFor(task);
@@ -537,7 +594,7 @@ export function MemberTaskBoardPage() {
                     <div
                       key={task.id}
                       id={`task-card-${task.id}`}
-                      className={`bg-[#161F2D] rounded-xl p-3 border space-y-2 transition-all ${
+                      className={`bg-[#161F2D] rounded-xl p-3.5 border space-y-3 transition-all ${
                         targetedTaskId === task.id
                           ? "ring-2 ring-[#7FA0D6] border-[#7FA0D6] shadow-lg shadow-blue-500/20"
                           : feedback
@@ -577,13 +634,13 @@ export function MemberTaskBoardPage() {
 
             {/* 3. Lead QA */}
             <div className={columnClass("qa")}>
-              <ColumnHeader dot="bg-amber-500" title="Submitted for QA" count={qa.length} />
-              <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar min-h-0">
+              <ColumnHeader dot="bg-amber-400" title="SUBMITTED FOR QA" count={qa.length} />
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar min-h-0">
                 {qa.map((task) => (
                   <div
                     key={task.id}
                     id={`task-card-${task.id}`}
-                    className={`bg-[#161F2D] rounded-xl p-3 border space-y-2 transition-all ${
+                    className={`bg-[#161F2D] rounded-xl p-3.5 border space-y-3 transition-all ${
                       targetedTaskId === task.id ? "ring-2 ring-[#7FA0D6] border-[#7FA0D6] shadow-lg shadow-blue-500/20" : "border-[#2A3446]/80"
                     }`}
                   >
@@ -619,12 +676,12 @@ export function MemberTaskBoardPage() {
 
             {/* 4. Client review & approved */}
             <div className={columnClass("review")}>
-              <ColumnHeader dot="bg-emerald-500" title="Client Review & Approved" count={review.length} />
-              <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar min-h-0">
+              <ColumnHeader dot="bg-emerald-400" title="CLIENT REVIEW & APPROVED" count={review.length} />
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar min-h-0">
                 {review.map((task) => {
                   const approved = task.status === "ready_to_publish" || task.status === "completed";
                   return (
-                    <div key={task.id} className="bg-[#161F2D] rounded-xl p-3 border border-[#2A3446]/80 space-y-2">
+                    <div key={task.id} className="bg-[#161F2D] rounded-xl p-3.5 border border-[#2A3446]/80 space-y-3">
                       <div className="flex items-center justify-between text-[10px] font-bold">
                         {clientBadge(task)}
                         {approved ? (
@@ -905,25 +962,22 @@ export function MemberTaskBoardPage() {
         </div>
       )}
 
-      {/* Story & Approval Modal */}
-      <StoryApprovalModal
-        isOpen={storyApprovalModalOpen}
-        onClose={() => setStoryApprovalModalOpen(false)}
-        onSuccess={() => refreshBoard()}
-        defaultClientId={clients[0]?.id}
-      />
     </div>
   );
 }
 
 function ColumnHeader({ dot, title, count }: { dot: string; title: string; count: number }) {
   return (
-    <div className="flex items-center justify-between px-1 pt-0.5 shrink-0">
-      <div className="flex items-center gap-1.5">
-        <span className={`size-2 rounded-full ${dot}`} />
-        <h3 className="text-xs font-black uppercase tracking-wider text-[#F1F5F9]">{title}</h3>
+    <div className="flex items-center justify-between px-1 pt-0.5 pb-1 shrink-0">
+      <div className="flex items-center gap-2 min-w-0">
+        <span className={`size-2 rounded-full shrink-0 ${dot}`} />
+        <h3 className="text-[11px] font-bold tracking-wider uppercase text-slate-200 truncate">
+          {title}
+        </h3>
       </div>
-      <span className="px-1.5 rounded-full text-[9px] font-black bg-[#161F2D] text-[#F1F5F9] border border-[#2A3446]">{count}</span>
+      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold tracking-wider bg-[#161F2D] text-slate-300 border border-[#2A3446] shrink-0">
+        {count}
+      </span>
     </div>
   );
 }

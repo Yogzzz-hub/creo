@@ -541,7 +541,14 @@ async def get_client_subscription(
     prof_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
     prof = (await db.execute(prof_stmt)).scalar_one_or_none()
     pause_info = (prof.brand_dna or {}).get("subscription_pause") if prof else None
-    is_paused_next = bool(pause_info and pause_info.get("is_paused"))
+    from app.models.billing import SubscriptionPauseRequest
+    request_row = (await db.execute(select(SubscriptionPauseRequest).where(
+        SubscriptionPauseRequest.client_id == client_id,
+        SubscriptionPauseRequest.subscription_id == sub.id if sub else False
+    ).order_by(SubscriptionPauseRequest.created_at.desc()).limit(1))).scalar_one_or_none()
+    recurring = bool(sub and (sub.gateway_subscription_id or "").startswith("sub_"))
+    gateway_data = (sub.gateway_data or {}) if sub else {}
+    is_paused_next = recurring and gateway_data.get("mandate_status") == "paused"
 
     # Include paid add-on purchases in the invoices table
     addon_purchases = (prof.brand_dna or {}).get("addon_purchases", []) if prof else []
@@ -576,6 +583,7 @@ async def get_client_subscription(
         "seconds_remaining": check["seconds_remaining"],
         "days_remaining": check["days_remaining"],
         "server_time_utc": check["server_time_utc"],
+        "autopay": {"enabled": recurring and gateway_data.get("mandate_status") == "active", "recurring": recurring, "provider_status": gateway_data.get("mandate_status"), "pause_request_status": request_row.status if request_row else None, "paid_until": sub.current_period_end.isoformat() if sub else None},
         "is_paused_next_month": is_paused_next,
         "pause_details": pause_info if is_paused_next else None,
     }
@@ -632,143 +640,251 @@ async def pause_subscription(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Schedules the active subscription to pause for the upcoming cycle."""
-    from datetime import UTC, datetime
-    from sqlalchemy.orm.attributes import flag_modified
-    from app.models.user import ClientProfile, User
-    from app.models.support import Ticket
-    from app.models.enums import TicketPriority, TicketStatus
-    from app.services.subscription_guard import check_client_subscription
-    from app.core.logging import get_logger
-
-    logger = get_logger("app.routers.payments")
+    from app.services import billing_renewal
     req = body or PauseSubscriptionRequest()
-
-    client_id = actor.client_id or actor.user_id
-    check = await check_client_subscription(db, client_id)
-    sub = check.get("subscription")
-    plan = check.get("plan")
-    if not check.get("is_active"):
-        raise HTTPException(status_code=400, detail="There is no active plan to pause.")
-
-    prof_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
-    prof = (await db.execute(prof_stmt)).scalar_one_or_none()
-    if not prof:
-        prof = ClientProfile(user_id=client_id, brand_dna={})
-        db.add(prof)
-
-    dna = dict(prof.brand_dna or {})
-    effective_date_str = (
-        sub.current_period_end.strftime("%d %b %Y")
-        if sub and getattr(sub, "current_period_end", None)
-        else "next cycle"
-    )
-    effective_date_iso = (
-        sub.current_period_end.isoformat()
-        if sub and getattr(sub, "current_period_end", None)
-        else None
-    )
-
-    dna["subscription_pause"] = {
-        "is_paused": True,
-        "reason": req.reason or "Client requested pause",
-        "notes": req.notes,
-        "paused_at": datetime.now(UTC).isoformat(),
-        "effective_date": effective_date_iso,
-    }
-    prof.brand_dna = dna
-    flag_modified(prof, "brand_dna")
-
-    # Notify account/ops team via internal support ticket (non-blocking)
-    try:
-        user_stmt = select(User).where(User.id == client_id)
-        user_obj = (await db.execute(user_stmt)).scalar_one_or_none()
-        client_name = (user_obj.full_name if user_obj else None) or actor.email or str(client_id)
-
-        pause_ticket = Ticket(
-            client_id=client_id,
-            agency_id=getattr(sub, "agency_id", None) if sub else (user_obj.agency_id if user_obj else None),
-            title=f"Subscription Pause Request: Next Month ({plan.display_name if plan else 'Active Retainer'})",
-            description=(
-                f"Client {client_name} ({actor.email}) requested to pause their retainer for the upcoming cycle.\n\n"
-                f"• Effective renewal date: {effective_date_str}\n"
-                f"• Reason: {req.reason or 'Not specified'}\n"
-                f"• Notes: {req.notes or 'None'}\n"
-                f"Current period remains active until {effective_date_str}."
-            ),
-            priority=TicketPriority.HIGH,
-            status=TicketStatus.OPEN,
-        )
-        db.add(pause_ticket)
-    except Exception as err:
-        logger.warning("subscription_pause_ticket_skipped", error=str(err))
-
-    await db.commit()
-
-    return {
-        "success": True,
-        "message": f"Your plan has been scheduled to pause starting {effective_date_str}. You will not be charged next month.",
-        "is_paused_next_month": True,
-        "effective_date": effective_date_iso,
-    }
+    reason = (req.reason or "Pause next month") + (" ? " + req.notes if req.notes else "")
+    return await billing_renewal.request_pause(db, actor, reason)
 
 
 @router.post("/subscription/resume")
-async def resume_subscription(
+async def resume_subscription(actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)):
+    from app.services import billing_renewal
+    return await billing_renewal.resume(db, actor)
+
+
+class PauseReviewBody(BaseModel):
+    approve: bool
+
+
+@router.get("/subscription/pause-requests")
+async def pause_requests(actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)):
+    from app.models.enums import UserRole
+    from app.models.billing import SubscriptionPauseRequest
+    from app.services.billing_renewal import serialize
+    from app.core.errors import Forbidden
+    if actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
+        raise Forbidden("Only administrators can review pause requests.")
+    query = select(SubscriptionPauseRequest, User.full_name).join(User, User.id == SubscriptionPauseRequest.client_id)
+    if actor.role != UserRole.SUPER_ADMIN:
+        if not actor.agency_id:
+            raise Forbidden("An agency is required.")
+        query = query.where(SubscriptionPauseRequest.agency_id == actor.agency_id)
+    rows = (await db.execute(query.order_by(SubscriptionPauseRequest.created_at.desc()).limit(100))).all()
+    return [{**serialize(row), "client_name": name} for row, name in rows]
+
+
+@router.post("/subscription/pause-requests/{request_id}/review")
+async def review_pause_request(request_id: uuid.UUID, body: PauseReviewBody,
+    actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)):
+    from app.services import billing_renewal
+    return await billing_renewal.review(db, actor, request_id, body.approve)
+
+
+# ── Split Payment Management & Automated Reminders ───────────────────────────
+
+
+class InstalmentInput(BaseModel):
+    instalment_number: int | None = None
+    amount: float
+    due_date: str
+    notes: str | None = None
+
+
+class CreateSplitPackageRequest(BaseModel):
+    client_id: str | None = None  # if admin, can target client
+    title: str
+    total_amount: float
+    currency: str = "INR"
+    notes: str | None = None
+    instalments: list[InstalmentInput]
+
+
+class MarkInstalmentPaidRequest(BaseModel):
+    amount: float | None = None
+    payment_method: str = "manual"
+    transaction_ref: str | None = None
+    notes: str | None = None
+
+
+class UpdateInstalmentDeadlineRequest(BaseModel):
+    due_date: str
+    notes: str | None = None
+
+
+async def _authorize_split_client(db, actor, client_id, *, write=False):
+    from app.models.user import User
+    client = await db.get(User, client_id)
+    if not client or str(client.role) != "client":
+        raise HTTPException(status_code=404, detail="Client not found")
+    if str(actor.role) == "client":
+        if write or actor.user_id != client_id:
+            raise HTTPException(status_code=403, detail="Client access denied")
+    elif str(actor.role) not in ("admin", "super_admin", "sales", "team_lead"):
+        raise HTTPException(status_code=403, detail="Staff permission required")
+    if str(actor.role) != "super_admin" and (not actor.agency_id or client.agency_id != actor.agency_id):
+        raise HTTPException(status_code=403, detail="Client belongs to another agency")
+
+
+async def _authorize_split_instalment(db, actor, instalment_id):
+    from app.models.billing import PaymentInstalment
+    inst = await db.get(PaymentInstalment, instalment_id)
+    if not inst:
+        raise HTTPException(status_code=404, detail="Instalment not found")
+    await _authorize_split_client(db, actor, inst.client_id, write=True)
+    return inst
+
+
+@router.post("/split-packages")
+async def create_split_payment_package(
+    body: CreateSplitPackageRequest,
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Resumes automatic renewal for the client's next cycle."""
-    from datetime import UTC, datetime
-    from sqlalchemy.orm.attributes import flag_modified
-    from app.models.user import ClientProfile, User
-    from app.models.support import Ticket
-    from app.models.enums import TicketPriority, TicketStatus
-    from app.services.subscription_guard import check_client_subscription
-    from app.core.logging import get_logger
+    """Agency admin/staff configures total agreed amount and divides it into instalments."""
+    import uuid
+    from app.services import split_payment_service
 
-    logger = get_logger("app.routers.payments")
+    if actor.role not in ("admin", "super_admin", "sales", "team_lead"):
+        raise HTTPException(status_code=403, detail="Only agency staff can configure split payment packages")
 
-    client_id = actor.client_id or actor.user_id
-    check = await check_client_subscription(db, client_id)
-    sub = check.get("subscription")
-    plan = check.get("plan")
-
-    prof_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
-    prof = (await db.execute(prof_stmt)).scalar_one_or_none()
-    if not prof:
-        prof = ClientProfile(user_id=client_id, brand_dna={})
-        db.add(prof)
-
-    dna = dict(prof.brand_dna or {})
-    dna["subscription_pause"] = {
-        "is_paused": False,
-        "resumed_at": datetime.now(UTC).isoformat(),
-    }
-    prof.brand_dna = dna
-    flag_modified(prof, "brand_dna")
-
-    try:
-        user_stmt = select(User).where(User.id == client_id)
-        user_obj = (await db.execute(user_stmt)).scalar_one_or_none()
-        client_name = (user_obj.full_name if user_obj else None) or actor.email or str(client_id)
-
-        resume_ticket = Ticket(
-            client_id=client_id,
-            agency_id=getattr(sub, "agency_id", None) if sub else (user_obj.agency_id if user_obj else None),
-            title=f"Subscription Resumed by Client ({plan.display_name if plan else 'Active Retainer'})",
-            description=f"Client {client_name} ({actor.email}) resumed their subscription renewal. AutoPay will proceed normally.",
-            priority=TicketPriority.MEDIUM,
-            status=TicketStatus.RESOLVED,
-        )
-        db.add(resume_ticket)
-    except Exception as err:
-        logger.warning("subscription_resume_ticket_skipped", error=str(err))
-
-    await db.commit()
-
+    target_client_id = uuid.UUID(body.client_id) if body.client_id else (actor.client_id or actor.user_id)
+    await _authorize_split_client(db, actor, target_client_id, write=True)
+    pkg = await split_payment_service.create_split_package(
+        db,
+        agency_id=actor.agency_id,
+        client_id=target_client_id,
+        title=body.title,
+        total_amount=body.total_amount,
+        currency=body.currency,
+        notes=body.notes,
+        instalments_data=[item.model_dump() for item in body.instalments],
+    )
     return {
-        "success": True,
-        "message": "Your subscription renewal has been resumed. AutoPay remains active.",
-        "is_paused_next_month": False,
+        "status": "ok",
+        "package_id": str(pkg.id),
+        "title": pkg.title,
+        "total_amount": float(pkg.total_amount),
+        "currency": pkg.currency,
     }
+
+
+@router.get("/split-summary")
+async def get_split_payment_summary(
+    client_id: str | None = None,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Retrieve total package amount, amount paid, pending balance, and upcoming deadlines."""
+    import uuid
+    from app.services import split_payment_service
+
+    target_id: uuid.UUID
+    if actor.role == "client":
+        target_id = actor.client_id or actor.user_id
+    elif client_id:
+        target_id = uuid.UUID(client_id)
+    elif actor.client_id:
+        target_id = actor.client_id
+    else:
+        # If admin without specified client, return empty or first client
+        target_id = actor.user_id
+
+    await _authorize_split_client(db, actor, target_id)
+    return await split_payment_service.get_client_split_summary(db, target_id)
+
+
+@router.post("/instalments/{instalment_id}/mark-paid")
+async def mark_split_instalment_paid(
+    instalment_id: str,
+    body: MarkInstalmentPaidRequest,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Authorized staff marks an instalment paid manually or from gateway webhook."""
+    import uuid
+    from app.services import split_payment_service
+
+    if actor.role not in ("admin", "super_admin", "sales", "team_lead"):
+        raise HTTPException(status_code=403, detail="Staff permission required to update payment status")
+
+    inst_uuid = uuid.UUID(instalment_id)
+    await _authorize_split_instalment(db, actor, inst_uuid)
+    updated = await split_payment_service.mark_instalment_paid(
+        db,
+        inst_uuid,
+        paid_amount=body.amount,
+        payment_method=body.payment_method,
+        transaction_ref=body.transaction_ref,
+        notes=body.notes,
+        actor_id=actor.user_id,
+    )
+    return {
+        "status": "ok",
+        "instalment_id": str(updated.id),
+        "instalment_status": updated.status,
+        "paid_amount": float(updated.paid_amount),
+        "paid_at": updated.paid_at.isoformat() if updated.paid_at else None,
+    }
+
+
+@router.patch("/instalments/{instalment_id}/deadline")
+async def update_split_instalment_deadline(
+    instalment_id: str,
+    body: UpdateInstalmentDeadlineRequest,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Agency sets or updates payment deadline for an instalment."""
+    import uuid
+    from app.services import split_payment_service
+
+    if actor.role not in ("admin", "super_admin", "sales", "team_lead"):
+        raise HTTPException(status_code=403, detail="Staff permission required to set deadline")
+
+    inst_uuid = uuid.UUID(instalment_id)
+    await _authorize_split_instalment(db, actor, inst_uuid)
+    updated = await split_payment_service.update_instalment_deadline(
+        db, inst_uuid, body.due_date, notes=body.notes,
+    )
+    return {
+        "status": "ok",
+        "instalment_id": str(updated.id),
+        "due_date": updated.due_date.isoformat(),
+        "instalment_status": updated.status,
+    }
+
+
+@router.post("/instalments/{instalment_id}/remind")
+async def send_split_instalment_reminder(
+    instalment_id: str,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Trigger manual or automated payment reminder for an upcoming instalment."""
+    import uuid
+    from app.models.billing import PaymentInstalment
+    from app.services import split_payment_service
+
+    inst_uuid = uuid.UUID(instalment_id)
+    await _authorize_split_instalment(db, actor, inst_uuid)
+    inst = await db.get(PaymentInstalment, inst_uuid)
+    if not inst:
+        raise HTTPException(status_code=404, detail="Instalment not found")
+
+    sent = await split_payment_service.send_automated_instalment_reminder(db, inst)
+    return {
+        "status": "ok" if sent else "skipped",
+        "reminder_sent": sent,
+    }
+
+
+@router.post("/split-check-reminders")
+async def trigger_split_payment_reminder_check(
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Automated task checking for approaching deadlines and overdue instalments."""
+    from app.services import split_payment_service
+
+    return await split_payment_service.check_and_dispatch_reminders(db)
+

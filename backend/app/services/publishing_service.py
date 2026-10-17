@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import or_, select
@@ -269,7 +269,8 @@ def set_ready(job: PublishingJob, d: Deliverable, profile: ClientProfile) -> Non
             profile.ig_connection_id,
             profile.instagram_user_id,
         )
-    job.next_attempt_at = job.scheduled_at
+    # Reserve time for media fetching, validation and Instagram transcoding.
+    job.next_attempt_at = job.scheduled_at - timedelta(minutes=30) if job.scheduled_at else None
 
 
 async def on_deliverable_transition(
@@ -308,7 +309,9 @@ async def on_deliverable_transition(
             )
         job.approved_by = actor_id if review_fingerprint else None
         job.approved_fingerprint = review_fingerprint
-        if job.status != "canceled":
+        if job.status != "canceled" or job.error_code == "VERSION_INVALIDATED" or job.last_error == (
+            "This version was rejected or superseded. The revised version requires approval."
+        ):
             set_ready(job, d, profile)
         await audit(db, job, "client_approved")
         await notify(
@@ -317,13 +320,21 @@ async def on_deliverable_transition(
             "Approved content ready for scheduling",
             "Client approval is recorded. Publication follows the configured future schedule.",
         )
-    elif target not in ("approved", "scheduled", "publishing", "published"):
+    elif target in ("qa_rejected", "revision_requested", "archived"):
         job.approved_fingerprint, job.approved_by = None, None
         job.status = "canceled"
+        job.error_code = "VERSION_INVALIDATED"
         job.last_error = (
             "This version was rejected or superseded. The revised version requires approval."
         )
         await audit(db, job, "version_invalidated")
+    elif target != "approved":
+        # Moving through production/QA/client review is not a rejection.
+        job.approved_fingerprint, job.approved_by = None, None
+        if job.status != "canceled":
+            job.status = "pending_approval"
+            job.last_error, job.error_code = None, None
+        await audit(db, job, "awaiting_client_approval")
 
 
 async def calendar_plan(
@@ -470,11 +481,12 @@ async def action(db: AsyncSession, actor: Actor, d: Deliverable, operation: str)
     await access(db, actor, d, write=True)
     profile = await lock_profile(db, d.client_id)
     job = await job_for(db, d)
-    if not job or job.status in BUSY | {"published"}:
+    safe_preparation_pause = job and operation == "pause" and job.status == "processing" and job.stage not in ("submitting", "confirmed", "confirmed_container")
+    if not job or (job.status in BUSY | {"published"} and not safe_preparation_pause):
         raise Conflict(
             "This job is processing, published or requires reconciliation; it cannot be changed."
         )
-    if operation in ("pause", "retry") and actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
+    if operation in ("pause", "retry") and actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.TEAM_LEAD):
         raise Forbidden("An administrator must pause or retry publishing.")
     if operation == "publish_now" and actor.role not in (
         UserRole.ADMIN,
@@ -484,8 +496,11 @@ async def action(db: AsyncSession, actor: Actor, d: Deliverable, operation: str)
         raise Forbidden("An administrator or team lead must publish ahead of schedule.")
     if operation == "cancel":
         job.status = "canceled"
+        job.last_error, job.error_code = None, None
+        job.next_attempt_at = None
     elif operation == "pause":
         job.status = "paused"
+        job.lease_id, job.lease_until = None, None
     elif operation in ("resume", "retry"):
         if operation == "resume" and job.status != "paused":
             raise Conflict("Only a paused job can be resumed.")

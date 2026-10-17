@@ -117,16 +117,23 @@ export function AdminBottomNav() {
     },
     {
       label: "Slack",
-      href: "/slack",
+      href: "/workstation/slack",
       icon: MessageSquare,
       isActive: location.pathname.includes("/slack"),
     },
   ];
 
-  const activeItems = isMemberRole ? memberItems : isTeamLead ? leadItems : adminItems;
+  const isBDE = ["sales", "bde", "bde_head"].includes(user?.role || "");
+  const bdeItems: { label: string; href: string; icon: typeof Users; exact?: boolean; isActive?: boolean }[] = [
+    { label: "Today", href: "/bde/crm/overview", icon: LayoutDashboard },
+    { label: "Leads", href: "/bde/crm/leads", icon: Users },
+    { label: "Tasks", href: "/bde/crm/tasks", icon: CalendarCheck },
+    { label: "Proposals", href: "/bde/crm/proposals", icon: Layers },
+  ];
+  const activeItems = isBDE ? bdeItems : isMemberRole ? memberItems : isTeamLead ? leadItems : adminItems;
 
   const memberMoreLinks = [
-    { label: "Slack Workspace Hub", href: "/slack", icon: MessageSquare, desc: "Team & project communication" },
+    { label: "Slack Workspace Hub", href: "/workstation/slack", icon: MessageSquare, desc: "Team & project communication" },
     { label: "My Schedule & PTO", href: "/workstation/schedule", icon: CalendarCheck, desc: "Request leave & shift schedule" },
     { label: "Asset Handoff QA", href: "/workstation/tasks", icon: CheckSquare, desc: "Submit files for lead sign-off" },
     { label: "Agency Calendar", href: "/admin/calendar", icon: CalendarDays, desc: "View all scheduled content" },
@@ -135,6 +142,14 @@ export function AdminBottomNav() {
 
   const moreLinks = isMemberRole
     ? memberMoreLinks
+    : isBDE
+    ? [
+        { label: "Pipeline", href: "/bde/crm/pipeline", icon: Layers, desc: "Follow deals by stage" },
+        { label: "Referrals", href: "/bde/crm/referrals", icon: Users, desc: "Track sourced opportunities" },
+        { label: "Messages", href: "/bde/crm/messages", icon: MessageSquare, desc: "CRM conversation drafts" },
+        { label: "AI workspace", href: "/bde/crm/discovery", icon: Sparkles, desc: "Evidence-based draft assistance" },
+        { label: "Reports", href: "/bde/crm/reports", icon: IndianRupee, desc: "Your revenue and scorecards" },
+      ]
     : isTeamLead
     ? [
         { label: "Slack Workspace Hub", href: "/slack", icon: MessageSquare, desc: "Pod chat & in-channel task assignment" },
@@ -144,6 +159,7 @@ export function AdminBottomNav() {
       ]
     : [
         { label: "Slack Workspace Hub", href: "/slack", icon: MessageSquare, desc: "Direct team & client chat, task creation" },
+        { label: "BDE Sales & Outreach", href: "/admin/bde-oversight", icon: Users, desc: "Monitor prospect reach & sales velocity" },
         { label: "Plans & Negotiations", href: "/admin/plans", icon: IndianRupee, desc: "Commercial deal retainers & pricing tiers" },
         { label: "Team Management", href: "/admin/team", icon: Users, desc: "Roster, pod capacity & leads" },
         { label: "Leave Requests", href: "/admin/leaves", icon: CalendarCheck, desc: "Staff time-off approvals" },
@@ -157,9 +173,13 @@ export function AdminBottomNav() {
     <>
       <nav
         aria-label="Admin Navigation"
-        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#161F2D]/95 backdrop-blur-xl border-t border-[#2A3446] px-1 pt-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-[0_-4px_25px_rgba(5,8,16,0.6)]"
+        className={`lg:hidden fixed bottom-0 inset-x-0 z-50 backdrop-blur-xl px-1 pt-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-[0_-4px_25px_rgba(5,8,16,0.6)] ${
+          isMemberRole
+            ? "bg-[#0B0F17]/95 border-t border-slate-800/80"
+            : "bg-[#161F2D]/95 border-t border-[#2A3446]"
+        }`}
       >
-        <div className="max-w-md mx-auto flex items-center justify-around">
+        <div className="max-w-[430px] mx-auto flex items-center justify-around">
           {activeItems.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -175,14 +195,20 @@ export function AdminBottomNav() {
                 to={item.href}
                 className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-200 flex-1 min-w-0 max-w-[72px] ${
                   isActive
-                    ? "text-[#BCCCE6] font-bold"
-                    : "text-[#97A0B3] hover:text-white font-medium"
+                    ? isMemberRole
+                      ? "text-sky-400 font-bold"
+                      : "text-[#BCCCE6] font-bold"
+                    : "text-slate-400 hover:text-white font-medium"
                 }`}
               >
                 <div className="relative">
                   <div
                     className={`p-1 rounded-xl transition-all ${
-                      isActive ? "bg-[#BCCCE6]/15 text-[#BCCCE6]" : ""
+                      isActive
+                        ? isMemberRole
+                          ? "bg-sky-400/10 text-sky-400"
+                          : "bg-[#BCCCE6]/15 text-[#BCCCE6]"
+                        : ""
                     }`}
                   >
                     <Icon
@@ -192,10 +218,16 @@ export function AdminBottomNav() {
                     />
                   </div>
                   {isActive && (
-                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full bg-[#7FA0D6]" />
+                    <span
+                      className={`absolute -bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full ${
+                        isMemberRole ? "bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" : "bg-[#7FA0D6]"
+                      }`}
+                    />
                   )}
                 </div>
-                <span className="text-[10px] mt-0.5 tracking-tight truncate w-full text-center">{item.label}</span>
+                <span className={`text-[10px] mt-0.5 tracking-tight truncate w-full text-center ${isActive && isMemberRole ? "text-white font-bold" : ""}`}>
+                  {item.label}
+                </span>
               </Link>
             );
           })}
@@ -206,14 +238,20 @@ export function AdminBottomNav() {
             onClick={() => setMoreDrawerOpen(true)}
             className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-200 flex-1 min-w-0 max-w-[72px] cursor-pointer ${
               moreDrawerOpen
-                ? "text-[#BCCCE6] font-bold"
-                : "text-[#97A0B3] hover:text-white font-medium"
+                ? isMemberRole
+                  ? "text-sky-400 font-bold"
+                  : "text-[#BCCCE6] font-bold"
+                : "text-slate-400 hover:text-white font-medium"
             }`}
           >
             <div className="relative">
               <div
                 className={`p-1 rounded-xl transition-all ${
-                  moreDrawerOpen ? "bg-[#BCCCE6]/15 text-[#BCCCE6]" : ""
+                  moreDrawerOpen
+                    ? isMemberRole
+                      ? "bg-sky-400/10 text-sky-400"
+                      : "bg-[#BCCCE6]/15 text-[#BCCCE6]"
+                    : ""
                 }`}
               >
                 <Menu className="size-4 sm:size-5 stroke-[1.8]" />

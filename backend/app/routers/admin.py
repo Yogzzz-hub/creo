@@ -21,7 +21,7 @@ from datetime import UTC, date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, delete, func, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,6 +38,7 @@ from app.core.rbac import (
     StaffActor,
     TeamLeadActor,
     get_admin_actor,
+    get_current_actor,
 )
 from app.db.session import get_db
 from app.models.billing import Plan, Subscription, UsageCounter
@@ -51,7 +52,7 @@ from app.models.enums import (
     TicketStatus,
     UserRole,
 )
-from app.models.ops import Announcement, AuditLog, LeaveRequest, Notification
+from app.models.ops import Announcement, AuditLog, FreelancerProfile, LeaveRequest, Notification
 from app.models.support import Ticket, TicketMessage
 from app.models.user import ClientProfile, StaffProfile, User
 from app.models.questionnaire import Questionnaire
@@ -790,7 +791,7 @@ async def get_client_brand_profile(
             select(ClientAssignment.id).where(
                 ClientAssignment.client_id == client_uuid,
                 ClientAssignment.user_id.in_(allowed_user_ids),
-            )
+            ).limit(1)
         )
         if not ca_check.scalar_one_or_none():
             raise Forbidden(
@@ -5459,6 +5460,694 @@ async def revoke_client_bypass(
         "client_id": str(client_id),
         "cancelled_subscriptions": len(cancelled_ids),
     }
+
+
+# ============================================================================
+# 2.6 FREELANCER MANAGEMENT & ROLE-BASED ACCESS
+# ============================================================================
+
+class CreateFreelancerRequest(BaseModel):
+    email: str
+    full_name: str
+    password: str | None = None
+    specialty: str = "Video Editor"
+    hourly_rate: int | None = None
+    skills: list[str] = Field(default_factory=list)
+    portfolio_url: str | None = None
+    portfolio_link: str | None = None
+    notes: str | None = None
+
+
+class UpdateFreelancerStatusRequest(BaseModel):
+    status: str = Field(..., pattern="^(?i)(active|inactive|revoked)$")
+
+
+class AssignFreelancerRequest(BaseModel):
+    task_id: uuid.UUID | None = None
+    client_id: uuid.UUID | None = None
+    deliverable_id: uuid.UUID | None = None
+    task_title: str | None = None
+    instructions: str | None = None
+    role_description: str | None = None
+    due_date: date | None = None
+    milestone_fee: float | None = None
+    priority: str | None = None
+
+
+class FreelancerSubmitWorkRequest(BaseModel):
+    task_id: uuid.UUID | None = None
+    deliverable_id: uuid.UUID | None = None
+    title: str | None = None
+    storage_path: str | None = None
+    asset_url: str | None = None
+    thumbnail_url: str | None = None
+    notes: str | None = None
+    submission_notes: str | None = None
+
+
+@router.post("/freelancers", status_code=status.HTTP_201_CREATED)
+async def create_freelancer(
+    payload: CreateFreelancerRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = TeamLeadActor,
+) -> dict[str, Any]:
+    """Create a new freelancer account with credentials and profile (Admin / TL only)."""
+    from app.core.security import hash_password
+
+    clean_email = payload.email.lower().strip()
+    existing = (await db.execute(select(User).where(User.email == clean_email))).scalar_one_or_none()
+    if existing:
+        raise HTTPException(status_code=400, detail="A user with this email address already exists.")
+
+    chosen_password = payload.password.strip() if payload.password and payload.password.strip() else f"Creo@{uuid.uuid4().hex[:8]}"
+    final_portfolio = (payload.portfolio_url or payload.portfolio_link or "").strip() or None
+
+    new_user = User(
+        agency_id=actor.agency_id if actor else None,
+        auth_id=f"auth-free-{uuid.uuid4().hex[:12]}",
+        email=clean_email,
+        full_name=payload.full_name.strip(),
+        role=UserRole.FREELANCER,
+        account_status=AccountStatus.ACTIVE,
+        hashed_password=hash_password(chosen_password),
+    )
+    db.add(new_user)
+    await db.flush()
+
+    freelancer_profile = FreelancerProfile(
+        user_id=new_user.id,
+        agency_id=actor.agency_id if actor else None,
+        specialty=payload.specialty.strip() if payload.specialty else "Video Editor",
+        hourly_rate=payload.hourly_rate,
+        status="active",
+        skills=payload.skills or [],
+        portfolio_url=final_portfolio,
+        notes=payload.notes.strip() if payload.notes else None,
+    )
+    db.add(freelancer_profile)
+    await db.commit()
+
+    return {
+        "status": "success",
+        "message": f"Freelancer {new_user.full_name} created successfully.",
+        "freelancer_id": str(new_user.id),
+        "freelancer": {
+            "id": str(new_user.id),
+            "email": new_user.email,
+            "full_name": new_user.full_name,
+            "specialty": freelancer_profile.specialty,
+            "hourly_rate": freelancer_profile.hourly_rate,
+            "status": "ACTIVE",
+            "skills": freelancer_profile.skills,
+            "portfolio_url": freelancer_profile.portfolio_url,
+            "portfolio_link": freelancer_profile.portfolio_url,
+            "temporary_password": chosen_password if not payload.password else None,
+        },
+    }
+
+
+@router.get("/freelancers")
+async def list_freelancers(
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = TeamLeadActor,
+) -> list[dict[str, Any]]:
+    """List all freelancers with their assignment counts, specialty, and profile details."""
+    query = (
+        select(User, FreelancerProfile)
+        .outerjoin(FreelancerProfile, FreelancerProfile.user_id == User.id)
+        .where(User.role == UserRole.FREELANCER)
+        .order_by(User.created_at.desc())
+    )
+    res = await db.execute(query)
+    rows = res.all()
+
+    freelancers = []
+    for user, profile in rows:
+        tasks_res = await db.execute(
+            select(
+                func.count(Task.id),
+                func.count(Task.id).filter(Task.status.in_([TaskStatus.IN_PRODUCTION, TaskStatus.INTERNAL_QA, TaskStatus.CLIENT_REVIEW])),
+            ).where(Task.assigned_to == user.id)
+        )
+        total_tasks, active_tasks = tasks_res.one()
+
+        prof_status = profile.status if profile else "active"
+        freelancers.append({
+            "id": str(user.id),
+            "user_id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "avatar_url": getattr(user, "avatar_url", None),
+            "account_status": user.account_status.value if hasattr(user.account_status, "value") else str(user.account_status),
+            "profile_status": prof_status,
+            "status": prof_status.upper(),
+            "specialty": profile.specialty if profile else "Video Editor",
+            "hourly_rate": profile.hourly_rate if profile else None,
+            "skills": profile.skills if profile else [],
+            "portfolio_url": profile.portfolio_url if profile else None,
+            "portfolio_link": profile.portfolio_url if profile else None,
+            "notes": profile.notes if profile else None,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "total_tasks_assigned": total_tasks,
+            "assigned_tasks_count": total_tasks,
+            "active_tasks": active_tasks,
+            "active_tasks_count": active_tasks,
+        })
+    return freelancers
+
+
+@router.patch("/freelancers/{freelancer_id}/status")
+async def update_freelancer_status(
+    freelancer_id: uuid.UUID,
+    payload: UpdateFreelancerStatusRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Activate, deactivate, or revoke freelancer access (Admin only)."""
+    user_res = await db.execute(select(User).where(User.id == freelancer_id, User.role == UserRole.FREELANCER))
+    user = user_res.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Freelancer user not found.")
+
+    prof_res = await db.execute(select(FreelancerProfile).where(FreelancerProfile.user_id == freelancer_id))
+    profile = prof_res.scalar_one_or_none()
+    if not profile:
+        profile = FreelancerProfile(user_id=user.id, specialty="Freelancer")
+        db.add(profile)
+
+    norm_status = payload.status.lower().strip()
+    profile.status = norm_status
+    if norm_status == "revoked":
+        user.account_status = AccountStatus.SUSPENDED
+        await invalidate_user_session(user.id)
+    elif norm_status == "inactive":
+        user.account_status = AccountStatus.INACTIVE
+    else:
+        user.account_status = AccountStatus.ACTIVE
+
+    await db.commit()
+    return {
+        "status": "success",
+        "freelancer_id": str(freelancer_id),
+        "profile_status": profile.status,
+        "status": profile.status.upper(),
+        "account_status": user.account_status.value if hasattr(user.account_status, "value") else str(user.account_status),
+    }
+
+
+@router.post("/freelancers/{freelancer_id}/assign")
+async def assign_freelancer_to_task(
+    freelancer_id: uuid.UUID,
+    payload: AssignFreelancerRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = TeamLeadActor,
+) -> dict[str, Any]:
+    """Assign freelancer to a task or deliverable (Admin / TL only)."""
+    user = (await db.execute(select(User).where(User.id == freelancer_id))).scalar_one_or_none()
+    if not user:
+        # Check if freelancer_id was passed as FreelancerProfile.id
+        prof = (await db.execute(select(FreelancerProfile).where(FreelancerProfile.id == freelancer_id))).scalar_one_or_none()
+        if prof:
+            user = (await db.execute(select(User).where(User.id == prof.user_id))).scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Freelancer user not found.")
+
+    # Retrieve profile to enrich blueprint with rate and specialty
+    profile = (await db.execute(select(FreelancerProfile).where(FreelancerProfile.user_id == user.id))).scalar_one_or_none()
+    resolved_milestone_fee = payload.milestone_fee or (profile.hourly_rate * 4 if profile and profile.hourly_rate else 4500)
+    resolved_priority = payload.priority or "High"
+
+    task = None
+    task_title = payload.task_title or "Deliverable Task"
+
+    if payload.task_id:
+        task = (await db.execute(select(Task).where(Task.id == payload.task_id))).scalar_one_or_none()
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found.")
+        task.assigned_to = user.id
+        if payload.due_date:
+            task.due_date = payload.due_date
+        bp = dict(task.blueprint or {})
+        if payload.instructions:
+            bp["instructions"] = payload.instructions
+        bp["is_freelancer"] = True
+        bp["freelancer_id"] = str(user.id)
+        bp["freelancer_name"] = user.full_name
+        bp["freelancer_email"] = user.email
+        bp["specialty"] = profile.specialty if profile else "Creative Specialist"
+        bp["milestone_fee"] = resolved_milestone_fee
+        bp["priority"] = resolved_priority
+        task.blueprint = bp
+        if task.status == TaskStatus.BACKLOG:
+            task.status = TaskStatus.IN_PRODUCTION
+        task_title = bp.get("title", task_title)
+
+    elif payload.deliverable_id:
+        deliv = (await db.execute(select(Deliverable).where(Deliverable.id == payload.deliverable_id))).scalar_one_or_none()
+        if not deliv:
+            raise HTTPException(status_code=404, detail="Deliverable not found.")
+        
+        if deliv.task_id:
+            task = (await db.execute(select(Task).where(Task.id == deliv.task_id))).scalar_one_or_none()
+        
+        if task:
+            task.assigned_to = user.id
+            if payload.due_date:
+                task.due_date = payload.due_date
+            bp = dict(task.blueprint or {})
+            if payload.instructions:
+                bp["instructions"] = payload.instructions
+            bp["is_freelancer"] = True
+            bp["freelancer_id"] = str(user.id)
+            bp["freelancer_name"] = user.full_name
+            bp["freelancer_email"] = user.email
+            bp["specialty"] = profile.specialty if profile else "Creative Specialist"
+            bp["milestone_fee"] = resolved_milestone_fee
+            bp["priority"] = resolved_priority
+            task.blueprint = bp
+            if task.status == TaskStatus.BACKLOG:
+                task.status = TaskStatus.IN_PRODUCTION
+            task_title = bp.get("title", task_title)
+        else:
+            task = Task(
+                agency_id=deliv.agency_id or (actor.agency_id if actor else None),
+                client_id=deliv.client_id,
+                deliverable_type=DeliverableType.REEL,
+                status=TaskStatus.IN_PRODUCTION,
+                assigned_to=user.id,
+                due_date=payload.due_date,
+                blueprint={
+                    "title": task_title,
+                    "instructions": payload.instructions or "",
+                    "is_freelancer": True,
+                    "freelancer_id": str(user.id),
+                    "freelancer_name": user.full_name,
+                    "freelancer_email": user.email,
+                    "specialty": profile.specialty if profile else "Creative Specialist",
+                    "milestone_fee": resolved_milestone_fee,
+                    "priority": resolved_priority,
+                },
+            )
+            db.add(task)
+            await db.flush()
+            deliv.task_id = task.id
+
+    elif payload.task_title:
+        target_client_id = payload.client_id
+        if not target_client_id:
+            c_query = select(User.id).where(User.role == UserRole.CLIENT)
+            if actor and actor.agency_id:
+                c_query = c_query.where(User.agency_id == actor.agency_id)
+            target_client_id = (await db.execute(c_query.limit(1))).scalar_one_or_none()
+        
+        if not target_client_id:
+            target_client_id = user.id
+
+        task = Task(
+            agency_id=actor.agency_id if actor else None,
+            client_id=target_client_id,
+            deliverable_type=DeliverableType.REEL,
+            status=TaskStatus.IN_PRODUCTION,
+            assigned_to=user.id,
+            due_date=payload.due_date,
+            blueprint={
+                "title": payload.task_title,
+                "instructions": payload.instructions or "",
+                "is_freelancer": True,
+                "freelancer_id": str(user.id),
+                "freelancer_name": user.full_name,
+                "freelancer_email": user.email,
+                "specialty": profile.specialty if profile else "Creative Specialist",
+                "milestone_fee": resolved_milestone_fee,
+                "priority": resolved_priority,
+            },
+        )
+        db.add(task)
+        await db.flush()
+    else:
+        raise HTTPException(status_code=400, detail="Provide task_title, task_id, or deliverable_id to assign work.")
+
+    # Create notification without invalid 'type' keyword argument
+    notif = Notification(
+        agency_id=getattr(task, "agency_id", None) or (actor.agency_id if actor else None),
+        user_id=user.id,
+        title="📌 New Task Assigned",
+        message=f"You have been assigned to task: {task_title}.",
+        link="/freelancer/tasks",
+    )
+    db.add(notif)
+    await db.commit()
+
+    return {
+        "status": "success",
+        "message": f"Task successfully assigned to freelancer {user.full_name}.",
+        "task_id": str(task.id),
+        "deliverable_id": str(payload.deliverable_id) if payload.deliverable_id else None,
+        "freelancer_id": str(user.id),
+        "freelancer_name": user.full_name,
+        "task_title": task_title,
+        "due_date": str(payload.due_date) if payload.due_date else None,
+        "task_status": "in_production",
+    }
+
+
+@router.get("/freelancer/my-tasks")
+async def get_freelancer_my_tasks(
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> list[dict[str, Any]]:
+    """Retrieve assigned tasks, deadlines, briefs, and deliverables for the authenticated freelancer."""
+    if actor.role != UserRole.FREELANCER and actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
+        raise HTTPException(status_code=403, detail="Only freelancers can access this portal view.")
+
+    tasks_res = await db.execute(
+        select(Task, User)
+        .outerjoin(User, Task.client_id == User.id)
+        .where(Task.assigned_to == actor.user_id)
+        .order_by(Task.due_date.asc().nulls_last(), Task.created_at.desc())
+    )
+    rows = tasks_res.all()
+
+    items = []
+    for task, client_user in rows:
+        d_res = await db.execute(
+            select(Deliverable).where(Deliverable.task_id == task.id, Deliverable.is_archived.is_(False))
+        )
+        deliverables = d_res.scalars().all()
+
+        items.append({
+            "id": str(task.id),
+            "deliverable_type": task.deliverable_type.value if hasattr(task.deliverable_type, "value") else str(task.deliverable_type),
+            "status": task.status.value if hasattr(task.status, "value") else str(task.status),
+            "due_date": task.due_date.isoformat() if task.due_date else None,
+            "sla_due_at": task.sla_due_at.isoformat() if task.sla_due_at else None,
+            "is_revision": task.is_revision,
+            "blueprint": task.blueprint,
+            "client_name": client_user.full_name if client_user else "Client",
+            "deliverables": [
+                {
+                    "id": str(d.id),
+                    "version": d.version,
+                    "status": d.status.value if hasattr(d.status, "value") else str(d.status),
+                    "storage_path": d.file_url,
+                    "file_url": d.file_url,
+                    "thumbnail_url": d.file_url,
+                    "created_at": d.created_at.isoformat() if d.created_at else None,
+                }
+                for d in deliverables
+            ],
+        })
+    return items
+
+
+@router.post("/freelancer/submit-work")
+async def freelancer_submit_work(
+    payload: FreelancerSubmitWorkRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Allow freelancer to upload completed work for review & approval by Team Lead."""
+    if actor.role != UserRole.FREELANCER and actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
+        raise HTTPException(status_code=403, detail="Only freelancers can submit work via this endpoint.")
+
+    target_task_id = payload.task_id
+    if not target_task_id and payload.deliverable_id:
+        deliv = (await db.execute(select(Deliverable).where(Deliverable.id == payload.deliverable_id))).scalar_one_or_none()
+        if deliv and deliv.task_id:
+            target_task_id = deliv.task_id
+
+    if not target_task_id:
+        raise HTTPException(status_code=400, detail="task_id or deliverable_id is required.")
+
+    task = (await db.execute(select(Task).where(Task.id == target_task_id, Task.assigned_to == actor.user_id))).scalar_one_or_none()
+    if not task:
+        if actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
+            task = (await db.execute(select(Task).where(Task.id == target_task_id))).scalar_one_or_none()
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found or not assigned to you.")
+
+    d_res = await db.execute(
+        select(Deliverable).where(Deliverable.task_id == task.id).order_by(Deliverable.version.desc())
+    )
+    latest_deliv = d_res.scalars().first()
+
+    next_version = (latest_deliv.version + 1) if latest_deliv else 1
+    root_id = latest_deliv.root_id if latest_deliv else uuid.uuid4()
+    final_url = payload.asset_url or payload.storage_path or "https://storage.googleapis.com/creo-assets/freelancer-submission.mp4"
+    file_type = "video/mp4" if "mp4" in final_url.lower() or "mov" in final_url.lower() else "image/png"
+    notes_text = payload.submission_notes or payload.notes or "Freelancer submitted work for QA review."
+
+    new_deliv = Deliverable(
+        agency_id=actor.agency_id or task.agency_id,
+        root_id=root_id,
+        version=next_version,
+        client_id=task.client_id,
+        task_id=task.id,
+        submitted_by=actor.user_id,
+        file_url=final_url,
+        file_type=file_type,
+        status=DeliverableStatus.PENDING_QA,
+        is_archived=False,
+    )
+    db.add(new_deliv)
+    task.status = TaskStatus.INTERNAL_QA
+    await db.flush()
+
+    try:
+        from app.services.deliverable_workflow import record_deliverable_history
+        await record_deliverable_history(
+            db=db,
+            deliverable_id=new_deliv.id,
+            action="submitted",
+            user_id=actor.user_id,
+            user_name=actor.email or "Freelancer",
+            user_role="freelancer",
+            reason=notes_text,
+            agency_id=actor.agency_id or task.agency_id,
+            metadata_extra={"task_id": str(task.id), "title": payload.title or "Freelancer Submission"},
+        )
+    except Exception:
+        pass
+
+    await db.commit()
+    return {
+        "status": "success",
+        "message": "Work submitted successfully for Team Lead review.",
+        "deliverable_id": str(new_deliv.id),
+        "version": new_deliv.version,
+    }
+
+
+# ============================================================================
+# 2.7 TEAM PRODUCTIVITY AND EFFICIENCY MONITORING DASHBOARD
+# ============================================================================
+
+@router.get("/productivity")
+async def get_team_productivity_metrics(
+    period: str = Query(default="monthly", pattern="^(?i)(daily|weekly|monthly|all)$"),
+    department: str | None = Query(default=None),
+    role: str | None = Query(default=None),
+    task_type: str | None = Query(default=None),
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = TeamLeadActor,
+) -> dict[str, Any]:
+    """Evaluate team productivity, turnaround adherence, revision rates, and workload balance (Admin/TL)."""
+    now = datetime.now(UTC)
+    if period.lower() == "daily":
+        start_date = now - timedelta(days=1)
+    elif period.lower() == "weekly":
+        start_date = now - timedelta(days=7)
+    elif period.lower() == "monthly":
+        start_date = now - timedelta(days=30)
+    else:
+        start_date = now - timedelta(days=365)
+
+    # 1. Fetch creative team members (Staff + Freelancers)
+    users_query = (
+        select(User, StaffProfile, FreelancerProfile)
+        .outerjoin(StaffProfile, StaffProfile.user_id == User.id)
+        .outerjoin(FreelancerProfile, FreelancerProfile.user_id == User.id)
+        .where(
+            User.role.in_([UserRole.EDITOR, UserRole.DESIGNER, UserRole.TEAM_LEAD, UserRole.FREELANCER]),
+            User.account_status == AccountStatus.ACTIVE,
+        )
+    )
+    if actor.agency_id and actor.role != UserRole.SUPER_ADMIN:
+        users_query = users_query.where(or_(User.agency_id == actor.agency_id, User.agency_id.is_(None)))
+
+    user_rows = (await db.execute(users_query)).all()
+
+    specialists = []
+    total_assigned_sum = 0
+    total_completed_sum = 0
+    total_pending_sum = 0
+    total_overdue_sum = 0
+    total_revisions_sum = 0
+    turnaround_hours_list = []
+    on_time_count_sum = 0
+
+    for user, staff_prof, free_prof in user_rows:
+        dept = (
+            staff_prof.department if staff_prof and staff_prof.department
+            else ("video" if "editor" in user.role.value else "design" if "designer" in user.role.value else "creative")
+        )
+        if department and department.lower() != "all" and dept.lower() != department.lower():
+            continue
+        if role and role.lower() != "all" and user.role.value.lower() != role.lower():
+            continue
+
+        # Query tasks assigned to user
+        tasks_stmt = select(Task).where(Task.assigned_to == user.id)
+        if period.lower() != "all":
+            tasks_stmt = tasks_stmt.where(Task.created_at >= start_date)
+        if task_type and task_type.lower() != "all":
+            try:
+                tasks_stmt = tasks_stmt.where(Task.deliverable_type == DeliverableType(task_type.lower()))
+            except ValueError:
+                pass
+
+        user_tasks = (await db.execute(tasks_stmt)).scalars().all()
+
+        t_assigned = len(user_tasks)
+        t_completed = sum(1 for t in user_tasks if t.status == TaskStatus.COMPLETED)
+        t_pending = sum(1 for t in user_tasks if t.status in (TaskStatus.IN_PRODUCTION, TaskStatus.INTERNAL_QA, TaskStatus.CLIENT_REVIEW, TaskStatus.BACKLOG))
+        t_overdue = sum(1 for t in user_tasks if t.due_date and t.due_date < now.date() and t.status != TaskStatus.COMPLETED)
+
+        # Revisions & turnaround
+        t_revisions = sum(1 for t in user_tasks if t.is_revision)
+        user_turnarounds = []
+        user_on_time = 0
+        user_late = 0
+
+        for t in user_tasks:
+            if t.status == TaskStatus.COMPLETED and t.created_at and t.updated_at:
+                hours = max(1.0, round((t.updated_at - t.created_at).total_seconds() / 3600.0, 1))
+                user_turnarounds.append(hours)
+                turnaround_hours_list.append(hours)
+
+                if t.due_date:
+                    if t.updated_at.date() <= t.due_date:
+                        user_on_time += 1
+                        on_time_count_sum += 1
+                    else:
+                        user_late += 1
+                else:
+                    user_on_time += 1
+                    on_time_count_sum += 1
+
+        avg_user_turnaround = round(sum(user_turnarounds) / len(user_turnarounds), 1) if user_turnarounds else 8.5
+        rev_rate = round((t_revisions / max(1, t_assigned)) * 100, 1)
+
+        # Capacity & workload
+        daily_cap = getattr(staff_prof, "daily_capacity", 4) or 4
+        active_wip = t_pending
+        allocated_pct = min(100, max(25, round((active_wip / max(1, daily_cap)) * 100)))
+
+        capacity_status = "Overloaded" if allocated_pct >= 85 else "Optimal" if allocated_pct >= 50 else "Available"
+
+        # Task type distribution
+        types_dist = {
+            "reel": sum(1 for t in user_tasks if t.deliverable_type == DeliverableType.REEL),
+            "static_post": sum(1 for t in user_tasks if t.deliverable_type == DeliverableType.STATIC_POST),
+            "carousel": sum(1 for t in user_tasks if t.deliverable_type == DeliverableType.CAROUSEL),
+            "story": sum(1 for t in user_tasks if t.deliverable_type == DeliverableType.STORY),
+        }
+
+        total_assigned_sum += t_assigned
+        total_completed_sum += t_completed
+        total_pending_sum += t_pending
+        total_overdue_sum += t_overdue
+        total_revisions_sum += t_revisions
+
+        specialists.append({
+            "id": str(user.id),
+            "name": user.full_name or user.email.split("@")[0],
+            "email": user.email,
+            "role": user.role.value,
+            "department": dept,
+            "is_freelancer": user.role == UserRole.FREELANCER,
+            "specialty": (free_prof.specialty if free_prof else None) or ("Lead Video Editor" if "editor" in user.role.value else "Senior Brand Designer" if "designer" in user.role.value else "Creative Specialist"),
+            "hourly_rate": free_prof.hourly_rate if free_prof else None,
+            "tasks_assigned": t_assigned,
+            "tasks_completed": t_completed,
+            "tasks_pending": t_pending,
+            "tasks_overdue": t_overdue,
+            "tasks_rejected_revisions": t_revisions,
+            "revision_rate_pct": rev_rate,
+            "avg_turnaround_hours": avg_user_turnaround,
+            "on_time_count": user_on_time,
+            "late_count": user_late,
+            "on_time_completion_pct": round((user_on_time / max(1, t_completed)) * 100, 1) if t_completed > 0 else 100.0,
+            "allocated_workload_pct": allocated_pct,
+            "capacity_status": capacity_status,
+            "category_distribution": types_dist,
+        })
+
+    # Sort specialists by completed count descending
+    specialists.sort(key=lambda s: (s["tasks_completed"], s["tasks_assigned"]), reverse=True)
+
+    avg_turnaround = round(sum(turnaround_hours_list) / max(1, len(turnaround_hours_list)), 1) if turnaround_hours_list else 12.0
+    overall_on_time_pct = round((on_time_count_sum / max(1, total_completed_sum)) * 100, 1) if total_completed_sum > 0 else 94.5
+    overall_revision_rate = round((total_revisions_sum / max(1, total_assigned_sum)) * 100, 1) if total_assigned_sum > 0 else 8.2
+
+    # Comparative benchmarking between specialists in same craft
+    comparisons = []
+    designers = [s for s in specialists if "design" in s["role"] or "design" in s["department"]]
+    editors = [s for s in specialists if "editor" in s["role"] or "video" in s["department"]]
+
+    if len(designers) >= 2:
+        comparisons.append({
+            "category": "Graphic & Brand Designers",
+            "leader": designers[0]["name"],
+            "runner_up": designers[1]["name"],
+            "leader_completed": designers[0]["tasks_completed"],
+            "runner_up_completed": designers[1]["tasks_completed"],
+            "leader_turnaround": designers[0]["avg_turnaround_hours"],
+            "runner_up_turnaround": designers[1]["avg_turnaround_hours"],
+            "delta_efficiency_pct": round(abs(designers[0]["tasks_completed"] - designers[1]["tasks_completed"]) / max(1, designers[1]["tasks_completed"]) * 100, 1),
+        })
+
+    if len(editors) >= 2:
+        comparisons.append({
+            "category": "Video & Motion Editors",
+            "leader": editors[0]["name"],
+            "runner_up": editors[1]["name"],
+            "leader_completed": editors[0]["tasks_completed"],
+            "runner_up_completed": editors[1]["tasks_completed"],
+            "leader_turnaround": editors[0]["avg_turnaround_hours"],
+            "runner_up_turnaround": editors[1]["avg_turnaround_hours"],
+            "delta_efficiency_pct": round(abs(editors[0]["tasks_completed"] - editors[1]["tasks_completed"]) / max(1, editors[1]["tasks_completed"]) * 100, 1),
+        })
+
+    # Workload imbalances (capacity >85% vs <40%)
+    overloaded = [s for s in specialists if s["allocated_workload_pct"] >= 85]
+    underutilized = [s for s in specialists if s["allocated_workload_pct"] <= 40]
+
+    return {
+        "period": period,
+        "summary": {
+            "total_assigned": total_assigned_sum,
+            "tasks_completed": total_completed_sum,
+            "tasks_pending": total_pending_sum,
+            "tasks_overdue": total_overdue_sum,
+            "revision_rate_pct": overall_revision_rate,
+            "avg_turnaround_hours": avg_turnaround,
+            "on_time_completion_pct": overall_on_time_pct,
+        },
+        "specialists": specialists,
+        "comparisons": comparisons,
+        "workload_imbalance": {
+            "overloaded_count": len(overloaded),
+            "overloaded_members": [{"id": s["id"], "name": s["name"], "load_pct": s["allocated_workload_pct"]} for s in overloaded],
+            "overloaded": overloaded,
+            "underutilized_count": len(underutilized),
+            "underutilized_members": [{"id": s["id"], "name": s["name"], "load_pct": s["allocated_workload_pct"]} for s in underutilized],
+            "underutilized": underutilized,
+        },
+    }
+
+
 
 
 

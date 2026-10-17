@@ -1,3 +1,4 @@
+import { Instagram, Facebook } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router";
@@ -23,6 +24,8 @@ export function InstagramCallbackPage() {
   const cache = useQueryClient();
   const started = useRef(false);
   const [callback] = useState(() => parseInstagramCallback(window.location.search));
+  const ProviderLogo = callback.state?.startsWith("ig:") ? Instagram : Facebook;
+  const providerLabel = callback.state?.startsWith("ig:") ? "Instagram" : "Facebook";
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
@@ -80,7 +83,8 @@ export function InstagramCallbackPage() {
     setBusy(true);
     setError("");
     try {
-      await selectAccount(selection.selection_id, accountId);
+      const result = await selectAccount(selection.selection_id, accountId);
+      if (!result.connected) throw new Error(result.error || "The account did not connect. Try again.");
       setSelection(null);
       finish();
     } catch (e) {
@@ -95,7 +99,8 @@ export function InstagramCallbackPage() {
   return (
     <main className="min-h-screen bg-[#0B111C] text-white flex items-center justify-center p-4">
       <div className="w-full max-w-md rounded-2xl border border-[#2A3446] bg-[#161F2D] p-6 space-y-4 text-center">
-        <h1 className="text-lg font-bold">Connecting Meta</h1>
+        <ProviderLogo aria-hidden="true" className={`size-12 mx-auto ${busy ? "animate-pulse motion-reduce:animate-none" : ""} ${providerLabel === "Instagram" ? "text-pink-400" : "text-blue-400"}`} />
+        <h1 className="text-lg font-bold">Connecting {providerLabel}</h1>
         {busy && <output className="block text-sm text-[#97A0B3]">Finishing authorization…</output>}
         {done && (
           <output className="block text-sm text-emerald-300">

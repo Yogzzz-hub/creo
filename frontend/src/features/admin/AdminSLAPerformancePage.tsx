@@ -373,13 +373,7 @@ export function AdminSLAPerformancePage() {
                   </p>
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-xs font-semibold text-amber-400">Auto-load balancing recommended</span>
-                    <button
-                      type="button"
-                      onClick={() => navigate("/admin/tasks")}
-                      className="px-3 py-1 rounded-lg bg-[#0B111C] border border-amber-500/30 text-amber-300 font-bold text-[11px] hover:bg-amber-950/50 transition-colors cursor-pointer"
-                    >
-                      Monitor
-                    </button>
+
                   </div>
                 </div>
               </div>

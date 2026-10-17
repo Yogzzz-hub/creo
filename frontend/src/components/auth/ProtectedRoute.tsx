@@ -9,10 +9,13 @@ export const ROLE_HOMES: Record<string, string> = {
   team_lead: "/admin/pod-dashboard",
   editor: "/workstation",
   designer: "/workstation",
-  sales: "/admin/sales",
+  sales: "/bde",
+  bde: "/bde",
+  bde_head: "/bde/crm/overview",
   admin: "/admin",
   super_admin: "/admin",
   investor_relations: "/admin/reports",
+  freelancer: "/freelancer/tasks",
 };
 
 export function getRoleHome(role?: string | null): string {

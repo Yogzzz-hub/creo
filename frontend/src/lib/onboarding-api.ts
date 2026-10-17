@@ -207,3 +207,25 @@ export function cancelManualPaymentRequest(): Promise<{ status: string; message:
   });
 }
 
+export function uploadBrandLogo(file: File): Promise<{ status: string; logo_url: string; filename: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return request<{ status: string; logo_url: string; filename: string }>(
+    "/api/v1/onboarding/questionnaire/logo",
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+}
+
+export function fetchBrandLogo(): Promise<{ brand_logo_url: string | null }> {
+  return request<{ brand_logo_url: string | null }>("/api/v1/onboarding/questionnaire/logo");
+}
+
+export function deleteBrandLogo(): Promise<{ status: string; message: string }> {
+  return request<{ status: string; message: string }>("/api/v1/onboarding/questionnaire/logo", {
+    method: "DELETE",
+  });
+}
+

@@ -2,8 +2,8 @@ import { NativeSelect } from "../../ui/NativeSelect";
 import { useState } from "react";
 import { Link } from "react-router";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { submitPodQAReview, fetchPodDashboard, type PodDashboardData } from "../../lib/ops-api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { submitPodQAReview, fetchPodDashboard, createPodTask, type PodDashboardData } from "../../lib/ops-api";
 import { useAuth } from "../../lib/auth-context";
 import { motion } from "motion/react";
 import {
@@ -28,6 +28,8 @@ function formatDuration(hours: number): string {
 
 export function PodTaskBoardPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [newCardFormat, setNewCardFormat] = useState("reel");
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [newCardTitle, setNewCardTitle] = useState("");
@@ -41,10 +43,11 @@ export function PodTaskBoardPage() {
   // Mobile column switcher for sleek phone experience
   const [activeMobileCol, setActiveMobileCol] = useState<"all" | "backlog" | "in_progress" | "review" | "dispatched">("all");
 
-  const { data } = useQuery<PodDashboardData>({
+  const { data, isPending, isError, error, refetch } = useQuery<PodDashboardData>({
     queryKey: ["pod_dashboard", user?.id, undefined],
     queryFn: () => fetchPodDashboard(),
-    staleTime: 30_000,
+    staleTime: 10_000,
+    refetchInterval: 15_000,
     enabled: !!user?.id,
   });
 
@@ -55,8 +58,10 @@ export function PodTaskBoardPage() {
     `${m?.full_name || m?.name || m?.email?.split("@")[0] || "Specialist"} · ${
       m?.craft_title || m?.craft_role || String(m?.role || "Specialist").replace(/_/g, " ")
     }`;
-  const memberValue = (m: any) => m?.full_name || m?.name || m?.email || "";
+  const memberValue = (m: any) => m.id;
   // Work already in flight is what a lead re-routes when it stalls.
+  const allTasks = Object.values(data?.tasks || {}).flat();
+  const totalActive = allTasks.filter(t => t.status !== "completed").length;
   const activeTasks = [...(data?.tasks?.in_production || []), ...(data?.tasks?.internal_qa || [])];
   const rerouteTask = activeTasks.find((t) => t.id === rerouteTaskId) || activeTasks[0];
 
@@ -74,6 +79,17 @@ export function PodTaskBoardPage() {
     onError: (err: any) => {
       showToast(err?.message || "Failed to submit QA decision", "error");
     },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: () => createPodTask({ client_id: newCardClient || data!.clients[0]!.id,
+      assignee_id: newCardAssignee || undefined, deliverable_type: newCardFormat, title: newCardTitle.trim() }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
+      setAssignModalOpen(false); setNewCardTitle(""); setNewCardAssignee("");
+      showToast("Task saved to the sprint board.");
+    },
+    onError: (err: Error) => showToast(err.message, "error"),
   });
 
   const handleExportSprintCSV = () => {
@@ -108,6 +124,8 @@ export function PodTaskBoardPage() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-[1440px] w-full mx-auto px-3 sm:px-5 lg:px-6 py-3.5 pb-20 sm:pb-6 space-y-3.5 sm:space-y-4">
+        {isPending && <p role="status">Loading task queue...</p>}
+        {isError && <p role="alert" className="text-amber-200">{error.message}<button onClick={() => void refetch()} className="ml-3 underline">Retry</button></p>}
         {/* Toast Alert */}
         {toastMessage && (
           <div
@@ -161,11 +179,11 @@ export function PodTaskBoardPage() {
             <div className="space-y-0.5">
               <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Total Active Tasks</span>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-lg sm:text-xl font-black text-white">18</span>
+                <span className="text-lg sm:text-xl font-black text-white">{isPending ? "..." : isError ? "Unavailable" : totalActive}</span>
                 <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">Tasks in Sprint</span>
               </div>
               <p className="text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] pt-0.5">
-                4 In Progress · 6 Review · 8 Backlog
+                {data?.tasks.in_production.length || 0} In Progress / {data?.tasks.internal_qa.length || 0} Review / {data?.tasks.backlog.length || 0} Backlog
               </p>
             </div>
             <div className="size-7 sm:size-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shrink-0">
@@ -200,11 +218,11 @@ export function PodTaskBoardPage() {
         {/* Mobile-Only Kanban Column Selector Pills */}
         <div className="flex md:hidden items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs font-bold">
           {[
-            { id: "all", label: "All Columns", count: 18 },
-            { id: "backlog", label: "Backlog", count: 8 },
-            { id: "in_progress", label: "In Progress", count: 4 },
-            { id: "review", label: "QA Review", count: 6 },
-            { id: "dispatched", label: "Dispatched", count: 3 },
+            { id: "all", label: "All Columns", count: totalActive },
+            { id: "backlog", label: "Backlog", count: data?.tasks.backlog.length || 0 },
+            { id: "in_progress", label: "In Progress", count: data?.tasks.in_production.length || 0 },
+            { id: "review", label: "QA Review", count: data?.tasks.internal_qa.length || 0 },
+            { id: "dispatched", label: "Dispatched", count: (data?.tasks.ready_to_publish.length || 0) + (data?.tasks.completed.length || 0) },
           ].map((col) => (
             <button
               key={col.id}
@@ -496,12 +514,12 @@ export function PodTaskBoardPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-[#F1F5F9] block mb-1">Content Format</label>
-                  <NativeSelect
+                  <NativeSelect value={newCardFormat} onChange={e => setNewCardFormat(e.target.value)}
                     className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white"
                   >
-                    <option value="Reel">Reel</option>
-                    <option value="Story">Story</option>
-                    <option value="Post">Post</option>
+                    <option value="reel">Reel</option>
+                    <option value="story">Story</option>
+                    <option value="static_post">Post</option>
                   </NativeSelect>
                 </div>
                 <div>
@@ -515,7 +533,7 @@ export function PodTaskBoardPage() {
                       <option value="">No clients assigned to pod</option>
                     ) : (
                       data.clients.map((c) => (
-                        <option key={c.id} value={c.name}>{c.name}</option>
+                        <option key={c.id} value={c.id}>{c.name}</option>
                       ))
                     )}
                   </NativeSelect>
@@ -543,20 +561,11 @@ export function PodTaskBoardPage() {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  showToast(
-                    newCardAssignee
-                      ? `Added "${newCardTitle || "New Task"}" to Sprint Board, assigned to ${newCardAssignee}`
-                      : `Added "${newCardTitle || "New Task"}" to Sprint Board as unassigned backlog`,
-                    "success",
-                  );
-                  setAssignModalOpen(false);
-                  setNewCardTitle("");
-                  setNewCardAssignee("");
-                }}
+                onClick={() => createMutation.mutate()}
+                disabled={createMutation.isPending || !newCardTitle.trim() || !data?.clients.length}
                 className="px-5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition"
               >
-                Add Card
+                {createMutation.isPending ? "Saving..." : "Add Card"}
               </button>
             </div>
           </div>

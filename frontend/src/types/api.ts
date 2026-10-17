@@ -71,6 +71,8 @@ export interface Plan {
 }
 
 export interface CreateOrderResponse {
+  razorpay_subscription_id?: string;
+  recurring?: boolean;
   order_id: string;
   amount: number;
   currency: string;
@@ -237,6 +239,41 @@ export interface DeliverableDetail extends DeliverableItem {
   versions: DeliverableItem[];
 }
 
+export interface DeliverableHistoryEntry {
+  id: string;
+  deliverable_id: string;
+  action: string;
+  action_label?: string;
+  actor_id?: string;
+  actor_name?: string;
+  actor_role?: string;
+  user_id?: string;
+  user_name?: string;
+  user_role?: string;
+  reason?: string | null;
+  file_url?: string | null;
+  voice_note_url?: string | null;
+  voice_note_duration?: number | null;
+  metadata_extra?: Record<string, any>;
+  timestamp: string;
+  created_at?: string;
+  date?: string;
+  time?: string;
+}
+
+export interface DeletedDeliverableRecord {
+  id: string;
+  root_id: string;
+  version: number;
+  deliverable_type?: string;
+  thumbnail_url?: string | null;
+  deleted_at: string;
+  deleted_by?: string | null;
+  deleted_by_name?: string | null;
+  deletion_reason: string;
+  is_archived?: boolean;
+}
+
 export interface PortalDeliverablesResponse {
   items: DeliverableItem[];
   has_more: boolean;
@@ -245,6 +282,7 @@ export interface PortalDeliverablesResponse {
   subscription_active?: boolean;
   is_expired?: boolean;
   limit: number;
+  deleted_records?: DeletedDeliverableRecord[];
 }
 
 // ── Announcements & Broadcasts ──────────────────────────────────────────────

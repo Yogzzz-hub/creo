@@ -49,7 +49,7 @@ class ApprovalAndTimeTests(unittest.TestCase):
         secure_callback = "https://creo.yogalakshmibaskar20.workers.dev/portal/account/instagram"
         with (
             patch.object(settings, "ENVIRONMENT", "production"),
-            patch.object(settings, "INSTAGRAM_APP_ID", "meta-app-id"),
+            patch.object(settings, "INSTAGRAM_APP_ID", "1974779006811443"),
             patch.object(settings, "INSTAGRAM_APP_SECRET", "meta-app-secret"),
             patch.object(settings, "INSTAGRAM_REDIRECT_URI", secure_callback),
             patch.object(settings, "ENCRYPTION_KEY", Fernet.generate_key().decode()),

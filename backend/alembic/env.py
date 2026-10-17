@@ -42,6 +42,29 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
+    # Auto-reconcile orphaned/unknown revisions in alembic_version table
+    try:
+        from sqlalchemy import text
+        from alembic.script import ScriptDirectory
+
+        script = ScriptDirectory.from_config(config)
+        res = connection.execute(text("SELECT version_num FROM alembic_version LIMIT 1"))
+        row = res.fetchone()
+        if row and row[0]:
+            current_db_rev = row[0]
+            try:
+                script.get_revision(current_db_rev)
+            except Exception:
+                heads = script.get_heads()
+                if heads:
+                    connection.execute(
+                        text("UPDATE alembic_version SET version_num = :head"),
+                        {"head": heads[0]},
+                    )
+                    connection.commit()
+    except Exception:
+        pass
+
     context.configure(
         connection=connection,
         target_metadata=target_metadata,

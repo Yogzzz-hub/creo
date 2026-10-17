@@ -16,11 +16,12 @@ import {
   Users,
 } from "lucide-react";
 import { request } from "../../lib/http";
-import { useSearchParams, useLocation } from "react-router";
+import { useSearchParams, useLocation, Link } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
+import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { getAuthToken } from "../../lib/auth-token";
@@ -142,6 +143,8 @@ export function SlackChatPage() {
   // User role classification
   const roleStr = (user?.role || "").toLowerCase();
   const isClient = roleStr === "client";
+  const gate = useOnboardingGate();
+  const canUseChat = !isClient || gate.isComplete;
   const isTeamLead = roleStr === "team_lead" || roleStr === "lead";
   const isAdmin = ["admin", "super_admin", "ops_admin"].includes(roleStr);
   const isTeamMember = !isClient && !isTeamLead && !isAdmin;
@@ -152,8 +155,6 @@ export function SlackChatPage() {
     location.pathname.startsWith("/workstation") ||
     location.pathname.startsWith("/member") ||
     location.pathname === "/slack";
-  const gate = useOnboardingGate();
-  const canUseChat = !isClient || gate.isComplete;
   const locationState = location.state as { draft?: string; dm?: string; leadName?: string } | null;
   const urlDm = searchParams.get("dm");
   const urlChannel = searchParams.get("channel");
@@ -540,7 +541,7 @@ export function SlackChatPage() {
 
       const formattedServer = serverItems.map((m: any) => {
         const isSelf = m.sender_id === user?.id;
-        const senderName = isSelf ? (user?.full_name || "You") : (m.sender_name || (activeMode === "dm" ? (activeContact?.name || "Direct Contact") : "Team Specialist"));
+        const senderName = isSelf ? (user?.full_name || "You") : (m.sender_name || (activeMode === "dm" ? (activeContact?.name || "Teammate") : "Team Specialist"));
         const senderRole = isSelf
           ? (user?.role === "super_admin" || user?.role === "admin"
               ? "Super Admin"
@@ -730,6 +731,7 @@ export function SlackChatPage() {
         // BroadcastChannel fallback
       }
     } catch (err: any) {
+      setMessageText(text);
       console.error("Message send error:", err);
       showToast(err?.message || "Failed to send message. Please retry.", "info");
     }
@@ -805,7 +807,10 @@ export function SlackChatPage() {
   if (isClient && gate.error) {
     return (
       <div role="alert" className="p-6 text-sm text-[#BCCCE6]">
-        Could not verify onboarding status. <button type="button" className="underline" onClick={() => void gate.refetch()}>Retry</button>
+        Could not verify onboarding status.{" "}
+        <button type="button" className="underline" onClick={() => void gate.refetch()}>
+          Retry
+        </button>
       </div>
     );
   }
@@ -816,10 +821,15 @@ export function SlackChatPage() {
 
   if (isClient && !gate.isComplete) {
     return (
-      <SubscriptionLockedState
-        title="Direct Chat Locked"
-        description="Complete setup to chat with your creative team."
-      />
+      <div className="flex flex-1 min-h-0 flex-col py-2 sm:py-4">
+        <ResumeOnboardingBanner variant="compact" />
+        <div className="flex flex-1 items-center justify-center py-6 sm:py-10">
+          <SubscriptionLockedState
+            title="Direct Chat Locked"
+            description="Your private chat with the assigned creative pod unlocks after you complete workspace setup. Resume setup above to continue where you left off."
+          />
+        </div>
+      </div>
     );
   }
 
@@ -829,8 +839,8 @@ export function SlackChatPage() {
         isClient
           ? "flex-1 min-h-0 h-full"
           : isWorkstation
-          ? "pt-6 px-4 sm:px-6 lg:px-8 pb-6 h-[calc(100vh-1.5rem)]"
-          : "h-[calc(100vh-5.5rem)] min-h-[550px]"
+          ? "flex-1 min-h-0 h-full lg:pt-6 lg:px-8 lg:pb-6"
+          : "flex-1 min-h-0 h-full"
       } overflow-hidden`}
     >
       {/* ── Top Header Context Bar (Admin Console Only) ── */}
@@ -862,7 +872,15 @@ export function SlackChatPage() {
           <div className="p-3.5 border-b border-white/[0.08] space-y-3 shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="size-7 rounded-xl bg-gradient-to-br from-[#7FA0D6] to-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                <Link
+                  to={isWorkstation ? "/workstation" : isClient ? "/portal" : "/admin"}
+                  className="md:hidden p-1.5 rounded-xl bg-white/[0.06] text-slate-300 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+                  aria-label="Back to dashboard"
+                  title="Back to dashboard"
+                >
+                  <ArrowLeft className="size-4" />
+                </Link>
+                <div className="size-7 rounded-xl bg-gradient-to-br from-[#7FA0D6] to-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
                   <MessageSquare className="size-3.5" />
                 </div>
                 <div>
@@ -1202,60 +1220,58 @@ export function SlackChatPage() {
             </div>
           </div>
 
-          {/* Messages Feed Viewport */}
-          {((activeMode === "dm" && !activeContact) || serverMessages.length === 0) ? (
-            <div
-              ref={messagesContainerRef}
-              className="flex-1 min-h-0 flex flex-col items-center justify-center p-6 text-center bg-[#0B111C]/90"
-            >
-              <div
-                className={`size-16 rounded-3xl flex items-center justify-center mb-4 border ${
-                  activeMode === "dm" && activeContact?.is_super_admin
-                    ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                    : "bg-[#7FA0D6]/10 text-[#7FA0D6] border-[#7FA0D6]/20"
-                }`}
-              >
-                {activeMode === "channel" ? (
-                  <Hash className="size-8 text-[#7FA0D6]" />
-                ) : activeContact?.is_super_admin ? (
-                  <Crown className="size-8" />
-                ) : (
-                  <MessageSquare className="size-8" />
+          {/* Messages Feed */}
+          <div
+            ref={messagesContainerRef}
+            className="flex-1 min-h-0 max-h-full overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-4 bg-[#0B111C]/90 backdrop-blur-xl flex flex-col"
+          >
+            {(activeMode === "dm" && !activeContact) || serverMessages.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-auto">
+                <div
+                  className={`size-16 rounded-3xl flex items-center justify-center mb-4 border ${
+                    activeMode === "dm" && activeContact?.is_super_admin
+                      ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                      : "bg-[#7FA0D6]/10 text-[#7FA0D6] border-[#7FA0D6]/20"
+                  }`}
+                >
+                  {activeMode === "channel" ? (
+                    <Hash className="size-8 text-[#7FA0D6]" />
+                  ) : activeContact?.is_super_admin ? (
+                    <Crown className="size-8 text-amber-400" />
+                  ) : (
+                    <MessageSquare className="size-8 text-[#7FA0D6]" />
+                  )}
+                </div>
+                <h3 className="text-base font-black text-white">
+                  {activeMode === "channel"
+                    ? `Welcome to #${activeChannel.label}`
+                    : !activeContact
+                    ? "No assigned teammate selected"
+                    : activeContact.is_super_admin
+                    ? "Direct Channel with Creo Super Administration"
+                    : `Direct Conversation with ${activeContact.name}`}
+                </h3>
+                <p className="text-xs text-[#97A0B3] max-w-md mt-1.5 leading-relaxed">
+                  {activeMode === "channel"
+                    ? `This is the start of the #${activeChannel.label} channel. Collaborate with your creative team, drop project notes, or review revisions in real time.`
+                    : !activeContact
+                    ? "Your chat list only includes your assigned team and executive support contact."
+                    : activeContact.is_super_admin
+                    ? "This is your private, direct thread with Creo Executive Super Administration. Inquire about your creative pod, retainer adjustments, SLA escalations, or custom requests."
+                    : `This is the start of your direct 1-on-1 thread with ${activeContact.name}. Drop project feedback, creative directions, or collaborate in real time.`}
+                </p>
+                {activeMode === "dm" && activeContact && (
+                  <div className="mt-4 flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#161F2D] text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                      <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+                      Live 2-Way Sync Active
+                    </span>
+                  </div>
                 )}
               </div>
-              <h3 className="text-base font-black text-white">
-                {activeMode === "channel"
-                  ? `Welcome to #${activeChannel.label}`
-                  : !activeContact
-                  ? "No assigned teammate selected"
-                  : activeContact.is_super_admin
-                  ? "Direct Channel with Creo Super Administration"
-                  : `Direct Conversation with ${activeContact.name}`}
-              </h3>
-              <p className="text-xs text-[#97A0B3] max-w-md mt-1.5 leading-relaxed">
-                {activeMode === "channel"
-                  ? `This is the start of the #${activeChannel.label} channel. Collaborate with your creative team, drop project notes, or review revisions in real time.`
-                  : !activeContact
-                  ? "Your chat list only includes your assigned team and executive support contact."
-                  : activeContact.is_super_admin
-                  ? "This is your private, direct thread with Creo Executive Super Administration. Inquire about your creative pod, retainer adjustments, SLA escalations, or custom requests."
-                  : `This is the start of your direct 1-on-1 thread with ${activeContact.name}. Drop project feedback, creative directions, or collaborate in real time.`}
-              </p>
-              {activeMode === "dm" && activeContact && (
-                <div className="mt-4 flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#161F2D] text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
-                    <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-                    Live 2-Way Sync Active
-                  </span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div
-              ref={messagesContainerRef}
-              className="flex-1 min-h-0 overflow-y-auto space-y-4 p-4 sm:p-6 bg-[#0B111C]/90"
-            >
-              {serverMessages.map((msg) => {
+            ) : (
+              <>
+                {serverMessages.map((msg) => {
                 const isUser = msg.sender === currentPersona || msg.sender === (user?.full_name || "You");
                 return (
                   <div
@@ -1335,8 +1351,9 @@ export function SlackChatPage() {
                 );
               })}
               <div ref={chatEndRef} />
-            </div>
+            </>
           )}
+        </div>
 
           {/* Message Input Bar */}
           <div className="border-t border-[#2A3446]/60 p-4 bg-[#161F2D] relative shrink-0">
@@ -1402,7 +1419,7 @@ export function SlackChatPage() {
                 <input
                   ref={chatInputRef}
                   type="text"
-                  disabled={!activeContact}
+                  disabled={activeMode === "dm" && !activeContact}
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   placeholder={
@@ -1415,7 +1432,7 @@ export function SlackChatPage() {
                 <div className="absolute right-2 flex items-center gap-1">
                   <button
                     type="button"
-                    disabled={!activeContact}
+                    disabled={activeMode === "dm" && !activeContact}
                     onClick={() => setShowEmojiPicker((prev) => !prev)}
                     className="p-1.5 text-[#97A0B3] hover:text-[#7FA0D6] rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                     title="Add Emoji"
@@ -1424,7 +1441,7 @@ export function SlackChatPage() {
                   </button>
                   <button
                     type="button"
-                    disabled={!activeContact}
+                    disabled={activeMode === "dm" && !activeContact}
                     onClick={() => showToast("Attachment upload ready", "info")}
                     className="p-1.5 text-[#97A0B3] hover:text-white rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                     title="Attach file"
@@ -1433,7 +1450,7 @@ export function SlackChatPage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={!activeContact || !messageText.trim()}
+                    disabled={(activeMode === "dm" && !activeContact) || !messageText.trim()}
                     className="p-2 rounded-xl bg-[#7FA0D6] hover:bg-white text-[#0B111C] disabled:opacity-40 transition cursor-pointer font-bold"
                   >
                     <Send className="size-4" />

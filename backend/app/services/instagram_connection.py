@@ -85,7 +85,11 @@ def configured(provider: str = "facebook") -> bool:
             if provider == "instagram"
             else settings.INSTAGRAM_APP_SECRET
         )
-        if provider not in ("facebook", "instagram") or not app_id.strip() or not secret.strip():
+        if (
+            provider not in ("facebook", "instagram")
+            or not app_id.strip().isdecimal()
+            or not secret.strip()
+        ):
             return False
         if not callback_is_safe:
             return False
@@ -96,6 +100,20 @@ def configured(provider: str = "facebook") -> bool:
 
 
 def require_configuration(provider: str = "facebook") -> None:
+    app_id = (
+        settings.INSTAGRAM_LOGIN_APP_ID if provider == "instagram" else settings.INSTAGRAM_APP_ID
+    )
+    app_secret = (
+        settings.INSTAGRAM_LOGIN_APP_SECRET
+        if provider == "instagram"
+        else settings.INSTAGRAM_APP_SECRET
+    )
+    if not app_id.strip().isdecimal() or not app_secret.strip():
+        label = "Instagram Login" if provider == "instagram" else "Facebook Login"
+        raise Conflict(
+            f"{label} is not configured correctly. Your agency needs to set its matching app ID and secret on the server.",
+            code="INSTAGRAM_NOT_CONFIGURED",
+        )
     if not configured(provider):
         logger.error(
             "instagram_not_configured",
@@ -270,18 +288,18 @@ async def pause_jobs(db: AsyncSession, profile: ClientProfile, reason: str) -> N
 def authorization_url(state: str, provider: str = "facebook") -> str:
     """Build the matching provider dialog without exposing app secrets."""
     if provider == "instagram":
-        return "https://www.instagram.com/oauth/authorize?" + urlencode(
+        return "https://www.instagram.com/oauth/authorize/?" + urlencode(
             {
-                "client_id": settings.INSTAGRAM_LOGIN_APP_ID,
+                "client_id": settings.INSTAGRAM_LOGIN_APP_ID.strip(),
                 "redirect_uri": settings.INSTAGRAM_REDIRECT_URI,
                 "response_type": "code",
                 "scope": ",".join(sorted(LOGIN_SCOPES)),
                 "state": state,
-                "enable_fb_login": "0",
+                "enable_fb_login": "false",
             }
         )
     params = {
-        "client_id": settings.INSTAGRAM_APP_ID,
+        "client_id": settings.INSTAGRAM_APP_ID.strip(),
         "redirect_uri": settings.INSTAGRAM_REDIRECT_URI,
         "response_type": "code",
         "state": state,

@@ -1,3 +1,4 @@
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { useState } from "react";
 import { Search, Download, Loader2, Film } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -108,9 +109,7 @@ export function PortalLibraryPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-[400px] items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#7FA0D6] animate-spin" />
-      </div>
+      <CreoInlineLoader />
     );
   }
 

@@ -31,7 +31,7 @@ from app.core.rbac import (
 )
 from app.db.session import get_db
 from app.models.billing import Plan, Subscription
-from app.models.enums import DeliverableStatus, DeliverableType, SubscriptionStatus, TaskStatus, UserRole
+from app.models.enums import AccountStatus, DeliverableStatus, DeliverableType, SubscriptionStatus, TaskStatus, UserRole
 from app.models.ops import AuditLog
 from app.models.user import User
 from app.models.work import Deliverable, Task
@@ -49,6 +49,7 @@ router = APIRouter(prefix="/tasks", tags=["Tasks"])
 class TaskCreateRequest(BaseModel):
     client_id: uuid.UUID
     deliverable_type: DeliverableType
+    assignee_id: uuid.UUID | None = None
     due_date: date | None = None
     auto_dispatch: bool = False
     title: str | None = Field(default=None, max_length=200)
@@ -232,6 +233,21 @@ async def create_task(
     elif actor.role == UserRole.ADMIN and actor.agency_id and client.agency_id not in (None, actor.agency_id):
         raise Forbidden("This client belongs to another agency", code="CLIENT_FORBIDDEN")
 
+    assignee_id = actor.user_id if actor.role in (UserRole.EDITOR, UserRole.DESIGNER) else payload.assignee_id
+    if assignee_id:
+        from app.models.user import StaffProfile
+        assignee = await db.get(User, assignee_id)
+        if (not assignee or assignee.role not in (UserRole.EDITOR, UserRole.DESIGNER, UserRole.TEAM_LEAD)
+            or assignee.account_status != AccountStatus.ACTIVE
+            or assignee.agency_id != client.agency_id):
+            raise Forbidden("Choose an active specialist in the client's agency", code="INVALID_ASSIGNEE")
+        if actor.role == UserRole.TEAM_LEAD and assignee_id != actor.user_id:
+            profile = await db.scalar(select(StaffProfile).where(StaffProfile.user_id == assignee_id))
+            if not profile or profile.team_lead_id != actor.user_id:
+                raise Forbidden("This specialist is outside your pod", code="ASSIGNEE_NOT_ON_POD")
+    if payload.auto_dispatch and assignee_id:
+        raise Conflict("Choose a specialist or automatic dispatch, not both")
+
     # Lookup client plan tier to compute turnaround SLA
     sub_res = await db.execute(
         select(Plan.name)
@@ -256,16 +272,17 @@ async def create_task(
         agency_id=client.agency_id,
         client_id=payload.client_id,
         deliverable_type=payload.deliverable_type,
-        status=TaskStatus.BACKLOG,
+        status=TaskStatus.IN_PRODUCTION if assignee_id else TaskStatus.BACKLOG,
         due_date=payload.due_date,
         sla_due_at=sla_due,
-        assigned_to=actor.user_id if actor.role in (UserRole.EDITOR, UserRole.DESIGNER) else None,
+        assigned_to=assignee_id,
         blueprint=blueprint or None,
     )
     db.add(task)
     await db.flush()
 
     audit = AuditLog(
+        agency_id=client.agency_id,
         actor_id=actor.user_id,
         actor_role=actor.role,
         entity="task",
@@ -273,6 +290,7 @@ async def create_task(
         action="task_created",
         to_value={
             "client_id": str(payload.client_id),
+            "assigned_to": str(assignee_id) if assignee_id else None,
             "deliverable_type": payload.deliverable_type.value,
             "sla_due_at": sla_due.isoformat(),
         },

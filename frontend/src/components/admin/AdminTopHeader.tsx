@@ -1,6 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import { 
-  ChevronLeft, 
   ExternalLink, 
   LogOut, 
   Menu
@@ -31,7 +30,7 @@ export function AdminTopHeader({
   kpis: _kpis,
   refreshing: _refreshing,
   handleRefreshKpis: _handleRefreshKpis,
-  showBackButton = false,
+  showBackButton: _showBackButton = false,
 }: AdminTopHeaderProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -104,6 +103,10 @@ export function AdminTopHeader({
       ? "Team Details"
       : location.pathname.includes("/lead/clients")
       ? "Client Details"
+      : location.pathname.includes("/admin/productivity")
+      ? "Team Productivity & Efficiency"
+      : location.pathname.includes("/admin/bde") || location.pathname.startsWith("/bde")
+      ? "BDE Prospect Pipeline"
       : location.pathname.includes("/admin/revenue")
       ? "Revenue Engine"
       : location.pathname.includes("/admin/plans") || location.pathname.includes("/admin/sales")
@@ -141,7 +144,7 @@ export function AdminTopHeader({
   }
 
   return (
-    <div className={`sticky top-0 z-40 w-full bg-[#0B111C]/90 backdrop-blur-md pt-2 sm:pt-2.5 pb-1.5 sm:pb-2 transition-all ${location.pathname.startsWith("/portal") ? "px-4 sm:px-6" : "px-3.5 sm:px-6 lg:px-8"}`}>
+    <div className={`lg:hidden sticky top-0 z-40 w-full bg-[#0B111C]/90 backdrop-blur-md pt-2 sm:pt-2.5 pb-1.5 sm:pb-2 transition-all ${location.pathname.startsWith("/portal") ? "px-4 sm:px-6" : "px-3.5 sm:px-6 lg:px-8"}`}>
       <header className="max-w-[1500px] mx-auto bg-[#161F2D] rounded-xl sm:rounded-full border border-[#2A3446] px-3.5 sm:px-5 lg:px-6 py-1.5 sm:py-2 flex items-center justify-between shadow-[0_4px_20px_rgba(5,8,16,0.5)] min-h-[44px] sm:min-h-[48px]">
         {/* Left Section: Mobile Hamburger + Back Button + Mobile Brand Logo + Title */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -156,24 +159,6 @@ export function AdminTopHeader({
           >
             <Menu className="w-4 h-4" />
           </button>
-
-          {showBackButton && (
-            <Link
-              to={
-                isAdminOrSuper
-                  ? "/admin"
-                  : isTeamLead
-                  ? "/admin/pod-dashboard"
-                  : isMemberRole
-                  ? "/workstation"
-                  : "/portal"
-              }
-              className="p-1 rounded-full hover:bg-[#161F2D] text-[#97A0B3] hover:text-white transition-colors shrink-0"
-              title="Go Back"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Link>
-          )}
 
           {/* Brand Logo - visible on mobile where sidebar is inside drawer */}
           <Link
@@ -191,10 +176,6 @@ export function AdminTopHeader({
           >
             Creo<span className="text-[#7FA0D6] text-base sm:text-lg leading-none">.</span>
           </Link>
-
-          {showBackButton && (
-            <span className="h-4 w-px bg-[#2A3446] mx-1 hidden sm:block shrink-0" />
-          )}
 
           {/* Active Page Title */}
           {!hideTitle && resolvedTitle && (

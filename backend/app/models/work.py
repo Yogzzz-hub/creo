@@ -135,12 +135,23 @@ class Deliverable(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     ig_permalink: Mapped[str | None] = mapped_column(Text, nullable=True)
     publish_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     publish_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_archived: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    deleted_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    deletion_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     client: Mapped[User] = relationship(
         "User", foreign_keys=[client_id], back_populates="deliverables"
     )
     task: Mapped[Task | None] = relationship("Task", back_populates="deliverables")
     parent: Mapped[Deliverable | None] = relationship("Deliverable", remote_side="Deliverable.id")
+    history_entries: Mapped[list[DeliverableHistory]] = relationship(
+        "DeliverableHistory", back_populates="deliverable", cascade="all, delete-orphan", order_by="DeliverableHistory.created_at.desc()"
+    )
 
     __table_args__ = (
         UniqueConstraint("root_id", "version", name="uq_deliv_root_version"),
@@ -293,3 +304,41 @@ class ClientAssignment(Base, UUIDPrimaryKeyMixin):
             unique=True,
         ),
     )
+
+
+class DeliverableHistory(Base, UUIDPrimaryKeyMixin):
+    __tablename__ = "deliverable_history"
+
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    deliverable_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("deliverables.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    root_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    action: Mapped[str] = mapped_column(String(50), nullable=False)  # submitted, qa_approved, qa_rejected, client_approved, revision_requested, withdrawn_deleted, archived, resubmitted
+    actor_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    actor_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    actor_role: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    file_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    voice_note_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    voice_note_duration: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    client_visible: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    deliverable: Mapped[Deliverable] = relationship("Deliverable", back_populates="history_entries")
+    actor: Mapped[User | None] = relationship("User", foreign_keys=[actor_id])

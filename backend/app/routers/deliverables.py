@@ -50,7 +50,7 @@ from app.core.errors import AppError, Conflict, Forbidden, NotFound
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
 from app.models.enums import DeliverableStatus, UserRole
-from app.models.work import Deliverable, Task
+from app.models.work import Deliverable, DeliverableHistory, Task
 from app.repositories.base import DeliverableRepository, TenantScope
 from app.routers.publishing import ScheduleBody
 from app.services import deliverable_state, storage_service
@@ -291,7 +291,9 @@ async def qa_reject(
 
 
 class RequestChangesBody(BaseModel):
-    rejection_comment: str = Field(min_length=1, max_length=4000)
+    rejection_comment: str | None = Field(default=None, max_length=4000)
+    voice_note_url: str | None = None
+    voice_note_duration: int | None = None
 
 
 class ApproveDeliverableBody(BaseModel):
@@ -329,15 +331,24 @@ async def request_changes(
     db: AsyncSession = Depends(get_db),
     _sub_guard: dict[str, Any] = Depends(require_active_subscription),
 ) -> dict[str, object]:
-    """Client requests changes. pending_approval → revision_requested. Comment required.
+    """Client requests changes. pending_approval → revision_requested. Comment or voice note required.
 
     On REVISION_LIMIT_REACHED, raises Conflict with code 'REVISION_LIMIT_REACHED'.
     The frontend should render a plan upsell dialog, not a red toast.
     """
     comment = (payload.rejection_comment if payload else rejection_comment) or ""
+    voice_note_url = payload.voice_note_url if payload else None
+    voice_note_duration = payload.voice_note_duration if payload else None
     scope = _scope_from_actor(actor)
     d = await _get_deliverable_or_404(deliverable_id, scope, db)
-    d = await workflow.client_request_changes(db, actor, d, comment)
+    d = await workflow.client_request_changes(
+        db,
+        actor,
+        d,
+        comment,
+        voice_note_url=voice_note_url,
+        voice_note_duration=voice_note_duration,
+    )
     return {
         "status": d.status.value,
         "deliverable_id": str(d.id),
@@ -359,6 +370,179 @@ async def schedule_deliverable(
         raise NotFound("Deliverable not found")
     job = await publishing_service.schedule(db, actor, d, **payload.model_dump())
     return publishing_service.serialize(job, d)
+
+
+class WithdrawDeliverableBody(BaseModel):
+    reason: str = Field(min_length=3, max_length=2000, description="Reason for withdrawing or deleting the deliverable")
+
+
+def serialize_history_entry(h: DeliverableHistory) -> dict[str, Any]:
+    action_labels = {
+        "submitted": "Submitted for QA",
+        "qa_approved": "Approved by Team Lead",
+        "qa_rejected": "Changes Requested by Team Lead",
+        "client_approved": "Approved by Client",
+        "revision_requested": "Revision Requested by Client",
+        "voice_response": "Voice Response / Clarification",
+        "withdrawn_deleted": "Withdrawn / Deleted by Team Lead",
+        "resubmitted": "Resubmitted",
+        "archived": "Archived",
+    }
+    voice_url = storage_service.resolve_media_url(h.voice_note_url) if getattr(h, "voice_note_url", None) else None
+    return {
+        "id": str(h.id),
+        "deliverable_id": str(h.deliverable_id),
+        "root_id": str(h.root_id) if h.root_id else None,
+        "version": h.version,
+        "action": h.action,
+        "action_label": action_labels.get(h.action, h.action.replace("_", " ").capitalize()),
+        "actor_id": str(h.actor_id) if h.actor_id else None,
+        "actor_name": h.actor_name,
+        "actor_role": h.actor_role,
+        "reason": h.reason,
+        "file_url": storage_service.resolve_media_url(h.file_url) if h.file_url else None,
+        "voice_note_url": voice_url,
+        "voice_note_duration": getattr(h, "voice_note_duration", None),
+        "client_visible": h.client_visible,
+        "created_at": h.created_at.isoformat() if h.created_at else None,
+        "date": h.created_at.strftime("%b %d, %Y") if h.created_at else None,
+        "time": h.created_at.strftime("%I:%M %p") if h.created_at else None,
+    }
+
+
+class VoiceResponsePayload(BaseModel):
+    message: str | None = None
+    voice_note_url: str | None = None
+    voice_note_duration: int | None = None
+
+
+@router.post("/{deliverable_id}/upload-voice-note")
+@portal_router.post("/deliverables/{deliverable_id}/upload-voice-note")
+async def upload_voice_note(
+    deliverable_id: uuid.UUID,
+    audio: UploadFile = File(...),
+    duration: int | None = Form(default=None),
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Upload a voice recording feedback note (audio/webm, audio/mp4, audio/ogg, audio/wav, audio/mpeg)."""
+    scope = _scope_from_actor(actor)
+    d = await _get_deliverable_or_404(deliverable_id, scope, db)
+
+    mime_type = audio.content_type or "audio/webm"
+    if mime_type not in storage_service.ALLOWED_MIMES:
+        mime_type = "audio/webm"
+
+    content = await audio.read()
+    size = len(content)
+    if size > 25 * 1024 * 1024:
+        raise AppError("Audio file exceeds maximum 25MB limit", code="AUDIO_TOO_LARGE")
+
+    import io
+    fileobj = io.BytesIO(content)
+    storage_key = storage_service.make_storage_key(d.client_id, mime_type, prefix="voice-notes")
+    stored = await asyncio.to_thread(
+        storage_service.put_object, storage_key, fileobj, mime_type, size
+    )
+    resolved = storage_service.resolve_media_url(stored)
+    return {
+        "storage_key": stored,
+        "voice_note_url": resolved,
+        "duration": duration,
+        "mime_type": mime_type,
+        "file_size_bytes": size,
+    }
+
+
+@router.post("/{deliverable_id}/voice-response")
+@portal_router.post("/deliverables/{deliverable_id}/voice-response")
+async def post_voice_response(
+    deliverable_id: uuid.UUID,
+    payload: VoiceResponsePayload,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Allow client or team member to post a voice response/clarification to revision history."""
+    scope = _scope_from_actor(actor)
+    d = await _get_deliverable_or_404(deliverable_id, scope, db)
+    msg = (payload.message or "").strip()
+    if not msg and not payload.voice_note_url:
+        raise Conflict("Please provide a message or voice note", code="MISSING_CONTENT")
+    if not msg:
+        msg = "[Voice Response Attached]"
+
+    history = await workflow.record_deliverable_history(
+        db,
+        d,
+        "voice_response",
+        actor,
+        reason=msg,
+        voice_note_url=payload.voice_note_url,
+        voice_note_duration=payload.voice_note_duration,
+        client_visible=True,
+    )
+    await db.commit()
+    return serialize_history_entry(history)
+
+
+@router.post("/{deliverable_id}/withdraw")
+@router.delete("/{deliverable_id}")
+async def withdraw_deliverable(
+    deliverable_id: uuid.UUID,
+    payload: WithdrawDeliverableBody,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Team Lead / Admin withdraws or deletes an approved deliverable with a mandatory reason."""
+    scope = _scope_from_actor(actor)
+    d = await _get_deliverable_or_404(deliverable_id, scope, db)
+    d = await workflow.withdraw_approved_deliverable(db, actor, d, reason=payload.reason)
+    return {
+        "status": d.status.value,
+        "deliverable_id": str(d.id),
+        "is_archived": getattr(d, "is_archived", True),
+        "deletion_reason": getattr(d, "deletion_reason", payload.reason),
+        "deleted_at": d.deleted_at.isoformat() if getattr(d, "deleted_at", None) else None,
+    }
+
+
+@router.get("/{deliverable_id}/history")
+async def get_deliverable_history(
+    deliverable_id: uuid.UUID,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict[str, Any]]:
+    """Complete history of submissions, approvals, revisions, and deletions for authorized staff."""
+    d, _task = await workflow.get_deliverable_for_review(db, actor, deliverable_id)
+    stmt = (
+        select(DeliverableHistory)
+        .where(
+            (DeliverableHistory.deliverable_id == d.id) | (DeliverableHistory.root_id == d.root_id)
+        )
+        .order_by(DeliverableHistory.created_at.desc())
+    )
+    rows = (await db.execute(stmt)).scalars().all()
+    return [serialize_history_entry(h) for h in rows]
+
+
+@portal_router.get("/deliverables/{deliverable_id}/history")
+async def get_portal_deliverable_history(
+    deliverable_id: uuid.UUID,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict[str, Any]]:
+    """Client-facing history of deliverable submissions, approvals, deletions and revisions."""
+    d = await _get_deliverable_or_404(deliverable_id, _scope_from_actor(actor), db)
+    stmt = (
+        select(DeliverableHistory)
+        .where(
+            (DeliverableHistory.deliverable_id == d.id) | (DeliverableHistory.root_id == d.root_id),
+            DeliverableHistory.client_visible == True,
+        )
+        .order_by(DeliverableHistory.created_at.desc())
+    )
+    rows = (await db.execute(stmt)).scalars().all()
+    return [serialize_history_entry(h) for h in rows]
 
 
 # ── Version History ────────────────────────────────────────────────────────────
@@ -580,8 +764,37 @@ async def portal_list_deliverables(
             return await asyncio.to_thread(workflow.serialize_for_client, pair[0], pair[1],
                 request=request, revisions_allowed=allowed)
     items = await asyncio.gather(*(serialize(pair) for pair in ordered))
+
+    # Fetch recently deleted / withdrawn deliverable records for transparency
+    deleted_rows = (await db.execute(
+        select(Deliverable, Task)
+        .outerjoin(Task, Task.id == Deliverable.task_id)
+        .where(
+            Deliverable.client_id == target,
+            Deliverable.is_archived.is_(True),
+            Deliverable.deleted_at.is_not(None),
+        )
+        .order_by(Deliverable.deleted_at.desc())
+        .limit(10)
+    )).all()
+    deleted_records = [
+        {
+            "id": str(deliv.id),
+            "root_id": str(deliv.root_id),
+            "version": deliv.version,
+            "title": workflow.deliverable_title(tsk, deliv),
+            "type_label": workflow.type_label(tsk, deliv),
+            "deleted_at": deliv.deleted_at.isoformat() if deliv.deleted_at else None,
+            "deletion_reason": deliv.deletion_reason,
+            "status": "withdrawn_deleted",
+            "status_label": "Withdrawn / Deleted",
+        }
+        for deliv, tsk in deleted_rows
+    ]
+
     return {
         "items": items,
+        "deleted_records": deleted_records,
         "has_more": has_more,
         "waiting_on_you": waiting_count,
         "revisions_allowed": allowed,

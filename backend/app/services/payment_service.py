@@ -67,7 +67,7 @@ def verify_checkout_signature(order_id: str | None, payment_id: str | None, sign
         return False
     expected = hmac.new(
         key_secret.encode("utf-8"),
-        f"{order_id}|{payment_id}".encode("utf-8"),
+        (f"{payment_id}|{order_id}" if order_id.startswith("sub_") else f"{order_id}|{payment_id}").encode("utf-8"),
         hashlib.sha256,
     ).hexdigest()
     return hmac.compare_digest(expected, signature)
@@ -91,8 +91,10 @@ async def create_order(
         raise NotFound("Plan not found or inactive", code="PLAN_NOT_FOUND")
 
     # Validate client_id exists in users table to prevent FK violations
-    user_stmt = select(User).where(User.id == client_id)
+    user_stmt = select(User).where(User.id == client_id).with_for_update()
     existing_user = (await db.execute(user_stmt)).scalar_one_or_none()
+    if existing_user and existing_user.role != UserRole.CLIENT:
+        raise Forbidden("Only client accounts can authorize a subscription.")
     if not existing_user:
         raise NotFound(f"Client account {client_id} not found", code="CLIENT_NOT_FOUND")
 
@@ -109,9 +111,13 @@ async def create_order(
     if custom_plan:
         plan = custom_plan
 
+    if plan.agency_id and plan.agency_id != existing_user.agency_id:
+        raise Forbidden("This plan belongs to another agency.")
     now = datetime.now(UTC)
     from app.services.subscription_guard import expire_stale_subscriptions
     await expire_stale_subscriptions(db)
+    # The expiry sweep may commit. Reacquire serialization before gateway creation.
+    await db.execute(select(User.id).where(User.id == client_id).with_for_update())
 
     # Option 1: Guard against overlapping active subscriptions.
     # Clients can only select/purchase a new plan once their current retainer expires.
@@ -145,11 +151,27 @@ async def create_order(
         if gateway == PaymentProvider.RAZORPAY
         else getattr(settings, "STRIPE_PUBLISHABLE_KEY", "pk_test_creo_demo")
     )
-    key_secret = getattr(settings, "RAZORPAY_KEY_SECRET", "")
 
     if gateway == PaymentProvider.RAZORPAY:
-        from app.services.razorpay_orders import create_razorpay_order
-        order_id = await create_razorpay_order(key_id, key_secret, plan.price_minor, plan.currency)
+        from app.services import razorpay_subscriptions
+        if not existing_user.agency_id:
+            raise Conflict("Assign the client to an agency before billing.")
+        if active_sub:
+            raise Conflict("An active subscription already exists. Manage its renewal in Settings.")
+        pending = (await db.execute(select(Subscription).where(
+            Subscription.client_id == client_id,
+            Subscription.status == SubscriptionStatus.INCOMPLETE,
+            Subscription.gateway_subscription_id.like("sub_%")
+        ).order_by(Subscription.created_at.desc()).limit(1))).scalar_one_or_none()
+        if pending:
+            remote = await razorpay_subscriptions.fetch(pending.gateway_subscription_id)
+            if remote.get("status") in ("created", "authenticated", "active"):
+                if pending.plan_id != plan.id or int((pending.gateway_data or {}).get("price_minor", -1)) != plan.price_minor:
+                    raise Conflict("A recurring checkout is already open for another plan. Ask your agency to cancel it before choosing a new plan.")
+                return CreateOrderResponse(subscription_id=pending.id, gateway=gateway,
+                    order_id=pending.gateway_subscription_id, razorpay_subscription_id=pending.gateway_subscription_id,
+                    amount_minor=plan.price_minor, currency=plan.currency, key_id=key_id, recurring=True)
+        order_id = await razorpay_subscriptions.create(plan, client_id)
     else:
         from app.core.errors import AppError
         raise AppError("This payment gateway is unavailable.",
@@ -157,6 +179,8 @@ async def create_order(
 
     subscription = Subscription(
         id=sub_id,
+        agency_id=existing_user.agency_id,
+        gateway_data={"recurring": True, "price_minor": plan.price_minor, "currency": plan.currency, "mandate_status": "created"},
         client_id=client_id,
         plan_id=plan.id,
         status=SubscriptionStatus.INCOMPLETE,
@@ -173,6 +197,8 @@ async def create_order(
         subscription_id=sub_id,
         gateway=gateway,
         order_id=order_id,
+        razorpay_subscription_id=order_id,
+        recurring=True,
         amount_minor=plan.price_minor,
         currency=plan.currency,
         key_id=key_id,
@@ -263,7 +289,7 @@ async def confirm_order(
         Subscription.gateway_subscription_id == order_id,
         Subscription.gateway == gateway,
     )
-    sub = (await db.execute(sub_stmt)).scalar_one_or_none()
+    sub = (await db.execute(sub_stmt.with_for_update() if order_id.startswith("sub_") else sub_stmt)).scalar_one_or_none()
     if not sub:
         raise NotFound("Subscription order not found", code="ORDER_NOT_FOUND")
 
@@ -275,13 +301,20 @@ async def confirm_order(
             if caller_id and sub.client_id != caller_id:
                 raise Forbidden("Unauthorized: you cannot confirm a payment order belonging to another client.")
 
-    if sub.status in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING):
+    if sub.status in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING) and sub.current_period_end > datetime.now(UTC):
         return ConfirmPaymentResponse(status="active", subscription_id=sub.id)
 
     # Razorpay signature verification (the browser can only produce it for a real payment)
     is_valid_signature = gateway == PaymentProvider.RAZORPAY and verify_checkout_signature(
         order_id, payment_id, signature
     )
+    if order_id.startswith("sub_"):
+        if not is_valid_signature:
+            raise Forbidden("Invalid recurring payment signature.")
+        from app.services import razorpay_subscriptions
+        remote = await razorpay_subscriptions.fetch(sub.gateway_subscription_id)
+        await apply_recurring_payment(db, sub, remote)
+        return ConfirmPaymentResponse(status="active", subscription_id=sub.id)
     if is_valid_signature or sandbox_confirmation_allowed():
         await _activate_subscription(db, sub)
         return ConfirmPaymentResponse(status="active", subscription_id=sub.id)
@@ -420,6 +453,8 @@ async def process_event(db: AsyncSession, event_id: uuid.UUID) -> None:
     order_id = (
         payload.get("order_id")
         or payload.get("data", {}).get("object", {}).get("id")
+        or razorpay_body.get("subscription", {}).get("entity", {}).get("id")
+        or razorpay_body.get("payment", {}).get("entity", {}).get("subscription_id")
         or razorpay_body.get("payment", {}).get("entity", {}).get("order_id")
         or razorpay_body.get("order", {}).get("entity", {}).get("id")
     )
@@ -431,23 +466,30 @@ async def process_event(db: AsyncSession, event_id: uuid.UUID) -> None:
     if order_id:
         sub_stmt = (
             select(Subscription)
-            .where(Subscription.gateway_subscription_id == str(order_id))
+            .where(Subscription.gateway_subscription_id == str(order_id), Subscription.gateway == event.provider)
             .order_by(Subscription.created_at.desc())
             .limit(1)
         )
-        subscription = (await db.execute(sub_stmt)).scalar_one_or_none()
+        subscription = (await db.execute(sub_stmt.with_for_update())).scalar_one_or_none()
 
-    if not subscription and client_id_raw:
+    if not subscription and client_id_raw and event.provider != PaymentProvider.RAZORPAY:
         sub_stmt = (
             select(Subscription)
             .where(Subscription.client_id == uuid.UUID(client_id_raw))
             .order_by(Subscription.created_at.desc())
             .limit(1)
         )
-        subscription = (await db.execute(sub_stmt)).scalar_one_or_none()
+        subscription = (await db.execute(sub_stmt.with_for_update())).scalar_one_or_none()
 
     now = datetime.now(UTC)
-    if subscription and event.event_type in SUCCESS_EVENT_TYPES:
+    if subscription and str(subscription.gateway_subscription_id or "").startswith("sub_"):
+        from app.services import razorpay_subscriptions
+        remote = await razorpay_subscriptions.fetch(subscription.gateway_subscription_id)
+        if event.event_type == "subscription.charged":
+            await apply_recurring_payment(db, subscription, remote, commit=False)
+        else:
+            subscription.gateway_data = {**(subscription.gateway_data or {}), "mandate_status": remote.get("status")}
+    elif subscription and event.event_type in SUCCESS_EVENT_TYPES:
         await _activate_subscription(db, subscription, commit=False)
     elif subscription:
         logger.info("payment_event_ignored_not_a_capture", event_type=event.event_type, event_id=str(event_id))
@@ -456,3 +498,34 @@ async def process_event(db: AsyncSession, event_id: uuid.UUID) -> None:
     event.processed_at = now
     await db.commit()
     logger.info("payment_event_processed_successfully", event_id=str(event_id))
+
+
+async def apply_recurring_payment(db, subscription, remote, *, commit=True):
+    from app.services import razorpay_subscriptions
+    start, end = razorpay_subscriptions.paid_period(remote, subscription.gateway_subscription_id)
+    plan = await db.get(Plan, subscription.plan_id)
+    if not plan:
+        raise NotFound("Subscription plan no longer exists.")
+    remote_plan = await razorpay_subscriptions.call("GET", "plans/" + razorpay_subscriptions.identifier(remote["plan_id"], "plan"))
+    item = remote_plan.get("item", {})
+    expected = subscription.gateway_data or {}
+    if item.get("amount") != expected.get("price_minor") or item.get("currency") != expected.get("currency"):
+        raise Conflict("Razorpay recurring price does not match the selected plan.")
+    previous_end = subscription.current_period_end
+    # Stale signed events cannot reactivate an expired or superseded mandate.
+    if end <= datetime.now(UTC):
+        raise Conflict("This recurring payment covers an expired period.")
+    newer = (await db.execute(select(Subscription.id).where(
+        Subscription.client_id == subscription.client_id, Subscription.id != subscription.id,
+        Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
+        Subscription.created_at > subscription.created_at).limit(1))).scalar_one_or_none()
+    if newer:
+        raise Conflict("A newer subscription already supersedes this mandate.")
+    await _activate_subscription(db, subscription, commit=False)
+    if end >= previous_end or not expected.get("paid_count"):
+        subscription.current_period_start, subscription.current_period_end = start, end
+    else:
+        subscription.current_period_end = previous_end
+    subscription.gateway_data = {**expected, "mandate_status": remote.get("status"), "paid_count": remote.get("paid_count"), "charge_at": remote.get("charge_at")}
+    if commit:
+        await db.commit()

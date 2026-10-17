@@ -23,9 +23,14 @@ class UserRole(StrEnum):
     SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
     SALES = "sales"
+    BDE = "bde"
+    BDE_HEAD = "bde_head"
     TEAM_LEAD = "team_lead"
     EDITOR = "editor"
     DESIGNER = "designer"
+    # Existing deployment records use this role. Recognize it when reading
+    # staff/assignee rows; authorization remains explicitly allowlisted.
+    FREELANCER = "freelancer"
     CLIENT = "client"
     INVESTOR_RELATIONS = "investor_relations"
     FREELANCER = "freelancer"

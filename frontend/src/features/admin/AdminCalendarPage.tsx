@@ -179,7 +179,8 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
     queryKey: ["admin-calendar", user?.id, year, monthNumber],
     queryFn: () => request<CalendarEvent[]>(`/api/v1/admin/calendar?month=${monthNumber}&year=${year}`),
     enabled: !!user?.id,
-    staleTime: 30_000,
+    staleTime: 10_000,
+    refetchInterval: 15_000,
   });
 
   // 2. Fetch Client Roster for Admin Selection
@@ -359,14 +360,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             </button>
           )}
 
-          <button
-            onClick={() => void calendarQuery.refetch()}
-            disabled={calendarQuery.isFetching}
-            className="min-h-9 px-3 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] text-[#97A0B3] hover:text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
-          >
-            <RefreshCw size={14} className={calendarQuery.isFetching ? "animate-spin text-[#7FA0D6]" : ""} />
-            Refresh
-          </button>
+
         </div>
       </header>
 

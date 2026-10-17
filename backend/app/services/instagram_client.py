@@ -12,6 +12,9 @@ import httpx
 
 from app.config import settings
 from app.core.errors import AppError
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 SCOPES = {
     "instagram_basic",
@@ -101,6 +104,17 @@ class RealInstagramClient:
         if response.is_error or "error" in body:
             error = body.get("error")
             code = error.get("code") if isinstance(error, dict) else None
+            subcode = error.get("error_subcode") if isinstance(error, dict) else None
+            # Numeric diagnostics only: never log provider messages, URLs, tokens,
+            # authorization codes, secrets, account IDs or response payloads.
+            logger.warning(
+                "instagram_provider_rejected",
+                provider_host=httpx.URL(self.base_url).host,
+                operation=path.rsplit("/", 1)[-1],
+                http_status=response.status_code,
+                provider_code=code if isinstance(code, int) else None,
+                provider_subcode=subcode if isinstance(subcode, int) else None,
+            )
             reconnect = code in (10, 102, 190, 200, 294)
             transient = (
                 response.status_code >= 500
@@ -227,8 +241,7 @@ class RealInstagramClient:
                 break
         if not result:
             raise InstagramError(
-                "No eligible Instagram Business account linked to a managed Facebook "
-                "Page was found.",
+                "Facebook did not return an Instagram account you can publish to. Link your Business or Creator account to a Facebook Page, grant this app access to both, and sign in with a user who can create Page content.",
                 "NO_BUSINESS_ACCOUNT",
             )
         return result

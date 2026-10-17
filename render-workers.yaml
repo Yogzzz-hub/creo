@@ -117,6 +117,16 @@ services:
           type: web
           name: creo-api-singapore
           envVarKey: INSTAGRAM_APP_SECRET
+      - key: INSTAGRAM_LOGIN_APP_ID
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: INSTAGRAM_LOGIN_APP_ID
+      - key: INSTAGRAM_LOGIN_APP_SECRET
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: INSTAGRAM_LOGIN_APP_SECRET
       - key: INSTAGRAM_CLIENT_MODE
         fromService:
           type: web

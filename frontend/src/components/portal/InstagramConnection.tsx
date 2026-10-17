@@ -161,7 +161,7 @@ export function InstagramConnection() {
         {query.data && (
           <div className="space-y-2">
             <button type="button" className={button}
-              disabled={busy || !query.data.instagram_login_configured}
+              disabled={busy}
               onClick={() => void perform("instagram")}
             >
               {busy ? "Opening authorization..." : "Connect Instagram directly"}

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useReducedMotion } from "../../lib/useReducedMotion";
 import {
   AdditiveBlending,
   BufferAttribute,
@@ -70,6 +71,7 @@ const FRAGMENT = /* glsl */ `
  */
 export default function HeroWaveScene({ className = "" }: { className?: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     const host = hostRef.current;
@@ -82,7 +84,6 @@ export default function HeroWaveScene({ className = "" }: { className?: string }
       return; // No WebGL: the section's CSS gradients still look complete
     }
 
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const small = window.matchMedia("(max-width: 768px)").matches;
     const pixelRatio = Math.min(window.devicePixelRatio || 1, small ? 1.25 : 1.75);
     renderer.setPixelRatio(pixelRatio);
@@ -202,7 +203,7 @@ export default function HeroWaveScene({ className = "" }: { className?: string }
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, []);
+  }, [reduce]);
 
   return <div ref={hostRef} aria-hidden="true" className={`pointer-events-none ${className}`} />;
 }

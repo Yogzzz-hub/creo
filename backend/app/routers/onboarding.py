@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from typing import Any
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -83,6 +83,132 @@ async def save_questionnaire_section(
     """Autosave an individual section (a..g) without blocking on full form."""
     client_id = actor.client_id or actor.user_id
     return await onboarding_service.save_questionnaire_section(db, client_id, body.section, body.data)
+
+
+ALLOWED_LOGO_EXTENSIONS = {".png", ".jpg", ".jpeg", ".svg"}
+ALLOWED_LOGO_MIMES = {"image/png", "image/jpeg", "image/jpg", "image/svg+xml"}
+MAX_LOGO_SIZE_BYTES = 10 * 1024 * 1024  # 10MB
+
+
+@router.post("/questionnaire/logo")
+async def upload_brand_logo(
+    file: UploadFile = File(...),
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Upload brand logo during questionnaire onboarding with format validation and preview."""
+    import os
+    import aiofiles
+
+    client_id = actor.client_id or actor.user_id
+    filename = (file.filename or "").strip()
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in ALLOWED_LOGO_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid logo format '{ext}'. Allowed formats: PNG, JPG, JPEG, SVG.",
+        )
+    content_type = (file.content_type or "").lower()
+    if content_type and content_type not in ALLOWED_LOGO_MIMES:
+        if ext not in ALLOWED_LOGO_EXTENSIONS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid logo MIME type '{content_type}'.",
+            )
+
+    content = await file.read()
+    if len(content) > MAX_LOGO_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"Logo file exceeds maximum size of 10MB ({len(content)/(1024*1024):.1f}MB).",
+        )
+    if len(content) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded logo file is empty.",
+        )
+
+    # Store file in static uploads directory
+    static_base = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+    logo_dir = os.path.join(static_base, "uploads", "brand_logos", str(client_id))
+    os.makedirs(logo_dir, exist_ok=True)
+    safe_filename = f"logo_{uuid.uuid4().hex[:12]}{ext}"
+    local_path = os.path.join(logo_dir, safe_filename)
+
+    async with aiofiles.open(local_path, "wb") as f:
+        await f.write(content)
+
+    logo_url = f"/static/uploads/brand_logos/{client_id}/{safe_filename}"
+
+    # Update ClientProfile
+    profile = await db.get(ClientProfile, client_id)
+    if profile:
+        profile.brand_logo_url = logo_url
+
+    # Update Questionnaire answers & section_a
+    q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_id)
+    q = (await db.execute(q_stmt)).scalar_one_or_none()
+    if q:
+        sec_a = dict(q.section_a or {})
+        sec_a["brand_logo_url"] = logo_url
+        sec_a["brand_logo_filename"] = filename
+        q.section_a = sec_a
+
+        answers = dict(q.answers or {})
+        answers["brand_logo_url"] = logo_url
+        answers["brand_logo_filename"] = filename
+        q.answers = answers
+
+    await db.commit()
+
+    return {
+        "status": "ok",
+        "brand_logo_url": logo_url,
+        "filename": filename,
+        "size_bytes": len(content),
+        "content_type": content_type or f"image/{ext.lstrip('.')}",
+    }
+
+
+@router.get("/questionnaire/logo")
+async def get_brand_logo(
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Get uploaded brand logo for current client."""
+    client_id = actor.client_id or actor.user_id
+    profile = await db.get(ClientProfile, client_id)
+    logo_url = profile.brand_logo_url if profile else None
+    return {
+        "brand_logo_url": logo_url,
+    }
+
+
+@router.delete("/questionnaire/logo")
+async def delete_brand_logo(
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Remove or reset brand logo."""
+    client_id = actor.client_id or actor.user_id
+    profile = await db.get(ClientProfile, client_id)
+    if profile:
+        profile.brand_logo_url = None
+
+    q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_id)
+    q = (await db.execute(q_stmt)).scalar_one_or_none()
+    if q:
+        sec_a = dict(q.section_a or {})
+        sec_a.pop("brand_logo_url", None)
+        sec_a.pop("brand_logo_filename", None)
+        q.section_a = sec_a
+        answers = dict(q.answers or {})
+        answers.pop("brand_logo_url", None)
+        answers.pop("brand_logo_filename", None)
+        q.answers = answers
+
+    await db.commit()
+    return {"status": "ok", "message": "Brand logo removed"}
 
 
 @router.get("/questionnaire", response_model=QuestionnaireStateResponse)
@@ -301,164 +427,9 @@ async def create_manual_payment_request(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> ManualPaymentRequestResponse:
-    """Client submits an offline/manual payment claim (cash, bank transfer, etc.) to bypass Step 3."""
-    client_id = actor.client_id or actor.user_id
-    await _ensure_manual_payments_table(db)
-
-    # Verify plan exists (check by UUID, slug name, or custom client plan)
-    from app.models.billing import Plan, Subscription
-    from app.models.enums import SubscriptionStatus
-    plan = None
-    try:
-        pid_uuid = uuid.UUID(str(body.plan_id))
-        plan = (await db.execute(select(Plan).where(Plan.id == pid_uuid))).scalar_one_or_none()
-    except (ValueError, TypeError):
-        pass
-
-    if not plan:
-        plan = (await db.execute(
-            select(Plan).where(Plan.name == str(body.plan_id), Plan.is_active.is_(True))
-        )).scalar_one_or_none()
-
-    if not plan:
-        plan = (await db.execute(
-            select(Plan).where(Plan.name == f"custom_{client_id.hex[:8]}", Plan.is_active.is_(True))
-        )).scalar_one_or_none()
-
-    if not plan:
-        raise HTTPException(status_code=404, detail="Selected plan does not exist")
-
-    # Check if client already has an active subscription
-    sub_res = await db.execute(
-        select(Subscription).where(
-            Subscription.client_id == client_id,
-            Subscription.status.in_([SubscriptionStatus.TRIALING, SubscriptionStatus.ACTIVE]),
-        )
-    )
-    if sub_res.scalars().first():
-        raise HTTPException(status_code=400, detail="Client already has an active subscription")
-
-    amount = float(plan.monthly_price)
-
-    # Check for existing pending request
-    existing_res = await db.execute(text("""
-        SELECT id FROM manual_payment_requests
-        WHERE client_id = :cid AND status = 'PENDING'
-        ORDER BY created_at DESC LIMIT 1
-    """), {"cid": client_id})
-    existing = existing_res.fetchone()
-
-    if existing:
-        req_id = existing[0]
-        await db.execute(text("""
-            UPDATE manual_payment_requests
-            SET plan_id = :pid, payment_method = :pm, amount = :amt, reference_note = :rn, updated_at = NOW()
-            WHERE id = :rid
-        """), {
-            "pid": plan.id,
-            "pm": body.payment_method,
-            "amt": amount,
-            "rn": body.reference_note,
-            "rid": req_id,
-        })
-    else:
-        req_id = uuid.uuid4()
-        await db.execute(text("""
-            INSERT INTO manual_payment_requests (id, client_id, plan_id, payment_method, amount, reference_note, status, created_at, updated_at)
-            VALUES (:id, :cid, :pid, :pm, :amt, :rn, 'PENDING', NOW(), NOW())
-        """), {
-            "id": req_id,
-            "cid": client_id,
-            "pid": plan.id,
-            "pm": body.payment_method,
-            "amt": amount,
-            "rn": body.reference_note,
-        })
-
-    # Fetch client info for notification
-    u_res = await db.execute(select(User).where(User.id == client_id))
-    u = u_res.scalar_one_or_none()
-    client_name = (u.full_name or "Valued Client") if u else "Valued Client"
-    client_email = (u.email or "") if u else ""
-
-    # Create administrative notification for agency admins
-    from app.models.ops import Notification
-    from app.models.enums import UserRole
-    try:
-        admins_res = await db.execute(
-            select(User.id).where(User.role.in_([UserRole.ADMIN, UserRole.SUPER_ADMIN]))
-        )
-        admin_ids = [row[0] for row in admins_res.fetchall()]
-        for aid in admin_ids:
-            db.add(
-                Notification(
-                    user_id=aid,
-                    title="Offline Payment Verification Requested",
-                    message=f"{client_name} ({client_email}) requested offline payment verification ({body.payment_method.upper()}) for {plan.display_name} (₹{int(amount):,}).",
-                    link="/admin/clients",
-                    is_read=False,
-                )
-            )
-    except Exception as exc:
-        logger.warning("failed_to_notify_admins_in_app", error=str(exc))
-
-    # Create client in-app notification
-    client_notif = Notification(
-        user_id=client_id,
-        title="Offline Payment Verification Under Review",
-        message=f"Your offline payment request for {plan.display_name} (₹{int(amount):,}) has been received. Our agency team will verify and activate your account shortly.",
-        link="/onboarding?step=3",
-        is_read=False,
-    )
-    db.add(client_notif)
-    await db.commit()
-
-    # Intimate via Email (Brevo / SMTP) in background
-    from app.services.email_service import send_payment_verification_request_email
-    import asyncio
-
-    if client_email:
-        asyncio.create_task(
-            send_payment_verification_request_email(
-                to_email=client_email,
-                client_name=client_name,
-                plan_name=plan.display_name,
-                amount=amount,
-                payment_method=body.payment_method,
-                is_admin=False,
-                notes=body.reference_note or "",
-            )
-        )
-
-    # Intimate agency admins via email
-    admin_emails = ["admin@creo.agency", "ops.admin@creo.agency"]
-    for a_email in admin_emails:
-        asyncio.create_task(
-            send_payment_verification_request_email(
-                to_email=a_email,
-                client_name=client_name,
-                plan_name=plan.display_name,
-                amount=amount,
-                payment_method=body.payment_method,
-                is_admin=True,
-                notes=body.reference_note or "",
-            )
-        )
-
-    return ManualPaymentRequestResponse(
-        id=req_id,
-        client_id=client_id,
-        client_name=u.full_name if u else None,
-        client_email=u.email if u else None,
-        plan_id=body.plan_id,
-        plan_name=plan.name,
-        plan_display_name=plan.display_name,
-        payment_method=body.payment_method,
-        amount=amount,
-        reference_note=body.reference_note,
-        status="PENDING",
-        created_at=datetime.now(UTC),
-    )
+    """New client onboarding requires a recurring Razorpay mandate."""
+    from app.core.errors import Conflict
+    raise Conflict("Monthly Razorpay AutoPay authorization is required. Complete subscription checkout.", code="AUTOPAY_REQUIRED")
 
 
 @router.get("/manual-payment-request", response_model=ManualPaymentRequestResponse | None)
@@ -468,7 +439,6 @@ async def get_manual_payment_request(
 ) -> ManualPaymentRequestResponse | None:
     """Check current status of the client's offline payment verification request."""
     client_id = actor.client_id or actor.user_id
-    await _ensure_manual_payments_table(db)
     res = await db.execute(text("""
         SELECT r.id, r.client_id, r.plan_id, r.payment_method, r.amount, r.reference_note,
                r.status, r.reviewed_at, r.admin_notes, r.created_at,
@@ -508,7 +478,6 @@ async def cancel_manual_payment_request(
 ) -> dict[str, str]:
     """Client cancels their pending manual payment request to proceed with online payment."""
     client_id = actor.client_id or actor.user_id
-    await _ensure_manual_payments_table(db)
     await db.execute(text("""
         DELETE FROM manual_payment_requests
         WHERE client_id = :cid AND status = 'PENDING'

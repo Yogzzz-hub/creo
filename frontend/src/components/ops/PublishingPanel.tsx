@@ -19,6 +19,7 @@ import { request } from "../../lib/http";
 import { useConfirm } from "../ui/ConfirmDialog";
 
 export interface PublishingJob {
+  stage?: string;
   id: string;
   client_id: string;
   client_name?: string;
@@ -41,6 +42,7 @@ export interface PublishingJob {
   attempts: number;
 }
 interface Details {
+  publishing_enabled: boolean;
   job: PublishingJob | null;
   calendar_publish_at?: string | null;
   timezone: string;
@@ -139,7 +141,7 @@ export function PublishingPanel({
   const query = useQuery({
     queryKey: ["publishing", "detail", deliverableId, user?.id],
     queryFn: () => request<Details>(`/api/v1/publishing/deliverables/${deliverableId}`),
-    refetchInterval: editing ? false : 30000,
+    refetchInterval: editing ? false : 5000,
   });
   const history = useQuery({
     queryKey: ["publishing", "history", deliverableId, user?.id],
@@ -295,9 +297,11 @@ export function PublishingPanel({
   // The job follows its calendar slot unless the team saved a different time.
   const offCalendar = Boolean(
     job?.scheduled_at &&
-      calendarAt &&
-      Math.abs(new Date(job.scheduled_at).getTime() - new Date(calendarAt).getTime()) > 60_000,
+      (!calendarAt ||
+      Math.abs(new Date(job.scheduled_at).getTime() - new Date(calendarAt).getTime()) > 60_000),
   );
+  const overdue = job?.status === "scheduled" && !!job.scheduled_at &&
+    Date.now() - new Date(job.scheduled_at).getTime() > 60_000;
   const canPostNow =
     manage && lead && job?.approved && connected && !frozen && job.status !== "canceled";
   const hasStaffActions =
@@ -334,7 +338,7 @@ export function PublishingPanel({
 
       <div className="rounded-xl border border-[#2A3446] bg-[#161F2D]/70 px-3 py-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-          <span className={labelText}>Content calendar slot</span>
+          <span className={labelText}>{offCalendar ? "Publishing time" : "Content calendar slot"}</span>
           {offCalendar && (
             <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">
               Custom time
@@ -344,9 +348,9 @@ export function PublishingPanel({
         <p className="mt-1.5 flex items-start gap-2 text-sm">
           <CalendarClock className="mt-0.5 size-4 shrink-0 text-[#7FA0D6]" />
           <span className="min-w-0 break-words">
-            {calendarAt ? (
+            {(offCalendar ? job?.scheduled_at : calendarAt) ? (
               <>
-                {fmt(calendarAt)} <span className="text-[#97A0B3]">· {zone}</span>
+                {fmt((offCalendar ? job?.scheduled_at : calendarAt)!)} <span className="text-[#97A0B3]">· {zone}</span>
               </>
             ) : (
               <span className="text-[#97A0B3]">
@@ -355,15 +359,25 @@ export function PublishingPanel({
             )}
           </span>
         </p>
-        {offCalendar && job?.scheduled_at && (
+        {offCalendar && calendarAt && (
           <p className="mt-1 pl-6 text-xs text-amber-300">
-            Posting at {fmt(job.scheduled_at)} instead.
+            Calendar slot: {fmt(calendarAt)}. Using the custom time above.
           </p>
         )}
-        {!offCalendar && job?.scheduled_at && job.status === "scheduled" && (
-          <p className="mt-1 pl-6 text-xs text-emerald-300">Auto-post armed for this slot.</p>
+        {job?.scheduled_at && job.status === "scheduled" && data?.publishing_enabled && !overdue && (
+          <p className="mt-1 pl-6 text-xs text-emerald-300">Auto-post scheduled for the time above.</p>
         )}
       </div>
+      {data?.publishing_enabled === false && job && !["published", "canceled"].includes(job.status) && (
+        <p role="alert" className="rounded-xl border border-amber-500/30 p-3 text-sm text-amber-200">
+          Automatic publishing is unavailable. An administrator must enable publishing and check the Instagram configuration.
+        </p>
+      )}
+      {overdue && (
+        <p role="alert" className="rounded-xl border border-amber-500/30 p-3 text-sm text-amber-200">
+          The scheduled time has passed. Instagram has not confirmed publication. Check publishing history; the team can review or reschedule this post.
+        </p>
+      )}
 
       {job && (
         <div className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-3">
@@ -496,7 +510,7 @@ export function PublishingPanel({
               Resume schedule
             </button>
           )}
-          {admin && job?.status === "scheduled" && (
+          {lead && job && ["scheduled", "processing"].includes(job.status) && job.stage !== "submitting" && (
             <button
               type="button"
               className={button}
@@ -722,10 +736,29 @@ export function PublishingQueue({
   clientId,
 }: { readOnly?: boolean; clientId?: string }) {
   const { user } = useAuth();
+  const confirm = useConfirm();
+  const queryClient = useQueryClient();
+  const [canceling, setCanceling] = useState("");
+  const [cancelError, setCancelError] = useState("");
+  async function cancelJob(job: PublishingJob) {
+    if (!await confirm({ title: "Cancel auto-post?", description: "The approved asset stays in Creo. This stops its scheduled publication.", confirmText: "Cancel auto-post", tone: "danger" })) return;
+    setCanceling(job.id); setCancelError("");
+    try {
+      await request(`/api/v1/publishing/deliverables/${job.deliverable_id}/action`, { method: "POST", body: JSON.stringify({ action: "cancel" }) });
+      await queryClient.invalidateQueries({ queryKey: ["publishing"] });
+    } catch (err) { setCancelError(err instanceof Error ? err.message : "Unable to cancel publication."); }
+    finally { setCanceling(""); }
+  }
   const [status, setStatus] = useState("");
   const [client, setClient] = useState("");
   const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState("");
+  const clients = useQuery({
+    queryKey: ["publishing", "filter-clients", user?.id],
+    queryFn: () => request<{ client_id: string; company_name: string | null; full_name?: string | null; email: string }[]>("/api/v1/admin/clients"),
+    enabled: !readOnly && !clientId,
+  });
+  const effectiveClientId = clientId || client;
   const connection = useQuery({
     queryKey: ["publishing", "client-connection", user?.id, clientId],
     queryFn: () =>
@@ -733,19 +766,17 @@ export function PublishingQueue({
         `/api/v1/publishing/clients/${clientId}/connection`,
       ),
     enabled: !!clientId && ["admin", "super_admin"].includes(user?.role || ""),
-    refetchInterval: 30000,
+    refetchInterval: 5000,
   });
   const query = useQuery({
-    queryKey: ["publishing", "queue", user?.id, clientId, status, offset],
+    queryKey: ["publishing", "queue", user?.id, effectiveClientId, status, offset],
     queryFn: () =>
       request<PublishingJob[]>(
-        `/api/v1/publishing/jobs?offset=${offset}${clientId ? `&client_id=${clientId}` : ""}${status ? `&status=${status}` : ""}`,
+        `/api/v1/publishing/jobs?offset=${offset}${effectiveClientId ? `&client_id=${encodeURIComponent(effectiveClientId)}` : ""}${status ? `&status=${status}` : ""}`,
       ),
-    refetchInterval: 30000,
+    refetchInterval: 5000,
   });
-  const rows = (query.data || []).filter(
-    (j) => !client || (j.client_name || j.client_id).toLowerCase().includes(client.toLowerCase()),
-  );
+  const rows = query.data || [];
   const page = Math.floor(offset / 100) + 1;
   return (
     <section className="min-w-0 space-y-4 rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 text-white sm:p-5">
@@ -820,12 +851,16 @@ export function PublishingQueue({
         {!readOnly && !clientId && (
           <label className="block">
             <span className={labelText}>Filter by client</span>
-            <input
+            <select
               className={input}
               value={client}
-              onChange={(e) => setClient(e.target.value)}
-              placeholder="Client name"
-            />
+              disabled={clients.isPending || clients.isError}
+              onChange={(e) => { setClient(e.target.value); setOffset(0); setSelected(""); }}
+            >
+              <option value="">{clients.isPending ? "Loading clients…" : "All clients"}</option>
+              {(clients.data || []).map(c => <option key={c.client_id} value={c.client_id}>{c.company_name || c.full_name || c.email}</option>)}
+            </select>
+            {clients.isError && <p role="alert" className="mt-2 text-sm text-amber-200">Unable to load clients. <button type="button" onClick={() => void clients.refetch()} className="underline">Retry</button></p>}
           </label>
         )}
       </div>
@@ -861,6 +896,7 @@ export function PublishingQueue({
         </div>
       )}
 
+      {cancelError && <p role="alert" className="text-sm text-amber-200">{cancelError}</p>}
       <ul className="space-y-2">
         {rows.map((j) => {
           const open = selected === j.id;
@@ -889,6 +925,7 @@ export function PublishingQueue({
                   />
                 </span>
               </button>
+              {!readOnly && ["admin", "super_admin", "team_lead"].includes(user?.role || "") && !["published", "canceled", "processing", "uncertain"].includes(j.status) && <div className="px-3.5 pb-3"><button type="button" disabled={!!canceling} onClick={() => void cancelJob(j)} className={`${buttonDanger} flex-none`}>{canceling === j.id ? "Canceling..." : "Cancel auto-post"}</button></div>}
               {open && (
                 <div className="px-3.5 pb-3.5">
                   <PublishingPanel deliverableId={j.deliverable_id} readOnly={readOnly} />

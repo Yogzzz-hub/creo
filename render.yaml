@@ -57,7 +57,9 @@ services:
       - key: INSTAGRAM_CLIENT_MODE
         value: real
       - key: INSTAGRAM_PUBLISHING_ENABLED
-        value: "false"
+        value: "true"
+      - key: PUBLISHING_DISPATCH_SECRET
+        sync: false
       - key: META_GRAPH_API_VERSION
         value: v26.0
       - key: INSTAGRAM_FFPROBE_PATH
@@ -178,6 +180,16 @@ services:
           name: creo-api
           type: web
           envVarKey: INSTAGRAM_REDIRECT_URI
+      - key: INSTAGRAM_LOGIN_APP_ID
+        fromService:
+          type: web
+          name: creo-api
+          envVarKey: INSTAGRAM_LOGIN_APP_ID
+      - key: INSTAGRAM_LOGIN_APP_SECRET
+        fromService:
+          type: web
+          name: creo-api
+          envVarKey: INSTAGRAM_LOGIN_APP_SECRET
       - key: INSTAGRAM_CLIENT_MODE
         fromService:
           name: creo-api

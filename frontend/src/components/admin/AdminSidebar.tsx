@@ -27,6 +27,7 @@ import { useAuth } from "../../lib/auth-context";
 import { useAdminSidebar } from "./AdminSidebarContext";
 import { useConfirm } from "../ui/ConfirmDialog";
 import { NotificationMenu } from "../ui/NotificationMenu";
+import { WorkstationSidebar } from "../workstation/WorkstationSidebar";
 
 interface NavItem {
   label: string;
@@ -72,20 +73,27 @@ export function AdminSidebar() {
     user?.role === "team_member" ||
     user?.role === "editor" ||
     user?.role === "designer";
+  const isBDERole = ["sales", "bde", "bde_head"].includes(user?.role || "");
+  const isFreelancerRole = user?.role === "freelancer";
 
   const isClientRole =
     user?.role === "client" ||
-    (!isAdminOrSuper && !isTeamLead && !isSpecialist && location.pathname.startsWith("/portal"));
+    (!isAdminOrSuper && !isTeamLead && !isSpecialist && !isBDERole && !isFreelancerRole && location.pathname.startsWith("/portal"));
 
   // A team lead keeps the lead sidebar even on a /workstation URL; only specialists
   // (and unknown roles landing there) get the member layout.
   const isMemberRole =
     !isClientRole &&
-    !isAdminOrSuper &&
     !isTeamLead &&
+    !isBDERole &&
+    !isFreelancerRole &&
     (isSpecialist ||
       location.pathname.startsWith("/workstation") ||
       location.pathname.startsWith("/member"));
+
+  if (isMemberRole) {
+    return <WorkstationSidebar />;
+  }
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -141,12 +149,15 @@ export function AdminSidebar() {
       items: [
         { label: "Manage Revenues", href: "/admin/revenue", icon: TrendingUp },
         { label: "Plans & Negotiations", href: "/admin/plans", icon: FileText },
+        { label: "Revenue CRM", href: "/bde/crm/overview", icon: Briefcase, badge: "CRM" },
+        { label: "BDE Sales & Outreach", href: "/admin/bde-oversight", icon: Briefcase },
       ],
     },
     {
       label: "Team Management",
       items: [
         { label: "Team Management", href: "/admin/team", icon: Users },
+        { label: "Productivity & Efficiency", href: "/admin/productivity", icon: TrendingUp, badge: "KPIs" },
         { label: "Leave Requests & Approvals", href: "/admin/leaves", icon: CalendarCheck },
       ],
     },
@@ -210,9 +221,14 @@ export function AdminSidebar() {
 
   const memberNavSections: NavSection[] = [
     {
-      label: "",
+      label: "OVERVIEW",
       items: [
         { label: "Dashboard", href: "/workstation", icon: LayoutDashboard },
+      ],
+    },
+    {
+      label: "WORKSPACE",
+      items: [
         { label: "Tasks", href: "/workstation/tasks", icon: CheckSquare },
         { label: "Instagram Publishing", href: "/admin/publishing", icon: Send },
         { label: "Leave Requests", href: "/workstation/schedule", icon: Calendar },
@@ -245,6 +261,45 @@ export function AdminSidebar() {
     },
   ];
 
+  const bdeNavSections: NavSection[] = [
+    {
+      label: "BDE Workspace",
+      items: [
+        { label: "Action Center", href: "/bde/crm/overview", icon: LayoutDashboard },
+        { label: "Leads & Companies", href: "/bde/crm/leads", icon: Users },
+        { label: "Pipeline", href: "/bde/crm/pipeline", icon: Layers },
+        { label: "Follow-ups", href: "/bde/crm/tasks", icon: Calendar },
+        { label: "Proposal Studio", href: "/bde/crm/proposals", icon: FileText },
+        { label: "Referrals", href: "/bde/crm/referrals", icon: Briefcase },
+        { label: "Messages", href: "/bde/crm/messages", icon: MessageSquare },
+        { label: "AI Workspace", href: "/bde/crm/discovery", icon: TrendingUp },
+        { label: "Reports & Scorecards", href: "/bde/crm/reports", icon: CreditCard },
+        { label: "Delivery Handoffs", href: "/bde/crm/handoffs", icon: Briefcase },
+      ],
+    },
+    {
+      label: "Communication",
+      items: [
+        { label: "Team Slack Hub", href: "/slack", icon: MessageSquare, badge: "Chat" },
+      ],
+    },
+  ];
+
+  const freelancerNavSections: NavSection[] = [
+    {
+      label: "Freelancer Studio",
+      items: [
+        { label: "Assigned Workload", href: "/freelancer/tasks", icon: CheckSquare, badge: "Active" },
+      ],
+    },
+    {
+      label: "Communication",
+      items: [
+        { label: "Team Slack Hub", href: "/slack", icon: MessageSquare, badge: "Chat" },
+      ],
+    },
+  ];
+
   const portalPreviewSection: NavSection = {
     label: "Client Portal (Active View)",
     items: [
@@ -258,6 +313,10 @@ export function AdminSidebar() {
 
   const currentNavSections = user?.role === "client"
     ? clientNavSections
+    : isFreelancerRole
+    ? freelancerNavSections
+    : isBDERole
+    ? bdeNavSections
     : isMemberRole
     ? memberNavSections
     : user?.role === "team_lead"
@@ -268,6 +327,10 @@ export function AdminSidebar() {
 
   const homeHref = isAdminOrSuper
     ? "/admin"
+    : isFreelancerRole
+    ? "/freelancer/tasks"
+    : isBDERole
+    ? "/bde"
     : isTeamLead
     ? "/admin/pod-dashboard"
     : isMemberRole
@@ -288,13 +351,21 @@ export function AdminSidebar() {
     user?.full_name ||
     (isClientRole
       ? (user?.company_name || "Client Account")
+      : isFreelancerRole
+      ? "Freelancer Specialist"
+      : isBDERole
+      ? "BDE Specialist"
       : isMemberRole
       ? "Elena Rostova"
       : user?.role === "team_lead"
       ? "Pod Lead"
       : "Creo Admin");
 
-  const roleSubtitle = isMemberRole
+  const roleSubtitle = isFreelancerRole
+    ? "Creative Freelancer · Specialist Roster"
+    : isBDERole
+    ? (user?.role === "bde_head" ? "BDE Head · Team oversight" : "Business Development · Sales Hub")
+    : isMemberRole
     ? `${user?.role ? user.role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Specialist"} · Active Workstation`
     : user?.role === "team_lead"
     ? "Pod Lead · Operations"

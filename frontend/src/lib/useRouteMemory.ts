@@ -83,7 +83,12 @@ export function isRouteValidForRole(route: string, role: string): boolean {
       return isAdminRoute || isDashboardRoute;
 
     case "sales":
-      return isAdminRoute || isDashboardRoute;
+    case "bde_head":
+    case "bde":
+      return route.startsWith("/bde") || route.startsWith("/admin/bde") || route.startsWith("/admin/plans") || route.startsWith("/slack");
+
+    case "freelancer":
+      return route.startsWith("/freelancer") || route.startsWith("/slack");
 
     case "investor_relations":
       return isAdminRoute;

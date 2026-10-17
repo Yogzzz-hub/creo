@@ -18,7 +18,6 @@ import {
   Copy,
   Check,
   Upload,
-  History,
   Edit3,
   X,
   FileText,
@@ -70,11 +69,21 @@ export function PortalBrandDNAPage() {
     queryFn: () => request("/api/v1/portal/profile"),
   });
 
+  const { data: logoData } = useQuery({
+    queryKey: ["brand-logo-asset"],
+    queryFn: async () => {
+      try {
+        return await request<{ brand_logo_url: string | null }>("/api/v1/onboarding/questionnaire/logo");
+      } catch {
+        return { brand_logo_url: null };
+      }
+    },
+  });
+
   const gate = useOnboardingGate();
   const isBrandTab = tab === "brand" || tab === "edit-brand";
 
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-  const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(tab === "edit-brand");
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalText, setSuccessModalText] = useState("Changes saved successfully!");
@@ -82,7 +91,7 @@ export function PortalBrandDNAPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const isAnyModalOpen = isSuccessModalOpen || isEditModalOpen || isVersionModalOpen;
+    const isAnyModalOpen = isSuccessModalOpen || isEditModalOpen;
     if (!isAnyModalOpen) return;
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -90,7 +99,6 @@ export function PortalBrandDNAPage() {
       if (e.key === "Escape") {
         setIsSuccessModalOpen(false);
         setIsEditModalOpen(false);
-        setIsVersionModalOpen(false);
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -98,7 +106,7 @@ export function PortalBrandDNAPage() {
       document.body.style.overflow = originalOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [isSuccessModalOpen, isEditModalOpen, isVersionModalOpen]);
+  }, [isSuccessModalOpen, isEditModalOpen]);
 
   const brandFiles: any[] = profile?.brand_dna?.files || [];
 
@@ -608,114 +616,6 @@ export function PortalBrandDNAPage() {
         document.body
       )}
 
-      {/* ─────────────────────────────────────────────────────────── */}
-      {/* VERSION HISTORY MODAL (CENTERED VIA PORTAL)                 */}
-      {/* ─────────────────────────────────────────────────────────── */}
-      {isVersionModalOpen &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
-            onClick={() => setIsVersionModalOpen(false)}
-          >
-            <div
-              className="bg-[#161F2D] border border-[#2A3446] rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200 m-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-            <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
-              <div className="flex items-center gap-2">
-                <History className="size-4 text-[#7FA0D6]" />
-                <h3 className="text-base font-bold text-white">Brand DNA Version History</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsVersionModalOpen(false)}
-                className="size-7 rounded-lg border border-[#2A3446] bg-[#0B111C] flex items-center justify-center text-[#97A0B3] hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {[
-                {
-                  version: "Version 3",
-                  date: "2 Sep 2026 · 14:32 UTC",
-                  author: "You (Client)",
-                  status: "Active Current",
-                  notes: "Updated brand one-liner, color palette hex codes, and verified voice keywords.",
-                  active: true,
-                },
-                {
-                  version: "Version 2",
-                  date: "28 Aug 2026 · 10:15 UTC",
-                  author: "Elena Rostova (Account Director)",
-                  status: "Pod Synced",
-                  notes: "Refined 3 content pillars, funnel alignment, and tone metric gauges.",
-                  active: false,
-                },
-                {
-                  version: "Version 1",
-                  date: "15 Aug 2026 · 09:00 UTC",
-                  author: "Creo AI Engine",
-                  status: "Initial Synthesis",
-                  notes: "Synthesized automatically from onboarding questionnaire intake.",
-                  active: false,
-                },
-              ].map((v, i) => (
-                <div
-                  key={i}
-                  className={`p-4 rounded-xl border transition-colors ${
-                    v.active ? "bg-[#0B111C] border-[#7FA0D6]/40" : "bg-[#0B111C]/50 border-[#2A3446]"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-white">{v.version}</span>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        v.active ? "bg-emerald-500/15 text-emerald-400" : "bg-white/[0.05] text-[#97A0B3]"
-                      }`}
-                    >
-                      {v.status}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-[#7FA0D6] mb-1.5">{v.date} · {v.author}</p>
-                  <p className="text-xs text-[#97A0B3] leading-relaxed">{v.notes}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-3 border-t border-[#2A3446] flex justify-end">
-              <button
-                type="button"
-                onClick={() => setIsVersionModalOpen(false)}
-                className="px-5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs font-bold hover:bg-white transition-colors cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* Action Bar */}
-      <div className="flex items-center justify-end gap-3 pb-3">
-        <button
-          type="button"
-          onClick={() => setIsVersionModalOpen(true)}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#2A3446] bg-[#0B111C] text-xs sm:text-[13px] font-medium text-white hover:bg-[#161F2D] hover:border-[#7FA0D6]/40 transition-colors cursor-pointer"
-        >
-          <History className="size-3.5 text-[#97A0B3]" /> Version history
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsEditModalOpen(true)}
-          className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs sm:text-[13px] font-bold hover:bg-white transition-all shadow-sm active:scale-95 cursor-pointer"
-        >
-          <Edit3 className="size-3.5" /> Suggest an edit
-        </button>
-      </div>
-
       {/* Bento Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {/* ── CARD 1: BRAND VOICE & PERSONALITY ── */}
@@ -727,7 +627,14 @@ export function PortalBrandDNAPage() {
               </div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-white">Brand Voice & Personality</h3>
             </div>
-            <span className="text-[11px] font-medium text-[#7FA0D6]">Verified Guidelines</span>
+            <button
+              type="button"
+              onClick={() => setIsEditModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs font-bold hover:bg-white transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
+            >
+              <Edit3 className="size-3.5" />
+              <span>Suggest an edit</span>
+            </button>
           </div>
 
           <div className="p-5 sm:p-6 space-y-5">
@@ -853,6 +760,49 @@ export function PortalBrandDNAPage() {
                 </div>
               </div>
             </div>
+
+            {/* Official Brand Logo Asset (Requirement 2.2) */}
+            {(logoData?.brand_logo_url || profile?.brand_logo_url) && (
+              <div className="pt-4 border-t border-[#2A3446]/80 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="size-3.5 text-[#7FA0D6]" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
+                      Official Brand Logo Asset
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    Production Asset
+                  </span>
+                </div>
+                <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 flex items-center gap-4">
+                  <div className="w-20 h-14 rounded-lg border border-[#2A3446] bg-[radial-gradient(#2A3446_1px,transparent_1px)] [background-size:8px_8px] bg-[#0E1524] flex items-center justify-center p-2 shrink-0">
+                    <img
+                      src={resolveAssetUrl(logoData?.brand_logo_url || profile?.brand_logo_url)}
+                      alt="Brand Logo"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-white truncate">
+                      {(logoData?.brand_logo_url || profile?.brand_logo_url)?.split("/").pop()}
+                    </p>
+                    <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                      Accessible to assigned pod designers, editors & creative leads.
+                    </p>
+                  </div>
+                  <a
+                    href={resolveAssetUrl(logoData?.brand_logo_url || profile?.brand_logo_url)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2 rounded-lg bg-[#161F2D] hover:bg-[#2A3446] text-[#7FA0D6] border border-[#2A3446] transition-colors"
+                    title="View Logo Asset"
+                  >
+                    <Download className="size-3.5" />
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

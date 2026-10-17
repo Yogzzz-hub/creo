@@ -50,7 +50,7 @@ export function PortalLayout() {
         >
           {/* Top Header with Hamburger: kept in phone view, removed from desktop view */}
           <div className="lg:hidden">
-            <AdminTopHeader showBackButton />
+            <AdminTopHeader />
           </div>
 
           {/* Main Content Area — fixed height for Slack so internal scrollbars activate */}
