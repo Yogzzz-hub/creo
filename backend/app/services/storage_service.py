@@ -159,15 +159,26 @@ def mark_s3_unhealthy(reason: str) -> None:
 
 
 def _check_s3_health() -> bool:
-    """Inspect configuration without making a blocking bucket probe.
+    """Inspect configuration and probe S3/R2 once to ensure credentials work.
 
-    Signing an R2 URL is local cryptography. A bucket HEAD here used to block
-    the API event loop on the first media list, potentially for SDK retries.
-    Actual storage operations still validate access and can mark R2 unhealthy.
+    If S3/R2 is disabled, credentials missing, or returns 401/403, mark S3 unhealthy
+    and seamlessly fall back to Supabase Storage.
     """
-    return settings.STORAGE_S3_ENABLED and _s3_healthy is not False and bool(
-        settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY
-    )
+    global _s3_healthy
+    if not settings.STORAGE_S3_ENABLED or not (settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY):
+        return False
+    if _s3_healthy is False:
+        return False
+    if _s3_healthy is None:
+        try:
+            s3 = _get_s3_client()
+            s3.head_bucket(Bucket=settings.STORAGE_BUCKET)
+            _s3_healthy = True
+        except Exception as exc:
+            log.warning("s3_health_check_failed_fallback_supabase", error=str(exc))
+            _s3_healthy = False
+            return False
+    return _s3_healthy
 
 
 def _is_s3_configured() -> bool:

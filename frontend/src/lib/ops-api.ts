@@ -8,10 +8,11 @@ import type {
   AdminQueueData,
   ClientRosterItem,
   SLABreachItem,
+  SLAPerformanceData,
 } from "../types/ops";
 import { HttpError, request } from "./http";
 export { request };
-export type { ClientRosterItem, AdminDashboardData, AdminKPIs, AdminQueueData, SLABreachItem };
+export type { ClientRosterItem, AdminDashboardData, AdminKPIs, AdminQueueData, SLABreachItem, SLAPerformanceData };
 
 export async function autoAssignTask(
   taskId: string,
@@ -97,6 +98,10 @@ export async function fetchSLABreaches(_userId?: string, _role = "admin"): Promi
   return request<SLABreachItem[]>("/api/v1/admin/sla");
 }
 
+export async function fetchSLAPerformance(): Promise<SLAPerformanceData> {
+  return request<SLAPerformanceData>("/api/v1/admin/sla-performance");
+}
+
 export async function suspendUser(
   userIdToSuspend: string,
   _adminUserId?: string,
@@ -122,11 +127,14 @@ export interface LeaveRequestItem {
   user_name?: string;
   name?: string;
   employee_email?: string;
+  email?: string;
   role?: string;
   role_raw?: string;
   user_role?: string;
+  role_display?: string;
   department?: string;
   domain?: string;
+  pod_name?: string;
   team_lead_id?: string | null;
   team_lead_name?: string;
   start_date: string;
@@ -135,10 +143,13 @@ export interface LeaveRequestItem {
   status: "pending" | "approved" | "rejected";
   created_at: string;
   created_at_ist?: string;
-  approved_by_name: string | null;
+  approved_by?: string | null;
+  approved_by_name?: string | null;
   can_approve?: boolean;
   can_reject?: boolean;
   can_cancel?: boolean;
+  is_self?: boolean;
+  is_on_leave_today?: boolean;
 }
 
 export async function fetchLeaveRequests(): Promise<LeaveRequestItem[]> {
@@ -162,6 +173,26 @@ export async function approveLeaveRequest(leaveId: string): Promise<any> {
 
 export async function rejectLeaveRequest(leaveId: string): Promise<any> {
   return request(`/api/v1/admin/leave/${leaveId}/reject`, { method: "POST" });
+}
+
+export interface TeamMemberItem {
+  id: string;
+  full_name: string;
+  email: string;
+  role: string;
+  account_status: string;
+  department: string;
+  daily_capacity: number;
+  skills: string[];
+  is_accepting_work: boolean;
+  active_wip: number;
+  on_leave_today: boolean;
+  team_lead_id: string | null;
+  team_lead_name: string | null;
+}
+
+export async function fetchTeamMembers(): Promise<TeamMemberItem[]> {
+  return request<TeamMemberItem[]>("/api/v1/admin/teams");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

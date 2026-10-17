@@ -311,7 +311,7 @@ export function SlackChatPage() {
     if (user?.company_name) {
       return `client-${user.company_name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
     }
-    return "client-kameshwari-rajkumar";
+    return user?.id ? `client-${user.id}` : "client-pod";
   }, [user]);
 
   // Fetch role-scoped channels from backend

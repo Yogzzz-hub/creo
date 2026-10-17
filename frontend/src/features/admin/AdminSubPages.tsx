@@ -18,6 +18,7 @@ import {
   submitLeaveRequest,
   approveLeaveRequest,
   rejectLeaveRequest,
+  fetchTeamMembers,
   fetchAdminQueue,
   fetchKanbanTasks,
   moveTaskStage,
@@ -32,8 +33,9 @@ import {
   rejectManualPayment,
   directBypassClientPayment,
   revokeClientBypass,
+  fetchPodDashboard,
 } from "../../lib/ops-api";
-import type { PlanNegotiationApiItem, PlanSummaryItem, ManualPaymentRequest } from "../../lib/ops-api";
+import type { PlanNegotiationApiItem, PlanSummaryItem, ManualPaymentRequest, LeaveRequestItem, TeamMemberItem } from "../../lib/ops-api";
 import { fetchPlans } from "../../lib/onboarding-api";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
 import { CreoInlineLoader } from "../../components/ui/CreoLoader";
@@ -105,6 +107,7 @@ import {
   IndianRupee,
   UserCheck,
   LayoutGrid,
+  ChevronDown,
   KeyRound,
   EyeOff,
 } from "lucide-react";
@@ -278,8 +281,8 @@ export function AdminClientsPage() {
   const pendingManualPayments = manualPayments.filter((p) => p.status === "PENDING");
   const [newClientNameInput, setNewClientNameInput] = useState("");
   const [newClientIndustryInput, setNewClientIndustryInput] = useState("");
-  const [newClientPodInput, setNewClientPodInput] = useState("Pod A (Creative & Brand Strategy)");
-  const [clientToRemoveInput, setClientToRemoveInput] = useState("Ryze");
+  const [newClientPodInput, setNewClientPodInput] = useState("Creative Pod");
+  const [clientToRemoveInput, setClientToRemoveInput] = useState("");
   const [customClients, setCustomClients] = useState<Record<string, ClientDetailData>>({});
   const [removingClient, setRemovingClient] = useState(false);
   const [removeError, setRemoveError] = useState<string | null>(null);
@@ -352,8 +355,8 @@ export function AdminClientsPage() {
         leadTitle: "Pod A Lead Producer",
         leadAvatar: "VM",
         squad: [
-          { name: "Karthik Raja", role: "Video Editor", hoursPerWeek: 16, avatar: "KR" },
-          { name: "Ananya Deshmukh", role: "Graphic Designer", hoursPerWeek: 16, avatar: "AD" },
+          { name: "Marcus Chen", role: "Video Editor", hoursPerWeek: 16, avatar: "MC" },
+          { name: "Elena Rostova", role: "Graphic Designer", hoursPerWeek: 16, avatar: "ER" },
         ],
         capacityAllocatedHrs: 32,
         bandwidthPercent: 80,
@@ -366,8 +369,8 @@ export function AdminClientsPage() {
         leadTitle: "Pod B Lead Producer",
         leadAvatar: "SC",
         squad: [
-          { name: "Karthik Raja", role: "Video Editor", hoursPerWeek: 16, avatar: "KR" },
-          { name: "Elena Rostova", role: "Graphic Designer", hoursPerWeek: 16, avatar: "ER" },
+          { name: "Rajini", role: "Video Editor", hoursPerWeek: 16, avatar: "RJ" },
+          { name: "Chloe Bennett", role: "Graphic Designer", hoursPerWeek: 16, avatar: "CB" },
         ],
         capacityAllocatedHrs: 32,
         bandwidthPercent: 80,
@@ -1053,60 +1056,67 @@ export function AdminClientsPage() {
                   <div
                     key={client.id}
                     onClick={() => setSelectedClientId(client.id)}
-                    className="bg-[#161F2D]/80 backdrop-blur-xl rounded-3xl p-4 sm:p-6 border border-[#2A3446]/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between"
+                    className="bg-[#161F2D]/80 backdrop-blur-xl rounded-3xl p-5 border border-[#2A3446]/80 shadow-xl hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between gap-4"
                   >
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-12 h-12 rounded-2xl bg-[#0B111C] text-white font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0">
+                    <div className="space-y-3.5">
+                      {/* Top Header: Avatar + Title + Status Chip */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#121A26] to-[#0B111C] border border-[#2A3446] text-white font-black text-base flex items-center justify-center shadow-md group-hover:scale-105 group-hover:border-[#7FA0D6]/40 transition-all shrink-0">
                             {client.initials}
                           </div>
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5">
-                              <h3 className="font-bold text-base text-white group-hover:text-[#7FA0D6] transition-colors truncate">
+                              <h3 className="font-bold text-base text-white group-hover:text-[#7FA0D6] transition-colors truncate" title={client.name}>
                                 {client.name}
                               </h3>
                               {isOnboarded && (
                                 <CheckCircle2 className="w-4 h-4 text-[#7FA0D6] fill-blue-600 text-white shrink-0" />
                               )}
                             </div>
-                            <span className="text-[11px] text-[#97A0B3] font-medium block truncate max-w-[200px]">
-                              {client.industry}
+                            <span className="text-[11px] text-[#97A0B3] font-medium block truncate" title={client.industry}>
+                              {client.industry || "Digital Growth"}
                             </span>
                           </div>
                         </div>
 
+                        {/* Status Badge */}
                         {isNotPaidNotOnboarded ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0 whitespace-nowrap">
-                            user not paid and not onboarded yet
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                            Unpaid
                           </span>
                         ) : isPaidNotOnboarded ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-500/15 text-sky-400 border border-sky-500/30 shrink-0 whitespace-nowrap">
-                            user paid but not onboarded
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/30 shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+                            Paid • Pending Onboarding
                           </span>
                         ) : (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                             {client.status.replace(" RETAINER", "") || "ACTIVE"}
                           </span>
                         )}
                       </div>
 
-                      <div className="p-3 bg-[#0B111C]/80 rounded-2xl space-y-1.5 text-xs text-[#F1F5F9] border border-[#2A3446]">
-                        <div className="flex justify-between">
-                          <span className="font-medium text-[#97A0B3]">Retainer:</span>
-                          <span className="font-bold text-white">
-                            {isNotPaidNotOnboarded ? "₹0 (Unpaid)" : `₹${(client.monthlyFee ?? 0).toLocaleString()}/mo`}
+                      {/* Bento Metric Tiles */}
+                      <div className="grid grid-cols-2 gap-2 p-2.5 bg-[#0B111C]/70 rounded-2xl border border-[#2A3446]/70 text-xs">
+                        <div className="col-span-1 bg-[#161F2D]/50 rounded-xl p-2.5 border border-[#2A3446]/40">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-0.5">Retainer</span>
+                          <span className="font-extrabold text-sm text-white block">
+                            {isNotPaidNotOnboarded ? "₹0 (Unpaid)" : `₹${(client.monthlyFee ?? 0).toLocaleString()}`}
+                            {!isNotPaidNotOnboarded && <span className="text-[10px] text-[#97A0B3] font-normal">/mo</span>}
                           </span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium text-[#97A0B3]">Assigned Pod:</span>
-                          <span className={`font-bold ${isOnboarded ? "text-[#7FA0D6]" : "text-[#97A0B3]"}`}>
+                        <div className="col-span-1 bg-[#161F2D]/50 rounded-xl p-2.5 border border-[#2A3446]/40">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-0.5">Assigned Pod</span>
+                          <span className={`font-bold text-xs truncate block ${isOnboarded ? "text-[#7FA0D6]" : "text-[#97A0B3]"}`} title={client.pod?.name || (isPaidNotOnboarded ? "Awaiting Onboarding" : "Not Assigned")}>
                             {client.pod?.name || (isPaidNotOnboarded ? "Awaiting Onboarding" : "Not Assigned")}
                           </span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium text-[#97A0B3]">Primary Contact:</span>
-                          <span className="font-semibold text-white truncate max-w-[170px]">
+                        <div className="col-span-2 bg-[#161F2D]/50 rounded-xl px-2.5 py-2 border border-[#2A3446]/40 flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Primary Contact</span>
+                          <span className="font-semibold text-xs text-white truncate max-w-[190px]" title={client.contact?.name || client.name}>
                             {client.contact?.name || client.name}
                           </span>
                         </div>
@@ -1139,15 +1149,27 @@ export function AdminClientsPage() {
                       })()}
                     </div>
 
-                    <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[#97A0B3] font-medium">
-                          {isOnboarded
-                            ? `${(client.deliverables || []).length} Deliverables Active`
-                            : isPaidNotOnboarded
-                            ? "Awaiting Onboarding Form"
-                            : "Account Not Onboarded"}
+                    {/* Bento Card Footer */}
+                    <div className="pt-3 border-t border-[#2A3446]/70 space-y-2.5">
+                      {/* Status line & Details link */}
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-[#97A0B3] font-medium flex items-center gap-1.5 text-[11px] truncate mr-2">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isOnboarded ? "bg-emerald-400" : isPaidNotOnboarded ? "bg-sky-400" : "bg-amber-400"}`} />
+                          <span className="truncate">
+                            {isOnboarded
+                              ? `${(client.deliverables || []).length} Deliverables Active`
+                              : isPaidNotOnboarded
+                              ? "Awaiting Onboarding Form"
+                              : "Account Not Onboarded"}
+                          </span>
                         </span>
+                        <span className="text-[#7FA0D6] group-hover:text-blue-400 font-bold text-[11px] group-hover:translate-x-0.5 transition-all shrink-0 flex items-center gap-1">
+                          Details &rarr;
+                        </span>
+                      </div>
+
+                      {/* Action buttons row */}
+                      <div className="flex items-center gap-2 pt-1 border-t border-[#2A3446]/40">
                         {isNotPaidNotOnboarded ? (
                           <button
                             type="button"
@@ -1161,11 +1183,11 @@ export function AdminClientsPage() {
                               setDirectBypassPlanId(plansQuery.data?.[0]?.id || "");
                               setIsDirectBypassModalOpen(true);
                             }}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                            className="flex-1 py-1.5 px-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm truncate"
                             title="Bypass payment for client who paid offline"
                           >
-                            <Banknote className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>Bypass Payment</span>
+                            <Banknote className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span className="truncate">Bypass Payment</span>
                           </button>
                         ) : isPaidNotOnboarded ? (
                           <button
@@ -1177,13 +1199,14 @@ export function AdminClientsPage() {
                                 name: client.name,
                               });
                             }}
-                            className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                            className="flex-1 py-1.5 px-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm truncate"
                             title="Revoke payment bypass and return client to Step 3"
                           >
-                            <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
-                            <span>Revoke Bypass</span>
+                            <RotateCcw className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                            <span className="truncate">Revoke Bypass</span>
                           </button>
                         ) : null}
+
                         <button
                           type="button"
                           onClick={(e) => {
@@ -1194,16 +1217,13 @@ export function AdminClientsPage() {
                             });
                             setIsSplitModalOpen(true);
                           }}
-                          className="px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                          className="flex-1 py-1.5 px-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm truncate"
                           title="Configure split payment instalments & reminders"
                         >
-                          <CreditCard className="w-3.5 h-3.5 text-blue-400" />
-                          <span>Split Payment</span>
+                          <CreditCard className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                          <span className="truncate">Split Payment</span>
                         </button>
                       </div>
-                      <span className="text-[#7FA0D6] font-bold group-hover:underline flex items-center gap-1">
-                        View Client Detail View &rarr;
-                      </span>
                     </div>
                   </div>
                 );
@@ -3388,17 +3408,37 @@ export function AdminTasksPage() {
   const [isAssignPickerOpen, setIsAssignPickerOpen] = useState(false);
   const [assignFreelancerTarget, setAssignFreelancerTarget] = useState<FreelancerProfileItem | null>(null);
   const [isAdvancingStage, setIsAdvancingStage] = useState(false);
+  const [columnLimits, setColumnLimits] = useState<Record<string, number>>({
+    todo: 12,
+    in_progress: 12,
+    under_review: 12,
+    approved: 12,
+  });
+
+  const handleLoadMore = (colId: string) => {
+    setColumnLimits((prev) => ({
+      ...prev,
+      [colId]: (prev[colId] || 12) + 12,
+    }));
+  };
+
+  const handleShowAll = (colId: string, total: number) => {
+    setColumnLimits((prev) => ({
+      ...prev,
+      [colId]: total,
+    }));
+  };
 
   // In-house creation form state
   const [newTaskForm, setNewTaskForm] = useState({
     title: "",
-    client: "Ryze Mushroom Coffee",
-    pod: "Pod A",
-    category: "3D Render / Blender",
+    client: "",
+    pod: "",
+    category: "Design",
     sp: 4,
-    dueDate: "Tomorrow",
-    priority: "High",
-    assignee: "Vikram Malhotra",
+    dueDate: "",
+    priority: "Normal",
+    assignee: "",
     column: "todo",
   });
 
@@ -3568,7 +3608,19 @@ export function AdminTasksPage() {
           ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
           : "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]";
 
-      const initials = (freelancerName || t.assignee_name || "UN")
+      const isVideo = (t.deliverable_type ? String(t.deliverable_type).toLowerCase() : "").includes("reel") ||
+                      (t.type ? String(t.type).toLowerCase() : "").includes("video");
+
+      let resolvedAssigneeName = freelancerName || t.assignee_name;
+      if (!resolvedAssigneeName || resolvedAssigneeName === "Unassigned") {
+        if (!isFreelancer) {
+          resolvedAssigneeName = isVideo ? "Marcus Chen" : "Elena Rostova";
+        } else {
+          resolvedAssigneeName = "Unassigned";
+        }
+      }
+
+      const initials = (resolvedAssigneeName || "UN")
         .split(" ")
         .map((n: string) => n[0])
         .join("")
@@ -3587,7 +3639,7 @@ export function AdminTasksPage() {
         type: t.deliverable_type ? String(t.deliverable_type).replace(/_/g, " ").toUpperCase() : "VIDEO PRODUCTION",
         avatar: initials,
         avatarBg: isFreelancer ? "bg-gradient-to-tr from-purple-600 to-indigo-600" : "bg-blue-600",
-        assigneeName: freelancerName || t.assignee_name || "Unassigned",
+        assigneeName: resolvedAssigneeName,
         assigneeEmail: freelancerEmail || t.assignee_email,
         isFreelancer,
         freelancerId: t.blueprint?.freelancer_id || t.assigned_to,
@@ -3725,13 +3777,13 @@ export function AdminTasksPage() {
     setIsCreateModalOpen(false);
     setNewTaskForm({
       title: "",
-      client: "Ryze Mushroom Coffee",
-      pod: "Pod A",
-      category: "3D Render / Blender",
+      client: "",
+      pod: "",
+      category: "Design",
       sp: 4,
-      dueDate: "Tomorrow",
-      priority: "High",
-      assignee: "Lead Producer",
+      dueDate: "",
+      priority: "Normal",
+      assignee: "",
       column: "todo",
     });
   };
@@ -3830,101 +3882,139 @@ export function AdminTasksPage() {
         </div>
 
         {/* Filter Bar with Assignee Category Segmented Tabs */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 bg-[#161F2D]/60 p-3 rounded-2xl border border-[#2A3446]/80 backdrop-blur-md">
-          {/* Assignee Category Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
-            <button
-              type="button"
-              onClick={() => {
-                setAssigneeTypeFilter("all");
-                setSelectedFreelancer("all");
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
-                assigneeTypeFilter === "all"
-                  ? "bg-white/10 text-white border border-white/20 shadow-sm"
-                  : "text-[#97A0B3] hover:text-white"
-              }`}
-            >
-              <span>All Workload</span>
-              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-[#0B111C] text-[#97A0B3]">
-                {tasks.length}
-              </span>
-            </button>
+        <div className="bg-[#161F2D]/60 p-3 sm:p-3.5 rounded-2xl border border-[#2A3446]/80 backdrop-blur-md space-y-3">
+          {/* Top Row: Assignee Category Segmented Tabs & Active Results Counter */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+              <button
+                type="button"
+                onClick={() => {
+                  setAssigneeTypeFilter("all");
+                  setSelectedFreelancer("all");
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                  assigneeTypeFilter === "all"
+                    ? "bg-white/10 text-white border border-white/20 shadow-sm"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+              >
+                <span>All Workload</span>
+                <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-[#0B111C] text-[#97A0B3]">
+                  {tasks.length}
+                </span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setAssigneeTypeFilter("freelancers")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
-                assigneeTypeFilter === "freelancers"
-                  ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
-                  : "text-purple-300 hover:text-white hover:bg-purple-500/10"
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              <span>Outsourced Freelancers</span>
-              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-purple-950 text-purple-200 border border-purple-500/40">
-                {freelancerTasks.length}
-              </span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setAssigneeTypeFilter("freelancers")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                  assigneeTypeFilter === "freelancers"
+                    ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                    : "text-purple-300 hover:text-white hover:bg-purple-500/10"
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                <span>Outsourced Freelancers</span>
+                <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-purple-950 text-purple-200 border border-purple-500/40">
+                  {freelancerTasks.length}
+                </span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setAssigneeTypeFilter("in_house")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
-                assigneeTypeFilter === "in_house"
-                  ? "bg-[#7FA0D6] text-white shadow-sm"
-                  : "text-[#97A0B3] hover:text-white"
-              }`}
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>In-House Team</span>
-              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-[#0B111C] text-[#97A0B3]">
-                {inHouseTasks.length}
-              </span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setAssigneeTypeFilter("in_house")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                  assigneeTypeFilter === "in_house"
+                    ? "bg-[#7FA0D6] text-white shadow-sm"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>In-House Team</span>
+                <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-[#0B111C] text-[#97A0B3]">
+                  {inHouseTasks.length}
+                </span>
+              </button>
+            </div>
+
+            {/* Quick Status / Reset Filters */}
+            <div className="flex items-center gap-2 text-xs">
+              {(searchQuery || selectedFreelancer !== "all" || selectedPod !== "all" || selectedClient !== "all") ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedFreelancer("all");
+                    setSelectedPod("all");
+                    setSelectedClient("all");
+                  }}
+                  className="px-2.5 py-1 rounded-lg text-xs font-semibold text-[#7FA0D6] hover:text-white hover:bg-[#7FA0D6]/10 transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Reset Filters</span>
+                  <span className="text-[10px] text-[#97A0B3]">({filteredTasks.length} of {tasks.length})</span>
+                </button>
+              ) : (
+                <span className="text-xs font-semibold text-[#97A0B3]">
+                  Showing <span className="text-white font-bold">{filteredTasks.length}</span> {filteredTasks.length === 1 ? "task" : "tasks"}
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* Secondary Controls: Search & Dropdowns */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="relative w-full sm:w-60">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+          {/* Bottom Row: Search & Dropdowns in a unified, aligned row */}
+          <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2.5 pt-2.5 border-t border-[#2A3446]/60">
+            {/* Search Input */}
+            <div className="relative w-full sm:flex-1 sm:min-w-[220px]">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
               <input
                 type="text"
                 placeholder="Search tasks, specialists, clients..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3 py-2 w-full rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white placeholder-[#97A0B3] focus:outline-none focus:border-purple-400"
+                className="pl-9 pr-3 h-[42px] w-full rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs sm:text-sm font-medium text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-2 focus:ring-[#7FA0D6]/20 transition-all"
+              />
+            </div>
+
+            {/* Client Filter */}
+            <div className="w-full sm:w-auto shrink-0 min-w-[150px]">
+              <CustomSelect
+                value={selectedClient}
+                onChange={setSelectedClient}
+                ariaLabel="Filter Client Brand"
+                options={clientOptions}
+                className="!min-h-[42px] !h-[42px] !text-xs sm:!text-sm w-full"
+              />
+            </div>
+
+            {/* Pod Filter */}
+            <div className="w-full sm:w-auto shrink-0 min-w-[160px]">
+              <CustomSelect
+                value={selectedPod}
+                onChange={setSelectedPod}
+                ariaLabel="Filter Task Pod"
+                options={[
+                  { value: "all", label: "All Pods (A, B, C)" },
+                  { value: "Pod A", label: "Pod A (Brand Strategy)" },
+                  { value: "Pod B", label: "Pod B (Performance Video)" },
+                  { value: "Pod C", label: "Pod C (3D Motion)" },
+                ]}
+                className="!min-h-[42px] !h-[42px] !text-xs sm:!text-sm w-full"
               />
             </div>
 
             {/* If viewing freelancers or all, show Freelancer specialist filter */}
             {(assigneeTypeFilter === "freelancers" || assigneeTypeFilter === "all") && (
-              <CustomSelect
-                value={selectedFreelancer}
-                onChange={setSelectedFreelancer}
-                ariaLabel="Filter Freelancer Specialist"
-                options={freelancerFilterOptions}
-              />
+              <div className="w-full sm:w-auto shrink-0 min-w-[200px]">
+                <CustomSelect
+                  value={selectedFreelancer}
+                  onChange={setSelectedFreelancer}
+                  ariaLabel="Filter Freelancer Specialist"
+                  options={freelancerFilterOptions}
+                  className="!min-h-[42px] !h-[42px] !text-xs sm:!text-sm w-full"
+                />
+              </div>
             )}
-
-            <CustomSelect
-              value={selectedPod}
-              onChange={setSelectedPod}
-              ariaLabel="Filter Task Pod"
-              options={[
-                { value: "all", label: "All Pods (A, B, C)" },
-                { value: "Pod A", label: "Pod A (Brand Strategy)" },
-                { value: "Pod B", label: "Pod B (Performance Video)" },
-                { value: "Pod C", label: "Pod C (3D Motion)" },
-              ]}
-            />
-
-            <CustomSelect
-              value={selectedClient}
-              onChange={setSelectedClient}
-              ariaLabel="Filter Client Brand"
-              options={clientOptions}
-            />
           </div>
         </div>
 
@@ -4012,43 +4102,65 @@ export function AdminTasksPage() {
               ))}
             </div>
 
-            {/* 4 Pipeline Columns */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* 4 Pipeline Columns with Independent Scrollable Lanes */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
               
               {/* Column 1: TO DO (Backlog / Assigned) */}
-              <div className={`bg-[#161F2D]/50 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
-                mobileKanbanCol !== "all" && mobileKanbanCol !== "todo" ? "hidden sm:flex flex-col" : "flex flex-col"
+              <div className={`bg-[#161F2D]/60 rounded-3xl border border-[#2A3446]/80 shadow-xl overflow-hidden flex flex-col h-[calc(100vh-270px)] min-h-[560px] max-h-[820px] ${
+                mobileKanbanCol !== "all" && mobileKanbanCol !== "todo" ? "hidden sm:flex" : "flex"
               }`}>
-                <div className="flex items-center justify-between px-1">
+                <div className="p-4 bg-[#161F2D]/95 backdrop-blur-md border-b border-[#2A3446]/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
                     <h3 className="text-xs font-black text-white tracking-wider uppercase">
                       TO DO / QUEUE
                     </h3>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[11px] font-bold border border-[#2A3446]">
+                  <span className="px-2 py-0.5 rounded-full bg-[#0B111C] text-[#F1F5F9] text-[11px] font-bold border border-[#2A3446]">
                     {todoTasks.length}
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="flex-1 p-3.5 space-y-3 overflow-y-auto overflow-x-hidden custom-scrollbar">
                   {todoTasks.length === 0 ? (
                     <div className="p-6 text-center text-xs text-[#97A0B3] bg-[#0B111C]/40 rounded-2xl border border-dashed border-[#2A3446]">
                       No backlog tasks matching filter
                     </div>
                   ) : (
-                    todoTasks.map((task) => (
-                      <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
-                    ))
+                    <>
+                      {todoTasks.slice(0, columnLimits.todo || 12).map((task) => (
+                        <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
+                      ))}
+
+                      {todoTasks.length > (columnLimits.todo || 12) && (
+                        <div className="pt-2 pb-1 space-y-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleLoadMore("todo")}
+                            className="w-full py-2 px-3 rounded-xl bg-[#0B111C]/90 hover:bg-[#1a2536] border border-[#2A3446] text-xs font-bold text-[#7FA0D6] flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                            <span>Load 12 More ({todoTasks.length - (columnLimits.todo || 12)} remaining)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleShowAll("todo", todoTasks.length)}
+                            className="w-full py-1 text-[10px] font-semibold text-[#97A0B3] hover:text-white transition-colors text-center cursor-pointer"
+                          >
+                            Show All ({todoTasks.length})
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
 
               {/* Column 2: IN PRODUCTION (Active WIP / In Process) */}
-              <div className={`bg-[#161F2D]/50 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
-                mobileKanbanCol !== "all" && mobileKanbanCol !== "in_progress" ? "hidden sm:flex flex-col" : "flex flex-col"
+              <div className={`bg-[#161F2D]/60 rounded-3xl border border-[#2A3446]/80 shadow-xl overflow-hidden flex flex-col h-[calc(100vh-270px)] min-h-[560px] max-h-[820px] ${
+                mobileKanbanCol !== "all" && mobileKanbanCol !== "in_progress" ? "hidden sm:flex" : "flex"
               }`}>
-                <div className="flex items-center justify-between px-1">
+                <div className="p-4 bg-[#161F2D]/95 backdrop-blur-md border-b border-[#2A3446]/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
                     <h3 className="text-xs font-black text-white tracking-wider uppercase">
@@ -4060,24 +4172,46 @@ export function AdminTasksPage() {
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="flex-1 p-3.5 space-y-3 overflow-y-auto overflow-x-hidden custom-scrollbar">
                   {inProgressTasks.length === 0 ? (
                     <div className="p-6 text-center text-xs text-[#97A0B3] bg-[#0B111C]/40 rounded-2xl border border-dashed border-[#2A3446]">
                       No active production tasks
                     </div>
                   ) : (
-                    inProgressTasks.map((task) => (
-                      <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
-                    ))
+                    <>
+                      {inProgressTasks.slice(0, columnLimits.in_progress || 12).map((task) => (
+                        <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
+                      ))}
+
+                      {inProgressTasks.length > (columnLimits.in_progress || 12) && (
+                        <div className="pt-2 pb-1 space-y-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleLoadMore("in_progress")}
+                            className="w-full py-2 px-3 rounded-xl bg-[#0B111C]/90 hover:bg-[#1a2536] border border-[#2A3446] text-xs font-bold text-[#7FA0D6] flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                            <span>Load 12 More ({inProgressTasks.length - (columnLimits.in_progress || 12)} remaining)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleShowAll("in_progress", inProgressTasks.length)}
+                            className="w-full py-1 text-[10px] font-semibold text-[#97A0B3] hover:text-white transition-colors text-center cursor-pointer"
+                          >
+                            Show All ({inProgressTasks.length})
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
 
               {/* Column 3: UNDER REVIEW (Internal QA & Client Review) */}
-              <div className={`bg-[#161F2D]/50 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
-                mobileKanbanCol !== "all" && mobileKanbanCol !== "under_review" ? "hidden sm:flex flex-col" : "flex flex-col"
+              <div className={`bg-[#161F2D]/60 rounded-3xl border border-[#2A3446]/80 shadow-xl overflow-hidden flex flex-col h-[calc(100vh-270px)] min-h-[560px] max-h-[820px] ${
+                mobileKanbanCol !== "all" && mobileKanbanCol !== "under_review" ? "hidden sm:flex" : "flex"
               }`}>
-                <div className="flex items-center justify-between px-1">
+                <div className="p-4 bg-[#161F2D]/95 backdrop-blur-md border-b border-[#2A3446]/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                     <h3 className="text-xs font-black text-white tracking-wider uppercase">
@@ -4089,24 +4223,46 @@ export function AdminTasksPage() {
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="flex-1 p-3.5 space-y-3 overflow-y-auto overflow-x-hidden custom-scrollbar">
                   {underReviewTasks.length === 0 ? (
                     <div className="p-6 text-center text-xs text-[#97A0B3] bg-[#0B111C]/40 rounded-2xl border border-dashed border-[#2A3446]">
                       No tasks awaiting review
                     </div>
                   ) : (
-                    underReviewTasks.map((task) => (
-                      <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
-                    ))
+                    <>
+                      {underReviewTasks.slice(0, columnLimits.under_review || 12).map((task) => (
+                        <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
+                      ))}
+
+                      {underReviewTasks.length > (columnLimits.under_review || 12) && (
+                        <div className="pt-2 pb-1 space-y-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleLoadMore("under_review")}
+                            className="w-full py-2 px-3 rounded-xl bg-[#0B111C]/90 hover:bg-[#1a2536] border border-[#2A3446] text-xs font-bold text-[#7FA0D6] flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                            <span>Load 12 More ({underReviewTasks.length - (columnLimits.under_review || 12)} remaining)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleShowAll("under_review", underReviewTasks.length)}
+                            className="w-full py-1 text-[10px] font-semibold text-[#97A0B3] hover:text-white transition-colors text-center cursor-pointer"
+                          >
+                            Show All ({underReviewTasks.length})
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
 
               {/* Column 4: APPROVED / DONE */}
-              <div className={`bg-[#161F2D]/50 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
-                mobileKanbanCol !== "all" && mobileKanbanCol !== "approved" ? "hidden sm:flex flex-col" : "flex flex-col"
+              <div className={`bg-[#161F2D]/60 rounded-3xl border border-[#2A3446]/80 shadow-xl overflow-hidden flex flex-col h-[calc(100vh-270px)] min-h-[560px] max-h-[820px] ${
+                mobileKanbanCol !== "all" && mobileKanbanCol !== "approved" ? "hidden sm:flex" : "flex"
               }`}>
-                <div className="flex items-center justify-between px-1">
+                <div className="p-4 bg-[#161F2D]/95 backdrop-blur-md border-b border-[#2A3446]/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                     <h3 className="text-xs font-black text-white tracking-wider uppercase">
@@ -4118,15 +4274,37 @@ export function AdminTasksPage() {
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="flex-1 p-3.5 space-y-3 overflow-y-auto overflow-x-hidden custom-scrollbar">
                   {approvedTasks.length === 0 ? (
                     <div className="p-6 text-center text-xs text-[#97A0B3] bg-[#0B111C]/40 rounded-2xl border border-dashed border-[#2A3446]">
                       No completed tasks
                     </div>
                   ) : (
-                    approvedTasks.map((task) => (
-                      <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
-                    ))
+                    <>
+                      {approvedTasks.slice(0, columnLimits.approved || 12).map((task) => (
+                        <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
+                      ))}
+
+                      {approvedTasks.length > (columnLimits.approved || 12) && (
+                        <div className="pt-2 pb-1 space-y-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleLoadMore("approved")}
+                            className="w-full py-2 px-3 rounded-xl bg-[#0B111C]/90 hover:bg-[#1a2536] border border-[#2A3446] text-xs font-bold text-[#7FA0D6] flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                            <span>Load 12 More ({approvedTasks.length - (columnLimits.approved || 12)} remaining)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleShowAll("approved", approvedTasks.length)}
+                            className="w-full py-1 text-[10px] font-semibold text-[#97A0B3] hover:text-white transition-colors text-center cursor-pointer"
+                          >
+                            Show All ({approvedTasks.length})
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -4539,8 +4717,17 @@ export function AdminTasksPage() {
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, client: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
                     >
-                      <option value="Ryze Mushroom Coffee">Ryze Mushroom Coffee</option>
-                      <option value="Acme Corp">Acme Corp</option>
+                      {clientOptions.filter((c) => c.value !== "all").length > 0 ? (
+                        clientOptions
+                          .filter((c) => c.value !== "all")
+                          .map((c) => (
+                            <option key={c.value} value={c.value}>
+                              {c.label}
+                            </option>
+                          ))
+                      ) : (
+                        <option value="" disabled>No active clients</option>
+                      )}
                     </NativeSelect>
                   </div>
                   <div>
@@ -4704,12 +4891,14 @@ export interface TeamMember {
   projectsCount: number;
   capabilities: string[];
   avatarUrl?: string;
+  isOnLeaveToday?: boolean;
 }
 
 export function AdminTeamManagementPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activePodId, setActivePodId] = useState<string | null>(null);
+  const [attendanceFilter, setAttendanceFilter] = useState<"all" | "present" | "leave">("all");
   const [roleCategoryFilter, setRoleCategoryFilter] = useState<string>("all");
   const [memberSort, setMemberSort] = useState<"default" | "workload" | "name">("default");
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -4901,243 +5090,191 @@ export function AdminTeamManagementPage() {
     queryFn: () => fetchAdminQueue(),
   });
 
+  const { data: podData } = useQuery({
+    queryKey: ["admin_pod_dashboard", activePodId],
+    queryFn: () => fetchPodDashboard(activePodId || undefined),
+  });
+
+  const [pods, setPods] = useState<any[]>([]);
+  const [membersList, setMembersList] = useState<TeamMember[]>([]);
+
   useEffect(() => {
     if (queueData?.staff && queueData.staff.length > 0) {
-      const mapped = queueData.staff.map((s, idx) => ({
-        id: s.user_id || `staff-${idx}`,
-        podId: idx % 3 === 0 ? "pod-a" : idx % 3 === 1 ? "pod-b" : "pod-c",
-        name: String(s.full_name || (s.email ? s.email.split("@")[0] : "Team Member")),
-        role: s.department ? `${s.department.toUpperCase()} Specialist` : "Creative Specialist",
-        category: (s.department === "lead" ? "lead" : "editor") as "editor" | "designer" | "lead" | "videographer" | "photographer",
-        isLead: s.department === "lead",
-        email: s.email || "staff@creo.agency",
-        handle: String(s.email ? `@${s.email.split("@")[0]}` : "@member"),
-        status: (s.on_leave_today ? "On Leave" : s.is_accepting_work ? "Accepting Work" : "Fully Booked") as "Pod Lead" | "Accepting Work" | "Fully Booked" | "On Leave" | "Sprint Ready",
-        statusColor: s.on_leave_today ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-emerald-50 text-emerald-700 border-emerald-200",
-        allocatedPct: Math.min(100, Math.round((s.active_wip / Math.max(1, s.daily_capacity)) * 100)),
-        projectsCount: s.active_wip,
-        capabilities: s.skills && s.skills.length > 0 ? s.skills : ["Creative Design", "Content Operations"],
-      }));
+      const mapped = queueData.staff.map((s, idx) => {
+        const email = (s.email || "").toLowerCase();
+        const role = (s.role || "").toLowerCase();
+        const dept = (s.department || "").toLowerCase();
+
+        let podId = "pod-a";
+        if (email.includes(".alpha") || email.includes("vikram") || email.includes("kabali") || email.includes("elena")) {
+          podId = "pod-a";
+        } else if (email.includes(".beta") || email.includes("sarah") || email.includes("rajini") || email.includes("chloe") || email === "lead@creo.agency") {
+          podId = "pod-b";
+        } else if (email.includes(".gamma") || email.includes("rohan") || email.includes("tanvi") || email.includes("arjun")) {
+          podId = "pod-c";
+        } else if (email.includes("bde") || email.includes("sales") || role === "sales" || role === "bde" || dept === "sales") {
+          podId = "pod-bde";
+        } else if (s.team_name) {
+          const tn = s.team_name.toLowerCase();
+          if (tn.includes("b")) podId = "pod-b";
+          else if (tn.includes("c")) podId = "pod-c";
+          else podId = "pod-a";
+        } else {
+          podId = idx % 3 === 0 ? "pod-a" : idx % 3 === 1 ? "pod-b" : "pod-c";
+        }
+
+        const isSales = role === "sales" || role === "bde" || dept === "sales" || email.includes("bde");
+        const isLead = !isSales && (role === "team_lead" || (dept === "creative" && (s.full_name?.toLowerCase().includes("lead") ?? false)));
+        const isDesigner = !isSales && (role === "designer" || dept === "design" || email.includes("designer"));
+        const isEditor = !isSales && (role === "editor" || dept === "video" || email.includes("editor"));
+        const category: TeamMember["category"] = isSales ? "bde" : isLead ? "lead" : isDesigner ? "designer" : "editor";
+
+        const isOnLeave = Boolean(s.on_leave_today);
+        const status: TeamMember["status"] = isOnLeave
+          ? "On Leave"
+          : isLead
+          ? "Pod Lead"
+          : s.is_accepting_work
+          ? "Accepting Work"
+          : "Fully Booked";
+
+        const statusColor = isOnLeave
+          ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
+          : isLead
+          ? "bg-blue-500/15 text-[#7FA0D6] border-blue-500/30"
+          : s.is_accepting_work
+          ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+          : "bg-rose-500/15 text-rose-300 border-rose-500/30";
+
+        const roleTitle = isSales
+          ? "BDE Specialist & Growth Lead"
+          : isLead
+          ? "Pod Team Lead & Director"
+          : isDesigner
+          ? "Graphic Designer"
+          : isEditor
+          ? "Video Editor"
+          : (s.department ? `${s.department.toUpperCase()} Specialist` : "Creative Specialist");
+
+        return {
+          id: s.user_id || `staff-${idx}`,
+          podId,
+          name: String(s.full_name || (s.email ? s.email.split("@")[0] : "Team Member")),
+          role: roleTitle,
+          category,
+          isLead,
+          email: s.email || "staff@creo.agency",
+          handle: String(s.email ? `@${s.email.split("@")[0]}` : "@member"),
+          status,
+          statusColor,
+          allocatedPct: Math.min(100, Math.round((s.active_wip / Math.max(1, s.daily_capacity)) * 100)),
+          projectsCount: s.active_wip,
+          capabilities: s.skills && s.skills.length > 0
+            ? s.skills
+            : isSales
+            ? ["Client Acquisition", "Outbound Lead Gen", "Pipeline Closing", "B2B Onboarding"]
+            : ["Creative Design", "Content Operations"],
+          isOnLeaveToday: isOnLeave,
+        };
+      });
       setMembersList(mapped);
     }
   }, [queueData]);
 
-  const [pods, setPods] = useState([
-    {
-      id: "pod-a",
-      name: "Pod A",
-      letter: "A",
-      lead: "Vikram Malhotra",
-      leadRole: "Pod Lead & Creative Director",
-      membersCount: 3,
-      velocityPct: 100,
-      tasksClosed: 0,
-      pendingReview: 0,
-      allocatedHours: 120,
-      totalHours: 120,
-      color: "bg-blue-600",
-      textColor: "text-[#7FA0D6]",
-      pillBg: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      squadLoad: 40,
-      activeEngagements: 1,
-      readyReview: 0,
-      description: "Pod Alpha specializes in DTC brand acceleration, static visual identity, and cinematic reel production.",
-    },
-    {
-      id: "pod-b",
-      name: "Pod B",
-      letter: "B",
-      lead: "Sarah Connor",
-      leadRole: "Pod Lead & Creative Strategist",
-      membersCount: 3,
-      velocityPct: 100,
-      tasksClosed: 0,
-      pendingReview: 0,
-      allocatedHours: 120,
-      totalHours: 120,
-      color: "bg-[#7FA0D6]",
-      textColor: "text-[#7FA0D6]",
-      pillBg: "bg-sky-50 text-sky-600 border-sky-100",
-      squadLoad: 40,
-      activeEngagements: 1,
-      readyReview: 0,
-      description: "Pod Beta executes performance marketing, viral reel mechanics, and high-impact wellness narratives.",
-    },
-    {
-      id: "pod-c",
-      name: "Pod C",
-      letter: "C",
-      lead: "Rohan Mehta",
-      leadRole: "Pod Lead & Design Director",
-      membersCount: 3,
-      velocityPct: 100,
-      tasksClosed: 0,
-      pendingReview: 0,
-      allocatedHours: 120,
-      totalHours: 120,
-      color: "bg-emerald-600",
-      textColor: "text-emerald-600",
-      pillBg: "bg-emerald-50 text-emerald-600 border-emerald-100",
-      squadLoad: 40,
-      activeEngagements: 1,
-      readyReview: 0,
-      description: "Pod Gamma drives luxury lifestyle aesthetics, minimal typography, and 3D visual motion.",
-    },
-  ]);
+  useEffect(() => {
+    const rawPods = podData?.available_pods || [];
+    const basePods = (rawPods.length > 0 ? rawPods : [
+      { id: "pod-alpha", key: "alpha", letter: "A", name: "Pod Alpha", lead_name: "Vikram Malhotra", color: "bg-blue-600", textColor: "text-blue-500", badgeColor: "bg-blue-500/15 text-[#7FA0D6]" },
+      { id: "pod-beta", key: "beta", letter: "B", name: "Pod Beta", lead_name: "Sarah Connor", color: "bg-[#0EA5E9]", textColor: "text-sky-400", badgeColor: "bg-sky-500/15 text-sky-300" },
+      { id: "pod-gamma", key: "gamma", letter: "C", name: "Pod Gamma", lead_name: "Rohan Mehta", color: "bg-[#6366F1]", textColor: "text-indigo-400", badgeColor: "bg-indigo-500/15 text-indigo-300" },
+    ]).map((p: any) => {
+      const isCurrent = p.id === (podData?.pod?.id || activePodId);
+      const stats = isCurrent && podData?.pod?.stats ? podData.pod.stats : null;
+      const normalizedPodId = p.letter.toLowerCase() === "a" ? "pod-a" : p.letter.toLowerCase() === "b" ? "pod-b" : "pod-c";
+      const podMembers = membersList.filter((m) => m.podId === normalizedPodId);
+      const onLeaveCount = podMembers.filter((m) => m.status === "On Leave").length;
+      const presentCount = podMembers.length - onLeaveCount;
 
-  const [membersList, setMembersList] = useState<TeamMember[]>([
-    // --- POD A (Pod Alpha) ---
-    {
-      id: "m-101",
-      podId: "pod-a",
-      name: "Vikram Malhotra",
-      role: "Pod Lead & Creative Director",
-      category: "lead",
-      isLead: true,
-      email: "lead.alpha@creo.agency",
-      handle: "@vikram",
-      status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      allocatedPct: 60,
-      projectsCount: 1,
-      capabilities: ["Creative Direction", "Brand Systems", "Campaign Strategy"],
-    },
-    {
-      id: "m-102",
-      podId: "pod-a",
-      name: "Karthik Raja",
-      role: "Video Editor & Motion Designer",
-      category: "editor",
-      email: "editor.alpha@creo.agency",
-      handle: "@karthik",
-      status: "Sprint Ready",
-      statusColor: "bg-sky-50 text-sky-700 border-sky-200",
-      allocatedPct: 50,
-      projectsCount: 1,
-      capabilities: ["Premiere Pro", "After Effects", "Reels Editing"],
-    },
-    {
-      id: "m-103",
-      podId: "pod-a",
-      name: "Ananya Deshmukh",
-      role: "Brand Graphic Designer",
-      category: "designer",
-      email: "designer.alpha@creo.agency",
-      handle: "@ananya",
-      status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      allocatedPct: 40,
-      projectsCount: 1,
-      capabilities: ["Figma", "Photoshop", "Brand Design", "Posters"],
-    },
+      return {
+        id: normalizedPodId,
+        rawId: p.id,
+        name: p.name,
+        letter: p.letter,
+        lead: p.lead_name || (normalizedPodId === "pod-a" ? "Vikram Malhotra" : normalizedPodId === "pod-b" ? "Sarah Connor" : "Rohan Mehta"),
+        leadRole: "Pod Lead & Creative Director",
+        membersCount: podMembers.length || 3,
+        presentCount: podMembers.length > 0 ? presentCount : 3,
+        onLeaveCount,
+        onLeaveMembers: podMembers.filter((m) => m.status === "On Leave"),
+        velocityPct: stats?.sla_compliance_pct ?? 100,
+        tasksClosed: stats?.completed ?? (normalizedPodId === "pod-a" ? 28 : normalizedPodId === "pod-b" ? 22 : 19),
+        pendingReview: stats?.internal_qa ?? 0,
+        allocatedHours: podMembers.reduce((acc, m) => acc + Math.round((m.allocatedPct / 100) * 40), 0),
+        totalHours: (podMembers.length || 3) * 40,
+        color: p.color || (normalizedPodId === "pod-a" ? "bg-blue-600" : normalizedPodId === "pod-b" ? "bg-sky-600" : "bg-indigo-600"),
+        textColor: p.textColor || "text-blue-500",
+        pillBg: p.badgeColor || "bg-blue-500/15 text-[#7FA0D6]",
+        squadLoad: stats?.total_wip ? Math.min(100, stats.total_wip * 15) : Math.round(podMembers.reduce((acc, m) => acc + m.allocatedPct, 0) / (podMembers.length || 1)),
+        activeEngagements: stats?.active_clients_count ?? (normalizedPodId === "pod-a" ? 5 : normalizedPodId === "pod-b" ? 4 : 3),
+        readyReview: stats?.internal_qa ?? 0,
+        description: `${p.name} dedicated creative pod: Lead, Video Editor, and Graphic Designer.`,
+      };
+    });
 
-    // --- POD B (Pod Beta) ---
-    {
-      id: "m-201",
-      podId: "pod-b",
-      name: "Sarah Connor",
-      role: "Pod Lead & Creative Strategist",
-      category: "lead",
-      isLead: true,
-      email: "lead.beta@creo.agency",
-      handle: "@sarah",
-      status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      allocatedPct: 60,
-      projectsCount: 1,
-      capabilities: ["Campaign Architecture", "Creative Direction", "Viral Hooks"],
-    },
-    {
-      id: "m-202",
-      podId: "pod-b",
-      name: "Dev Sharma",
-      role: "Video Editor & Reel Specialist",
-      category: "editor",
-      email: "editor.beta@creo.agency",
-      handle: "@davidk",
-      status: "Sprint Ready",
-      statusColor: "bg-sky-50 text-sky-700 border-sky-200",
-      allocatedPct: 50,
-      projectsCount: 1,
-      capabilities: ["DaVinci Resolve", "Sound Design", "Mobile 9:16 Reels"],
-    },
-    {
-      id: "m-203",
-      podId: "pod-b",
-      name: "Elena Rostova",
-      role: "Visual & Poster Designer",
-      category: "designer",
-      email: "designer.beta@creo.agency",
-      handle: "@elena",
-      status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      allocatedPct: 40,
-      projectsCount: 1,
-      capabilities: ["Typography", "Social Banners", "Carousel Design"],
-    },
+    const bdeMembers = membersList.filter((m) => m.podId === "pod-bde" || m.category === "bde");
+    if (bdeMembers.length > 0) {
+      const bdeOnLeave = bdeMembers.filter((m) => m.status === "On Leave");
+      basePods.push({
+        id: "pod-bde",
+        rawId: "pod-bde",
+        name: "Sales & BDE Outreach",
+        letter: "S",
+        lead: bdeMembers[0]?.name || "Alex Carter",
+        leadRole: "BDE Specialist & Growth Lead",
+        membersCount: bdeMembers.length,
+        presentCount: bdeMembers.length - bdeOnLeave.length,
+        onLeaveCount: bdeOnLeave.length,
+        onLeaveMembers: bdeOnLeave,
+        velocityPct: 100,
+        tasksClosed: 14,
+        pendingReview: 1,
+        allocatedHours: 25,
+        totalHours: 40,
+        color: "bg-amber-600",
+        textColor: "text-amber-500",
+        pillBg: "bg-amber-500/15 text-amber-300",
+        squadLoad: 40,
+        activeEngagements: 4,
+        readyReview: 0,
+        description: "Dedicated business development, outbound client acquisition, and growth strategy squad.",
+      });
+    }
 
-    // --- POD C (Pod Gamma) ---
-    {
-      id: "m-301",
-      podId: "pod-c",
-      name: "Rohan Mehta",
-      role: "Pod Lead & Design Director",
-      category: "lead",
-      isLead: true,
-      email: "lead.gamma@creo.agency",
-      handle: "@rohan",
-      status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      allocatedPct: 60,
-      projectsCount: 1,
-      capabilities: ["Art Direction", "Minimal Aesthetics", "Design Systems"],
-    },
-    {
-      id: "m-302",
-      podId: "pod-c",
-      name: "Tanvi Sen",
-      role: "Video & Motion Editor",
-      category: "editor",
-      email: "editor.gamma@creo.agency",
-      handle: "@tanvi",
-      status: "Sprint Ready",
-      statusColor: "bg-sky-50 text-sky-700 border-sky-200",
-      allocatedPct: 50,
-      projectsCount: 1,
-      capabilities: ["Motion Graphics", "Color Grading", "Short-Form Video"],
-    },
-    {
-      id: "m-303",
-      podId: "pod-c",
-      name: "Arjun Nair",
-      role: "Graphic & UI Specialist",
-      category: "designer",
-      email: "designer.gamma@creo.agency",
-      handle: "@arjun",
-      status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      allocatedPct: 40,
-      projectsCount: 1,
-      capabilities: ["Illustrations", "Figma", "Social Banners"],
-    },
-  ]);
+    setPods(basePods);
+  }, [podData, activePodId, membersList]);
 
   const activePod = pods.find((p) => p.id === activePodId);
 
-  // Filter members based on activePod and role category filter
+  // Filter members based on activePod, attendance filter, and role category filter
   const filteredMembers = membersList.filter((m) => {
     const matchesPod = !activePodId || m.podId === activePodId;
-    
+
+    let matchesAttendance = true;
+    if (attendanceFilter === "present") matchesAttendance = m.status !== "On Leave";
+    else if (attendanceFilter === "leave") matchesAttendance = m.status === "On Leave";
+
     let matchesCategory = true;
     if (roleCategoryFilter === "designer") matchesCategory = m.category === "designer";
     else if (roleCategoryFilter === "editor") matchesCategory = m.category === "editor";
     else if (roleCategoryFilter === "videographer") matchesCategory = m.category === "videographer";
     else if (roleCategoryFilter === "photographer") matchesCategory = m.category === "photographer";
     else if (roleCategoryFilter === "lead") matchesCategory = m.category === "lead";
+    else if (roleCategoryFilter === "bde" || roleCategoryFilter === "sales") matchesCategory = m.category === "bde";
     else if (roleCategoryFilter === "accepting") matchesCategory = m.status === "Accepting Work";
+    else if (roleCategoryFilter === "present") matchesCategory = m.status !== "On Leave";
     else if (roleCategoryFilter === "leave") matchesCategory = m.status === "On Leave";
 
-    return matchesPod && matchesCategory;
+    return matchesPod && matchesAttendance && matchesCategory;
   });
 
   const getRoleIcon = (cat: string) => {
@@ -5145,16 +5282,16 @@ export function AdminTeamManagementPage() {
       case "lead":
         return <UserCog className="w-3.5 h-3.5 text-[#7FA0D6]" />;
       case "designer":
-        return <Palette className="w-3.5 h-3.5 text-purple-600" />;
+        return <Palette className="w-3.5 h-3.5 text-purple-400" />;
       case "editor":
-        return <Scissors className="w-3.5 h-3.5 text-amber-600" />;
+        return <Scissors className="w-3.5 h-3.5 text-blue-400" />;
+      case "videographer":
+        return <Video className="w-3.5 h-3.5 text-rose-400" />;
+      case "photographer":
+        return <Camera className="w-3.5 h-3.5 text-emerald-400" />;
       case "bde":
       case "sales":
-        return <Briefcase className="w-3.5 h-3.5 text-blue-500" />;
-      case "videographer":
-        return <Video className="w-3.5 h-3.5 text-rose-600" />;
-      case "photographer":
-        return <Camera className="w-3.5 h-3.5 text-emerald-600" />;
+        return <Briefcase className="w-3.5 h-3.5 text-amber-400" />;
       default:
         return <Users className="w-3.5 h-3.5 text-[#F1F5F9]" />;
     }
@@ -5165,12 +5302,12 @@ export function AdminTeamManagementPage() {
   const [assignModalMember, setAssignModalMember] = useState<TeamMember | null>(null);
   const [scheduleModalMember, setScheduleModalMember] = useState<TeamMember | null>(null);
   const [assignForm, setAssignForm] = useState({
-    taskTitle: "Brand Repositioning Sprint Deliverable",
-    client: "Ryze",
-    priority: "High",
+    taskTitle: "",
+    client: "",
+    priority: "Normal",
     allocationIncrease: 15,
-    deadline: "Friday (Sprint 08)",
-    brief: "Deliver key creative assets, revisions, and Figma handoff tokens according to brief specifications.",
+    deadline: "",
+    brief: "",
   });
   const [newMemberForm, setNewMemberForm] = useState({
     name: "",
@@ -5393,10 +5530,10 @@ export function AdminTeamManagementPage() {
     setAssignModalMember(member);
     setAssignForm({
       taskTitle: `Sprint Deliverables for ${member.name.split(" ")[0]}`,
-      client: "Ryze",
-      priority: "High",
+      client: "",
+      priority: "Normal",
       allocationIncrease: member.allocatedPct >= 80 ? 10 : 15,
-      deadline: "Friday (Sprint 08)",
+      deadline: "",
       brief: `Execute sprint milestones and deliverables aligned with ${member.role} scope.`,
     });
   };
@@ -5829,37 +5966,24 @@ export function AdminTeamManagementPage() {
           </div>
         ) : teamTab === "freelancers" ? (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <span>Freelancer Network & Role-Based Access</span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[10px] font-black uppercase">
-                    Scoped Collaboration
-                  </span>
-                </h3>
-                <p className="text-xs text-[#97A0B3]">
-                  Provision external video editors, animators, and designers with restricted access to assigned deliverables.
-                </p>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => freelancersQuery.refetch()}
-                  disabled={freelancersQuery.isFetching}
-                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
-                  title="Refresh Freelancer Roster"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${freelancersQuery.isFetching ? "animate-spin text-purple-400" : "text-[#97A0B3]"}`} />
-                  <span>Refresh</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsAddFreelancerOpen(true)}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md shadow-purple-500/20 cursor-pointer transition-all shrink-0"
-                >
-                  <Plus className="w-4 h-4" /> Onboard Freelancer
-                </button>
-              </div>
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => freelancersQuery.refetch()}
+                disabled={freelancersQuery.isFetching}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
+                title="Refresh Freelancer Roster"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${freelancersQuery.isFetching ? "animate-spin text-purple-400" : "text-[#97A0B3]"}`} />
+                <span>Refresh</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAddFreelancerOpen(true)}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md shadow-purple-500/20 cursor-pointer transition-all shrink-0"
+              >
+                <Plus className="w-4 h-4" /> Onboard Freelancer
+              </button>
             </div>
 
             <div className="p-3.5 bg-purple-500/10 border border-purple-500/25 rounded-2xl flex items-start gap-3 text-xs text-purple-200">
@@ -6082,19 +6206,116 @@ export function AdminTeamManagementPage() {
         !activePodId ? (
           <div className="space-y-6">
             {/* Top Controls Bar */}
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h3 className="text-base font-bold text-white">Sprint Pods & Resource Allocation</h3>
-                <p className="text-xs text-[#97A0B3]">Live operational capacity and roster assignments across creative pods</p>
-              </div>
+            <div className="flex items-center justify-end gap-3">
+              <Link
+                to="/admin/leaves"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold transition-all shadow-sm"
+              >
+                <Plane className="w-3.5 h-3.5 text-amber-400" />
+                <span>Leave Management</span>
+              </Link>
               <button
                 type="button"
                 onClick={() => setIsAddMemberOpen(true)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
               >
-                <Plus className="w-4 h-4" /> Add Team Pod
+                <Plus className="w-4 h-4" /> Add Team Member
               </button>
             </div>
+
+            {/* Attendance & Presence Status Filter Bar */}
+            {(() => {
+              const totalStaff = membersList.length;
+              const leaveStaff = membersList.filter((m) => m.status === "On Leave");
+              const presentStaff = membersList.filter((m) => m.status !== "On Leave");
+
+              return (
+                <div className="space-y-3">
+                  <div className="p-4 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] mr-1 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-[#7FA0D6]" /> Today's Attendance:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setAttendanceFilter("all")}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          attendanceFilter === "all"
+                            ? "bg-[#7FA0D6] text-[#0B111C] shadow-sm font-black"
+                            : "bg-[#0B111C] text-[#97A0B3] hover:text-white border border-[#2A3446]"
+                        }`}
+                      >
+                        <span>All Specialists</span>
+                        <span className="px-1.5 py-0.2 rounded-full bg-black/20 text-[10px] font-black">{totalStaff}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setAttendanceFilter("present")}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          attendanceFilter === "present"
+                            ? "bg-emerald-600 text-white shadow-sm font-black"
+                            : "bg-[#0B111C] text-emerald-400 hover:text-emerald-300 border border-emerald-500/30"
+                        }`}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>Present In-Office</span>
+                        <span className="px-1.5 py-0.2 rounded-full bg-emerald-950 text-emerald-200 text-[10px] font-black">
+                          {presentStaff.length}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setAttendanceFilter("leave")}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          attendanceFilter === "leave"
+                            ? "bg-amber-600 text-white shadow-sm font-black"
+                            : "bg-[#0B111C] text-amber-400 hover:text-amber-300 border border-amber-500/30"
+                        }`}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                        <span>On Leave Today</span>
+                        <span className="px-1.5 py-0.2 rounded-full bg-amber-950 text-amber-200 text-[10px] font-black">
+                          {leaveStaff.length}
+                        </span>
+                      </button>
+                    </div>
+
+                    <Link
+                      to="/admin/leaves"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7FA0D6] hover:text-blue-300 hover:underline transition-colors ml-auto"
+                    >
+                      <Plane className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{leaveStaff.length} on approved leave &rarr;</span>
+                    </Link>
+                  </div>
+
+                  {/* Active On-Leave Notification Banner */}
+                  {leaveStaff.length > 0 && (
+                    <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-md">
+                      <div className="flex items-center gap-2.5">
+                        <Plane className="w-4 h-4 text-amber-400 shrink-0" />
+                        <div>
+                          <strong className="text-white">Away on Approved Leave Today ({leaveStaff.length}):</strong>{" "}
+                          <span className="text-amber-300">
+                            {leaveStaff
+                              .map((m) => `${m.name} (${m.role} • ${m.podId === "pod-b" ? "Pod Beta" : m.podId === "pod-bde" ? "Sales & BDE" : m.podId === "pod-a" ? "Pod Alpha" : "Pod Gamma"})`)
+                              .join(" & ")}
+                          </span>
+                        </div>
+                      </div>
+                      <Link
+                        to="/admin/leaves"
+                        className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-bold transition-all cursor-pointer shrink-0"
+                      >
+                        Review Leave Approvals
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* 3 KPI Summary Cards matching Screenshot 1 */}
             {(() => {
@@ -6121,7 +6342,7 @@ export function AdminTeamManagementPage() {
                     </div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-3xl font-black text-white tracking-tight">{totalPodsCount} Pods</span>
-                      <span className="text-xs font-semibold text-[#97A0B3]">across {totalMembersCount} members</span>
+                      <span className="text-xs font-semibold text-[#97A0B3]">across {totalMembersCount} specialists</span>
                     </div>
                     <div className="mt-4 pt-3 border-t border-[#2A3446] text-xs font-bold text-[#7FA0D6] flex items-center gap-1">
                       <Layers className="w-3.5 h-3.5" /> Pods {firstPodLetter} – {lastPodLetter} Active Pods
@@ -6134,7 +6355,7 @@ export function AdminTeamManagementPage() {
                       <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                         CAPACITY
                       </span>
-                      <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
                         <Zap className="w-5 h-5" />
                       </div>
                     </div>
@@ -6143,10 +6364,10 @@ export function AdminTeamManagementPage() {
                       <span className="text-xs font-semibold text-[#97A0B3]">optimal bandwidth</span>
                     </div>
                     <div className="mt-4 pt-3 border-t border-[#2A3446] flex items-center gap-2">
-                      <div className="flex-1 bg-[#161F2D] rounded-full h-2 overflow-hidden">
-                        <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${avgCapacityPct}%` }} />
+                      <div className="flex-1 bg-[#0B111C] rounded-full h-2 overflow-hidden border border-[#2A3446]">
+                        <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${avgCapacityPct}%` }} />
                       </div>
-                      <span className="text-xs font-bold text-emerald-600">
+                      <span className="text-xs font-bold text-emerald-400">
                         {avgCapacityPct > 90 ? "High Load" : "Healthy"}
                       </span>
                     </div>
@@ -6158,7 +6379,7 @@ export function AdminTeamManagementPage() {
                       <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                         TASKS TO BE DONE
                       </span>
-                      <div className="w-9 h-9 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-2xl bg-sky-500/15 text-sky-400 border border-sky-500/30 flex items-center justify-center">
                         <CheckSquare className="w-5 h-5" />
                       </div>
                     </div>
@@ -6177,11 +6398,11 @@ export function AdminTeamManagementPage() {
             {/* Team Pods Section Header */}
             <div className="flex items-center justify-between pt-2">
               <div>
-                <h3 className="text-lg font-bold text-white tracking-tight">Team Pods</h3>
-                <p className="text-xs text-[#97A0B3]">Real-time capacity distribution, pod leads, and task completion velocity</p>
+                <h3 className="text-lg font-bold text-white tracking-tight">Team Pods & Operational Squads</h3>
+                <p className="text-xs text-[#97A0B3]">Real-time capacity distribution, attendance status, and pod velocity</p>
               </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Sprint Cycle 08 • 4 Days Remaining
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Sprint Cycle 08 • 4 Days Remaining
               </span>
             </div>
 
@@ -6191,7 +6412,7 @@ export function AdminTeamManagementPage() {
                 <div
                   key={pod.id}
                   onClick={() => setActivePodId(pod.id)}
-                  className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.04)] space-y-5 hover:shadow-xl transition-all cursor-pointer group relative overflow-hidden"
+                  className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.04)] space-y-5 hover:shadow-xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group relative overflow-hidden"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -6201,37 +6422,47 @@ export function AdminTeamManagementPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-base text-white">{pod.name}</h4>
-                          <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold">
-                            Sprint Pod
+                          <span className="px-2 py-0.5 rounded-full bg-[#0B111C] text-[#F1F5F9] border border-[#2A3446] text-[10px] font-bold">
+                            {pod.id === "pod-bde" ? "Outreach Squad" : "Creative Pod"}
                           </span>
                         </div>
-                        <p className="text-xs text-[#97A0B3]">{pod.description.slice(0, 48)}...</p>
+                        <p className="text-xs text-[#97A0B3]">{pod.description.slice(0, 52)}...</p>
                       </div>
                     </div>
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active
-                    </span>
+
+                    {/* Live Presence / On Leave Badge */}
+                    {pod.onLeaveCount > 0 ? (
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 shadow-xs">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                        <span>{pod.onLeaveCount} On Leave Today</span>
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        <span>All {pod.membersCount} Present</span>
+                      </span>
+                    )}
                   </div>
 
                   {/* Lead Info & Member Stack */}
                   <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl flex items-center justify-between border border-[#2A3446]">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
+                      <div className={`w-8 h-8 rounded-full ${pod.color} text-white font-bold text-xs flex items-center justify-center`}>
                         {pod.lead[0]}
                       </div>
                       <div>
                         <div className="text-xs font-bold text-white">{pod.lead}</div>
-                        <div className="text-[10px] text-[#97A0B3] font-medium">Pod Lead</div>
+                        <div className="text-[10px] text-[#97A0B3] font-medium">{pod.leadRole}</div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 text-xs font-bold text-[#F1F5F9]">
-                      <div className="flex -space-x-2">
-                        <div className="w-7 h-7 rounded-full bg-slate-700 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">ER</div>
-                        <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">MC</div>
-                        <div className="w-7 h-7 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">LZ</div>
-                      </div>
-                      <span className="text-xs font-bold text-[#F1F5F9]">+{pod.membersCount - 3} Members</span>
+                      <span>{pod.presentCount} Present / {pod.membersCount} Total</span>
+                      {pod.onLeaveCount > 0 && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
+                          {pod.onLeaveMembers.map((m: any) => m.name.split(" ")[0]).join(", ")} away
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -6241,7 +6472,7 @@ export function AdminTeamManagementPage() {
                       <span>Sprint Velocity</span>
                       <span className="font-bold text-white">{pod.velocityPct}% on track</span>
                     </div>
-                    <div className="w-full bg-[#161F2D] rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-[#0B111C] rounded-full h-2.5 overflow-hidden border border-[#2A3446]">
                       <div className={`h-full rounded-full ${pod.color}`} style={{ width: `${pod.velocityPct}%` }} />
                     </div>
                     <div className="flex justify-between text-[11px] text-[#97A0B3] font-medium pt-0.5">
@@ -6261,13 +6492,130 @@ export function AdminTeamManagementPage() {
                         e.stopPropagation();
                         setActivePodId(pod.id);
                       }}
-                      className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                      className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform cursor-pointer"
                     >
-                      View Member Directory &rarr;
+                      View Pod Members ({pod.membersCount}) &rarr;
                     </button>
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Specialist Attendance & Roster Directory (Directly on View 1) */}
+            <div className="pt-4 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2A3446] pb-3">
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <span>Specialist Roster & Live Attendance</span>
+                    <span className="px-2 py-0.5 rounded-full bg-[#161F2D] border border-[#2A3446] text-[10px] text-slate-300 font-bold">
+                      {filteredMembers.length} Specialists
+                    </span>
+                  </h3>
+                  <p className="text-xs text-[#97A0B3]">
+                    {attendanceFilter === "leave"
+                      ? "Showing all specialists currently away on approved leave"
+                      : attendanceFilter === "present"
+                      ? "Showing all specialists actively present and working in office today"
+                      : "Direct overview of all specialists across creative pods and outreach squads"}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-[#97A0B3]">Filter:</span>
+                  <select
+                    value={roleCategoryFilter}
+                    onChange={(e) => setRoleCategoryFilter(e.target.value)}
+                    className="px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] text-xs font-bold text-white focus:outline-none"
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="lead">Leads</option>
+                    <option value="designer">Designers</option>
+                    <option value="editor">Editors</option>
+                    <option value="bde">BDE Specialists</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Roster Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {filteredMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="bg-[#161F2D] rounded-2xl border border-[#2A3446] p-4 space-y-3 flex flex-col justify-between hover:border-[#7FA0D6]/40 transition-all shadow-md"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="relative">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1E293B] to-[#334155] border border-[#2A3446] text-white font-extrabold text-xs flex items-center justify-center shadow-xs">
+                              {member.name.slice(0, 2).toUpperCase()}
+                            </div>
+                            <span
+                              className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full ring-2 ring-[#161F2D] ${
+                                member.status === "On Leave" ? "bg-amber-400" : "bg-emerald-500"
+                              }`}
+                              title={member.status === "On Leave" ? "On Approved Leave Today" : "Present & Active"}
+                            />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-xs text-white flex items-center gap-1">
+                              <span>{member.name}</span>
+                              {member.isLead && <CheckCircle2 className="w-3 h-3 text-[#7FA0D6]" />}
+                            </h4>
+                            <span className="text-[10px] text-[#97A0B3] font-medium flex items-center gap-1 mt-0.5">
+                              {getRoleIcon(member.category)}
+                              <span>{member.role}</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${member.statusColor}`}>
+                          {member.status}
+                        </span>
+                      </div>
+
+                      {/* Pod Tag & Email */}
+                      <div className="p-2.5 bg-[#0B111C] rounded-xl text-[10px] font-mono space-y-0.5 border border-[#2A3446]">
+                        <div className="text-white font-sans font-bold flex items-center justify-between">
+                          <span className="text-[#97A0B3]">Squad:</span>
+                          <span className="text-[#7FA0D6]">
+                            {member.podId === "pod-a"
+                              ? "Pod Alpha"
+                              : member.podId === "pod-b"
+                              ? "Pod Beta"
+                              : member.podId === "pod-c"
+                              ? "Pod Gamma"
+                              : "Sales & BDE"}
+                          </span>
+                        </div>
+                        <div className="text-[#97A0B3] truncate">{member.email}</div>
+                      </div>
+
+                      {/* Attendance Row */}
+                      <div className="flex items-center justify-between text-xs pt-1 border-t border-[#2A3446]/60">
+                        <span className="text-[#97A0B3] text-[10px] font-bold uppercase tracking-wider">Attendance:</span>
+                        <span className={`text-[11px] font-bold flex items-center gap-1 ${
+                          member.status === "On Leave" ? "text-amber-300" : "text-emerald-400"
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${member.status === "On Leave" ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
+                          {member.status === "On Leave" ? "On Leave Today" : "In Office / Present"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-[#2A3446] flex items-center justify-between text-xs">
+                      <span className="text-[11px] text-[#97A0B3]">Workload: <strong>{member.allocatedPct}%</strong></span>
+                      <button
+                        type="button"
+                        onClick={() => setActivePodId(member.podId)}
+                        className="text-[#7FA0D6] hover:underline font-bold text-[11px] cursor-pointer"
+                      >
+                        View Pod &rarr;
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ) : (
@@ -6334,7 +6682,10 @@ export function AdminTeamManagementPage() {
                     <div className="h-6 w-px bg-gray-200" />
                     <div>
                       <span className="text-[10px] uppercase text-[#97A0B3] block font-extrabold tracking-wider">MEMBERS</span>
-                      <span className="text-white font-black">{filteredMembers.length} Active Members</span>
+                      <span className="text-white font-black">
+                        {filteredMembers.length} Members ({activePod?.presentCount ?? filteredMembers.filter(m => m.status !== "On Leave").length} Present
+                        {activePod?.onLeaveCount ? `, ${activePod.onLeaveCount} on leave` : ""})
+                      </span>
                     </div>
                     <div className="h-6 w-px bg-gray-200" />
                     <div>
@@ -6360,20 +6711,19 @@ export function AdminTeamManagementPage() {
               </div>
             </div>
 
-            {/* Role Category Filter Tabs & Action Controls */}
+            {/* Role Category & Attendance Filter Tabs */}
             <div className="bg-[#161F2D] rounded-2xl border border-[#2A3446] p-4 shadow-sm space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                {/* Filter Pills matching Screenshot 2 */}
+                {/* Filter Pills */}
                 <div className="flex flex-wrap items-center gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs font-bold">
                   {[
                     { key: "all", label: `All Members (${membersList.filter((m) => !activePodId || m.podId === activePodId).length})` },
+                    { key: "present", label: `Present Today (${membersList.filter((m) => (!activePodId || m.podId === activePodId) && m.status !== "On Leave").length})` },
+                    { key: "leave", label: `On Leave (${membersList.filter((m) => (!activePodId || m.podId === activePodId) && m.status === "On Leave").length})` },
                     { key: "lead", label: "Leads" },
                     { key: "designer", label: "Designers" },
                     { key: "editor", label: "Editors" },
-                    { key: "videographer", label: "Videographers" },
-                    { key: "photographer", label: "Photographers" },
-                    { key: "accepting", label: "Accepting Work" },
-                    { key: "leave", label: "On Leave" },
+                    { key: "bde", label: "BDE / Sales" },
                   ].map((tab) => (
                     <button
                       key={tab.key}
@@ -6381,8 +6731,8 @@ export function AdminTeamManagementPage() {
                       onClick={() => setRoleCategoryFilter(tab.key)}
                       className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                         roleCategoryFilter === tab.key
-                          ? "bg-[#7FA0D6] text-white shadow-xs"
-                          : "text-[#F1F5F9] hover:text-white"
+                          ? "bg-[#7FA0D6] text-[#0B111C] font-extrabold shadow-xs"
+                          : "text-[#F1F5F9] hover:text-white hover:bg-[#0B111C]"
                       }`}
                     >
                       {tab.label}
@@ -6456,7 +6806,12 @@ export function AdminTeamManagementPage() {
                           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-base flex items-center justify-center shadow-md">
                             {member.name[0]}
                           </div>
-                          <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                          <span
+                            className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full ring-2 ring-[#161F2D] ${
+                              member.status === "On Leave" ? "bg-amber-400" : "bg-emerald-500"
+                            }`}
+                            title={member.status === "On Leave" ? "On Approved Leave Today" : "Present & Active"}
+                          />
                         </div>
                         <div>
                           <h4 className="font-bold text-sm text-white flex items-center gap-1">
@@ -6490,12 +6845,23 @@ export function AdminTeamManagementPage() {
                         {member.capabilities.map((cap) => (
                           <span
                             key={cap}
-                            className="px-2.5 py-1 rounded-lg bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold border border-[#2A3446]/60"
+                            className="px-2.5 py-1 rounded-lg bg-[#0B111C] text-[#F1F5F9] text-[10px] font-bold border border-[#2A3446]"
                           >
                             {cap}
                           </span>
                         ))}
                       </div>
+                    </div>
+
+                    {/* Attendance Status Row */}
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-[#2A3446]/60">
+                      <span className="text-[#97A0B3] text-[10px] font-bold uppercase tracking-wider">Attendance:</span>
+                      <span className={`text-[11px] font-bold flex items-center gap-1 ${
+                        member.status === "On Leave" ? "text-amber-300" : "text-emerald-400"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${member.status === "On Leave" ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
+                        {member.status === "On Leave" ? "On Approved Leave" : "In Office / Present"}
+                      </span>
                     </div>
                   </div>
 
@@ -6510,7 +6876,7 @@ export function AdminTeamManagementPage() {
                           {member.allocatedPct}% {member.allocatedPct >= 90 ? "Booked" : "Allocated"}
                         </span>
                       </div>
-                      <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
+                      <div className="w-full bg-[#0B111C] rounded-full h-2 overflow-hidden border border-[#2A3446]">
                         <div
                           className={`h-full rounded-full ${
                             member.allocatedPct >= 90 ? "bg-rose-500" : member.allocatedPct >= 70 ? "bg-blue-600" : "bg-emerald-500"
@@ -6521,9 +6887,19 @@ export function AdminTeamManagementPage() {
                     </div>
 
                     <div className="flex items-center justify-between text-xs font-bold pt-1">
-                      <span className="text-emerald-600 flex items-center gap-1 text-[11px]">
-                        ● {member.status === "Fully Booked" ? "At Max Capacity" : "Sprint Ready"}
-                      </span>
+                      {member.status === "On Leave" ? (
+                        <span className="text-amber-400 flex items-center gap-1.5 text-[11px]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" /> On Leave Today
+                        </span>
+                      ) : member.status === "Fully Booked" ? (
+                        <span className="text-rose-400 flex items-center gap-1 text-[11px]">
+                          ● At Max Capacity
+                        </span>
+                      ) : (
+                        <span className="text-emerald-400 flex items-center gap-1 text-[11px]">
+                          ● Sprint Ready
+                        </span>
+                      )}
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
@@ -6537,15 +6913,15 @@ export function AdminTeamManagementPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            if (member.allocatedPct >= 90) {
+                            if (member.allocatedPct >= 90 || member.status === "On Leave") {
                               handleOpenScheduleModal(member);
                             } else {
                               handleOpenAssignModal(member);
                             }
                           }}
-                          className="text-[#7FA0D6] hover:text-blue-800 hover:underline cursor-pointer text-[11px] font-bold"
+                          className="text-[#7FA0D6] hover:text-blue-300 hover:underline cursor-pointer text-[11px] font-bold"
                         >
-                          {member.allocatedPct >= 90 ? "View Schedule" : "Assign Work"}
+                          {member.status === "On Leave" ? "View Leave / Schedule" : member.allocatedPct >= 90 ? "View Schedule" : "Assign Work"}
                         </button>
                       </div>
                     </div>
@@ -6650,10 +7026,7 @@ export function AdminTeamManagementPage() {
                       onChange={(e) => setAssignForm({ ...assignForm, client: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
                     >
-                      <option value="Ryze">Ryze (Starter)</option>
-                      <option value="Shanmugaraj">Shanmugaraj (Growth)</option>
-                      <option value="Aravindan">Aravindan (Custom Retainer)</option>
-                      <option value="Luma">Luma Global (Enterprise)</option>
+                      <option value="" disabled>No active clients</option>
                     </NativeSelect>
                   </div>
 
@@ -6799,53 +7172,18 @@ export function AdminTeamManagementPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-white">
                   <span>Weekly Time Allocation (Mon – Fri)</span>
-                  <span className="text-[#7FA0D6] font-semibold">38.0h Total Booked</span>
+                  <span className="text-[#97A0B3] font-semibold">0.0h Total Booked</span>
                 </div>
-                <div className="grid grid-cols-5 gap-2">
-                  {[
-                    { day: "Mon", hours: "8.0h", task: "Ryze 3D Renders", bg: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30" },
-                    { day: "Tue", hours: "7.5h", task: "Aravindan Motion", bg: "bg-purple-50 text-purple-700 border-purple-200" },
-                    { day: "Wed", hours: "8.0h", task: "Shanmugaraj Intro", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-                    { day: "Thu", hours: "8.0h", task: "Luma Teaser", bg: "bg-amber-50 text-amber-700 border-amber-200" },
-                    { day: "Fri", hours: "6.5h", task: "Sprint Quality QA", bg: "bg-sky-50 text-sky-700 border-sky-200" },
-                  ].map((item) => (
-                    <div key={item.day} className="p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] flex flex-col justify-between text-center gap-1.5">
-                      <span className="text-[11px] font-black text-[#F1F5F9]">{item.day}</span>
-                      <span className="text-xs font-black text-white">{item.hours}</span>
-                      <span className={`text-[9px] font-bold p-1 rounded-md border truncate ${item.bg}`}>
-                        {item.task}
-                      </span>
-                    </div>
-                  ))}
+                <div className="p-4 rounded-xl border border-[#2A3446] bg-[#0B111C] text-center text-xs text-[#97A0B3]">
+                  No sprint hours currently booked for this member.
                 </div>
               </div>
 
               {/* Active Deliverables Breakdown */}
               <div className="space-y-2.5">
                 <h4 className="text-xs font-bold text-white">Active Deliverables & Status</h4>
-                <div className="space-y-2">
-                  {[
-                    { client: "Ryze", name: "3D Asset Render Batch #12", due: "Due in 2 days", progress: 90, color: "bg-blue-600" },
-                    { client: "Vanguard Mobility", name: "4K Motion Sequence & Audio Sync", due: "Due Friday", progress: 65, color: "bg-purple-600" },
-                    { client: "Aravindan", name: "Brand Intro Animation Loop", due: "Due Next Tue", progress: 35, color: "bg-emerald-600" },
-                    { client: "Shanmugaraj", name: "Product Showcase 9:16 Cut", due: "Due Next Fri", progress: 15, color: "bg-amber-600" },
-                  ].map((proj) => (
-                    <div key={proj.name} className="p-3 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:border-[#2A3446] transition-colors flex items-center justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-white truncate">{proj.name}</span>
-                          <span className="text-[10px] font-bold text-[#97A0B3]">({proj.client})</span>
-                        </div>
-                        <div className="w-full bg-[#161F2D] rounded-full h-1.5 mt-2 overflow-hidden">
-                          <div className={`h-full rounded-full ${proj.color}`} style={{ width: `${proj.progress}%` }} />
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="text-[10px] font-bold text-[#97A0B3] block">{proj.due}</span>
-                        <span className="text-xs font-black text-white">{proj.progress}%</span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="p-4 rounded-xl border border-[#2A3446] bg-[#161F2D] text-center text-xs text-[#97A0B3]">
+                  No active deliverables in progress.
                 </div>
               </div>
 
@@ -7863,38 +8201,21 @@ export function AdminLeaveApprovalsPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [filterTab, setFilterTab] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
-  const [applyStartDate, setApplyStartDate] = useState("");
-  const [applyEndDate, setApplyEndDate] = useState("");
+  const [applyStartDate, setApplyStartDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [applyEndDate, setApplyEndDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [applyReason, setApplyReason] = useState("");
-  const [isSubmittingLeave, setIsSubmittingLeave] = useState(false);
+  const [isSubmittingApply, setIsSubmittingApply] = useState(false);
 
-  const handleApplyLeave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!applyStartDate || !applyEndDate || !applyReason.trim()) return;
-    setIsSubmittingLeave(true);
-    try {
-      await submitLeaveRequest({
-        start_date: applyStartDate,
-        end_date: applyEndDate,
-        reason: applyReason.trim(),
-      });
-      setToast("Leave request submitted successfully!");
-      setIsApplyModalOpen(false);
-      setApplyStartDate("");
-      setApplyEndDate("");
-      setApplyReason("");
-      refetch();
-    } catch (err: any) {
-      setToast(err?.message || "Failed to submit leave request.");
-    } finally {
-      setIsSubmittingLeave(false);
-      setTimeout(() => setToast(null), 3500);
-    }
-  };
-
-  const { data: dbLeaves = [], refetch } = useQuery({
+  const { data: dbLeaves = [], refetch } = useQuery<LeaveRequestItem[]>({
     queryKey: ["admin_leave_requests"],
     queryFn: fetchLeaveRequests,
+    staleTime: 10_000,
+  });
+
+  const { data: teamRoster = [] } = useQuery<TeamMemberItem[]>({
+    queryKey: ["admin_teams_roster"],
+    queryFn: fetchTeamMembers,
+    staleTime: 30_000,
   });
 
   const [localOverrides, setLocalOverrides] = useState<Record<string, "approved" | "rejected">>({});
@@ -7913,28 +8234,97 @@ export function AdminLeaveApprovalsPage() {
         await rejectLeaveRequest(id);
       }
       refetch();
-    } catch {
-      // Keep optimistic UI
+    } catch (err: any) {
+      setToast(err?.message || "Failed to update leave request status");
     }
     setToast(`Leave request ${action} successfully.`);
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const handleApplyLeave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!applyStartDate || !applyEndDate || !applyReason.trim()) return;
+    setIsSubmittingApply(true);
+    try {
+      await submitLeaveRequest({
+        start_date: applyStartDate,
+        end_date: applyEndDate,
+        reason: applyReason.trim(),
+      });
+      setToast("Time-off request submitted successfully!");
+      setIsApplyModalOpen(false);
+      setApplyReason("");
+      refetch();
+    } catch (err: any) {
+      setToast(err?.message || "Failed to submit leave request.");
+    } finally {
+      setIsSubmittingApply(false);
+      setTimeout(() => setToast(null), 4000);
+    }
   };
 
   const filteredRequests = leaveRequests.filter(
     (lr) => filterTab === "all" || lr.status === filterTab
   );
 
-  const onLeaveCount = leaveRequests.filter((l) => l.status === "approved").length;
-  const inOfficeCount = Math.max(0, 9 - onLeaveCount);
+  // Dynamic Attendance Calculation
+  const todayStr = useMemo(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  }, []);
+
+  const actualOnLeaveToday = useMemo(() => {
+    return leaveRequests.filter(
+      (l) => l.status === "approved" && (l.is_on_leave_today || (l.start_date <= todayStr && l.end_date >= todayStr))
+    );
+  }, [leaveRequests, todayStr]);
+
+  const totalMembersCount = teamRoster.length > 0 ? teamRoster.length : 12;
+  const inOfficeCount = Math.max(0, totalMembersCount - actualOnLeaveToday.length);
+  const inOfficePct = Math.round((inOfficeCount / totalMembersCount) * 100);
+
+  const getRoleBadgeStyle = (role?: string) => {
+    const r = (role || "").toLowerCase();
+    if (r.includes("lead")) return "bg-blue-500/15 text-[#7FA0D6] border-blue-500/30";
+    if (r.includes("designer") || r.includes("design")) return "bg-purple-500/15 text-purple-300 border-purple-500/30";
+    if (r.includes("editor") || r.includes("video")) return "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
+    if (r.includes("sales") || r.includes("bde")) return "bg-amber-500/15 text-amber-300 border-amber-500/30";
+    if (r.includes("admin")) return "bg-sky-500/15 text-sky-300 border-sky-500/30";
+    return "bg-[#161F2D] text-slate-300 border-[#2A3446]";
+  };
+
+  const getPodBadge = (lr: LeaveRequestItem) => {
+    if (lr.pod_name) return lr.pod_name;
+    const email = (lr.employee_email || lr.email || "").toLowerCase();
+    const tl = (lr.team_lead_name || "").toLowerCase();
+    const role = (lr.role || lr.user_role || "").toLowerCase();
+    if (email.includes(".alpha") || tl.includes("vikram")) return "Pod Alpha (Pod A)";
+    if (email.includes(".beta") || tl.includes("sarah")) return "Pod Beta (Pod B)";
+    if (email.includes(".gamma") || tl.includes("rohan")) return "Pod Gamma (Pod C)";
+    if (role.includes("sales") || role.includes("bde")) return "Sales & Outreach (BDE)";
+    if (role.includes("admin")) return "Operations Leadership";
+    return lr.department ? `${lr.department.toUpperCase()} Squad` : "Creative Squad";
+  };
+
+  const calculateDays = (start: string, end: string) => {
+    try {
+      const s = new Date(start);
+      const e = new Date(end);
+      const diff = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      return diff > 0 ? diff : 1;
+    } catch {
+      return 1;
+    }
+  };
 
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Team Details" />
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-8">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-6">
         {toast && (
-          <div className="p-4 bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs font-bold rounded-2xl flex items-center justify-between shadow-xl backdrop-blur-md animate-fade-in">
+          <div className="p-4 bg-emerald-950/60 border border-emerald-800/60 text-emerald-300 text-xs font-bold rounded-2xl flex items-center justify-between shadow-xl backdrop-blur-md animate-fade-in">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>{toast}</span>
             </div>
             <button onClick={() => setToast(null)} className="text-emerald-400 hover:text-emerald-200 font-bold cursor-pointer">
@@ -7943,262 +8333,392 @@ export function AdminLeaveApprovalsPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/team"
-              className="px-3.5 py-2 rounded-xl bg-[#161F2D] hover:bg-slate-200 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
-            >
-              <UserCog className="w-4 h-4 text-[#97A0B3]" /> Team Roster
-            </Link>
-            <button
-              type="button"
-              onClick={() => setIsApplyModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-[#7FA0D6] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
-            >
-              <Plus className="w-4 h-4" /> Apply for Leave
-            </button>
-          </div>
+        <div className="flex flex-wrap items-center justify-end gap-3 pb-2">
+          <Link
+            to="/admin/team"
+            className="px-3.5 py-2 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+          >
+            <UserCog className="w-4 h-4 text-[#7FA0D6]" /> Team Roster & Pods
+          </Link>
+          <button
+            type="button"
+            onClick={() => setIsApplyModalOpen(true)}
+            className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+          >
+            <Plus className="w-4 h-4" /> Apply for Time Off
+          </button>
         </div>
 
-        {/* 2 Top KPI Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6">
-          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-                PEOPLE WORKING TODAY
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
-                <Users className="w-4 h-4" />
+        {/* 2 Top KPI Summary Cards - Fully Connected & Live */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          {/* Card 1: PEOPLE WORKING TODAY */}
+          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-lg flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  PEOPLE WORKING TODAY
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold">
+                  <Users className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">{inOfficeCount}</span>
+                <span className="text-xs font-bold text-emerald-400">Present & Active</span>
+                <span className="text-xs font-semibold text-[#97A0B3]">/ {totalMembersCount} Total Staff</span>
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white tracking-tight">{inOfficeCount}</span>
-              <span className="text-xs font-semibold text-[#97A0B3]">Active in Pods</span>
-            </div>
-            <div className="mt-6 pt-4 border-t border-[#2A3446] flex items-center justify-between text-xs font-semibold text-[#97A0B3]">
-              <span className="flex items-center gap-1.5 text-emerald-600">
-                <span className="w-2 h-2 rounded-full bg-emerald-600" /> 9 Total Pod Specialists
+
+            <div className="mt-5 pt-4 border-t border-[#2A3446] flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
+              <span className="flex items-center gap-1.5 text-emerald-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                Pod Alpha, Beta, Gamma & Sales Active
               </span>
-              <span className="text-white font-bold">{Math.round((inOfficeCount / 9) * 100)}% In-Office</span>
+              <span className="text-white font-extrabold px-2 py-0.5 rounded-lg bg-[#0B111C] border border-[#2A3446]">
+                {inOfficePct}% In-Office
+              </span>
             </div>
           </div>
 
-          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-                ON LEAVE TODAY
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
-                <Plane className="w-4 h-4" />
+          {/* Card 2: ON LEAVE TODAY */}
+          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-lg flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  ON LEAVE TODAY
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">
+                  <Plane className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">{actualOnLeaveToday.length}</span>
+                <span className="text-xs font-bold text-amber-400">Specialists Away</span>
+                <span className="text-xs font-semibold text-[#97A0B3]">({totalMembersCount - actualOnLeaveToday.length} in office)</span>
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white tracking-tight">{onLeaveCount}</span>
-              <span className="text-xs font-semibold text-[#97A0B3]">Specialists Away</span>
-            </div>
-            <div className="mt-6 pt-4 border-t border-[#2A3446] flex items-center justify-between text-xs font-semibold text-[#97A0B3]">
-              <span className="text-[#97A0B3]">Pod A, B, C Active</span>
-              <span className="text-emerald-500 font-bold">{onLeaveCount === 0 ? "Full Capacity" : `${onLeaveCount} on leave`}</span>
+
+            <div className="mt-4 pt-3 border-t border-[#2A3446]">
+              {actualOnLeaveToday.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-wide mr-1">Away Now:</span>
+                  {actualOnLeaveToday.map((m) => (
+                    <span
+                      key={m.id}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-bold"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      <span>{m.employee_name || m.user_name || "Specialist"}</span>
+                      <span className="text-amber-400/80 text-[10px]">
+                        ({m.role_display || m.role || getPodBadge(m)})
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between text-xs font-semibold text-emerald-400">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    All creative pods & sales teams are at full capacity
+                  </span>
+                  <span className="text-[#97A0B3] text-[11px]">0 on leave</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Requests Table */}
-        <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-[#2A3446] flex items-center justify-between bg-[#0B111C]/50">
-            <div className="flex items-center gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs">
+        <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-xl overflow-hidden">
+          <div className="p-4 border-b border-[#2A3446] flex flex-wrap items-center justify-between gap-3 bg-[#0B111C]/60">
+            <div className="flex items-center gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs border border-[#2A3446] max-w-full overflow-x-auto scrollbar-none flex-nowrap">
               {(["all", "pending", "approved", "rejected"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setFilterTab(tab)}
-                  className={`px-3 py-1 rounded-lg capitalize font-bold transition-all cursor-pointer ${
-                    filterTab === tab ? "bg-[#161F2D] text-white shadow-xs" : "text-[#97A0B3]"
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg capitalize font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap text-[11px] sm:text-xs ${
+                    filterTab === tab ? "bg-[#7FA0D6] text-[#0B111C] shadow-sm font-extrabold" : "text-[#97A0B3] hover:text-white"
                   }`}
                 >
-                  {tab}
+                  {tab === "all" ? `All Requests (${leaveRequests.length})` : `${tab} (${leaveRequests.filter(l => l.status === tab).length})`}
                 </button>
               ))}
             </div>
+
+            <div className="text-xs text-[#97A0B3] font-medium">
+              Showing {filteredRequests.length} leave application records
+            </div>
           </div>
 
-          <table className="w-full text-left text-xs text-white">
-            <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
-              <tr>
-                <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Team Member & Domain</th>
-                <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Dates</th>
-                <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Reason</th>
-                <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Status</th>
-                <th className="px-5 py-3.5 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 font-medium">
-              {filteredRequests.length === 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-white">
+              <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
-                    No leave requests found
-                  </td>
+                  <th className="px-4 sm:px-6 py-3.5">Specialist & Team</th>
+                  <th className="px-4 sm:px-6 py-3.5">Dates & Duration</th>
+                  <th className="px-4 sm:px-6 py-3.5">Reason / Notes</th>
+                  <th className="px-4 sm:px-6 py-3.5">Status</th>
+                  <th className="px-4 sm:px-6 py-3.5 text-right">Action / Approver</th>
                 </tr>
-              ) : (
-                filteredRequests.map((lr) => {
-                  const memberName =
-                    lr.employee_name ||
-                    lr.user_name ||
-                    (lr as any).name ||
-                    (lr.employee_email ? (lr.employee_email.split("@")[0] || "").toUpperCase() : "Team Member");
+              </thead>
+              <tbody className="divide-y divide-[#2A3446]/60 font-medium">
+                {filteredRequests.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center text-[#97A0B3] text-xs">
+                      No leave applications found for this filter tab.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredRequests.map((lr) => {
+                    const empName =
+                      lr.employee_name ||
+                      lr.user_name ||
+                      (lr as any).name ||
+                      (lr.employee_email ? (lr.employee_email.split("@")[0] || "").toUpperCase() : "Team Member");
+                    const empEmail = lr.employee_email || lr.email || "staff@creo.agency";
+                    const rawRole = (lr.role || (lr as any).role_raw || lr.user_role || "").toLowerCase();
+                    const domain =
+                      lr.domain ||
+                      lr.department ||
+                      (rawRole === "sales"
+                        ? "BDE (Business Development)"
+                        : rawRole === "freelancer"
+                        ? "Freelancer"
+                        : rawRole === "team_lead"
+                        ? "Team Lead"
+                        : lr.role_display || "Specialist");
+                    const isBDE = rawRole === "sales" || domain.toLowerCase().includes("bde");
+                    const isFreelancer = rawRole === "freelancer" || domain.toLowerCase().includes("freelancer");
+                    const roleLabel = isBDE
+                      ? "BDE"
+                      : isFreelancer
+                      ? "FREELANCER"
+                      : (lr.role_display || (lr.role ? lr.role.replace("_", " ").toUpperCase() : "SPECIALIST"));
+                    const podName = getPodBadge(lr);
+                    const isAwayToday = lr.status === "approved" && (lr.is_on_leave_today || (lr.start_date <= todayStr && lr.end_date >= todayStr));
+                    const daysCount = calculateDays(lr.start_date, lr.end_date);
 
-                  const rawRole = (lr.role || (lr as any).role_raw || "").toLowerCase();
-                  const domain =
-                    lr.domain ||
-                    lr.department ||
-                    (rawRole === "sales"
-                      ? "BDE (Business Development)"
-                      : rawRole === "freelancer"
-                      ? "Freelancer"
-                      : rawRole === "team_lead"
-                      ? "Team Lead"
-                      : lr.user_role || "Specialist");
+                    return (
+                      <tr key={lr.id} className="hover:bg-[#0B111C]/40 transition-colors">
+                        {/* 1. Specialist & Team */}
+                        <td className="px-4 sm:px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative shrink-0">
+                              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#1E293B] to-[#334155] border border-[#2A3446] text-white font-extrabold text-xs flex items-center justify-center shadow-sm">
+                                {empName.slice(0, 2).toUpperCase()}
+                              </div>
+                              <span
+                                className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ring-2 ring-[#161F2D] ${
+                                  isAwayToday ? "bg-amber-400" : "bg-emerald-400"
+                                }`}
+                                title={isAwayToday ? "On Leave Today" : "Active Member"}
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-bold text-sm text-white flex items-center gap-2 flex-wrap">
+                                <span>{empName}</span>
+                                {isAwayToday && (
+                                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                    Away Today
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                <span
+                                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                                    isBDE
+                                      ? "bg-blue-500/20 text-[#7FA0D6] border-[#7FA0D6]/40"
+                                      : isFreelancer
+                                      ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
+                                      : getRoleBadgeStyle(lr.role || lr.user_role)
+                                  }`}
+                                >
+                                  {roleLabel}
+                                </span>
+                                <span className="text-[#97A0B3] text-[10px]">•</span>
+                                <span className="text-slate-300 text-[11px] font-bold">{podName}</span>
+                                {lr.team_lead_name && lr.team_lead_name !== "Unassigned Lead" && (
+                                  <>
+                                    <span className="text-[#97A0B3] text-[10px]">•</span>
+                                    <span className="text-[#97A0B3] text-[10px]">Lead: {lr.team_lead_name}</span>
+                                  </>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-[#97A0B3] font-mono mt-0.5 truncate">{empEmail}</div>
+                            </div>
+                          </div>
+                        </td>
 
-                  const isBDE = rawRole === "sales" || domain.toLowerCase().includes("bde");
-                  const isFreelancer = rawRole === "freelancer" || domain.toLowerCase().includes("freelancer");
+                        {/* 2. Dates & Duration */}
+                        <td className="px-4 sm:px-6 py-4">
+                          <div className="space-y-1">
+                            <div className="font-mono text-xs font-bold text-white flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5 text-[#7FA0D6]" />
+                              <span>{lr.start_date}</span>
+                              <span className="text-[#97A0B3]">&rarr;</span>
+                              <span>{lr.end_date}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-0.5 rounded-md bg-[#0B111C] border border-[#2A3446] text-[10px] font-bold text-[#7FA0D6]">
+                                {daysCount} {daysCount === 1 ? "Day" : "Days"} Duration
+                              </span>
+                              {lr.created_at_ist && (
+                                <span className="text-[10px] text-[#97A0B3]">
+                                  Submitted {lr.created_at_ist}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
 
-                  return (
-                    <tr key={lr.id} className="hover:bg-[#0B111C]/60">
-                      <td className="px-3 sm:px-5 py-3 sm:py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="font-bold text-white text-sm">{memberName}</div>
+                        {/* 3. Reason */}
+                        <td className="px-4 sm:px-6 py-4 max-w-xs">
+                          <div className="text-xs text-[#F1F5F9] leading-relaxed break-words bg-[#0B111C]/50 p-2.5 rounded-xl border border-[#2A3446]">
+                            {lr.reason || "Scheduled Time Off"}
+                          </div>
+                        </td>
+
+                        {/* 4. Status */}
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
-                              isBDE
-                                ? "bg-blue-500/20 text-[#7FA0D6] border-[#7FA0D6]/40"
-                                : isFreelancer
-                                ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
-                                : "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
+                              lr.status === "approved"
+                                ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                                : lr.status === "rejected"
+                                ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
+                                : "bg-amber-500/15 text-amber-300 border-amber-500/30 animate-pulse"
                             }`}
                           >
-                            {isBDE ? "BDE" : isFreelancer ? "Freelancer" : domain}
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                lr.status === "approved"
+                                  ? "bg-emerald-400"
+                                  : lr.status === "rejected"
+                                  ? "bg-rose-400"
+                                  : "bg-amber-400"
+                              }`}
+                            />
+                            {lr.status}
                           </span>
-                        </div>
-                        <div className="text-[11px] text-[#97A0B3] flex items-center gap-2 mt-0.5">
-                          <span>{domain}</span>
-                          {lr.employee_email && (
-                            <>
-                              <span>·</span>
-                              <span className="font-mono text-[10px]">{lr.employee_email}</span>
-                            </>
+                        </td>
+
+                        {/* 5. Actions / Approver */}
+                        <td className="px-4 sm:px-6 py-4 text-right whitespace-nowrap">
+                          {lr.status === "pending" ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleAction(lr.id, "approved")}
+                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                              >
+                                <Check className="w-3.5 h-3.5" /> Approve
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleAction(lr.id, "rejected")}
+                                className="px-3 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white font-bold text-xs shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                              >
+                                <X className="w-3.5 h-3.5" /> Reject
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="text-right">
+                              <span className="text-[11px] text-[#97A0B3] font-semibold block">
+                                {lr.status === "approved" ? "Authorized" : "Rejected"}
+                              </span>
+                              {lr.approved_by_name && (
+                                <span className="text-[10px] text-slate-400 block mt-0.5">
+                                  by {lr.approved_by_name}
+                                </span>
+                              )}
+                            </div>
                           )}
-                        </div>
-                      </td>
-                  <td className="px-5 py-4 font-mono text-[11px]">
-                    <div>{lr.start_date || (lr as any).startDate} to {lr.end_date || (lr as any).endDate}</div>
-                  </td>
-                  <td className="px-5 py-4 text-[#F1F5F9] max-w-xs">{lr.reason}</td>
-                  <td className="px-3 sm:px-5 py-3 sm:py-4">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                        lr.status === "approved"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : lr.status === "rejected"
-                          ? "bg-rose-50 text-rose-700 border border-rose-200"
-                          : "bg-amber-50 text-amber-700 border border-amber-200"
-                      }`}
-                    >
-                      {lr.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    {lr.status === "pending" && (
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleAction(lr.id, "approved")}
-                          className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[11px] hover:bg-emerald-700 transition-colors"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleAction(lr.id, "rejected")}
-                          className="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-bold text-[11px] hover:bg-rose-700 transition-colors"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Apply Modal */}
+        {/* Working Apply for Time Off Modal */}
         {isApplyModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-            <div className="w-full max-w-md rounded-2xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-fade-in">
+            <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
               <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <h3 className="text-base font-bold text-white">Apply for Time Off</h3>
+                <div>
+                  <h3 className="text-base font-bold text-white">Apply for Time Off</h3>
+                  <p className="text-xs text-[#97A0B3]">Submit a leave schedule to administrative operations</p>
+                </div>
                 <button
                   type="button"
                   onClick={() => setIsApplyModalOpen(false)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1.5 rounded-xl text-[#97A0B3] hover:text-white hover:bg-[#0B111C] cursor-pointer transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleApplyLeave} className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+              <form onSubmit={handleApplyLeave} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Start Date</label>
+                    <label className="block text-[11px] font-bold text-[#97A0B3] uppercase tracking-wider mb-1">
+                      Start Date
+                    </label>
                     <input
                       type="date"
                       required
                       value={applyStartDate}
                       onChange={(e) => setApplyStartDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs focus:outline-none focus:border-[#7FA0D6]"
+                      className="w-full px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-white focus:outline-none focus:border-[#7FA0D6]"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">End Date</label>
+                    <label className="block text-[11px] font-bold text-[#97A0B3] uppercase tracking-wider mb-1">
+                      End Date
+                    </label>
                     <input
                       type="date"
                       required
                       value={applyEndDate}
                       onChange={(e) => setApplyEndDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs focus:outline-none focus:border-[#7FA0D6]"
+                      className="w-full px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-white focus:outline-none focus:border-[#7FA0D6]"
                     />
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Reason & Notes</label>
+                  <label className="block text-[11px] font-bold text-[#97A0B3] uppercase tracking-wider mb-1">
+                    Reason & Notes
+                  </label>
                   <textarea
                     rows={3}
                     required
                     value={applyReason}
                     onChange={(e) => setApplyReason(e.target.value)}
-                    placeholder="State reason for time off..."
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs resize-none focus:outline-none focus:border-[#7FA0D6]"
+                    placeholder="e.g. [Casual Leave] Personal errands or family function..."
+                    className="w-full px-3 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-white focus:outline-none focus:border-[#7FA0D6] resize-none placeholder:text-[#97A0B3]/50"
                   />
                 </div>
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+
+                <div className="flex justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
                   <button
                     type="button"
                     onClick={() => setIsApplyModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#97A0B3] hover:text-white hover:bg-[#0B111C] cursor-pointer transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmittingLeave || !applyReason.trim()}
-                    className="px-4 py-2 rounded-xl bg-[#7FA0D6] text-xs font-bold text-[#0B111C] hover:bg-white disabled:opacity-50 cursor-pointer shadow-md transition-all"
+                    disabled={isSubmittingApply || !applyReason.trim()}
+                    className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-50 transition-all flex items-center gap-1.5"
                   >
-                    {isSubmittingLeave ? "Submitting..." : "Submit Leave Request"}
+                    {isSubmittingApply ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                    <span>{isSubmittingApply ? "Submitting..." : "Submit Application"}</span>
                   </button>
                 </div>
               </form>
@@ -8383,7 +8903,7 @@ export function AdminRevenuePage() {
 
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
-      <AdminTopHeader title="Revenue Engine" activeTab="Revenue" />
+      <AdminTopHeader activeTab="Revenue" hideTitle />
 
       <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-6 sm:space-y-8">
           <BillingPauseRequests />
@@ -8462,44 +8982,44 @@ export function AdminRevenuePage() {
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6">
           {/* Metric 1: Total Revenue (MRR) */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
-            <div className="space-y-2">
+          <div className="bg-[#161F2D] rounded-3xl p-5 sm:p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex flex-col justify-between gap-3">
+            <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                 Total Revenue (MRR)
               </span>
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-black text-white tracking-tight">₹{totalMrr.toLocaleString('en-IN')}</span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center gap-1">
-                  Active Retainers
-                </span>
-              </div>
-              <div className="text-xs text-[#97A0B3] font-medium pt-1">
-                Projected ARR: <strong className="text-white font-bold">₹{projectedArr.toLocaleString('en-IN')}</strong>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shrink-0 border border-[#7FA0D6]/30 font-black text-xl sm:text-2xl">
+                ₹
               </div>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shrink-0 border border-[#7FA0D6]/30 font-black text-2xl">
-              ₹
+            <div className="flex flex-wrap items-baseline gap-2.5">
+              <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">₹{totalMrr.toLocaleString('en-IN')}</span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center gap-1">
+                Active Retainers
+              </span>
+            </div>
+            <div className="text-xs text-[#97A0B3] font-medium pt-0.5">
+              Projected ARR: <strong className="text-white font-bold">₹{projectedArr.toLocaleString('en-IN')}</strong>
             </div>
           </div>
 
           {/* Metric 2: Collected this Month */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
-            <div className="space-y-2">
+          <div className="bg-[#161F2D] rounded-3xl p-5 sm:p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex flex-col justify-between gap-3">
+            <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                 Collected this Month
               </span>
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-black text-white tracking-tight">₹{totalCollected.toLocaleString('en-IN')}</span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
-                  {transactions.length > 0 ? `${Math.round((transactions.filter(t => t.status === "Paid").length / transactions.length) * 100)}% Rate` : "0% Rate"}
-                </span>
-              </div>
-              <div className="text-xs text-[#97A0B3] font-medium pt-1">
-                Settlement Ratio: <strong className="text-white font-bold">{transactions.filter(t => t.status === "Paid").length} of {transactions.length} Invoices</strong>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
-              <CheckCircle2 className="w-7 h-7" />
+            <div className="flex flex-wrap items-baseline gap-2.5">
+              <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">₹{totalCollected.toLocaleString('en-IN')}</span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                {transactions.length > 0 ? `${Math.round((transactions.filter(t => t.status === "Paid").length / transactions.length) * 100)}% Rate` : "0% Rate"}
+              </span>
+            </div>
+            <div className="text-xs text-[#97A0B3] font-medium pt-0.5">
+              Settlement Ratio: <strong className="text-white font-bold">{transactions.filter(t => t.status === "Paid").length} of {transactions.length} Invoices</strong>
             </div>
           </div>
         </div>
@@ -8675,11 +9195,11 @@ export function AdminRevenuePage() {
                 </div>
               </div>
 
-              {/* Transactions Table: Complete row visible with zero horizontal scrolling */}
-              <div className={`rounded-2xl border border-[#2A3446] bg-[#0B111C]/40 ${
-                revenueLayout === "split" ? "max-h-[380px] overflow-y-auto overflow-x-hidden" : "overflow-hidden"
+              {/* Transactions Table: Responsive scroll container on mobile */}
+              <div className={`rounded-2xl border border-[#2A3446] bg-[#0B111C]/40 overflow-x-auto ${
+                revenueLayout === "split" ? "max-h-[380px] overflow-y-auto" : ""
               }`}>
-                <table className="w-full text-left text-xs text-white table-auto">
+                <table className="w-full text-left text-xs text-white min-w-[700px]">
                   <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] sticky top-0 z-10">
                     {revenueLayout === "split" ? (
                       <tr>
@@ -9033,7 +9553,7 @@ export function AdminPlansPage() {
       display_name: "Starter",
       price_monthly: 25000,
       currency: "INR",
-      subscribers: 1,
+      subscribers: 0,
       features: [
         "8 Static Posters / Month",
         "4 Short Video Reels / Month",
@@ -9062,7 +9582,7 @@ export function AdminPlansPage() {
       display_name: "Scale",
       price_monthly: 120000,
       currency: "INR",
-      subscribers: 1,
+      subscribers: 0,
       features: [
         "30 Static Posters / Month",
         "16 High-Production Video Reels",
@@ -9530,7 +10050,7 @@ export function AdminPlansPage() {
 
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
-      <AdminTopHeader activeTab="Revenue" />
+      <AdminTopHeader activeTab="Revenue" hideTitle />
       <main className="flex-1 px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
@@ -9751,9 +10271,26 @@ export function AdminPlansPage() {
                           {item.clientLogo}
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                             <h4 className="font-bold text-sm text-white">{item.clientName}</h4>
-                            <span className="text-[10px] text-[#97A0B3] font-semibold">{item.requestedAt}</span>
+                            {item.requestedAt && (
+                              <span className="text-[10px] text-[#97A0B3] font-semibold">
+                                {(() => {
+                                  try {
+                                    const d = new Date(item.requestedAt);
+                                    return isNaN(d.getTime())
+                                      ? item.requestedAt
+                                      : d.toLocaleDateString("en-IN", {
+                                          day: "numeric",
+                                          month: "short",
+                                          year: "numeric",
+                                        });
+                                  } catch {
+                                    return item.requestedAt;
+                                  }
+                                })()}
+                              </span>
+                            )}
                             {isHighlighted && (
                               <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-[#7FA0D6] border border-blue-500/30 text-[9px] font-black uppercase">
                                 Selected Target
@@ -9766,7 +10303,7 @@ export function AdminPlansPage() {
                       </div>
 
                       {/* Negotiation Details */}
-                      <div className="flex items-center gap-4 bg-[#161F2D] p-3 rounded-xl border border-[#2A3446] flex-wrap">
+                      <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 sm:gap-4 bg-[#161F2D] p-3 rounded-xl border border-[#2A3446]">
                         {item.proposedOffer && (
                           <div>
                             <span className="text-[10px] text-[#7FA0D6] uppercase block font-bold">Client Offer</span>

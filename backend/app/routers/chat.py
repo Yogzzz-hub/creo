@@ -1030,7 +1030,7 @@ async def send_message(
     is_sender_bde = sender_role in ("sales", "bde")
     is_sender_tm = not (is_sender_admin or is_sender_freelancer or is_sender_tl or is_sender_client or is_sender_bde)
 
-    websocket_recipients: set[Any] = set()
+    websocket_recipients: set[Any] = {current_user_id}
 
     if payload.channel:
         if is_sender_freelancer:
@@ -1075,6 +1075,41 @@ async def send_message(
         client_id = current_user_id if is_client_user else (payload.client_id or current_user_id)
         specialist_id = current_user_id
 
+        # Determine notification and broadcast recipients
+        recipients: set[uuid.UUID] = set()
+        if is_client_user:
+            from app.models.work import ClientAssignment
+            assignments_stmt = (
+                select(ClientAssignment.user_id)
+                .where(ClientAssignment.client_id == client_id)
+            )
+            assignments_res = await db.execute(assignments_stmt)
+            assigned_user_ids = set(assignments_res.scalars().all())
+
+            if not assigned_user_ids:
+                admins_stmt = select(User.id).where(
+                    User.role.in_([UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.TEAM_LEAD]),
+                    User.account_status == "active",
+                )
+                assigned_user_ids = set((await db.execute(admins_stmt)).scalars().all())
+
+            recipients = assigned_user_ids
+        elif _is_staff_channel(payload.channel):
+            staff_stmt = select(User.id).where(
+                User.role.in_([
+                    UserRole.ADMIN,
+                    UserRole.SUPER_ADMIN,
+                    UserRole.TEAM_LEAD,
+                    UserRole.EDITOR,
+                    UserRole.DESIGNER,
+                ]),
+                User.account_status == "active",
+            )
+            recipients = set((await db.execute(staff_stmt)).scalars().all())
+        else:
+            if client_id and client_id != current_user_id:
+                recipients = {client_id}
+
         new_msg = DirectMessage(
             client_id=client_id,
             specialist_id=specialist_id,
@@ -1084,11 +1119,11 @@ async def send_message(
         )
         db.add(new_msg)
 
-        # Broadcast live channel messages to all connected active connections
-        websocket_recipients = set(ws_manager.active_connections.keys())
-
-        recipients = {client_id}
+        # Broadcast live channel messages to all connected active connections as well as relevant recipients
+        websocket_recipients = set(ws_manager.active_connections.keys()) | {current_user_id}
         recipients.discard(current_user_id)
+        websocket_recipients.update(recipients)
+
         for recipient_id in recipients:
             notification = Notification(
                 user_id=recipient_id,
@@ -1126,16 +1161,12 @@ async def send_message(
                     status_code=403,
                     detail="Clients are only permitted to message Team Leads, Administrators, and BDE Specialists."
                 )
-
-        # RULE 2: TL CAN MESSAGE ADMIN AND CLIENTS
         elif is_sender_tl:
             if not (is_target_admin or is_target_client):
                 raise HTTPException(
                     status_code=403,
                     detail="Team Leads can only direct message Administrators and Clients."
                 )
-
-        # RULE 3: TEAM MEMBERS CAN ONLY MESSAGE ADMIN
         elif is_sender_tm:
             if not is_target_admin:
                 raise HTTPException(
@@ -1145,10 +1176,10 @@ async def send_message(
 
         # RULE 4: ADMIN CAN MESSAGE LEADS, CLIENTS, AND BDE SPECIALISTS
         elif is_sender_admin:
-            if is_target_admin:
+            if target_user.id == current_user_id:
                 raise HTTPException(
                     status_code=400,
-                    detail="Cannot direct message an administrator account."
+                    detail="Cannot direct message yourself."
                 )
             if not (is_target_tl or is_target_client or is_target_bde):
                 raise HTTPException(

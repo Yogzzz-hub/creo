@@ -35,6 +35,7 @@ import {
   LeadStatus,
   CreateLeadPayload,
 } from "../../lib/bde-api";
+import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CurvedSelect, type CurvedSelectOption } from "../../components/ui/CurvedSelect";
 
 
@@ -287,12 +288,14 @@ export function BDEDashboardPage() {
   };
 
   return (
-    <motion.main
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1650px] w-full mx-auto space-y-6"
-    >
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+      <AdminTopHeader activeTab="BDE Outreach" hideTitle />
+      <motion.main
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="flex-1 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-[1650px] w-full mx-auto space-y-6"
+      >
 
       {/* ── TAB 1: Visual Sales Funnel & Pipeline ─────────────────────────────────── */}
       {activeTab === "pipeline" && (
@@ -1435,6 +1438,7 @@ export function BDEDashboardPage() {
         )}
       </AnimatePresence>
     </motion.main>
+    </div>
   );
 }
 

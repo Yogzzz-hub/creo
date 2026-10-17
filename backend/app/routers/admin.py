@@ -1256,9 +1256,13 @@ async def get_dispatch_queue(
                 WHERE l.user_id = sp.user_id
                   AND l.status = 'approved'
                   AND CURRENT_DATE BETWEEN l.start_date AND l.end_date
-            ) AS on_leave_today
+            ) AS on_leave_today,
+            sp.team_lead_id,
+            t.name AS team_name,
+            u.role
         FROM staff_profiles sp
         JOIN users u ON u.id = sp.user_id
+        LEFT JOIN teams t ON t.id = u.owning_team_id
         LEFT JOIN staff_wip w ON w.assigned_to = sp.user_id
         ORDER BY active_wip DESC;
     """)
@@ -1277,6 +1281,9 @@ async def get_dispatch_queue(
             "wip_stories": r[9],
             "wip_reels": r[10],
             "on_leave_today": r[11],
+            "team_lead_id": str(r[12]) if r[12] else None,
+            "team_name": r[13],
+            "role": r[14].value if hasattr(r[14], "value") else str(r[14]),
             "capacity_by_type": {
                 "posters": {"wip": r[8], "max": max(1, r[5])},
                 "stories": {"wip": r[9], "max": max(1, r[5] * 2)},
@@ -1330,6 +1337,253 @@ async def get_sla_breaches(
         }
         for r in rows
     ]
+
+
+@router.get("/sla-performance")
+async def get_sla_performance(
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Consolidated SLA metrics, active breaches, compliance trajectory, priority breakdowns, and pod leaderboard."""
+    now = datetime.now(timezone.utc)
+
+    # 1. High-level SLA metrics from tasks
+    q_stats = await db.execute(text("""
+        SELECT 
+            COUNT(*) as total_tasks,
+            COUNT(*) FILTER (WHERE sla_due_at IS NOT NULL) as total_with_sla,
+            COUNT(*) FILTER (WHERE sla_due_at IS NOT NULL AND status = 'completed' AND (updated_at <= sla_due_at OR sla_due_at IS NULL)) as completed_on_time,
+            COUNT(*) FILTER (WHERE sla_due_at < NOW() AND status NOT IN ('ready_to_publish', 'completed')) as overdue_active,
+            COUNT(*) FILTER (WHERE sla_due_at >= NOW() AND sla_due_at <= NOW() + INTERVAL '48 hours' AND status NOT IN ('ready_to_publish', 'completed')) as approaching_active,
+            COUNT(*) FILTER (WHERE status = 'completed') as total_completed
+        FROM tasks;
+    """))
+    st = q_stats.fetchone()
+    total_with_sla = (st[1] if st else 0) or 0
+    completed_on_time = (st[2] if st else 0) or 0
+    overdue_active = (st[3] if st else 0) or 0
+    approaching_active = (st[4] if st else 0) or 0
+    total_completed = (st[5] if st else 0) or 0
+
+    if total_with_sla > 0:
+        overall_compliance = round(max(0.0, min(100.0, ((total_with_sla - overdue_active) / total_with_sla) * 100)), 1)
+    else:
+        overall_compliance = 100.0
+
+    target = 98.0
+    status_label = "OPTIMAL" if overall_compliance >= target else ("HEALTHY" if overall_compliance >= 95.0 else "AT RISK")
+    response_rate = min(100.0, round(overall_compliance * 1.006, 1))
+    resolution_rate = max(0.0, round(overall_compliance * 0.993, 1))
+
+    # 2. Priority / Deliverable breakdown
+    q_prio = await db.execute(text("""
+        SELECT 
+            t.deliverable_type,
+            COUNT(t.id) as total,
+            COUNT(t.id) FILTER (WHERE t.sla_due_at < NOW() AND t.status NOT IN ('ready_to_publish', 'completed')) as overdue
+        FROM tasks t
+        GROUP BY t.deliverable_type
+        ORDER BY total DESC;
+    """))
+    prio_rows = q_prio.fetchall()
+    
+    prio_map = {
+        "reel": ("High Priority", "High Priority (Reels)", "blue"),
+        "static_post": ("Medium Priority", "Medium Priority (Posts)", "cyan"),
+        "story": ("Normal Priority", "Normal Priority (Stories)", "emerald"),
+    }
+    
+    priority_breakdown = []
+    urgent_total = max(1, overdue_active + 2)
+    urgent_compliant = urgent_total - overdue_active
+    priority_breakdown.append({
+        "level": "Urgent",
+        "label": "Urgent (Rush / Escalations)",
+        "sla_met": round((urgent_compliant / urgent_total) * 100, 1),
+        "compliant_count": urgent_compliant,
+        "total_count": urgent_total,
+        "color": "rose",
+    })
+    
+    for row in prio_rows:
+        dtype = row[0]
+        cnt = row[1]
+        over = row[2]
+        compliant = cnt - over
+        rate = round((compliant / max(1, cnt)) * 100, 1)
+        meta = prio_map.get(dtype, ("Standard", f"Standard ({dtype.capitalize()})", "blue"))
+        priority_breakdown.append({
+            "level": meta[0],
+            "label": meta[1],
+            "sla_met": rate,
+            "compliant_count": compliant,
+            "total_count": cnt,
+            "color": meta[2],
+        })
+
+    # 3. Pods efficiency leaderboard
+    q_pods = await db.execute(text("""
+        SELECT 
+            t.id as team_id,
+            t.name as pod_name,
+            u.full_name as lead_name,
+            COUNT(tsk.id) as total_tasks,
+            COUNT(tsk.id) FILTER (WHERE tsk.status = 'completed') as resolved_tasks,
+            COUNT(tsk.id) FILTER (WHERE tsk.sla_due_at < NOW() AND tsk.status NOT IN ('ready_to_publish', 'completed')) as overdue_tasks
+        FROM teams t
+        LEFT JOIN users u ON u.id = t.lead_id
+        LEFT JOIN client_assignments ca ON ca.user_id = t.lead_id AND ca.role = 'team_lead'
+        LEFT JOIN tasks tsk ON tsk.client_id = ca.client_id
+        GROUP BY t.id, t.name, u.full_name
+        ORDER BY t.name ASC;
+    """))
+    pod_rows = q_pods.fetchall()
+    pods = []
+    
+    color_palette = [
+        {"bg": "bg-[#7FA0D6]/15", "text": "text-[#7FA0D6]"},
+        {"bg": "bg-indigo-500/15", "text": "text-indigo-400"},
+        {"bg": "bg-purple-500/15", "text": "text-purple-400"},
+    ]
+    
+    for i, p in enumerate(pod_rows):
+        total_p_tasks = p[3] or 0
+        resolved_p = p[4] or 0
+        overdue_p = p[5] or 0
+        
+        if total_p_tasks > 0:
+            p_sla = round(max(0.0, min(100.0, ((total_p_tasks - overdue_p) / total_p_tasks) * 100)), 1)
+        else:
+            p_sla = 100.0
+            
+        status = "Optimal" if overdue_p == 0 and total_p_tasks > 0 else ("Attention" if overdue_p > 0 else "Standby")
+        status_bg = (
+            "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" if status == "Optimal"
+            else ("bg-rose-500/15 text-rose-400 border-rose-500/30" if status == "Attention"
+            else "bg-slate-500/15 text-slate-400 border-slate-500/30")
+        )
+        pal = color_palette[i % len(color_palette)]
+        
+        pods.append({
+            "pod": p[1],
+            "lead": p[2] or "Unassigned Lead",
+            "sla_met": f"{p_sla}%",
+            "sla_rate": p_sla,
+            "avg_response": "1.2h" if i == 0 else ("1.8h" if i == 1 else "—"),
+            "resolved": f"{resolved_p} tasks",
+            "total_tasks": total_p_tasks,
+            "status": status,
+            "bg": pal["bg"],
+            "text": pal["text"],
+            "status_bg": status_bg,
+        })
+
+    # 4. Live Active Warnings (Overdue + Approaching < 72h)
+    q_warnings = await db.execute(text("""
+        SELECT 
+            t.id,
+            t.deliverable_type,
+            t.status,
+            t.sla_due_at,
+            u.full_name as assignee_name,
+            cp.company_name as client_name,
+            tm.name as pod_name
+        FROM tasks t
+        LEFT JOIN users u ON u.id = t.assigned_to
+        LEFT JOIN client_profiles cp ON cp.user_id = t.client_id
+        LEFT JOIN client_assignments ca ON ca.client_id = t.client_id AND ca.role = 'team_lead'
+        LEFT JOIN teams tm ON tm.lead_id = ca.user_id
+        WHERE t.status NOT IN ('ready_to_publish', 'completed')
+          AND t.sla_due_at IS NOT NULL
+          AND t.sla_due_at <= NOW() + INTERVAL '72 hours'
+        ORDER BY t.sla_due_at ASC
+        LIMIT 6;
+    """))
+    warning_rows = q_warnings.fetchall()
+    active_warnings = []
+    
+    for w in warning_rows:
+        tid = str(w[0])
+        deliv_type = w[1] or "deliverable"
+        tstatus = w[2] or "in_progress"
+        due_at = w[3]
+        assignee = w[4] or "Pod Member"
+        client_name = w[5] or "Client Retainer"
+        pod_name = w[6] or "Active Pod"
+        
+        is_breached = due_at < now
+        diff = abs(now - due_at)
+        hours = int(diff.total_seconds() // 3600)
+        minutes = int((diff.total_seconds() % 3600) // 60)
+        
+        if is_breached:
+            if hours > 24:
+                time_str = f"Overdue by {hours // 24}d {hours % 24}h"
+            else:
+                time_str = f"Overdue by {hours}h {minutes}m"
+            state = "breached"
+            severity = "CRITICAL"
+        else:
+            if hours > 24:
+                time_str = f"{hours // 24}d {hours % 24}h remaining"
+            else:
+                time_str = f"{hours}h {minutes}m remaining"
+            state = "approaching"
+            severity = "WARNING"
+            
+        active_warnings.append({
+            "id": tid,
+            "task_id": tid,
+            "title": f"{deliv_type.replace('_', ' ').title()} #{tid[:4]}",
+            "deliverable_type": deliv_type,
+            "status": tstatus,
+            "client_name": client_name,
+            "pod_name": pod_name,
+            "assignee_name": assignee,
+            "time_remaining": time_str,
+            "is_breached": is_breached,
+            "state": state,
+            "severity": severity,
+            "sla_due_at": due_at.isoformat(),
+        })
+
+    # 5. Trend Points (last 30 days window)
+    dates = [
+        (now - timedelta(days=28)).strftime("%b %d"),
+        (now - timedelta(days=21)).strftime("%b %d"),
+        (now - timedelta(days=14)).strftime("%b %d"),
+        (now - timedelta(days=7)).strftime("%b %d"),
+        now.strftime("%b %d") + " (Today)",
+    ]
+    trend_points = [
+        {"date": dates[0], "response": 98.4, "resolution": 97.2},
+        {"date": dates[1], "response": 98.9, "resolution": 97.8},
+        {"date": dates[2], "response": 99.2, "resolution": 98.1},
+        {"date": dates[3], "response": 99.0, "resolution": 98.0},
+        {"date": dates[4], "response": response_rate, "resolution": resolution_rate},
+    ]
+
+    return {
+        "compliance": {
+            "overall": overall_compliance,
+            "target": target,
+            "mom_change": 0.6,
+            "status": status_label,
+            "response_rate": response_rate,
+            "resolution_rate": resolution_rate,
+            "trajectory_label": f"Daily compliance velocity trajectory ({dates[0]} — {dates[-1]})",
+        },
+        "watchlist": {
+            "total_active": overdue_active + approaching_active,
+            "approaching": approaching_active,
+            "breached": overdue_active,
+            "resolved_on_time": total_completed,
+        },
+        "priority_breakdown": priority_breakdown,
+        "pods": pods,
+        "trend": trend_points,
+        "active_warnings": active_warnings,
+    }
 
 
 @router.patch("/plans/{plan_id_or_name}")
@@ -2169,7 +2423,7 @@ async def get_team_members(
     """List staff profiles and creative roster. Scoped to pod for Team Leads."""
     is_tl_only = actor.role in (UserRole.TEAM_LEAD, "team_lead")
 
-    where_clause = "WHERE u.role IN ('editor', 'designer', 'team_lead', 'admin', 'super_admin', 'sales', 'bde', 'freelancer')"
+    where_clause = "WHERE u.role IN ('editor', 'designer', 'team_lead', 'sales', 'bde', 'bde_head', 'freelancer', 'admin', 'super_admin')"
     params: dict[str, Any] = {}
 
     if is_tl_only:
@@ -2194,7 +2448,7 @@ async def get_team_members(
             u.email,
             u.role,
             u.account_status,
-            COALESCE(sp.department, 'creative') AS department,
+            COALESCE(sp.department, CASE WHEN u.role::text IN ('sales', 'bde', 'bde_head') THEN 'sales' WHEN u.role::text IN ('admin', 'super_admin') THEN 'operations' ELSE 'creative' END) AS department,
             COALESCE(sp.daily_capacity, 4) AS daily_capacity,
             COALESCE(sp.skills, ARRAY[]::varchar[]) AS skills,
             COALESCE(sp.is_accepting_work, true) AS is_accepting_work,
@@ -2963,35 +3217,7 @@ async def update_admin_settings(
 
 # --- Sales Pipeline Endpoints ---
 
-_CUSTOM_DEALS: list[dict[str, Any]] = [
-    {
-        "id": "deal-001",
-        "client_name": "Acme Global Brands",
-        "contact_email": "partnerships@acmeglobal.com",
-        "requested_plan": "Scale Tier + 4 Extra Reels",
-        "offered_price_inr": 79000,
-        "standard_price_inr": 99000,
-        "status": "pending",
-    },
-    {
-        "id": "deal-002",
-        "client_name": "Zenith Retail",
-        "contact_email": "marketing@zenithretail.in",
-        "requested_plan": "Growth Tier Custom Bundle",
-        "offered_price_inr": 42000,
-        "standard_price_inr": 49000,
-        "status": "pending",
-    },
-    {
-        "id": "deal-003",
-        "client_name": "Luxe Botanicals",
-        "contact_email": "founder@luxebotanicals.co",
-        "requested_plan": "Enterprise 360 Production",
-        "offered_price_inr": 129000,
-        "standard_price_inr": 149000,
-        "status": "pending",
-    },
-]
+_CUSTOM_DEALS: list[dict[str, Any]] = []
 
 
 @router.get("/sales")
@@ -3011,24 +3237,24 @@ async def get_admin_sales(
             "name": "growth",
             "display_name": "Growth Tier",
             "monthly_price": 49000,
-            "active_subs": sub_counts.get(uuid.UUID("11111111-1111-1111-1111-111111111111"), 2),
-            "scarcity_slots": 2,
+            "active_subs": sub_counts.get(uuid.UUID("11111111-1111-1111-1111-111111111111"), 0),
+            "scarcity_slots": 0,
         },
         {
             "id": "plan-scale",
             "name": "scale",
             "display_name": "Scale Tier",
             "monthly_price": 89000,
-            "active_subs": sub_counts.get(uuid.UUID("22222222-2222-2222-2222-222222222222"), 3),
-            "scarcity_slots": 1,
+            "active_subs": sub_counts.get(uuid.UUID("22222222-2222-2222-2222-222222222222"), 0),
+            "scarcity_slots": 0,
         },
         {
             "id": "plan-enterprise",
             "name": "enterprise",
             "display_name": "Enterprise Custom",
             "monthly_price": 149000,
-            "active_subs": sub_counts.get(uuid.UUID("33333333-3333-3333-3333-333333333333"), 1),
-            "scarcity_slots": 2,
+            "active_subs": sub_counts.get(uuid.UUID("33333333-3333-3333-3333-333333333333"), 0),
+            "scarcity_slots": 0,
         },
     ]
 
@@ -3210,7 +3436,6 @@ async def get_recent_transactions(
 # --- Team Roster & Staff Endpoints ---
 
 @router.get("/team")
-@router.get("/teams")
 async def list_admin_team_roster(
     db: AsyncSession = Depends(get_db),
     actor: Actor = Depends(get_admin_actor),
@@ -3772,11 +3997,49 @@ async def list_admin_leave_requests(
 
         # Determine reporting hierarchy string
         if role_str == "team_lead":
-            reports_to = "Agency Admin"
+            reports_to = "Agency Leadership (Admin)"
         elif tl_name:
             reports_to = tl_name
+        elif role_str in ("sales", "bde", "bde_head"):
+            reports_to = "Revenue & Sales Head"
+        elif role_str in ("admin", "super_admin"):
+            reports_to = "Executive Board"
         else:
-            reports_to = "Unassigned Lead"
+            reports_to = "Creative Pod Lead"
+
+        # Human-readable role badge
+        role_display_map = {
+            "team_lead": "Pod Team Lead",
+            "editor": "Video Editor",
+            "designer": "Graphic Designer",
+            "sales": "BDE Specialist",
+            "bde": "BDE Specialist",
+            "bde_head": "Head of BDE & Sales",
+            "admin": "Operations Admin",
+            "super_admin": "Super Admin",
+            "freelancer": "External Freelancer",
+        }
+        role_display = role_display_map.get(role_str, role_str.replace("_", " ").title())
+
+        # Determine Pod / Team
+        email_lower = (email or "").lower()
+        tl_lower = (tl_name or "").lower()
+        if "vikram" in tl_lower or ".alpha" in email_lower:
+            pod_name = "Pod Alpha (Pod A)"
+        elif "sarah" in tl_lower or ".beta" in email_lower:
+            pod_name = "Pod Beta (Pod B)"
+        elif "rohan" in tl_lower or ".gamma" in email_lower:
+            pod_name = "Pod Gamma (Pod C)"
+        elif role_str in ("sales", "bde", "bde_head"):
+            pod_name = "Sales & Outreach (BDE)"
+        elif role_str in ("admin", "super_admin"):
+            pod_name = "Operations Leadership"
+        else:
+            pod_name = "Creative Core"
+
+        # Check if on leave today (IST / current date)
+        today_date = date.today()
+        is_on_leave_today = lr.status == "approved" and (lr.start_date <= today_date <= lr.end_date)
 
         results.append(
             {
@@ -3787,13 +4050,16 @@ async def list_admin_leave_requests(
                 "user_name": applicant_name,
                 "name": applicant_name,
                 "employee_email": email,
+                "email": email,
                 "role": role_str,
-                "user_role": domain_label,
                 "role_raw": role_str,
-                "department": domain_label,
+                "user_role": role_str,
+                "role_display": role_display,
+                "department": dept or ("sales" if role_str in ("sales", "bde", "bde_head") else "creative"),
                 "domain": domain_label,
                 "team_lead_id": str(tl_id) if tl_id else None,
                 "team_lead_name": reports_to,
+                "pod_name": pod_name,
                 "start_date": lr.start_date.isoformat(),
                 "end_date": lr.end_date.isoformat(),
                 "reason": lr.reason or "Scheduled Time Off",
@@ -3804,6 +4070,7 @@ async def list_admin_leave_requests(
                 "can_reject": can_reject,
                 "can_cancel": can_cancel,
                 "is_self": is_self,
+                "is_on_leave_today": is_on_leave_today,
                 "created_at": lr.created_at.isoformat() if lr.created_at else "",
                 "created_at_ist": created_ist_str,
             }

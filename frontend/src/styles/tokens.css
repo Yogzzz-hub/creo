@@ -1191,3 +1191,24 @@ iframe[id*="razorpay"] {
   -webkit-backdrop-filter: blur(8px) !important;
 }
 
+/* Sleek Dark Mode Scrollbar for Kanban lanes & scroll panels */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #2A3446 transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #2A3446;
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #7FA0D6;
+}
+
+

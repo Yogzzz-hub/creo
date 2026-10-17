@@ -1034,7 +1034,7 @@ async def approve_calendar_month(
             sla_due_at=sla_due_at,
             effort_points=effort,
             is_revision=False,
-            assigned_to=default_assignee if dispatch_immediately else None,
+            assigned_to=default_assignee,
             preferred_sub_skill=pref_skill,
             concept_status=slot.concept_status,
             blueprint=slot.blueprint,
