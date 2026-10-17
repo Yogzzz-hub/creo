@@ -278,7 +278,6 @@ export function AdminSidebar() {
     {
       label: "BDE Workspace",
       items: [
-<<<<<<< HEAD
         { label: "Sales Funnel & Leads", href: "/bde", icon: Briefcase },
         { label: "Follow-Up Agenda", href: "/bde?tab=calendar", icon: CalendarCheck },
         { label: "Forecasting & Win/Loss", href: "/bde?tab=analytics", icon: TrendingUp },
@@ -289,18 +288,6 @@ export function AdminSidebar() {
       label: "Commercials & Enablement",
       items: [
         { label: "Platform Plans Catalog", href: "/admin/plans", icon: Layers },
-=======
-        { label: "Action Center", href: "/bde/crm/overview", icon: LayoutDashboard },
-        { label: "Leads & Companies", href: "/bde/crm/leads", icon: Users },
-        { label: "Pipeline", href: "/bde/crm/pipeline", icon: Layers },
-        { label: "Follow-ups", href: "/bde/crm/tasks", icon: Calendar },
-        { label: "Proposal Studio", href: "/bde/crm/proposals", icon: FileText },
-        { label: "Referrals", href: "/bde/crm/referrals", icon: Briefcase },
-        { label: "Messages", href: "/bde/crm/messages", icon: MessageSquare },
-        { label: "AI Workspace", href: "/bde/crm/discovery", icon: TrendingUp },
-        { label: "Reports & Scorecards", href: "/bde/crm/reports", icon: CreditCard },
-        { label: "Delivery Handoffs", href: "/bde/crm/handoffs", icon: Briefcase },
->>>>>>> origin/main
       ],
     },
     {
