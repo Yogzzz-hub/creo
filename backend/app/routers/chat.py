@@ -621,6 +621,8 @@ async def send_message(
     is_sender_client = sender_role in ("client",)
     is_sender_tm = not (is_sender_admin or is_sender_tl or is_sender_client)
 
+    websocket_recipients: set[uuid.UUID] = {current_user_id}
+
     if payload.channel:
         # Enforce channel permissions:
         # Client can ONLY post in their dedicated client pod channel (#pod-creative-hub or client-*)
@@ -636,6 +638,41 @@ async def send_message(
         client_id = current_user_id if is_client_user else (payload.client_id or current_user_id)
         specialist_id = current_user_id
 
+        # Determine notification and broadcast recipients
+        recipients: set[uuid.UUID] = set()
+        if is_client_user:
+            from app.models.work import ClientAssignment
+            assignments_stmt = (
+                select(ClientAssignment.user_id)
+                .where(ClientAssignment.client_id == client_id)
+            )
+            assignments_res = await db.execute(assignments_stmt)
+            assigned_user_ids = set(assignments_res.scalars().all())
+
+            if not assigned_user_ids:
+                admins_stmt = select(User.id).where(
+                    User.role.in_([UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.TEAM_LEAD]),
+                    User.account_status == "active",
+                )
+                assigned_user_ids = set((await db.execute(admins_stmt)).scalars().all())
+
+            recipients = assigned_user_ids
+        elif _is_staff_channel(payload.channel):
+            staff_stmt = select(User.id).where(
+                User.role.in_([
+                    UserRole.ADMIN,
+                    UserRole.SUPER_ADMIN,
+                    UserRole.TEAM_LEAD,
+                    UserRole.EDITOR,
+                    UserRole.DESIGNER,
+                ]),
+                User.account_status == "active",
+            )
+            recipients = set((await db.execute(staff_stmt)).scalars().all())
+        else:
+            if client_id and client_id != current_user_id:
+                recipients = {client_id}
+
         new_msg = DirectMessage(
             client_id=client_id,
             specialist_id=specialist_id,
@@ -645,16 +682,17 @@ async def send_message(
         )
         db.add(new_msg)
 
-        recipients = assigned_user_ids if is_client_user else {client_id}
         recipients.discard(current_user_id)
+        websocket_recipients.update(recipients)
+
         for recipient_id in recipients:
             notification = Notification(
                 user_id=recipient_id,
-                title=f"New message from {sender_name} in your client workspace",
+                title=f"New message from {sender_name} in #{payload.channel}",
                 message=payload.message[:100] + ("..." if len(payload.message) > 100 else ""),
-                link=f"/slack?dm={current_user_id}"
-                if is_client_user
-                else f"/portal/slack?dm={current_user_id}",
+                link=f"/portal/slack?channel={payload.channel}"
+                if recipient_id == client_id and not is_client_user
+                else f"/slack?channel={payload.channel}",
                 is_read=False,
             )
             db.add(notification)
@@ -673,44 +711,31 @@ async def send_message(
         is_target_admin = target_role in ("admin", "super_admin", "ops_admin")
         is_target_tl = target_role in ("team_lead", "lead")
         is_target_client = target_role in ("client",)
-        is_target_tm = not (is_target_admin or is_target_tl or is_target_client)
 
         # STRICT ROLE AUTHORIZATION RULES:
-        # RULE 1: CLIENT CAN ONLY MESSAGE TL AND ADMIN
         if is_sender_client:
             if not (is_target_admin or is_target_tl):
                 raise HTTPException(
                     status_code=403,
                     detail="Clients are only permitted to message Team Leads and Administrators."
                 )
-
-        # RULE 2: TL CAN MESSAGE ADMIN AND CLIENTS
         elif is_sender_tl:
             if not (is_target_admin or is_target_client):
                 raise HTTPException(
                     status_code=403,
                     detail="Team Leads can only direct message Administrators and Clients."
                 )
-
-        # RULE 3: TEAM MEMBERS CAN ONLY MESSAGE ADMIN
         elif is_sender_tm:
             if not is_target_admin:
                 raise HTTPException(
                     status_code=403,
                     detail="Team members are only permitted to message Administrators."
                 )
-
-        # RULE 4: ADMIN CAN MESSAGE LEADS AND CLIENTS (NO ADMIN-TO-ADMIN, NO INDIVIDUAL MEMBERS)
         elif is_sender_admin:
-            if is_target_admin:
+            if target_user.id == current_user_id:
                 raise HTTPException(
                     status_code=400,
-                    detail="Cannot direct message an administrator account."
-                )
-            if not (is_target_tl or is_target_client):
-                raise HTTPException(
-                    status_code=403,
-                    detail="Administrators can only direct message Team Leads and Clients. Use Pod Group channels to collaborate with team members."
+                    detail="Cannot direct message yourself."
                 )
 
         if actor.role in (UserRole.CLIENT, "client"):
