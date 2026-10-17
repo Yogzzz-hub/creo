@@ -621,6 +621,8 @@ async def send_message(
     is_sender_client = sender_role in ("client",)
     is_sender_tm = not (is_sender_admin or is_sender_tl or is_sender_client)
 
+    websocket_recipients: set[Any] = set()
+
     if payload.channel:
         # Enforce channel permissions:
         # Client can ONLY post in their dedicated client pod channel (#pod-creative-hub or client-*)
@@ -645,16 +647,19 @@ async def send_message(
         )
         db.add(new_msg)
 
-        recipients = assigned_user_ids if is_client_user else {client_id}
+        # Broadcast live channel messages to all connected active connections
+        websocket_recipients = set(ws_manager.active_connections.keys())
+
+        recipients = {client_id}
         recipients.discard(current_user_id)
         for recipient_id in recipients:
             notification = Notification(
                 user_id=recipient_id,
-                title=f"New message from {sender_name} in your client workspace",
+                title=f"New message from {sender_name} in #{payload.channel}",
                 message=payload.message[:100] + ("..." if len(payload.message) > 100 else ""),
-                link=f"/slack?dm={current_user_id}"
+                link=f"/slack?channel={payload.channel}"
                 if is_client_user
-                else f"/portal/slack?dm={current_user_id}",
+                else f"/portal/slack?channel={payload.channel}",
                 is_read=False,
             )
             db.add(notification)

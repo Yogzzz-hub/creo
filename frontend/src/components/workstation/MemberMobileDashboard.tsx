@@ -54,6 +54,7 @@ interface MemberMobileDashboardProps {
   members: any[];
   quickReplyText: string;
   setQuickReplyText: (text: string) => void;
+  isSendingQuickReply?: boolean;
   handleSendQuickReply: (e: React.FormEvent) => void;
   setLogHoursModalOpen: (open: boolean) => void;
   setZoomModalOpen: (open: boolean) => void;
@@ -65,7 +66,7 @@ interface MemberMobileDashboardProps {
 
 export function MemberMobileDashboard({
   podName,
-  leadName,
+  leadName: _leadName,
   user,
   userInitials,
   metricActiveTasks,
@@ -84,6 +85,7 @@ export function MemberMobileDashboard({
   members,
   quickReplyText,
   setQuickReplyText,
+  isSendingQuickReply = false,
   handleSendQuickReply,
   setLogHoursModalOpen: _setLogHoursModalOpen,
   setZoomModalOpen,
@@ -452,7 +454,7 @@ export function MemberMobileDashboard({
             {/* Slack Quick-Reply Bar */}
             <form onSubmit={handleSendQuickReply} className="pt-1">
               <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1.5 px-0.5">
-                <span>Direct channel to <strong className="text-slate-200">{leadName}</strong></span>
+                <span>Direct channel to <strong className="text-slate-200">Pod Beta Team</strong></span>
                 <span className="text-[10px] text-sky-400 font-semibold uppercase tracking-wider">Instant Sync</span>
               </div>
               <div className="relative flex items-center">
@@ -460,16 +462,23 @@ export function MemberMobileDashboard({
                   type="text" 
                   value={quickReplyText}
                   onChange={(e) => setQuickReplyText(e.target.value)}
-                  placeholder={`Reply to ${leadName} via Slack...`}
-                  className="w-full bg-[#070B12]/80 border border-white/15 focus:border-sky-400 focus:outline-none rounded-xl py-2.5 pl-3 pr-20 text-xs text-white placeholder-slate-500 shadow-inner"
+                  placeholder="Reply to Pod Beta Team via Slack..."
+                  disabled={isSendingQuickReply}
+                  className="w-full bg-[#070B12]/80 border border-white/15 focus:border-sky-400 focus:outline-none rounded-xl py-2.5 pl-3 pr-20 text-xs text-white placeholder-slate-500 shadow-inner disabled:opacity-60"
                 />
                 <button
                   type="submit"
-                  disabled={!quickReplyText.trim()}
+                  disabled={!quickReplyText.trim() || isSendingQuickReply}
                   className="absolute right-1.5 bg-[#4A154B] hover:bg-[#611f69] disabled:opacity-50 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 border border-white/20 transition-all cursor-pointer"
                 >
-                  <span>Slack</span>
-                  <Send className="w-3 h-3" />
+                  {isSendingQuickReply ? (
+                    <span>Sending...</span>
+                  ) : (
+                    <>
+                      <span>Slack</span>
+                      <Send className="w-3 h-3" />
+                    </>
+                  )}
                 </button>
               </div>
             </form>
