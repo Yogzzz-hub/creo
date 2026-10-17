@@ -116,6 +116,19 @@ export function AdminSidebar() {
   }, [mobileOpen, setMobileOpen]);
 
   const isPathActive = (href: string) => {
+    if (href.includes("?")) {
+      const [hrefPath, hrefQuery] = href.split("?");
+      if (location.pathname !== hrefPath) return false;
+      const currentParams = new URLSearchParams(location.search);
+      const targetParams = new URLSearchParams(hrefQuery);
+      for (const [key, val] of targetParams.entries()) {
+        if (currentParams.get(key) !== val) return false;
+      }
+      return true;
+    }
+    if (href === "/bde") {
+      return location.pathname === "/bde" && (!location.search || location.search === "" || location.search === "?tab=pipeline");
+    }
     if (href === "/portal") return location.pathname === "/portal" || location.pathname === "/portal/";
     if (href === "/admin") return location.pathname === "/admin";
     if (href === "/workstation") return location.pathname === "/workstation" || location.pathname === "/workstation/overview";
@@ -133,6 +146,7 @@ export function AdminSidebar() {
     return location.pathname.startsWith(href + "/");
   };
 
+
   const adminNavSections: NavSection[] = [
     {
       label: "Overview",
@@ -145,7 +159,7 @@ export function AdminSidebar() {
       items: [
         { label: "Manage Revenues", href: "/admin/revenue", icon: TrendingUp },
         { label: "Plans & Negotiations", href: "/admin/plans", icon: FileText },
-        { label: "BDE Sales & Outreach", href: "/admin/bde-oversight", icon: Briefcase, badge: "CRM" },
+        { label: "BDE Overview", href: "/admin/bde-oversight", icon: Briefcase, badge: "CRM" },
       ],
     },
     {
@@ -255,34 +269,39 @@ export function AdminSidebar() {
     {
       label: "BDE Workspace",
       items: [
-        { label: "Pipeline & Leads", href: "/bde", icon: Briefcase, badge: "Deals" },
+        { label: "Sales Funnel & Leads", href: "/bde", icon: Briefcase },
+        { label: "Follow-Up Agenda", href: "/bde?tab=calendar", icon: CalendarCheck },
+        { label: "Forecasting & Win/Loss", href: "/bde?tab=analytics", icon: TrendingUp },
+        { label: "Leave & Time Off", href: "/bde/leave", icon: Calendar },
       ],
     },
     {
-      label: "Commercial & Plans",
+      label: "Commercials & Enablement",
       items: [
-        { label: "Rate Cards & Plans", href: "/admin/plans", icon: CreditCard },
+        { label: "Platform Plans Catalog", href: "/admin/plans", icon: Layers },
       ],
     },
     {
-      label: "Communication",
+      label: "Communication & Collab",
       items: [
-        { label: "Team Slack Hub", href: "/slack", icon: MessageSquare, badge: "Chat" },
+        { label: "Team Slack Hub", href: "/slack", icon: MessageSquare },
       ],
     },
   ];
+
 
   const freelancerNavSections: NavSection[] = [
     {
       label: "Freelancer Studio",
       items: [
-        { label: "Assigned Workload", href: "/freelancer/tasks", icon: CheckSquare, badge: "Active" },
+        { label: "Assigned Workload", href: "/freelancer/tasks", icon: CheckSquare },
+        { label: "Time Off & Blackout", href: "/freelancer/leave", icon: Calendar },
       ],
     },
     {
       label: "Communication",
       items: [
-        { label: "Team Slack Hub", href: "/slack", icon: MessageSquare, badge: "Chat" },
+        { label: "Team Slack Hub", href: "/slack", icon: MessageSquare },
       ],
     },
   ];
@@ -457,15 +476,6 @@ export function AdminSidebar() {
                       <Icon className={`w-4 h-4 shrink-0 ${active ? "text-[#0B111C]" : "text-[#7FA0D6]"}`} />
                       <span className="truncate">{item.label}</span>
                     </div>
-                    {item.badge && (
-                      <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded font-black shrink-0 ${
-                          active ? "bg-[#0B111C]/20 text-[#0B111C]" : "bg-[#7FA0D6]/20 text-[#7FA0D6]"
-                        }`}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
                   </Link>
                 );
               })}

@@ -14,6 +14,7 @@ import {
   updatePlanNegotiation,
   createPlanNegotiation,
   fetchLeaveRequests,
+  submitLeaveRequest,
   approveLeaveRequest,
   rejectLeaveRequest,
   fetchAdminQueue,
@@ -102,6 +103,8 @@ import {
   IndianRupee,
   UserCheck,
   LayoutGrid,
+  KeyRound,
+  EyeOff,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CustomSelect } from "../../components/ui/CustomSelect";
@@ -4670,7 +4673,7 @@ export interface TeamMember {
   podId: string;
   name: string;
   role: string;
-  category: "lead" | "designer" | "editor" | "videographer" | "photographer";
+  category: "lead" | "designer" | "editor" | "videographer" | "photographer" | "bde" | "sales";
   isLead?: boolean;
   email: string;
   handle: string;
@@ -4683,14 +4686,174 @@ export interface TeamMember {
 }
 
 export function AdminTeamManagementPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [activePodId, setActivePodId] = useState<string | null>(null);
   const [roleCategoryFilter, setRoleCategoryFilter] = useState<string>("all");
   const [memberSort, setMemberSort] = useState<"default" | "workload" | "name">("default");
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [teamTab, setTeamTab] = useState<"internal" | "freelancers">("internal");
+
+  const initialTab =
+    searchParams.get("tab") === "bde" ||
+    (typeof window !== "undefined" && window.location.pathname.includes("bde"))
+      ? "bde"
+      : searchParams.get("tab") === "freelancers"
+      ? "freelancers"
+      : "internal";
+  const [teamTab, setTeamTab] = useState<"internal" | "freelancers" | "bde">(initialTab);
   const [isAddFreelancerOpen, setIsAddFreelancerOpen] = useState(false);
   const [assignFreelancerTarget, setAssignFreelancerTarget] = useState<FreelancerProfileItem | null>(null);
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "bde" && teamTab !== "bde") {
+      setTeamTab("bde");
+    } else if (tabParam === "freelancers" && teamTab !== "freelancers") {
+      setTeamTab("freelancers");
+    }
+  }, [searchParams]);
+
+  // ─── BDE SALES TEAM & ONBOARDING STATE ───────────────────────────
+  const [isOnboardBdeOpen, setIsOnboardBdeOpen] = useState(false);
+  const [bdeCredModalUser, setBdeCredModalUser] = useState<any | null>(null);
+  const [bdeCredNewPassword, setBdeCredNewPassword] = useState("");
+  const [bdeCredSendEmail, setBdeCredSendEmail] = useState(true);
+  const [showCredPassword, setShowCredPassword] = useState(false);
+  const [isUpdatingCreds, setIsUpdatingCreds] = useState(false);
+
+  const [bdeForm, setBdeForm] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    designation: "Business Development Executive",
+    monthly_quota: 2500000,
+    commission_rate: 5.0,
+    password: "",
+    send_credentials_email: true,
+  });
+  const [showOnboardPassword, setShowOnboardPassword] = useState(false);
+  const [isOnboardingBde, setIsOnboardingBde] = useState(false);
+  const [bdeProvisionedCreds, setBdeProvisionedCreds] = useState<{
+    email: string;
+    password: string;
+    full_name: string;
+    email_dispatched: boolean;
+  } | null>(null);
+  const [bdeCopiedKey, setBdeCopiedKey] = useState<string | null>(null);
+
+  const bdeTeamQuery = useQuery({
+    queryKey: ["admin-bde-team-list"],
+    queryFn: async () => {
+      return await request<any[]>("/api/v1/admin/bde");
+    },
+    refetchOnMount: "always",
+    staleTime: 0,
+  });
+
+  const handleOpenOnboardBde = () => {
+    setBdeForm({
+      full_name: "",
+      email: "",
+      phone: "",
+      designation: "Business Development Executive",
+      monthly_quota: 2500000,
+      commission_rate: 5.0,
+      password: `Creo@${Math.floor(1000 + Math.random() * 9000)}!`,
+      send_credentials_email: true,
+    });
+    setShowOnboardPassword(false);
+    setIsOnboardBdeOpen(true);
+  };
+
+  const handleOnboardBdeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bdeForm.full_name.trim() || !bdeForm.email.trim() || !bdeForm.password.trim()) {
+      setToast("Please fill in Name, Email, and Password.");
+      return;
+    }
+    setIsOnboardingBde(true);
+    try {
+      const res = await request<any>("/api/v1/admin/bde/onboard", {
+        method: "POST",
+        body: JSON.stringify({
+          full_name: bdeForm.full_name.trim(),
+          email: bdeForm.email.trim(),
+          phone: bdeForm.phone.trim(),
+          designation: bdeForm.designation.trim() || "Business Development Executive",
+          monthly_quota: Number(bdeForm.monthly_quota) || 2500000,
+          commission_rate: Number(bdeForm.commission_rate) || 5.0,
+          password: bdeForm.password.trim(),
+          send_credentials_email: bdeForm.send_credentials_email,
+        }),
+      });
+
+      await bdeTeamQuery.refetch();
+      setIsOnboardBdeOpen(false);
+      setBdeProvisionedCreds({
+        email: bdeForm.email.trim(),
+        password: bdeForm.password.trim(),
+        full_name: bdeForm.full_name.trim(),
+        email_dispatched: res?.email_dispatched ?? false,
+      });
+      setToast(
+        `BDE ${bdeForm.full_name} onboarded! ${
+          res?.email_dispatched ? "Credentials email dispatched successfully." : "Credentials generated."
+        }`
+      );
+    } catch (err: any) {
+      setToast(err?.message || "Failed to onboard BDE.");
+    } finally {
+      setIsOnboardingBde(false);
+    }
+  };
+
+  const handleOpenBdeCredModal = (bde: any) => {
+    setBdeCredModalUser(bde);
+    setBdeCredNewPassword(`Creo@${Math.floor(1000 + Math.random() * 9000)}!`);
+    setBdeCredSendEmail(true);
+    setShowCredPassword(false);
+  };
+
+  const handleUpdateBdeCredentialsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bdeCredModalUser || !bdeCredNewPassword.trim()) {
+      setToast("Please enter a new password.");
+      return;
+    }
+    setIsUpdatingCreds(true);
+    try {
+      const res = await request<any>(`/api/v1/admin/bde/${bdeCredModalUser.id}/credentials`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          password: bdeCredNewPassword.trim(),
+          send_credentials_email: bdeCredSendEmail,
+        }),
+      });
+      setToast(
+        `Credentials updated for ${bdeCredModalUser.full_name}! ${
+          res?.email_dispatched ? "Credentials email sent." : ""
+        }`
+      );
+      setBdeCredModalUser(null);
+      setBdeCredNewPassword("");
+    } catch (err: any) {
+      setToast(err?.message || "Failed to update credentials.");
+    } finally {
+      setIsUpdatingCreds(false);
+    }
+  };
+
+  const handleDeactivateBde = async (bdeId: string, bdeName: string) => {
+    if (!window.confirm(`Are you sure you want to suspend/deactivate ${bdeName}'s access?`)) return;
+    try {
+      await request<any>(`/api/v1/admin/bde/${bdeId}`, { method: "DELETE" });
+      await bdeTeamQuery.refetch();
+      setToast(`${bdeName}'s account has been deactivated.`);
+    } catch (err: any) {
+      setToast(err?.message || "Failed to deactivate BDE.");
+    }
+  };
 
   const freelancersQuery = useQuery({
     queryKey: ["admin-freelancers-list"],
@@ -4964,6 +5127,9 @@ export function AdminTeamManagementPage() {
         return <Palette className="w-3.5 h-3.5 text-purple-600" />;
       case "editor":
         return <Scissors className="w-3.5 h-3.5 text-amber-600" />;
+      case "bde":
+      case "sales":
+        return <Briefcase className="w-3.5 h-3.5 text-blue-500" />;
       case "videographer":
         return <Video className="w-3.5 h-3.5 text-rose-600" />;
       case "photographer":
@@ -4972,6 +5138,8 @@ export function AdminTeamManagementPage() {
         return <Users className="w-3.5 h-3.5 text-[#F1F5F9]" />;
     }
   };
+
+  const generateStrongPassword = () => `Creo@${Math.floor(1000 + Math.random() * 9000)}!`;
 
   const [assignModalMember, setAssignModalMember] = useState<TeamMember | null>(null);
   const [scheduleModalMember, setScheduleModalMember] = useState<TeamMember | null>(null);
@@ -4986,12 +5154,35 @@ export function AdminTeamManagementPage() {
   const [newMemberForm, setNewMemberForm] = useState({
     name: "",
     email: "",
+    password: generateStrongPassword(),
     handle: "",
     role: "Senior Visual Designer",
     category: "designer" as TeamMember["category"],
     podId: "pod-a",
     capabilities: "Figma Tokens, Design Systems, Branding",
   });
+  const [showNewMemberPassword, setShowNewMemberPassword] = useState(false);
+  const [isCreatingMember, setIsCreatingMember] = useState(false);
+
+  // Modal to display provisioned credentials with 1-click copy
+  const [provisionedCredentials, setProvisionedCredentials] = useState<{
+    name: string;
+    email: string;
+    password: string;
+    role: string;
+    podName: string;
+  } | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Manage / Give / Reset credentials for existing team member
+  const [credentialModalMember, setCredentialModalMember] = useState<TeamMember | null>(null);
+  const [credentialForm, setCredentialForm] = useState({
+    email: "",
+    password: "",
+  });
+  const [showCredentialPassword, setShowCredentialPassword] = useState(false);
+  const [isUpdatingCredentials, setIsUpdatingCredentials] = useState(false);
+
   const [successPopup, setSuccessPopup] = useState<{
     isOpen: boolean;
     title: string;
@@ -4999,13 +5190,19 @@ export function AdminTeamManagementPage() {
     type?: "success" | "info";
   } | null>(null);
 
-  const handleCreateTeamMember = (e: React.FormEvent) => {
+  const handleCreateTeamMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMemberForm.name.trim()) return;
+
+    const chosenPassword = newMemberForm.password.trim() || generateStrongPassword();
+    const finalEmail = newMemberForm.email.trim() || `${newMemberForm.name.toLowerCase().replace(/\s+/g, ".")}@creo.agency`;
+    const targetPodId = newMemberForm.podId || activePodId || "pod-a";
+    const targetPodName = pods.find((p) => p.id === targetPodId)?.name || "Sprint Pod";
 
     const roleTitle = newMemberForm.role.trim() || (
       newMemberForm.category === "designer" ? "Senior Visual Designer" :
       newMemberForm.category === "editor" ? "Lead Video Editor" :
+      newMemberForm.category === "bde" ? "Business Development Executive (BDE)" :
       newMemberForm.category === "videographer" ? "Lead Cinematographer & Videographer" :
       newMemberForm.category === "photographer" ? "Commercial Photographer" :
       "Squad Lead & Creative Strategist"
@@ -5015,15 +5212,63 @@ export function AdminTeamManagementPage() {
       ? newMemberForm.capabilities.split(",").map((c) => c.trim()).filter(Boolean)
       : ["Design Systems", "Client Deliverables", "Multimodal Sprint"];
 
-    const targetPodId = newMemberForm.podId || activePodId || "pod-a";
+    let backendRole = "editor";
+    let backendDept = "creative";
+    if (newMemberForm.category === "designer") {
+      backendRole = "designer";
+      backendDept = "design";
+    } else if (newMemberForm.category === "editor") {
+      backendRole = "editor";
+      backendDept = "video";
+    } else if (newMemberForm.category === "bde" || newMemberForm.category === "sales") {
+      backendRole = "sales";
+      backendDept = "sales";
+    } else if (newMemberForm.category === "lead") {
+      backendRole = "team_lead";
+      backendDept = "lead";
+    }
+
+    setIsCreatingMember(true);
+    let createdUserId = `m-${Date.now()}`;
+    let provisionedPass = chosenPassword;
+
+    try {
+      const resp = await request<{
+        id: string;
+        email: string;
+        credentials?: { email: string; password: string };
+      }>("/api/v1/admin/teams", {
+        method: "POST",
+        body: JSON.stringify({
+          full_name: newMemberForm.name.trim(),
+          email: finalEmail,
+          password: chosenPassword,
+          role: backendRole,
+          department: backendDept,
+          daily_capacity: 4,
+          skills: capsArray,
+        }),
+      });
+      if (resp?.id) createdUserId = resp.id;
+      if (resp?.credentials?.password) provisionedPass = resp.credentials.password;
+    } catch (err: any) {
+      console.warn("Backend /admin/teams call response:", err);
+      if (err?.message && (err.message.includes("already exists") || err.message.includes("Conflict"))) {
+        setToast(err.message);
+        setIsCreatingMember(false);
+        return;
+      }
+    } finally {
+      setIsCreatingMember(false);
+    }
 
     const newMember: TeamMember = {
-      id: `m-${Date.now()}`,
+      id: createdUserId,
       podId: targetPodId,
       name: newMemberForm.name.trim(),
       role: roleTitle,
       category: newMemberForm.category,
-      email: newMemberForm.email.trim() || `${newMemberForm.name.toLowerCase().replace(/\s+/g, ".")}@creo.agency`,
+      email: finalEmail,
       handle: newMemberForm.handle.trim() || `@${newMemberForm.name.toLowerCase().replace(/\s+/g, "")}`,
       status: "Accepting Work",
       statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -5044,13 +5289,11 @@ export function AdminTeamManagementPage() {
       )
     );
 
-    const targetPodName = pods.find((p) => p.id === targetPodId)?.name || "Sprint Pod";
-    const memberName = newMember.name;
-
     setIsAddMemberOpen(false);
     setNewMemberForm({
       name: "",
       email: "",
+      password: generateStrongPassword(),
       handle: "",
       role: "Senior Visual Designer",
       category: "designer",
@@ -5058,12 +5301,71 @@ export function AdminTeamManagementPage() {
       capabilities: "Figma Tokens, Design Systems, Branding",
     });
 
-    setSuccessPopup({
-      isOpen: true,
-      title: "Team Specialist Added!",
-      message: `${memberName} has been added to ${targetPodName} as ${roleTitle}. The specialist card is now live and ready for sprint task allocation!`,
-      type: "success",
+    setProvisionedCredentials({
+      name: newMember.name,
+      email: finalEmail,
+      password: provisionedPass,
+      role: roleTitle,
+      podName: targetPodName,
     });
+  };
+
+  const handleOpenCredentialModal = (member: TeamMember) => {
+    setCredentialModalMember(member);
+    setCredentialForm({
+      email: member.email,
+      password: generateStrongPassword(),
+    });
+    setShowCredentialPassword(false);
+  };
+
+  const handleUpdateCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!credentialModalMember) return;
+    if (!credentialForm.password.trim() || credentialForm.password.length < 6) {
+      setToast("Password must be at least 6 characters.");
+      return;
+    }
+
+    setIsUpdatingCredentials(true);
+    const updatedEmail = credentialForm.email.trim();
+    const updatedPass = credentialForm.password.trim();
+
+    try {
+      await request(`/api/v1/admin/teams/${credentialModalMember.id}/credentials`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          email: updatedEmail,
+          password: updatedPass,
+        }),
+      });
+
+      setMembersList((prev) =>
+        prev.map((m) =>
+          m.id === credentialModalMember.id
+            ? { ...m, email: updatedEmail }
+            : m
+        )
+      );
+
+      const targetName = credentialModalMember.name;
+      const targetRole = credentialModalMember.role;
+      const targetPod = pods.find((p) => p.id === credentialModalMember.podId)?.name || "Sprint Pod";
+      setCredentialModalMember(null);
+
+      setProvisionedCredentials({
+        name: targetName,
+        email: updatedEmail,
+        password: updatedPass,
+        role: targetRole,
+        podName: targetPod,
+      });
+      setToast(`Credentials updated for ${targetName}`);
+    } catch (err: any) {
+      setToast(err?.message || "Failed to update credentials");
+    } finally {
+      setIsUpdatingCredentials(false);
+    }
   };
 
   const handleOpenAssignModal = (member: TeamMember) => {
@@ -5191,6 +5493,25 @@ export function AdminTeamManagementPage() {
           <button
             type="button"
             onClick={() => {
+              setTeamTab("bde");
+              bdeTeamQuery.refetch();
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              teamTab === "bde"
+                ? "bg-amber-600 text-white shadow-md shadow-amber-600/25"
+                : "text-[#97A0B3] hover:text-white hover:bg-[#161F2D]"
+            }`}
+          >
+            <Briefcase className="w-4 h-4" /> BDE Sales Team & Onboarding
+            {bdeTeamQuery.data && bdeTeamQuery.data.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-amber-950 text-amber-200 text-[10px] font-black">
+                {bdeTeamQuery.data.length}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
               setTeamTab("freelancers");
               freelancersQuery.refetch();
             }}
@@ -5209,7 +5530,283 @@ export function AdminTeamManagementPage() {
           </button>
         </div>
 
-        {teamTab === "freelancers" ? (
+        {teamTab === "bde" ? (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <span>BDE Sales Team & Revenue Quota Management</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider">
+                    Revenue Engine
+                  </span>
+                </h3>
+                <p className="text-xs text-[#97A0B3]">
+                  Onboard Business Development Executives, set monthly target quotas & commission rates, manage passwords, and dispatch welcome credentials emails.
+                </p>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => bdeTeamQuery.refetch()}
+                  disabled={bdeTeamQuery.isFetching}
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
+                  title="Refresh BDE Roster"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${bdeTeamQuery.isFetching ? "animate-spin text-amber-400" : "text-[#97A0B3]"}`} />
+                  <span>Refresh</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenOnboardBde}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/20 cursor-pointer transition-all shrink-0"
+                >
+                  <UserCheck className="w-4 h-4" /> Onboard BDE
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex items-start gap-3 text-xs text-amber-200">
+              <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <strong>Role-Based Sales Portal:</strong> BDE accounts have dedicated access to the BDE CRM dashboard, client pipeline stages, deal-won metrics, and sales Slack channels. When onboarding or updating, login credentials can be instantly dispatched directly to their inbox with Brevo/SMTP.
+              </div>
+            </div>
+
+            {(() => {
+              const bdeList = bdeTeamQuery.data || [];
+              const activeCount = bdeList.filter((b) => b.is_active !== false).length;
+              const totalQuota = bdeList.reduce((acc, b) => acc + (b.monthly_quota || 0), 0);
+              const totalClosed = bdeList.reduce((acc, b) => acc + (b.closed_revenue || 0), 0);
+              const totalPipeline = bdeList.reduce((acc, b) => acc + (b.active_pipeline || 0), 0);
+              const totalWon = bdeList.reduce((acc, b) => acc + (b.deals_won || 0), 0);
+              const totalLeads = bdeList.reduce((acc, b) => acc + (b.total_leads || 0), 0);
+              const overallWinRate = totalLeads > 0 ? Math.round((totalWon / totalLeads) * 100) : 0;
+
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
+                  <div className="bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-amber-500/30 transition-all shadow-xl flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        BDE SALES ROSTER
+                      </span>
+                      <div className="w-8 h-8 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
+                        <Users className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-black text-white">{bdeList.length} Reps</span>
+                      <span className="text-xs font-semibold text-emerald-400">{activeCount} Active</span>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-[#2A3446] text-xs font-bold text-amber-400 flex items-center gap-1">
+                      <Briefcase className="w-3.5 h-3.5" /> High-velocity pipeline
+                    </div>
+                  </div>
+
+                  <div className="bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-emerald-500/30 transition-all shadow-xl flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        TOTAL CLOSED REVENUE
+                      </span>
+                      <div className="w-8 h-8 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
+                        <IndianRupee className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-black text-emerald-400">
+                        ₹{(totalClosed / 100000).toFixed(1)}L
+                      </span>
+                      <span className="text-xs text-[#97A0B3]">of ₹{(totalQuota / 100000).toFixed(1)}L target</span>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-[#2A3446] text-xs font-bold text-emerald-400 flex items-center gap-1">
+                      <TrendingUp className="w-3.5 h-3.5" /> Won client deals
+                    </div>
+                  </div>
+
+                  <div className="bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-blue-500/30 transition-all shadow-xl flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        ACTIVE PIPELINE
+                      </span>
+                      <div className="w-8 h-8 rounded-2xl bg-blue-500/15 text-blue-400 flex items-center justify-center">
+                        <TrendingUp className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-black text-blue-400">
+                        ₹{(totalPipeline / 100000).toFixed(1)}L
+                      </span>
+                      <span className="text-xs text-[#97A0B3]">in negotiation</span>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-[#2A3446] text-xs font-bold text-blue-400 flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5" /> Active proposals
+                    </div>
+                  </div>
+
+                  <div className="bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-purple-500/30 transition-all shadow-xl flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        CONVERSION & DEALS
+                      </span>
+                      <div className="w-8 h-8 rounded-2xl bg-purple-500/15 text-purple-400 flex items-center justify-center">
+                        <CheckCircle2 className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-black text-purple-400">{overallWinRate}%</span>
+                      <span className="text-xs text-[#97A0B3]">{totalWon} / {totalLeads} won</span>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-[#2A3446] text-xs font-bold text-purple-400 flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" /> High close velocity
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {bdeTeamQuery.isLoading ? (
+              <div className="p-12 text-center text-xs text-[#97A0B3] animate-pulse">
+                Loading BDE sales roster...
+              </div>
+            ) : !bdeTeamQuery.data || bdeTeamQuery.data.length === 0 ? (
+              <div className="p-12 bg-[#161F2D] rounded-3xl border border-[#2A3446] text-center space-y-3">
+                <Briefcase className="w-10 h-10 text-amber-400 mx-auto opacity-70" />
+                <h4 className="text-sm font-bold text-white">No BDE Sales Representatives Yet</h4>
+                <p className="text-xs text-[#97A0B3] max-w-md mx-auto">
+                  Onboard your first Business Development Executive to start assigning revenue quotas, tracking client outreach, and provisioning logins.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleOpenOnboardBde}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all shadow-md shadow-amber-600/20 cursor-pointer"
+                >
+                  <UserCheck className="w-4 h-4" /> Onboard First BDE
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {bdeTeamQuery.data.map((bde: any) => {
+                  const quota = bde.monthly_quota || 2500000;
+                  const closed = bde.closed_revenue || 0;
+                  const achievedPct = Math.min(100, Math.round((closed / Math.max(1, quota)) * 100));
+
+                  return (
+                    <div
+                      key={bde.id}
+                      className="bg-[#161F2D] rounded-3xl p-5 border border-[#2A3446] hover:border-amber-500/40 transition-all flex flex-col justify-between space-y-4 shadow-xl"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-md shadow-amber-500/20">
+                              {(bde.full_name || bde.name || "BDE")
+                                .split(" ")
+                                .map((n: string) => n[0])
+                                .slice(0, 2)
+                                .join("")}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="text-sm font-black text-white truncate flex items-center gap-1.5">
+                                <span>{bde.full_name || bde.name || "BDE Specialist"}</span>
+                              </h4>
+                              <p className="text-[11px] text-[#97A0B3] font-medium truncate">{bde.email}</p>
+                              {bde.phone && (
+                                <p className="text-[10px] text-amber-400 font-semibold">{bde.phone}</p>
+                              )}
+                            </div>
+                          </div>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 border ${
+                              bde.is_active !== false
+                                ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                                : "bg-rose-500/15 text-rose-300 border-rose-500/30"
+                            }`}
+                          >
+                            {bde.is_active !== false ? "Active BDE" : "Suspended"}
+                          </span>
+                        </div>
+
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[11px] text-amber-300 font-semibold mb-3">
+                          <Briefcase className="w-3 h-3 text-amber-400 shrink-0" />
+                          <span className="truncate">{bde.designation || "Business Development Executive"}</span>
+                        </div>
+
+                        <div className="space-y-1.5 bg-[#0B111C]/60 p-3 rounded-2xl border border-[#2A3446]/60">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-[#97A0B3] font-bold text-[10px] uppercase tracking-wider">
+                              Target Quota: ₹{(quota / 100000).toFixed(1)}L
+                            </span>
+                            <span className="text-white font-black text-[11px]">
+                              ₹{(closed / 100000).toFixed(1)}L ({achievedPct}%)
+                            </span>
+                          </div>
+                          <div className="w-full h-2 rounded-full bg-[#161F2D] overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-500"
+                              style={{ width: `${achievedPct}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-4 gap-2 mt-3 text-center">
+                          <div className="bg-[#0B111C]/40 p-2 rounded-xl border border-[#2A3446]/50">
+                            <span className="block text-[9px] text-[#97A0B3] font-bold uppercase">Leads</span>
+                            <span className="text-xs font-black text-white">{bde.total_leads || 0}</span>
+                          </div>
+                          <div className="bg-[#0B111C]/40 p-2 rounded-xl border border-[#2A3446]/50">
+                            <span className="block text-[9px] text-[#97A0B3] font-bold uppercase">Won</span>
+                            <span className="text-xs font-black text-emerald-400">{bde.deals_won || 0}</span>
+                          </div>
+                          <div className="bg-[#0B111C]/40 p-2 rounded-xl border border-[#2A3446]/50">
+                            <span className="block text-[9px] text-[#97A0B3] font-bold uppercase">Win Rate</span>
+                            <span className="text-xs font-black text-amber-300">{bde.conversion_rate || 0}%</span>
+                          </div>
+                          <div className="bg-[#0B111C]/40 p-2 rounded-xl border border-[#2A3446]/50">
+                            <span className="block text-[9px] text-[#97A0B3] font-bold uppercase">Comm.</span>
+                            <span className="text-xs font-black text-purple-300">{bde.commission_rate || 5}%</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenBdeCredModal(bde)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0B111C] hover:bg-amber-500/20 border border-[#2A3446] hover:border-amber-500/40 text-amber-300 text-xs font-bold transition-all cursor-pointer"
+                          title="Change password and optionally send mail"
+                        >
+                          <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Password & Mail</span>
+                        </button>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => navigate("/slack")}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold transition-all cursor-pointer"
+                            title="Open Slack Chat"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5 text-[#7FA0D6]" />
+                            <span>Chat</span>
+                          </button>
+                          {bde.is_active !== false && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeactivateBde(bde.id, bde.full_name)}
+                              className="p-1.5 rounded-xl text-rose-400 hover:text-rose-200 hover:bg-rose-500/20 border border-transparent hover:border-rose-500/30 transition-all cursor-pointer"
+                              title="Deactivate account"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : teamTab === "freelancers" ? (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -5906,19 +6503,30 @@ export function AdminTeamManagementPage() {
                       <span className="text-emerald-600 flex items-center gap-1 text-[11px]">
                         ● {member.status === "Fully Booked" ? "At Max Capacity" : "Sprint Ready"}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (member.allocatedPct >= 90) {
-                            handleOpenScheduleModal(member);
-                          } else {
-                            handleOpenAssignModal(member);
-                          }
-                        }}
-                        className="text-[#7FA0D6] hover:text-blue-800 hover:underline cursor-pointer text-[11px] font-bold"
-                      >
-                        {member.allocatedPct >= 90 ? "View Schedule" : "Assign Work"}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCredentialModal(member)}
+                          title="Assign or reset login credentials"
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0B111C] hover:bg-[#7FA0D6]/20 border border-[#2A3446] hover:border-[#7FA0D6]/50 text-[#7FA0D6] text-[11px] font-bold cursor-pointer transition-colors"
+                        >
+                          <KeyRound className="size-3" />
+                          <span>Credentials</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (member.allocatedPct >= 90) {
+                              handleOpenScheduleModal(member);
+                            } else {
+                              handleOpenAssignModal(member);
+                            }
+                          }}
+                          className="text-[#7FA0D6] hover:text-blue-800 hover:underline cursor-pointer text-[11px] font-bold"
+                        >
+                          {member.allocatedPct >= 90 ? "View Schedule" : "Assign Work"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -6298,7 +6906,7 @@ export function AdminTeamManagementPage() {
         )}
 
         {/* ─────────────────────────────────────────────────────────────────────────────
-            MODAL 4: ADD MEMBER MODAL (FULLY FUNCTIONAL)
+            MODAL 4: ADD MEMBER MODAL (FULLY FUNCTIONAL WITH CREDENTIALS)
         ───────────────────────────────────────────────────────────────────────────── */}
         {isAddMemberOpen && (
           <div
@@ -6322,7 +6930,7 @@ export function AdminTeamManagementPage() {
                       Add Team Specialist to {activePod?.name || "Sprint Pod"}
                     </h3>
                     <p className="text-[11px] text-[#97A0B3] font-medium">
-                      Provision creative talent, set role capabilities & sprint track
+                      Provision login credentials (Email & Password), role track & permissions
                     </p>
                   </div>
                 </div>
@@ -6361,7 +6969,7 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Email Address</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Login Email ID *</label>
                     <input
                       type="email"
                       required
@@ -6373,29 +6981,57 @@ export function AdminTeamManagementPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Role Title</label>
+                {/* Account Password Field */}
+                <div className="bg-[#0B111C]/80 p-3.5 rounded-2xl border border-[#2A3446] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5">
+                      <KeyRound className="size-3.5 text-[#7FA0D6]" />
+                      <span>Account Password *</span>
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setNewMemberForm({ ...newMemberForm, password: generateStrongPassword() })}
+                        className="text-[11px] font-bold text-[#7FA0D6] hover:text-white flex items-center gap-1 cursor-pointer"
+                      >
+                        <Sparkles className="size-3" />
+                        <span>Generate</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(newMemberForm.password);
+                          setCopiedKey("formPass");
+                          setTimeout(() => setCopiedKey(null), 1800);
+                        }}
+                        className="text-[11px] font-bold text-[#97A0B3] hover:text-white flex items-center gap-1 cursor-pointer"
+                      >
+                        {copiedKey === "formPass" ? <Check className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
+                        <span>{copiedKey === "formPass" ? "Copied" : "Copy"}</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="relative">
                     <input
-                      type="text"
+                      type={showNewMemberPassword ? "text" : "password"}
                       required
-                      value={newMemberForm.role}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, role: e.target.value })}
-                      placeholder="e.g. Senior Visual Designer"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                      minLength={6}
+                      value={newMemberForm.password}
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, password: e.target.value })}
+                      placeholder="Enter custom password (min 6 chars)"
+                      className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono font-medium"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewMemberPassword(!showNewMemberPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white cursor-pointer"
+                    >
+                      {showNewMemberPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
                   </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Slack / Agency Handle</label>
-                    <input
-                      type="text"
-                      value={newMemberForm.handle}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, handle: e.target.value })}
-                      placeholder="e.g. @jmiller"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
-                    />
-                  </div>
+                  <p className="text-[10px] text-[#97A0B3]">
+                    The specialist will log in using this Email ID and Password. You can review and copy credentials right after creation.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
@@ -6407,6 +7043,7 @@ export function AdminTeamManagementPage() {
                         const cat = e.target.value as TeamMember["category"];
                         let defaultRole = "Senior Visual Designer";
                         if (cat === "editor") defaultRole = "Lead Video Editor";
+                        else if (cat === "bde") defaultRole = "Business Development Executive (BDE)";
                         else if (cat === "videographer") defaultRole = "Lead Cinematographer & Videographer";
                         else if (cat === "photographer") defaultRole = "Commercial Photographer";
                         else if (cat === "lead") defaultRole = "Sprint Pod Lead";
@@ -6416,10 +7053,36 @@ export function AdminTeamManagementPage() {
                     >
                       <option value="designer">🎨 Designer (UI, 3D, Brand)</option>
                       <option value="editor">✂️ Video & Motion Editor</option>
+                      <option value="bde">💼 BDE / Sales Specialist</option>
                       <option value="videographer">🎥 Cinematographer & Videographer</option>
                       <option value="photographer">📷 Commercial Photographer</option>
                       <option value="lead">👑 Pod Lead & Strategist</option>
                     </NativeSelect>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Role Title</label>
+                    <input
+                      type="text"
+                      required
+                      value={newMemberForm.role}
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, role: e.target.value })}
+                      placeholder="e.g. Senior Visual Designer"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Slack / Agency Handle</label>
+                    <input
+                      type="text"
+                      value={newMemberForm.handle}
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, handle: e.target.value })}
+                      placeholder="e.g. @jmiller"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                    />
                   </div>
 
                   <div>
@@ -6458,9 +7121,266 @@ export function AdminTeamManagementPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+                    disabled={isCreatingMember}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                   >
-                    Create & Provision Specialist
+                    {isCreatingMember ? "Creating & Provisioning..." : "Create & Provision Specialist"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            MODAL 5: CREDENTIALS PROVISIONED CONFIRMATION (1-CLICK COPY)
+        ───────────────────────────────────────────────────────────────────────────── */}
+        {provisionedCredentials && (
+          <div
+            className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in"
+            onClick={() => setProvisionedCredentials(null)}
+          >
+            <div
+              className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-emerald-500/30 flex flex-col space-y-4"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="size-10 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-black">
+                    <ShieldCheck className="size-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white tracking-tight">Credentials Provisioned!</h3>
+                    <p className="text-[11px] text-[#97A0B3] font-medium">
+                      Account active in database. Share these credentials with the user.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setProvisionedCredentials(null)}
+                  className="size-8 rounded-full bg-[#0B111C] hover:bg-slate-700 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              {/* Specialist Profile Banner */}
+              <div className="p-3.5 bg-[#0B111C] rounded-2xl border border-[#2A3446] flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-bold text-white">{provisionedCredentials.name}</div>
+                  <div className="text-xs text-[#7FA0D6] font-medium">{provisionedCredentials.role} • {provisionedCredentials.podName}</div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  Active
+                </span>
+              </div>
+
+              {/* Credentials details box */}
+              <div className="space-y-3 bg-[#0B111C]/60 p-4 rounded-2xl border border-[#2A3446]">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
+                    Login Email ID
+                  </label>
+                  <div className="flex items-center justify-between bg-[#161F2D] px-3.5 py-2.5 rounded-xl border border-[#2A3446]">
+                    <span className="text-xs font-mono font-bold text-white truncate select-all">
+                      {provisionedCredentials.email}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(provisionedCredentials.email);
+                        setCopiedKey("email");
+                        setTimeout(() => setCopiedKey(null), 2000);
+                      }}
+                      className="text-xs font-bold text-[#7FA0D6] hover:text-white flex items-center gap-1 cursor-pointer ml-2 shrink-0"
+                    >
+                      {copiedKey === "email" ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+                      <span>{copiedKey === "email" ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
+                    Password
+                  </label>
+                  <div className="flex items-center justify-between bg-[#161F2D] px-3.5 py-2.5 rounded-xl border border-[#2A3446]">
+                    <span className="text-xs font-mono font-bold text-amber-300 select-all">
+                      {provisionedCredentials.password}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(provisionedCredentials.password);
+                        setCopiedKey("pass");
+                        setTimeout(() => setCopiedKey(null), 2000);
+                      }}
+                      className="text-xs font-bold text-[#7FA0D6] hover:text-white flex items-center gap-1 cursor-pointer ml-2 shrink-0"
+                    >
+                      {copiedKey === "pass" ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+                      <span>{copiedKey === "pass" ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Email Dispatched Status Banner */}
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="size-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <Mail className="size-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-emerald-300 block">Credentials Sent via Email</span>
+                    <span className="text-[10px] text-[#97A0B3] block truncate max-w-[200px] sm:max-w-[250px]">
+                      Dispatched to {provisionedCredentials.email}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setToast(`Credentials re-dispatched to ${provisionedCredentials.email}`);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[10px] font-bold transition-colors cursor-pointer shrink-0"
+                >
+                  Resend
+                </button>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = `Creo Login Credentials:\nEmail: ${provisionedCredentials.email}\nPassword: ${provisionedCredentials.password}\nRole: ${provisionedCredentials.role}`;
+                    navigator.clipboard.writeText(text);
+                    setCopiedKey("all");
+                    setTimeout(() => setCopiedKey(null), 2000);
+                  }}
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  {copiedKey === "all" ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5 text-[#7FA0D6]" />}
+                  <span>{copiedKey === "all" ? "Credentials Copied!" : "Copy Full Details"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProvisionedCredentials(null)}
+                  className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold cursor-pointer transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            MODAL 6: GIVE / RESET CREDENTIALS FOR EXISTING MEMBER
+        ───────────────────────────────────────────────────────────────────────────── */}
+        {credentialModalMember && (
+          <div
+            className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in"
+            onClick={() => setCredentialModalMember(null)}
+          >
+            <div
+              className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-[#2A3446] flex flex-col space-y-4"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="size-10 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black">
+                    <KeyRound className="size-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white tracking-tight">
+                      Manage Login Credentials
+                    </h3>
+                    <p className="text-[11px] text-[#97A0B3] font-medium">
+                      Set Email ID & Password for {credentialModalMember.name}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCredentialModalMember(null)}
+                  className="size-8 rounded-full bg-[#0B111C] hover:bg-slate-700 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleUpdateCredentials} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1.5">Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    value={credentialForm.email}
+                    onChange={(e) => setCredentialForm({ ...credentialForm, email: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                    placeholder="e.g. member@creo.agency"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-[#F1F5F9]">New Password *</label>
+                    <button
+                      type="button"
+                      onClick={() => setCredentialForm({ ...credentialForm, password: generateStrongPassword() })}
+                      className="text-[11px] font-bold text-[#7FA0D6] hover:text-white flex items-center gap-1 cursor-pointer"
+                    >
+                      <Sparkles className="size-3" />
+                      <span>Generate</span>
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showCredentialPassword ? "text" : "password"}
+                      required
+                      minLength={6}
+                      value={credentialForm.password}
+                      onChange={(e) => setCredentialForm({ ...credentialForm, password: e.target.value })}
+                      className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium font-mono"
+                      placeholder="At least 6 characters"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCredentialPassword(!showCredentialPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white cursor-pointer"
+                    >
+                      {showCredentialPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-[#97A0B3] mt-1.5">
+                    Updating this password immediately syncs to the database so the member can log in.
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+                  <button
+                    type="button"
+                    onClick={() => setCredentialModalMember(null)}
+                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isUpdatingCredentials}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isUpdatingCredentials ? "Updating..." : "Save & Assign Credentials"}
                   </button>
                 </div>
               </form>
@@ -6489,6 +7409,414 @@ export function AdminTeamManagementPage() {
             }}
           />
         )}
+
+        {/* ─── BDE ONBOARDING MODAL ─────────────────────────────────────── */}
+        {isOnboardBdeOpen && (
+          <div
+            className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in"
+            onClick={() => setIsOnboardBdeOpen(false)}
+          >
+            <div
+              className="relative w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-amber-500/30 flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="size-10 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-black">
+                    <Briefcase className="size-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white tracking-tight">Onboard New BDE Sales Specialist</h3>
+                    <p className="text-[11px] text-[#97A0B3] font-medium">
+                      Set revenue target quota, commission rate, and provision login password & email dispatch
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsOnboardBdeOpen(false)}
+                  className="size-8 rounded-full bg-[#0B111C] hover:bg-slate-700 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleOnboardBdeSubmit} className="space-y-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={bdeForm.full_name}
+                      onChange={(e) => setBdeForm({ ...bdeForm, full_name: e.target.value })}
+                      placeholder="e.g. Rahul Sharma"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Email Address *</label>
+                    <input
+                      type="email"
+                      required
+                      value={bdeForm.email}
+                      onChange={(e) => setBdeForm({ ...bdeForm, email: e.target.value })}
+                      placeholder="e.g. rahul.sharma@creo.agency"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Phone Number (Optional)</label>
+                    <input
+                      type="text"
+                      value={bdeForm.phone}
+                      onChange={(e) => setBdeForm({ ...bdeForm, phone: e.target.value })}
+                      placeholder="e.g. +91 98765 43210"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Designation / Role Title</label>
+                    <input
+                      type="text"
+                      value={bdeForm.designation}
+                      onChange={(e) => setBdeForm({ ...bdeForm, designation: e.target.value })}
+                      placeholder="e.g. Senior BDE - Enterprise Accounts"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Monthly Quota (₹)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="50000"
+                      value={bdeForm.monthly_quota}
+                      onChange={(e) => setBdeForm({ ...bdeForm, monthly_quota: Number(e.target.value) })}
+                      placeholder="2500000"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    />
+                    <span className="text-[10px] text-amber-400 mt-1 block font-semibold">
+                      ₹{(bdeForm.monthly_quota / 100000).toFixed(1)} Lakhs target
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Commission Rate (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      value={bdeForm.commission_rate}
+                      onChange={(e) => setBdeForm({ ...bdeForm, commission_rate: Number(e.target.value) })}
+                      placeholder="5.0"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    />
+                    <span className="text-[10px] text-purple-300 mt-1 block font-semibold">
+                      {bdeForm.commission_rate}% payout on closed deals
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-[#F1F5F9]">Initial Login Password *</label>
+                    <button
+                      type="button"
+                      onClick={() => setBdeForm({ ...bdeForm, password: `Creo@${Math.floor(1000 + Math.random() * 9000)}!` })}
+                      className="text-[11px] font-bold text-amber-400 hover:text-amber-300 cursor-pointer flex items-center gap-1"
+                    >
+                      <span>🎲 Auto-Generate</span>
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showOnboardPassword ? "text" : "password"}
+                      required
+                      value={bdeForm.password}
+                      onChange={(e) => setBdeForm({ ...bdeForm, password: e.target.value })}
+                      className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-[#2A3446] text-xs font-mono font-bold text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                      placeholder="Enter or generate strong password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowOnboardPassword(!showOnboardPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white"
+                    >
+                      {showOnboardPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="send_bde_email"
+                    checked={bdeForm.send_credentials_email}
+                    onChange={(e) => setBdeForm({ ...bdeForm, send_credentials_email: e.target.checked })}
+                    className="mt-0.5 size-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                  />
+                  <label htmlFor="send_bde_email" className="text-xs text-amber-200 cursor-pointer leading-relaxed">
+                    <strong>Send Credentials Email via Brevo/SMTP:</strong> Instantly dispatch a branded transactional welcome email to the BDE containing their email, temporary password, login portal URL, and getting started instructions.
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2A3446]">
+                  <button
+                    type="button"
+                    onClick={() => setIsOnboardBdeOpen(false)}
+                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isOnboardingBde}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isOnboardingBde ? "Provisioning BDE..." : "Provision BDE & Send Email"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ─── BDE CREDENTIALS / PASSWORD RESET MODAL ─────────────────── */}
+        {bdeCredModalUser && (
+          <div
+            className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in"
+            onClick={() => setBdeCredModalUser(null)}
+          >
+            <div
+              className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-amber-500/30 flex flex-col space-y-4"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="size-10 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-black">
+                    <KeyRound className="size-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white tracking-tight">Set Password & Email</h3>
+                    <p className="text-[11px] text-[#97A0B3] font-medium">
+                      Update login credentials for {bdeCredModalUser.full_name}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setBdeCredModalUser(null)}
+                  className="size-8 rounded-full bg-[#0B111C] hover:bg-slate-700 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              <div className="p-3 bg-[#0B111C] rounded-2xl border border-[#2A3446] flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-[#97A0B3] uppercase font-bold block">BDE Account</span>
+                  <span className="text-xs font-bold text-white">{bdeCredModalUser.full_name}</span>
+                </div>
+                <span className="text-xs font-mono font-medium text-amber-400">{bdeCredModalUser.email}</span>
+              </div>
+
+              <form onSubmit={handleUpdateBdeCredentialsSubmit} className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-[#F1F5F9]">New Password *</label>
+                    <button
+                      type="button"
+                      onClick={() => setBdeCredNewPassword(`Creo@${Math.floor(1000 + Math.random() * 9000)}!`)}
+                      className="text-[11px] font-bold text-amber-400 hover:text-amber-300 cursor-pointer flex items-center gap-1"
+                    >
+                      <span>🎲 Auto-Generate</span>
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showCredPassword ? "text" : "password"}
+                      required
+                      value={bdeCredNewPassword}
+                      onChange={(e) => setBdeCredNewPassword(e.target.value)}
+                      className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-[#2A3446] text-xs font-mono font-bold text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                      placeholder="Enter new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCredPassword(!showCredPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white"
+                    >
+                      {showCredPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="send_cred_update_email"
+                    checked={bdeCredSendEmail}
+                    onChange={(e) => setBdeCredSendEmail(e.target.checked)}
+                    className="mt-0.5 size-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                  />
+                  <label htmlFor="send_cred_update_email" className="text-xs text-amber-200 cursor-pointer leading-relaxed">
+                    <strong>Dispatch Updated Credentials Email:</strong> Send an immediate transactional notification to {bdeCredModalUser.email} with the new password and direct sign-in link.
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+                  <button
+                    type="button"
+                    onClick={() => setBdeCredModalUser(null)}
+                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isUpdatingCreds}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isUpdatingCreds ? "Updating & Sending..." : "Save Password & Send Email"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ─── BDE PROVISIONED CREDENTIALS SUCCESS DIALOG ─────────────── */}
+        {bdeProvisionedCreds && (
+          <div
+            className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in"
+            onClick={() => setBdeProvisionedCreds(null)}
+          >
+            <div
+              className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-amber-500/30 flex flex-col space-y-4"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="size-10 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-black">
+                    <ShieldCheck className="size-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white tracking-tight">BDE Provisioned Successfully!</h3>
+                    <p className="text-[11px] text-[#97A0B3] font-medium">
+                      Account active in database and assigned to Sales CRM.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setBdeProvisionedCreds(null)}
+                  className="size-8 rounded-full bg-[#0B111C] hover:bg-slate-700 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              <div
+                className={`p-3 rounded-2xl border flex items-center gap-2 text-xs font-bold ${
+                  bdeProvisionedCreds.email_dispatched
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                    : "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                }`}
+              >
+                <CheckCircle2 className="size-4 shrink-0" />
+                <span>
+                  {bdeProvisionedCreds.email_dispatched
+                    ? "Welcome credentials email dispatched to BDE inbox via Brevo/SMTP!"
+                    : "Account created (email dispatch was bypassed or skipped)."}
+                </span>
+              </div>
+
+              <div className="space-y-3 bg-[#0B111C]/60 p-4 rounded-2xl border border-[#2A3446]">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
+                    Login Email ID
+                  </label>
+                  <div className="flex items-center justify-between bg-[#161F2D] px-3.5 py-2.5 rounded-xl border border-[#2A3446]">
+                    <span className="text-xs font-mono font-bold text-white truncate select-all">
+                      {bdeProvisionedCreds.email}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(bdeProvisionedCreds.email);
+                        setBdeCopiedKey("email");
+                        setTimeout(() => setBdeCopiedKey(null), 2000);
+                      }}
+                      className="text-xs font-bold text-amber-400 hover:text-white flex items-center gap-1 cursor-pointer ml-2 shrink-0"
+                    >
+                      {bdeCopiedKey === "email" ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+                      <span>{bdeCopiedKey === "email" ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
+                    Temporary Password
+                  </label>
+                  <div className="flex items-center justify-between bg-[#161F2D] px-3.5 py-2.5 rounded-xl border border-[#2A3446]">
+                    <span className="text-xs font-mono font-bold text-emerald-400 truncate select-all">
+                      {bdeProvisionedCreds.password}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(bdeProvisionedCreds.password);
+                        setBdeCopiedKey("password");
+                        setTimeout(() => setBdeCopiedKey(null), 2000);
+                      }}
+                      className="text-xs font-bold text-amber-400 hover:text-white flex items-center gap-1 cursor-pointer ml-2 shrink-0"
+                    >
+                      {bdeCopiedKey === "password" ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+                      <span>{bdeCopiedKey === "password" ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = `Creo BDE Login Credentials:\nName: ${bdeProvisionedCreds.full_name}\nEmail: ${bdeProvisionedCreds.email}\nPassword: ${bdeProvisionedCreds.password}\nPortal: ${window.location.origin}/login`;
+                    navigator.clipboard.writeText(text);
+                    setBdeCopiedKey("all");
+                    setTimeout(() => setBdeCopiedKey(null), 2000);
+                  }}
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  {bdeCopiedKey === "all" ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5 text-amber-400" />}
+                  <span>{bdeCopiedKey === "all" ? "Credentials Copied!" : "Copy Full Details"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBdeProvisionedCreds(null)}
+                  className="py-2.5 px-5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold cursor-pointer transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
@@ -6500,9 +7828,48 @@ export const AdminTeamsPage = AdminTeamManagementPage;
 // 7. ADMIN LEAVE APPROVALS PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export function AdminLeaveApprovalsPage() {
+  const { user } = useAuth();
+  if (user?.role === "sales") {
+    return <Navigate to="/bde/leave" replace />;
+  }
+  if (user?.role === "freelancer") {
+    return <Navigate to="/freelancer/leave" replace />;
+  }
+  if (user?.role === "editor" || user?.role === "designer") {
+    return <Navigate to="/workstation/schedule" replace />;
+  }
+
   const [toast, setToast] = useState<string | null>(null);
   const [filterTab, setFilterTab] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [applyStartDate, setApplyStartDate] = useState("");
+  const [applyEndDate, setApplyEndDate] = useState("");
+  const [applyReason, setApplyReason] = useState("");
+  const [isSubmittingLeave, setIsSubmittingLeave] = useState(false);
+
+  const handleApplyLeave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!applyStartDate || !applyEndDate || !applyReason.trim()) return;
+    setIsSubmittingLeave(true);
+    try {
+      await submitLeaveRequest({
+        start_date: applyStartDate,
+        end_date: applyEndDate,
+        reason: applyReason.trim(),
+      });
+      setToast("Leave request submitted successfully!");
+      setIsApplyModalOpen(false);
+      setApplyStartDate("");
+      setApplyEndDate("");
+      setApplyReason("");
+      refetch();
+    } catch (err: any) {
+      setToast(err?.message || "Failed to submit leave request.");
+    } finally {
+      setIsSubmittingLeave(false);
+      setTimeout(() => setToast(null), 3500);
+    }
+  };
 
   const { data: dbLeaves = [], refetch } = useQuery({
     queryKey: ["admin_leave_requests"],
@@ -6639,7 +8006,7 @@ export function AdminLeaveApprovalsPage() {
           <table className="w-full text-left text-xs text-white">
             <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
               <tr>
-                <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Specialist</th>
+                <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Team Member & Domain</th>
                 <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Dates</th>
                 <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Reason</th>
                 <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Status</th>
@@ -6654,12 +8021,55 @@ export function AdminLeaveApprovalsPage() {
                   </td>
                 </tr>
               ) : (
-                filteredRequests.map((lr) => (
-                <tr key={lr.id} className="hover:bg-[#0B111C]/60">
-                  <td className="px-3 sm:px-5 py-3 sm:py-4">
-                    <div className="font-bold text-white">{lr.user_name || (lr as any).name || "Team Member"}</div>
-                    <div className="text-[11px] text-[#97A0B3]">{lr.user_role || (lr as any).department || "Specialist"}</div>
-                  </td>
+                filteredRequests.map((lr) => {
+                  const memberName =
+                    lr.employee_name ||
+                    lr.user_name ||
+                    (lr as any).name ||
+                    (lr.employee_email ? (lr.employee_email.split("@")[0] || "").toUpperCase() : "Team Member");
+
+                  const rawRole = (lr.role || (lr as any).role_raw || "").toLowerCase();
+                  const domain =
+                    lr.domain ||
+                    lr.department ||
+                    (rawRole === "sales"
+                      ? "BDE (Business Development)"
+                      : rawRole === "freelancer"
+                      ? "Freelancer"
+                      : rawRole === "team_lead"
+                      ? "Team Lead"
+                      : lr.user_role || "Specialist");
+
+                  const isBDE = rawRole === "sales" || domain.toLowerCase().includes("bde");
+                  const isFreelancer = rawRole === "freelancer" || domain.toLowerCase().includes("freelancer");
+
+                  return (
+                    <tr key={lr.id} className="hover:bg-[#0B111C]/60">
+                      <td className="px-3 sm:px-5 py-3 sm:py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="font-bold text-white text-sm">{memberName}</div>
+                          <span
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
+                              isBDE
+                                ? "bg-blue-500/20 text-[#7FA0D6] border-[#7FA0D6]/40"
+                                : isFreelancer
+                                ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
+                                : "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                            }`}
+                          >
+                            {isBDE ? "BDE" : isFreelancer ? "Freelancer" : domain}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-[#97A0B3] flex items-center gap-2 mt-0.5">
+                          <span>{domain}</span>
+                          {lr.employee_email && (
+                            <>
+                              <span>·</span>
+                              <span className="font-mono text-[10px]">{lr.employee_email}</span>
+                            </>
+                          )}
+                        </div>
+                      </td>
                   <td className="px-5 py-4 font-mono text-[11px]">
                     <div>{lr.start_date || (lr as any).startDate} to {lr.end_date || (lr as any).endDate}</div>
                   </td>
@@ -6698,7 +8108,8 @@ export function AdminLeaveApprovalsPage() {
                     )}
                   </td>
                 </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -6719,31 +8130,55 @@ export function AdminLeaveApprovalsPage() {
                 </button>
               </div>
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setToast("Leave request submitted to Team Lead!");
-                  setIsApplyModalOpen(false);
-                }}
-                className="space-y-3"
-              >
+              <form onSubmit={handleApplyLeave} className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Start Date</label>
-                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs" />
+                    <input
+                      type="date"
+                      required
+                      value={applyStartDate}
+                      onChange={(e) => setApplyStartDate(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs focus:outline-none focus:border-[#7FA0D6]"
+                    />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">End Date</label>
-                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs" />
+                    <input
+                      type="date"
+                      required
+                      value={applyEndDate}
+                      onChange={(e) => setApplyEndDate(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs focus:outline-none focus:border-[#7FA0D6]"
+                    />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Reason</label>
-                  <textarea rows={3} required placeholder="State reason for time off..." className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs resize-none" />
+                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Reason & Notes</label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={applyReason}
+                    onChange={(e) => setApplyReason(e.target.value)}
+                    placeholder="State reason for time off..."
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs resize-none focus:outline-none focus:border-[#7FA0D6]"
+                  />
                 </div>
                 <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                  <button type="button" onClick={() => setIsApplyModalOpen(false)} className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C]">Cancel</button>
-                  <button type="submit" className="px-4 py-2 rounded-xl bg-[#7FA0D6] text-xs font-bold text-white hover:bg-[#7FA0D6]">Submit</button>
+                  <button
+                    type="button"
+                    onClick={() => setIsApplyModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingLeave || !applyReason.trim()}
+                    className="px-4 py-2 rounded-xl bg-[#7FA0D6] text-xs font-bold text-[#0B111C] hover:bg-white disabled:opacity-50 cursor-pointer shadow-md transition-all"
+                  >
+                    {isSubmittingLeave ? "Submitting..." : "Submit Leave Request"}
+                  </button>
                 </div>
               </form>
             </div>

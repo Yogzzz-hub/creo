@@ -19,6 +19,8 @@ import {
   FileText,
   Briefcase,
   Target,
+  ArrowUpRight,
+  Activity,
 } from "lucide-react";
 import {
   fetchBDEPerformance,
@@ -65,6 +67,41 @@ export function AdminBDEOversightPage() {
       return true;
     });
   }, [leads, selectedRep, selectedStage, selectedPriority, searchQuery]);
+
+  // In-flight deals (proposals sent, negotiations, meetings scheduled, contacted)
+  const inFlightDeals = useMemo(() => {
+    return leads
+      .filter((l) =>
+        ["proposal_sent", "negotiation", "meeting_scheduled", "contacted"].includes(
+          l.status.toLowerCase()
+        )
+      )
+      .sort((a, b) => (b.estimated_deal_value || 0) - (a.estimated_deal_value || 0));
+  }, [leads]);
+
+  // Channel breakdown metrics from reps & recent activities
+  const channelMetrics = useMemo(() => {
+    const totalCalls = reps.reduce((sum, r) => sum + (r.calls_count || 0), 0);
+    const totalMeetings = reps.reduce((sum, r) => sum + (r.meetings_count || 0), 0);
+    const totalProposals = reps.reduce((sum, r) => sum + (r.proposals_sent || 0), 0);
+    const whatsappActivities = recentActivities.filter(
+      (a) => a.activity_type.toLowerCase() === "whatsapp"
+    ).length;
+    const emailActivities = recentActivities.filter(
+      (a) => a.activity_type.toLowerCase() === "email"
+    ).length;
+    const totalTouchpoints =
+      totalCalls + totalMeetings + totalProposals + whatsappActivities + emailActivities;
+
+    return {
+      totalCalls,
+      totalMeetings,
+      totalProposals,
+      whatsappActivities,
+      emailActivities,
+      totalTouchpoints,
+    };
+  }, [reps, recentActivities]);
 
   const formatINR = (val: number) => {
     return new Intl.NumberFormat("en-IN", {
@@ -143,7 +180,7 @@ export function AdminBDEOversightPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                BDE Sales & Outreach Oversight
+                BDE Overview
                 <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30">
                   Admin Console
                 </span>
@@ -401,6 +438,159 @@ export function AdminBDEOversightPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* ── High-Priority Deals in Flight (Fills the space & highlights active pipeline) ── */}
+          <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm space-y-3.5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-amber-400" />
+                  Active Deals in Flight & Proposals Under Negotiation
+                </h3>
+                <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                  High-priority commercial opportunities actively progressing through pitch, proposal, and negotiation.
+                </p>
+              </div>
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                {inFlightDeals.length} Deals In Flight
+              </span>
+            </div>
+
+            {inFlightDeals.length === 0 ? (
+              <div className="p-6 bg-[#0B111C] rounded-xl border border-[#2A3446] text-center text-xs text-[#97A0B3]">
+                No deals currently in proposal or negotiation stage.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {inFlightDeals.slice(0, 4).map((deal) => (
+                  <div
+                    key={deal.id}
+                    onClick={() => setSelectedLeadModal(deal)}
+                    className="p-4 rounded-xl bg-[#0B111C] border border-[#2A3446] hover:border-amber-500/40 transition-all cursor-pointer group flex flex-col justify-between space-y-3"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-bold text-white truncate group-hover:text-amber-400 transition-colors">
+                            {deal.company_name}
+                          </h4>
+                          <p className="text-[11px] text-[#97A0B3] truncate">{deal.name}</p>
+                        </div>
+                        {getPriorityBadge(deal.priority)}
+                      </div>
+
+                      <div className="mt-2.5 flex items-baseline justify-between">
+                        <span className="text-sm font-black text-amber-400">
+                          {formatINR(deal.estimated_deal_value)}
+                        </span>
+                        <div>{getStageBadge(deal.status)}</div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2.5 border-t border-[#2A3446]/60 flex items-center justify-between text-[11px]">
+                      <div className="flex items-center gap-1.5 text-[#BCCCE6] truncate">
+                        <div className="w-5 h-5 rounded-full bg-[#161F2D] text-[9px] font-bold text-amber-400 flex items-center justify-center border border-[#2A3446]">
+                          {(deal.assigned_bde_name || "BD").slice(0, 2).toUpperCase()}
+                        </div>
+                        <span className="truncate">{deal.assigned_bde_name || "Unassigned"}</span>
+                      </div>
+                      <span className="text-[10px] text-[#7FA0D6] group-hover:underline flex items-center gap-0.5 shrink-0">
+                        Inspect <ArrowUpRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── Outreach Channels & Touchpoints Efficiency ── */}
+          <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm space-y-3.5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-blue-400" />
+                  Outreach Channels & Touchpoint Engagement Breakdown
+                </h3>
+                <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                  Aggregate distribution of client interaction channels logged across active sales reps.
+                </p>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                Multi-Channel Mix
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-[#97A0B3]">Calls Logged</span>
+                  <PhoneCall className="w-3.5 h-3.5 text-blue-400" />
+                </div>
+                <p className="text-lg font-black text-white">{channelMetrics.totalCalls}</p>
+                <div className="w-full bg-[#161F2D] h-1.5 rounded-full overflow-hidden mt-1">
+                  <div
+                    className="bg-blue-500 h-full rounded-full"
+                    style={{
+                      width: `${Math.min(100, Math.round((channelMetrics.totalCalls / Math.max(1, channelMetrics.totalTouchpoints)) * 100))}%`,
+                    }}
+                  />
+                </div>
+                <span className="text-[9px] text-blue-400 font-semibold block pt-0.5">Direct outreach</span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-[#97A0B3]">WhatsApp</span>
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                </div>
+                <p className="text-lg font-black text-white">{channelMetrics.whatsappActivities}</p>
+                <div className="w-full bg-[#161F2D] h-1.5 rounded-full overflow-hidden mt-1">
+                  <div
+                    className="bg-emerald-500 h-full rounded-full"
+                    style={{
+                      width: `${Math.min(100, Math.round((channelMetrics.whatsappActivities / Math.max(1, channelMetrics.totalTouchpoints)) * 100))}%`,
+                    }}
+                  />
+                </div>
+                <span className="text-[9px] text-emerald-400 font-semibold block pt-0.5">Quick responses</span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-[#97A0B3]">Meetings Held</span>
+                  <Calendar className="w-3.5 h-3.5 text-purple-400" />
+                </div>
+                <p className="text-lg font-black text-white">{channelMetrics.totalMeetings}</p>
+                <div className="w-full bg-[#161F2D] h-1.5 rounded-full overflow-hidden mt-1">
+                  <div
+                    className="bg-purple-500 h-full rounded-full"
+                    style={{
+                      width: `${Math.min(100, Math.round((channelMetrics.totalMeetings / Math.max(1, channelMetrics.totalTouchpoints)) * 100))}%`,
+                    }}
+                  />
+                </div>
+                <span className="text-[9px] text-purple-400 font-semibold block pt-0.5">Client pitches</span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-[#97A0B3]">Proposals Sent</span>
+                  <FileText className="w-3.5 h-3.5 text-amber-400" />
+                </div>
+                <p className="text-lg font-black text-white">{channelMetrics.totalProposals}</p>
+                <div className="w-full bg-[#161F2D] h-1.5 rounded-full overflow-hidden mt-1">
+                  <div
+                    className="bg-amber-500 h-full rounded-full"
+                    style={{
+                      width: `${Math.min(100, Math.round((channelMetrics.totalProposals / Math.max(1, channelMetrics.totalTouchpoints)) * 100))}%`,
+                    }}
+                  />
+                </div>
+                <span className="text-[9px] text-amber-400 font-semibold block pt-0.5">Deal agreements</span>
+              </div>
             </div>
           </div>
         </div>

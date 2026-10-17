@@ -374,6 +374,8 @@ async def add_lead_activity(
 
     now = datetime.now(UTC)
     lead.last_contacted_at = now
+    if payload.scheduled_follow_up is not None:
+        lead.next_follow_up_at = payload.scheduled_follow_up
 
     actor_user_id = None
     if actor.user_id:
@@ -463,6 +465,11 @@ async def get_bde_metrics(
         "hot_count": hot_count,
         "warm_count": warm_count,
         "cold_count": cold_count,
+        "priorities": {
+            "hot": hot_count,
+            "warm": warm_count,
+            "cold": cold_count,
+        },
         "overdue_follow_ups": overdue_follow_ups,
         "today_follow_ups": today_follow_ups,
         "stages": stage_counts,
@@ -743,5 +750,309 @@ async def get_bde_performance(
         "recent_activities": recent_activities_list,
         "stages": stage_breakdown,
         "leads": leads_summary,
+    }
+
+
+class GenerateProposalRequest(BaseModel):
+    lead_id: uuid.UUID
+    plan_name: str = "Growth Retainer"
+    monthly_fee: int = Field(..., ge=1000)
+    discount_pct: int = Field(default=0, ge=0, le=50)
+    deliverables: dict[str, int] = Field(
+        default_factory=lambda: {"reels": 8, "static_posts": 12, "carousels": 4, "stories": 15, "shoot_days": 1}
+    )
+    notes: str | None = None
+    valid_until: datetime | None = None
+
+
+@router.get("/analytics")
+async def get_bde_sales_analytics(
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = BDEActor,
+) -> dict[str, Any]:
+    """Sales forecasting, revenue against targets, and win/loss analytical breakdown."""
+    base_query = select(Lead).options(selectinload(Lead.activities))
+    if actor.agency_id and actor.role != UserRole.SUPER_ADMIN:
+        base_query = base_query.where(or_(Lead.agency_id == actor.agency_id, Lead.agency_id.is_(None)))
+
+    leads = (await db.execute(base_query)).scalars().all()
+
+    # Probability weights per stage
+    STAGE_PROBABILITIES: dict[str, float] = {
+        "new": 0.10,
+        "contacted": 0.25,
+        "meeting_scheduled": 0.40,
+        "proposal_sent": 0.60,
+        "negotiation": 0.80,
+        "converted": 1.00,
+        "lost": 0.00,
+    }
+
+    monthly_target = 2500000  # ₹25,00,000 monthly quota
+    converted_leads = [l for l in leads if l.status == "converted"]
+    lost_leads = [l for l in leads if l.status == "lost"]
+    active_deals = [l for l in leads if l.status not in ("converted", "lost")]
+
+    closed_revenue = sum(l.estimated_deal_value for l in converted_leads)
+    target_achievement_pct = round((closed_revenue / max(1, monthly_target)) * 100, 1)
+
+    total_pipeline_value = sum(l.estimated_deal_value for l in active_deals)
+    weighted_pipeline_value = sum(
+        int(l.estimated_deal_value * STAGE_PROBABILITIES.get(l.status, 0.20))
+        for l in active_deals
+    )
+
+    # Forecast tiers
+    negotiation_deals_val = sum(l.estimated_deal_value for l in active_deals if l.status == "negotiation")
+    best_case = closed_revenue + total_pipeline_value
+    expected_forecast = closed_revenue + weighted_pipeline_value
+    worst_case = closed_revenue + int(negotiation_deals_val * 0.75)
+
+    # Win / Loss analysis
+    won_count = len(converted_leads)
+    lost_count = len(lost_leads)
+    total_decided = won_count + lost_count
+    win_rate = round((won_count / max(1, total_decided)) * 100, 1) if total_decided > 0 else 0.0
+
+    # Categorize loss reasons
+    reasons_map: dict[str, int] = {
+        "Pricing / Budget Constraints": 0,
+        "Chose Competitor": 0,
+        "Timing / Postponed Campaign": 0,
+        "Scope Mismatch": 0,
+        "Decision Maker Ghosted": 0,
+        "Other / Inactive": 0,
+    }
+    for l in lost_leads:
+        r = (l.lost_reason or "").lower()
+        if "price" in r or "budget" in r or "cost" in r or "expensive" in r:
+            reasons_map["Pricing / Budget Constraints"] += 1
+        elif "competitor" in r or "rival" in r or "agency" in r:
+            reasons_map["Chose Competitor"] += 1
+        elif "time" in r or "timing" in r or "later" in r or "postpone" in r or "q" in r:
+            reasons_map["Timing / Postponed Campaign"] += 1
+        elif "scope" in r or "fit" in r or "deliverable" in r:
+            reasons_map["Scope Mismatch"] += 1
+        elif "ghost" in r or "response" in r or "unreachable" in r or "no reply" in r:
+            reasons_map["Decision Maker Ghosted"] += 1
+        else:
+            reasons_map["Other / Inactive"] += 1
+
+    loss_reasons_list = [
+        {"reason": k, "count": v, "percentage": round((v / max(1, lost_count)) * 100, 1)}
+        for k, v in reasons_map.items()
+    ]
+    loss_reasons_list.sort(key=lambda x: x["count"], reverse=True)
+
+    # Activities velocity
+    all_activities = [act for l in leads for act in (l.activities or [])]
+    now = datetime.now(UTC)
+    seven_days_ago = now - timedelta(days=7)
+    weekly_activities = sum(1 for a in all_activities if a.created_at and a.created_at >= seven_days_ago)
+
+    calls_count = sum(1 for a in all_activities if a.activity_type.lower() == "call")
+    emails_count = sum(1 for a in all_activities if a.activity_type.lower() == "email")
+    whatsapp_count = sum(1 for a in all_activities if a.activity_type.lower() == "whatsapp")
+    meetings_count = sum(1 for a in all_activities if a.activity_type.lower() == "meeting")
+    proposals_count = sum(1 for a in all_activities if a.activity_type.lower() == "proposal")
+
+    return {
+        "revenue_tracking": {
+            "monthly_target": monthly_target,
+            "closed_revenue": closed_revenue,
+            "target_achievement_pct": target_achievement_pct,
+            "remaining_to_target": max(0, monthly_target - closed_revenue),
+            "quarterly_projected": int(expected_forecast * 3),
+        },
+        "pipeline_value": {
+            "total_unweighted": total_pipeline_value,
+            "weighted_expected": weighted_pipeline_value,
+            "active_deals_count": len(active_deals),
+            "avg_deal_size": round(total_pipeline_value / max(1, len(active_deals))),
+        },
+        "forecasting": {
+            "best_case": best_case,
+            "expected": expected_forecast,
+            "worst_case": worst_case,
+            "stage_probabilities": STAGE_PROBABILITIES,
+        },
+        "win_loss_analysis": {
+            "won_count": won_count,
+            "lost_count": lost_count,
+            "win_rate": win_rate,
+            "loss_rate": round(100.0 - win_rate, 1) if total_decided > 0 else 0.0,
+            "loss_reasons": loss_reasons_list,
+        },
+        "activity_metrics": {
+            "total_activities": len(all_activities),
+            "calls": calls_count,
+            "emails": emails_count,
+            "whatsapp": whatsapp_count,
+            "meetings": meetings_count,
+            "proposals": proposals_count,
+            "weekly_actual": weekly_activities,
+            "weekly_target": 120,
+            "weekly_adherence_pct": round((weekly_activities / 120) * 100, 1),
+        },
+    }
+
+
+@router.get("/collateral")
+async def get_bde_sales_collateral(
+    actor: Actor = BDEActor,
+) -> dict[str, Any]:
+    """Curated collateral repository: pitch decks, case studies, blueprints, and SLAs."""
+    return {
+        "pitch_decks": [
+            {
+                "id": "deck-2026",
+                "title": "Creo Agency Master Pitch Deck 2026",
+                "subtitle": "Direct-to-Consumer Growth Engine & 30-Day Content Production Framework",
+                "format": "PDF / 24 Slides",
+                "download_url": "https://storage.googleapis.com/creo-assets/decks/Creo-Master-Pitch-Deck-2026.pdf",
+                "category": "Pitch Deck",
+                "updated_at": "Oct 2026",
+            },
+            {
+                "id": "deck-enterprise",
+                "title": "Enterprise Omnichannel Retainer Overview",
+                "subtitle": "High-velocity content scaling for brands doing ₹1Cr+ monthly GMV",
+                "format": "PDF / 16 Slides",
+                "download_url": "https://storage.googleapis.com/creo-assets/decks/Creo-Enterprise-Retainer.pdf",
+                "category": "Pitch Deck",
+                "updated_at": "Sep 2026",
+            },
+        ],
+        "case_studies": [
+            {
+                "id": "cs-astra",
+                "brand": "Astra Living",
+                "sector": "Luxury Home & Decor",
+                "headline": "3.8x ROAS Scale with Daily Vertical Reels & Studio Shoots",
+                "summary": "Generated 4.2M organic impressions and scaled monthly GMV from ₹28L to ₹1.1Cr in 90 days.",
+                "download_url": "https://storage.googleapis.com/creo-assets/case-studies/Astra-Living-Case-Study.pdf",
+                "highlight_metric": "+280% Sales Growth",
+            },
+            {
+                "id": "cs-zenith",
+                "brand": "Zenith Fitness",
+                "sector": "Activewear & Supplements",
+                "headline": "Zero-to-180k Follower Community Transformation",
+                "summary": "Engineered viral organic TikTok/Instagram reel framework driving ₹65L in direct attribute revenue.",
+                "download_url": "https://storage.googleapis.com/creo-assets/case-studies/Zenith-Fitness-Scale.pdf",
+                "highlight_metric": "180k Organic Followers",
+            },
+            {
+                "id": "cs-kaya",
+                "brand": "Kaya Botanicals",
+                "sector": "Clean Beauty & Skincare",
+                "headline": "Retention Engine via Sequenced Educational Carousels",
+                "summary": "Cut customer acquisition cost (CAC) by 42% through daily problem-solution educational carousels.",
+                "download_url": "https://storage.googleapis.com/creo-assets/case-studies/Kaya-Botanicals-Retention.pdf",
+                "highlight_metric": "-42% CAC Reduction",
+            },
+        ],
+        "rate_cards_and_agreements": [
+            {
+                "id": "rate-standard",
+                "title": "Creo Official Rate Card & Deliverable Quotas (2026)",
+                "subtitle": "Approved pricing matrix for Starter, Growth, and Scale plans with unit costs",
+                "format": "PDF Reference",
+                "download_url": "https://storage.googleapis.com/creo-assets/legal/Creo-Rate-Cards-2026.pdf",
+            },
+            {
+                "id": "legal-msa",
+                "title": "Master Services Agreement (MSA) & SLA Guarantee",
+                "subtitle": "Standard client terms, 24-48h turnaround SLA, revision policies, and IP transfer terms",
+                "format": "Legal Document",
+                "download_url": "https://storage.googleapis.com/creo-assets/legal/Creo-MSA-SLA-Agreement.pdf",
+            },
+            {
+                "id": "legal-nda",
+                "title": "Mutual Non-Disclosure Agreement (NDA)",
+                "subtitle": "Standard commercial confidentiality agreement for preliminary strategy calls",
+                "format": "Legal Document",
+                "download_url": "https://storage.googleapis.com/creo-assets/legal/Creo-Mutual-NDA.pdf",
+            },
+        ],
+    }
+
+
+@router.post("/proposals", status_code=status.HTTP_201_CREATED)
+async def generate_sales_proposal(
+    payload: GenerateProposalRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = BDEActor,
+) -> dict[str, Any]:
+    """Generate, log, and track client proposal with discount threshold validation."""
+    lead = (await db.execute(select(Lead).where(Lead.id == payload.lead_id))).scalar_one_or_none()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found.")
+
+    # Calculate discounted fee
+    discount_amount = int(payload.monthly_fee * (payload.discount_pct / 100.0))
+    final_monthly_fee = payload.monthly_fee - discount_amount
+
+    # Discount governance
+    discount_tier = "Direct Rep Discretion" if payload.discount_pct <= 10 else (
+        "Senior BDE Approved" if payload.discount_pct <= 15 else "Super Admin Escalation Required"
+    )
+
+    # Format deliverables summary
+    deliv_lines = [f"{v}x {k.replace('_', ' ').capitalize()}" for k, v in payload.deliverables.items() if v > 0]
+    scope_str = ", ".join(deliv_lines)
+
+    summary_text = (
+        f"Proposal Generated: {payload.plan_name} at ₹{final_monthly_fee:,}/mo "
+        f"({payload.discount_pct}% discount applied · {discount_tier}). Scope: {scope_str}."
+    )
+    if payload.notes:
+        summary_text += f" Notes: {payload.notes.strip()}"
+
+    # Update lead stage & deal value
+    lead.status = "proposal_sent"
+    lead.estimated_deal_value = final_monthly_fee * 6  # 6-month contract LTV
+    lead.last_contacted_at = datetime.now(UTC)
+
+    # Record proposal activity
+    activity = LeadActivity(
+        lead_id=lead.id,
+        bde_id=actor.user_id,
+        activity_type="proposal",
+        summary=summary_text,
+        outcome=f"Proposal Sent · ₹{final_monthly_fee:,}/mo",
+        scheduled_follow_up=payload.valid_until or (datetime.now(UTC) + timedelta(days=3)),
+        metadata_extra={
+            "plan_name": payload.plan_name,
+            "original_monthly_fee": payload.monthly_fee,
+            "discount_pct": payload.discount_pct,
+            "final_monthly_fee": final_monthly_fee,
+            "discount_tier": discount_tier,
+            "deliverables": payload.deliverables,
+            "valid_until": payload.valid_until.isoformat() if payload.valid_until else None,
+            "status": "sent",
+        },
+    )
+    db.add(activity)
+    await db.commit()
+
+    return {
+        "status": "success",
+        "message": f"Proposal generated and dispatched for {lead.company_name}.",
+        "activity_id": str(activity.id),
+        "proposal": {
+            "lead_id": str(lead.id),
+            "lead_name": lead.name,
+            "company_name": lead.company_name,
+            "plan_name": payload.plan_name,
+            "original_monthly_fee": payload.monthly_fee,
+            "discount_pct": payload.discount_pct,
+            "discount_tier": discount_tier,
+            "final_monthly_fee": final_monthly_fee,
+            "deliverables": payload.deliverables,
+            "scope_summary": scope_str,
+            "notes": payload.notes,
+            "valid_until": (payload.valid_until or (datetime.now(UTC) + timedelta(days=7))).isoformat(),
+        },
     }
 

@@ -56,6 +56,7 @@ export interface FreelancerAssignedTask {
   assigned_at?: string;
   deliverables?: any[];
   blueprint?: Record<string, any>;
+  milestone_fee?: number;
 }
 
 export interface FreelancerSubmitPayload {
@@ -155,6 +156,7 @@ export async function fetchMyFreelancerTasks(): Promise<FreelancerAssignedTask[]
     assigned_at: item.created_at,
     deliverables: item.deliverables || [],
     blueprint: item.blueprint,
+    milestone_fee: Number(item.milestone_fee ?? item.blueprint?.milestone_fee ?? 4500),
   }));
 }
 
@@ -162,5 +164,27 @@ export async function submitFreelancerWork(payload: FreelancerSubmitPayload): Pr
   return request("/api/v1/admin/freelancer/submit-work", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export async function startFreelancerTask(taskId: string): Promise<{ message: string }> {
+  return request(`/api/v1/admin/freelancer/tasks/${taskId}/start-work`, {
+    method: "PATCH",
+  });
+}
+
+export async function uploadFreelancerContentFile(
+  taskId: string,
+  file: File,
+  notes?: string
+): Promise<{ status: string; message: string; file_url: string; deliverable_id?: string; version?: number }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (notes) {
+    formData.append("notes", notes);
+  }
+  return request(`/api/v1/admin/freelancer/tasks/${taskId}/upload-content`, {
+    method: "POST",
+    body: formData,
   });
 }

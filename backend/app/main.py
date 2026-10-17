@@ -138,6 +138,50 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             await db.execute(text("CREATE INDEX IF NOT EXISTS idx_manual_payments_client_id ON manual_payment_requests(client_id);"))
             await db.execute(text("CREATE INDEX IF NOT EXISTS idx_manual_payments_status ON manual_payment_requests(status);"))
             await db.execute(text("CREATE INDEX IF NOT EXISTS idx_manual_payments_created_at ON manual_payment_requests(created_at);"))
+
+            # Ensure BDE Proposals table exists
+            await db.execute(text("""
+                CREATE TABLE IF NOT EXISTS bde_proposals (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    lead_id UUID NOT NULL REFERENCES bde_leads(id) ON DELETE CASCADE,
+                    bde_id UUID REFERENCES users(id) ON DELETE SET NULL,
+                    plan_name VARCHAR(100) NOT NULL DEFAULT 'Growth Retainer',
+                    monthly_fee BIGINT NOT NULL,
+                    discount_pct BIGINT NOT NULL DEFAULT 0,
+                    final_monthly_fee BIGINT NOT NULL,
+                    contract_months BIGINT NOT NULL DEFAULT 6,
+                    total_contract_value BIGINT NOT NULL,
+                    deliverables JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    status VARCHAR(50) NOT NULL DEFAULT 'sent',
+                    notes TEXT,
+                    valid_until TIMESTAMP WITH TIME ZONE,
+                    accepted_at TIMESTAMP WITH TIME ZONE,
+                    metadata_extra JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+                );
+            """))
+            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_bde_proposals_lead_id ON bde_proposals(lead_id);"))
+            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_bde_proposals_status ON bde_proposals(status);"))
+
+            # Ensure BDE Targets & Quota table exists
+            await db.execute(text("""
+                CREATE TABLE IF NOT EXISTS bde_targets (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    bde_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    month VARCHAR(7) NOT NULL,
+                    monthly_quota BIGINT NOT NULL DEFAULT 2500000,
+                    closed_revenue BIGINT NOT NULL DEFAULT 0,
+                    commission_rate DOUBLE PRECISION NOT NULL DEFAULT 5.0,
+                    commission_earned BIGINT NOT NULL DEFAULT 0,
+                    deals_won BIGINT NOT NULL DEFAULT 0,
+                    notes TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+                );
+            """))
+            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_bde_targets_bde_month ON bde_targets(bde_id, month);"))
+
             await db.commit()
     except Exception as e:
         logger.warning("admin_bootstrap_warning", error=str(e))

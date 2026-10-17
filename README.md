@@ -71,26 +71,34 @@ creo/
 
 ## ✨ Key Platform Features
 
-### 1. Operations & Admin Management Suite
+### 1. Operations, Executive & Productivity Suite
 - **Interactive Executive Dashboard**: Live KPIs, monthly recurring revenue (MRR), turnaround SLAs, and staff capacity monitoring.
+- **Team Productivity & Efficiency Intelligence**: Specialist turnaround velocity, revision rates, capacity utilization, head-to-head craft benchmarks, and workload balance monitoring.
+- **BDE Outreach Oversight**: Velocity tracking, client contact funnel, conversion analytics, and real-time rep leaderboard.
 - **Team Lead Pod Controllers**: Assign daily task quotas (posters, reels, carousels) and triage staff leave requests.
-- **Real-Time Client Roster**: Comprehensive directory of client subscription tiers, onboarding milestones, and dedicated manager assignments.
-- **SLA Breach & Escalation Watch**: Automated detection of delayed review cycles and imminent delivery deadlines.
+- **Freelancer Provisioning & Task Assignment**: Seamless onboarding of external creative talent with milestone fees and brief routing.
 
-### 2. Creative Production Pipeline
+### 2. Business Development & Sales CRM (`/bde`)
+- **Complete Prospect Pipeline**: Track leads across 7 stages (`new`, `contacted`, `meeting_scheduled`, `proposal_sent`, `negotiation`, `converted`, `lost`) with priority classification (`HOT`, `WARM`, `COLD`).
+- **Communication Touchpoint Logger**: Direct logging for phone calls, WhatsApp messages, emails, meetings, and proposals.
+- **Follow-Up Agenda & Calendar**: Overdue alerts, today's call roster, and upcoming client commitments.
+
+### 3. Creative Production & Freelancer Pipeline
+- **Dedicated Freelancer Portal (`/freelancer/tasks`)**: Secure freelance specialist workspace for brief inspection, creative asset download, and direct QA submission to Team Leads.
 - **5-Stage Task Pipeline**: Task progression through `Backlog`, `In Production`, `Internal QA`, `Client Review`, and `Ready to Publish`.
-- **Dynamic Workload Balancing**: Intelligent task auto-dispatch based on editor and designer active bandwidth.
+- **Dynamic Workload Balancing**: Continuity-first auto-dispatch with sub-skill affinity and windowed capacity locks.
 
-### 3. Client Portal Suite
-- **Deliverables Review & Approval Dock**: Full-screen 9:16 vertical reels and high-res poster inspection with 1-click approvals and feedback markup.
+### 4. Client Portal Suite
+- **Deliverables Review & Multi-Modal Voice Feedback**: Full-screen 9:16 vertical reels and poster inspection with native in-browser voice note recording (`VoiceFeedbackRecorder`) and waveform playback (`VoicePlayer`).
 - **Publishing Calendar**: Multi-platform publishing schedules, quota allocation meters, and date inspection agendas.
-- **Transparent Retainers & Payments**: Razorpay checkout integration for monthly subscription retainers and instant add-on packs.
+- **Flexible Retainers & Split Payment Packages**: Razorpay checkout integration for monthly subscription retainers, custom split milestone instalment packages, and automated payment reminders.
+- **Direct Instagram Professional Login**: Native Meta `Instagram Login for Business` token exchange without requiring a linked Facebook Page.
 - **Client Support Desk**: Dedicated ticketing system with 4-hour enterprise response SLAs and direct WhatsApp concierge integration.
 
-### 4. Client Onboarding Flow
+### 5. Client Onboarding Flow
 - **5-Stage Setup Journey**: Email verification (OTP), service terms sign-off, retainer activation, and AI Brand DNA profiling.
 
-### 5. Public Marketing Experience
+### 6. Public Marketing Experience
 - **High-Converting Luminous Hero**: Engaging typography, live workstation deliverable cards, and social proof badges.
 - **Verified Client Case Studies**: Authentic performance metrics across *Astra Living*, *Urban Bakes*, *Zenith Fitness*, *Kaya Botanicals*, and *Pulse Mobility*.
 - **Interactive Pricing Calculator**: Transparent monthly retainers with detailed deliverable quotas and feature comparisons.

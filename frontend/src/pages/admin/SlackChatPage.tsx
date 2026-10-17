@@ -1,4 +1,3 @@
-import { NativeSelect } from "../../ui/NativeSelect";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { motion } from "motion/react";
 import {
@@ -100,6 +99,7 @@ interface ChatContact {
   email?: string;
   is_super_admin?: boolean;
   is_client?: boolean;
+  is_bde?: boolean;
   online?: boolean;
 }
 
@@ -261,6 +261,18 @@ const SEED_WORKSPACE_MESSAGES: Record<string, ChatMessage[]> = {
       reactions: [{ emoji: "⭐", count: 2, users: ["Admin"] }],
     },
   ],
+  "bde-sales-hub": [
+    {
+      id: "seed-bde-1",
+      sender: "Creo Super Admin",
+      role: "Super Admin",
+      avatar: "SA",
+      avatarBg: "bg-amber-500",
+      content: "💼 BDE Growth & Pipeline Command: Welcome BDE sales specialists! Use this channel to coordinate high-value client deals, custom retainers, and cross-rep sales coverage.",
+      timestamp: "09:00 AM",
+      reactions: [{ emoji: "🚀", count: 3, users: ["Admin"] }],
+    },
+  ],
 };
 
 const LOCAL_STORAGE_CHANNEL_MESSAGES_KEY = "creo_slack_channels_v3";
@@ -273,9 +285,11 @@ export function SlackChatPage() {
   const isClient = roleStr === "client";
   const gate = useOnboardingGate();
   const canUseChat = !isClient || gate.isComplete;
-  const isTeamLead = roleStr === "team_lead" || roleStr === "lead";
+  const isFreelancer = ["freelancer", "freelance"].includes(roleStr);
+  const isTeamLead = ["team_lead", "lead"].includes(roleStr);
   const isAdmin = ["admin", "super_admin", "ops_admin"].includes(roleStr);
-  const isTeamMember = !isClient && !isTeamLead && !isAdmin;
+  const isBde = ["sales", "bde"].includes(roleStr);
+  const isTeamMember = !isClient && !isFreelancer && !isTeamLead && !isAdmin && !isBde;
 
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -300,15 +314,33 @@ export function SlackChatPage() {
     return "client-kameshwari-rajkumar";
   }, [user]);
 
+  // Fetch role-scoped channels from backend
+  const { data: serverChannels = [] } = useQuery<WorkspaceChannel[]>({
+    queryKey: ["chat_channels", user?.id],
+    queryFn: () => request<WorkspaceChannel[]>("/api/v1/chat/channels"),
+    enabled: !!user?.id && canUseChat,
+    staleTime: 30_000,
+  });
+
   // Channels definitions strictly filtered per user role:
+  // - Freelancer: NONE (no channels at all)
   // - Client: ONLY their dedicated Pod Hub (#pod-creative-hub)
-  // - Admin: Group with all leads (#all-pod-leads), each pod group with members, and agency channels
-  // - TL: Group with all leads (#all-pod-leads), their own pod group (#pod-beta-team), and agency channels
-  // - Team Members: Their own pod group (#pod-beta-team) with lead & admin, and agency channels
+  // - Admin: Group with all leads (#all-pod-leads), BDE hub, each pod group with members, and agency channels
+  // - TL: Group with all leads (#all-pod-leads), their own pod group, and agency channels
+  // - Team Members: Their own pod group ONLY with lead & admin, and agency channels
   const channelsList: WorkspaceChannel[] = useMemo(() => {
+    if (serverChannels && serverChannels.length > 0) {
+      return serverChannels;
+    }
+
+    // 1. FREELANCER: NO CHANNELS
+    if (isFreelancer) {
+      return [];
+    }
+
     const list: WorkspaceChannel[] = [];
 
-    // 1. CLIENT: ONLY dedicated pod creative hub
+    // 2. CLIENT: ONLY dedicated pod creative hub
     if (isClient) {
       list.push({
         id: clientChannelSlug,
@@ -319,12 +351,19 @@ export function SlackChatPage() {
       return list;
     }
 
-    // 2. ADMIN: All Leads Group + Each Pod Group with members + Global agency channels
+    // 3. ADMIN: All Leads Group + BDE Hub + Each Pod Group with members + Global agency channels
     if (isAdmin) {
       list.push({
         id: "all-pod-leads",
         label: "all-pod-leads",
         desc: "Leadership Council: Executive Admin & All Pod Leads",
+        isPodChannel: true,
+      });
+
+      list.push({
+        id: "bde-sales-hub",
+        label: "bde-sales-hub",
+        desc: "BDE Commercial Outreach & Pipeline Command (Sales Reps & Admin)",
         isPodChannel: true,
       });
 
@@ -369,7 +408,7 @@ export function SlackChatPage() {
       return list;
     }
 
-    // 3. TEAM LEAD (TL): All Leads Group + Their Own Pod + Global agency channels
+    // 4. TEAM LEAD (TL): All Leads Group + Their Own Pod + Global agency channels
     if (isTeamLead) {
       list.push({
         id: "all-pod-leads",
@@ -405,7 +444,7 @@ export function SlackChatPage() {
       return list;
     }
 
-    // 4. TEAM MEMBERS: Their Own Pod Group + Global channels
+    // 5. TEAM MEMBERS: Their Own Pod Group ONLY + Global channels
     if (isTeamMember) {
       list.push({
         id: "pod-beta-team",
@@ -429,8 +468,26 @@ export function SlackChatPage() {
       return list;
     }
 
+    // 6. BDE: BDE Sales Hub + Announcements
+    if (isBde) {
+      list.push(
+        {
+          id: "bde-sales-hub",
+          label: "bde-sales-hub",
+          desc: "BDE Commercial Outreach & Pipeline Sync (Sales Reps & Admin)",
+          isPodChannel: true,
+        },
+        {
+          id: "general",
+          label: "general",
+          desc: "Workspace standups, milestones, and announcements",
+        }
+      );
+      return list;
+    }
+
     return list;
-  }, [isClient, isAdmin, isTeamLead, isTeamMember, clientChannelSlug]);
+  }, [serverChannels, isFreelancer, isClient, isAdmin, isTeamLead, isTeamMember, isBde, clientChannelSlug]);
 
   // Fetch DM contacts from backend
   const { data: serverContacts = [] } = useQuery<ChatContact[]>({
@@ -441,10 +498,12 @@ export function SlackChatPage() {
   });
 
   // Fallback contacts strictly enforcing role permissions:
-  // - Client: ONLY 2 CHATS (Admin & Pod Lead)
-  // - TL: Admin & Clients
-  // - Team Members: Admin ONLY
-  // - Admin: All Pod Leads & Clients (NO other admin, NO individual members)
+  // - Freelancer: ONLY Admin
+  // - Client: Admin & Pod Lead & BDE
+  // - TL: Admin, Each member from own pod, and assigned clients
+  // - Team Members: Admin and their own Pod Lead ONLY
+  // - BDE: Clients, Admin, and other BDE members
+  // - Admin: All Pod Leads, All Team Members, BDEs, Clients, Freelancers
   const fallbackContacts: ChatContact[] = useMemo(() => {
     const superAdmin: ChatContact = {
       id: "646f6d6e-3479-42c5-b275-9fcd212453f6",
@@ -454,37 +513,88 @@ export function SlackChatPage() {
       is_super_admin: true,
       online: true,
     };
-    const teamLead: ChatContact = {
-      id: "00000000-0000-0000-0000-0000000000b1",
-      name: "Sarah Connor (Lead - Pod B)",
-      role: "Team Lead & Account Director",
+    const teamLeadSarah: ChatContact = {
+      id: "9faa25ef-30e0-46cf-b9ac-f53dce1c0578",
+      name: "Sarah Connor",
+      role: "Team Lead & Account Director (Pod B)",
       email: "lead.beta@creo.agency",
+      online: true,
+    };
+    const teamLeadVikram: ChatContact = {
+      id: "e5cd3dc7-41fc-4ae5-9bb1-8314fcf8afa5",
+      name: "Vikram Malhotra",
+      role: "Team Lead & Account Director (Pod A)",
+      email: "lead.alpha@creo.agency",
+      online: true,
+    };
+    const teamLeadRohan: ChatContact = {
+      id: "bd13b2f8-59a8-4bee-a2f9-fa5c1108d29b",
+      name: "Rohan Mehta",
+      role: "Team Lead & Account Director (Pod C)",
+      email: "lead.gamma@creo.agency",
+      online: true,
+    };
+    const memberRajini: ChatContact = {
+      id: "44d7156f-f233-4bc7-9372-233bb9b7c1a1",
+      name: "Rajini",
+      role: "Lead Video Editor (Pod B)",
+      email: "editor.beta@creo.agency",
+      online: true,
+    };
+    const memberChloe: ChatContact = {
+      id: "17e174a7-b1d5-4a61-b541-e945c7d8be64",
+      name: "Chloe Bennett",
+      role: "Lead Graphic Designer (Pod B)",
+      email: "designer.beta@creo.agency",
       online: true,
     };
     const clientRep: ChatContact = {
       id: "1a5ef9ac-e43e-4fa0-918d-de31d44e8c7a",
-      name: "Kameshwari Rajkumar",
+      name: "127 Aravindan S",
       role: "Client",
-      email: "kameshwari.r2824@gmail.com",
+      email: "aravindan20062006@gmail.com",
       is_client: true,
       online: true,
     };
+    const bdeRep: ChatContact = {
+      id: "00000000-0000-0000-0000-0000000000d1",
+      name: "Alex Carter (BDE Specialist)",
+      role: "BDE Specialist",
+      email: "bde@creo.agency",
+      is_bde: true,
+      online: true,
+    };
+    const freelancerRep: ChatContact = {
+      id: "00000000-0000-0000-0000-0000000000f1",
+      name: "Freelance Creative Editor",
+      role: "Freelancer",
+      email: "freelancer@creo.agency",
+      online: true,
+    };
 
-    if (isClient) {
-      // RULE 1: CLIENT ONLY MESSAGES TL AND ADMIN (2 CHATS)
-      return [superAdmin, teamLead];
-    }
-    if (isTeamLead) {
-      // RULE 2: TL MESSAGES ADMIN AND CLIENTS
-      return [superAdmin, clientRep];
-    }
-    if (isTeamMember) {
-      // RULE 3: TEAM MEMBERS MESSAGE ADMIN ONLY
+    if (isFreelancer) {
+      // FREELANCER: ONLY ADMIN NONE ELSE
       return [superAdmin];
     }
-    // RULE 4: ADMIN MESSAGES ALL POD LEADS AND CLIENTS (NO ADMIN, NO MEMBERS)
-    return [teamLead, clientRep];
-  }, [isClient, isTeamLead, isTeamMember]);
+    if (isClient) {
+      // CLIENT: MESSAGES TL, ADMIN, AND BDE
+      return [superAdmin, teamLeadSarah, bdeRep];
+    }
+    if (isTeamLead) {
+      // TL: ADMIN, EACH POD MEMBER, AND THEIR CLIENTS
+      return [superAdmin, memberRajini, memberChloe, clientRep];
+    }
+    if (isTeamMember) {
+      // TEAM MEMBERS: ADMIN AND THEIR TL ONLY
+      return [superAdmin, teamLeadSarah];
+    }
+    if (isBde) {
+      // BDE: ONLY CLIENTS, ADMIN, AND OTHER BDE MEMBERS
+      return [superAdmin, clientRep, bdeRep];
+    }
+    // ADMIN: ALL POD LEADS, ALL TEAM MEMBERS, BDEs, CLIENTS, FREELANCERS
+    return [teamLeadSarah, teamLeadVikram, teamLeadRohan, memberRajini, memberChloe, bdeRep, clientRep, freelancerRep];
+  }, [isFreelancer, isClient, isTeamLead, isTeamMember, isBde]);
 
   const contactsList: ChatContact[] = useMemo(() => {
     const rawList = serverContacts && serverContacts.length > 0 ? serverContacts : fallbackContacts;
@@ -505,36 +615,43 @@ export function SlackChatPage() {
         const isTargetAdmin = Boolean(c.is_super_admin) || cRole.includes("admin");
         const isTargetTL = cRole.includes("lead") || cRole.includes("director");
         const isTargetClient = Boolean(c.is_client) || cRole.includes("client");
+        const isTargetBde = Boolean(c.is_bde) || cRole.includes("bde") || cRole.includes("sales");
 
-        if (isClient) {
-          // CLIENT: EXACTLY 2 CHATS ONLY - ADMIN AND POD LEAD
-          return isTargetAdmin || isTargetTL;
-        }
-        if (isTeamLead) {
-          // TL: ADMIN AND CLIENTS
-          return isTargetAdmin || isTargetClient;
-        }
-        if (isTeamMember) {
-          // MEMBERS: ADMIN ONLY
+        if (isFreelancer) {
+          // FREELANCER: ONLY ADMIN, NONE ELSE
           return isTargetAdmin;
         }
+        if (isClient) {
+          // CLIENT: ADMIN, POD LEAD, AND BDE
+          return isTargetAdmin || isTargetTL || isTargetBde;
+        }
+        if (isTeamLead) {
+          // TL: ADMIN, MEMBERS FROM OWN POD, AND ASSIGNED CLIENTS
+          return isTargetAdmin || isTargetClient || (!isTargetBde && !cRole.includes("freelancer"));
+        }
+        if (isTeamMember) {
+          // MEMBERS: ADMIN AND THEIR TL ONLY
+          return isTargetAdmin || isTargetTL;
+        }
+        if (isBde) {
+          // BDE: ONLY CLIENTS, ADMINS, AND OTHER BDE MEMBERS
+          return isTargetAdmin || isTargetClient || isTargetBde;
+        }
         if (isAdmin) {
-          // ADMIN:
-          // - REMOVE ADMIN (cannot chat with admin!)
-          // - REMOVE INDIVIDUAL MEMBERS (collaborate in Pod Groups!)
-          // - ONLY POD LEADS AND CLIENTS!
+          // ADMIN: TALK WITH CLIENTS, ALL TEAM LEADS, ALL TEAM MEMBERS, BDE MEMBERS, FREELANCERS
+          // Exclude other admins
           if (isTargetAdmin) return false;
-          return isTargetTL || isTargetClient;
+          return true;
         }
         return isTargetAdmin || isTargetTL;
       });
-  }, [serverContacts, fallbackContacts, isClient, isTeamLead, isTeamMember, isAdmin, user]);
+  }, [serverContacts, fallbackContacts, isFreelancer, isClient, isTeamLead, isTeamMember, isBde, isAdmin, user]);
 
   // Selection mode: "channel" | "dm"
   const [activeMode, setActiveMode] = useState<"channel" | "dm">(() => {
-    if (urlDm) return "dm";
+    if (urlDm || isFreelancer) return "dm";
     if (urlChannel) return "channel";
-    return "channel"; // Default to Pod Channel on entry
+    return isFreelancer ? "dm" : "channel";
   });
 
   // Selected Channel ID
@@ -626,12 +743,7 @@ export function SlackChatPage() {
   const [pickerTargetMsgId, setPickerTargetMsgId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "info" } | null>(null);
 
-  // Modals
-  const [assignTaskModalOpen, setAssignTaskModalOpen] = useState(false);
-  const [taskTitle, setTaskTitle] = useState("");
-  const [taskPriority, setTaskPriority] = useState<"P1 High" | "P2 Med" | "P3 Normal">("P1 High");
-  const [taskDeadline, setTaskDeadline] = useState("Today by 05:00 PM PST");
-  const [taskScope, setTaskScope] = useState("");
+
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -917,44 +1029,7 @@ export function SlackChatPage() {
     });
   };
 
-  const handleConfirmAssignTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAssignTaskModalOpen(false);
-    const contact = activeContact;
-    if (!contact) return;
 
-    const resolvedTitle = taskTitle || "Priority Sprint Request";
-    const taskContent = `⚡ New Sprint Task: **${resolvedTitle}**\n- Priority: ${taskPriority}\n- Due: ${taskDeadline}${taskScope ? `\n- Scope: ${taskScope}` : ""}`;
-
-    try {
-      if (activeMode === "dm") {
-        await request("/api/v1/chat/messages", {
-          method: "POST",
-          body: JSON.stringify({
-            recipient_id: contact.id,
-            message: taskContent,
-            thread_type: "direct",
-          }),
-        });
-      } else {
-        await request("/api/v1/chat/messages", {
-          method: "POST",
-          body: JSON.stringify({
-            channel: activeChannelId,
-            message: taskContent,
-          }),
-        });
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["chat_messages"] });
-      refetchMessages();
-      showToast(`Task "${resolvedTitle}" posted!`);
-      setTaskTitle("");
-      setTaskScope("");
-    } catch {
-      showToast("Could not assign task", "info");
-    }
-  };
 
   if (isClient && gate.error) {
     return (
@@ -1129,58 +1204,60 @@ export function SlackChatPage() {
           {/* SIDEBAR SCROLLABLE CONTENT (CHANNELS + DIRECT MESSAGES) */}
           <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-4 text-xs">
             {/* SECTION 1: WORKSPACE & POD CHANNELS */}
-            <div className="space-y-1">
-              <div className="px-2 text-[10px] font-black uppercase tracking-wider text-[#97A0B3] flex items-center justify-between pb-1">
-                <span className="flex items-center gap-1.5">
-                  <Hash className="size-3 text-[#7FA0D6]" />
-                  <span>Channels</span>
-                </span>
-                <span className="text-[#97A0B3]">{filteredChannels.length}</span>
+            {filteredChannels.length > 0 && (
+              <div className="space-y-1">
+                <div className="px-2 text-[10px] font-black uppercase tracking-wider text-[#97A0B3] flex items-center justify-between pb-1">
+                  <span className="flex items-center gap-1.5">
+                    <Hash className="size-3 text-[#7FA0D6]" />
+                    <span>Channels</span>
+                  </span>
+                  <span className="text-[#97A0B3]">{filteredChannels.length}</span>
+                </div>
+
+                {filteredChannels.map((channel) => {
+                  const isSelected = activeMode === "channel" && activeChannelId === channel.id;
+
+                  return (
+                    <button
+                      key={channel.id}
+                      onClick={() => {
+                        setActiveMode("channel");
+                        setActiveChannelId(channel.id);
+                        setMobileView("chat");
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl font-semibold transition-all text-left cursor-pointer ${
+                        isSelected
+                          ? "bg-gradient-to-r from-[#7FA0D6]/25 via-blue-500/15 to-transparent backdrop-blur-xl border border-[#7FA0D6]/50 text-white shadow-[0_0_15px_rgba(127,160,214,0.15)] ring-1 ring-[#7FA0D6]/30"
+                          : "text-slate-300 hover:bg-white/[0.04] hover:text-white border border-transparent hover:border-white/[0.06]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className={`size-6 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${
+                            isSelected ? "bg-[#7FA0D6] text-[#0B111C]" : "bg-white/[0.06] text-[#97A0B3]"
+                          }`}
+                        >
+                          <Hash className="size-3" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="block text-xs font-bold truncate text-white leading-tight">
+                            {channel.label}
+                          </span>
+                          <span className="block text-[10px] text-[#97A0B3] truncate leading-tight mt-0.5">
+                            {channel.desc}
+                          </span>
+                        </div>
+                      </div>
+                      {channel.isPodChannel && (
+                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          Pod
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-
-              {filteredChannels.map((channel) => {
-                const isSelected = activeMode === "channel" && activeChannelId === channel.id;
-
-                return (
-                  <button
-                    key={channel.id}
-                    onClick={() => {
-                      setActiveMode("channel");
-                      setActiveChannelId(channel.id);
-                      setMobileView("chat");
-                    }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl font-semibold transition-all text-left cursor-pointer ${
-                      isSelected
-                        ? "bg-gradient-to-r from-[#7FA0D6]/25 via-blue-500/15 to-transparent backdrop-blur-xl border border-[#7FA0D6]/50 text-white shadow-[0_0_15px_rgba(127,160,214,0.15)] ring-1 ring-[#7FA0D6]/30"
-                        : "text-slate-300 hover:bg-white/[0.04] hover:text-white border border-transparent hover:border-white/[0.06]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div
-                        className={`size-6 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${
-                          isSelected ? "bg-[#7FA0D6] text-[#0B111C]" : "bg-white/[0.06] text-[#97A0B3]"
-                        }`}
-                      >
-                        <Hash className="size-3" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="block text-xs font-bold truncate text-white leading-tight">
-                          {channel.label}
-                        </span>
-                        <span className="block text-[10px] text-[#97A0B3] truncate leading-tight mt-0.5">
-                          {channel.desc}
-                        </span>
-                      </div>
-                    </div>
-                    {channel.isPodChannel && (
-                      <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                        Pod
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            )}
 
             {/* SECTION 2: DIRECT MESSAGES */}
             <div className="space-y-1 pt-1">
@@ -1350,18 +1427,7 @@ export function SlackChatPage() {
               )}
             </div>
 
-            {/* Quick Actions (Task) */}
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setAssignTaskModalOpen(true)}
-                className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#7FA0D6] hover:bg-white text-[#0B111C] font-black text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-blue-500/20"
-                title="Create sprint task in chat"
-              >
-                <Sparkles className="size-3.5" />
-                <span className="hidden sm:inline">Assign Task</span>
-              </button>
-            </div>
+
           </div>
 
           {/* Messages Feed */}
@@ -1606,97 +1672,7 @@ export function SlackChatPage() {
         </section>
       </motion.div>
 
-      {/* MODAL: ASSIGN TASK IN CHAT */}
-      {assignTaskModalOpen && (
-        <div
-          className="fixed inset-0 w-screen h-screen z-[99999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fade-in"
-          onClick={() => setAssignTaskModalOpen(false)}
-        >
-          <div
-            className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-5 text-[#7FA0D6]" />
-                <h3 className="text-base font-black text-white">
-                  {activeMode === "channel" ? `Post Task in #${activeChannel.label}` : `Send Task to ${activeContact?.name}`}
-                </h3>
-              </div>
-              <button onClick={() => setAssignTaskModalOpen(false)} className="text-[#97A0B3] hover:text-white">
-                <X className="size-5" />
-              </button>
-            </div>
 
-            <form onSubmit={handleConfirmAssignTask} className="space-y-3 text-xs">
-              <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Task Title</label>
-                <input
-                  type="text"
-                  required
-                  value={taskTitle}
-                  onChange={(e) => setTaskTitle(e.target.value)}
-                  placeholder="e.g. Hero Kinetic Reel Animation"
-                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C] text-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Priority Level</label>
-                  <NativeSelect
-                    value={taskPriority}
-                    onChange={(e) => setTaskPriority(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C] text-white"
-                  >
-                    <option value="P1 High">P1 High (Urgent SLA)</option>
-                    <option value="P2 Med">P2 Medium</option>
-                    <option value="P3 Normal">P3 Normal Sprint</option>
-                  </NativeSelect>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Delivery Deadline</label>
-                  <input
-                    type="text"
-                    required
-                    value={taskDeadline}
-                    onChange={(e) => setTaskDeadline(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C] text-white"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Task Scope & Delivery Notes</label>
-                <textarea
-                  rows={3}
-                  value={taskScope}
-                  onChange={(e) => setTaskScope(e.target.value)}
-                  placeholder="Add scope details or technical requirements..."
-                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-medium bg-[#0B111C] text-white"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button
-                  type="button"
-                  onClick={() => setAssignTaskModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-white text-[#0B111C] font-black cursor-pointer shadow-md"
-                >
-                  Post Task
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
 
     </div>
