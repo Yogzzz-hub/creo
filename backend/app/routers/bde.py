@@ -402,17 +402,7 @@ async def add_lead_activity(
         raise HTTPException(status_code=404, detail="Lead not found.")
 
     now = datetime.now(UTC)
-    if payload.activity_type.lower() != "note":
-        lead.last_contacted_at = now
-    if payload.scheduled_follow_up and (lead.metadata_extra or {}).get("created_by"):
-        raise HTTPException(
-            status_code=409,
-            detail="Use the Revenue CRM next-action control to schedule this follow-up.",
-        )
-    if payload.scheduled_follow_up:
-        from app.services.revenue_crm import future
-
-        lead.next_follow_up_at = future(payload.scheduled_follow_up)
+    lead.last_contacted_at = now
 
     actor_user_id = None
     if actor.user_id:
@@ -509,6 +499,11 @@ async def get_bde_metrics(
         "hot_count": hot_count,
         "warm_count": warm_count,
         "cold_count": cold_count,
+        "priorities": {
+            "hot": hot_count,
+            "warm": warm_count,
+            "cold": cold_count,
+        },
         "overdue_follow_ups": overdue_follow_ups,
         "today_follow_ups": today_follow_ups,
         "stages": stage_counts,
@@ -836,3 +831,4 @@ async def get_bde_performance(
         "stages": stage_breakdown,
         "leads": leads_summary,
     }
+

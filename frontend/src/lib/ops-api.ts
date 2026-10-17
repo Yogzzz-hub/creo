@@ -123,14 +123,17 @@ export interface LeaveRequestItem {
   id: string;
   user_id?: string;
   team_member_id?: string;
-  user_name?: string;
   employee_name?: string;
+  user_name?: string;
+  name?: string;
   employee_email?: string;
   email?: string;
-  user_role?: string;
   role?: string;
+  role_raw?: string;
+  user_role?: string;
   role_display?: string;
   department?: string;
+  domain?: string;
   pod_name?: string;
   team_lead_id?: string | null;
   team_lead_name?: string;
@@ -151,6 +154,17 @@ export interface LeaveRequestItem {
 
 export async function fetchLeaveRequests(): Promise<LeaveRequestItem[]> {
   return request<LeaveRequestItem[]>("/api/v1/admin/leave");
+}
+
+export async function submitLeaveRequest(data: {
+  start_date: string;
+  end_date: string;
+  reason: string;
+}): Promise<any> {
+  return request("/api/v1/admin/leave", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
 export async function approveLeaveRequest(leaveId: string): Promise<any> {

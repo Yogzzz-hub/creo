@@ -159,7 +159,7 @@ export function AdminBottomNav() {
       ]
     : [
         { label: "Slack Workspace Hub", href: "/slack", icon: MessageSquare, desc: "Direct team & client chat, task creation" },
-        { label: "BDE Sales & Outreach", href: "/admin/bde-oversight", icon: Users, desc: "Monitor prospect reach & sales velocity" },
+        { label: "BDE Overview", href: "/admin/bde-oversight", icon: Users, desc: "Monitor prospect reach & sales velocity" },
         { label: "Plans & Negotiations", href: "/admin/plans", icon: IndianRupee, desc: "Commercial deal retainers & pricing tiers" },
         { label: "Team Management", href: "/admin/team", icon: Users, desc: "Roster, pod capacity & leads" },
         { label: "Leave Requests", href: "/admin/leaves", icon: CalendarCheck, desc: "Staff time-off approvals" },

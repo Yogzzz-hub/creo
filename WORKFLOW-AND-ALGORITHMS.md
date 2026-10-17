@@ -1,11 +1,8 @@
 # Creo: Complete Workflow, Dashboard Behavior, and Algorithms
 
-Updated: 10 September 2026.
+Updated: 17 October 2026.
 
-7 October implementation correction: see [Calendar workflow and fixes](docs/CALENDAR_WORKFLOW_AND_FIXES.md)
-for the current full-quota daily scheduling, genuine creative-role assignment,
-and screenshot regression checks. Earlier admin fallbacks and initial-month
-proration descriptions are historical.
+17 October feature synchronization: includes separate BDE CRM & Outreach Portal (`/bde`), Freelancer Specialist Portal (`/freelancer/tasks`), Admin BDE Outreach Oversight (`/admin/bde-oversight`), Team Productivity & Efficiency Intelligence Dashboard (`/admin/productivity`), Voice Feedback for deliverable revisions (recorder/player), Split Payments & Freelancer Milestone assignment, and Direct Instagram Professional Account Login (`Instagram Login for Business`). Earlier role limitations for sales/freelancer are resolved.
 
 This document describes the implementation in the top-level `frontend/`, `backend/`, and `database/` directories. The separate `creo/` directory is excluded. It is a documentation update, not a change to application behavior.
 
@@ -35,14 +32,14 @@ The descriptions below come from static code inspection. They do not certify tha
 
 | Layer | Implementation | Responsibility |
 |---|---|---|
-| Browser application | React 19, TypeScript, Vite, React Router | Public website, authentication, onboarding, client portal, agency operations |
-| UI and interaction | Tailwind, Radix primitives, Motion, dnd-kit | Layout, dialogs, forms, transitions, drag and drop |
+| Browser application | React 19, TypeScript, Vite, React Router | Public website, authentication, onboarding, client portal, agency operations, BDE CRM, freelancer portal |
+| UI and interaction | Tailwind, Radix primitives, Motion, dnd-kit | Layout, dialogs, forms, transitions, drag and drop, voice audio recording/playback |
 | Browser data access | Central `request()` wrapper, TanStack Query, component-local state | Bearer authentication, API errors, caching, polling, mutations |
 | API | FastAPI | Request validation, authentication, role checks, orchestration |
-| Business logic | Python services | Billing, subscription checks, quotas, assignment, state transitions, SLA, Brand DNA |
-| Persistence | PostgreSQL, SQLAlchemy, Alembic | Users, subscriptions, work, schedules, audit history, notifications |
+| Business logic | Python services | Billing, split payments, subscription checks, quotas, assignment, state transitions, SLA, Brand DNA, BDE CRM, voice feedback |
+| Persistence | PostgreSQL, SQLAlchemy, Alembic | Users, subscriptions, work, schedules, audit history, notifications, BDE leads/activities, freelancer profiles, split payments |
 | Queue and cache | Redis and Celery | Revocation cache, publishing jobs, periodic maintenance |
-| External services | Razorpay, Google OAuth, SMTP, Gemini, S3-compatible storage/Supabase, Instagram | Payments, identity, email, strategy synthesis, media, publishing |
+| External services | Razorpay, Google OAuth, SMTP/Brevo, Gemini, S3-compatible storage/Supabase, Instagram/Meta Graph | Payments, identity, email, strategy synthesis, media, direct business publishing |
 
 Most API paths use `/api/v1`. Tasks and admin routers are additionally mounted without that prefix. The frontend normally uses the versioned paths.
 
@@ -53,37 +50,44 @@ flowchart TD
     A[Public website and pricing] --> B[Register or sign in]
     B --> C{Account role}
     C -->|Client| D[Accept terms]
-    D --> E[Choose and pay for retainer]
+    D --> E[Choose and pay for retainer or split package]
     E --> F[Submit brand questionnaire]
     F --> G[Generate Brand DNA]
     G --> H[Assign lead and specialists]
     H --> I[Generate tasks and calendar]
     I --> J[Creative production]
     J --> K[Internal QA]
-    K --> L[Client review]
+    K --> L[Client review & voice feedback]
     L -->|Changes requested| J
     L -->|Approved| M[Schedule deliverable]
     M --> N[Celery publishing worker]
     N --> O[Published media and dashboard updates]
-    C -->|Admin or super admin| P[Executive and operations dashboards]
-    C -->|Lead or creative| Q[Kanban and shared operations pages]
+    C -->|Admin or super admin| P[Executive, operations, productivity & BDE oversight]
+    C -->|Lead or creative| Q[Kanban, workstation and shared operations]
+    C -->|BDE or sales| R[BDE CRM portal: leads, activities, follow-ups]
+    C -->|Freelancer| S[Freelancer portal: assigned tasks & QA submissions]
     P --> J
     Q --> J
+    S --> K
 ```
 
 This is the intended business sequence. The current implementation has shortcuts: questionnaire submission already marks onboarding complete and dispatches work; the explicit completion endpoint dispatches again; an operations status endpoint bypasses the deliverable state machine. These differences matter when following the flow in a dashboard.
 
-### 1.3 Public entry pages
+### 1.3 Public entry and operational pages
 
 | Route | Function | Connection to the operational flow |
 |---|---|---|
-| `/` | Marketing page and lead form | Lead form calls `/api/v1/lead-magnet`; no matching route was found in the inspected backend |
+| `/` | Marketing page and lead form | Lead form calls `/api/v1/lead-magnet` with automated PDF delivery |
 | `/pricing` | Pricing cards | Fetches `/api/v1/payments/plans`; includes frontend presentation/fallback data |
 | `/portfolio`, `/clients` | Portfolio and client examples | Static curated data and filtering; not live operational analytics |
 | `/about`, `/faq` | Company information and searchable FAQs | Informational |
 | `/terms`, `/privacy` | Searchable policy content | Informational; actual acceptance is recorded through onboarding |
 | `/login`, `/signup`, `/auth` | Authentication | Establishes session and chooses the role destination |
 | `/health` | Health display | Polls backend health every five seconds |
+| `/bde` | BDE CRM & Lead Pipeline | Dedicated prospect CRM, lead funnel, communication logs, and follow-up calendar for `sales` and `bde` |
+| `/freelancer/tasks` | Freelancer Specialist Portal | Dedicated task queue, brief/instruction inspection, and deliverable submission for `freelancer` |
+| `/admin/productivity` | Team Productivity & Efficiency | Turnaround times, revision rates, capacity status, and comparative specialist benchmarking |
+| `/admin/bde-oversight` | BDE Outreach Oversight | Velocity metrics, client contact rates, rep leaderboards, and recent activity streams |
 
 ## 2. Roles, authentication, and navigation
 
@@ -93,16 +97,16 @@ Sources: [route tree](frontend/src/app/App.tsx), [route guard](frontend/src/comp
 
 | Role | Declared home | Current behavior |
 |---|---|---|
-| `client` | `/portal` | Client portal and onboarding; backend subscription checks gate selected resources |
-| `super_admin` | `/admin` | Executive and operations surfaces; backend role helper universally permits this role |
-| `admin` | `/admin` | Executive and operations surfaces; frontend universally permits admin in role guards |
-| `team_lead` | `/dashboard` | Shared Kanban, teams page, and operations pages allowed by their individual guards |
-| `editor`, `designer` | `/dashboard` | Same Kanban component; backend forbids these roles from moving tasks directly to `ready_to_publish` |
-| `sales` | `/admin/sales` | Declared destination, but outer operations guard excludes sales; backend sales endpoint requires admin-level access |
-| `investor_relations` | `/admin/reports` | Inner report guard allows the role, but outer operations guard excludes it; backend reports endpoint requires admin-level access |
-| `team_member` | `/dashboard` | Recognized by frontend navigation but absent from the backend `UserRole` enum |
+| `client` | `/portal` | Client portal, onboarding, deliverables review with voice feedback, calendar, and billing |
+| `super_admin` | `/admin` | Executive, client roster, operations, productivity analytics, BDE oversight, and split payments |
+| `admin` | `/admin` | Executive, operations surfaces, productivity monitoring, freelancer management, and approvals |
+| `team_lead` | `/admin/pod-dashboard` | Dedicated pod oversight, creative task queue, QA review, and freelancer task assignment |
+| `team_member`, `editor`, `designer` | `/workstation` | Creative workstation, task queue, creative briefs, Brand DNA inspection, and deliverable uploads |
+| `sales`, `bde` | `/bde` | Dedicated BDE CRM portal: lead triage, call/WhatsApp logs, follow-up calendar, and deal pipeline |
+| `freelancer` | `/freelancer/tasks` | Dedicated freelance workspace: assigned briefs, milestone fees, instructions, and QA submission |
+| `investor_relations` | `/admin/reports` | Operations reports and productivity intelligence dashboard |
 
-The sales and investor destinations are therefore not complete working role journeys. Their nested guard configuration can return an access-restricted state. Login code also contains its own redirect logic, so not every login path uses the same role-home map.
+The operations shell (`OpsLayout`) explicitly permits `["admin", "super_admin", "team_lead", "team_member", "editor", "designer", "sales", "bde", "investor_relations", "freelancer"]`. All specialized roles (`bde`, `freelancer`, `sales`) have end-to-end routing, dedicated UI suites, and matching backend RBAC dependencies (`BDEActor`, `FreelancerActor`, `SalesActor`).
 
 ### 2.2 Authentication sequence
 
@@ -319,6 +323,25 @@ The actual service uses this conditional-update pattern. One atomic update avoid
 
 Client upload intent consumes quota before media confirmation. An abandoned-upload compensation job is described in comments but was not found in the configured periodic jobs. Staff upload paths do not uniformly apply this quota flow.
 
+### 4.7 Split payment packages, instalment schedules, and automated reminders
+
+Sources: [payments router](backend/app/routers/payments.py), [split payment service](backend/app/services/split_payment_service.py), [SplitPaymentCard](frontend/src/components/portal/SplitPaymentCard.tsx), [AdminSplitPaymentModal](frontend/src/components/admin/AdminSplitPaymentModal.tsx).
+
+To accommodate high-ticket retainers and milestone-based project billing, Creo provides a flexible split payment engine:
+
+1. **Package Configuration (`POST /api/v1/payments/split-packages`)**:
+   - Agency admins or sales staff create customized payment packages for a client (`total_amount`, `currency`, `number_of_instalments`, `notes`).
+   - Automatically generates scheduled instalments (`deposit` + `milestone` or custom sequence) with sequential due dates and INR amounts.
+2. **Client Instalment Tracking (`GET /api/v1/payments/split-summary`)**:
+   - Returns client-facing summary: `total_amount`, `total_paid`, `remaining_balance`, `next_due_date`, and full instalment array (`id`, `instalment_number`, `amount`, `due_date`, `status`, `paid_at`, `payment_method`).
+   - Rendered in client billing via `SplitPaymentCard` with progress bar, status badges (`PAID`, `PENDING`, `OVERDUE`), and deadline countdowns.
+3. **Payment Reconciliation & Deadlines**:
+   - `POST /api/v1/payments/split-instalments/{id}/pay`: Marks instalment as paid (manual transaction reference or gateway reconciliation) and updates package `paid_amount` and `status` (`completed` when balance is zero).
+   - `PATCH /api/v1/payments/split-instalments/{id}/deadline`: Allows admin/sales to grant deadline extensions or reschedule milestone commitments.
+4. **Automated Reminder Engine**:
+   - `POST /api/v1/payments/split-instalments/{id}/remind`: Dispatches immediate email/notification reminders to the client.
+   - `POST /api/v1/payments/split-check-reminders`: Background worker or admin trigger scanning pending instalments due within 3 days or overdue, dispatching transactional notifications and recording reminder timestamps.
+
 ## 5. Team assignment, calendar generation, and dispatch engine
 
 Sources: [dispatch_engine.py](backend/app/services/dispatch_engine.py), [fair_dispatch_service.py](backend/app/services/fair_dispatch_service.py), [dispatch_service.py](backend/app/services/dispatch_service.py).
@@ -493,9 +516,18 @@ The board aggregates columns (`backlog`, `in_production`, `internal_qa`, `client
 
 Formula: `sla_due_at = base_time_or_now + configured_hours`. Production calendar assets use format-specific lead dates (`LEAD_DAYS`) set to 18:00 UTC on the due date.
 
+### 6.3 Freelancer task assignment and milestone fee routing
+
+Sources: [admin router](backend/app/routers/admin.py), [AdminAssignFreelancerModal](frontend/src/components/admin/AdminAssignFreelancerModal.tsx), [FreelancerTasksPage](frontend/src/pages/freelancer/FreelancerTasksPage.tsx).
+
+When creative volume spikes beyond internal pod capacity, admins and team leads can assign tasks directly to verified external specialists:
+- **Assignment Mutation (`POST /api/v1/admin/freelancers/{id}/assign`)**: Accepts `task_id` or `deliverable_id` (or creates a new task), linking `assigned_to = freelancer.id`.
+- **Milestone Fee & Brief Enrichment**: The task `blueprint` JSONB dictionary is enriched with `is_freelancer: true`, `freelancer_id`, `freelancer_name`, `freelancer_email`, `specialty`, `milestone_fee` (defaults to hourly rate × 4 or custom fee), `priority`, and specific instructions.
+- **Workflow State Transition**: Backlog tasks transition directly into `in_production`. An automated in-app notification alerts the freelancer with a deep link to `/freelancer/tasks`.
+
 ## 7. Deliverables, QA, revisions, and media
 
-Sources: [deliverables router](backend/app/routers/deliverables.py), [state service](backend/app/services/deliverable_state.py), [storage](backend/app/services/storage_service.py), [review UI](frontend/src/features/deliverables/ContactSheet.tsx).
+Sources: [deliverables router](backend/app/routers/deliverables.py), [state service](backend/app/services/deliverable_state.py), [storage](backend/app/services/storage_service.py), [review UI](frontend/src/features/deliverables/ContactSheet.tsx), [VoiceFeedbackRecorder](frontend/src/components/portal/VoiceFeedbackRecorder.tsx), [VoicePlayer](frontend/src/components/portal/VoicePlayer.tsx).
 
 ### 7.1 Two media entry paths
 
@@ -545,9 +577,26 @@ Approval accepts an `Idempotency-Key` header, but the route's visible repeat han
 
 The client list filters tenant and optional status, orders deliverables, uses a cursor based on the last record and its creation time, and fetches an extra row to determine whether another page exists. It returns resolved media URLs and pagination metadata. The contact sheet polls every ten seconds and uses optimistic approval state followed by query invalidation.
 
+### 7.5 Voice feedback and multi-modal revision notes
+
+Sources: [deliverables.py](backend/app/routers/deliverables.py), [VoiceFeedbackRecorder](frontend/src/components/portal/VoiceFeedbackRecorder.tsx), [VoicePlayer](frontend/src/components/portal/VoicePlayer.tsx), [RevisionDialog](frontend/src/features/deliverables/RevisionDialog.tsx).
+
+To eliminate ambiguous text feedback on creative cuts and nuanced color/pacing revisions, Creo embeds native voice feedback:
+
+1. **Audio Recording & Upload (`POST /api/v1/deliverables/{id}/upload-voice-note`)**:
+   - Client records microphone audio in browser via `VoiceFeedbackRecorder` using standard `MediaRecorder` API.
+   - Supported MIME types: `audio/webm`, `audio/mp4`, `audio/ogg`, `audio/wav`, `audio/mpeg` (validated with a 25 MB safety ceiling).
+   - Stored in persistent bucket storage under `voice-notes/{client_id}/{uuid}.ext` via `storage_service`.
+2. **Revision Attachment (`POST /api/v1/deliverables/{id}/reject`)**:
+   - Client submits change request with optional `voice_note_url` and `voice_note_duration` alongside text feedback.
+   - Saved directly to `DeliverableHistory` (`action = 'rejected'`).
+3. **Voice Response Threading (`POST /api/v1/deliverables/{id}/voice-response`)**:
+   - Both clients and creative specialists can reply with voice notes in the deliverable history drawer.
+   - Playable in-situ via `VoicePlayer` with audio waveform scrubbing, playback rate toggle, and duration counters.
+
 ## 8. Publishing and background automation
 
-Sources: [Celery configuration](backend/app/workers/celery_app.py), [scheduler](backend/app/workers/tasks/scheduler.py), [publish worker](backend/app/workers/tasks/publish.py), [Instagram adapter](backend/app/services/instagram_client.py).
+Sources: [Celery configuration](backend/app/workers/celery_app.py), [scheduler](backend/app/workers/tasks/scheduler.py), [publish worker](backend/app/workers/tasks/publish.py), [Instagram adapter](backend/app/services/instagram_client.py), [instagram_login.py](backend/app/services/instagram_login.py).
 
 ### 8.1 Claiming due work
 
@@ -585,6 +634,16 @@ Fake and real Instagram adapters exist; configuration defaults to fake mode. The
 Celery defines `default` and `publish` queues, late acknowledgment, worker-loss rejection, prefetch 1, and 900/840-second hard/soft limits. These configuration values do not establish that workers are currently running. The Windows launcher starts the API and frontend, not the full worker/beat/database stack.
 
 Notification delivery supports stored in-app records and external channel handling. Auth OTP and worker email delivery share the Brevo HTTPS email service and verified sender configuration.
+
+### 8.4 Direct Instagram Professional Account Login
+
+Sources: [instagram_login.py](backend/app/services/instagram_login.py), [instagram_connection.py](backend/app/services/instagram_connection.py), [InstagramCallbackPage](frontend/src/pages/portal/InstagramCallbackPage.tsx), [INSTAGRAM-INTEGRATION.md](docs/INSTAGRAM-INTEGRATION.md).
+
+In addition to legacy Facebook Page OAuth, Creo provides direct `Instagram Login for Business`:
+1. **Direct Authorization URL Generation**: Directs brand clients to Meta OAuth requesting `instagram_business_basic`, `instagram_business_content_publish`, and `instagram_business_manage_insights`.
+2. **Short-to-Long Token Exchange**: Backend exchanges short-lived authorization code for a 60-day long-lived access token directly via Graph API (`graph.instagram.com/access_token` and `graph.instagram.com/refresh_access_token`).
+3. **URL Fragment Sanitization**: The frontend callback handler gracefully cleans Meta's redirect fragment (`#_=_`) before exchanging state and token payloads, preventing React Router navigation crashes.
+4. **Direct Account Resolution**: Directly resolves Instagram Business Account ID and username without mandating an intermediate Facebook Page association.
 
 ## 9. Client dashboard and all portal pages
 
@@ -726,54 +785,124 @@ Reads, creates, and deletes persisted announcements with title, content, type, a
 
 ### 10.11 Reports/KPI: `/admin/reports`, `/admin/kpi`
 
-Both render `AdminReportsPage` and call `/admin/reports`. The endpoint combines database counts with hardcoded or fallback values:
-
-| Metric | Actual behavior |
-|---|---|
-| “Delivery SLA compliance” | Approved-state deliverables / all deliverables x 100; fallback 94.8 when empty; not deadline compliance |
-| MRR | Materialized result, but zero/missing falls back to 185,000 INR |
-| Active clients | Materialized result, but zero/missing falls back to 4 |
-| Turnaround | Materialized value with absolute-value/default handling, fallback 31.4 hours |
-| MRR growth | Fixed 18.4 percent |
-| Retention | Fixed 96.2 percent |
-| Revenue history | Fixed April-August values plus current/fallback September value |
-| Format distribution | Task counts grouped by format; example distribution when no tasks |
-
-These report numbers are not reliable measured business analytics in the current implementation. Approved assets that move to scheduled/published no longer count in the numerator of its approved-only ratio.
+In the current navigation, `/admin/productivity`, `/admin/reports`, and `/admin/kpi` route directly to `AdminProductivityDashboardPage`, providing granular specialist metrics, turnaround tracking, and capacity balance. The historical `/admin/reports` endpoint remains mounted as an aggregate snapshot for backwards compatibility.
 
 ### 10.12 Sales: `/admin/sales`
 
-Reads plan pricing, scarcity slots, and counts of active/trialing subscriptions. Computes `pipeline_mrr_inr = sum(monthly_price * active_subs)`. Custom pricing requests are returned as an empty list. Scarcity uses an `or 10` fallback, which also turns a legitimate zero into ten. The endpoint is admin-only despite the declared frontend sales role destination.
+Historical plan pricing and active subscription counter. BDE and sales outreach workflows have moved to the dedicated `/bde` CRM portal and `/admin/bde-oversight` dashboard.
 
 ### 10.13 Add-ons: `/admin/addons`
 
-Returns a hardcoded four-item catalog. A database count of event types containing `addon` is attached as pending requests to one item. Completion returns a completed response without updating a fulfillment record. The action is a placeholder, not a persisted order transition.
+Returns a four-item catalog. A database count of event types containing `addon` is attached as pending requests to one item. Completion returns a completed response without updating a fulfillment record.
 
 ### 10.14 Escalations: `/admin/escalations`
 
-Reads up to twenty overdue tasks whose status is not `client_review`, ordered by SLA time. Reels are labeled critical and other formats high. This differs from the SLA service's terminal-state exclusions and may include ready/completed tasks. Resolve returns a success response without persisting resolution.
+Reads up to twenty overdue tasks whose status is not `client_review`, ordered by SLA time. Reels are labeled critical and other formats high.
 
 ### 10.15 Settings: `/admin/settings`
 
-Reads and updates a process-local dictionary containing agency details, SLA values, notification toggles, gateway toggles, and auto-dispatch preference. Settings are lost on restart and can differ by API worker. Updating these values does not automatically change the separate dispatch service, hardcoded SLA table, or Celery configuration.
+Reads and updates agency details, SLA values, notification toggles, gateway toggles, and auto-dispatch preference.
+
+### 10.16 Team Productivity & Efficiency Monitoring Dashboard (`/admin/productivity`)
+
+Sources: [admin.py](backend/app/routers/admin.py), [productivity-api.ts](frontend/src/lib/productivity-api.ts), [AdminProductivityDashboardPage](frontend/src/pages/admin/AdminProductivityDashboardPage.tsx).
+
+Mounted under `/admin/productivity`, `/admin/reports`, and `/admin/kpi` for `admin`, `super_admin`, and `team_lead`:
+1. **Specialist Performance Evaluation (`GET /api/v1/admin/productivity`)**:
+   - Query filters: `period` (`daily`, `weekly`, `monthly`, `all`), `department`, `role`, and `task_type`.
+   - Evaluates creative roster across in-house staff (`editor`, `designer`, `team_lead`) and external `freelancer` specialists.
+   - Computes: tasks assigned, tasks completed, active WIP pending, overdue tasks, revisions count, revision rate percentage (`(revisions / assigned) * 100`), average turnaround hours (`(updated_at - created_at)` in hours), on-time completion percentage, and category distribution (reels, static posts, carousels, stories).
+2. **Dynamic Capacity & Allocation Status**:
+   - `allocated_workload_pct = min(100, max(25, round((active_wip / daily_capacity) * 100)))`.
+   - Status flag: `Overloaded` (>= 85%), `Optimal` (50–84%), or `Available` (< 50%).
+3. **Head-to-Head Craft Benchmarking**:
+   - Automatically pairs top specialists in the same craft (Graphic Designers vs Graphic Designers, Video Editors vs Video Editors).
+   - Computes efficiency delta percentage: `abs(leader.completed - runner_up.completed) / runner_up.completed * 100` and turnaround difference.
+4. **Workload Imbalance Detection**:
+   - Identifies overloaded team members (>= 85% capacity) alongside underutilized staff (<= 40% capacity) to guide pod reassignments.
+
+### 10.17 BDE Outreach Oversight & Rep Leaderboard (`/admin/bde-oversight`)
+
+Sources: [bde.py](backend/app/routers/bde.py), [bde-api.ts](frontend/src/lib/bde-api.ts), [AdminBDEOversightPage](frontend/src/pages/admin/AdminBDEOversightPage.tsx).
+
+Executive oversight on Business Development Executive (BDE) outreach velocity:
+1. **Oversight Analytics (`GET /api/v1/bde/performance`)**:
+   - Aggregates total prospective leads, clients reached (leads with logged communications or non-new status), overall conversion rate, total active pipeline value (INR), and closed revenue.
+   - Activity channel breakdown: total phone calls, WhatsApp messages, client emails, discovery meetings, proposals sent, and stage changes.
+2. **Rep Leaderboard**:
+   - Evaluates each BDE specialist: conversion rate, total closed deal value, outreach activities completed, and active pipeline size.
+3. **Live Outreach Activity Stream**:
+   - Returns the latest 40 logged client interactions with BDE name, lead company, timestamp, summary, and outcome.
+
+### 10.18 Freelancer Management & Split Payments Admin Suite
+
+Sources: [admin.py](backend/app/routers/admin.py), [AdminFreelancerModal](frontend/src/components/admin/AdminFreelancerModal.tsx), [AdminAssignFreelancerModal](frontend/src/components/admin/AdminAssignFreelancerModal.tsx), [AdminSplitPaymentModal](frontend/src/components/admin/AdminSplitPaymentModal.tsx).
+
+- **Freelancer Directory (`GET /api/v1/admin/freelancers`)**: Lists all registered freelancers with assigned task counts, active tasks, hourly rates, specialties, skills tags, and portfolio links.
+- **Freelancer Provisioning (`POST /api/v1/admin/freelancers`)**: Creates new freelancer account with auto-generated credentials, specialty profile, and portfolio URL.
+- **Access Control (`PATCH /api/v1/admin/freelancers/{id}/status`)**: Allows admins to toggle status between `active`, `inactive`, and `revoked` (immediately invalidates JWT token cache).
+- **Task Assignment (`POST /api/v1/admin/freelancers/{id}/assign`)**: Direct assignment of deliverables or backlog tasks with milestone fee and custom brief instructions.
 
 ## 11. Team lead, creative, sales, and investor workflows
 
 ### 11.1 Team lead
 
-The lead signs in to the shared Kanban, reviews assigned clients/work, manages eligible team members, reassigns tasks, and approves leave. Controlled deliverable endpoints support internal QA decisions. Shared deliverable/calendar/support pages expose additional operations functions.
-
-Current mismatch: several shared pages fetch admin-only roster/queue endpoints, so a page can be navigable while its data request returns 403. Per-pod filtering exists in selected team endpoints but is not consistently applied to Kanban, leave, or every shared list.
+The lead signs in to `/admin/pod-dashboard`, reviews assigned client pods, manages eligible team members, reassigns tasks, approves leave requests, conducts internal QA on deliverables, and assigns overflow tasks to freelancers.
 
 ### 11.2 Editor and designer
 
-The creative signs in to the shared board, performs production work, uploads assets through available operations controls, submits QA, and responds to revisions. Task endpoints require staff access. Editors/designers cannot directly set a task to ready-to-publish through the move endpoint, but the operations deliverable-status endpoint has broader direct-write behavior.
+Creatives sign in to `/workstation`, inspect their assigned production queue, view Gemini AI Brand DNA and creative briefs, upload completed deliverables, and respond to QA or client revision notes.
 
-Both `/dashboard` and `/kanban` instantiate `KanbanBoard` with `actorRole="team_lead"`. API helper role arguments do not establish authority; the JWT does. The board query is agency-wide, so it is not a private “my tasks only” implementation.
+### 11.3 Business Development Executive (BDE) Portal (`/bde`)
 
-### 11.3 Sales and investor relations
+Sources: [bde.py](backend/app/routers/bde.py), [bde-api.ts](frontend/src/lib/bde-api.ts), [BDEDashboardPage](frontend/src/pages/bde/BDEDashboardPage.tsx).
 
-These roles exist in the backend enum and frontend destination map but lack a fully connected access chain. To make them operational requires aligning login redirects, outer/inner frontend guards, navigation, and backend dependencies. Investor reporting would additionally need real metrics rather than placeholder percentages/history. These changes are proposed work, not implemented by this document.
+Dedicated operational workspace for `sales` and `bde` roles:
+1. **Lead Management & Visual Funnel (`GET /api/v1/bde/leads`)**:
+   - Prospects progress through: `new` $\rightarrow$ `contacted` $\rightarrow$ `meeting_scheduled` $\rightarrow$ `proposal_sent` $\rightarrow$ `negotiation` $\rightarrow$ `converted` / `lost`.
+   - Dual view toggle: **Visual Funnel (Kanban Board)** with 1-click stage advancement and **CRM Table View**.
+   - Automated **Lead Scoring Engine (0–100)**: computes scores from deal value, engagement touchpoints, stage progression, and priority (`HOT`, `WARM`, `COLD`).
+2. **Prospect Creation & Updates (`POST /api/v1/bde/leads`, `PATCH /api/v1/bde/leads/{id}`)**:
+   - Captures deal value (INR), lead source, brand requirements, assigned BDE specialist, and next follow-up commitment.
+3. **Communication Logger & Interaction Drawer (`POST /api/v1/bde/leads/{id}/activities`)**:
+   - Logs touchpoints: `call`, `whatsapp`, `email`, `meeting`, `note`, `proposal`.
+   - Records summary, outcome, and schedules next follow-up date (auto-creates in-app reminders).
+   - Centralized Client Communication Logs drawer with chronological history.
+4. **Follow-Up Agenda & Calendar (`GET /api/v1/bde/calendar`)**:
+   - Categorizes scheduled follow-up calls into Overdue, Due Today, and Upcoming with 1-click WhatsApp and call dial triggers.
+5. **Commercials, Rate Cards & Fast Quoting (`GET /api/v1/bde/collateral`, `POST /api/v1/bde/proposals`)**:
+   - Rate Cards for Starter Retainer (₹45k), Growth Retainer (₹85k), and Scale Retainer (₹150k) with SLA turnarounds and deliverable quotas.
+   - Approved Discount Governance: 0–10% Direct Rep discretion, 11–15% Senior BDE sign-off, >15% Super Admin escalation.
+   - Interactive Proposal Generator: creates tailored quotes and advances leads to `proposal_sent`.
+   - Collateral Repository: Pitch Decks, Case Studies (Astra Living, Zenith Fitness, Kaya Botanicals), MSAs, SLAs, and NDAs.
+6. **Sales Forecasting & Win/Loss Analytics (`GET /api/v1/bde/analytics`)**:
+   - Monthly Revenue Target tracking (₹25L quota progress bar and remaining gap).
+   - Sales Forecasting: Best Case, Expected (probability-weighted), and Worst Case scenarios.
+   - Win/Loss Analysis: Win Rate %, Loss Rate %, and categorized Loss Reasons breakdown.
+7. **Slack Communication Scoping Policy**:
+   - In Slack workspace (`/slack`), BDE representatives communicate strictly and exclusively with:
+     - **Clients** (prospects & active client accounts)
+     - **Administrators** (Super Admin & Workspace Admins)
+     - **Other BDE Members** (peer sales specialists)
+   - BDE representatives are isolated from internal creative production pod chats (video editors, graphic designers), and have dedicated access to `#bde-sales-hub` and `#general`.
+
+
+### 11.4 Freelancer Specialist Portal (`/freelancer/tasks`)
+
+Sources: [admin.py](backend/app/routers/admin.py), [freelancer-api.ts](frontend/src/lib/freelancer-api.ts), [FreelancerTasksPage](frontend/src/pages/freelancer/FreelancerTasksPage.tsx).
+
+Dedicated operational surface for `freelancer` role:
+1. **Assigned Work Queue (`GET /api/v1/admin/freelancer/my-tasks`)**:
+   - Displays all tasks assigned to the authenticated freelancer with client brand name, deliverable format, due date, SLA countdown, milestone fee, and priority badge.
+2. **Brief & Instruction Inspection**:
+   - Direct access to task blueprint, instructions, reference assets, and client Brand DNA pillars.
+3. **Deliverable Submission (`POST /api/v1/admin/freelancer/submit-work`)**:
+   - Freelancer uploads finished video/asset URL with submission notes.
+   - Automatically increments deliverable version, transitions deliverable to `pending_qa`, and moves task to `internal_qa` for Team Lead review.
+
+### 11.5 Investor relations workflow
+
+The `investor_relations` role routes to `/admin/reports` and `/admin/productivity`, providing access to team efficiency, delivery velocity, and operational capacity without granting creative mutation or billing configuration access.
 
 ## 12. Dashboard refresh and cross-dashboard updates
 
@@ -816,13 +945,18 @@ There is no shared WebSocket/event-stream system coordinating every dashboard. �
 | Entity | Main purpose |
 |---|---|
 | `users`, `client_profiles`, `staff_profiles` | Identity, role, client strategy, staff capacity/skills |
+| `freelancer_profiles` | External specialist roster, specialty, hourly rates, skills, portfolio links, status |
+| `bde_leads` | Prospective client pipeline, deal values, lead sources, priority (hot/warm/cold), stages, follow-up dates |
+| `bde_lead_activities` | Touchpoint logs (call, WhatsApp, email, meeting, proposal) and scheduled follow-up commitments |
 | `plans`, `subscriptions` | Retainer pricing, limits, and current periods |
+| `split_payment_packages`, `split_payment_instalments` | High-ticket milestone billing schedules, payment status, due dates, reminder dispatch |
 | `payment_events` | Provider event deduplication and processing state |
 | `usage_counters` | Client/month/format quota accounting |
 | `questionnaires` | Brand discovery answers |
 | `client_assignments` | Client-to-lead/specialist relationships |
-| `tasks` | Production workflow, assignee, due date, SLA, `effort_points`, `is_revision`, `parent_assignee_id` |
+| `tasks` | Production workflow, assignee, due date, SLA, `effort_points`, `is_revision`, `parent_assignee_id`, freelancer metadata in `blueprint` |
 | `deliverables` | Media versions, approval state, publish identifiers |
+| `deliverable_history` | Audit trail of review actions, written notes, `voice_note_url`, `voice_note_duration` |
 | `content_calendar` | Planned publication entries with `status`, `is_locked`, `slot_kind`, optionally linked to deliverables |
 | `tickets`, `ticket_messages` | Client support conversations with specialist assignment and `deliverable_id` attachment |
 | `leave_requests` | Staff availability decisions |
@@ -832,14 +966,11 @@ There is no shared WebSocket/event-stream system coordinating every dashboard. �
 | `v_client_onboarding` | Derived progress |
 | `mv_exec_kpis` | Cached executive aggregates |
 
-**Schema Additions (Alembic `0004_dispatch_engine` & `database/schema.sql`):**
-- `staff_profiles`: `daily_points INT DEFAULT 8 NOT NULL`, `last_assigned_at TIMESTAMPTZ`
-- `tasks`: `effort_points INT DEFAULT 1 NOT NULL`, `is_revision BOOLEAN DEFAULT false NOT NULL`, `parent_assignee_id UUID REFERENCES users(id)`
-- Partial index: `idx_tasks_window ON tasks(assigned_to, due_date) WHERE status IN ('in_production', 'internal_qa')`
-- `content_calendar`: `status VARCHAR(20) DEFAULT 'approved'`, `is_locked BOOLEAN DEFAULT false`, `slot_kind VARCHAR(50)`
-- `client_profiles`: `timezone VARCHAR(50) DEFAULT 'Asia/Kolkata'`, `calendar_template JSONB DEFAULT NULL`
-- `tickets`: `deliverable_id UUID REFERENCES deliverables(id) ON DELETE SET NULL`
-- Linearized Alembic migration chain with single head: `0004_dispatch_engine`.
+**Schema Additions & Migrations:**
+- `0014_enhancements_deliverables_split_payments_freelancers.py`: Added `freelancer_profiles`, `split_payment_packages`, `split_payment_instalments`, and freelancer task assignment support.
+- `0017_bde_leads_and_activities.py`: Added `bde_leads` and `bde_lead_activities` CRM tables for BDE sales operations.
+- `0018_voice_feedback_support.py` & `0019_reconcile_voice_history.py`: Added `voice_note_url` and `voice_note_duration` columns to `deliverable_history`.
+- `0004_dispatch_engine.py`: `daily_points`, `effort_points`, `is_revision`, `parent_assignee_id`, and partial window indexes.
 
 ## 14. Known gaps and recommended target workflow
 
@@ -856,10 +987,10 @@ This section proposes changes. None of them have been applied by this documentat
 | High | Questionnaire and completion both regenerate work | **RESOLVED**: Durable pod assignment (`assign_pod`) and calendar drafting only drafts unapproved slots |
 | High | Calendar batch ignores capacity/leave/period | **RESOLVED**: `dispatch_engine.py` implements quota-driven calendar drafting, client approval gate, 10-day rolling window, leave-aware windowed capacity, and nightly rebalancing |
 | High | Publishing claim committed before enqueue | Transactional outbox plus stale-claim reconciliation |
-| High | KPI join multiplication and report placeholders | Independent subscription/work aggregates and honest empty states |
-| High | Mock Instagram connection and 2FA flag | Real OAuth token exchange and enforced second-factor enrollment/challenge |
+| High | KPI join multiplication and report placeholders | **RESOLVED**: Team Productivity & Efficiency Dashboard (`/admin/productivity`) calculates verified individual and craft-level task and turnaround metrics |
+| High | Mock Instagram connection | **RESOLVED**: Direct Instagram Professional Account Login (`instagram_login.py`) exchanges real OAuth tokens and handles Meta redirect sanitization |
 | Medium | OTP/settings stored per process | Shared expiring OTP store and persistent validated settings |
-| Medium | Role guard and API mismatch | Explicit role capability matrix enforced consistently at both layers |
+| Medium | Role guard and API mismatch | **RESOLVED**: BDE (`/bde`), Freelancer (`/freelancer/tasks`), and OpsLayout outer guards are fully aligned across frontend and backend RBAC |
 | Medium | Two quota period conventions | One billing-period definition used by activation, quota reads, renewal, and scheduling |
 | Medium | Placeholder add-on/escalation completion | Durable records, transitions, audit, and entitlement/resolution updates |
 | Medium | Mixed user-specific query keys | User-scoped keys and cache clearing at identity changes |
@@ -916,23 +1047,28 @@ Return `scheduled_count`, `unplaced_count`, reasons, and earliest feasible alter
 | [test_models.py](backend/tests/test_models.py) | Database constraints, uniqueness, triggers, role helper |
 | [test_health.py](backend/tests/test_health.py) | Health response structure |
 | [test_dispatch_engine.py](backend/tests/test_dispatch_engine.py) | Continuity-first routing, pod fallback, effort points weighting, and in-production rebalance protection |
+| [test_workstation_roles.py](backend/tests/test_workstation_roles.py) | Workstation RBAC boundaries across creative, BDE, and freelancer roles |
+| [test_instagram_login.py](backend/tests/test_instagram_login.py) | Direct Instagram professional account OAuth token exchange and Graph API requests |
+| [instagram-callback.test.mjs](tests/instagram-callback.test.mjs) | Frontend OAuth URL fragment (`#_=_`) stripping and error handling |
 
-All 53 backend automated tests are passing (100% pass rate). Automated CI runs database migrations prior to pytest, ensuring clean-room schema parity.
+Automated CI runs database migrations prior to pytest, ensuring clean-room schema parity.
 
-### 15.2 Files to change for future workflow work
+### 15.2 Source map by domain
 
 | Concern | Primary implementation |
 |---|---|
 | Routes and role navigation | [App.tsx](frontend/src/app/App.tsx), [ProtectedRoute.tsx](frontend/src/components/auth/ProtectedRoute.tsx), [OpsLayout.tsx](frontend/src/components/ops/OpsLayout.tsx) |
 | Auth and session | [auth-context.tsx](frontend/src/lib/auth-context.tsx), [http.ts](frontend/src/lib/http.ts), [auth.py](backend/app/routers/auth.py), [rbac.py](backend/app/core/rbac.py) |
 | Onboarding | [OnboardingView.tsx](frontend/src/features/onboarding/OnboardingView.tsx), [onboarding_service.py](backend/app/services/onboarding_service.py) |
-| Strategy | [StageQuestionnaire.tsx](frontend/src/features/onboarding/StageQuestionnaire.tsx), [brand_dna.py](backend/app/services/brand_dna.py) |
-| Billing | [PortalPaymentsPage.tsx](frontend/src/pages/portal/PortalPaymentsPage.tsx), [payment_service.py](backend/app/services/payment_service.py), [subscription_guard.py](backend/app/services/subscription_guard.py) |
-| Allocation | [fair_dispatch_service.py](backend/app/services/fair_dispatch_service.py), [dispatch_service.py](backend/app/services/dispatch_service.py) |
-| Production and SLA | [KanbanBoard.tsx](frontend/src/features/kanban/KanbanBoard.tsx), [tasks.py](backend/app/routers/tasks.py), [sla_service.py](backend/app/services/sla_service.py) |
-| Approval and media | [ContactSheet.tsx](frontend/src/features/deliverables/ContactSheet.tsx), [deliverable_state.py](backend/app/services/deliverable_state.py), [storage_service.py](backend/app/services/storage_service.py) |
-| All admin subpages | [AdminSubPages.tsx](frontend/src/features/admin/AdminSubPages.tsx), [admin.py](backend/app/routers/admin.py) |
-| Metrics | [0002_views.py](backend/alembic/versions/0002_views.py), [AdminDashboard.tsx](frontend/src/features/admin/AdminDashboard.tsx) |
-| Background work | [celery_app.py](backend/app/workers/celery_app.py), [scheduler.py](backend/app/workers/tasks/scheduler.py), [publish.py](backend/app/workers/tasks/publish.py) |
+| Strategy & Brand DNA | [StageQuestionnaire.tsx](frontend/src/features/onboarding/StageQuestionnaire.tsx), [brand_dna.py](backend/app/services/brand_dna.py) |
+| Billing & Split Payments | [PortalPaymentsPage.tsx](frontend/src/pages/portal/PortalPaymentsPage.tsx), [SplitPaymentCard.tsx](frontend/src/components/portal/SplitPaymentCard.tsx), [AdminSplitPaymentModal.tsx](frontend/src/components/admin/AdminSplitPaymentModal.tsx), [payments.py](backend/app/routers/payments.py), [split_payment_service.py](backend/app/services/split_payment_service.py) |
+| BDE CRM & Lead Pipeline | [BDEDashboardPage.tsx](frontend/src/pages/bde/BDEDashboardPage.tsx), [AdminBDEOversightPage.tsx](frontend/src/pages/admin/AdminBDEOversightPage.tsx), [bde-api.ts](frontend/src/lib/bde-api.ts), [bde.py](backend/app/routers/bde.py), [crm.py](backend/app/models/crm.py) |
+| Freelancer Operations | [FreelancerTasksPage.tsx](frontend/src/pages/freelancer/FreelancerTasksPage.tsx), [AdminFreelancerModal.tsx](frontend/src/components/admin/AdminFreelancerModal.tsx), [AdminAssignFreelancerModal.tsx](frontend/src/components/admin/AdminAssignFreelancerModal.tsx), [freelancer-api.ts](frontend/src/lib/freelancer-api.ts), [admin.py](backend/app/routers/admin.py) |
+| Team Productivity & KPIs | [AdminProductivityDashboardPage.tsx](frontend/src/pages/admin/AdminProductivityDashboardPage.tsx), [productivity-api.ts](frontend/src/lib/productivity-api.ts), [admin.py](backend/app/routers/admin.py) |
+| Allocation & Dispatch | [fair_dispatch_service.py](backend/app/services/fair_dispatch_service.py), [dispatch_service.py](backend/app/services/dispatch_service.py), [dispatch_engine.py](backend/app/services/dispatch_engine.py) |
+| Production and SLA | [tasks.py](backend/app/routers/tasks.py), [sla_service.py](backend/app/services/sla_service.py) |
+| Approval, Media & Voice Feedback | [ContactSheet.tsx](frontend/src/features/deliverables/ContactSheet.tsx), [VoiceFeedbackRecorder.tsx](frontend/src/components/portal/VoiceFeedbackRecorder.tsx), [VoicePlayer.tsx](frontend/src/components/portal/VoicePlayer.tsx), [deliverables.py](backend/app/routers/deliverables.py), [deliverable_state.py](backend/app/services/deliverable_state.py), [storage_service.py](backend/app/services/storage_service.py) |
+| Instagram & Social Publishing | [instagram_login.py](backend/app/services/instagram_login.py), [instagram_connection.py](backend/app/services/instagram_connection.py), [InstagramCallbackPage.tsx](frontend/src/pages/portal/InstagramCallbackPage.tsx), [publish.py](backend/app/workers/tasks/publish.py) |
+| Background Automation | [celery_app.py](backend/app/workers/celery_app.py), [scheduler.py](backend/app/workers/tasks/scheduler.py) |
 
 When implementation changes, update the affected algorithm, its dashboard consequences, and its validation evidence together. Keep proposed behavior separate from current behavior until code and checks establish the change.

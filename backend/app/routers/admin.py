@@ -34,11 +34,13 @@ from app.core.rbac import (
     Actor,
     AdminActor,
     InvestorActor,
+    LeaveApplicantActor,
     SalesActor,
     StaffActor,
     TeamLeadActor,
     get_admin_actor,
     get_current_actor,
+    require_roles,
 )
 from app.db.session import get_db
 from app.models.billing import Plan, Subscription, UsageCounter
@@ -378,7 +380,7 @@ async def get_revenue_trend(
 @router.get("/plans-summary")
 async def get_plans_summary(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(require_roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.SALES)),
 ) -> dict[str, Any]:
     """Return all active plans with subscriber counts, revenue contribution and share."""
     sql = text("""
@@ -2421,7 +2423,7 @@ async def get_team_members(
     """List staff profiles and creative roster. Scoped to pod for Team Leads."""
     is_tl_only = actor.role in (UserRole.TEAM_LEAD, "team_lead")
 
-    where_clause = "WHERE u.role IN ('editor', 'designer', 'team_lead', 'sales', 'bde', 'bde_head', 'admin', 'super_admin')"
+    where_clause = "WHERE u.role IN ('editor', 'designer', 'team_lead', 'sales', 'bde', 'bde_head', 'freelancer', 'admin', 'super_admin')"
     params: dict[str, Any] = {}
 
     if is_tl_only:
@@ -2513,7 +2515,10 @@ async def create_team_member(
     try:
         user_role = UserRole(payload.role.lower())
     except ValueError:
-        user_role = UserRole.EDITOR
+        if payload.role.lower() in ("bde", "sales"):
+            user_role = UserRole.SALES
+        else:
+            user_role = UserRole.EDITOR
 
     # Team Lead restrictions
     target_tl_id = payload.team_lead_id
@@ -2545,6 +2550,19 @@ async def create_team_member(
     db.add(staff_profile)
     await db.commit()
 
+    # Dispatch credentials email to the newly provisioned staff member
+    email_delivered = False
+    try:
+        from app.services.email_service import send_credentials_email
+        email_delivered = await send_credentials_email(
+            to_email=new_user.email,
+            full_name=new_user.full_name or new_user.email,
+            role=new_user.role.value,
+            password=chosen_password,
+        )
+    except Exception as exc:
+        logger.warning(f"Failed to send credentials email to {new_user.email}: {exc}")
+
     return {
         "status": "created",
         "id": str(new_user.id),
@@ -2554,10 +2572,96 @@ async def create_team_member(
         "department": staff_profile.department,
         "daily_capacity": staff_profile.daily_capacity,
         "team_lead_id": str(target_tl_id) if target_tl_id else None,
+        "email_delivered": email_delivered,
         "credentials": {
             "email": new_user.email,
             "password": chosen_password,
         },
+    }
+
+
+class UpdateMemberCredentialsRequest(BaseModel):
+    email: str | None = None
+    password: str = Field(..., min_length=6)
+
+
+@router.patch("/teams/{user_id}/credentials")
+async def update_member_credentials(
+    user_id: uuid.UUID,
+    payload: UpdateMemberCredentialsRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = TeamLeadActor,
+) -> dict[str, Any]:
+    """Admin or Lead sets or resets user credentials (email and password)."""
+    from app.core.security import hash_password
+
+    user = await db.get(User, user_id)
+    if not user:
+        raise NotFound(f"User {user_id} not found")
+
+    if payload.email and payload.email.strip().lower() != user.email.lower():
+        clean_email = payload.email.strip().lower()
+        existing = (await db.execute(select(User).where(User.email == clean_email, User.id != user_id))).scalar_one_or_none()
+        if existing:
+            raise Conflict("A user with this email address already exists.")
+        user.email = clean_email
+
+    new_password = payload.password.strip()
+    user.hashed_password = hash_password(new_password)
+    await db.commit()
+
+    email_delivered = False
+    try:
+        from app.services.email_service import send_credentials_email
+        email_delivered = await send_credentials_email(
+            to_email=user.email,
+            full_name=user.full_name or user.email,
+            role=user.role.value,
+            password=new_password,
+        )
+    except Exception as exc:
+        logger.warning(f"Failed to send credentials update email to {user.email}: {exc}")
+
+    return {
+        "status": "success",
+        "message": f"Credentials for {user.full_name or user.email} updated successfully.",
+        "user_id": str(user.id),
+        "email": user.email,
+        "password": new_password,
+        "email_delivered": email_delivered,
+    }
+
+
+class SendCredentialsEmailRequest(BaseModel):
+    password: str = Field(..., min_length=6)
+
+
+@router.post("/teams/{user_id}/send-credentials-email")
+async def resend_credentials_email(
+    user_id: uuid.UUID,
+    payload: SendCredentialsEmailRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = TeamLeadActor,
+) -> dict[str, Any]:
+    """Re-dispatch credentials email to the specified staff or BDE user."""
+    from app.services.email_service import send_credentials_email
+
+    user = await db.get(User, user_id)
+    if not user:
+        raise NotFound(f"User {user_id} not found")
+
+    delivered = await send_credentials_email(
+        to_email=user.email,
+        full_name=user.full_name or user.email,
+        role=user.role.value,
+        password=payload.password.strip(),
+    )
+
+    return {
+        "status": "success",
+        "delivered": delivered,
+        "email": user.email,
+        "message": f"Credentials email {'sent successfully' if delivered else 'attempted'} to {user.email}.",
     }
 
 
@@ -2568,6 +2672,7 @@ async def update_team_member(
     db: AsyncSession = Depends(get_db),
     actor: Actor = TeamLeadActor,
 ) -> dict[str, Any]:
+
     """Edit capacity, skills, and status for a team member."""
     sp = await db.get(StaffProfile, user_id)
     if not sp:
@@ -2619,6 +2724,263 @@ async def remove_team_member(
     await db.commit()
     return {"status": "deactivated", "user_id": str(user_id)}
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BDE ONBOARDING & MANAGEMENT ENDPOINTS (Admin / Super Admin)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class BDEOnboardRequest(BaseModel):
+    full_name: str = Field(..., min_length=2, max_length=255)
+    email: str = Field(..., min_length=5, max_length=255)
+    phone: str | None = None
+    password: str | None = None
+    designation: str = "Business Development Executive (BDE)"
+    monthly_quota: int = Field(default=2500000, ge=0)
+    commission_rate: float = Field(default=5.0, ge=0.0, le=100.0)
+    send_email: bool = True
+
+
+class BDECredentialsUpdateRequest(BaseModel):
+    email: str | None = None
+    password: str = Field(..., min_length=6)
+    send_email: bool = True
+
+
+@router.get("/bde")
+async def list_bde_team(
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> list[dict[str, Any]]:
+    """List all onboarded BDE sales specialists with their quotas and conversion metrics."""
+    from app.models.crm import BDETarget, Lead
+
+    bde_stmt = (
+        select(User)
+        .where(User.role.in_([UserRole.SALES, "sales", "bde"]))
+        .order_by(User.created_at.asc())
+    )
+    bde_users = (await db.execute(bde_stmt)).scalars().all()
+
+    results: list[dict[str, Any]] = []
+
+    for u in bde_users:
+        sp = await db.get(StaffProfile, u.id)
+        
+        # Phone & designation extraction
+        designation = "Business Development Executive (BDE)"
+        phone_num = ""
+        if sp and sp.skills:
+            for s in sp.skills:
+                if s.startswith("Phone: "):
+                    phone_num = s.replace("Phone: ", "").strip()
+                elif s in ("Business Development Executive (BDE)", "Senior BDE", "Commercial Growth Director", "Enterprise Sales Lead"):
+                    designation = s
+                elif not phone_num and any(char.isdigit() for char in s):
+                    phone_num = s
+
+        # Target info
+        target_stmt = (
+            select(BDETarget)
+            .where(BDETarget.bde_id == u.id)
+            .order_by(BDETarget.created_at.desc())
+            .limit(1)
+        )
+        target = (await db.execute(target_stmt)).scalar_one_or_none()
+
+        # Lead metrics
+        lead_stmt = select(Lead).where(Lead.assigned_bde_id == u.id)
+        leads = (await db.execute(lead_stmt)).scalars().all()
+
+        total_leads = len(leads)
+        converted_leads = [l for l in leads if l.status == "converted"]
+        deals_won = len(converted_leads)
+        closed_revenue = sum(l.estimated_deal_value for l in converted_leads)
+        active_pipeline = sum(l.estimated_deal_value for l in leads if l.status not in ("converted", "lost"))
+
+        conversion_rate = round((deals_won / total_leads * 100), 1) if total_leads > 0 else 0.0
+
+        monthly_quota = target.monthly_quota if target else 2500000
+        commission_rate = target.commission_rate if target else 5.0
+
+        results.append({
+            "id": str(u.id),
+            "name": u.full_name or u.email.split("@")[0].capitalize(),
+            "email": u.email,
+            "phone": phone_num or "+91 98765 43210",
+            "role": u.role.value if hasattr(u.role, "value") else str(u.role),
+            "designation": designation,
+            "status": "Active" if u.account_status == AccountStatus.ACTIVE else "Suspended",
+            "account_status": u.account_status.value if hasattr(u.account_status, "value") else str(u.account_status),
+            "monthly_quota": monthly_quota,
+            "commission_rate": commission_rate,
+            "total_leads": total_leads,
+            "deals_won": deals_won,
+            "closed_revenue": closed_revenue,
+            "active_pipeline": active_pipeline,
+            "conversion_rate": conversion_rate,
+            "created_at": u.created_at.isoformat() if u.created_at else None,
+        })
+
+    return results
+
+
+@router.post("/bde/onboard")
+async def onboard_bde(
+    payload: BDEOnboardRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Onboard a new BDE with custom credentials, quota target, and transactional welcome email."""
+    from app.core.security import hash_password
+    from app.models.crm import BDETarget
+
+    clean_email = payload.email.lower().strip()
+    existing = (await db.execute(select(User).where(User.email == clean_email))).scalar_one_or_none()
+    if existing:
+        raise Conflict(f"An account with email {clean_email} already exists.")
+
+    chosen_password = (
+        payload.password.strip()
+        if payload.password and payload.password.strip()
+        else f"Creo@BDE{uuid.uuid4().hex[:6]}!"
+    )
+
+    new_bde = User(
+        auth_id=f"auth-bde-{uuid.uuid4().hex[:12]}",
+        email=clean_email,
+        full_name=payload.full_name.strip(),
+        role=UserRole.SALES,
+        account_status=AccountStatus.ACTIVE,
+        hashed_password=hash_password(chosen_password),
+    )
+    db.add(new_bde)
+    await db.flush()
+
+    skills_list = [payload.designation, "B2B Sales", "Client Negotiations", "Enterprise Accounts"]
+    if payload.phone and payload.phone.strip():
+        skills_list.append(f"Phone: {payload.phone.strip()}")
+
+    staff_profile = StaffProfile(
+        user_id=new_bde.id,
+        department="sales",
+        daily_capacity=10,
+        skills=skills_list,
+        is_accepting_work=True,
+    )
+    db.add(staff_profile)
+
+    current_month_str = datetime.now(UTC).strftime("%Y-%m")
+    target = BDETarget(
+        bde_id=new_bde.id,
+        month=current_month_str,
+        monthly_quota=payload.monthly_quota,
+        closed_revenue=0,
+        commission_rate=payload.commission_rate,
+        commission_earned=0,
+        deals_won=0,
+        notes=f"Designation: {payload.designation}. Onboarded by Admin via Creo Console.",
+    )
+    db.add(target)
+    await db.commit()
+
+    email_delivered = False
+    if payload.send_email:
+        try:
+            from app.services.email_service import send_credentials_email
+            email_delivered = await send_credentials_email(
+                to_email=new_bde.email,
+                full_name=new_bde.full_name or new_bde.email,
+                role=f"{payload.designation} (Sales)",
+                password=chosen_password,
+            )
+        except Exception as exc:
+            logger.warning(f"Failed to dispatch BDE credentials email to {new_bde.email}: {exc}")
+
+    return {
+        "status": "created",
+        "message": f"BDE representative {new_bde.full_name} onboarded successfully.",
+        "id": str(new_bde.id),
+        "full_name": new_bde.full_name,
+        "email": new_bde.email,
+        "phone": payload.phone or "",
+        "designation": payload.designation,
+        "monthly_quota": payload.monthly_quota,
+        "commission_rate": payload.commission_rate,
+        "email_delivered": email_delivered,
+        "credentials": {
+            "email": new_bde.email,
+            "password": chosen_password,
+            "login_url": "/bde",
+        },
+    }
+
+
+@router.patch("/bde/{bde_id}/credentials")
+async def update_bde_credentials(
+    bde_id: uuid.UUID,
+    payload: BDECredentialsUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Reset or update BDE login credentials and optionally re-dispatch credentials email."""
+    from app.core.security import hash_password
+
+    user = await db.get(User, bde_id)
+    if not user:
+        raise NotFound(f"BDE user {bde_id} not found")
+
+    if payload.email and payload.email.strip().lower() != user.email.lower():
+        clean_email = payload.email.strip().lower()
+        existing = (await db.execute(select(User).where(User.email == clean_email, User.id != bde_id))).scalar_one_or_none()
+        if existing:
+            raise Conflict("A user with this email address already exists.")
+        user.email = clean_email
+
+    new_password = payload.password.strip()
+    user.hashed_password = hash_password(new_password)
+    await db.commit()
+
+    email_delivered = False
+    if payload.send_email:
+        try:
+            from app.services.email_service import send_credentials_email
+            email_delivered = await send_credentials_email(
+                to_email=user.email,
+                full_name=user.full_name or user.email,
+                role="BDE Sales Specialist",
+                password=new_password,
+            )
+        except Exception as exc:
+            logger.warning(f"Failed to re-dispatch BDE credentials email to {user.email}: {exc}")
+
+    return {
+        "status": "success",
+        "message": f"Credentials for {user.full_name or user.email} updated successfully.",
+        "user_id": str(user.id),
+        "email": user.email,
+        "password": new_password,
+        "email_delivered": email_delivered,
+    }
+
+
+@router.delete("/bde/{bde_id}")
+async def deactivate_bde(
+    bde_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Deactivate a BDE representative."""
+    user = await db.get(User, bde_id)
+    if not user:
+        raise NotFound(f"BDE user {bde_id} not found")
+
+    user.account_status = AccountStatus.SUSPENDED
+    sp = await db.get(StaffProfile, bde_id)
+    if sp:
+        sp.is_accepting_work = False
+    await db.commit()
+    return {"status": "deactivated", "bde_id": str(bde_id)}
 
 
 # --- Addons Endpoints ---
@@ -3533,7 +3895,7 @@ class LeaveApplyRequest(BaseModel):
 @router.get("/leave")
 async def list_admin_leave_requests(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = LeaveApplicantActor,
 ) -> list[dict[str, Any]]:
     """
     List staff leave requests from DB with strict hierarchical scoping:
@@ -3610,6 +3972,29 @@ async def list_admin_leave_requests(
             created_ist = lr.created_at.astimezone(ist_tz)
             created_ist_str = created_ist.strftime("%d %b %Y, %I:%M %p IST")
 
+        # Determine human-friendly name & domain/role label
+        applicant_name = (full_name or "").strip()
+        if not applicant_name and email:
+            parts = email.split("@")[0].replace(".", " ").replace("_", " ").split()
+            applicant_name = " ".join([p.upper() if len(p) <= 3 else p.capitalize() for p in parts])
+        if not applicant_name:
+            applicant_name = "Staff Member"
+
+        if role_str == "sales":
+            domain_label = "BDE (Business Development)"
+        elif role_str == "freelancer":
+            domain_label = "Freelancer"
+        elif role_str == "team_lead":
+            domain_label = f"Team Lead ({dept.capitalize() if dept else 'Pod'})"
+        elif role_str == "editor":
+            domain_label = "Video Editor"
+        elif role_str == "designer":
+            domain_label = "Graphic Designer"
+        elif dept:
+            domain_label = dept.capitalize()
+        else:
+            domain_label = role_str.replace("_", " ").title()
+
         # Determine reporting hierarchy string
         if role_str == "team_lead":
             reports_to = "Agency Leadership (Admin)"
@@ -3661,14 +4046,17 @@ async def list_admin_leave_requests(
                 "id": str(lr.id),
                 "team_member_id": str(lr.user_id),
                 "user_id": str(lr.user_id),
-                "employee_name": full_name or email.split("@")[0].capitalize(),
-                "user_name": full_name or email.split("@")[0].capitalize(),
+                "employee_name": applicant_name,
+                "user_name": applicant_name,
+                "name": applicant_name,
                 "employee_email": email,
                 "email": email,
                 "role": role_str,
+                "role_raw": role_str,
                 "user_role": role_str,
                 "role_display": role_display,
-                "department": dept or ("sales" if role_str in ("sales", "bde") else "creative"),
+                "department": dept or ("sales" if role_str in ("sales", "bde", "bde_head") else "creative"),
+                "domain": domain_label,
                 "team_lead_id": str(tl_id) if tl_id else None,
                 "team_lead_name": reports_to,
                 "pod_name": pod_name,
@@ -3695,7 +4083,7 @@ async def list_admin_leave_requests(
 async def create_leave_request(
     payload: LeaveApplyRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = LeaveApplicantActor,
 ) -> dict[str, Any]:
     """
     Submit a time-off leave request.
@@ -3953,7 +4341,7 @@ async def reject_leave_request(
 async def cancel_leave_request(
     leave_id: str,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = LeaveApplicantActor,
 ) -> dict[str, Any]:
     """
     Cancel/withdraw a leave request.
@@ -6230,6 +6618,100 @@ async def freelancer_submit_work(
     }
 
 
+@router.patch("/freelancer/tasks/{task_id}/start-work")
+async def freelancer_start_task(
+    task_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Mark assigned task as in production / work in progress."""
+    if actor.role != UserRole.FREELANCER and actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
+        raise HTTPException(status_code=403, detail="Only freelancers can update task work status.")
+    task = (await db.execute(select(Task).where(Task.id == task_id))).scalar_one_or_none()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found.")
+    task.status = TaskStatus.IN_PRODUCTION
+    await db.commit()
+    return {"status": "success", "message": "Task marked as In Progress."}
+
+
+@router.post("/freelancer/tasks/{task_id}/upload-content")
+async def freelancer_upload_content(
+    task_id: uuid.UUID,
+    file: UploadFile = File(...),
+    notes: str | None = Form(default=None),
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Upload deliverable video/image/asset directly for a task."""
+    if actor.role != UserRole.FREELANCER and actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
+        raise HTTPException(status_code=403, detail="Only freelancers can upload deliverables via this portal.")
+    task = (await db.execute(select(Task).where(Task.id == task_id))).scalar_one_or_none()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found.")
+
+    static_base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static", "uploads", "freelancer_deliverables"))
+    os.makedirs(static_base, exist_ok=True)
+    clean_filename = f"{uuid.uuid4().hex[:8]}_{file.filename.replace(' ', '_')}"
+    file_path = os.path.join(static_base, clean_filename)
+
+    content = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(content)
+
+    file_url = f"/static/uploads/freelancer_deliverables/{clean_filename}"
+
+    d_res = await db.execute(
+        select(Deliverable).where(Deliverable.task_id == task.id).order_by(Deliverable.version.desc())
+    )
+    latest_deliv = d_res.scalars().first()
+    next_version = (latest_deliv.version + 1) if latest_deliv else 1
+    root_id = latest_deliv.root_id if latest_deliv else uuid.uuid4()
+
+    mime = file.content_type or ("video/mp4" if "mp4" in clean_filename.lower() or "mov" in clean_filename.lower() else "image/png")
+
+    new_deliv = Deliverable(
+        agency_id=actor.agency_id or task.agency_id,
+        root_id=root_id,
+        version=next_version,
+        client_id=task.client_id,
+        task_id=task.id,
+        submitted_by=actor.user_id,
+        file_url=file_url,
+        file_type=mime,
+        status=DeliverableStatus.PENDING_QA,
+        is_archived=False,
+    )
+    db.add(new_deliv)
+    task.status = TaskStatus.INTERNAL_QA
+    await db.flush()
+
+    try:
+        from app.services.deliverable_workflow import record_deliverable_history
+        await record_deliverable_history(
+            db=db,
+            deliverable_id=new_deliv.id,
+            action="submitted",
+            user_id=actor.user_id,
+            user_name=actor.email or "Freelancer",
+            user_role="freelancer",
+            reason=notes or "Freelancer direct file upload for QA review.",
+            agency_id=actor.agency_id or task.agency_id,
+            metadata_extra={"task_id": str(task.id), "filename": file.filename},
+        )
+    except Exception:
+        pass
+
+    await db.commit()
+    return {
+        "status": "success",
+        "message": f"'{file.filename}' uploaded and submitted for Team Lead QA review!",
+        "file_url": file_url,
+        "deliverable_id": str(new_deliv.id),
+        "version": new_deliv.version,
+    }
+
+
 # ============================================================================
 # 2.7 TEAM PRODUCTIVITY AND EFFICIENCY MONITORING DASHBOARD
 # ============================================================================
@@ -6437,6 +6919,267 @@ async def get_team_productivity_metrics(
             "underutilized": underutilized,
         },
     }
+
+
+# ============================================================================
+# 2.8 BDE SALES SPECIALIST ONBOARDING, CREDENTIALS, AND ROSTER MANAGEMENT
+# ============================================================================
+
+class OnboardBDERequest(BaseModel):
+    full_name: str
+    email: str
+    phone: str | None = None
+    designation: str = "Business Development Executive"
+    monthly_quota: int = 2500000
+    commission_rate: float = 5.0
+    password: str
+    send_credentials_email: bool = True
+
+
+class UpdateBDECredsRequest(BaseModel):
+    password: str
+    send_credentials_email: bool = True
+
+
+@router.get("/bde")
+async def list_bde_team(
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> list[dict[str, Any]]:
+    """List all BDE sales representatives, target quotas, and converted revenue stats."""
+    from app.models.crm import Lead, BDETarget
+
+    # Fetch all users with UserRole.SALES
+    stmt = (
+        select(User)
+        .where(User.role == UserRole.SALES)
+        .order_by(User.created_at.asc())
+    )
+    res = await db.execute(stmt)
+    sales_users = res.scalars().all()
+
+    current_month = datetime.now(UTC).strftime("%Y-%m")
+    out: list[dict[str, Any]] = []
+
+    for user in sales_users:
+        # Fetch target quota for current month or latest
+        t_stmt = (
+            select(BDETarget)
+            .where(BDETarget.bde_id == user.id)
+            .order_by(BDETarget.created_at.desc())
+        )
+        target = (await db.execute(t_stmt)).scalars().first()
+
+        # Aggregate leads assigned to this BDE
+        l_stmt = select(Lead).where(Lead.assigned_bde_id == user.id)
+        leads = (await db.execute(l_stmt)).scalars().all()
+
+        total_leads = len(leads)
+        won_leads = [l for l in leads if (l.status or "").lower() == "converted"]
+        deals_won = len(won_leads)
+        closed_revenue = sum(l.estimated_deal_value for l in won_leads)
+
+        active_statuses = ("new", "contacted", "meeting_scheduled", "proposal_sent", "negotiation")
+        active_leads = [l for l in leads if (l.status or "").lower() in active_statuses]
+        active_pipeline = sum(l.estimated_deal_value for l in active_leads)
+
+        conversion_rate = round((deals_won / total_leads) * 100) if total_leads > 0 else 0
+        monthly_quota = target.monthly_quota if target else 2500000
+        commission_rate = target.commission_rate if target else 5.0
+
+        phone = ""
+        designation = "Business Development Executive"
+        if target and target.notes:
+            for part in target.notes.split("|"):
+                part = part.strip()
+                if part.lower().startswith("designation:"):
+                    designation = part.split(":", 1)[1].strip()
+                elif part.lower().startswith("phone:"):
+                    phone = part.split(":", 1)[1].strip()
+
+        out.append({
+            "id": str(user.id),
+            "full_name": user.full_name or "BDE Specialist",
+            "name": user.full_name or "BDE Specialist",
+            "email": user.email,
+            "phone": phone,
+            "designation": designation,
+            "monthly_quota": monthly_quota,
+            "commission_rate": commission_rate,
+            "closed_revenue": closed_revenue,
+            "active_pipeline": active_pipeline,
+            "total_leads": total_leads,
+            "deals_won": deals_won,
+            "conversion_rate": conversion_rate,
+            "is_active": user.account_status == AccountStatus.ACTIVE,
+        })
+
+    return out
+
+
+@router.post("/bde/onboard")
+async def onboard_bde(
+    payload: OnboardBDERequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Onboard a new BDE, provision login credentials, configure sales quota, and dispatch email."""
+    from app.core.security import hash_password
+    from app.models.crm import BDETarget
+    from app.services.email_service import send_email
+
+    clean_email = payload.email.strip().lower()
+
+    # Check if user already exists
+    existing_user = (
+        await db.execute(select(User).where(func.lower(User.email) == clean_email))
+    ).scalar_one_or_none()
+
+    if existing_user:
+        if existing_user.role != UserRole.SALES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"User with email '{clean_email}' already exists with role '{existing_user.role.value}'."
+            )
+        user = existing_user
+        user.full_name = payload.full_name.strip()
+        user.hashed_password = hash_password(payload.password.strip())
+        user.account_status = AccountStatus.ACTIVE
+    else:
+        user = User(
+            email=clean_email,
+            auth_id=f"sales_{uuid.uuid4().hex[:12]}",
+            full_name=payload.full_name.strip(),
+            role=UserRole.SALES,
+            account_status=AccountStatus.ACTIVE,
+            hashed_password=hash_password(payload.password.strip()),
+            agency_id=actor.agency_id,
+        )
+        db.add(user)
+        await db.flush()
+
+    current_month = datetime.now(UTC).strftime("%Y-%m")
+    notes = f"Designation: {payload.designation.strip()} | Phone: {(payload.phone or '').strip()}"
+
+    t_stmt = select(BDETarget).where(BDETarget.bde_id == user.id, BDETarget.month == current_month)
+    target = (await db.execute(t_stmt)).scalar_one_or_none()
+    if target:
+        target.monthly_quota = payload.monthly_quota
+        target.commission_rate = payload.commission_rate
+        target.notes = notes
+    else:
+        target = BDETarget(
+            bde_id=user.id,
+            month=current_month,
+            monthly_quota=payload.monthly_quota,
+            commission_rate=payload.commission_rate,
+            notes=notes,
+        )
+        db.add(target)
+
+    await db.commit()
+
+    email_sent = False
+    if payload.send_credentials_email:
+        subject = "Welcome to Creo Agency — Your BDE Sales Specialist Portal Access"
+        html = f"""
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #0B111C; color: #FFFFFF; border-radius: 16px;">
+          <h2 style="color: #F59E0B; margin-top: 0;">Welcome to Creo, {user.full_name}!</h2>
+          <p style="color: #94A3B8; font-size: 14px; line-height: 1.6;">
+            You have been provisioned as a <strong>{payload.designation}</strong> in Creo's Revenue Engine.
+          </p>
+          <div style="background: #161F2D; border: 1px solid #2A3446; border-radius: 12px; padding: 18px; margin: 20px 0;">
+            <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Portal URL: <a href="http://localhost:5173/auth" style="color: #38BDF8; font-weight: bold;">Login to Creo Portal</a></p>
+            <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Email: <strong style="color: #FFFFFF;">{clean_email}</strong></p>
+            <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Temporary Password: <code style="background: #0B111C; padding: 4px 8px; border-radius: 6px; color: #F59E0B; font-size: 14px; font-weight: bold;">{payload.password.strip()}</code></p>
+            <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Monthly Quota: <strong style="color: #10B981;">₹{payload.monthly_quota:,}</strong></p>
+            <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Commission: <strong style="color: #A855F7;">{payload.commission_rate}%</strong></p>
+          </div>
+          <p style="color: #64748B; font-size: 12px;">Please log in, change your password if required, and start managing your high-priority deals and prospective clients.</p>
+        </div>
+        """
+        try:
+            email_sent = await send_email(to_email=clean_email, subject=subject, html_content=html)
+        except Exception as e:
+            logger.warning(f"Failed to send BDE credentials email: {e}")
+
+    return {
+        "status": "success",
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "email_dispatched": email_sent,
+        "message": f"BDE {user.full_name} onboarded successfully.",
+    }
+
+
+@router.patch("/bde/{bde_id}/credentials")
+async def update_bde_credentials(
+    bde_id: uuid.UUID,
+    payload: UpdateBDECredsRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Update password for an existing BDE and optionally send an email notification."""
+    from app.core.security import hash_password
+    from app.services.email_service import send_email
+
+    user = (await db.execute(select(User).where(User.id == bde_id))).scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="BDE account not found.")
+
+    new_pass = payload.password.strip()
+    if len(new_pass) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
+
+    user.hashed_password = hash_password(new_pass)
+    await db.commit()
+
+    email_sent = False
+    if payload.send_credentials_email:
+        subject = "Your Creo BDE Account Credentials Have Been Updated"
+        html = f"""
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #0B111C; color: #FFFFFF; border-radius: 16px;">
+          <h2 style="color: #F59E0B; margin-top: 0;">Updated Creo Login Credentials</h2>
+          <p style="color: #94A3B8; font-size: 14px; line-height: 1.6;">
+            Hello {user.full_name}, your administrator has updated your BDE login password.
+          </p>
+          <div style="background: #161F2D; border: 1px solid #2A3446; border-radius: 12px; padding: 18px; margin: 20px 0;">
+            <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Portal URL: <a href="http://localhost:5173/auth" style="color: #38BDF8; font-weight: bold;">Login to Creo Portal</a></p>
+            <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Email: <strong style="color: #FFFFFF;">{user.email}</strong></p>
+            <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">New Password: <code style="background: #0B111C; padding: 4px 8px; border-radius: 6px; color: #F59E0B; font-size: 14px; font-weight: bold;">{new_pass}</code></p>
+          </div>
+        </div>
+        """
+        try:
+            email_sent = await send_email(to_email=user.email, subject=subject, html_content=html)
+        except Exception as e:
+            logger.warning(f"Failed to send updated BDE credentials email: {e}")
+
+    return {
+        "status": "success",
+        "email_dispatched": email_sent,
+        "message": f"Credentials updated for {user.full_name}.",
+    }
+
+
+@router.delete("/bde/{bde_id}")
+async def deactivate_bde(
+    bde_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Deactivate/suspend a BDE account."""
+    user = (await db.execute(select(User).where(User.id == bde_id))).scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="BDE account not found.")
+
+    user.account_status = AccountStatus.SUSPENDED
+    user.token_version += 1
+    await db.commit()
+
+    return {"status": "success", "message": f"{user.full_name} has been deactivated."}
+
 
 
 

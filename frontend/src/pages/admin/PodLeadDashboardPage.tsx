@@ -18,7 +18,6 @@ import {
   Users,
   Clock,
   Calendar,
-  AlertTriangle,
   CheckCircle2,
   ArrowRight,
   ArrowLeftRight,
@@ -31,10 +30,8 @@ import {
   X,
   MessageSquare,
   TrendingUp,
-  Sparkles,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../ui/Dialog";
-import { StoryApprovalModal } from "../../components/ops/StoryApprovalModal";
 
 export function PodLeadDashboardPage() {
   const { user } = useAuth();
@@ -45,7 +42,6 @@ export function PodLeadDashboardPage() {
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
   const [standupModalOpen, setStandupModalOpen] = useState(false);
   const [standupNote, setStandupNote] = useState("");
-  const [storyApprovalOpen, setStoryApprovalOpen] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [assignForm, setAssignForm] = useState({
@@ -56,10 +52,6 @@ export function PodLeadDashboardPage() {
     deadline: "Today 5:00 PM",
     notes: "",
   });
-  const [blockedModalOpen, setBlockedModalOpen] = useState(false);
-  const [blockedForm, setBlockedForm] = useState({ title: "", client: "", severity: "Blocker (P0)", details: "" });
-  const [reinforcementsModalOpen, setReinforcementsModalOpen] = useState(false);
-  const [reinforceForm, setReinforceForm] = useState({ role: "3D Motion Designer", hours: "+20 hrs/week", urgency: "Immediate (Today)", notes: "" });
 
   const { data, isLoading, isError, error, refetch } = useQuery<PodDashboardData>({
     queryKey: ["pod_dashboard", user?.id, selectedPodKey],
@@ -314,13 +306,6 @@ export function PodLeadDashboardPage() {
               <Plus className="size-3.5" />
               Assign Deliverable
             </button>
-            <button
-              onClick={() => setStoryApprovalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
-            >
-              <Sparkles className="size-3.5" />
-              Story & Client Approval
-            </button>
           </div>
         </div>
 
@@ -409,9 +394,9 @@ export function PodLeadDashboardPage() {
         </div>
 
         {/* 3. Main Two-Column Layout (Left 2/3, Right 1/3) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-4 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-4">
           {/* LEFT 2 COLUMNS */}
-          <div className="lg:col-span-2 space-y-3.5 sm:space-y-4">
+          <div className="lg:col-span-2 flex flex-col gap-3.5 sm:gap-4">
             {/* Section A: Pod Team Roster & Live Workload */}
             <div id="roster" className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#2A3446] gap-2">
@@ -489,7 +474,7 @@ export function PodLeadDashboardPage() {
             </div>
 
             {/* Section B: Deliverables Pending Lead Sign-off */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs space-y-3.5">
+            <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs flex-1 flex flex-col gap-3.5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#2A3446] gap-2">
                 <div className="flex items-center gap-2.5">
                   <div className="size-7 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black">
@@ -514,9 +499,9 @@ export function PodLeadDashboardPage() {
               </div>
 
               {/* Deliverable Action Cards */}
-              <div className="space-y-2.5">
+              <div className="space-y-2.5 flex-1 flex flex-col">
                 {deliverablesList.length === 0 ? (
-                  <div className="bg-[#0B111C] border border-dashed border-[#2A3446] rounded-2xl p-6 text-center space-y-1.5">
+                  <div className="bg-[#0B111C] border border-dashed border-[#2A3446] rounded-2xl p-6 text-center space-y-1.5 flex-1 flex flex-col items-center justify-center min-h-[140px]">
                     <CheckCircle2 className="size-6 text-emerald-500 mx-auto" />
                     <p className="text-xs font-bold text-white">All deliverables signed off!</p>
                     <p className="text-[10px] text-[#97A0B3]">Zero pending review items in today's QA queue.</p>
@@ -756,28 +741,6 @@ export function PodLeadDashboardPage() {
                 </button>
 
                 <button
-                  onClick={() => setBlockedModalOpen(true)}
-                  className="p-2.5 rounded-xl bg-[#0B111C] hover:bg-rose-500/15 border border-[#2A3446] hover:border-rose-500/40 text-left transition-all cursor-pointer group"
-                >
-                  <div className="size-6 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
-                    <AlertTriangle className="size-3" />
-                  </div>
-                  <span className="text-[11px] font-black text-white block">Log Issue</span>
-                  <span className="text-[9px] text-[#97A0B3] font-medium">Escalate swiftly</span>
-                </button>
-
-                <button
-                  onClick={() => setReinforcementsModalOpen(true)}
-                  className="p-2.5 rounded-xl bg-[#0B111C] hover:bg-purple-500/15 border border-[#2A3446] hover:border-purple-500/40 text-left transition-all cursor-pointer group"
-                >
-                  <div className="size-6 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
-                    <Users className="size-3" />
-                  </div>
-                  <span className="text-[11px] font-black text-white block">Reinforce</span>
-                  <span className="text-[9px] text-[#97A0B3] font-medium">Request talent</span>
-                </button>
-
-                <button
                   onClick={handleExportWeeklyReport}
                   className="p-2.5 rounded-xl bg-[#0B111C] hover:bg-emerald-500/15 border border-[#2A3446] hover:border-emerald-500/40 text-left transition-all cursor-pointer group"
                 >
@@ -963,224 +926,7 @@ export function PodLeadDashboardPage() {
           </div>
         </div>
       )}
-      {/* ─────────────────────────────────────────────────────────────────────────────
-          LOG BLOCKED ISSUE MODAL
-      ───────────────────────────────────────────────────────────────────────────── */}
-      {blockedModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
-        >
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="size-9 rounded-2xl bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center justify-center">
-                  <AlertTriangle className="size-4.5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-white">Log Blocked Issue</h3>
-                  <p className="text-xs text-[#97A0B3] font-medium">Escalate production blockers to Studio Operations</p>
-                </div>
-              </div>
-              <button onClick={() => setBlockedModalOpen(false)} className="text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer">
-                <X className="size-5" />
-              </button>
-            </div>
 
-            <div className="space-y-3.5 text-xs">
-              <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Issue Title</label>
-                <input
-                  type="text"
-                  value={blockedForm.title}
-                  onChange={(e) => setBlockedForm({ ...blockedForm, title: e.target.value })}
-                  placeholder="e.g. Missing 3D CAD assets from client for Holiday Drop"
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D] focus:ring-2 focus:ring-rose-500 focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Affected Client</label>
-                  <NativeSelect
-                    value={blockedForm.client}
-                    onChange={(e) => setBlockedForm({ ...blockedForm, client: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
-                  >
-                    {(!data?.clients || data.clients.length === 0) ? (
-                      <option value="">No clients assigned</option>
-                    ) : (
-                      data.clients.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))
-                    )}
-                  </NativeSelect>
-                </div>
-                <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Severity</label>
-                  <NativeSelect
-                    value={blockedForm.severity}
-                    onChange={(e) => setBlockedForm({ ...blockedForm, severity: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
-                  >
-                    <option value="Blocker (P0)">Blocker (P0 - SLA Risk)</option>
-                    <option value="High (P1)">High (P1)</option>
-                    <option value="Medium (P2)">Medium (P2)</option>
-                  </NativeSelect>
-                </div>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Blocker Details & Action Required</label>
-                <textarea
-                  rows={3}
-                  value={blockedForm.details}
-                  onChange={(e) => setBlockedForm({ ...blockedForm, details: e.target.value })}
-                  placeholder="Explain what is blocking the deliverable and what Ops Director intervention is needed..."
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D] focus:ring-2 focus:ring-rose-500 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-3 border-t border-[#2A3446]">
-              <button
-                type="button"
-                onClick={() => setBlockedModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  showToast(`Blocked issue "${blockedForm.title || "Production Blocker"}" escalated to Studio Director`, "success");
-                  setBlockedModalOpen(false);
-                  setBlockedForm({ title: "", client: "", severity: "Blocker (P0)", details: "" });
-                }}
-                className="px-5 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-rose-600/20"
-              >
-                <AlertTriangle className="size-3.5" />
-                Dispatch Blocker Escalation
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─────────────────────────────────────────────────────────────────────────────
-          REQUEST SPECIALIST REINFORCEMENTS MODAL
-      ───────────────────────────────────────────────────────────────────────────── */}
-      {reinforcementsModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
-        >
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="size-9 rounded-2xl bg-purple-500/15 text-purple-400 border border-purple-500/30 flex items-center justify-center">
-                  <Users className="size-4.5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-white">Request Specialist Reinforcements</h3>
-                  <p className="text-xs text-[#97A0B3] font-medium">Request studio capacity surge for upcoming milestones</p>
-                </div>
-              </div>
-              <button onClick={() => setReinforcementsModalOpen(false)} className="text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer">
-                <X className="size-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3.5 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Craft Role Needed</label>
-                  <NativeSelect
-                    value={reinforceForm.role}
-                    onChange={(e) => setReinforceForm({ ...reinforceForm, role: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
-                  >
-                    <option value="3D Motion Designer">3D Motion Designer</option>
-                    <option value="Video Editor & Colorist">Video Editor & Colorist</option>
-                    <option value="Lead Copy Strategist">Lead Copy Strategist</option>
-                    <option value="Brand Visual Designer">Brand Visual Designer</option>
-                  </NativeSelect>
-                </div>
-                <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Bandwidth Surge</label>
-                  <NativeSelect
-                    value={reinforceForm.hours}
-                    onChange={(e) => setReinforceForm({ ...reinforceForm, hours: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
-                  >
-                    <option value="+20 hrs/week">+20 hrs/week (Part-time)</option>
-                    <option value="+40 hrs/week">+40 hrs/week (Dedicated Surge)</option>
-                    <option value="Single Milestone">Single Milestone Sprint</option>
-                  </NativeSelect>
-                </div>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Required Starting</label>
-                <NativeSelect
-                  value={reinforceForm.urgency}
-                  onChange={(e) => setReinforceForm({ ...reinforceForm, urgency: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
-                >
-                  <option value="Immediate (Today)">Immediate (Today - Critical Bandwidth)</option>
-                  <option value="Next Sprint Cycle">Next Sprint Cycle</option>
-                  <option value="Next Month">Next Month</option>
-                </NativeSelect>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Workload Surge Notes</label>
-                <textarea
-                  rows={3}
-                  value={reinforceForm.notes}
-                  onChange={(e) => setReinforceForm({ ...reinforceForm, notes: e.target.value })}
-                  placeholder="Explain reason for extra capacity (e.g. End-of-month deliverable batch surge)..."
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D] focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-3 border-t border-[#2A3446]">
-              <button
-                type="button"
-                onClick={() => setReinforcementsModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  showToast(`Reinforcements request for ${reinforceForm.role} (${reinforceForm.hours}) sent to Studio Resourcing`, "success");
-                  setReinforcementsModalOpen(false);
-                  setReinforceForm({ role: "3D Motion Designer", hours: "+20 hrs/week", urgency: "Immediate (Today)", notes: "" });
-                }}
-                className="px-5 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-purple-600/20"
-              >
-                <Users className="size-3.5" />
-                Dispatch Surge Request
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Story & Approval Request Modal */}
-      <StoryApprovalModal
-        isOpen={storyApprovalOpen}
-        onClose={() => setStoryApprovalOpen(false)}
-        onSuccess={() => {
-          showToast("Story approval request sent successfully!", "success");
-          queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
-        }}
-      />
     </div>
   );
 }
