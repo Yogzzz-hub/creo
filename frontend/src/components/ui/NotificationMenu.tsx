@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Check, CheckCheck, CalendarCheck, DollarSign, Users, Clock, ExternalLink, ShieldCheck, Trash2, X, ArrowUpRight } from "lucide-react";
+import { Bell, Check, CheckCheck, CalendarCheck, DollarSign, Users, Clock, ExternalLink, ShieldCheck, Trash2, X } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 
@@ -23,22 +23,8 @@ export function NotificationMenu({ placement = "header" }: { placement?: "header
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const isAdminOrSuper = user?.role === "admin" || user?.role === "super_admin";
-  const isTeamLead = user?.role === "team_lead";
-  const isSpecialist =
-    user?.role === "team_member" ||
-    user?.role === "editor" ||
-    user?.role === "designer";
-
-  const isClientRole =
-    user?.role === "client" ||
-    (!isAdminOrSuper && !isTeamLead && !isSpecialist && location.pathname.startsWith("/portal"));
-
-  const isMemberRole =
-    !isClientRole &&
-    (isSpecialist ||
-      location.pathname.startsWith("/workstation") ||
-      location.pathname.startsWith("/member"));
+  const isSalesRole = user?.role === "sales" || location.pathname.startsWith("/bde");
+  const isFreelancerRole = user?.role === "freelancer" || location.pathname.startsWith("/freelancer");
 
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
@@ -92,6 +78,16 @@ export function NotificationMenu({ placement = "header" }: { placement?: "header
     })
     .map((n) => {
       const isRead = Boolean(n.is_read || readIds.has(n.id));
+      if (isSalesRole) {
+        if (n.link?.includes("/admin/leaves") || n.link?.includes("/admin/leave")) {
+          return { ...n, is_read: isRead, link: "/bde/leave" };
+        }
+      }
+      if (isFreelancerRole) {
+        if (n.link?.includes("/admin/leaves") || n.link?.includes("/admin/leave")) {
+          return { ...n, is_read: isRead, link: "/freelancer/leave" };
+        }
+      }
       if (user?.role === "team_lead") {
         if (n.link?.includes("/admin/leaves") || n.link?.includes("/admin/leave")) {
           return { ...n, is_read: isRead, link: "/lead/schedule" };
@@ -360,19 +356,6 @@ export function NotificationMenu({ placement = "header" }: { placement?: "header
                       <p className="mx-auto mt-2 max-w-[260px] text-sm leading-6 text-[#A7B4C8]">New updates from your workspace will appear here.</p>
                     </div>
                   )}
-                </div>
-
-                {/* Footer */}
-                <div className="px-4 sm:px-5 py-3 bg-[#101724] border-t border-[#2A3446] flex items-center justify-between gap-3 text-xs shrink-0">
-                  <span className="text-xs text-[#97A0B3]">Workspace updates</span>
-                  <Link
-                    to={isClientRole ? "/portal/deliverables" : isMemberRole ? "/workstation/schedule" : "/admin/leaves"}
-                    onClick={() => setNotificationOpen(false)}
-                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-[#BCCCE6] hover:bg-[#2A3446] hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]"
-                  >
-                    {isClientRole ? "View deliverables" : isMemberRole ? "View schedule" : "View approvals"}
-                    <ArrowUpRight className="size-3.5" />
-                  </Link>
                 </div>
               </div>, document.body
             )}

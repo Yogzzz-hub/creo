@@ -612,3 +612,108 @@ async def send_payment_rejected_email(
 
     return await send_email(to_email, subject, html_content, text_content)
 
+
+async def send_credentials_email(
+    to_email: str,
+    full_name: str,
+    role: str,
+    password: str,
+    login_url: str | None = None,
+) -> bool:
+    """Send workstation account credentials (email and password) to the user."""
+    from html import escape
+
+    base_url = (login_url or settings.FRONTEND_URL or "http://localhost:5173").rstrip("/")
+    action_url = f"{base_url}/auth"
+
+    subject = "Your Creo Workstation Credentials - Welcome to Creo"
+    formatted_role = role.replace("_", " ").title()
+
+    text_content = f"""Welcome to Creo, {full_name}!
+
+Your Creo workstation account has been provisioned.
+
+Account Credentials:
+- Email ID: {to_email}
+- Password: {password}
+- Assigned Role: {formatted_role}
+- Login URL: {action_url}
+
+Please log in and update your password in Settings if required.
+
+-- Creo Creative Studio Team
+"""
+
+    html_content = f"""<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin: 0; padding: 0; background-color: #0B111C; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0B111C; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width: 560px; background-color: #161F2D; border-radius: 20px; overflow: hidden; border: 1px solid #2A3446; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+          <!-- Brand Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); padding: 32px 32px 24px; border-bottom: 1px solid #2A3446; text-align: center;">
+              <div style="display: inline-block; background: rgba(127, 160, 214, 0.15); border: 1px solid rgba(127, 160, 214, 0.3); border-radius: 9999px; padding: 6px 16px; margin-bottom: 12px;">
+                <span style="font-size: 11px; font-weight: 800; color: #7FA0D6; letter-spacing: 0.1em; text-transform: uppercase;">CREO WORKSTATION ACCESS</span>
+              </div>
+              <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.02em;">Welcome to Creo!</h1>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 32px 32px 24px;">
+              <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #E2E8F0;">
+                Hi <strong>{escape(full_name)}</strong>,
+              </p>
+              <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.6; color: #94A3B8;">
+                Your administrative account credentials have been provisioned for the <strong>{escape(formatted_role)}</strong> role. You can log in immediately to access your active tasks, client deliverables, and team workspace.
+              </p>
+
+              <!-- Credentials Card -->
+              <div style="background-color: #0B111C; border: 1px solid #2A3446; border-radius: 16px; padding: 20px; margin-bottom: 28px;">
+                <div style="margin-bottom: 14px;">
+                  <span style="display: block; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Login Email ID</span>
+                  <span style="display: block; font-size: 14px; font-family: monospace; font-weight: 700; color: #FFFFFF; background: #161F2D; padding: 8px 12px; border-radius: 8px; border: 1px solid #2A3446;">{escape(to_email)}</span>
+                </div>
+                <div style="margin-bottom: 14px;">
+                  <span style="display: block; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Password</span>
+                  <span style="display: block; font-size: 14px; font-family: monospace; font-weight: 700; color: #FCD34D; background: #161F2D; padding: 8px 12px; border-radius: 8px; border: 1px solid #2A3446;">{escape(password)}</span>
+                </div>
+                <div>
+                  <span style="display: block; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Assigned Track</span>
+                  <span style="display: inline-block; font-size: 12px; font-weight: 700; color: #7FA0D6; background: rgba(127,160,214,0.15); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(127,160,214,0.3);">{escape(formatted_role)}</span>
+                </div>
+              </div>
+
+              <!-- CTA Button -->
+              <div style="text-align: center; margin-bottom: 24px;">
+                <a href="{action_url}" style="display: inline-block; background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%); color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 12px; box-shadow: 0 4px 14px rgba(37,99,235,0.4);">
+                  Sign In to Workstation &rarr;
+                </a>
+              </div>
+
+              <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #64748B; text-align: center;">
+                For security reasons, we recommend updating your password after logging in for the first time.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #0F172A; padding: 20px 32px; text-align: center; border-top: 1px solid #2A3446;">
+              <p style="margin: 0; font-size: 11px; color: #64748B;">&copy; 2026 Creo Creative Studio. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    return await send_email(to_email, subject, html_content, text_content)
+
+

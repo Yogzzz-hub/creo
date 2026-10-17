@@ -171,3 +171,15 @@ FreelancerOrStaffActor = Depends(
         UserRole.SUPER_ADMIN,
     )
 )
+LeaveApplicantActor = Depends(
+    require_roles(
+        UserRole.FREELANCER,
+        UserRole.SALES,
+        UserRole.EDITOR,
+        UserRole.DESIGNER,
+        UserRole.TEAM_LEAD,
+        UserRole.ADMIN,
+        UserRole.SUPER_ADMIN,
+    )
+)
+

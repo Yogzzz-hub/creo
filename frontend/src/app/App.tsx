@@ -149,6 +149,12 @@ const SharedProposalPage = lazyModule(() => import("../pages/bde/SharedProposalP
 const BDEDashboardPage = lazyModule(() =>
   import("../pages/bde/BDEDashboardPage").then((m) => ({ default: m.BDEDashboardPage }))
 );
+const BDELeavePage = lazyModule(() =>
+  import("../pages/bde/BDELeavePage").then((m) => ({ default: m.BDELeavePage }))
+);
+const FreelancerLeavePage = lazyModule(() =>
+  import("../pages/freelancer/FreelancerLeavePage").then((m) => ({ default: m.FreelancerLeavePage }))
+);
 const AdminBDEOversightPage = lazyModule(() =>
   import("../pages/admin/AdminBDEOversightPage").then((m) => ({ default: m.AdminBDEOversightPage }))
 );
@@ -329,6 +335,9 @@ const dashboardRoutes = {
   "/admin/sla": AdminSLAPerformancePage,
   "/admin/teams": AdminTeamManagementPage,
   "/admin/team": AdminTeamManagementPage,
+  "/admin/bde-management": AdminTeamManagementPage,
+  "/admin/bde-team": AdminTeamManagementPage,
+  "/admin/bde-onboarding": AdminTeamManagementPage,
   "/admin/leave": AdminLeaveApprovalsPage,
   "/admin/leaves": AdminLeaveApprovalsPage,
   "/admin/revenue": AdminRevenuePage,
@@ -749,6 +758,14 @@ export function App() {
                 <Route path="/bde/crm/:section" element={<ProtectedRoute allowedRoles={["sales", "bde", "bde_head", "admin", "super_admin"]}><RevenueCRMPage /></ProtectedRoute>} />
                 <Route path="/bde/legacy" element={<ProtectedRoute allowedRoles={["sales", "bde", "bde_head", "admin", "super_admin"]}><BDEDashboardPage /></ProtectedRoute>} />
                 <Route
+                  path="/bde/leave"
+                  element={
+                    <ProtectedRoute allowedRoles={["sales", "bde", "admin", "super_admin"]}>
+                      <BDELeavePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/admin/revenue"
                   element={
                     <ProtectedRoute allowedRoles={["admin", "super_admin", "investor_relations", "sales"]}>
@@ -759,7 +776,7 @@ export function App() {
                 <Route
                   path="/admin/plans"
                   element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "sales", "bde"]}>
                       <AdminPlansPage />
                     </ProtectedRoute>
                   }
@@ -767,7 +784,7 @@ export function App() {
                 <Route
                   path="/admin/plans-and-negotiations"
                   element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "sales", "bde"]}>
                       <AdminPlansPage />
                     </ProtectedRoute>
                   }
@@ -954,8 +971,16 @@ export function App() {
                 <Route
                   path="/freelancer/tasks"
                   element={
-                    <ProtectedRoute allowedRoles={["freelancer"]}>
+                    <ProtectedRoute allowedRoles={["freelancer", "admin", "super_admin"]}>
                       <FreelancerTasksPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/freelancer/leave"
+                  element={
+                    <ProtectedRoute allowedRoles={["freelancer", "admin", "super_admin"]}>
+                      <FreelancerLeavePage />
                     </ProtectedRoute>
                   }
                 />

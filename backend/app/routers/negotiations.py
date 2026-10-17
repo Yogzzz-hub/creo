@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.core.errors import NotFound
 from app.core.logging import get_logger
-from app.core.rbac import Actor, get_admin_actor, get_current_actor
+from app.core.rbac import Actor, get_admin_actor, get_current_actor, require_roles
 from app.db.session import get_db
 from app.models.billing import Subscription
 from app.models.enums import SubscriptionStatus, UserRole
@@ -120,12 +120,15 @@ async def submit_negotiation(
     )
 
 
+get_commercial_actor = require_roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.SALES)
+
+
 @router.patch("/{negotiation_id}/approve", response_model=dict[str, Any])
 @router.post("/{negotiation_id}/approve", response_model=dict[str, Any])
 async def approve_negotiation(
     negotiation_id: uuid.UUID,
     payload: NegotiationApproveRequest,
-    actor: Actor = Depends(get_admin_actor),
+    actor: Actor = Depends(get_commercial_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Accept, decline or counter a negotiation.
@@ -158,7 +161,7 @@ async def approve_negotiation(
 async def list_negotiations(
     status_filter: str | None = Query(None, alias="status"),
     negotiation_id: uuid.UUID | None = Query(None, alias="id"),
-    actor: Actor = Depends(get_admin_actor),
+    actor: Actor = Depends(get_commercial_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Admin retrieves all custom plan negotiations."""

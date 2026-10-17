@@ -61,6 +61,7 @@ export interface BDEMetrics {
 
 export interface BDECalendarItem {
   id: string;
+  lead_id?: string;
   title: string;
   scheduled_time?: string | null;
   is_overdue: boolean;
@@ -172,7 +173,16 @@ export async function logLeadActivity(
 }
 
 export async function fetchBDEMetrics(): Promise<BDEMetrics> {
-  return request<BDEMetrics>("/api/v1/bde/metrics");
+  const data = await request<any>("/api/v1/bde/metrics");
+  return {
+    ...data,
+    priorities: data?.priorities || {
+      hot: data?.hot_count || 0,
+      warm: data?.warm_count || 0,
+      cold: data?.cold_count || 0,
+    },
+    stages: data?.stages || {},
+  };
 }
 
 export async function fetchBDECalendar(): Promise<{
@@ -262,4 +272,115 @@ export interface BDEPerformanceResponse {
 export async function fetchBDEPerformance(): Promise<BDEPerformanceResponse> {
   return request<BDEPerformanceResponse>("/api/v1/bde/performance");
 }
+
+export interface BDEAnalyticsData {
+  revenue_tracking: {
+    monthly_target: number;
+    closed_revenue: number;
+    target_achievement_pct: number;
+    remaining_to_target: number;
+    quarterly_projected: number;
+  };
+  pipeline_value: {
+    total_unweighted: number;
+    weighted_expected: number;
+    active_deals_count: number;
+    avg_deal_size: number;
+  };
+  forecasting: {
+    best_case: number;
+    expected: number;
+    worst_case: number;
+    stage_probabilities: Record<string, number>;
+  };
+  win_loss_analysis: {
+    won_count: number;
+    lost_count: number;
+    win_rate: number;
+    loss_rate: number;
+    loss_reasons: Array<{
+      reason: string;
+      count: number;
+      percentage: number;
+    }>;
+  };
+  activity_metrics: {
+    total_activities: number;
+    calls: number;
+    emails: number;
+    whatsapp: number;
+    meetings: number;
+    proposals: number;
+    weekly_actual: number;
+    weekly_target: number;
+    weekly_adherence_pct: number;
+  };
+}
+
+export interface BDECollateralItem {
+  id: string;
+  title?: string;
+  brand?: string;
+  sector?: string;
+  headline?: string;
+  subtitle?: string;
+  summary?: string;
+  format?: string;
+  download_url: string;
+  category?: string;
+  updated_at?: string;
+  highlight_metric?: string;
+}
+
+export interface BDECollateralResponse {
+  pitch_decks: BDECollateralItem[];
+  case_studies: BDECollateralItem[];
+  rate_cards_and_agreements: BDECollateralItem[];
+}
+
+export interface GenerateProposalPayload {
+  lead_id: string;
+  plan_name: string;
+  monthly_fee: number;
+  discount_pct: number;
+  deliverables: Record<string, number>;
+  notes?: string;
+  valid_until?: string;
+}
+
+export interface GenerateProposalResponse {
+  status: string;
+  message: string;
+  activity_id: string;
+  proposal: {
+    lead_id: string;
+    lead_name: string;
+    company_name: string;
+    plan_name: string;
+    original_monthly_fee: number;
+    discount_pct: number;
+    discount_tier: string;
+    final_monthly_fee: number;
+    deliverables: Record<string, number>;
+    scope_summary: string;
+    notes?: string;
+    valid_until: string;
+  };
+}
+
+export async function fetchBDEAnalytics(): Promise<BDEAnalyticsData> {
+  return request<BDEAnalyticsData>("/api/v1/bde/analytics");
+}
+
+export async function fetchBDECollateral(): Promise<BDECollateralResponse> {
+  return request<BDECollateralResponse>("/api/v1/bde/collateral");
+}
+
+export async function generateProposal(payload: GenerateProposalPayload): Promise<GenerateProposalResponse> {
+  return request<GenerateProposalResponse>("/api/v1/bde/proposals", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 

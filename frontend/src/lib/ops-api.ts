@@ -116,19 +116,44 @@ export async function suspendUser(
 
 export interface LeaveRequestItem {
   id: string;
-  user_id: string;
-  user_name: string;
-  user_role: string;
+  user_id?: string;
+  team_member_id?: string;
+  employee_name?: string;
+  user_name?: string;
+  name?: string;
+  employee_email?: string;
+  role?: string;
+  role_raw?: string;
+  user_role?: string;
+  department?: string;
+  domain?: string;
+  team_lead_id?: string | null;
+  team_lead_name?: string;
   start_date: string;
   end_date: string;
   reason: string;
   status: "pending" | "approved" | "rejected";
   created_at: string;
+  created_at_ist?: string;
   approved_by_name: string | null;
+  can_approve?: boolean;
+  can_reject?: boolean;
+  can_cancel?: boolean;
 }
 
 export async function fetchLeaveRequests(): Promise<LeaveRequestItem[]> {
   return request<LeaveRequestItem[]>("/api/v1/admin/leave");
+}
+
+export async function submitLeaveRequest(data: {
+  start_date: string;
+  end_date: string;
+  reason: string;
+}): Promise<any> {
+  return request("/api/v1/admin/leave", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
 export async function approveLeaveRequest(leaveId: string): Promise<any> {
