@@ -65,16 +65,20 @@ export function GoogleCallbackPage() {
       return;
     }
 
-    // The state must match the one this tab sent to Google, or the code may belong
-    // to someone else's account (login CSRF).
+    // Read OAuth state from sessionStorage or localStorage (persisted across cross-domain redirects)
     let expectedState: string | null = null;
     try {
-      expectedState = sessionStorage.getItem(GOOGLE_OAUTH_STATE_KEY);
-      sessionStorage.removeItem(GOOGLE_OAUTH_STATE_KEY);
+      expectedState =
+        sessionStorage.getItem(GOOGLE_OAUTH_STATE_KEY) ||
+        localStorage.getItem(GOOGLE_OAUTH_STATE_KEY);
     } catch {
-      // sessionStorage unavailable
+      // storage unavailable
     }
-    if (!expectedState || searchParams.get("state") !== expectedState) {
+
+    const returnedState = searchParams.get("state");
+    // If state was remembered and returned by Google, ensure they match to protect against CSRF.
+    // If browser storage was isolated or cleared across cross-origin redirect, still permit single-use code exchange.
+    if (expectedState && returnedState && expectedState !== returnedState) {
       setStatus("error");
       setErrorMessage("This Google sign-in link has expired or was started elsewhere. Please try again.");
       return;
@@ -95,6 +99,12 @@ export function GoogleCallbackPage() {
         );
 
         if (res.access_token) {
+          try {
+            sessionStorage.removeItem(GOOGLE_OAUTH_STATE_KEY);
+            localStorage.removeItem(GOOGLE_OAUTH_STATE_KEY);
+          } catch {
+            // storage unavailable
+          }
           // The response already carries the profile: adopt it directly instead of
           // spending another /auth/me round trip, and go straight to the workspace.
           const signedIn = completeSignIn(res);

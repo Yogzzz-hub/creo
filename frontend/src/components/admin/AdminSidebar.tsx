@@ -73,7 +73,7 @@ export function AdminSidebar() {
     user?.role === "team_member" ||
     user?.role === "editor" ||
     user?.role === "designer";
-  const isBDERole = user?.role === "sales" || user?.role === "bde";
+  const isBDERole = ["sales", "bde", "bde_head"].includes(user?.role || "");
   const isFreelancerRole = user?.role === "freelancer";
 
   const isClientRole =
@@ -149,7 +149,8 @@ export function AdminSidebar() {
       items: [
         { label: "Manage Revenues", href: "/admin/revenue", icon: TrendingUp },
         { label: "Plans & Negotiations", href: "/admin/plans", icon: FileText },
-        { label: "BDE Sales & Outreach", href: "/admin/bde-oversight", icon: Briefcase, badge: "CRM" },
+        { label: "Revenue CRM", href: "/bde/crm/overview", icon: Briefcase, badge: "CRM" },
+        { label: "BDE Sales & Outreach", href: "/admin/bde-oversight", icon: Briefcase },
       ],
     },
     {
@@ -264,13 +265,16 @@ export function AdminSidebar() {
     {
       label: "BDE Workspace",
       items: [
-        { label: "Pipeline & Leads", href: "/bde", icon: Briefcase, badge: "Deals" },
-      ],
-    },
-    {
-      label: "Commercial & Plans",
-      items: [
-        { label: "Rate Cards & Plans", href: "/admin/plans", icon: CreditCard },
+        { label: "Action Center", href: "/bde/crm/overview", icon: LayoutDashboard },
+        { label: "Leads & Companies", href: "/bde/crm/leads", icon: Users },
+        { label: "Pipeline", href: "/bde/crm/pipeline", icon: Layers },
+        { label: "Follow-ups", href: "/bde/crm/tasks", icon: Calendar },
+        { label: "Proposal Studio", href: "/bde/crm/proposals", icon: FileText },
+        { label: "Referrals", href: "/bde/crm/referrals", icon: Briefcase },
+        { label: "Messages", href: "/bde/crm/messages", icon: MessageSquare },
+        { label: "AI Workspace", href: "/bde/crm/discovery", icon: TrendingUp },
+        { label: "Reports & Scorecards", href: "/bde/crm/reports", icon: CreditCard },
+        { label: "Delivery Handoffs", href: "/bde/crm/handoffs", icon: Briefcase },
       ],
     },
     {
@@ -360,7 +364,7 @@ export function AdminSidebar() {
   const roleSubtitle = isFreelancerRole
     ? "Creative Freelancer · Specialist Roster"
     : isBDERole
-    ? "Business Development · Sales Hub"
+    ? (user?.role === "bde_head" ? "BDE Head · Team oversight" : "Business Development · Sales Hub")
     : isMemberRole
     ? `${user?.role ? user.role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Specialist"} · Active Workstation`
     : user?.role === "team_lead"

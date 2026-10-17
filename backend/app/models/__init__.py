@@ -1,5 +1,16 @@
 """Models package exporting all ORM models."""
 
+from app.models.revenue_crm import (
+    CRMPolicy,
+    CRMTask,
+    CRMService,
+    CRMProposal,
+    CRMReferral,
+    CRMFinanceEntry,
+    CRMConsent,
+    CRMMessage,
+    CRMHandoff,
+)
 from app.models.auth import IdempotencyKey, RefreshToken
 from app.models.publishing import InstagramOAuth, PublishingJob
 from app.models.billing import (
@@ -112,4 +123,13 @@ __all__ = [
     # CRM
     "Lead",
     "LeadActivity",
+    "CRMPolicy",
+    "CRMTask",
+    "CRMService",
+    "CRMProposal",
+    "CRMReferral",
+    "CRMFinanceEntry",
+    "CRMConsent",
+    "CRMMessage",
+    "CRMHandoff",
 ]

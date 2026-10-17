@@ -15,7 +15,10 @@ import {
   Snowflake,
   RefreshCw,
   X,
-  DollarSign,
+  IndianRupee,
+  Users,
+  Target,
+  CheckCircle2,
 } from "lucide-react";
 import {
   fetchLeads,
@@ -29,6 +32,12 @@ import {
   LeadStatus,
   CreateLeadPayload,
 } from "../../lib/bde-api";
+
+const money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
+const pipelineStages: [LeadStatus, string][] = [
+  ["new", "New"], ["contacted", "Contacted"], ["meeting_scheduled", "Meeting"],
+  ["proposal_sent", "Proposal"], ["negotiation", "Negotiation"], ["converted", "Won"], ["lost", "Lost"],
+];
 
 export function BDEDashboardPage() {
   const queryClient = useQueryClient();
@@ -110,10 +119,15 @@ export function BDEDashboardPage() {
   };
 
   return (
-    <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1550px] w-full mx-auto space-y-6 animate-in fade-in duration-300">
+    <main className="min-w-0 flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1550px] w-full mx-auto space-y-6 animate-in fade-in duration-300">
+      <header className="space-y-1">
+        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#7FA0D6]">Business development</p>
+        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">BDE dashboard</h1>
+        <p className="text-sm text-[#97A0B3]">Track your team’s leads, deal progress, and follow-ups.</p>
+      </header>
       {/* Top Controls */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl p-1 flex items-center gap-1">
+        <div className="grid min-w-0 flex-1 grid-cols-2 rounded-xl border border-[#2A3446] bg-[#161F2D] p-1 sm:flex sm:flex-none sm:items-center sm:gap-1">
           <button
             type="button"
             onClick={() => setActiveTab("pipeline")}
@@ -152,84 +166,71 @@ export function BDEDashboardPage() {
         </button>
       </div>
 
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Pipeline Value */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 shadow-lg hover:border-[#7FA0D6]/40 transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">Pipeline Value</span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <DollarSign className="w-4 h-4" />
-            </div>
+      <section aria-label="BDE performance statistics" className="space-y-4">
+        {metricsQuery.isError && (
+          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+            <span>Unable to load BDE statistics.</span>
+            <button type="button" onClick={() => void metricsQuery.refetch()} className="font-semibold underline">Retry</button>
           </div>
-          <div className="text-2xl font-extrabold text-white font-mono">
-            ₹{metrics ? (metrics.total_pipeline_value / 1000).toLocaleString() : 0}k
-          </div>
-          <p className="text-[11px] text-[#97A0B3] mt-2">Active opportunities in negotiation</p>
+        )}
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+          {[
+            { label: "Total leads", value: metrics?.total_leads, detail: "All pipeline prospects", icon: Users },
+            { label: "Active leads", value: metrics ? metrics.total_leads - metrics.stages.converted - metrics.stages.lost : undefined, detail: "Open opportunities", icon: Target },
+            { label: "Pipeline value", value: metrics ? money.format(metrics.total_pipeline_value) : undefined, detail: "Estimated value of open deals", icon: IndianRupee },
+            { label: "Won deal value", value: metrics ? money.format(metrics.closed_revenue) : undefined, detail: `${metrics?.stages.converted ?? 0} converted leads`, icon: CheckCircle2 },
+            { label: "Conversion rate", value: metrics ? `${metrics.conversion_rate}%` : undefined, detail: "Converted leads / total leads", icon: TrendingUp },
+            { label: "Follow-ups today", value: metrics?.today_follow_ups, detail: `${metrics?.overdue_follow_ups ?? 0} overdue follow-ups`, icon: Clock },
+          ].map(({ label, value, detail, icon: Icon }) => (
+            <article key={label} className="flex min-w-0 flex-col rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-5">
+              <div className="flex min-h-9 items-start justify-between gap-2">
+                <h2 className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">{label}</h2>
+                <Icon aria-hidden="true" className="size-4 shrink-0 text-[#7FA0D6]" />
+              </div>
+              {metricsQuery.isPending ? <div aria-label="Loading statistic" className="my-1 h-8 w-20 animate-pulse rounded bg-[#2A3446] motion-reduce:animate-none" /> : <p className="break-words text-2xl font-bold tracking-tight text-white tabular-nums">{value ?? "—"}</p>}
+              <p className="mt-2 text-[11px] leading-relaxed text-[#97A0B3]">{metrics ? detail : "Statistics unavailable"}</p>
+            </article>
+          ))}
         </div>
-
-        {/* Conversion Rate */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 shadow-lg hover:border-[#7FA0D6]/40 transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">Conversion Rate</span>
-            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-              <TrendingUp className="w-4 h-4" />
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <article className="min-w-0 rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-white">Pipeline by stage</h2>
+              <span className="text-xs text-[#97A0B3]">All leads</span>
             </div>
-          </div>
-          <div className="text-2xl font-extrabold text-white font-mono">
-            {metrics ? `${metrics.conversion_rate}%` : "--"}
-          </div>
-          <p className="text-[11px] text-[#97A0B3] mt-2">
-            {metrics?.stages.converted || 0} clients won of {metrics?.total_leads || 0} leads
-          </p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
+              {pipelineStages.map(([stage, label]) => (
+                <button key={stage} type="button" onClick={() => { setStatusFilter(stage); setActiveTab("pipeline"); }} className={`min-w-0 rounded-xl border p-3 text-left transition-colors hover:border-[#7FA0D6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] ${statusFilter === stage ? "border-[#7FA0D6] bg-[#7FA0D6]/10" : "border-[#2A3446] bg-[#0B111C]"}`}>
+                  <span className="block text-xl font-bold text-white tabular-nums">{metrics?.stages[stage] ?? "—"}</span>
+                  <span className="mt-1 block text-[11px] text-[#97A0B3]">{label}</span>
+                </button>
+              ))}
+            </div>
+          </article>
+          <article className="min-w-0 rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-5">
+            <h2 className="mb-4 text-sm font-semibold text-white">Lead priorities</h2>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { key: "hot", label: "Hot", count: metrics?.hot_count, icon: Flame, color: "text-rose-400" },
+                { key: "warm", label: "Warm", count: metrics?.warm_count, icon: Sun, color: "text-amber-400" },
+                { key: "cold", label: "Cold", count: metrics?.cold_count, icon: Snowflake, color: "text-blue-400" },
+              ].map(({ key, label, count, icon: Icon, color }) => (
+                <button key={key} type="button" onClick={() => { setPriorityFilter(key); setActiveTab("pipeline"); }} className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-3 text-left transition-colors hover:border-[#7FA0D6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]">
+                  <span className={`flex items-center gap-1.5 text-[11px] ${color}`}><Icon aria-hidden="true" className="size-3.5" />{label}</span>
+                  <span className="mt-2 block text-xl font-bold text-white tabular-nums">{count ?? "—"}</span>
+                </button>
+              ))}
+            </div>
+          </article>
         </div>
-
-        {/* Priority Breakdown */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 shadow-lg hover:border-[#7FA0D6]/40 transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">Lead Priority</span>
-            <Flame className="w-4 h-4 text-rose-400" />
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 text-rose-400 font-bold text-sm">
-              <Flame className="w-3.5 h-3.5" />
-              <span>{metrics?.priorities.hot || 0} Hot</span>
-            </div>
-            <div className="flex items-center gap-1 text-amber-400 font-bold text-sm">
-              <Sun className="w-3.5 h-3.5" />
-              <span>{metrics?.priorities.warm || 0} Warm</span>
-            </div>
-            <div className="flex items-center gap-1 text-blue-400 font-bold text-sm">
-              <Snowflake className="w-3.5 h-3.5" />
-              <span>{metrics?.priorities.cold || 0} Cold</span>
-            </div>
-          </div>
-          <p className="text-[11px] text-[#97A0B3] mt-2">Prioritized for fast conversion</p>
-        </div>
-
-        {/* Overdue / Due Today Calls */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 shadow-lg hover:border-[#7FA0D6]/40 transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">Action Due</span>
-            <Clock className="w-4 h-4 text-amber-400" />
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-rose-400 font-mono">
-              {metrics ? metrics.overdue_follow_ups : 0}
-            </span>
-            <span className="text-xs text-rose-400 font-semibold">overdue</span>
-            <span className="text-xs text-[#97A0B3]">· {metrics?.today_follow_ups || 0} today</span>
-          </div>
-          <p className="text-[11px] text-[#97A0B3] mt-2">Scheduled calls awaiting outreach</p>
-        </div>
-      </div>
+      </section>
 
       {/* Main Tab Content */}
       {activeTab === "pipeline" ? (
         <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl shadow-xl overflow-hidden">
           {/* Filter Bar */}
-          <div className="p-4 sm:p-5 border-b border-[#2A3446] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-            <div className="relative flex-1 max-w-md">
+          <div className="grid gap-4 border-b border-[#2A3446] p-4 sm:p-5 xl:grid-cols-[minmax(220px,1fr)_auto] xl:items-center">
+            <div className="relative min-w-0">
               <Search className="w-4 h-4 text-[#97A0B3] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -295,7 +296,7 @@ export function BDEDashboardPage() {
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full min-w-[1000px] text-left text-xs">
               <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[#97A0B3] uppercase text-[10px] tracking-wider font-bold">
                 <tr>
                   <th className="py-3.5 px-4">Prospect & Company</th>
@@ -317,6 +318,8 @@ export function BDEDashboardPage() {
                       </div>
                     </td>
                   </tr>
+                ) : leadsQuery.isError ? (
+                  <tr><td colSpan={7} className="p-8 text-center text-rose-300">Unable to load prospects. <button type="button" onClick={() => void leadsQuery.refetch()} className="underline">Retry</button></td></tr>
                 ) : leads.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-[#97A0B3]">
@@ -482,7 +485,7 @@ export function BDEDashboardPage() {
         </div>
       ) : (
         /* Calendar & Reminder View */
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           {/* Overdue Calls */}
           <div className="bg-[#161F2D] border border-rose-500/30 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
             <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">

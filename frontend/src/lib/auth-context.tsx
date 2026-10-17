@@ -10,8 +10,9 @@ export const GOOGLE_OAUTH_STATE_KEY = "creo_google_oauth_state";
 function rememberGoogleState(state: string): void {
   try {
     sessionStorage.setItem(GOOGLE_OAUTH_STATE_KEY, state);
+    localStorage.setItem(GOOGLE_OAUTH_STATE_KEY, state);
   } catch {
-    // sessionStorage unavailable
+    // storage unavailable
   }
 }
 
@@ -23,7 +24,7 @@ let googleUrlPending: Promise<string> | null = null;
 
 function readGoogleState(): string | null {
   try {
-    return sessionStorage.getItem(GOOGLE_OAUTH_STATE_KEY);
+    return sessionStorage.getItem(GOOGLE_OAUTH_STATE_KEY) || localStorage.getItem(GOOGLE_OAUTH_STATE_KEY);
   } catch {
     return null;
   }

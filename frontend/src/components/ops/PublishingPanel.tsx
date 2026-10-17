@@ -42,6 +42,7 @@ export interface PublishingJob {
   attempts: number;
 }
 interface Details {
+  publishing_enabled: boolean;
   job: PublishingJob | null;
   calendar_publish_at?: string | null;
   timezone: string;
@@ -140,7 +141,7 @@ export function PublishingPanel({
   const query = useQuery({
     queryKey: ["publishing", "detail", deliverableId, user?.id],
     queryFn: () => request<Details>(`/api/v1/publishing/deliverables/${deliverableId}`),
-    refetchInterval: editing ? false : 30000,
+    refetchInterval: editing ? false : 5000,
   });
   const history = useQuery({
     queryKey: ["publishing", "history", deliverableId, user?.id],
@@ -296,9 +297,11 @@ export function PublishingPanel({
   // The job follows its calendar slot unless the team saved a different time.
   const offCalendar = Boolean(
     job?.scheduled_at &&
-      calendarAt &&
-      Math.abs(new Date(job.scheduled_at).getTime() - new Date(calendarAt).getTime()) > 60_000,
+      (!calendarAt ||
+      Math.abs(new Date(job.scheduled_at).getTime() - new Date(calendarAt).getTime()) > 60_000),
   );
+  const overdue = job?.status === "scheduled" && !!job.scheduled_at &&
+    Date.now() - new Date(job.scheduled_at).getTime() > 60_000;
   const canPostNow =
     manage && lead && job?.approved && connected && !frozen && job.status !== "canceled";
   const hasStaffActions =
@@ -335,7 +338,7 @@ export function PublishingPanel({
 
       <div className="rounded-xl border border-[#2A3446] bg-[#161F2D]/70 px-3 py-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-          <span className={labelText}>Content calendar slot</span>
+          <span className={labelText}>{offCalendar ? "Publishing time" : "Content calendar slot"}</span>
           {offCalendar && (
             <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">
               Custom time
@@ -345,9 +348,9 @@ export function PublishingPanel({
         <p className="mt-1.5 flex items-start gap-2 text-sm">
           <CalendarClock className="mt-0.5 size-4 shrink-0 text-[#7FA0D6]" />
           <span className="min-w-0 break-words">
-            {calendarAt ? (
+            {(offCalendar ? job?.scheduled_at : calendarAt) ? (
               <>
-                {fmt(calendarAt)} <span className="text-[#97A0B3]">· {zone}</span>
+                {fmt((offCalendar ? job?.scheduled_at : calendarAt)!)} <span className="text-[#97A0B3]">· {zone}</span>
               </>
             ) : (
               <span className="text-[#97A0B3]">
@@ -356,15 +359,25 @@ export function PublishingPanel({
             )}
           </span>
         </p>
-        {offCalendar && job?.scheduled_at && (
+        {offCalendar && calendarAt && (
           <p className="mt-1 pl-6 text-xs text-amber-300">
-            Posting at {fmt(job.scheduled_at)} instead.
+            Calendar slot: {fmt(calendarAt)}. Using the custom time above.
           </p>
         )}
-        {!offCalendar && job?.scheduled_at && job.status === "scheduled" && (
-          <p className="mt-1 pl-6 text-xs text-emerald-300">Auto-post armed for this slot.</p>
+        {job?.scheduled_at && job.status === "scheduled" && data?.publishing_enabled && !overdue && (
+          <p className="mt-1 pl-6 text-xs text-emerald-300">Auto-post scheduled for the time above.</p>
         )}
       </div>
+      {data?.publishing_enabled === false && job && !["published", "canceled"].includes(job.status) && (
+        <p role="alert" className="rounded-xl border border-amber-500/30 p-3 text-sm text-amber-200">
+          Automatic publishing is unavailable. An administrator must enable publishing and check the Instagram configuration.
+        </p>
+      )}
+      {overdue && (
+        <p role="alert" className="rounded-xl border border-amber-500/30 p-3 text-sm text-amber-200">
+          The scheduled time has passed. Instagram has not confirmed publication. Check publishing history; the team can review or reschedule this post.
+        </p>
+      )}
 
       {job && (
         <div className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-3">
@@ -753,7 +766,7 @@ export function PublishingQueue({
         `/api/v1/publishing/clients/${clientId}/connection`,
       ),
     enabled: !!clientId && ["admin", "super_admin"].includes(user?.role || ""),
-    refetchInterval: 30000,
+    refetchInterval: 5000,
   });
   const query = useQuery({
     queryKey: ["publishing", "queue", user?.id, effectiveClientId, status, offset],
@@ -761,7 +774,7 @@ export function PublishingQueue({
       request<PublishingJob[]>(
         `/api/v1/publishing/jobs?offset=${offset}${effectiveClientId ? `&client_id=${encodeURIComponent(effectiveClientId)}` : ""}${status ? `&status=${status}` : ""}`,
       ),
-    refetchInterval: 30000,
+    refetchInterval: 5000,
   });
   const rows = query.data || [];
   const page = Math.floor(offset / 100) + 1;

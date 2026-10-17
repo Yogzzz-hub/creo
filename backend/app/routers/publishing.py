@@ -1,10 +1,11 @@
 """Scoped publishing views and actions. Existing deliverable schedule route handles writes."""
 
 import uuid
+import secrets
 from datetime import datetime
 from typing import Literal
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +21,23 @@ from app.models.work import Deliverable
 from app.services import publishing_service as service
 
 router = APIRouter(prefix="/publishing", tags=["Instagram publishing"])
+
+
+@router.post("/dispatch", include_in_schema=False)
+async def dispatch(x_publishing_dispatch_key: str = Header(default="")):
+    """Authenticated cron entrypoint; accepts no job IDs or approval overrides."""
+    from app.config import settings
+    from app.workers.tasks.publish import enabled
+    from app.workers.tasks.scheduler import dispatch_due_publishes_async
+
+    if not settings.PUBLISHING_DISPATCH_SECRET or not secrets.compare_digest(
+        x_publishing_dispatch_key.encode(), settings.PUBLISHING_DISPATCH_SECRET.encode()
+    ):
+        raise Forbidden("Invalid publishing dispatcher credentials.")
+    if not enabled():
+        raise Conflict("Publishing is disabled or Instagram configuration is incomplete.")
+    processed = await dispatch_due_publishes_async(inline=True)
+    return {"status": "ok", "processed": len(processed)}
 
 
 class TestPostBody(BaseModel):
@@ -230,7 +248,10 @@ async def details(
     ).scalar_one_or_none()
     profile = await db.get(ClientProfile, d.client_id)
     plan = await service.calendar_plan(db, d)
+    from app.workers.tasks.publish import enabled
+
     return {
+        "publishing_enabled": enabled(),
         "job": service.serialize(job, d, plan[0] if plan else None) if job else None,
         "calendar_publish_at": plan[0].isoformat() if plan else None,
         "timezone": profile.timezone if profile else "Asia/Kolkata",
@@ -267,6 +288,7 @@ async def approve(
 async def action(
     deliverable_id: uuid.UUID,
     body: ActionBody,
+    background: BackgroundTasks,
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ):
@@ -279,15 +301,12 @@ async def action(
         ).scalar_one_or_none()
         if not job or job.status != "uncertain":
             raise Forbidden("Only an uncertain publication can be reconciled.")
-        from app.workers.tasks.publish import publish_deliverable_task
+        from app.workers.tasks.publish import enabled, execute_publish_job
 
-        # Read-only provider reconciliation is executed by the existing queue.
-        try:
-            publish_deliverable_task.apply_async((str(job.id), str(job.agency_id)), retry=False)
-        except Exception:
-            raise Conflict(
-                "Publishing worker is unavailable. Try reconciliation again later."
-            ) from None
+        if not enabled():
+            raise Conflict("Publishing is disabled or Instagram configuration is incomplete.")
+        # Reconciliation is read-only at Meta and also works without a Celery service.
+        background.add_task(execute_publish_job, job.id, job.agency_id)
         return {"status": "reconciliation_queued"}
     return service.serialize(await service.action(db, actor, d, body.action), d)
 
