@@ -17,6 +17,7 @@ import {
   fetchLeaveRequests,
   approveLeaveRequest,
   rejectLeaveRequest,
+  fetchTeamMembers,
   fetchAdminQueue,
   fetchKanbanTasks,
   moveTaskStage,
@@ -33,7 +34,7 @@ import {
   revokeClientBypass,
   fetchPodDashboard,
 } from "../../lib/ops-api";
-import type { PlanNegotiationApiItem, PlanSummaryItem, ManualPaymentRequest } from "../../lib/ops-api";
+import type { PlanNegotiationApiItem, PlanSummaryItem, ManualPaymentRequest, LeaveRequestItem, TeamMemberItem } from "../../lib/ops-api";
 import { fetchPlans } from "../../lib/onboarding-api";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
 import { CreoInlineLoader } from "../../components/ui/CreoLoader";
@@ -4877,7 +4878,7 @@ export interface TeamMember {
   podId: string;
   name: string;
   role: string;
-  category: "lead" | "designer" | "editor" | "videographer" | "photographer";
+  category: "lead" | "designer" | "editor" | "videographer" | "photographer" | "bde";
   isLead?: boolean;
   email: string;
   handle: string;
@@ -4887,10 +4888,12 @@ export interface TeamMember {
   projectsCount: number;
   capabilities: string[];
   avatarUrl?: string;
+  isOnLeaveToday?: boolean;
 }
 
 export function AdminTeamManagementPage() {
   const [activePodId, setActivePodId] = useState<string | null>(null);
+  const [attendanceFilter, setAttendanceFilter] = useState<"all" | "present" | "leave">("all");
   const [roleCategoryFilter, setRoleCategoryFilter] = useState<string>("all");
   const [memberSort, setMemberSort] = useState<"default" | "workload" | "name">("default");
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -4933,95 +4936,182 @@ export function AdminTeamManagementPage() {
   const [membersList, setMembersList] = useState<TeamMember[]>([]);
 
   useEffect(() => {
-    if (podData?.available_pods && podData.available_pods.length > 0) {
-      const dynamicPods = podData.available_pods.map((p: any) => {
-        const isCurrent = p.id === (podData.pod?.id || activePodId);
-        const stats = isCurrent && podData.pod?.stats ? podData.pod.stats : null;
-        const normalizedPodId = p.letter.toLowerCase() === "a" ? "pod-a" : p.letter.toLowerCase() === "b" ? "pod-b" : "pod-c";
-        return {
-          id: normalizedPodId,
-          rawId: p.id,
-          name: p.name,
-          letter: p.letter,
-          lead: p.lead_name || "Pod Lead",
-          leadRole: "Pod Lead & Creative Director",
-          membersCount: 3,
-          velocityPct: stats?.sla_compliance_pct ?? 100,
-          tasksClosed: stats?.completed ?? 0,
-          pendingReview: stats?.internal_qa ?? 0,
-          allocatedHours: 0,
-          totalHours: 120,
-          color: p.color || "bg-blue-600",
-          textColor: p.textColor || "text-blue-600",
-          pillBg: `${p.badgeColor || "bg-blue-50 text-blue-600"}`,
-          squadLoad: stats?.total_wip ? Math.min(100, stats.total_wip * 15) : 0,
-          activeEngagements: stats?.active_clients_count ?? 0,
-          readyReview: stats?.internal_qa ?? 0,
-          description: `${p.name} dedicated creative pod: Lead, Video Editor, and Graphic Designer.`,
-        };
-      });
-      setPods(dynamicPods);
-    }
-  }, [podData, activePodId]);
-
-  useEffect(() => {
     if (queueData?.staff && queueData.staff.length > 0) {
       const mapped = queueData.staff.map((s, idx) => {
         const email = (s.email || "").toLowerCase();
+        const role = (s.role || "").toLowerCase();
+        const dept = (s.department || "").toLowerCase();
+
         let podId = "pod-a";
-        if (email.includes(".alpha")) podId = "pod-a";
-        else if (email.includes(".beta") || email === "lead@creo.agency") podId = "pod-b";
-        else if (email.includes(".gamma")) podId = "pod-c";
-        else if (s.team_name) {
+        if (email.includes(".alpha") || email.includes("vikram") || email.includes("kabali") || email.includes("elena")) {
+          podId = "pod-a";
+        } else if (email.includes(".beta") || email.includes("sarah") || email.includes("rajini") || email.includes("chloe") || email === "lead@creo.agency") {
+          podId = "pod-b";
+        } else if (email.includes(".gamma") || email.includes("rohan") || email.includes("tanvi") || email.includes("arjun")) {
+          podId = "pod-c";
+        } else if (email.includes("bde") || email.includes("sales") || role === "sales" || role === "bde" || dept === "sales") {
+          podId = "pod-bde";
+        } else if (s.team_name) {
           const tn = s.team_name.toLowerCase();
-          if (tn.includes("b")) podId = "pod-beta";
-          else if (tn.includes("c")) podId = "pod-gamma";
+          if (tn.includes("b")) podId = "pod-b";
+          else if (tn.includes("c")) podId = "pod-c";
           else podId = "pod-a";
         } else {
           podId = idx % 3 === 0 ? "pod-a" : idx % 3 === 1 ? "pod-b" : "pod-c";
         }
 
-        const isLead = s.role === "team_lead" || (s.department === "creative" && (s.full_name?.toLowerCase().includes("lead") ?? false));
-        const isDesigner = s.role === "designer" || s.department === "design";
-        const isEditor = s.role === "editor" || s.department === "video";
-        const category: TeamMember["category"] = isLead ? "lead" : isDesigner ? "designer" : "editor";
+        const isSales = role === "sales" || role === "bde" || dept === "sales" || email.includes("bde");
+        const isLead = !isSales && (role === "team_lead" || (dept === "creative" && (s.full_name?.toLowerCase().includes("lead") ?? false)));
+        const isDesigner = !isSales && (role === "designer" || dept === "design" || email.includes("designer"));
+        const isEditor = !isSales && (role === "editor" || dept === "video" || email.includes("editor"));
+        const category: TeamMember["category"] = isSales ? "bde" : isLead ? "lead" : isDesigner ? "designer" : "editor";
+
+        const isOnLeave = Boolean(s.on_leave_today);
+        const status: TeamMember["status"] = isOnLeave
+          ? "On Leave"
+          : isLead
+          ? "Pod Lead"
+          : s.is_accepting_work
+          ? "Accepting Work"
+          : "Fully Booked";
+
+        const statusColor = isOnLeave
+          ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
+          : isLead
+          ? "bg-blue-500/15 text-[#7FA0D6] border-blue-500/30"
+          : s.is_accepting_work
+          ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+          : "bg-rose-500/15 text-rose-300 border-rose-500/30";
+
+        const roleTitle = isSales
+          ? "BDE Specialist & Growth Lead"
+          : isLead
+          ? "Pod Team Lead & Director"
+          : isDesigner
+          ? "Graphic Designer"
+          : isEditor
+          ? "Video Editor"
+          : (s.department ? `${s.department.toUpperCase()} Specialist` : "Creative Specialist");
 
         return {
           id: s.user_id || `staff-${idx}`,
           podId,
           name: String(s.full_name || (s.email ? s.email.split("@")[0] : "Team Member")),
-          role: isLead ? "Pod Team Lead & Director" : isDesigner ? "Graphic Designer" : isEditor ? "Video Editor" : (s.department ? `${s.department.toUpperCase()} Specialist` : "Creative Specialist"),
+          role: roleTitle,
           category,
           isLead,
           email: s.email || "staff@creo.agency",
           handle: String(s.email ? `@${s.email.split("@")[0]}` : "@member"),
-          status: (s.on_leave_today ? "On Leave" : s.is_accepting_work ? "Accepting Work" : "Fully Booked") as TeamMember["status"],
-          statusColor: s.on_leave_today ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-emerald-50 text-emerald-700 border-emerald-200",
+          status,
+          statusColor,
           allocatedPct: Math.min(100, Math.round((s.active_wip / Math.max(1, s.daily_capacity)) * 100)),
           projectsCount: s.active_wip,
-          capabilities: s.skills && s.skills.length > 0 ? s.skills : ["Creative Design", "Content Operations"],
+          capabilities: s.skills && s.skills.length > 0
+            ? s.skills
+            : isSales
+            ? ["Client Acquisition", "Outbound Lead Gen", "Pipeline Closing", "B2B Onboarding"]
+            : ["Creative Design", "Content Operations"],
+          isOnLeaveToday: isOnLeave,
         };
       });
       setMembersList(mapped);
     }
   }, [queueData]);
 
+  useEffect(() => {
+    const rawPods = podData?.available_pods || [];
+    const basePods = (rawPods.length > 0 ? rawPods : [
+      { id: "pod-alpha", key: "alpha", letter: "A", name: "Pod Alpha", lead_name: "Vikram Malhotra", color: "bg-blue-600", textColor: "text-blue-500", badgeColor: "bg-blue-500/15 text-[#7FA0D6]" },
+      { id: "pod-beta", key: "beta", letter: "B", name: "Pod Beta", lead_name: "Sarah Connor", color: "bg-[#0EA5E9]", textColor: "text-sky-400", badgeColor: "bg-sky-500/15 text-sky-300" },
+      { id: "pod-gamma", key: "gamma", letter: "C", name: "Pod Gamma", lead_name: "Rohan Mehta", color: "bg-[#6366F1]", textColor: "text-indigo-400", badgeColor: "bg-indigo-500/15 text-indigo-300" },
+    ]).map((p: any) => {
+      const isCurrent = p.id === (podData?.pod?.id || activePodId);
+      const stats = isCurrent && podData?.pod?.stats ? podData.pod.stats : null;
+      const normalizedPodId = p.letter.toLowerCase() === "a" ? "pod-a" : p.letter.toLowerCase() === "b" ? "pod-b" : "pod-c";
+      const podMembers = membersList.filter((m) => m.podId === normalizedPodId);
+      const onLeaveCount = podMembers.filter((m) => m.status === "On Leave").length;
+      const presentCount = podMembers.length - onLeaveCount;
+
+      return {
+        id: normalizedPodId,
+        rawId: p.id,
+        name: p.name,
+        letter: p.letter,
+        lead: p.lead_name || (normalizedPodId === "pod-a" ? "Vikram Malhotra" : normalizedPodId === "pod-b" ? "Sarah Connor" : "Rohan Mehta"),
+        leadRole: "Pod Lead & Creative Director",
+        membersCount: podMembers.length || 3,
+        presentCount: podMembers.length > 0 ? presentCount : 3,
+        onLeaveCount,
+        onLeaveMembers: podMembers.filter((m) => m.status === "On Leave"),
+        velocityPct: stats?.sla_compliance_pct ?? 100,
+        tasksClosed: stats?.completed ?? (normalizedPodId === "pod-a" ? 28 : normalizedPodId === "pod-b" ? 22 : 19),
+        pendingReview: stats?.internal_qa ?? 0,
+        allocatedHours: podMembers.reduce((acc, m) => acc + Math.round((m.allocatedPct / 100) * 40), 0),
+        totalHours: (podMembers.length || 3) * 40,
+        color: p.color || (normalizedPodId === "pod-a" ? "bg-blue-600" : normalizedPodId === "pod-b" ? "bg-sky-600" : "bg-indigo-600"),
+        textColor: p.textColor || "text-blue-500",
+        pillBg: p.badgeColor || "bg-blue-500/15 text-[#7FA0D6]",
+        squadLoad: stats?.total_wip ? Math.min(100, stats.total_wip * 15) : Math.round(podMembers.reduce((acc, m) => acc + m.allocatedPct, 0) / (podMembers.length || 1)),
+        activeEngagements: stats?.active_clients_count ?? (normalizedPodId === "pod-a" ? 5 : normalizedPodId === "pod-b" ? 4 : 3),
+        readyReview: stats?.internal_qa ?? 0,
+        description: `${p.name} dedicated creative pod: Lead, Video Editor, and Graphic Designer.`,
+      };
+    });
+
+    const bdeMembers = membersList.filter((m) => m.podId === "pod-bde" || m.category === "bde");
+    if (bdeMembers.length > 0) {
+      const bdeOnLeave = bdeMembers.filter((m) => m.status === "On Leave");
+      basePods.push({
+        id: "pod-bde",
+        rawId: "pod-bde",
+        name: "Sales & BDE Outreach",
+        letter: "S",
+        lead: bdeMembers[0]?.name || "Alex Carter",
+        leadRole: "BDE Specialist & Growth Lead",
+        membersCount: bdeMembers.length,
+        presentCount: bdeMembers.length - bdeOnLeave.length,
+        onLeaveCount: bdeOnLeave.length,
+        onLeaveMembers: bdeOnLeave,
+        velocityPct: 100,
+        tasksClosed: 14,
+        pendingReview: 1,
+        allocatedHours: 25,
+        totalHours: 40,
+        color: "bg-amber-600",
+        textColor: "text-amber-500",
+        pillBg: "bg-amber-500/15 text-amber-300",
+        squadLoad: 40,
+        activeEngagements: 4,
+        readyReview: 0,
+        description: "Dedicated business development, outbound client acquisition, and growth strategy squad.",
+      });
+    }
+
+    setPods(basePods);
+  }, [podData, activePodId, membersList]);
+
   const activePod = pods.find((p) => p.id === activePodId);
 
-  // Filter members based on activePod and role category filter
+  // Filter members based on activePod, attendance filter, and role category filter
   const filteredMembers = membersList.filter((m) => {
     const matchesPod = !activePodId || m.podId === activePodId;
-    
+
+    let matchesAttendance = true;
+    if (attendanceFilter === "present") matchesAttendance = m.status !== "On Leave";
+    else if (attendanceFilter === "leave") matchesAttendance = m.status === "On Leave";
+
     let matchesCategory = true;
     if (roleCategoryFilter === "designer") matchesCategory = m.category === "designer";
     else if (roleCategoryFilter === "editor") matchesCategory = m.category === "editor";
     else if (roleCategoryFilter === "videographer") matchesCategory = m.category === "videographer";
     else if (roleCategoryFilter === "photographer") matchesCategory = m.category === "photographer";
     else if (roleCategoryFilter === "lead") matchesCategory = m.category === "lead";
+    else if (roleCategoryFilter === "bde" || roleCategoryFilter === "sales") matchesCategory = m.category === "bde";
     else if (roleCategoryFilter === "accepting") matchesCategory = m.status === "Accepting Work";
+    else if (roleCategoryFilter === "present") matchesCategory = m.status !== "On Leave";
     else if (roleCategoryFilter === "leave") matchesCategory = m.status === "On Leave";
 
-    return matchesPod && matchesCategory;
+    return matchesPod && matchesAttendance && matchesCategory;
   });
 
   const getRoleIcon = (cat: string) => {
@@ -5029,13 +5119,15 @@ export function AdminTeamManagementPage() {
       case "lead":
         return <UserCog className="w-3.5 h-3.5 text-[#7FA0D6]" />;
       case "designer":
-        return <Palette className="w-3.5 h-3.5 text-purple-600" />;
+        return <Palette className="w-3.5 h-3.5 text-purple-400" />;
       case "editor":
-        return <Scissors className="w-3.5 h-3.5 text-amber-600" />;
+        return <Scissors className="w-3.5 h-3.5 text-blue-400" />;
       case "videographer":
-        return <Video className="w-3.5 h-3.5 text-rose-600" />;
+        return <Video className="w-3.5 h-3.5 text-rose-400" />;
       case "photographer":
-        return <Camera className="w-3.5 h-3.5 text-emerald-600" />;
+        return <Camera className="w-3.5 h-3.5 text-emerald-400" />;
+      case "bde":
+        return <Briefcase className="w-3.5 h-3.5 text-amber-400" />;
       default:
         return <Users className="w-3.5 h-3.5 text-[#F1F5F9]" />;
     }
@@ -5532,19 +5624,129 @@ export function AdminTeamManagementPage() {
         !activePodId ? (
           <div className="space-y-6">
             {/* Top Controls Bar */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-base font-bold text-white">Sprint Pods & Resource Allocation</h3>
-                <p className="text-xs text-[#97A0B3]">Live operational capacity and roster assignments across creative pods</p>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <span>Sprint Pods & Resource Allocation</span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                    Live Roster
+                  </span>
+                </h3>
+                <p className="text-xs text-[#97A0B3]">
+                  Live operational capacity, attendance status, and pod assignments across creative & outreach teams
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsAddMemberOpen(true)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
-              >
-                <Plus className="w-4 h-4" /> Add Team Pod
-              </button>
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/admin/leaves"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold transition-all shadow-sm"
+                >
+                  <Plane className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Leave Management</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setIsAddMemberOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
+                >
+                  <Plus className="w-4 h-4" /> Add Team Member
+                </button>
+              </div>
             </div>
+
+            {/* Attendance & Presence Status Filter Bar */}
+            {(() => {
+              const totalStaff = membersList.length;
+              const leaveStaff = membersList.filter((m) => m.status === "On Leave");
+              const presentStaff = membersList.filter((m) => m.status !== "On Leave");
+
+              return (
+                <div className="space-y-3">
+                  <div className="p-4 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] mr-1 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-[#7FA0D6]" /> Today's Attendance:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setAttendanceFilter("all")}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          attendanceFilter === "all"
+                            ? "bg-[#7FA0D6] text-[#0B111C] shadow-sm font-black"
+                            : "bg-[#0B111C] text-[#97A0B3] hover:text-white border border-[#2A3446]"
+                        }`}
+                      >
+                        <span>All Specialists</span>
+                        <span className="px-1.5 py-0.2 rounded-full bg-black/20 text-[10px] font-black">{totalStaff}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setAttendanceFilter("present")}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          attendanceFilter === "present"
+                            ? "bg-emerald-600 text-white shadow-sm font-black"
+                            : "bg-[#0B111C] text-emerald-400 hover:text-emerald-300 border border-emerald-500/30"
+                        }`}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>Present In-Office</span>
+                        <span className="px-1.5 py-0.2 rounded-full bg-emerald-950 text-emerald-200 text-[10px] font-black">
+                          {presentStaff.length}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setAttendanceFilter("leave")}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          attendanceFilter === "leave"
+                            ? "bg-amber-600 text-white shadow-sm font-black"
+                            : "bg-[#0B111C] text-amber-400 hover:text-amber-300 border border-amber-500/30"
+                        }`}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                        <span>On Leave Today</span>
+                        <span className="px-1.5 py-0.2 rounded-full bg-amber-950 text-amber-200 text-[10px] font-black">
+                          {leaveStaff.length}
+                        </span>
+                      </button>
+                    </div>
+
+                    <Link
+                      to="/admin/leaves"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7FA0D6] hover:text-blue-300 hover:underline transition-colors ml-auto"
+                    >
+                      <Plane className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{leaveStaff.length} on approved leave &rarr;</span>
+                    </Link>
+                  </div>
+
+                  {/* Active On-Leave Notification Banner */}
+                  {leaveStaff.length > 0 && (
+                    <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-md">
+                      <div className="flex items-center gap-2.5">
+                        <Plane className="w-4 h-4 text-amber-400 shrink-0" />
+                        <div>
+                          <strong className="text-white">Away on Approved Leave Today ({leaveStaff.length}):</strong>{" "}
+                          <span className="text-amber-300">
+                            {leaveStaff
+                              .map((m) => `${m.name} (${m.role} • ${m.podId === "pod-b" ? "Pod Beta" : m.podId === "pod-bde" ? "Sales & BDE" : m.podId === "pod-a" ? "Pod Alpha" : "Pod Gamma"})`)
+                              .join(" & ")}
+                          </span>
+                        </div>
+                      </div>
+                      <Link
+                        to="/admin/leaves"
+                        className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-bold transition-all cursor-pointer shrink-0"
+                      >
+                        Review Leave Approvals
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* 3 KPI Summary Cards matching Screenshot 1 */}
             {(() => {
@@ -5571,7 +5773,7 @@ export function AdminTeamManagementPage() {
                     </div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-3xl font-black text-white tracking-tight">{totalPodsCount} Pods</span>
-                      <span className="text-xs font-semibold text-[#97A0B3]">across {totalMembersCount} members</span>
+                      <span className="text-xs font-semibold text-[#97A0B3]">across {totalMembersCount} specialists</span>
                     </div>
                     <div className="mt-4 pt-3 border-t border-[#2A3446] text-xs font-bold text-[#7FA0D6] flex items-center gap-1">
                       <Layers className="w-3.5 h-3.5" /> Pods {firstPodLetter} – {lastPodLetter} Active Pods
@@ -5584,7 +5786,7 @@ export function AdminTeamManagementPage() {
                       <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                         CAPACITY
                       </span>
-                      <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
                         <Zap className="w-5 h-5" />
                       </div>
                     </div>
@@ -5593,10 +5795,10 @@ export function AdminTeamManagementPage() {
                       <span className="text-xs font-semibold text-[#97A0B3]">optimal bandwidth</span>
                     </div>
                     <div className="mt-4 pt-3 border-t border-[#2A3446] flex items-center gap-2">
-                      <div className="flex-1 bg-[#161F2D] rounded-full h-2 overflow-hidden">
-                        <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${avgCapacityPct}%` }} />
+                      <div className="flex-1 bg-[#0B111C] rounded-full h-2 overflow-hidden border border-[#2A3446]">
+                        <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${avgCapacityPct}%` }} />
                       </div>
-                      <span className="text-xs font-bold text-emerald-600">
+                      <span className="text-xs font-bold text-emerald-400">
                         {avgCapacityPct > 90 ? "High Load" : "Healthy"}
                       </span>
                     </div>
@@ -5608,7 +5810,7 @@ export function AdminTeamManagementPage() {
                       <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                         TASKS TO BE DONE
                       </span>
-                      <div className="w-9 h-9 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-2xl bg-sky-500/15 text-sky-400 border border-sky-500/30 flex items-center justify-center">
                         <CheckSquare className="w-5 h-5" />
                       </div>
                     </div>
@@ -5627,11 +5829,11 @@ export function AdminTeamManagementPage() {
             {/* Team Pods Section Header */}
             <div className="flex items-center justify-between pt-2">
               <div>
-                <h3 className="text-lg font-bold text-white tracking-tight">Team Pods</h3>
-                <p className="text-xs text-[#97A0B3]">Real-time capacity distribution, pod leads, and task completion velocity</p>
+                <h3 className="text-lg font-bold text-white tracking-tight">Team Pods & Operational Squads</h3>
+                <p className="text-xs text-[#97A0B3]">Real-time capacity distribution, attendance status, and pod velocity</p>
               </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Sprint Cycle 08 • 4 Days Remaining
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Sprint Cycle 08 • 4 Days Remaining
               </span>
             </div>
 
@@ -5641,7 +5843,7 @@ export function AdminTeamManagementPage() {
                 <div
                   key={pod.id}
                   onClick={() => setActivePodId(pod.id)}
-                  className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.04)] space-y-5 hover:shadow-xl transition-all cursor-pointer group relative overflow-hidden"
+                  className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.04)] space-y-5 hover:shadow-xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group relative overflow-hidden"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -5651,37 +5853,47 @@ export function AdminTeamManagementPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-base text-white">{pod.name}</h4>
-                          <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold">
-                            Sprint Pod
+                          <span className="px-2 py-0.5 rounded-full bg-[#0B111C] text-[#F1F5F9] border border-[#2A3446] text-[10px] font-bold">
+                            {pod.id === "pod-bde" ? "Outreach Squad" : "Creative Pod"}
                           </span>
                         </div>
-                        <p className="text-xs text-[#97A0B3]">{pod.description.slice(0, 48)}...</p>
+                        <p className="text-xs text-[#97A0B3]">{pod.description.slice(0, 52)}...</p>
                       </div>
                     </div>
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active
-                    </span>
+
+                    {/* Live Presence / On Leave Badge */}
+                    {pod.onLeaveCount > 0 ? (
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 shadow-xs">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                        <span>{pod.onLeaveCount} On Leave Today</span>
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        <span>All {pod.membersCount} Present</span>
+                      </span>
+                    )}
                   </div>
 
                   {/* Lead Info & Member Stack */}
                   <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl flex items-center justify-between border border-[#2A3446]">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
+                      <div className={`w-8 h-8 rounded-full ${pod.color} text-white font-bold text-xs flex items-center justify-center`}>
                         {pod.lead[0]}
                       </div>
                       <div>
                         <div className="text-xs font-bold text-white">{pod.lead}</div>
-                        <div className="text-[10px] text-[#97A0B3] font-medium">Pod Lead</div>
+                        <div className="text-[10px] text-[#97A0B3] font-medium">{pod.leadRole}</div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 text-xs font-bold text-[#F1F5F9]">
-                      <div className="flex -space-x-2">
-                        <div className="w-7 h-7 rounded-full bg-slate-700 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">ER</div>
-                        <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">MC</div>
-                        <div className="w-7 h-7 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">LZ</div>
-                      </div>
-                      <span className="text-xs font-bold text-[#F1F5F9]">+{pod.membersCount - 3} Members</span>
+                      <span>{pod.presentCount} Present / {pod.membersCount} Total</span>
+                      {pod.onLeaveCount > 0 && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
+                          {pod.onLeaveMembers.map((m: any) => m.name.split(" ")[0]).join(", ")} away
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -5691,7 +5903,7 @@ export function AdminTeamManagementPage() {
                       <span>Sprint Velocity</span>
                       <span className="font-bold text-white">{pod.velocityPct}% on track</span>
                     </div>
-                    <div className="w-full bg-[#161F2D] rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-[#0B111C] rounded-full h-2.5 overflow-hidden border border-[#2A3446]">
                       <div className={`h-full rounded-full ${pod.color}`} style={{ width: `${pod.velocityPct}%` }} />
                     </div>
                     <div className="flex justify-between text-[11px] text-[#97A0B3] font-medium pt-0.5">
@@ -5711,13 +5923,130 @@ export function AdminTeamManagementPage() {
                         e.stopPropagation();
                         setActivePodId(pod.id);
                       }}
-                      className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                      className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform cursor-pointer"
                     >
-                      View Member Directory &rarr;
+                      View Pod Members ({pod.membersCount}) &rarr;
                     </button>
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Specialist Attendance & Roster Directory (Directly on View 1) */}
+            <div className="pt-4 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2A3446] pb-3">
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <span>Specialist Roster & Live Attendance</span>
+                    <span className="px-2 py-0.5 rounded-full bg-[#161F2D] border border-[#2A3446] text-[10px] text-slate-300 font-bold">
+                      {filteredMembers.length} Specialists
+                    </span>
+                  </h3>
+                  <p className="text-xs text-[#97A0B3]">
+                    {attendanceFilter === "leave"
+                      ? "Showing all specialists currently away on approved leave"
+                      : attendanceFilter === "present"
+                      ? "Showing all specialists actively present and working in office today"
+                      : "Direct overview of all specialists across creative pods and outreach squads"}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-[#97A0B3]">Filter:</span>
+                  <select
+                    value={roleCategoryFilter}
+                    onChange={(e) => setRoleCategoryFilter(e.target.value)}
+                    className="px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] text-xs font-bold text-white focus:outline-none"
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="lead">Leads</option>
+                    <option value="designer">Designers</option>
+                    <option value="editor">Editors</option>
+                    <option value="bde">BDE Specialists</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Roster Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {filteredMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="bg-[#161F2D] rounded-2xl border border-[#2A3446] p-4 space-y-3 flex flex-col justify-between hover:border-[#7FA0D6]/40 transition-all shadow-md"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="relative">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1E293B] to-[#334155] border border-[#2A3446] text-white font-extrabold text-xs flex items-center justify-center shadow-xs">
+                              {member.name.slice(0, 2).toUpperCase()}
+                            </div>
+                            <span
+                              className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full ring-2 ring-[#161F2D] ${
+                                member.status === "On Leave" ? "bg-amber-400" : "bg-emerald-500"
+                              }`}
+                              title={member.status === "On Leave" ? "On Approved Leave Today" : "Present & Active"}
+                            />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-xs text-white flex items-center gap-1">
+                              <span>{member.name}</span>
+                              {member.isLead && <CheckCircle2 className="w-3 h-3 text-[#7FA0D6]" />}
+                            </h4>
+                            <span className="text-[10px] text-[#97A0B3] font-medium flex items-center gap-1 mt-0.5">
+                              {getRoleIcon(member.category)}
+                              <span>{member.role}</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${member.statusColor}`}>
+                          {member.status}
+                        </span>
+                      </div>
+
+                      {/* Pod Tag & Email */}
+                      <div className="p-2.5 bg-[#0B111C] rounded-xl text-[10px] font-mono space-y-0.5 border border-[#2A3446]">
+                        <div className="text-white font-sans font-bold flex items-center justify-between">
+                          <span className="text-[#97A0B3]">Squad:</span>
+                          <span className="text-[#7FA0D6]">
+                            {member.podId === "pod-a"
+                              ? "Pod Alpha"
+                              : member.podId === "pod-b"
+                              ? "Pod Beta"
+                              : member.podId === "pod-c"
+                              ? "Pod Gamma"
+                              : "Sales & BDE"}
+                          </span>
+                        </div>
+                        <div className="text-[#97A0B3] truncate">{member.email}</div>
+                      </div>
+
+                      {/* Attendance Row */}
+                      <div className="flex items-center justify-between text-xs pt-1 border-t border-[#2A3446]/60">
+                        <span className="text-[#97A0B3] text-[10px] font-bold uppercase tracking-wider">Attendance:</span>
+                        <span className={`text-[11px] font-bold flex items-center gap-1 ${
+                          member.status === "On Leave" ? "text-amber-300" : "text-emerald-400"
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${member.status === "On Leave" ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
+                          {member.status === "On Leave" ? "On Leave Today" : "In Office / Present"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-[#2A3446] flex items-center justify-between text-xs">
+                      <span className="text-[11px] text-[#97A0B3]">Workload: <strong>{member.allocatedPct}%</strong></span>
+                      <button
+                        type="button"
+                        onClick={() => setActivePodId(member.podId)}
+                        className="text-[#7FA0D6] hover:underline font-bold text-[11px] cursor-pointer"
+                      >
+                        View Pod &rarr;
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ) : (
@@ -5784,7 +6113,10 @@ export function AdminTeamManagementPage() {
                     <div className="h-6 w-px bg-gray-200" />
                     <div>
                       <span className="text-[10px] uppercase text-[#97A0B3] block font-extrabold tracking-wider">MEMBERS</span>
-                      <span className="text-white font-black">{filteredMembers.length} Active Members</span>
+                      <span className="text-white font-black">
+                        {filteredMembers.length} Members ({activePod?.presentCount ?? filteredMembers.filter(m => m.status !== "On Leave").length} Present
+                        {activePod?.onLeaveCount ? `, ${activePod.onLeaveCount} on leave` : ""})
+                      </span>
                     </div>
                     <div className="h-6 w-px bg-gray-200" />
                     <div>
@@ -5810,20 +6142,19 @@ export function AdminTeamManagementPage() {
               </div>
             </div>
 
-            {/* Role Category Filter Tabs & Action Controls */}
+            {/* Role Category & Attendance Filter Tabs */}
             <div className="bg-[#161F2D] rounded-2xl border border-[#2A3446] p-4 shadow-sm space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                {/* Filter Pills matching Screenshot 2 */}
+                {/* Filter Pills */}
                 <div className="flex flex-wrap items-center gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs font-bold">
                   {[
                     { key: "all", label: `All Members (${membersList.filter((m) => !activePodId || m.podId === activePodId).length})` },
+                    { key: "present", label: `Present Today (${membersList.filter((m) => (!activePodId || m.podId === activePodId) && m.status !== "On Leave").length})` },
+                    { key: "leave", label: `On Leave (${membersList.filter((m) => (!activePodId || m.podId === activePodId) && m.status === "On Leave").length})` },
                     { key: "lead", label: "Leads" },
                     { key: "designer", label: "Designers" },
                     { key: "editor", label: "Editors" },
-                    { key: "videographer", label: "Videographers" },
-                    { key: "photographer", label: "Photographers" },
-                    { key: "accepting", label: "Accepting Work" },
-                    { key: "leave", label: "On Leave" },
+                    { key: "bde", label: "BDE / Sales" },
                   ].map((tab) => (
                     <button
                       key={tab.key}
@@ -5831,8 +6162,8 @@ export function AdminTeamManagementPage() {
                       onClick={() => setRoleCategoryFilter(tab.key)}
                       className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                         roleCategoryFilter === tab.key
-                          ? "bg-[#7FA0D6] text-white shadow-xs"
-                          : "text-[#F1F5F9] hover:text-white"
+                          ? "bg-[#7FA0D6] text-[#0B111C] font-extrabold shadow-xs"
+                          : "text-[#F1F5F9] hover:text-white hover:bg-[#0B111C]"
                       }`}
                     >
                       {tab.label}
@@ -5906,7 +6237,12 @@ export function AdminTeamManagementPage() {
                           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-base flex items-center justify-center shadow-md">
                             {member.name[0]}
                           </div>
-                          <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                          <span
+                            className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full ring-2 ring-[#161F2D] ${
+                              member.status === "On Leave" ? "bg-amber-400" : "bg-emerald-500"
+                            }`}
+                            title={member.status === "On Leave" ? "On Approved Leave Today" : "Present & Active"}
+                          />
                         </div>
                         <div>
                           <h4 className="font-bold text-sm text-white flex items-center gap-1">
@@ -5940,12 +6276,23 @@ export function AdminTeamManagementPage() {
                         {member.capabilities.map((cap) => (
                           <span
                             key={cap}
-                            className="px-2.5 py-1 rounded-lg bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold border border-[#2A3446]/60"
+                            className="px-2.5 py-1 rounded-lg bg-[#0B111C] text-[#F1F5F9] text-[10px] font-bold border border-[#2A3446]"
                           >
                             {cap}
                           </span>
                         ))}
                       </div>
+                    </div>
+
+                    {/* Attendance Status Row */}
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-[#2A3446]/60">
+                      <span className="text-[#97A0B3] text-[10px] font-bold uppercase tracking-wider">Attendance:</span>
+                      <span className={`text-[11px] font-bold flex items-center gap-1 ${
+                        member.status === "On Leave" ? "text-amber-300" : "text-emerald-400"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${member.status === "On Leave" ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
+                        {member.status === "On Leave" ? "On Approved Leave" : "In Office / Present"}
+                      </span>
                     </div>
                   </div>
 
@@ -5960,7 +6307,7 @@ export function AdminTeamManagementPage() {
                           {member.allocatedPct}% {member.allocatedPct >= 90 ? "Booked" : "Allocated"}
                         </span>
                       </div>
-                      <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
+                      <div className="w-full bg-[#0B111C] rounded-full h-2 overflow-hidden border border-[#2A3446]">
                         <div
                           className={`h-full rounded-full ${
                             member.allocatedPct >= 90 ? "bg-rose-500" : member.allocatedPct >= 70 ? "bg-blue-600" : "bg-emerald-500"
@@ -5971,21 +6318,31 @@ export function AdminTeamManagementPage() {
                     </div>
 
                     <div className="flex items-center justify-between text-xs font-bold pt-1">
-                      <span className="text-emerald-600 flex items-center gap-1 text-[11px]">
-                        ● {member.status === "Fully Booked" ? "At Max Capacity" : "Sprint Ready"}
-                      </span>
+                      {member.status === "On Leave" ? (
+                        <span className="text-amber-400 flex items-center gap-1.5 text-[11px]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" /> On Leave Today
+                        </span>
+                      ) : member.status === "Fully Booked" ? (
+                        <span className="text-rose-400 flex items-center gap-1 text-[11px]">
+                          ● At Max Capacity
+                        </span>
+                      ) : (
+                        <span className="text-emerald-400 flex items-center gap-1 text-[11px]">
+                          ● Sprint Ready
+                        </span>
+                      )}
                       <button
                         type="button"
                         onClick={() => {
-                          if (member.allocatedPct >= 90) {
+                          if (member.allocatedPct >= 90 || member.status === "On Leave") {
                             handleOpenScheduleModal(member);
                           } else {
                             handleOpenAssignModal(member);
                           }
                         }}
-                        className="text-[#7FA0D6] hover:text-blue-800 hover:underline cursor-pointer text-[11px] font-bold"
+                        className="text-[#7FA0D6] hover:text-blue-300 hover:underline cursor-pointer text-[11px] font-bold"
                       >
-                        {member.allocatedPct >= 90 ? "View Schedule" : "Assign Work"}
+                        {member.status === "On Leave" ? "View Leave / Schedule" : member.allocatedPct >= 90 ? "View Schedule" : "Assign Work"}
                       </button>
                     </div>
                   </div>
@@ -6533,10 +6890,21 @@ export function AdminLeaveApprovalsPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [filterTab, setFilterTab] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [applyStartDate, setApplyStartDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [applyEndDate, setApplyEndDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [applyReason, setApplyReason] = useState("");
+  const [isSubmittingApply, setIsSubmittingApply] = useState(false);
 
-  const { data: dbLeaves = [], refetch } = useQuery({
+  const { data: dbLeaves = [], refetch } = useQuery<LeaveRequestItem[]>({
     queryKey: ["admin_leave_requests"],
     queryFn: fetchLeaveRequests,
+    staleTime: 10_000,
+  });
+
+  const { data: teamRoster = [] } = useQuery<TeamMemberItem[]>({
+    queryKey: ["admin_teams_roster"],
+    queryFn: fetchTeamMembers,
+    staleTime: 30_000,
   });
 
   const [localOverrides, setLocalOverrides] = useState<Record<string, "approved" | "rejected">>({});
@@ -6555,28 +6923,100 @@ export function AdminLeaveApprovalsPage() {
         await rejectLeaveRequest(id);
       }
       refetch();
-    } catch {
-      // Keep optimistic UI
+    } catch (err: any) {
+      setToast(err?.message || "Failed to update leave request status");
     }
     setToast(`Leave request ${action} successfully.`);
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const handleApplyLeave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!applyStartDate || !applyEndDate || !applyReason.trim()) return;
+    setIsSubmittingApply(true);
+    try {
+      await request("/api/v1/admin/leave", {
+        method: "POST",
+        body: JSON.stringify({
+          start_date: applyStartDate,
+          end_date: applyEndDate,
+          reason: applyReason.trim(),
+        }),
+      });
+      setToast("Time-off request submitted successfully!");
+      setIsApplyModalOpen(false);
+      setApplyReason("");
+      refetch();
+    } catch (err: any) {
+      setToast(err?.message || "Failed to submit leave request.");
+    } finally {
+      setIsSubmittingApply(false);
+      setTimeout(() => setToast(null), 4000);
+    }
   };
 
   const filteredRequests = leaveRequests.filter(
     (lr) => filterTab === "all" || lr.status === filterTab
   );
 
-  const onLeaveCount = leaveRequests.filter((l) => l.status === "approved").length;
-  const inOfficeCount = Math.max(0, 9 - onLeaveCount);
+  // Dynamic Attendance Calculation
+  const todayStr = useMemo(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  }, []);
+
+  const actualOnLeaveToday = useMemo(() => {
+    return leaveRequests.filter(
+      (l) => l.status === "approved" && (l.is_on_leave_today || (l.start_date <= todayStr && l.end_date >= todayStr))
+    );
+  }, [leaveRequests, todayStr]);
+
+  const totalMembersCount = teamRoster.length > 0 ? teamRoster.length : 12;
+  const inOfficeCount = Math.max(0, totalMembersCount - actualOnLeaveToday.length);
+  const inOfficePct = Math.round((inOfficeCount / totalMembersCount) * 100);
+
+  const getRoleBadgeStyle = (role?: string) => {
+    const r = (role || "").toLowerCase();
+    if (r.includes("lead")) return "bg-blue-500/15 text-[#7FA0D6] border-blue-500/30";
+    if (r.includes("designer") || r.includes("design")) return "bg-purple-500/15 text-purple-300 border-purple-500/30";
+    if (r.includes("editor") || r.includes("video")) return "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
+    if (r.includes("sales") || r.includes("bde")) return "bg-amber-500/15 text-amber-300 border-amber-500/30";
+    if (r.includes("admin")) return "bg-sky-500/15 text-sky-300 border-sky-500/30";
+    return "bg-[#161F2D] text-slate-300 border-[#2A3446]";
+  };
+
+  const getPodBadge = (lr: LeaveRequestItem) => {
+    if (lr.pod_name) return lr.pod_name;
+    const email = (lr.employee_email || lr.email || "").toLowerCase();
+    const tl = (lr.team_lead_name || "").toLowerCase();
+    const role = (lr.role || lr.user_role || "").toLowerCase();
+    if (email.includes(".alpha") || tl.includes("vikram")) return "Pod Alpha (Pod A)";
+    if (email.includes(".beta") || tl.includes("sarah")) return "Pod Beta (Pod B)";
+    if (email.includes(".gamma") || tl.includes("rohan")) return "Pod Gamma (Pod C)";
+    if (role.includes("sales") || role.includes("bde")) return "Sales & Outreach (BDE)";
+    if (role.includes("admin")) return "Operations Leadership";
+    return lr.department ? `${lr.department.toUpperCase()} Squad` : "Creative Squad";
+  };
+
+  const calculateDays = (start: string, end: string) => {
+    try {
+      const s = new Date(start);
+      const e = new Date(end);
+      const diff = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      return diff > 0 ? diff : 1;
+    } catch {
+      return 1;
+    }
+  };
 
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Team Details" />
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-8">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-6">
         {toast && (
-          <div className="p-4 bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs font-bold rounded-2xl flex items-center justify-between shadow-xl backdrop-blur-md animate-fade-in">
+          <div className="p-4 bg-emerald-950/60 border border-emerald-800/60 text-emerald-300 text-xs font-bold rounded-2xl flex items-center justify-between shadow-xl backdrop-blur-md animate-fade-in">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>{toast}</span>
             </div>
             <button onClick={() => setToast(null)} className="text-emerald-400 hover:text-emerald-200 font-bold cursor-pointer">
@@ -6586,194 +7026,377 @@ export function AdminLeaveApprovalsPage() {
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
+              <span>Leave Requests & Presence Approvals</span>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                Live Attendance
+              </span>
+            </h1>
+            <p className="text-xs text-[#97A0B3] mt-0.5">
+              Review and authorize time-off applications across Creative Pods, BDE Outreach, and Operations.
+            </p>
+          </div>
 
           <div className="flex items-center gap-3">
             <Link
               to="/admin/team"
-              className="px-3.5 py-2 rounded-xl bg-[#161F2D] hover:bg-slate-200 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
             >
-              <UserCog className="w-4 h-4 text-[#97A0B3]" /> Team Roster
+              <UserCog className="w-4 h-4 text-[#7FA0D6]" /> Team Roster & Pods
             </Link>
             <button
               type="button"
               onClick={() => setIsApplyModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-[#7FA0D6] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
             >
-              <Plus className="w-4 h-4" /> Apply for Leave
+              <Plus className="w-4 h-4" /> Apply for Time Off
             </button>
           </div>
         </div>
 
-        {/* 2 Top KPI Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6">
-          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-                PEOPLE WORKING TODAY
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
-                <Users className="w-4 h-4" />
+        {/* 2 Top KPI Summary Cards - Fully Connected & Live */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          {/* Card 1: PEOPLE WORKING TODAY */}
+          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-lg flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  PEOPLE WORKING TODAY
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold">
+                  <Users className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">{inOfficeCount}</span>
+                <span className="text-xs font-bold text-emerald-400">Present & Active</span>
+                <span className="text-xs font-semibold text-[#97A0B3]">/ {totalMembersCount} Total Staff</span>
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white tracking-tight">{inOfficeCount}</span>
-              <span className="text-xs font-semibold text-[#97A0B3]">Active in Pods</span>
-            </div>
-            <div className="mt-6 pt-4 border-t border-[#2A3446] flex items-center justify-between text-xs font-semibold text-[#97A0B3]">
-              <span className="flex items-center gap-1.5 text-emerald-600">
-                <span className="w-2 h-2 rounded-full bg-emerald-600" /> 9 Total Pod Specialists
+
+            <div className="mt-5 pt-4 border-t border-[#2A3446] flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
+              <span className="flex items-center gap-1.5 text-emerald-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                Pod Alpha, Beta, Gamma & Sales Active
               </span>
-              <span className="text-white font-bold">{Math.round((inOfficeCount / 9) * 100)}% In-Office</span>
+              <span className="text-white font-extrabold px-2 py-0.5 rounded-lg bg-[#0B111C] border border-[#2A3446]">
+                {inOfficePct}% In-Office
+              </span>
             </div>
           </div>
 
-          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-                ON LEAVE TODAY
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
-                <Plane className="w-4 h-4" />
+          {/* Card 2: ON LEAVE TODAY */}
+          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-lg flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  ON LEAVE TODAY
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">
+                  <Plane className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">{actualOnLeaveToday.length}</span>
+                <span className="text-xs font-bold text-amber-400">Specialists Away</span>
+                <span className="text-xs font-semibold text-[#97A0B3]">({totalMembersCount - actualOnLeaveToday.length} in office)</span>
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white tracking-tight">{onLeaveCount}</span>
-              <span className="text-xs font-semibold text-[#97A0B3]">Specialists Away</span>
-            </div>
-            <div className="mt-6 pt-4 border-t border-[#2A3446] flex items-center justify-between text-xs font-semibold text-[#97A0B3]">
-              <span className="text-[#97A0B3]">Pod A, B, C Active</span>
-              <span className="text-emerald-500 font-bold">{onLeaveCount === 0 ? "Full Capacity" : `${onLeaveCount} on leave`}</span>
+
+            <div className="mt-4 pt-3 border-t border-[#2A3446]">
+              {actualOnLeaveToday.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-wide mr-1">Away Now:</span>
+                  {actualOnLeaveToday.map((m) => (
+                    <span
+                      key={m.id}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-bold"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      <span>{m.employee_name || m.user_name || "Specialist"}</span>
+                      <span className="text-amber-400/80 text-[10px]">
+                        ({m.role_display || m.role || getPodBadge(m)})
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between text-xs font-semibold text-emerald-400">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    All creative pods & sales teams are at full capacity
+                  </span>
+                  <span className="text-[#97A0B3] text-[11px]">0 on leave</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Requests Table */}
-        <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-[#2A3446] flex items-center justify-between bg-[#0B111C]/50">
-            <div className="flex items-center gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs">
+        <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-xl overflow-hidden">
+          <div className="p-4 border-b border-[#2A3446] flex flex-wrap items-center justify-between gap-3 bg-[#0B111C]/60">
+            <div className="flex items-center gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs border border-[#2A3446]">
               {(["all", "pending", "approved", "rejected"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setFilterTab(tab)}
-                  className={`px-3 py-1 rounded-lg capitalize font-bold transition-all cursor-pointer ${
-                    filterTab === tab ? "bg-[#161F2D] text-white shadow-xs" : "text-[#97A0B3]"
+                  className={`px-3 py-1.5 rounded-lg capitalize font-bold transition-all cursor-pointer ${
+                    filterTab === tab ? "bg-[#7FA0D6] text-[#0B111C] shadow-sm font-extrabold" : "text-[#97A0B3] hover:text-white"
                   }`}
                 >
-                  {tab}
+                  {tab === "all" ? `All Requests (${leaveRequests.length})` : `${tab} (${leaveRequests.filter(l => l.status === tab).length})`}
                 </button>
               ))}
             </div>
+
+            <div className="text-xs text-[#97A0B3] font-medium">
+              Showing {filteredRequests.length} leave application records
+            </div>
           </div>
 
-          <table className="w-full text-left text-xs text-white">
-            <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
-              <tr>
-                <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Specialist</th>
-                <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Dates</th>
-                <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Reason</th>
-                <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Status</th>
-                <th className="px-5 py-3.5 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 font-medium">
-              {filteredRequests.length === 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-white">
+              <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
-                    No leave requests found
-                  </td>
+                  <th className="px-4 sm:px-6 py-3.5">Specialist & Team</th>
+                  <th className="px-4 sm:px-6 py-3.5">Dates & Duration</th>
+                  <th className="px-4 sm:px-6 py-3.5">Reason / Notes</th>
+                  <th className="px-4 sm:px-6 py-3.5">Status</th>
+                  <th className="px-4 sm:px-6 py-3.5 text-right">Action / Approver</th>
                 </tr>
-              ) : (
-                filteredRequests.map((lr) => (
-                <tr key={lr.id} className="hover:bg-[#0B111C]/60">
-                  <td className="px-3 sm:px-5 py-3 sm:py-4">
-                    <div className="font-bold text-white">{lr.user_name || (lr as any).name || "Team Member"}</div>
-                    <div className="text-[11px] text-[#97A0B3]">{lr.user_role || (lr as any).department || "Specialist"}</div>
-                  </td>
-                  <td className="px-5 py-4 font-mono text-[11px]">
-                    <div>{lr.start_date || (lr as any).startDate} to {lr.end_date || (lr as any).endDate}</div>
-                  </td>
-                  <td className="px-5 py-4 text-[#F1F5F9] max-w-xs">{lr.reason}</td>
-                  <td className="px-3 sm:px-5 py-3 sm:py-4">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                        lr.status === "approved"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : lr.status === "rejected"
-                          ? "bg-rose-50 text-rose-700 border border-rose-200"
-                          : "bg-amber-50 text-amber-700 border border-amber-200"
-                      }`}
-                    >
-                      {lr.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    {lr.status === "pending" && (
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleAction(lr.id, "approved")}
-                          className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[11px] hover:bg-emerald-700 transition-colors"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleAction(lr.id, "rejected")}
-                          className="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-bold text-[11px] hover:bg-rose-700 transition-colors"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[#2A3446]/60 font-medium">
+                {filteredRequests.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center text-[#97A0B3] text-xs">
+                      No leave applications found for this filter tab.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredRequests.map((lr) => {
+                    const empName = lr.employee_name || lr.user_name || (lr as any).name || "Team Member";
+                    const empEmail = lr.employee_email || lr.email || "staff@creo.agency";
+                    const roleLabel = lr.role_display || (lr.role ? lr.role.replace("_", " ").toUpperCase() : "SPECIALIST");
+                    const podName = getPodBadge(lr);
+                    const isAwayToday = lr.status === "approved" && (lr.is_on_leave_today || (lr.start_date <= todayStr && lr.end_date >= todayStr));
+                    const daysCount = calculateDays(lr.start_date, lr.end_date);
+
+                    return (
+                      <tr key={lr.id} className="hover:bg-[#0B111C]/40 transition-colors">
+                        {/* 1. Specialist & Team */}
+                        <td className="px-4 sm:px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative shrink-0">
+                              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#1E293B] to-[#334155] border border-[#2A3446] text-white font-extrabold text-xs flex items-center justify-center shadow-sm">
+                                {empName.slice(0, 2).toUpperCase()}
+                              </div>
+                              <span
+                                className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ring-2 ring-[#161F2D] ${
+                                  isAwayToday ? "bg-amber-400" : "bg-emerald-400"
+                                }`}
+                                title={isAwayToday ? "On Leave Today" : "Active Member"}
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-bold text-sm text-white flex items-center gap-2 flex-wrap">
+                                <span>{empName}</span>
+                                {isAwayToday && (
+                                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                    Away Today
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${getRoleBadgeStyle(lr.role || lr.user_role)}`}>
+                                  {roleLabel}
+                                </span>
+                                <span className="text-[#97A0B3] text-[10px]">•</span>
+                                <span className="text-slate-300 text-[11px] font-bold">{podName}</span>
+                                {lr.team_lead_name && lr.team_lead_name !== "Unassigned Lead" && (
+                                  <>
+                                    <span className="text-[#97A0B3] text-[10px]">•</span>
+                                    <span className="text-[#97A0B3] text-[10px]">Lead: {lr.team_lead_name}</span>
+                                  </>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-[#97A0B3] font-mono mt-0.5 truncate">{empEmail}</div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* 2. Dates & Duration */}
+                        <td className="px-4 sm:px-6 py-4">
+                          <div className="space-y-1">
+                            <div className="font-mono text-xs font-bold text-white flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5 text-[#7FA0D6]" />
+                              <span>{lr.start_date}</span>
+                              <span className="text-[#97A0B3]">&rarr;</span>
+                              <span>{lr.end_date}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-0.5 rounded-md bg-[#0B111C] border border-[#2A3446] text-[10px] font-bold text-[#7FA0D6]">
+                                {daysCount} {daysCount === 1 ? "Day" : "Days"} Duration
+                              </span>
+                              {lr.created_at_ist && (
+                                <span className="text-[10px] text-[#97A0B3]">
+                                  Submitted {lr.created_at_ist}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* 3. Reason */}
+                        <td className="px-4 sm:px-6 py-4 max-w-xs">
+                          <div className="text-xs text-[#F1F5F9] leading-relaxed break-words bg-[#0B111C]/50 p-2.5 rounded-xl border border-[#2A3446]">
+                            {lr.reason || "Scheduled Time Off"}
+                          </div>
+                        </td>
+
+                        {/* 4. Status */}
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
+                              lr.status === "approved"
+                                ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                                : lr.status === "rejected"
+                                ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
+                                : "bg-amber-500/15 text-amber-300 border-amber-500/30 animate-pulse"
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                lr.status === "approved"
+                                  ? "bg-emerald-400"
+                                  : lr.status === "rejected"
+                                  ? "bg-rose-400"
+                                  : "bg-amber-400"
+                              }`}
+                            />
+                            {lr.status}
+                          </span>
+                        </td>
+
+                        {/* 5. Actions / Approver */}
+                        <td className="px-4 sm:px-6 py-4 text-right whitespace-nowrap">
+                          {lr.status === "pending" ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleAction(lr.id, "approved")}
+                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                              >
+                                <Check className="w-3.5 h-3.5" /> Approve
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleAction(lr.id, "rejected")}
+                                className="px-3 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white font-bold text-xs shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                              >
+                                <X className="w-3.5 h-3.5" /> Reject
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="text-right">
+                              <span className="text-[11px] text-[#97A0B3] font-semibold block">
+                                {lr.status === "approved" ? "Authorized" : "Rejected"}
+                              </span>
+                              {lr.approved_by_name && (
+                                <span className="text-[10px] text-slate-400 block mt-0.5">
+                                  by {lr.approved_by_name}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Apply Modal */}
+        {/* Working Apply for Time Off Modal */}
         {isApplyModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-            <div className="w-full max-w-md rounded-2xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-fade-in">
+            <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
               <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <h3 className="text-base font-bold text-white">Apply for Time Off</h3>
+                <div>
+                  <h3 className="text-base font-bold text-white">Apply for Time Off</h3>
+                  <p className="text-xs text-[#97A0B3]">Submit a leave schedule to administrative operations</p>
+                </div>
                 <button
                   type="button"
                   onClick={() => setIsApplyModalOpen(false)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1.5 rounded-xl text-[#97A0B3] hover:text-white hover:bg-[#0B111C] cursor-pointer transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setToast("Leave request submitted to Team Lead!");
-                  setIsApplyModalOpen(false);
-                }}
-                className="space-y-3"
-              >
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+              <form onSubmit={handleApplyLeave} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Start Date</label>
-                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs" />
+                    <label className="block text-[11px] font-bold text-[#97A0B3] uppercase tracking-wider mb-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={applyStartDate}
+                      onChange={(e) => setApplyStartDate(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-white focus:outline-none focus:border-[#7FA0D6]"
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">End Date</label>
-                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs" />
+                    <label className="block text-[11px] font-bold text-[#97A0B3] uppercase tracking-wider mb-1">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={applyEndDate}
+                      onChange={(e) => setApplyEndDate(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-white focus:outline-none focus:border-[#7FA0D6]"
+                    />
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Reason</label>
-                  <textarea rows={3} required placeholder="State reason for time off..." className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs resize-none" />
+                  <label className="block text-[11px] font-bold text-[#97A0B3] uppercase tracking-wider mb-1">
+                    Reason & Notes
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={applyReason}
+                    onChange={(e) => setApplyReason(e.target.value)}
+                    placeholder="e.g. [Casual Leave] Personal errands or family function..."
+                    className="w-full px-3 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-white focus:outline-none focus:border-[#7FA0D6] resize-none placeholder:text-[#97A0B3]/50"
+                  />
                 </div>
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                  <button type="button" onClick={() => setIsApplyModalOpen(false)} className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C]">Cancel</button>
-                  <button type="submit" className="px-4 py-2 rounded-xl bg-[#7FA0D6] text-xs font-bold text-white hover:bg-[#7FA0D6]">Submit</button>
+
+                <div className="flex justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+                  <button
+                    type="button"
+                    onClick={() => setIsApplyModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#97A0B3] hover:text-white hover:bg-[#0B111C] cursor-pointer transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingApply}
+                    className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-50 transition-all flex items-center gap-1.5"
+                  >
+                    {isSubmittingApply ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                    <span>{isSubmittingApply ? "Submitting..." : "Submit Application"}</span>
+                  </button>
                 </div>
               </form>
             </div>

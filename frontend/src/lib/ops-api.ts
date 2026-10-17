@@ -121,15 +121,32 @@ export async function suspendUser(
 
 export interface LeaveRequestItem {
   id: string;
-  user_id: string;
-  user_name: string;
-  user_role: string;
+  user_id?: string;
+  team_member_id?: string;
+  user_name?: string;
+  employee_name?: string;
+  employee_email?: string;
+  email?: string;
+  user_role?: string;
+  role?: string;
+  role_display?: string;
+  department?: string;
+  pod_name?: string;
+  team_lead_id?: string | null;
+  team_lead_name?: string;
   start_date: string;
   end_date: string;
   reason: string;
   status: "pending" | "approved" | "rejected";
   created_at: string;
-  approved_by_name: string | null;
+  created_at_ist?: string;
+  approved_by?: string | null;
+  approved_by_name?: string | null;
+  can_approve?: boolean;
+  can_reject?: boolean;
+  can_cancel?: boolean;
+  is_self?: boolean;
+  is_on_leave_today?: boolean;
 }
 
 export async function fetchLeaveRequests(): Promise<LeaveRequestItem[]> {
@@ -142,6 +159,26 @@ export async function approveLeaveRequest(leaveId: string): Promise<any> {
 
 export async function rejectLeaveRequest(leaveId: string): Promise<any> {
   return request(`/api/v1/admin/leave/${leaveId}/reject`, { method: "POST" });
+}
+
+export interface TeamMemberItem {
+  id: string;
+  full_name: string;
+  email: string;
+  role: string;
+  account_status: string;
+  department: string;
+  daily_capacity: number;
+  skills: string[];
+  is_accepting_work: boolean;
+  active_wip: number;
+  on_leave_today: boolean;
+  team_lead_id: string | null;
+  team_lead_name: string | null;
+}
+
+export async function fetchTeamMembers(): Promise<TeamMemberItem[]> {
+  return request<TeamMemberItem[]>("/api/v1/admin/teams");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

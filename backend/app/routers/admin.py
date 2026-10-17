@@ -2421,7 +2421,7 @@ async def get_team_members(
     """List staff profiles and creative roster. Scoped to pod for Team Leads."""
     is_tl_only = actor.role in (UserRole.TEAM_LEAD, "team_lead")
 
-    where_clause = "WHERE u.role IN ('editor', 'designer', 'team_lead', 'admin', 'super_admin')"
+    where_clause = "WHERE u.role IN ('editor', 'designer', 'team_lead', 'sales', 'bde', 'bde_head', 'admin', 'super_admin')"
     params: dict[str, Any] = {}
 
     if is_tl_only:
@@ -2446,7 +2446,7 @@ async def get_team_members(
             u.email,
             u.role,
             u.account_status,
-            COALESCE(sp.department, 'creative') AS department,
+            COALESCE(sp.department, CASE WHEN u.role::text IN ('sales', 'bde', 'bde_head') THEN 'sales' WHEN u.role::text IN ('admin', 'super_admin') THEN 'operations' ELSE 'creative' END) AS department,
             COALESCE(sp.daily_capacity, 4) AS daily_capacity,
             COALESCE(sp.skills, ARRAY[]::varchar[]) AS skills,
             COALESCE(sp.is_accepting_work, true) AS is_accepting_work,
@@ -3074,7 +3074,6 @@ async def get_recent_transactions(
 # --- Team Roster & Staff Endpoints ---
 
 @router.get("/team")
-@router.get("/teams")
 async def list_admin_team_roster(
     db: AsyncSession = Depends(get_db),
     actor: Actor = Depends(get_admin_actor),
@@ -3613,22 +3612,66 @@ async def list_admin_leave_requests(
 
         # Determine reporting hierarchy string
         if role_str == "team_lead":
-            reports_to = "Agency Admin"
+            reports_to = "Agency Leadership (Admin)"
         elif tl_name:
             reports_to = tl_name
+        elif role_str in ("sales", "bde", "bde_head"):
+            reports_to = "Revenue & Sales Head"
+        elif role_str in ("admin", "super_admin"):
+            reports_to = "Executive Board"
         else:
-            reports_to = "Unassigned Lead"
+            reports_to = "Creative Pod Lead"
+
+        # Human-readable role badge
+        role_display_map = {
+            "team_lead": "Pod Team Lead",
+            "editor": "Video Editor",
+            "designer": "Graphic Designer",
+            "sales": "BDE Specialist",
+            "bde": "BDE Specialist",
+            "bde_head": "Head of BDE & Sales",
+            "admin": "Operations Admin",
+            "super_admin": "Super Admin",
+            "freelancer": "External Freelancer",
+        }
+        role_display = role_display_map.get(role_str, role_str.replace("_", " ").title())
+
+        # Determine Pod / Team
+        email_lower = (email or "").lower()
+        tl_lower = (tl_name or "").lower()
+        if "vikram" in tl_lower or ".alpha" in email_lower:
+            pod_name = "Pod Alpha (Pod A)"
+        elif "sarah" in tl_lower or ".beta" in email_lower:
+            pod_name = "Pod Beta (Pod B)"
+        elif "rohan" in tl_lower or ".gamma" in email_lower:
+            pod_name = "Pod Gamma (Pod C)"
+        elif role_str in ("sales", "bde", "bde_head"):
+            pod_name = "Sales & Outreach (BDE)"
+        elif role_str in ("admin", "super_admin"):
+            pod_name = "Operations Leadership"
+        else:
+            pod_name = "Creative Core"
+
+        # Check if on leave today (IST / current date)
+        today_date = date.today()
+        is_on_leave_today = lr.status == "approved" and (lr.start_date <= today_date <= lr.end_date)
 
         results.append(
             {
                 "id": str(lr.id),
                 "team_member_id": str(lr.user_id),
+                "user_id": str(lr.user_id),
                 "employee_name": full_name or email.split("@")[0].capitalize(),
+                "user_name": full_name or email.split("@")[0].capitalize(),
                 "employee_email": email,
+                "email": email,
                 "role": role_str,
-                "department": dept or "creative",
+                "user_role": role_str,
+                "role_display": role_display,
+                "department": dept or ("sales" if role_str in ("sales", "bde") else "creative"),
                 "team_lead_id": str(tl_id) if tl_id else None,
                 "team_lead_name": reports_to,
+                "pod_name": pod_name,
                 "start_date": lr.start_date.isoformat(),
                 "end_date": lr.end_date.isoformat(),
                 "reason": lr.reason or "Scheduled Time Off",
@@ -3639,6 +3682,7 @@ async def list_admin_leave_requests(
                 "can_reject": can_reject,
                 "can_cancel": can_cancel,
                 "is_self": is_self,
+                "is_on_leave_today": is_on_leave_today,
                 "created_at": lr.created_at.isoformat() if lr.created_at else "",
                 "created_at_ist": created_ist_str,
             }
