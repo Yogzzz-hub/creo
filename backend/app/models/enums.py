@@ -33,7 +33,6 @@ class UserRole(StrEnum):
     FREELANCER = "freelancer"
     CLIENT = "client"
     INVESTOR_RELATIONS = "investor_relations"
-    FREELANCER = "freelancer"
 
 
 class AccountStatus(StrEnum):
