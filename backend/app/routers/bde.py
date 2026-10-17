@@ -23,12 +23,8 @@ from sqlalchemy import desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.rbac import (
-    Actor,
-    SalesActor,
-    get_current_actor,
-    require_roles,
-)
+from app.core.rbac import Actor
+from app.routers.revenue_crm import actor_context
 from app.db.session import get_db
 from app.models.crm import Lead, LeadActivity
 from app.models.enums import UserRole
@@ -37,15 +33,16 @@ from app.models.user import User
 
 router = APIRouter(prefix="/bde", tags=["BDE & Lead Management"])
 
-# BDEs, Admins, Super Admins, and Team Leads can access the BDE portal
-BDEActor = Depends(
-    require_roles(
-        UserRole.SALES,
-        UserRole.ADMIN,
-        UserRole.SUPER_ADMIN,
-        UserRole.TEAM_LEAD,
-    )
-)
+# Legacy endpoints enforce the same current-account and ownership rules.
+BDEActor = Depends(actor_context)
+
+
+def sa_scope(actor):
+    if actor.role != UserRole.SUPER_ADMIN and not actor.agency_id:
+        raise HTTPException(status_code=403, detail="Agency membership required")
+    from app.services.crm_access import scope
+
+    return scope(actor, Lead.agency_id, Lead.assigned_bde_id)
 
 
 class CreateLeadRequest(BaseModel):
@@ -84,7 +81,9 @@ class UpdateLeadRequest(BaseModel):
 
 
 class CreateLeadActivityRequest(BaseModel):
-    activity_type: str = Field(default="call", pattern="^(?i)(call|whatsapp|email|meeting|note|proposal|status_change)$")
+    activity_type: str = Field(
+        default="call", pattern="^(?i)(call|whatsapp|email|meeting|note|proposal|status_change)$"
+    )
     summary: str = Field(..., min_length=1)
     outcome: str | None = None
     scheduled_follow_up: datetime | None = None
@@ -111,8 +110,7 @@ async def list_leads(
         )
     )
 
-    if actor.agency_id and actor.role != UserRole.SUPER_ADMIN:
-        stmt = stmt.where(or_(Lead.agency_id == actor.agency_id, Lead.agency_id.is_(None)))
+    stmt = stmt.where(sa_scope(actor))
 
     if assigned_to_me:
         stmt = stmt.where(Lead.assigned_bde_id == actor.user_id)
@@ -136,11 +134,15 @@ async def list_leads(
 
     now = datetime.now(UTC)
     if follow_up_filter == "overdue":
-        stmt = stmt.where(Lead.next_follow_up_at < now, Lead.status != "converted", Lead.status != "lost")
+        stmt = stmt.where(
+            Lead.next_follow_up_at < now, Lead.status != "converted", Lead.status != "lost"
+        )
     elif follow_up_filter == "today":
         start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
         end_of_day = start_of_day + timedelta(days=1)
-        stmt = stmt.where(Lead.next_follow_up_at >= start_of_day, Lead.next_follow_up_at < end_of_day)
+        stmt = stmt.where(
+            Lead.next_follow_up_at >= start_of_day, Lead.next_follow_up_at < end_of_day
+        )
     elif follow_up_filter == "upcoming":
         stmt = stmt.where(Lead.next_follow_up_at >= now)
 
@@ -149,25 +151,32 @@ async def list_leads(
 
     items = []
     for lead, bde_name, bde_email in rows:
-        items.append({
-            "id": str(lead.id),
-            "name": lead.name,
-            "company_name": lead.company_name,
-            "email": lead.email,
-            "phone": lead.phone,
-            "requirements": lead.requirements,
-            "estimated_deal_value": lead.estimated_deal_value,
-            "lead_source": lead.lead_source,
-            "priority": lead.priority.upper(),
-            "status": lead.status.lower(),
-            "lost_reason": lead.lost_reason,
-            "next_follow_up_at": lead.next_follow_up_at.isoformat() if lead.next_follow_up_at else None,
-            "last_contacted_at": lead.last_contacted_at.isoformat() if lead.last_contacted_at else None,
-            "assigned_bde_id": str(lead.assigned_bde_id) if lead.assigned_bde_id else None,
-            "assigned_bde_name": bde_name or ("Unassigned" if not lead.assigned_bde_id else "BDE Specialist"),
-            "created_at": lead.created_at.isoformat() if lead.created_at else None,
-            "updated_at": lead.updated_at.isoformat() if lead.updated_at else None,
-        })
+        items.append(
+            {
+                "id": str(lead.id),
+                "name": lead.name,
+                "company_name": lead.company_name,
+                "email": lead.email,
+                "phone": lead.phone,
+                "requirements": lead.requirements,
+                "estimated_deal_value": lead.estimated_deal_value,
+                "lead_source": lead.lead_source,
+                "priority": lead.priority.upper(),
+                "status": lead.status.lower(),
+                "lost_reason": lead.lost_reason,
+                "next_follow_up_at": lead.next_follow_up_at.isoformat()
+                if lead.next_follow_up_at
+                else None,
+                "last_contacted_at": lead.last_contacted_at.isoformat()
+                if lead.last_contacted_at
+                else None,
+                "assigned_bde_id": str(lead.assigned_bde_id) if lead.assigned_bde_id else None,
+                "assigned_bde_name": bde_name
+                or ("Unassigned" if not lead.assigned_bde_id else "BDE Specialist"),
+                "created_at": lead.created_at.isoformat() if lead.created_at else None,
+                "updated_at": lead.updated_at.isoformat() if lead.updated_at else None,
+            }
+        )
     return items
 
 
@@ -177,58 +186,33 @@ async def create_lead(
     db: AsyncSession = Depends(get_db),
     actor: Actor = BDEActor,
 ) -> dict[str, Any]:
-    """Create a new prospective client lead."""
-    # Safely verify assigned BDE user existence
-    assigned_bde = None
-    target_bde = payload.assigned_bde_id or actor.user_id
-    if target_bde:
-        exists_user = (await db.execute(select(User.id).where(User.id == target_bde))).scalar_one_or_none()
-        if exists_user:
-            assigned_bde = exists_user
+    """Compatibility entrypoint; new leads share dedupe, ownership and task rules."""
+    from app.routers.revenue_crm import LeadBody, create_record
 
-    lead = Lead(
-        agency_id=actor.agency_id,
-        assigned_bde_id=assigned_bde,
-        name=payload.name.strip(),
-        company_name=payload.company_name.strip(),
-        email=payload.email.strip().lower() if payload.email else None,
-        phone=payload.phone.strip() if payload.phone else None,
-        requirements=payload.requirements.strip() if payload.requirements else None,
-        estimated_deal_value=payload.estimated_deal_value,
-        lead_source=payload.lead_source.strip(),
-        priority=payload.priority.lower(),
-        status=payload.status.lower(),
-        next_follow_up_at=payload.next_follow_up_at,
-        last_contacted_at=datetime.now(UTC) if payload.status != "new" else None,
-    )
-    db.add(lead)
-    await db.flush()
-
-    # Create initial activity
-    init_activity = LeadActivity(
-        lead_id=lead.id,
-        bde_id=assigned_bde,
-        activity_type="note",
-        summary=f"Lead onboarded from {lead.lead_source} with {lead.priority.upper()} priority.",
-        outcome="Lead created",
-        scheduled_follow_up=payload.next_follow_up_at,
-    )
-    db.add(init_activity)
-
-    if payload.next_follow_up_at and assigned_bde:
-        notif = Notification(
-            user_id=assigned_bde,
-            title="📞 BDE Follow-Up Scheduled",
-            message=f"Follow-up scheduled with {lead.name} ({lead.company_name}) for {payload.next_follow_up_at.strftime('%b %d, %Y')}.",
-            type="bde_reminder",
-            link="/bde",
+    if payload.status.lower() != "new":
+        raise HTTPException(
+            status_code=409,
+            detail="Create a new lead first, then use CRM qualification and stage controls.",
         )
-        db.add(notif)
-
+    lead = await create_record(
+        db,
+        actor,
+        LeadBody(
+            name=payload.name,
+            company_name=payload.company_name,
+            email=payload.email,
+            phone=payload.phone,
+            requirements=payload.requirements or "",
+            estimated_deal_value=payload.estimated_deal_value,
+            lead_source=payload.lead_source,
+            assigned_bde_id=payload.assigned_bde_id,
+            due_at=payload.next_follow_up_at or datetime.now(UTC) + timedelta(days=1),
+        ),
+    )
     await db.commit()
     return {
         "status": "success",
-        "message": f"Lead {lead.name} ({lead.company_name}) created successfully.",
+        "message": "Lead created with a first qualification action.",
         "lead_id": str(lead.id),
     }
 
@@ -243,7 +227,7 @@ async def get_lead(
     stmt = (
         select(Lead, User.full_name.label("bde_name"))
         .outerjoin(User, Lead.assigned_bde_id == User.id)
-        .where(Lead.id == lead_id)
+        .where(Lead.id == lead_id, sa_scope(actor))
         .options(selectinload(Lead.activities))
     )
     res = await db.execute(stmt)
@@ -277,7 +261,9 @@ async def get_lead(
                 "activity_type": act.activity_type,
                 "summary": act.summary,
                 "outcome": act.outcome,
-                "scheduled_follow_up": act.scheduled_follow_up.isoformat() if act.scheduled_follow_up else None,
+                "scheduled_follow_up": act.scheduled_follow_up.isoformat()
+                if act.scheduled_follow_up
+                else None,
                 "created_at": act.created_at.isoformat() if act.created_at else None,
             }
             for act in activities
@@ -293,10 +279,20 @@ async def update_lead(
     actor: Actor = BDEActor,
 ) -> dict[str, Any]:
     """Update lead parameters, stage, priority, or next scheduled follow-up."""
-    lead = (await db.execute(select(Lead).where(Lead.id == lead_id))).scalar_one_or_none()
+    lead = (
+        await db.execute(select(Lead).where(Lead.id == lead_id, sa_scope(actor)))
+    ).scalar_one_or_none()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found.")
 
+    if (lead.metadata_extra or {}).get("created_by") and any(
+        getattr(payload, field) is not None
+        for field in ["status", "priority", "assigned_bde_id", "next_follow_up_at"]
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Use the Revenue CRM stage, qualification, assignment and task controls for this lead.",
+        )
     old_status = lead.status
     if payload.name is not None:
         lead.name = payload.name.strip()
@@ -319,6 +315,11 @@ async def update_lead(
     if payload.lost_reason is not None:
         lead.lost_reason = payload.lost_reason
     if payload.assigned_bde_id is not None:
+        from app.services.crm_access import require_manager
+        from app.routers.revenue_crm import allowed_owner
+
+        require_manager(actor)
+        await allowed_owner(db, actor, payload.assigned_bde_id)
         lead.assigned_bde_id = payload.assigned_bde_id
     if payload.next_follow_up_at is not None:
         lead.next_follow_up_at = payload.next_follow_up_at
@@ -351,13 +352,39 @@ async def delete_lead(
     actor: Actor = BDEActor,
 ) -> dict[str, str]:
     """Delete or remove a lead."""
-    lead = (await db.execute(select(Lead).where(Lead.id == lead_id))).scalar_one_or_none()
+    lead = (
+        await db.execute(select(Lead).where(Lead.id == lead_id, sa_scope(actor)))
+    ).scalar_one_or_none()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found.")
 
-    await db.delete(lead)
+    from app.services.crm_access import require_manager
+
+    require_manager(actor)
+    from app.models.revenue_crm import CRMTask, CRMMessage
+    from app.services.revenue_crm import event
+
+    lead.status, lead.next_follow_up_at = "archived", None
+    for task in (
+        await db.execute(
+            select(CRMTask).where(CRMTask.lead_id == lead.id, CRMTask.status == "pending")
+        )
+    ).scalars():
+        task.status = "canceled"
+    for message in (
+        await db.execute(
+            select(CRMMessage).where(
+                CRMMessage.lead_id == lead.id, CRMMessage.status.in_(["draft", "scheduled"])
+            )
+        )
+    ).scalars():
+        message.status, message.error = "suppressed", "Lead archived."
+    await event(db, actor, lead, "lead_archived")
     await db.commit()
-    return {"status": "success", "message": "Lead removed successfully."}
+    return {
+        "status": "success",
+        "message": "Lead archived; proposal and attribution history retained.",
+    }
 
 
 @router.post("/leads/{lead_id}/activities")
@@ -368,28 +395,30 @@ async def add_lead_activity(
     actor: Actor = BDEActor,
 ) -> dict[str, Any]:
     """Log communication (Call, WhatsApp, Meeting, Proposal) and schedule follow-ups."""
-    lead = (await db.execute(select(Lead).where(Lead.id == lead_id))).scalar_one_or_none()
+    lead = (
+        await db.execute(select(Lead).where(Lead.id == lead_id, sa_scope(actor)))
+    ).scalar_one_or_none()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found.")
 
     now = datetime.now(UTC)
     lead.last_contacted_at = now
-    if payload.scheduled_follow_up is not None:
-        lead.next_follow_up_at = payload.scheduled_follow_up
 
     actor_user_id = None
     if actor.user_id:
-        exists_user = (await db.execute(select(User.id).where(User.id == actor.user_id))).scalar_one_or_none()
+        exists_user = (
+            await db.execute(select(User.id).where(User.id == actor.user_id))
+        ).scalar_one_or_none()
         if exists_user:
             actor_user_id = exists_user
 
     notif_target = lead.assigned_bde_id or actor_user_id
     if payload.scheduled_follow_up and notif_target:
         notif = Notification(
+            agency_id=actor.agency_id,
             user_id=notif_target,
             title="⏰ Follow-Up Reminder",
             message=f"Follow-up due with {lead.name} ({lead.company_name}): {payload.summary[:80]}",
-            type="bde_reminder",
             link="/bde",
         )
         db.add(notif)
@@ -420,8 +449,7 @@ async def get_bde_metrics(
 ) -> dict[str, Any]:
     """Calculate conversion rates, pipeline value, follow-up adherence, and stage breakdown."""
     base_query = select(Lead)
-    if actor.agency_id and actor.role != UserRole.SUPER_ADMIN:
-        base_query = base_query.where(or_(Lead.agency_id == actor.agency_id, Lead.agency_id.is_(None)))
+    base_query = base_query.where(sa_scope(actor))
 
     leads = (await db.execute(base_query)).scalars().all()
 
@@ -434,12 +462,18 @@ async def get_bde_metrics(
     converted_count = len(converted_leads)
     conversion_rate = round((converted_count / max(1, total_leads)) * 100, 1)
 
-    total_pipeline_value = sum(l.estimated_deal_value for l in leads if l.status not in ("lost", "converted"))
+    total_pipeline_value = sum(
+        l.estimated_deal_value for l in leads if l.status not in ("lost", "converted")
+    )
     closed_revenue = sum(l.estimated_deal_value for l in converted_leads)
 
     now = datetime.now(UTC)
     overdue_follow_ups = sum(
-        1 for l in leads if l.next_follow_up_at and l.next_follow_up_at < now and l.status not in ("converted", "lost")
+        1
+        for l in leads
+        if l.next_follow_up_at
+        and l.next_follow_up_at < now
+        and l.status not in ("converted", "lost")
     )
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + timedelta(days=1)
@@ -485,11 +519,12 @@ async def get_bde_calendar(
     stmt = (
         select(Lead, User.full_name.label("bde_name"))
         .outerjoin(User, Lead.assigned_bde_id == User.id)
-        .where(Lead.next_follow_up_at.isnot(None), Lead.status != "converted", Lead.status != "lost")
+        .where(
+            Lead.next_follow_up_at.isnot(None), Lead.status != "converted", Lead.status != "lost"
+        )
         .order_by(Lead.next_follow_up_at.asc())
     )
-    if actor.agency_id and actor.role != UserRole.SUPER_ADMIN:
-        stmt = stmt.where(or_(Lead.agency_id == actor.agency_id, Lead.agency_id.is_(None)))
+    stmt = stmt.where(sa_scope(actor))
 
     res = await db.execute(stmt)
     rows = res.all()
@@ -507,10 +542,16 @@ async def get_bde_calendar(
             "id": str(lead.id),
             "lead_id": str(lead.id),
             "title": f"Follow-up with {lead.name}",
-            "scheduled_time": lead.next_follow_up_at.isoformat() if lead.next_follow_up_at else None,
+            "scheduled_time": lead.next_follow_up_at.isoformat()
+            if lead.next_follow_up_at
+            else None,
             "is_overdue": lead.next_follow_up_at < now,
             "is_today": today_start <= lead.next_follow_up_at < today_end,
-            "status_category": "overdue" if lead.next_follow_up_at < now else "today" if today_start <= lead.next_follow_up_at < today_end else "upcoming",
+            "status_category": "overdue"
+            if lead.next_follow_up_at < now
+            else "today"
+            if today_start <= lead.next_follow_up_at < today_end
+            else "upcoming",
             "lead": {
                 "id": str(lead.id),
                 "name": lead.name,
@@ -551,22 +592,25 @@ async def get_bde_performance(
         .options(selectinload(Lead.activities))
         .order_by(desc(Lead.updated_at))
     )
-    if actor.agency_id and actor.role != UserRole.SUPER_ADMIN:
-        lead_query = lead_query.where(or_(Lead.agency_id == actor.agency_id, Lead.agency_id.is_(None)))
+    lead_query = lead_query.where(sa_scope(actor))
 
     res = await db.execute(lead_query)
     lead_rows = res.all()
 
     # 2. Query all activities with lead details for recent outreach stream
     act_query = (
-        select(LeadActivity, Lead.name.label("lead_name"), Lead.company_name, User.full_name.label("bde_name"))
+        select(
+            LeadActivity,
+            Lead.name.label("lead_name"),
+            Lead.company_name,
+            User.full_name.label("bde_name"),
+        )
         .join(Lead, LeadActivity.lead_id == Lead.id)
         .outerjoin(User, LeadActivity.bde_id == User.id)
         .order_by(desc(LeadActivity.created_at))
         .limit(40)
     )
-    if actor.agency_id and actor.role != UserRole.SUPER_ADMIN:
-        act_query = act_query.where(or_(Lead.agency_id == actor.agency_id, Lead.agency_id.is_(None)))
+    act_query = act_query.where(sa_scope(actor))
 
     act_res = await db.execute(act_query)
     act_rows = act_res.all()
@@ -577,15 +621,27 @@ async def get_bde_performance(
         .where(User.role.in_([UserRole.SALES, "bde", "sales"]))
         .where(User.account_status == "active")
     )
-    if actor.agency_id and actor.role != UserRole.SUPER_ADMIN:
+    if actor.role != UserRole.SUPER_ADMIN:
+        sa_scope(actor)
         bde_users_stmt = bde_users_stmt.where(User.agency_id == actor.agency_id)
+    from app.services.crm_access import EXECUTIVES, owner_ids
+
+    if actor.role in EXECUTIVES:
+        bde_users_stmt = bde_users_stmt.where(User.id == actor.user_id)
+    elif actor.role == UserRole.BDE_HEAD:
+        bde_users_stmt = bde_users_stmt.where(
+            or_(User.id == actor.user_id, User.id.in_(owner_ids(actor)))
+        )
     bde_users = (await db.execute(bde_users_stmt)).scalars().all()
 
     # Calculate overall metrics
     total_leads = len(lead_rows)
     clients_reached_leads = [
-        lead for lead, _, _ in lead_rows
-        if lead.status != "new" or lead.last_contacted_at is not None or (lead.activities and len(lead.activities) > 0)
+        lead
+        for lead, _, _ in lead_rows
+        if lead.status != "new"
+        or lead.last_contacted_at is not None
+        or (lead.activities and len(lead.activities) > 0)
     ]
     total_clients_reached = len(clients_reached_leads)
 
@@ -593,7 +649,11 @@ async def get_bde_performance(
     converted_count = len(converted_leads)
     conversion_rate = round((converted_count / max(1, total_leads)) * 100, 1)
 
-    total_pipeline_value = sum(lead.estimated_deal_value for lead, _, _ in lead_rows if lead.status not in ("lost", "converted"))
+    total_pipeline_value = sum(
+        lead.estimated_deal_value
+        for lead, _, _ in lead_rows
+        if lead.status not in ("lost", "converted")
+    )
     closed_revenue = sum(lead.estimated_deal_value for lead in converted_leads)
 
     # Activity breakdown across all leads
@@ -604,7 +664,9 @@ async def get_bde_performance(
         "email": sum(1 for a in all_activities if a.activity_type.lower() == "email"),
         "meeting": sum(1 for a in all_activities if a.activity_type.lower() == "meeting"),
         "proposal": sum(1 for a in all_activities if a.activity_type.lower() == "proposal"),
-        "status_change": sum(1 for a in all_activities if a.activity_type.lower() == "status_change"),
+        "status_change": sum(
+            1 for a in all_activities if a.activity_type.lower() == "status_change"
+        ),
         "note": sum(1 for a in all_activities if a.activity_type.lower() == "note"),
     }
 
@@ -616,7 +678,9 @@ async def get_bde_performance(
             "bde_id": uid_str,
             "name": u.full_name or u.email,
             "email": u.email,
-            "avatar_initials": "".join([part[0] for part in (u.full_name or u.email).split()[:2]]).upper(),
+            "avatar_initials": "".join(
+                [part[0] for part in (u.full_name or u.email).split()[:2]]
+            ).upper(),
             "total_assigned": 0,
             "clients_reached": 0,
             "calls_count": 0,
@@ -637,7 +701,9 @@ async def get_bde_performance(
                     "bde_id": assigned_id,
                     "name": bde_name or bde_email or "BDE Rep",
                     "email": bde_email or "",
-                    "avatar_initials": "".join([p[0] for p in (bde_name or "BD").split()[:2]]).upper(),
+                    "avatar_initials": "".join(
+                        [p[0] for p in (bde_name or "BD").split()[:2]]
+                    ).upper(),
                     "total_assigned": 0,
                     "clients_reached": 0,
                     "calls_count": 0,
@@ -651,7 +717,9 @@ async def get_bde_performance(
                 }
             rep = rep_map[assigned_id]
             rep["total_assigned"] += 1
-            is_reached = lead.status != "new" or lead.last_contacted_at is not None or bool(lead.activities)
+            is_reached = (
+                lead.status != "new" or lead.last_contacted_at is not None or bool(lead.activities)
+            )
             if is_reached:
                 rep["clients_reached"] += 1
             if lead.status == "converted":
@@ -660,7 +728,7 @@ async def get_bde_performance(
             if lead.status == "proposal_sent":
                 rep["proposals_sent"] += 1
 
-            for act in (lead.activities or []):
+            for act in lead.activities or []:
                 act_type = act.activity_type.lower()
                 if act_type == "call":
                     rep["calls_count"] += 1
@@ -683,7 +751,9 @@ async def get_bde_performance(
         r["conversion_rate"] = round((r["deals_won"] / max(1, r["total_assigned"])) * 100, 1)
 
     # Sort reps by clients_reached desc
-    bde_reps_list.sort(key=lambda x: (x["clients_reached"], x["deals_won"], x["revenue_generated"]), reverse=True)
+    bde_reps_list.sort(
+        key=lambda x: (x["clients_reached"], x["deals_won"], x["revenue_generated"]), reverse=True
+    )
 
     # Format recent activities
     recent_activities_list = [
@@ -702,15 +772,25 @@ async def get_bde_performance(
     ]
 
     # Stage funnel with counts and values
-    stages_order = ["new", "contacted", "meeting_scheduled", "proposal_sent", "negotiation", "converted", "lost"]
+    stages_order = [
+        "new",
+        "contacted",
+        "meeting_scheduled",
+        "proposal_sent",
+        "negotiation",
+        "converted",
+        "lost",
+    ]
     stage_breakdown = []
     for stg in stages_order:
         matching = [l for l, _, _ in lead_rows if l.status == stg]
-        stage_breakdown.append({
-            "stage": stg,
-            "count": len(matching),
-            "value": sum(l.estimated_deal_value for l in matching),
-        })
+        stage_breakdown.append(
+            {
+                "stage": stg,
+                "count": len(matching),
+                "value": sum(l.estimated_deal_value for l in matching),
+            }
+        )
 
     # Lead summary rows for admin inspection
     leads_summary = [
@@ -750,309 +830,5 @@ async def get_bde_performance(
         "recent_activities": recent_activities_list,
         "stages": stage_breakdown,
         "leads": leads_summary,
-    }
-
-
-class GenerateProposalRequest(BaseModel):
-    lead_id: uuid.UUID
-    plan_name: str = "Growth Retainer"
-    monthly_fee: int = Field(..., ge=1000)
-    discount_pct: int = Field(default=0, ge=0, le=50)
-    deliverables: dict[str, int] = Field(
-        default_factory=lambda: {"reels": 8, "static_posts": 12, "carousels": 4, "stories": 15, "shoot_days": 1}
-    )
-    notes: str | None = None
-    valid_until: datetime | None = None
-
-
-@router.get("/analytics")
-async def get_bde_sales_analytics(
-    db: AsyncSession = Depends(get_db),
-    actor: Actor = BDEActor,
-) -> dict[str, Any]:
-    """Sales forecasting, revenue against targets, and win/loss analytical breakdown."""
-    base_query = select(Lead).options(selectinload(Lead.activities))
-    if actor.agency_id and actor.role != UserRole.SUPER_ADMIN:
-        base_query = base_query.where(or_(Lead.agency_id == actor.agency_id, Lead.agency_id.is_(None)))
-
-    leads = (await db.execute(base_query)).scalars().all()
-
-    # Probability weights per stage
-    STAGE_PROBABILITIES: dict[str, float] = {
-        "new": 0.10,
-        "contacted": 0.25,
-        "meeting_scheduled": 0.40,
-        "proposal_sent": 0.60,
-        "negotiation": 0.80,
-        "converted": 1.00,
-        "lost": 0.00,
-    }
-
-    monthly_target = 2500000  # ₹25,00,000 monthly quota
-    converted_leads = [l for l in leads if l.status == "converted"]
-    lost_leads = [l for l in leads if l.status == "lost"]
-    active_deals = [l for l in leads if l.status not in ("converted", "lost")]
-
-    closed_revenue = sum(l.estimated_deal_value for l in converted_leads)
-    target_achievement_pct = round((closed_revenue / max(1, monthly_target)) * 100, 1)
-
-    total_pipeline_value = sum(l.estimated_deal_value for l in active_deals)
-    weighted_pipeline_value = sum(
-        int(l.estimated_deal_value * STAGE_PROBABILITIES.get(l.status, 0.20))
-        for l in active_deals
-    )
-
-    # Forecast tiers
-    negotiation_deals_val = sum(l.estimated_deal_value for l in active_deals if l.status == "negotiation")
-    best_case = closed_revenue + total_pipeline_value
-    expected_forecast = closed_revenue + weighted_pipeline_value
-    worst_case = closed_revenue + int(negotiation_deals_val * 0.75)
-
-    # Win / Loss analysis
-    won_count = len(converted_leads)
-    lost_count = len(lost_leads)
-    total_decided = won_count + lost_count
-    win_rate = round((won_count / max(1, total_decided)) * 100, 1) if total_decided > 0 else 0.0
-
-    # Categorize loss reasons
-    reasons_map: dict[str, int] = {
-        "Pricing / Budget Constraints": 0,
-        "Chose Competitor": 0,
-        "Timing / Postponed Campaign": 0,
-        "Scope Mismatch": 0,
-        "Decision Maker Ghosted": 0,
-        "Other / Inactive": 0,
-    }
-    for l in lost_leads:
-        r = (l.lost_reason or "").lower()
-        if "price" in r or "budget" in r or "cost" in r or "expensive" in r:
-            reasons_map["Pricing / Budget Constraints"] += 1
-        elif "competitor" in r or "rival" in r or "agency" in r:
-            reasons_map["Chose Competitor"] += 1
-        elif "time" in r or "timing" in r or "later" in r or "postpone" in r or "q" in r:
-            reasons_map["Timing / Postponed Campaign"] += 1
-        elif "scope" in r or "fit" in r or "deliverable" in r:
-            reasons_map["Scope Mismatch"] += 1
-        elif "ghost" in r or "response" in r or "unreachable" in r or "no reply" in r:
-            reasons_map["Decision Maker Ghosted"] += 1
-        else:
-            reasons_map["Other / Inactive"] += 1
-
-    loss_reasons_list = [
-        {"reason": k, "count": v, "percentage": round((v / max(1, lost_count)) * 100, 1)}
-        for k, v in reasons_map.items()
-    ]
-    loss_reasons_list.sort(key=lambda x: x["count"], reverse=True)
-
-    # Activities velocity
-    all_activities = [act for l in leads for act in (l.activities or [])]
-    now = datetime.now(UTC)
-    seven_days_ago = now - timedelta(days=7)
-    weekly_activities = sum(1 for a in all_activities if a.created_at and a.created_at >= seven_days_ago)
-
-    calls_count = sum(1 for a in all_activities if a.activity_type.lower() == "call")
-    emails_count = sum(1 for a in all_activities if a.activity_type.lower() == "email")
-    whatsapp_count = sum(1 for a in all_activities if a.activity_type.lower() == "whatsapp")
-    meetings_count = sum(1 for a in all_activities if a.activity_type.lower() == "meeting")
-    proposals_count = sum(1 for a in all_activities if a.activity_type.lower() == "proposal")
-
-    return {
-        "revenue_tracking": {
-            "monthly_target": monthly_target,
-            "closed_revenue": closed_revenue,
-            "target_achievement_pct": target_achievement_pct,
-            "remaining_to_target": max(0, monthly_target - closed_revenue),
-            "quarterly_projected": int(expected_forecast * 3),
-        },
-        "pipeline_value": {
-            "total_unweighted": total_pipeline_value,
-            "weighted_expected": weighted_pipeline_value,
-            "active_deals_count": len(active_deals),
-            "avg_deal_size": round(total_pipeline_value / max(1, len(active_deals))),
-        },
-        "forecasting": {
-            "best_case": best_case,
-            "expected": expected_forecast,
-            "worst_case": worst_case,
-            "stage_probabilities": STAGE_PROBABILITIES,
-        },
-        "win_loss_analysis": {
-            "won_count": won_count,
-            "lost_count": lost_count,
-            "win_rate": win_rate,
-            "loss_rate": round(100.0 - win_rate, 1) if total_decided > 0 else 0.0,
-            "loss_reasons": loss_reasons_list,
-        },
-        "activity_metrics": {
-            "total_activities": len(all_activities),
-            "calls": calls_count,
-            "emails": emails_count,
-            "whatsapp": whatsapp_count,
-            "meetings": meetings_count,
-            "proposals": proposals_count,
-            "weekly_actual": weekly_activities,
-            "weekly_target": 120,
-            "weekly_adherence_pct": round((weekly_activities / 120) * 100, 1),
-        },
-    }
-
-
-@router.get("/collateral")
-async def get_bde_sales_collateral(
-    actor: Actor = BDEActor,
-) -> dict[str, Any]:
-    """Curated collateral repository: pitch decks, case studies, blueprints, and SLAs."""
-    return {
-        "pitch_decks": [
-            {
-                "id": "deck-2026",
-                "title": "Creo Agency Master Pitch Deck 2026",
-                "subtitle": "Direct-to-Consumer Growth Engine & 30-Day Content Production Framework",
-                "format": "PDF / 24 Slides",
-                "download_url": "https://storage.googleapis.com/creo-assets/decks/Creo-Master-Pitch-Deck-2026.pdf",
-                "category": "Pitch Deck",
-                "updated_at": "Oct 2026",
-            },
-            {
-                "id": "deck-enterprise",
-                "title": "Enterprise Omnichannel Retainer Overview",
-                "subtitle": "High-velocity content scaling for brands doing ₹1Cr+ monthly GMV",
-                "format": "PDF / 16 Slides",
-                "download_url": "https://storage.googleapis.com/creo-assets/decks/Creo-Enterprise-Retainer.pdf",
-                "category": "Pitch Deck",
-                "updated_at": "Sep 2026",
-            },
-        ],
-        "case_studies": [
-            {
-                "id": "cs-astra",
-                "brand": "Astra Living",
-                "sector": "Luxury Home & Decor",
-                "headline": "3.8x ROAS Scale with Daily Vertical Reels & Studio Shoots",
-                "summary": "Generated 4.2M organic impressions and scaled monthly GMV from ₹28L to ₹1.1Cr in 90 days.",
-                "download_url": "https://storage.googleapis.com/creo-assets/case-studies/Astra-Living-Case-Study.pdf",
-                "highlight_metric": "+280% Sales Growth",
-            },
-            {
-                "id": "cs-zenith",
-                "brand": "Zenith Fitness",
-                "sector": "Activewear & Supplements",
-                "headline": "Zero-to-180k Follower Community Transformation",
-                "summary": "Engineered viral organic TikTok/Instagram reel framework driving ₹65L in direct attribute revenue.",
-                "download_url": "https://storage.googleapis.com/creo-assets/case-studies/Zenith-Fitness-Scale.pdf",
-                "highlight_metric": "180k Organic Followers",
-            },
-            {
-                "id": "cs-kaya",
-                "brand": "Kaya Botanicals",
-                "sector": "Clean Beauty & Skincare",
-                "headline": "Retention Engine via Sequenced Educational Carousels",
-                "summary": "Cut customer acquisition cost (CAC) by 42% through daily problem-solution educational carousels.",
-                "download_url": "https://storage.googleapis.com/creo-assets/case-studies/Kaya-Botanicals-Retention.pdf",
-                "highlight_metric": "-42% CAC Reduction",
-            },
-        ],
-        "rate_cards_and_agreements": [
-            {
-                "id": "rate-standard",
-                "title": "Creo Official Rate Card & Deliverable Quotas (2026)",
-                "subtitle": "Approved pricing matrix for Starter, Growth, and Scale plans with unit costs",
-                "format": "PDF Reference",
-                "download_url": "https://storage.googleapis.com/creo-assets/legal/Creo-Rate-Cards-2026.pdf",
-            },
-            {
-                "id": "legal-msa",
-                "title": "Master Services Agreement (MSA) & SLA Guarantee",
-                "subtitle": "Standard client terms, 24-48h turnaround SLA, revision policies, and IP transfer terms",
-                "format": "Legal Document",
-                "download_url": "https://storage.googleapis.com/creo-assets/legal/Creo-MSA-SLA-Agreement.pdf",
-            },
-            {
-                "id": "legal-nda",
-                "title": "Mutual Non-Disclosure Agreement (NDA)",
-                "subtitle": "Standard commercial confidentiality agreement for preliminary strategy calls",
-                "format": "Legal Document",
-                "download_url": "https://storage.googleapis.com/creo-assets/legal/Creo-Mutual-NDA.pdf",
-            },
-        ],
-    }
-
-
-@router.post("/proposals", status_code=status.HTTP_201_CREATED)
-async def generate_sales_proposal(
-    payload: GenerateProposalRequest,
-    db: AsyncSession = Depends(get_db),
-    actor: Actor = BDEActor,
-) -> dict[str, Any]:
-    """Generate, log, and track client proposal with discount threshold validation."""
-    lead = (await db.execute(select(Lead).where(Lead.id == payload.lead_id))).scalar_one_or_none()
-    if not lead:
-        raise HTTPException(status_code=404, detail="Lead not found.")
-
-    # Calculate discounted fee
-    discount_amount = int(payload.monthly_fee * (payload.discount_pct / 100.0))
-    final_monthly_fee = payload.monthly_fee - discount_amount
-
-    # Discount governance
-    discount_tier = "Direct Rep Discretion" if payload.discount_pct <= 10 else (
-        "Senior BDE Approved" if payload.discount_pct <= 15 else "Super Admin Escalation Required"
-    )
-
-    # Format deliverables summary
-    deliv_lines = [f"{v}x {k.replace('_', ' ').capitalize()}" for k, v in payload.deliverables.items() if v > 0]
-    scope_str = ", ".join(deliv_lines)
-
-    summary_text = (
-        f"Proposal Generated: {payload.plan_name} at ₹{final_monthly_fee:,}/mo "
-        f"({payload.discount_pct}% discount applied · {discount_tier}). Scope: {scope_str}."
-    )
-    if payload.notes:
-        summary_text += f" Notes: {payload.notes.strip()}"
-
-    # Update lead stage & deal value
-    lead.status = "proposal_sent"
-    lead.estimated_deal_value = final_monthly_fee * 6  # 6-month contract LTV
-    lead.last_contacted_at = datetime.now(UTC)
-
-    # Record proposal activity
-    activity = LeadActivity(
-        lead_id=lead.id,
-        bde_id=actor.user_id,
-        activity_type="proposal",
-        summary=summary_text,
-        outcome=f"Proposal Sent · ₹{final_monthly_fee:,}/mo",
-        scheduled_follow_up=payload.valid_until or (datetime.now(UTC) + timedelta(days=3)),
-        metadata_extra={
-            "plan_name": payload.plan_name,
-            "original_monthly_fee": payload.monthly_fee,
-            "discount_pct": payload.discount_pct,
-            "final_monthly_fee": final_monthly_fee,
-            "discount_tier": discount_tier,
-            "deliverables": payload.deliverables,
-            "valid_until": payload.valid_until.isoformat() if payload.valid_until else None,
-            "status": "sent",
-        },
-    )
-    db.add(activity)
-    await db.commit()
-
-    return {
-        "status": "success",
-        "message": f"Proposal generated and dispatched for {lead.company_name}.",
-        "activity_id": str(activity.id),
-        "proposal": {
-            "lead_id": str(lead.id),
-            "lead_name": lead.name,
-            "company_name": lead.company_name,
-            "plan_name": payload.plan_name,
-            "original_monthly_fee": payload.monthly_fee,
-            "discount_pct": payload.discount_pct,
-            "discount_tier": discount_tier,
-            "final_monthly_fee": final_monthly_fee,
-            "deliverables": payload.deliverables,
-            "scope_summary": scope_str,
-            "notes": payload.notes,
-            "valid_until": (payload.valid_until or (datetime.now(UTC) + timedelta(days=7))).isoformat(),
-        },
     }
 

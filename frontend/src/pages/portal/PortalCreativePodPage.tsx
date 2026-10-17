@@ -1,3 +1,4 @@
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router";
@@ -174,9 +175,7 @@ export function PortalCreativePodPage() {
       {/* ── Team Cards Grid ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {isLoading ? (
-          <div className="col-span-full flex items-center justify-center py-16">
-            <div className="w-8 h-8 border-2 border-[#7FA0D6] border-t-transparent rounded-full animate-spin" />
-          </div>
+          <CreoInlineLoader />
         ) : allMembers.length === 0 ? (
           <div className="col-span-full py-16 text-center">
             <p className="text-sm text-[#97A0B3]">Your creative pod hasn't been assembled yet.</p>

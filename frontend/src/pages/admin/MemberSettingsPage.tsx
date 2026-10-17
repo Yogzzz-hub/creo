@@ -17,7 +17,12 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-const STANDUP_MEETING_URL = "https://zoom.us/j/9814421990?pwd=creo";
+const STANDUP_MEETING_URL =
+  typeof window !== "undefined"
+    ? localStorage.getItem("creo_member_meet_url")?.replace(/creo-standup-sync/g, "") ||
+      localStorage.getItem("creo_member_zoom_url") ||
+      "https://meet.google.com"
+    : "https://meet.google.com";
 
 function getCleanInitials(name?: string, fallback = "U"): string {
   if (!name) return fallback;
@@ -365,7 +370,7 @@ export function MemberSettingsPage() {
                 <Video className="size-4 text-[#7FA0D6] shrink-0" />
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-white truncate">10:00 AM Daily Standup</p>
-                  <p className="text-[10px] text-[#7FA0D6] truncate">Pod sync on Zoom</p>
+                  <p className="text-[10px] text-[#7FA0D6] truncate">Pod sync on Google Meet / Zoom</p>
                 </div>
               </div>
               <a

@@ -697,3 +697,8 @@ export async function revokeClientBypass(
 }
 
 
+
+/** Create and assign in one transaction; never report success for a browser-only card. */
+export function createPodTask(input: { client_id: string; assignee_id?: string; deliverable_type: string; title: string; brief?: string }) {
+  return request<{ id: string }>("/api/v1/tasks", { method: "POST", body: JSON.stringify(input) });
+}

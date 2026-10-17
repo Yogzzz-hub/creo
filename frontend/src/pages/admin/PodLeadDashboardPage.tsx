@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchPodDashboard,
+  createPodTask,
   submitPodQAReview,
   approveLeaveRequest,
   rejectLeaveRequest,
@@ -17,7 +18,6 @@ import {
   Users,
   Clock,
   Calendar,
-  AlertTriangle,
   CheckCircle2,
   ArrowRight,
   ArrowLeftRight,
@@ -30,9 +30,8 @@ import {
   X,
   MessageSquare,
   TrendingUp,
-  Sparkles,
 } from "lucide-react";
-import { StoryApprovalModal } from "../../components/ops/StoryApprovalModal";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../ui/Dialog";
 
 export function PodLeadDashboardPage() {
   const { user } = useAuth();
@@ -43,7 +42,7 @@ export function PodLeadDashboardPage() {
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
   const [standupModalOpen, setStandupModalOpen] = useState(false);
   const [standupNote, setStandupNote] = useState("");
-  const [storyApprovalOpen, setStoryApprovalOpen] = useState(false);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [assignForm, setAssignForm] = useState({
     title: "",
@@ -53,15 +52,12 @@ export function PodLeadDashboardPage() {
     deadline: "Today 5:00 PM",
     notes: "",
   });
-  const [blockedModalOpen, setBlockedModalOpen] = useState(false);
-  const [blockedForm, setBlockedForm] = useState({ title: "", client: "", severity: "Blocker (P0)", details: "" });
-  const [reinforcementsModalOpen, setReinforcementsModalOpen] = useState(false);
-  const [reinforceForm, setReinforceForm] = useState({ role: "3D Motion Designer", hours: "+20 hrs/week", urgency: "Immediate (Today)", notes: "" });
 
-  const { data, isLoading } = useQuery<PodDashboardData>({
+  const { data, isLoading, isError, error, refetch } = useQuery<PodDashboardData>({
     queryKey: ["pod_dashboard", user?.id, selectedPodKey],
     queryFn: () => fetchPodDashboard(selectedPodKey),
-    staleTime: 30_000,
+    staleTime: 10_000,
+    refetchInterval: 15_000,
   });
 
   const showToast = (text: string, type: "success" | "error" | "info" = "success") => {
@@ -83,7 +79,7 @@ export function PodLeadDashboardPage() {
     },
   });
 
-  const [pendingLeaveRequests, setPendingLeaveRequests] = useState<any[]>([]);
+  const pendingLeaveRequests = (data?.notifications || []).filter(n => n.type === "leave_request" && n.leave_id).map(n => ({ id: n.leave_id!, name: n.title.replace("Leave Request: ", ""), avatar: n.title.replace("Leave Request: ", "").slice(0, 2).toUpperCase(), note: n.message }));
 
   const leaveApproveMutation = useMutation({
     mutationFn: approveLeaveRequest,
@@ -91,7 +87,7 @@ export function PodLeadDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
     },
     onError: () => {
-      // optimistic
+      showToast("Unable to update leave request. Try again.", "error");
     },
   });
 
@@ -101,12 +97,11 @@ export function PodLeadDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
     },
     onError: () => {
-      // optimistic
+      showToast("Unable to update leave request. Try again.", "error");
     },
   });
 
   const handleApproveLeave = (id: string, name: string) => {
-    setPendingLeaveRequests((prev) => prev.filter((l) => l.id !== id));
     showToast(`Leave request for ${name} approved & coverage confirmed`, "success");
     try {
       leaveApproveMutation.mutate(id);
@@ -116,7 +111,6 @@ export function PodLeadDashboardPage() {
   };
 
   const handleDeclineLeave = (id: string, name: string) => {
-    setPendingLeaveRequests((prev) => prev.filter((l) => l.id !== id));
     showToast(`Leave request for ${name} declined`, "info");
     try {
       leaveDeclineMutation.mutate(id);
@@ -128,10 +122,14 @@ export function PodLeadDashboardPage() {
   const isSuperOrAdmin = user?.role === "admin" || user?.role === "super_admin";
 
   // Deliverables Pending Lead Sign-off
-  const [deliverablesList, setDeliverablesList] = useState<any[]>([]);
+  const deliverablesList = (data?.tasks?.internal_qa || []).filter(t => t.deliverable?.status === "pending_qa").map(t => ({
+    id: t.id, client: t.client_name, title: t.blueprint?.concept_name || t.deliverable_type,
+    talent: t.assignee_name, due: t.due_date || "No deadline", dueUrgent: t.is_near_sla,
+    notes: t.blueprint?.brief || "Ready for lead review", tags: [t.deliverable_type, "Pending QA"],
+    clientBadgeColor: "bg-blue-500/10 text-blue-300 border-blue-500/30",
+  }));
 
   const handleApproveDeliverable = (del: { id: string; title: string; client: string }) => {
-    setDeliverablesList((prev) => prev.filter((d) => d.id !== del.id));
     showToast(`Approved "${del.title}" & dispatched to ${del.client} portal`, "success");
     qaMutation.mutate({
       taskId: del.id,
@@ -143,7 +141,6 @@ export function PodLeadDashboardPage() {
   const handleConfirmRevision = () => {
     if (!revisionModalItem) return;
     const item = revisionModalItem;
-    setDeliverablesList((prev) => prev.filter((d) => d.id !== item.id));
     setRevisionModalItem(null);
     showToast(`Revision request sent to talent for "${item.title}"`, "info");
     qaMutation.mutate({
@@ -154,34 +151,22 @@ export function PodLeadDashboardPage() {
     setRevisionFeedback("");
   };
 
-  const handleDispatchTask = () => {
-    const clientName = assignForm.client || data?.clients?.[0]?.name || "Client";
-    const assigneeName = assignForm.assignee || memberName(data?.members?.[0]);
-    const title = assignForm.title.trim() || `${clientName} ${assignForm.format} Concept`;
-    const newDeliverable = {
-      id: `del-${Date.now()}`,
-      client: clientName.toUpperCase(),
-      clientBadgeColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      talent: assigneeName,
-      format: assignForm.format,
-      due: "Due in 24h",
-      dueUrgent: false,
-      title: title,
-      tags: [assignForm.format, "In Production", "Assigned by Lead", "9:16 Vertical"],
-      notes: assignForm.notes || "Assigned via Pod Quick Actions.",
-    };
-    setDeliverablesList((prev) => [newDeliverable, ...prev]);
-    showToast(`Assigned "${title}" to ${assigneeName} (${clientName})`, "success");
-    setAssignModalOpen(false);
-    setAssignForm({
-      title: "",
-      format: "Reel",
-      assignee: "",
-      client: "",
-      deadline: "Today 5:00 PM",
-      notes: "",
-    });
-  };
+  const dispatchMutation = useMutation({
+    mutationFn: () => createPodTask({
+      client_id: assignForm.client || data!.clients[0]!.id,
+      assignee_id: assignForm.assignee || data!.members[0]!.id,
+      deliverable_type: ({ Reel: "reel", Story: "story", Post: "static_post" })[assignForm.format] || "reel",
+      title: assignForm.title.trim(), brief: assignForm.notes,
+    }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
+      setAssignModalOpen(false);
+      setAssignForm({ title: "", format: "Reel", assignee: "", client: "", deadline: "", notes: "" });
+      showToast("Task saved and assigned. It is now in the production queue.");
+    },
+    onError: (error: Error) => showToast(error.message || "Could not save task", "error"),
+  });
+  const handleDispatchTask = () => { if (!dispatchMutation.isPending) dispatchMutation.mutate(); };
 
   const leadName = data?.pod?.lead?.name || user?.full_name || "Pod Lead";
   const podName = data?.pod?.name || "Pod Operations";
@@ -201,10 +186,11 @@ export function PodLeadDashboardPage() {
   // Dynamic Team Roster mapped from backend data
   const teamRoster = (data?.members || []).map((member: any) => {
     const displayName = memberName(member);
-    const tasksCount = member?.tasks_count || member?.assigned_tasks_count || 0;
+    const tasksCount = member?.active_wip ?? 0;
     const capacity = member?.capacity || member?.daily_capacity || 5;
     const pct = Math.min(100, Math.round((tasksCount / (capacity > 0 ? capacity : 5)) * 100));
     return {
+      id: member.id,
       name: displayName,
       avatar: displayName.slice(0, 2).toUpperCase(),
       avatarBg: "bg-[#7FA0D6]",
@@ -241,12 +227,21 @@ export function PodLeadDashboardPage() {
     showToast(`Downloaded ${podName} Weekly Lead Summary CSV report`, "success");
   };
 
+  if (isError) return <div role="alert" className="p-8 text-amber-200">{error.message}<button onClick={() => void refetch()} className="ml-3 underline">Retry</button></div>;
   if (isLoading || !data) {
     return <CreoLoadingScreen fullScreen={false} label="Loading Pod Operations" className="min-h-[45vh]" />;
   }
 
   return (
     <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
+      <Dialog open={!!selectedMemberId} onOpenChange={open => { if (!open) setSelectedMemberId(null); }}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto bg-[#161F2D] text-white border-[#2A3446]">
+          <DialogTitle>{teamRoster.find(m => m.id === selectedMemberId)?.name} workload</DialogTitle>
+          <DialogDescription>Current tasks assigned to this pod member.</DialogDescription>
+          <div className="space-y-3">{Object.values(data.tasks).flat().filter(t => t.assigned_to === selectedMemberId).map(t => <article key={t.id} className="rounded-xl border border-[#2A3446] p-3"><h3 className="font-semibold">{t.blueprint?.concept_name || t.deliverable_type}</h3><p className="text-sm text-[#97A0B3]">{t.client_name} / {t.status.replaceAll("_", " ")}</p><p className="text-xs text-[#97A0B3]">Due: {t.due_date || "No date set"}</p></article>)}
+          {!Object.values(data.tasks).flat().some(t => t.assigned_to === selectedMemberId) && <p className="text-sm text-[#97A0B3]">No tasks assigned.</p>}</div>
+        </DialogContent>
+      </Dialog>
       {/* Top Header Navigation */}
       <AdminTopHeader title="Team Details" activeTab="Team Details" />
 
@@ -310,13 +305,6 @@ export function PodLeadDashboardPage() {
             >
               <Plus className="size-3.5" />
               Assign Deliverable
-            </button>
-            <button
-              onClick={() => setStoryApprovalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
-            >
-              <Sparkles className="size-3.5" />
-              Story & Client Approval
             </button>
           </div>
         </div>
@@ -406,9 +394,9 @@ export function PodLeadDashboardPage() {
         </div>
 
         {/* 3. Main Two-Column Layout (Left 2/3, Right 1/3) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-4 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-4">
           {/* LEFT 2 COLUMNS */}
-          <div className="lg:col-span-2 space-y-3.5 sm:space-y-4">
+          <div className="lg:col-span-2 flex flex-col gap-3.5 sm:gap-4">
             {/* Section A: Pod Team Roster & Live Workload */}
             <div id="roster" className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#2A3446] gap-2">
@@ -419,7 +407,7 @@ export function PodLeadDashboardPage() {
                   <div>
                     <h2 className="text-sm font-black text-white">{podName} Team Roster & Live Workload</h2>
                     <p className="text-[11px] text-[#97A0B3] font-medium">
-                      4 Core talents deployed across active sprints
+                      {teamRoster.length} members in this pod
                     </p>
                   </div>
                 </div>
@@ -471,9 +459,9 @@ export function PodLeadDashboardPage() {
                         </div>
                       </div>
 
-                      <Link to="/lead/tasks" className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg hover:bg-[#161F2D] transition-colors">
+                      <button type="button" aria-label={`View ${member.name} workload`} onClick={() => setSelectedMemberId(member.id)} className="p-1 text-[#97A0B3] hover:text-white rounded-lg">
                         <ArrowRight className="size-3.5" />
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -486,7 +474,7 @@ export function PodLeadDashboardPage() {
             </div>
 
             {/* Section B: Deliverables Pending Lead Sign-off */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs space-y-3.5">
+            <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs flex-1 flex flex-col gap-3.5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#2A3446] gap-2">
                 <div className="flex items-center gap-2.5">
                   <div className="size-7 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black">
@@ -511,9 +499,9 @@ export function PodLeadDashboardPage() {
               </div>
 
               {/* Deliverable Action Cards */}
-              <div className="space-y-2.5">
+              <div className="space-y-2.5 flex-1 flex flex-col">
                 {deliverablesList.length === 0 ? (
-                  <div className="bg-[#0B111C] border border-dashed border-[#2A3446] rounded-2xl p-6 text-center space-y-1.5">
+                  <div className="bg-[#0B111C] border border-dashed border-[#2A3446] rounded-2xl p-6 text-center space-y-1.5 flex-1 flex flex-col items-center justify-center min-h-[140px]">
                     <CheckCircle2 className="size-6 text-emerald-500 mx-auto" />
                     <p className="text-xs font-bold text-white">All deliverables signed off!</p>
                     <p className="text-[10px] text-[#97A0B3]">Zero pending review items in today's QA queue.</p>
@@ -666,14 +654,13 @@ export function PodLeadDashboardPage() {
                         </div>
                         <div>
                           <h4 className="text-xs font-black text-white">{leave.name}</h4>
-                          <span className="text-[9px] text-[#97A0B3] font-bold">{leave.type}</span>
+                          <span className="text-[9px] text-[#97A0B3] font-bold">Leave request</span>
                         </div>
                       </div>
-                      <span className="text-[9px] font-bold text-[#97A0B3]">{leave.dates}</span>
+                      <span className="text-[9px] font-bold text-[#97A0B3]">Pending approval</span>
                     </div>
 
                     <div className="text-[10px] text-[#F1F5F9] bg-[#161F2D] p-2 rounded-lg border border-[#2A3446] font-medium">
-                      <span className="font-bold text-[#F1F5F9] block mb-0.5">Cover: {leave.cover}</span>
                       "{leave.note}"
                     </div>
 
@@ -751,28 +738,6 @@ export function PodLeadDashboardPage() {
                   </div>
                   <span className="text-[11px] font-black text-white block">Assign Task</span>
                   <span className="text-[9px] text-[#97A0B3] font-medium">Route to member</span>
-                </button>
-
-                <button
-                  onClick={() => setBlockedModalOpen(true)}
-                  className="p-2.5 rounded-xl bg-[#0B111C] hover:bg-rose-500/15 border border-[#2A3446] hover:border-rose-500/40 text-left transition-all cursor-pointer group"
-                >
-                  <div className="size-6 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
-                    <AlertTriangle className="size-3" />
-                  </div>
-                  <span className="text-[11px] font-black text-white block">Log Issue</span>
-                  <span className="text-[9px] text-[#97A0B3] font-medium">Escalate swiftly</span>
-                </button>
-
-                <button
-                  onClick={() => setReinforcementsModalOpen(true)}
-                  className="p-2.5 rounded-xl bg-[#0B111C] hover:bg-purple-500/15 border border-[#2A3446] hover:border-purple-500/40 text-left transition-all cursor-pointer group"
-                >
-                  <div className="size-6 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
-                    <Users className="size-3" />
-                  </div>
-                  <span className="text-[11px] font-black text-white block">Reinforce</span>
-                  <span className="text-[9px] text-[#97A0B3] font-medium">Request talent</span>
                 </button>
 
                 <button
@@ -916,7 +881,7 @@ export function PodLeadDashboardPage() {
                       <option value="">No clients assigned</option>
                     ) : (
                       data.clients.map((c) => (
-                        <option key={c.id} value={c.name}>{c.name}</option>
+                        <option key={c.id} value={c.id}>{c.name}</option>
                       ))
                     )}
                   </NativeSelect>
@@ -932,7 +897,7 @@ export function PodLeadDashboardPage() {
                       <option value="">No specialists registered</option>
                     ) : (
                       data.members.map((m) => (
-                        <option key={m.id} value={memberName(m)}>
+                        <option key={m.id} value={m.id}>
                           {memberName(m)} · {memberRole(m)}
                         </option>
                       ))
@@ -952,232 +917,16 @@ export function PodLeadDashboardPage() {
               <button
                 type="button"
                 onClick={handleDispatchTask}
+                disabled={dispatchMutation.isPending || !assignForm.title.trim() || !data.clients.length || !data.members.length}
                 className="px-5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition cursor-pointer shadow-md shadow-blue-500/20"
               >
-                Dispatch Task
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* ─────────────────────────────────────────────────────────────────────────────
-          LOG BLOCKED ISSUE MODAL
-      ───────────────────────────────────────────────────────────────────────────── */}
-      {blockedModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
-        >
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="size-9 rounded-2xl bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center justify-center">
-                  <AlertTriangle className="size-4.5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-white">Log Blocked Issue</h3>
-                  <p className="text-xs text-[#97A0B3] font-medium">Escalate production blockers to Studio Operations</p>
-                </div>
-              </div>
-              <button onClick={() => setBlockedModalOpen(false)} className="text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer">
-                <X className="size-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3.5 text-xs">
-              <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Issue Title</label>
-                <input
-                  type="text"
-                  value={blockedForm.title}
-                  onChange={(e) => setBlockedForm({ ...blockedForm, title: e.target.value })}
-                  placeholder="e.g. Missing 3D CAD assets from client for Holiday Drop"
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D] focus:ring-2 focus:ring-rose-500 focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Affected Client</label>
-                  <NativeSelect
-                    value={blockedForm.client}
-                    onChange={(e) => setBlockedForm({ ...blockedForm, client: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
-                  >
-                    {(!data?.clients || data.clients.length === 0) ? (
-                      <option value="">No clients assigned</option>
-                    ) : (
-                      data.clients.map((c) => (
-                        <option key={c.id} value={c.name}>{c.name}</option>
-                      ))
-                    )}
-                  </NativeSelect>
-                </div>
-                <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Severity</label>
-                  <NativeSelect
-                    value={blockedForm.severity}
-                    onChange={(e) => setBlockedForm({ ...blockedForm, severity: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
-                  >
-                    <option value="Blocker (P0)">Blocker (P0 - SLA Risk)</option>
-                    <option value="High (P1)">High (P1)</option>
-                    <option value="Medium (P2)">Medium (P2)</option>
-                  </NativeSelect>
-                </div>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Blocker Details & Action Required</label>
-                <textarea
-                  rows={3}
-                  value={blockedForm.details}
-                  onChange={(e) => setBlockedForm({ ...blockedForm, details: e.target.value })}
-                  placeholder="Explain what is blocking the deliverable and what Ops Director intervention is needed..."
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D] focus:ring-2 focus:ring-rose-500 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-3 border-t border-[#2A3446]">
-              <button
-                type="button"
-                onClick={() => setBlockedModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  showToast(`Blocked issue "${blockedForm.title || "Production Blocker"}" escalated to Studio Director`, "success");
-                  setBlockedModalOpen(false);
-                  setBlockedForm({ title: "", client: "", severity: "Blocker (P0)", details: "" });
-                }}
-                className="px-5 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-rose-600/20"
-              >
-                <AlertTriangle className="size-3.5" />
-                Dispatch Blocker Escalation
+                {dispatchMutation.isPending ? "Saving task..." : "Dispatch Task"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────────────────────
-          REQUEST SPECIALIST REINFORCEMENTS MODAL
-      ───────────────────────────────────────────────────────────────────────────── */}
-      {reinforcementsModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
-        >
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="size-9 rounded-2xl bg-purple-500/15 text-purple-400 border border-purple-500/30 flex items-center justify-center">
-                  <Users className="size-4.5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-white">Request Specialist Reinforcements</h3>
-                  <p className="text-xs text-[#97A0B3] font-medium">Request studio capacity surge for upcoming milestones</p>
-                </div>
-              </div>
-              <button onClick={() => setReinforcementsModalOpen(false)} className="text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer">
-                <X className="size-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3.5 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Craft Role Needed</label>
-                  <NativeSelect
-                    value={reinforceForm.role}
-                    onChange={(e) => setReinforceForm({ ...reinforceForm, role: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
-                  >
-                    <option value="3D Motion Designer">3D Motion Designer</option>
-                    <option value="Video Editor & Colorist">Video Editor & Colorist</option>
-                    <option value="Lead Copy Strategist">Lead Copy Strategist</option>
-                    <option value="Brand Visual Designer">Brand Visual Designer</option>
-                  </NativeSelect>
-                </div>
-                <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Bandwidth Surge</label>
-                  <NativeSelect
-                    value={reinforceForm.hours}
-                    onChange={(e) => setReinforceForm({ ...reinforceForm, hours: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
-                  >
-                    <option value="+20 hrs/week">+20 hrs/week (Part-time)</option>
-                    <option value="+40 hrs/week">+40 hrs/week (Dedicated Surge)</option>
-                    <option value="Single Milestone">Single Milestone Sprint</option>
-                  </NativeSelect>
-                </div>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Required Starting</label>
-                <NativeSelect
-                  value={reinforceForm.urgency}
-                  onChange={(e) => setReinforceForm({ ...reinforceForm, urgency: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
-                >
-                  <option value="Immediate (Today)">Immediate (Today - Critical Bandwidth)</option>
-                  <option value="Next Sprint Cycle">Next Sprint Cycle</option>
-                  <option value="Next Month">Next Month</option>
-                </NativeSelect>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Workload Surge Notes</label>
-                <textarea
-                  rows={3}
-                  value={reinforceForm.notes}
-                  onChange={(e) => setReinforceForm({ ...reinforceForm, notes: e.target.value })}
-                  placeholder="Explain reason for extra capacity (e.g. End-of-month deliverable batch surge)..."
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D] focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-3 border-t border-[#2A3446]">
-              <button
-                type="button"
-                onClick={() => setReinforcementsModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  showToast(`Reinforcements request for ${reinforceForm.role} (${reinforceForm.hours}) sent to Studio Resourcing`, "success");
-                  setReinforcementsModalOpen(false);
-                  setReinforceForm({ role: "3D Motion Designer", hours: "+20 hrs/week", urgency: "Immediate (Today)", notes: "" });
-                }}
-                className="px-5 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-purple-600/20"
-              >
-                <Users className="size-3.5" />
-                Dispatch Surge Request
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Story & Approval Request Modal */}
-      <StoryApprovalModal
-        isOpen={storyApprovalOpen}
-        onClose={() => setStoryApprovalOpen(false)}
-        onSuccess={() => {
-          showToast("Story approval request sent successfully!", "success");
-          queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
-        }}
-      />
     </div>
   );
 }

@@ -1,30 +1,18 @@
-"""Add voice feedback columns to deliverable_history.
+"""Recognize the existing deployment marker; preserve unknown legacy voice DDL.
 
-Revision ID: 0018_voice_feedback_support
-Revises: 0017_bde_leads_and_activities
-Create Date: 2026-10-14 14:30:00.000000
+The deployed database already has deliverable_history voice_note_url and
+voice_note_duration. This marker does not claim to recreate that unavailable
+migration on a fresh database and never deletes the existing columns.
 """
-
-from alembic import op
-import sqlalchemy as sa
-
 revision = "0018_voice_feedback_support"
-down_revision = "0017_bde_leads_and_activities"
+down_revision = "0016_merge_legacy_enhancements"
 branch_labels = None
 depends_on = None
 
 
-def upgrade() -> None:
-    op.execute("""
-        ALTER TABLE deliverable_history 
-        ADD COLUMN IF NOT EXISTS voice_note_url TEXT,
-        ADD COLUMN IF NOT EXISTS voice_note_duration INTEGER;
-    """)
+def upgrade():
+    pass
 
 
-def downgrade() -> None:
-    op.execute("""
-        ALTER TABLE deliverable_history 
-        DROP COLUMN IF EXISTS voice_note_url,
-        DROP COLUMN IF EXISTS voice_note_duration;
-    """)
+def downgrade():
+    pass

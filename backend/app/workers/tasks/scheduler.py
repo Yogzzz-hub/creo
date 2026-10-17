@@ -10,7 +10,7 @@ import asyncio
 import concurrent.futures
 import logging
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from collections.abc import Coroutine
 from typing import Any, TypeVar
 
@@ -42,14 +42,16 @@ async def _get_active_agencies() -> list[uuid.UUID]:
         return [uuid.UUID(str(row[0])) for row in res.fetchall()]
 
 
-async def dispatch_due_publishes_async() -> list[uuid.UUID]:
+async def dispatch_due_publishes_async(*, inline: bool = False) -> list[uuid.UUID]:
     """Enqueue due durable jobs; workers claim under row locks. Legacy rows are untouched."""
     from sqlalchemy import delete, or_, select
 
     from app.models.publishing import InstagramOAuth, PublishingJob
-    from app.workers.tasks.publish import enabled, publish_deliverable_task
+    from app.workers.tasks.publish import enabled, execute_publish_job, publish_deliverable_task
 
     can_publish = enabled()
+    if inline and not can_publish:
+        return []
     claimed = []
     for agency_id in await _get_active_agencies():
         async with async_session_factory() as db:
@@ -64,7 +66,7 @@ async def dispatch_due_publishes_async() -> list[uuid.UUID]:
                     .where(
                         PublishingJob.agency_id == agency_id,
                         PublishingJob.status.in_(["scheduled", "processing"]),
-                        PublishingJob.scheduled_at <= now,
+                        PublishingJob.scheduled_at <= now + timedelta(minutes=30),
                         or_(
                             PublishingJob.next_attempt_at.is_(None),
                             PublishingJob.next_attempt_at <= now,
@@ -78,15 +80,33 @@ async def dispatch_due_publishes_async() -> list[uuid.UUID]:
                 await db.commit()
                 for job_id in ids:
                     try:
-                        publish_deliverable_task.apply_async(
-                            (str(job_id), str(agency_id)), retry=False
-                        )
+                        if inline:
+                            await execute_publish_job(job_id, agency_id)
+                        else:
+                            publish_deliverable_task.apply_async(
+                                (str(job_id), str(agency_id)), retry=False
+                            )
                         claimed.append(job_id)
                     except Exception:
                         logger.warning(
-                            "Publishing broker unavailable; durable jobs will be retried by beat"
+                            "Publishing dispatch failed; durable job will be retried",
+                            extra={"job_id": str(job_id), "inline": inline},
                         )
     return claimed
+
+
+async def publishing_recovery_loop() -> None:
+    """Process durable jobs even when Celery/beat is unavailable.
+
+    Uses the same row locks, leases, approval checks and submission reconciliation
+    as Celery, so API replicas and queue workers can safely race for a job.
+    """
+    while True:
+        try:
+            await dispatch_due_publishes_async(inline=True)
+        except Exception:
+            logger.warning("Publishing recovery sweep failed; retrying on the next sweep")
+        await asyncio.sleep(5)
 
 
 @celery_app.task(name="app.workers.tasks.scheduler.dispatch_due_publishes_task", queue="default")

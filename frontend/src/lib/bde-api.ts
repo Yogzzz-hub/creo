@@ -53,11 +53,9 @@ export interface BDEMetrics {
   closed_revenue: number;
   overdue_follow_ups: number;
   today_follow_ups: number;
-  priorities: {
-    hot: number;
-    warm: number;
-    cold: number;
-  };
+  hot_count: number;
+  warm_count: number;
+  cold_count: number;
   stages: Record<LeadStatus, number>;
 }
 

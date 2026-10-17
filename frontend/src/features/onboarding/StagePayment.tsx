@@ -366,7 +366,8 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
           currency: order.currency || "INR",
           name: "Creo Digital Marketing",
           description: `Subscription - ${selectedPlan?.display_name || "Plan"}`,
-          order_id: order.order_id,
+          order_id: order.recurring ? undefined : order.order_id,
+          subscription_id: order.razorpay_subscription_id,
           prefill: {
             name: user?.full_name || undefined,
             email: user?.email || undefined,
@@ -378,15 +379,18 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
         async (response) => {
           setPhase("polling");
           try {
-            await confirmPayment(
+            const confirmation = await confirmPayment(
               userId,
               order.order_id,
               response.razorpay_payment_id || `pay_sandbox_${Date.now()}`,
               response.razorpay_signature || "sig_sandbox",
               "razorpay",
             );
-          } catch {
-            // Keep polling handled gracefully
+            if (confirmation.status !== "active") throw new Error("Your first payment is still pending. Check billing before continuing.");
+          } catch (err) {
+            setPhase("select"); checkoutLock.current = false;
+            setErrorMsg(err instanceof Error ? err.message : "Payment has not been confirmed.");
+            return;
           }
           // Onboarding status is refreshed by onPaymentComplete; don't block the UI on refetches
           void queryClient.invalidateQueries({ queryKey: ["client-subscription"] });
@@ -535,6 +539,7 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
         </div>
       )}
 
+      <p className="rounded-xl border border-[#2A3446] bg-[#161F2D] p-4 text-sm text-[#BCCCE6]">Monthly Razorpay AutoPay is required. Checkout authorizes recurring charges at your selected plan price. Request a future renewal pause in Settings; an admin must approve it before charges stop.</p>
       {/* Footer Actions */}
       <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
         {onBack ? (
@@ -576,29 +581,6 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
               <ArrowRight className="w-4 h-4" />
             </>
           )}
-        </button>
-      </div>
-
-      {/* Offline Payment / Cash / Direct Transfer Bypass Trigger */}
-      <div className="mt-4 p-4 rounded-2xl border border-[#2A3446] bg-[#161F2D]/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2.5 text-[#97A0B3]">
-          <div className="size-8 rounded-lg bg-emerald-950/40 border border-emerald-800/60 flex items-center justify-center text-emerald-400 shrink-0">
-            <Banknote className="size-4" />
-          </div>
-          <div>
-            <p className="font-semibold text-white">Paid already via Cash, Bank Transfer, or Existing Contract?</p>
-            <p className="text-[11px] text-[#97A0B3]">Submit an offline payment claim to bypass Step 3 upon admin approval.</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            if (selectedPlanId) setManualPlanId(selectedPlanId);
-            setShowManualModal(true);
-          }}
-          className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6] text-xs font-bold text-[#BCCCE6] hover:text-white transition-colors cursor-pointer shrink-0"
-        >
-          Request Offline Payment Bypass
         </button>
       </div>
 

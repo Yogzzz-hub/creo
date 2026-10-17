@@ -48,7 +48,7 @@ export function CreoLoader({
     <div
       role="status"
       aria-live="polite"
-      className={`creo-loader-appear flex flex-col items-center justify-center select-none -translate-y-2 ${className}`}
+      className={`creo-loader-appear flex flex-col items-center justify-center select-none ${className}`}
     >
       {/* ─────────────────────────────────────────────────────────────
           1. MAIN WAVE LOADER (SVG 280 x 80)
@@ -335,7 +335,7 @@ export function CreoLoader({
 /** Compact wave loader for content areas (keeps the surrounding layout visible). */
 export function CreoInlineLoader({ label = "Loading", className = "" }: { label?: string; className?: string }) {
   return (
-    <div className={`flex min-h-[45vh] w-full items-center justify-center ${className}`}>
+    <div className={`flex min-h-[55vh] w-full items-center justify-center ${className}`}>
       <CreoLoader label={label} highlightWord="" fullScreen={false} showSecondaryText={false} />
     </div>
   );

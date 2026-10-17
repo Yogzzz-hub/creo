@@ -71,6 +71,8 @@ export interface Plan {
 }
 
 export interface CreateOrderResponse {
+  razorpay_subscription_id?: string;
+  recurring?: boolean;
   order_id: string;
   amount: number;
   currency: string;

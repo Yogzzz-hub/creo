@@ -44,6 +44,8 @@ class CreateOrderResponse(BaseModel):
     subscription_id: uuid.UUID
     gateway: PaymentProvider
     order_id: str
+    razorpay_subscription_id: str | None = None
+    recurring: bool = False
     amount_minor: int
     currency: str
     key_id: str

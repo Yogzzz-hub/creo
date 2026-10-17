@@ -65,7 +65,7 @@ celery_app.conf.beat_schedule = {
     # Beat dispatches durable jobs; workers serialize claims under row locks.
     "dispatch-due-publishes": {
         "task": "app.workers.tasks.scheduler.dispatch_due_publishes_task",
-        "schedule": crontab(minute="*"),  # Every minute
+        "schedule": 5.0,  # Frequent pickup of preprocessed media at its publish time
         "options": {"queue": "default"},
     },
     # Idempotent SLA breach monitor every hour

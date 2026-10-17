@@ -1,5 +1,4 @@
-type Assets = { fetch(request: Request): Promise<Response> };
-type Environment = { ASSETS: Assets; API_ORIGIN?: string };
+type Environment = Pick<Env, "ASSETS" | "API_ORIGIN" | "PUBLISHING_DISPATCH_SECRET">;
 type WorkerContext = { waitUntil(work: Promise<unknown>): void };
 type EdgeCache = { match(request: Request): Promise<Response | undefined>; put(request: Request, response: Response): Promise<void> };
 
@@ -10,7 +9,7 @@ const FRESH_SECONDS = 60;
 const RETAIN_SECONDS = 300;
 
 function edgeCache(): EdgeCache | undefined {
-  return (globalThis.caches as CacheStorage & { default?: EdgeCache } | undefined)?.default;
+  return typeof caches === "undefined" ? undefined : caches.default;
 }
 
 function publicResponse(response: Response, state: string): Response {
@@ -81,6 +80,19 @@ async function proxyApi(request: Request, env: Environment, context: WorkerConte
 }
 
 export default {
+  async scheduled(_controller: ScheduledController, env: Environment): Promise<void> {
+    if (!env.PUBLISHING_DISPATCH_SECRET) throw new Error("Publishing dispatcher secret is missing");
+    const origin = new URL(env.API_ORIGIN).origin;
+    const response = await fetch(`${origin}/api/v1/publishing/dispatch`, {
+      method: "POST",
+      headers: { "X-Publishing-Dispatch-Key": env.PUBLISHING_DISPATCH_SECRET },
+      redirect: "error",
+      signal: AbortSignal.timeout(120_000),
+    });
+    await response.body?.cancel();
+    if (!response.ok) throw new Error(`Publishing dispatcher returned HTTP ${response.status}`);
+    console.log(JSON.stringify({ event: "publishing_dispatch_completed", status: response.status }));
+  },
   async fetch(request: Request, env: Environment, context: WorkerContext): Promise<Response> {
     const path = new URL(request.url).pathname;
     if (path.startsWith("/api/")) return proxyApi(request, env, context);

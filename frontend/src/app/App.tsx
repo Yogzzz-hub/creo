@@ -144,6 +144,8 @@ const SlackChatPage = lazyModule(() =>
 const AdminProductivityDashboardPage = lazyModule(() =>
   import("../pages/admin/AdminProductivityDashboardPage").then((m) => ({ default: m.AdminProductivityDashboardPage }))
 );
+const RevenueCRMPage = lazyModule(() => import("../pages/bde/RevenueCRMPage").then(m => ({ default: m.RevenueCRMPage })));
+const SharedProposalPage = lazyModule(() => import("../pages/bde/SharedProposalPage").then(m => ({ default: m.SharedProposalPage })));
 const BDEDashboardPage = lazyModule(() =>
   import("../pages/bde/BDEDashboardPage").then((m) => ({ default: m.BDEDashboardPage }))
 );
@@ -385,7 +387,9 @@ function RoutePrefetcher() {
     if (connection?.saveData || ["slow-2g", "2g"].includes(connection?.effectiveType ?? "")) return;
     return whenIdle(() => {
       if (role === "client") { preloadPortalPages({ includeOnboarding: needsOnboarding }); return; }
-      const chunks = role === "team_lead"
+      const chunks = ["sales", "bde", "bde_head"].includes(role)
+        ? [import("../pages/bde/RevenueCRMPage")]
+        : role === "team_lead"
         ? [import("../pages/admin/PodTaskBoardPage"), import("../pages/admin/PodDeliverablesReviewPage"), import("../pages/admin/PodScheduleLeavePage")]
         : ["editor", "designer", "team_member"].includes(role)
           ? [import("../pages/admin/MemberTaskBoardPage"), import("../pages/admin/MemberSchedulePTOPage")]
@@ -608,11 +612,13 @@ export function App() {
                 <Route path="slack" element={<SlackChatPage />} />
               </Route>
 
+              <Route path="/proposal/:token" element={<SharedProposalPage />} />
+
               {/* 5. Agency Operations Surface (Ops Paper Surface - Admin, Super Admin, Team) */}
               <Route
                 element={
                   <ProtectedRoute
-                    allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer", "sales", "bde", "investor_relations", "freelancer"]}
+                    allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer", "sales", "bde", "bde_head", "investor_relations", "freelancer"]}
                   >
                     <OpsLayout />
                   </ProtectedRoute>
@@ -744,11 +750,13 @@ export function App() {
                 <Route
                   path="/bde"
                   element={
-                    <ProtectedRoute allowedRoles={["sales", "bde"]}>
-                      <BDEDashboardPage />
+                    <ProtectedRoute allowedRoles={["sales", "bde", "bde_head", "admin", "super_admin"]}>
+                      <Navigate to="/bde/crm/overview" replace />
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/bde/crm/:section" element={<ProtectedRoute allowedRoles={["sales", "bde", "bde_head", "admin", "super_admin"]}><RevenueCRMPage /></ProtectedRoute>} />
+                <Route path="/bde/legacy" element={<ProtectedRoute allowedRoles={["sales", "bde", "bde_head", "admin", "super_admin"]}><BDEDashboardPage /></ProtectedRoute>} />
                 <Route
                   path="/bde/leave"
                   element={
@@ -802,6 +810,7 @@ export function App() {
                   element={<Navigate to="/admin" replace />}
                 />
                 <Route path="/lead" element={<Navigate to="/lead/dashboard" replace />} />
+                <Route path="/freelance-management" element={<Navigate to="/lead/tasks" replace />} />
                 <Route path="/pod-lead" element={<Navigate to="/lead/dashboard" replace />} />
                 <Route
                   path="/admin/pod-dashboard"

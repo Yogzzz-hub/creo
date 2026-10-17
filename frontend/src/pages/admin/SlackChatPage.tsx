@@ -15,7 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { request } from "../../lib/http";
-import { useSearchParams, useLocation } from "react-router";
+import { useSearchParams, useLocation, Link } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
@@ -297,9 +297,9 @@ export function SlackChatPage() {
     location.pathname.startsWith("/workstation") ||
     location.pathname.startsWith("/member") ||
     location.pathname === "/slack";
-  const locationState = location.state as { draft?: string; dm?: string; leadName?: string } | null;
+  const locationState = location.state as { draft?: string; dm?: string; channel?: string; leadName?: string } | null;
   const urlDm = searchParams.get("dm");
-  const urlChannel = searchParams.get("channel");
+  const urlChannel = searchParams.get("channel") || locationState?.channel || null;
   const urlDraft = searchParams.get("draft") || locationState?.draft || "";
   const targetDm = urlDm || locationState?.dm || null;
 
@@ -693,8 +693,37 @@ export function SlackChatPage() {
     );
   }, [channelsList, activeChannelId]);
 
+  // Synchronize active mode and channel/dm whenever URL parameters change
+  useEffect(() => {
+    if (urlChannel) {
+      setActiveMode("channel");
+      setActiveChannelId(urlChannel);
+      setMobileView("chat");
+      queryClient.invalidateQueries({ queryKey: ["chat_messages"] });
+    } else if (targetDm) {
+      setActiveMode("dm");
+      const match = contactsList.find(
+        (c) =>
+          c.id === targetDm ||
+          c.name.toLowerCase().includes(targetDm.toLowerCase()) ||
+          (targetDm.toLowerCase() === "super-admin" && c.is_super_admin)
+      );
+      if (match) {
+        setActiveContactId(match.id);
+        setMobileView("chat");
+        queryClient.invalidateQueries({ queryKey: ["chat_messages"] });
+      }
+    } else {
+      // Direct navigation to Slack without specific channel/DM -> Open Slack Workspace Hub
+      setMobileView("channels");
+    }
+  }, [urlChannel, targetDm, contactsList, queryClient]);
+
   // Mobile view toggle ('channels' or 'chat')
-  const [mobileView, setMobileView] = useState<"channels" | "chat">("chat");
+  // On mobile, default to "channels" (Slack Workspace Hub) unless explicitly directed to a channel/DM via URL
+  const [mobileView, setMobileView] = useState<"channels" | "chat">(() => {
+    return urlChannel || targetDm ? "chat" : "channels";
+  });
 
   const defaultPersona = user?.full_name || user?.email?.split("@")[0] || "Team Member";
   const [currentPersona, setCurrentPersona] = useState<string>(defaultPersona);
@@ -756,32 +785,15 @@ export function SlackChatPage() {
   // Local reactions store
   const [messageReactions, setMessageReactions] = useState<Record<string, { emoji: string; count: number; users: string[] }[]>>({});
 
-  // LocalStorage cached channel messages
-  const [localChannelMessages, setLocalChannelMessages] = useState<Record<string, ChatMessage[]>>(() => {
+  const saveLocalChannelMessage = (channelId: string, msg: ChatMessage) => {
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_CHANNEL_MESSAGES_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
+      const parsed = saved ? JSON.parse(saved) : {};
+      parsed[channelId] = [...(parsed[channelId] || []), msg];
+      localStorage.setItem(LOCAL_STORAGE_CHANNEL_MESSAGES_KEY, JSON.stringify(parsed));
     } catch {
       // ignore
     }
-    return SEED_WORKSPACE_MESSAGES;
-  });
-
-  const saveLocalChannelMessage = (channelId: string, msg: ChatMessage) => {
-    setLocalChannelMessages((prev) => {
-      const updated = {
-        ...prev,
-        [channelId]: [...(prev[channelId] || []), msg],
-      };
-      try {
-        localStorage.setItem(LOCAL_STORAGE_CHANNEL_MESSAGES_KEY, JSON.stringify(updated));
-      } catch {
-        // ignore
-      }
-      return updated;
-    });
   };
 
   // Live Messages Query (Polls every 2000ms with instant real-time sync)
@@ -829,39 +841,51 @@ export function SlackChatPage() {
         };
       });
 
-      // If channel mode and server returned items, merge with initial seed messages if standard channel
+      // If channel mode, merge initial seed messages at top, followed by chronological server messages, followed by any recent un-synced optimistic local messages
       if (activeMode === "channel") {
         const seed = SEED_WORKSPACE_MESSAGES[activeChannelId] || [];
-        const local = localChannelMessages[activeChannelId] || [];
-        
-        // Deduplicate by message content or ID
-        const seen = new Set<string>();
+        const seenIds = new Set<string>();
         const merged: ChatMessage[] = [];
 
-        // 1. Add seeds first for standard channels so history looks rich
-        if (seed.length > 0 && formattedServer.length === 0) {
-          for (const s of seed) {
-            if (!seen.has(s.content)) {
-              seen.add(s.content);
-              merged.push(s);
-            }
+        // 1. Seed messages always stay at the top as historical foundation
+        for (const s of seed) {
+          if (!seenIds.has(s.id)) {
+            seenIds.add(s.id);
+            merged.push(s);
           }
         }
 
-        // 2. Add local storage items
-        for (const loc of local) {
-          if (!seen.has(loc.content)) {
-            seen.add(loc.content);
-            merged.push(loc);
-          }
-        }
-
-        // 3. Add actual backend synced messages
+        // 2. Real server messages from backend database appended in exact chronological order
         for (const srv of formattedServer) {
-          if (!seen.has(srv.content)) {
-            seen.add(srv.content);
+          if (!seenIds.has(srv.id)) {
+            seenIds.add(srv.id);
             merged.push(srv);
           }
+        }
+
+        // 3. Any optimistic local message that hasn't appeared in server items yet
+        try {
+          const saved = localStorage.getItem(LOCAL_STORAGE_CHANNEL_MESSAGES_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            const channelLocals = (parsed[activeChannelId] || []) as ChatMessage[];
+            for (const loc of channelLocals) {
+              // Only keep fresh optimistic messages (< 5 minutes old)
+              const timeMatch = loc.id?.match(/local-(\d+)/);
+              if (timeMatch && Date.now() - Number(timeMatch[1]) > 5 * 60 * 1000) {
+                continue;
+              }
+              const alreadyInServer = formattedServer.some(
+                (srv) => srv.id === loc.id || (srv.sender === loc.sender && srv.content === loc.content)
+              );
+              if (!alreadyInServer && !seenIds.has(loc.id)) {
+                seenIds.add(loc.id);
+                merged.push(loc);
+              }
+            }
+          }
+        } catch {
+          // ignore
         }
 
         return merged;
@@ -937,12 +961,28 @@ export function SlackChatPage() {
     }
   }, [queryClient, refetchMessages]);
 
+  // Ensure fresh messages are refetched upon navigating into route or changing search params
+  useEffect(() => {
+    refetchMessages();
+  }, [location.pathname, location.search, location.state, refetchMessages]);
+
   // Auto-scroll to latest message
   useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    }
-  }, [serverMessages, activeMode, activeChannelId, activeContactId]);
+    const scrollDown = () => {
+      if (chatEndRef.current) {
+        chatEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+      } else if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    };
+    scrollDown();
+    const t1 = setTimeout(scrollDown, 80);
+    const t2 = setTimeout(scrollDown, 250);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [serverMessages.length, activeMode, activeChannelId, activeContactId]);
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -996,6 +1036,7 @@ export function SlackChatPage() {
         // BroadcastChannel fallback
       }
     } catch (err: any) {
+      setMessageText(text);
       console.error("Message send error:", err);
       showToast(err?.message || "Failed to send message. Please retry.", "info");
     }
@@ -1066,8 +1107,8 @@ export function SlackChatPage() {
         isClient
           ? "flex-1 min-h-0 h-full"
           : isWorkstation
-          ? "pt-6 px-4 sm:px-6 lg:px-8 pb-6 h-[calc(100vh-1.5rem)]"
-          : "h-[calc(100vh-5.5rem)] min-h-[550px]"
+          ? "flex-1 min-h-0 h-full lg:pt-6 lg:px-8 lg:pb-6"
+          : "flex-1 min-h-0 h-full"
       } overflow-hidden`}
     >
       {/* ── Top Header Context Bar (Admin Console Only) ── */}
@@ -1099,7 +1140,15 @@ export function SlackChatPage() {
           <div className="p-3.5 border-b border-white/[0.08] space-y-3 shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="size-7 rounded-xl bg-gradient-to-br from-[#7FA0D6] to-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                <Link
+                  to={isWorkstation ? "/workstation" : isClient ? "/portal" : "/admin"}
+                  className="md:hidden p-1.5 rounded-xl bg-white/[0.06] text-slate-300 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+                  aria-label="Back to dashboard"
+                  title="Back to dashboard"
+                >
+                  <ArrowLeft className="size-4" />
+                </Link>
+                <div className="size-7 rounded-xl bg-gradient-to-br from-[#7FA0D6] to-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
                   <MessageSquare className="size-3.5" />
                 </div>
                 <div>
@@ -1435,7 +1484,7 @@ export function SlackChatPage() {
             ref={messagesContainerRef}
             className="flex-1 min-h-0 max-h-full overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-4 bg-[#0B111C]/90 backdrop-blur-xl flex flex-col"
           >
-            {!activeContact || serverMessages.length === 0 ? (
+            {(activeMode === "dm" && !activeContact) || serverMessages.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-auto">
                 <div
                   className={`size-16 rounded-3xl flex items-center justify-center mb-4 border ${
@@ -1629,7 +1678,7 @@ export function SlackChatPage() {
                 <input
                   ref={chatInputRef}
                   type="text"
-                  disabled={!activeContact}
+                  disabled={activeMode === "dm" && !activeContact}
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   placeholder={
@@ -1642,7 +1691,7 @@ export function SlackChatPage() {
                 <div className="absolute right-2 flex items-center gap-1">
                   <button
                     type="button"
-                    disabled={!activeContact}
+                    disabled={activeMode === "dm" && !activeContact}
                     onClick={() => setShowEmojiPicker((prev) => !prev)}
                     className="p-1.5 text-[#97A0B3] hover:text-[#7FA0D6] rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                     title="Add Emoji"
@@ -1651,7 +1700,7 @@ export function SlackChatPage() {
                   </button>
                   <button
                     type="button"
-                    disabled={!activeContact}
+                    disabled={activeMode === "dm" && !activeContact}
                     onClick={() => showToast("Attachment upload ready", "info")}
                     className="p-1.5 text-[#97A0B3] hover:text-white rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                     title="Attach file"
@@ -1660,7 +1709,7 @@ export function SlackChatPage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={!activeContact || !messageText.trim()}
+                    disabled={(activeMode === "dm" && !activeContact) || !messageText.trim()}
                     className="p-2 rounded-xl bg-[#7FA0D6] hover:bg-white text-[#0B111C] disabled:opacity-40 transition cursor-pointer font-bold"
                   >
                     <Send className="size-4" />

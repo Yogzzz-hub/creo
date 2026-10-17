@@ -27,6 +27,7 @@ import { useAuth } from "../../lib/auth-context";
 import { useAdminSidebar } from "./AdminSidebarContext";
 import { useConfirm } from "../ui/ConfirmDialog";
 import { NotificationMenu } from "../ui/NotificationMenu";
+import { WorkstationSidebar } from "../workstation/WorkstationSidebar";
 
 interface NavItem {
   label: string;
@@ -72,7 +73,7 @@ export function AdminSidebar() {
     user?.role === "team_member" ||
     user?.role === "editor" ||
     user?.role === "designer";
-  const isBDERole = user?.role === "sales" || user?.role === "bde";
+  const isBDERole = ["sales", "bde", "bde_head"].includes(user?.role || "");
   const isFreelancerRole = user?.role === "freelancer";
 
   const isClientRole =
@@ -83,13 +84,16 @@ export function AdminSidebar() {
   // (and unknown roles landing there) get the member layout.
   const isMemberRole =
     !isClientRole &&
-    !isAdminOrSuper &&
     !isTeamLead &&
     !isBDERole &&
     !isFreelancerRole &&
     (isSpecialist ||
       location.pathname.startsWith("/workstation") ||
       location.pathname.startsWith("/member"));
+
+  if (isMemberRole) {
+    return <WorkstationSidebar />;
+  }
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -230,9 +234,14 @@ export function AdminSidebar() {
 
   const memberNavSections: NavSection[] = [
     {
-      label: "",
+      label: "OVERVIEW",
       items: [
         { label: "Dashboard", href: "/workstation", icon: LayoutDashboard },
+      ],
+    },
+    {
+      label: "WORKSPACE",
+      items: [
         { label: "Tasks", href: "/workstation/tasks", icon: CheckSquare },
         { label: "Instagram Publishing", href: "/admin/publishing", icon: Send },
         { label: "Leave Requests", href: "/workstation/schedule", icon: Calendar },
@@ -269,6 +278,7 @@ export function AdminSidebar() {
     {
       label: "BDE Workspace",
       items: [
+<<<<<<< HEAD
         { label: "Sales Funnel & Leads", href: "/bde", icon: Briefcase },
         { label: "Follow-Up Agenda", href: "/bde?tab=calendar", icon: CalendarCheck },
         { label: "Forecasting & Win/Loss", href: "/bde?tab=analytics", icon: TrendingUp },
@@ -279,6 +289,18 @@ export function AdminSidebar() {
       label: "Commercials & Enablement",
       items: [
         { label: "Platform Plans Catalog", href: "/admin/plans", icon: Layers },
+=======
+        { label: "Action Center", href: "/bde/crm/overview", icon: LayoutDashboard },
+        { label: "Leads & Companies", href: "/bde/crm/leads", icon: Users },
+        { label: "Pipeline", href: "/bde/crm/pipeline", icon: Layers },
+        { label: "Follow-ups", href: "/bde/crm/tasks", icon: Calendar },
+        { label: "Proposal Studio", href: "/bde/crm/proposals", icon: FileText },
+        { label: "Referrals", href: "/bde/crm/referrals", icon: Briefcase },
+        { label: "Messages", href: "/bde/crm/messages", icon: MessageSquare },
+        { label: "AI Workspace", href: "/bde/crm/discovery", icon: TrendingUp },
+        { label: "Reports & Scorecards", href: "/bde/crm/reports", icon: CreditCard },
+        { label: "Delivery Handoffs", href: "/bde/crm/handoffs", icon: Briefcase },
+>>>>>>> origin/main
       ],
     },
     {
@@ -370,7 +392,7 @@ export function AdminSidebar() {
   const roleSubtitle = isFreelancerRole
     ? "Creative Freelancer · Specialist Roster"
     : isBDERole
-    ? "Business Development · Sales Hub"
+    ? (user?.role === "bde_head" ? "BDE Head · Team oversight" : "Business Development · Sales Hub")
     : isMemberRole
     ? `${user?.role ? user.role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Specialist"} · Active Workstation`
     : user?.role === "team_lead"

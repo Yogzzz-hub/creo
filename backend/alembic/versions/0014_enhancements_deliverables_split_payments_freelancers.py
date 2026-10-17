@@ -1,14 +1,14 @@
 """Deliverable history, brand logo, split payments, and freelancer management schema.
 
-Revision ID: 0016_merge_legacy_enhancements
-Revises: 0015_payment_state_constraints
+Revision ID: 0020_enhancement_schema
+Revises: 0019_reconcile_voice_history
 Create Date: 2026-10-13
 """
 
 from alembic import op
 
-revision = "0016_merge_legacy_enhancements"
-down_revision = "0015_payment_state_constraints"
+revision = "0020_enhancement_schema"
+down_revision = "0019_reconcile_voice_history"
 branch_labels = None
 depends_on = None
 

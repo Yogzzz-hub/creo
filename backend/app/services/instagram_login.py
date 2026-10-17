@@ -4,9 +4,11 @@ from datetime import UTC, datetime
 from typing import Any
 
 from app.config import settings
+from app.core.logging import get_logger
 from app.services.instagram_client import InstagramError, RealInstagramClient
 
 LOGIN_SCOPES = {"instagram_business_basic", "instagram_business_content_publish"}
+logger = get_logger(__name__)
 
 
 class DirectInstagramClient(RealInstagramClient):
@@ -27,11 +29,20 @@ class DirectInstagramClient(RealInstagramClient):
             return "https://graph.instagram.com/access_token"
         return super().request_url(path)
 
-    async def permissions(self, token: str) -> set[str]:
-        data = await self.call("GET", "me/permissions", token)
-        granted = {
-            p.get("permission") for p in data.get("data", []) if p.get("status") == "granted"
-        }
+    def exchange_permissions(self, response: dict[str, Any]) -> set[str]:
+        # Instagram Login reports grants in its server-to-server token exchange.
+        # The Facebook-style GET user/permissions edge fails with code 100 here.
+        permissions = response.get("permissions")
+        if isinstance(permissions, str):
+            granted = {scope.strip() for scope in permissions.split(",") if scope.strip()}
+        elif isinstance(permissions, list) and all(isinstance(p, str) for p in permissions):
+            granted = set(permissions)
+        else:
+            raise InstagramError(
+                "Instagram did not return granted permissions. Start a new connection.",
+                "INSTAGRAM_PERMISSION_CHECK_FAILED",
+                reconnect=True,
+            )
         if not LOGIN_SCOPES.issubset(granted):
             raise InstagramError(
                 "Grant Instagram profile and publishing access to connect.",
@@ -50,7 +61,7 @@ class DirectInstagramClient(RealInstagramClient):
                     "INSTAGRAM_TOKEN_EXCHANGE_FAILED",
                     reconnect=True,
                 ) from None
-            if path == "me/permissions":
+            if path.endswith("/permissions"):
                 raise InstagramError(
                     "Instagram could not verify your permissions. Grant profile and publishing access and check the account's app access.",
                     "INSTAGRAM_PERMISSION_CHECK_FAILED",
@@ -76,6 +87,7 @@ class DirectInstagramClient(RealInstagramClient):
             short = rows[0]
         if not short.get("access_token") or not short.get("user_id"):
             raise InstagramError("Instagram did not return an account token.")
+        granted = self.exchange_permissions(short)
         long = await self.call(
             "GET",
             "access_token",
@@ -86,14 +98,35 @@ class DirectInstagramClient(RealInstagramClient):
         token = long.get("access_token")
         if not token or not long.get("expires_in") or int(long["expires_in"]) <= 0:
             raise InstagramError("Instagram did not return a valid long-lived token.")
-        granted = await self.permissions(token)
-        account = await self.call("GET", "me", token, fields="user_id,username,account_type")
+        account = await self.call("GET", "me", token, fields="id,user_id,username,account_type")
         account_id = str(account.get("user_id") or "")
-        if account_id != str(short["user_id"]) or account.get("account_type") not in (
+        # OAuth may return the app-scoped ID (profile.id), while profile.user_id
+        # identifies the professional account used by publishing endpoints.
+        # Both identifiers come from the same authenticated /me response.
+        if not account_id.isdecimal() or str(short["user_id"]) not in {
+            account_id, str(account.get("id") or "")
+        }:
+            logger.warning(
+                "instagram_account_validation_failed",
+                reason="identifier_mismatch",
+                has_professional_id=account_id.isdecimal(),
+                has_app_scoped_id=bool(account.get("id")),
+            )
+            raise InstagramError(
+                "Instagram returned inconsistent account identifiers. Start a new connection.",
+                "ACCOUNT_CHANGED",
+                reconnect=True,
+            )
+        if account.get("account_type") not in (
             "BUSINESS",
             "MEDIA_CREATOR",
             "CREATOR",
         ):
+            logger.warning(
+                "instagram_account_validation_failed",
+                reason="account_type",
+                account_type="PERSONAL" if account.get("account_type") == "PERSONAL" else "missing_or_unknown",
+            )
             raise InstagramError(
                 "Connect an Instagram Business or Creator account.", "NO_BUSINESS_ACCOUNT"
             )
@@ -113,12 +146,21 @@ class DirectInstagramClient(RealInstagramClient):
             }
         ]
 
+    async def revoke(self, credentials: dict[str, str]) -> None:
+        token = credentials["user_token"]
+        account = await self.call("GET", "me", token, fields="user_id")
+        account_id = str(account.get("user_id") or "")
+        if not account_id.isdecimal():
+            raise InstagramError("Instagram could not identify the account for revocation.")
+        await self.call("DELETE", f"{account_id}/permissions", token)
+
     async def verify_account(
         self, account_id: str, page_id: str, credentials: dict[str, str]
     ) -> dict:
         token = credentials["user_token"]
-        await self.permissions(token)
-        account = await self.call("GET", "me", token, fields="user_id,account_type")
+        # Check live account identity and publishing access below. Do not query
+        # the unsupported Facebook permission-list edge with an Instagram token.
+        account = await self.call("GET", "me", token, fields="id,user_id,account_type")
         if str(account.get("user_id")) != account_id:
             raise InstagramError(
                 "The authorized Instagram account changed. Reconnect.",

@@ -1,7 +1,7 @@
 """Add BDE leads and activities tables for CRM and follow-up automation.
 
-Revision ID: 0017_bde_leads_and_activities
-Revises: 0016_merge_legacy_enhancements
+Revision ID: 0021_bde_schema
+Revises: 0020_enhancement_schema
 Create Date: 2026-10-14 14:15:00.000000
 """
 
@@ -9,15 +9,32 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = "0017_bde_leads_and_activities"
-down_revision = "0016_merge_legacy_enhancements"
+revision = "0021_bde_schema"
+down_revision = "0020_enhancement_schema"
 branch_labels = None
 depends_on = None
 
 
+def create_table(name, *columns):
+    inspector = sa.inspect(op.get_bind())
+    if inspector.has_table(name):
+        existing = {column["name"] for column in inspector.get_columns(name)}
+        missing = {column.name for column in columns} - existing
+        if missing:
+            raise RuntimeError(f"Existing {name} is missing columns: {sorted(missing)}")
+        return
+    op.create_table(name, *columns)
+
+
+def create_index(name, table, columns):
+    indexes = {index["name"] for index in sa.inspect(op.get_bind()).get_indexes(table)}
+    if name not in indexes:
+        op.create_index(name, table, columns)
+
+
 def upgrade() -> None:
     # 1. Create bde_leads table
-    op.create_table(
+    create_table(
         "bde_leads",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("agency_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("agencies.id", ondelete="CASCADE"), nullable=True),
@@ -38,15 +55,15 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
-    op.create_index("ix_bde_leads_agency_id", "bde_leads", ["agency_id"])
-    op.create_index("ix_bde_leads_assigned_bde_id", "bde_leads", ["assigned_bde_id"])
-    op.create_index("ix_bde_leads_company_name", "bde_leads", ["company_name"])
-    op.create_index("ix_bde_leads_priority", "bde_leads", ["priority"])
-    op.create_index("ix_bde_leads_status", "bde_leads", ["status"])
-    op.create_index("ix_bde_leads_next_follow_up_at", "bde_leads", ["next_follow_up_at"])
+    create_index("ix_bde_leads_agency_id", "bde_leads", ["agency_id"])
+    create_index("ix_bde_leads_assigned_bde_id", "bde_leads", ["assigned_bde_id"])
+    create_index("ix_bde_leads_company_name", "bde_leads", ["company_name"])
+    create_index("ix_bde_leads_priority", "bde_leads", ["priority"])
+    create_index("ix_bde_leads_status", "bde_leads", ["status"])
+    create_index("ix_bde_leads_next_follow_up_at", "bde_leads", ["next_follow_up_at"])
 
     # 2. Create bde_lead_activities table
-    op.create_table(
+    create_table(
         "bde_lead_activities",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("lead_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("bde_leads.id", ondelete="CASCADE"), nullable=False),
@@ -58,7 +75,7 @@ def upgrade() -> None:
         sa.Column("metadata_extra", postgresql.JSONB(astext_type=sa.Text()), server_default="{}", nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
-    op.create_index("ix_bde_lead_activities_lead_id", "bde_lead_activities", ["lead_id"])
+    create_index("ix_bde_lead_activities_lead_id", "bde_lead_activities", ["lead_id"])
 
 
 def downgrade() -> None:

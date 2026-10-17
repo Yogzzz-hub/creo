@@ -185,7 +185,26 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             await db.commit()
     except Exception as e:
         logger.warning("admin_bootstrap_warning", error=str(e))
-    yield
+    import asyncio
+    from app.services.instagram_test_post import scheduled_test_loop
+    from app.workers.tasks.scheduler import publishing_recovery_loop
+    test_scheduler = asyncio.create_task(scheduled_test_loop())
+    publishing_scheduler = asyncio.create_task(publishing_recovery_loop())
+    from app.services.crm_reminders import reminder_loop
+    crm_scheduler = asyncio.create_task(reminder_loop())
+    try:
+        yield
+    finally:
+        test_scheduler.cancel()
+        publishing_scheduler.cancel()
+        crm_scheduler.cancel()
+        from contextlib import suppress
+        with suppress(asyncio.CancelledError):
+            await test_scheduler
+        with suppress(asyncio.CancelledError):
+            await publishing_scheduler
+        with suppress(asyncio.CancelledError):
+            await crm_scheduler
     logger.info("server_shutting_down")
     await engine.dispose()
 
@@ -264,8 +283,8 @@ async def security_and_rate_limit_middleware(
                 )
             )
 
-    # 2. IP-based request throttling / anti-DDoS (exempt health endpoint)
-    if not request.url.path.endswith("/health"):
+    # 2. IP-based request throttling / anti-DDoS (exempt health endpoints and root probes)
+    if not (request.url.path in {"/", "/health", "/api/v1/health"} or request.url.path.endswith("/health")):
         now = time.time()
         cutoff = now - WINDOW_SECONDS
         timestamps = [t for t in _ip_request_timestamps.get(client_ip, []) if t > cutoff]
@@ -381,6 +400,9 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(auth.users_router, prefix="/api/v1")
 app.include_router(instagram.router, prefix="/api/v1")
 app.include_router(publishing.router, prefix="/api/v1")
+from app.routers import revenue_crm
+app.include_router(revenue_crm.router, prefix="/api/v1")
+app.include_router(revenue_crm.public_router, prefix="/api/v1")
 app.include_router(plans.router, prefix="/api/v1")
 app.include_router(portal_dashboard.router, prefix="/api/v1")
 app.include_router(calendar.router, prefix="/api/v1")
@@ -417,25 +439,29 @@ app.mount("/uploads", StaticFiles(directory=_uploads_dir), name="uploads")
 
 
 
-@app.get("/", tags=["Root"])
+@app.api_route("/", methods=["GET", "HEAD"], tags=["Root"])
 async def root(
     request: Request,
     code: str | None = None,
     state: str | None = None,
-    db: AsyncSession = Depends(get_db),
 ) -> Any:
     """Root endpoint — returns API service status or handles direct Google OAuth browser redirects."""
+    if request.method == "HEAD":
+        return Response(status_code=status.HTTP_200_OK, media_type="application/json")
+
     if code:
+        from app.db.session import AsyncSessionLocal
         from app.routers.auth import _process_google_code
 
-        data = await _process_google_code(code, "https://creo-dsxr.onrender.com", db)
-        token = data["access_token"]
-        frontend_base = "http://localhost:5173"
-        if state and (state.startswith("http://") or state.startswith("https://")):
-            frontend_base = state.rstrip("/")
-        return RedirectResponse(
-            url=f"{frontend_base}/auth/google/callback?token={urllib.parse.quote(token)}"
-        )
+        async with AsyncSessionLocal() as session:
+            data = await _process_google_code(code, "https://creo-dsxr.onrender.com", session)
+            token = data["access_token"]
+            frontend_base = "http://localhost:5173"
+            if state and (state.startswith("http://") or state.startswith("https://")):
+                frontend_base = state.rstrip("/")
+            return RedirectResponse(
+                url=f"{frontend_base}/auth/google/callback?token={urllib.parse.quote(token)}"
+            )
     return {
         "name": "Creo API",
         "status": "online",
@@ -446,13 +472,15 @@ async def root(
     }
 
 
-@app.get("/health", tags=["Health"])
-@app.get("/api/v1/health", tags=["Health"])
-async def health_check() -> JSONResponse:
+@app.api_route("/health", methods=["GET", "HEAD"], tags=["Health"])
+@app.api_route("/api/v1/health", methods=["GET", "HEAD"], tags=["Health"])
+async def health_check(request: Request) -> Response:
     """Verify live connectivity to PostgreSQL and Redis.
 
     Performs a real `SELECT 1` on the database engine and `PING` on Redis.
     """
+    if request.method == "HEAD":
+        return Response(status_code=status.HTTP_200_OK, media_type="application/json")
     db_status = "ok"
     redis_status = "ok"
     errors: dict[str, str] = {}

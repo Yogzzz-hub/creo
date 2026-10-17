@@ -1,8 +1,9 @@
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { PublishingPanel } from "../../components/ops/PublishingPanel";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Check, Clock, Download, Film, ImageIcon, Loader2, RefreshCw, History } from "lucide-react";
+import { AlertTriangle, Check, Clock, Download, Film, ImageIcon, RefreshCw, History, Loader2 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import {
   approveDeliverable,
@@ -470,7 +471,7 @@ export function PortalDeliverablesPage() {
               {shownItem ? (
                 <MediaPreview item={shownItem} onRefresh={refresh} />
               ) : deliverableId && detailQuery.isLoading ? (
-                <Loader2 className="w-6 h-6 animate-spin text-[#97A0B3]" />
+                <CreoInlineLoader />
               ) : (
                 <div className="text-sm text-[#97A0B3] text-center px-6">
                   {deliverableId ? "This deliverable isn't available. It may still be in production." : "Select an asset to view"}

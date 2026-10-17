@@ -18,23 +18,36 @@ export function VoiceFeedbackRecorder({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackTime, setPlaybackTime] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [requesting, setRequesting] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<number | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const startedAtRef = useRef(0);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
+      mountedRef.current = false;
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-        mediaRecorderRef.current.stop();
+      const recorder = mediaRecorderRef.current;
+      if (recorder) {
+        recorder.onstop = null;
+        recorder.ondataavailable = null;
+        if (recorder.state !== "inactive") recorder.stop();
+        recorder.stream.getTracks().forEach((track) => track.stop());
       }
     };
+  }, []);
+  useEffect(() => {
+    return () => { if (audioUrl) URL.revokeObjectURL(audioUrl); };
   }, [audioUrl]);
 
   const startRecording = async () => {
+    if (requesting || isRecording) return;
+    setRequesting(true);
     setError(null);
     audioChunksRef.current = [];
     setRecordingDuration(0);
@@ -44,8 +57,17 @@ export function VoiceFeedbackRecorder({
     }
     onClearRecording();
 
+    let stream: MediaStream | undefined;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+        setError("Voice recording is unavailable in this browser. Use a supported browser or enter written feedback.");
+        return;
+      }
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!mountedRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported("audio/webm")
           ? "audio/webm"
@@ -64,19 +86,23 @@ export function VoiceFeedbackRecorder({
 
       mediaRecorder.onstop = () => {
         // Stop all audio tracks to release microphone hardware
-        stream.getTracks().forEach((track) => track.stop());
+        mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+        if (!mountedRef.current) return;
+        const duration = Math.min(maxDurationSeconds, Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000)));
+        setRecordingDuration(duration);
 
         const mime = mediaRecorder.mimeType || "audio/webm";
         const recordedBlob = new Blob(audioChunksRef.current, { type: mime });
         const url = URL.createObjectURL(recordedBlob);
         setAudioUrl(url);
-        onRecordingComplete(recordedBlob, recordingDuration);
+        onRecordingComplete(recordedBlob, duration);
       };
 
       mediaRecorder.start(250); // Slice into 250ms chunks
       setIsRecording(true);
 
       const startTime = Date.now();
+      startedAtRef.current = startTime;
       timerIntervalRef.current = window.setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
         setRecordingDuration(elapsed);
@@ -84,13 +110,16 @@ export function VoiceFeedbackRecorder({
           stopRecording();
         }
       }, 1000);
-    } catch (err: any) {
-      console.error("Microphone error:", err);
-      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+    } catch (err: unknown) {
+      stream?.getTracks().forEach((track) => track.stop());
+      if (!mountedRef.current) return;
+      if (err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "PermissionDeniedError")) {
         setError("Microphone permission was denied. Please allow microphone access in your browser settings to record voice feedback.");
       } else {
         setError("Unable to access microphone. Please verify an audio input device is connected.");
       }
+    } finally {
+      if (mountedRef.current) setRequesting(false);
     }
   };
 
@@ -170,10 +199,11 @@ export function VoiceFeedbackRecorder({
             <button
               type="button"
               onClick={startRecording}
+              disabled={requesting}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#7FA0D6]/20 border border-[#7FA0D6]/40 text-[#BCCCE6] hover:bg-[#7FA0D6]/30 hover:text-white transition-all text-xs font-semibold cursor-pointer group"
             >
               <Mic className="w-4 h-4 text-[#7FA0D6] group-hover:scale-110 transition-transform" />
-              <span>Record Voice Note</span>
+              <span>{requesting ? "Waiting for microphone…" : "Record Voice Note"}</span>
             </button>
           ) : (
             <div className="flex items-center justify-between w-full bg-[#161F2D] border border-red-500/40 rounded-xl px-4 py-2.5 animate-pulse">

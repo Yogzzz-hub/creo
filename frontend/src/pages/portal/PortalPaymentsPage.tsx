@@ -1,3 +1,4 @@
+import { AutoPaySettings } from "../../components/portal/AutoPaySettings";
 import { useState } from "react";
 import { Link } from "react-router";
 import { Download, Loader2, PauseCircle, CheckCircle2, AlertCircle, PhoneCall, ArrowRight } from "lucide-react";
@@ -550,50 +551,54 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Bottom Right: Payment method */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6 flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-white mb-6">Payment method</h3>
-            
-            <div className="space-y-4 mb-8">
-              <div className="flex items-center justify-between">
-                <span className="text-[13px] text-[#97A0B3]">Method</span>
-                <span className="text-[13px] font-bold text-white">UPI AutoPay • Razorpay</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[13px] text-[#97A0B3]">Next charge</span>
-                <span className="text-[13px] font-bold text-white">
-                  {hasActivePlan ? `₹${planPrice.toLocaleString('en-IN')} • ${renewalDate}` : "No upcoming charge (Plan inactive)"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[13px] text-[#97A0B3]">GSTIN on invoices</span>
-                <span className="text-[13px] font-bold text-white">Added</span>
+        <div className="space-y-4">
+          <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6 flex flex-col justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-white mb-6">Payment method</h3>
+              
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] text-[#97A0B3]">Method</span>
+                  <span className="text-[13px] font-bold text-white">{(subData as any)?.autopay?.recurring ? "Razorpay AutoPay" : "No AutoPay mandate"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] text-[#97A0B3]">Next charge</span>
+                  <span className="text-[13px] font-bold text-white">
+                    {isPausedNextMonth ? "Renewal paused" : !(subData as any)?.autopay?.enabled ? "No automatic charge confirmed" : hasActivePlan ? `₹${planPrice.toLocaleString('en-IN')} • ${renewalDate}` : "No upcoming charge (Plan inactive)"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] text-[#97A0B3]">GSTIN on invoices</span>
+                  <span className="text-[13px] font-bold text-white">Added</span>
+                </div>
               </div>
             </div>
+            
+            <button 
+              onClick={() => {
+                openRazorpayCheckout(
+                  {
+                    key: rzpKey,
+                    amount: 100,
+                    currency: "INR",
+                    name: "Creo Studio",
+                    description: "Update payment method (UPI / Card)",
+                    prefill: { name: user?.full_name || "", email: user?.email || "" },
+                  },
+                  () => {
+                    setActionNotice("Payment method updated successfully!");
+                    setTimeout(() => setActionNotice(null), 4000);
+                  },
+                  () => {}
+                );
+              }}
+              className="w-full py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors mt-auto cursor-pointer"
+            >
+              Change payment method
+            </button>
           </div>
-          
-          <button 
-            onClick={() => {
-              openRazorpayCheckout(
-                {
-                  key: rzpKey,
-                  amount: 100,
-                  currency: "INR",
-                  name: "Creo Studio",
-                  description: "Update payment method (UPI / Card)",
-                  prefill: { name: user?.full_name || "", email: user?.email || "" },
-                },
-                () => {
-                  setActionNotice("Payment method updated successfully!");
-                  setTimeout(() => setActionNotice(null), 4000);
-                },
-                () => {}
-              );
-            }}
-            className="w-full py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors mt-auto cursor-pointer"
-          >
-            Change payment method
-          </button>
+
+          <AutoPaySettings />
         </div>
 
       </div>
@@ -605,7 +610,7 @@ export function PortalPaymentsPage() {
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["client-subscription", user?.id] });
           queryClient.refetchQueries({ queryKey: ["client-subscription", user?.id] });
-          setActionNotice("Plan scheduled to pause for next month. AutoPay will not charge your account next cycle.");
+          setActionNotice("Pause request sent. AutoPay stays active until an administrator approves.");
           setTimeout(() => setActionNotice(null), 5000);
         }}
         planName={planName}

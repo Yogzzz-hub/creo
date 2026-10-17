@@ -9,6 +9,8 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
+    # Independent, fixed-sample staff test; ordinary publishing keeps its own gate.
+    INSTAGRAM_TEST_POSTING_ENABLED: bool = True
     model_config = SettingsConfigDict(
         env_file=(".env", "../.env"),
         env_file_encoding="utf-8",
@@ -152,6 +154,10 @@ class Settings(BaseSettings):
     META_LOGIN_CONFIG_ID: str = Field(default="", pattern=r"^\d*$")
     META_GRAPH_API_VERSION: str = Field(default="v26.0", pattern=r"^v\d+\.0$")
     INSTAGRAM_PUBLISHING_ENABLED: bool = Field(default=False)
+    # Managed secret JSON keyed by agency UUID; never returned to the browser.
+    CRM_WHATSAPP_CONNECTIONS: dict[str, dict[str, str]] = Field(default_factory=dict)
+    CRM_LEAD_PROVIDER_CONNECTIONS: dict[str, dict[str, str]] = Field(default_factory=dict)
+    PUBLISHING_DISPATCH_SECRET: str = Field(default="")
     INSTAGRAM_FFPROBE_PATH: str = Field(default="ffprobe")
     INSTAGRAM_MAX_LATENESS_MINUTES: int = Field(default=30, ge=1, le=1440)
     INSTAGRAM_REDIRECT_URI: str = Field(default="http://localhost:5173/portal/account/instagram")

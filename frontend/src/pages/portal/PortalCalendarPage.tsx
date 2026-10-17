@@ -1,3 +1,4 @@
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -339,9 +340,7 @@ export function PortalCalendarPage() {
 
   if (isSubLoading || isEntriesLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-[#7FA0D6]" />
-      </div>
+      <CreoInlineLoader />
     );
   }
 

@@ -1,3 +1,4 @@
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type AllocationStatus, PodAllocationModal } from "./PodAllocationModal";
@@ -21,8 +22,8 @@ import {
   Plus,
   Trash2,
   Loader2,
-  CheckCircle2,
   Check,
+  CheckCircle2,
   RefreshCw,
   Search,
   Pipette,
@@ -1061,6 +1062,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
   }, [activeSection, userId, setSearchParams, isActive, dataInitialized]);
   const [isSaving, setIsSaving] = useState(false);
   const [autosaveAttempt, setAutosaveAttempt] = useState(0);
+  const [isMetaConnecting, setIsMetaConnecting] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [completedSections, setCompletedSections] = useState<Set<SectionKey>>(new Set());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -1452,8 +1454,6 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
     };
   };
 
-  const coreUnlocked = dataInitialized && SECTIONS.filter(section => section.isCore)
-    .every(section => validateCurrentSection(section.key).valid);
   const canOpenSection = (targetKey: SectionKey) => dataInitialized && SECTIONS
     .slice(0, SECTIONS.findIndex(section => section.key === targetKey))
     .filter(section => section.isCore)
@@ -1594,7 +1594,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
   };
 
   const handleSynthesizeAndFinish = async () => {
-    if (isSynthesizing) return;
+    if (isSynthesizing || isMetaConnecting) return;
 
     // 1. Client-Side Validation: Verify Sections A through E
     const mandatorySections: SectionKey[] = ["a", "b", "c", "d", "e"];
@@ -1679,7 +1679,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
   if (isLoading || (qState && !dataInitialized)) {
     return (
       <div className="flex flex-col items-center justify-center p-16 space-y-4">
-        <Loader2 className="w-8 h-8 animate-spin text-[#7FA0D6]" />
+        <CreoInlineLoader />
         <p className="text-xs text-[#97A0B3] font-medium">Restoring your brand discovery session...</p>
       </div>
     );
@@ -1701,27 +1701,6 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
         onRetry={() => void handleSynthesizeAndFinish()}
         onClose={() => setAllocOpen(false)}
       />
-
-      {/* Core Discovery Complete Shortcut Banner */}
-      {coreUnlocked && (
-        <div className="bg-emerald-950/40 border border-emerald-800/60 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-emerald-200 shadow-md">
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-            <span className="text-sm font-medium">
-              <strong className="text-emerald-300">Core Discovery Complete!</strong> Sections A–E are recorded. You may proceed directly to allocate your Creative Pod.
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={handleSynthesizeAndFinish}
-            disabled={isSynthesizing}
-            className="px-4 py-2 bg-[#BCCCE6] text-[#0B111C] hover:bg-white rounded-xl text-xs font-bold transition-all shadow-sm shrink-0 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-          >
-            {isSynthesizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
-            <span>Allocate my creative pod</span>
-          </button>
-        </div>
-      )}
 
       {/* Horizontal Section Navigation Tabs: Equal-sized, correctly aligned, showing status */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
@@ -3195,7 +3174,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
 
         {/* SECTION H: CONNECT META (OPTIONAL) */}
         {activeSection === "h" && (
-          <MetaConnectSection userId={userId} beforeConnect={flushBeforeMetaRedirect} />
+          <MetaConnectSection userId={userId} beforeConnect={flushBeforeMetaRedirect} onConnectingChange={setIsMetaConnecting} />
         )}
 
         {/* Footer Actions */}
@@ -3224,7 +3203,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
               <button
                 type="button"
                 onClick={handleSynthesizeAndFinish}
-                disabled={isSynthesizing}
+                disabled={isSynthesizing || isMetaConnecting}
                 className="w-full sm:w-auto min-w-[240px] px-6 py-2.5 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-sm font-black transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-wait"
               >
                 {isSynthesizing ? (

@@ -1,6 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import { 
-  ChevronLeft, 
   ExternalLink, 
   LogOut, 
   Menu
@@ -31,7 +30,7 @@ export function AdminTopHeader({
   kpis: _kpis,
   refreshing: _refreshing,
   handleRefreshKpis: _handleRefreshKpis,
-  showBackButton = false,
+  showBackButton: _showBackButton = false,
 }: AdminTopHeaderProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -161,24 +160,6 @@ export function AdminTopHeader({
             <Menu className="w-4 h-4" />
           </button>
 
-          {showBackButton && (
-            <Link
-              to={
-                isAdminOrSuper
-                  ? "/admin"
-                  : isTeamLead
-                  ? "/admin/pod-dashboard"
-                  : isMemberRole
-                  ? "/workstation"
-                  : "/portal"
-              }
-              className="p-1 rounded-full hover:bg-[#161F2D] text-[#97A0B3] hover:text-white transition-colors shrink-0"
-              title="Go Back"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Link>
-          )}
-
           {/* Brand Logo - visible on mobile where sidebar is inside drawer */}
           <Link
             to={
@@ -195,10 +176,6 @@ export function AdminTopHeader({
           >
             Creo<span className="text-[#7FA0D6] text-base sm:text-lg leading-none">.</span>
           </Link>
-
-          {showBackButton && (
-            <span className="h-4 w-px bg-[#2A3446] mx-1 hidden sm:block shrink-0" />
-          )}
 
           {/* Active Page Title */}
           {!hideTitle && resolvedTitle && (

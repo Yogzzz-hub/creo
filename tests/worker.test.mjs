@@ -13,6 +13,32 @@ const { default: worker } = await import(`data:text/javascript;base64,${Buffer.f
 const originalFetch = globalThis.fetch;
 const originalCaches = globalThis.caches;
 const originalNow = Date.now;
+
+test("scheduled publishing calls only the configured API with its secret", async () => {
+  const f = fixture();
+  f.env.PUBLISHING_DISPATCH_SECRET = "test-only-secret";
+  let calls = 0;
+  globalThis.fetch = async (url, init) => {
+    calls++;
+    assert.equal(url, "https://api.example.com/api/v1/publishing/dispatch");
+    assert.equal(init.method, "POST");
+    assert.equal(init.headers["X-Publishing-Dispatch-Key"], "test-only-secret");
+    assert.equal(init.redirect, "error");
+    return new Response('{"status":"ok"}');
+  };
+  await worker.scheduled({}, f.env);
+  assert.equal(calls, 1);
+});
+
+test("scheduled publishing fails visibly for missing secrets and API errors", async () => {
+  const f = fixture();
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; return new Response("unavailable", { status: 503 }); };
+  await assert.rejects(worker.scheduled({}, f.env), /secret is missing/);
+  assert.equal(calls, 0);
+  f.env.PUBLISHING_DISPATCH_SECRET = "test-only-secret";
+  await assert.rejects(worker.scheduled({}, f.env), /HTTP 503/);
+});
 afterEach(() => {
   globalThis.fetch = originalFetch;
   globalThis.caches = originalCaches;

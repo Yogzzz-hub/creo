@@ -31,7 +31,7 @@ def enabled() -> bool:
     )
 
 
-async def eligible(db, job, d, profile):
+async def eligible(db, job, d, profile, *, preparing=True):
     await db.refresh(d)
     client = await db.get(User, job.client_id)
     if (
@@ -73,7 +73,7 @@ async def eligible(db, job, d, profile):
         raise InstagramError(
             "Instagram authorization expired. Reconnect.", "RECONNECT_REQUIRED", reconnect=True
         )
-    if not job.scheduled_at or job.scheduled_at > datetime.now(UTC):
+    if not job.scheduled_at or job.scheduled_at > datetime.now(UTC) + (timedelta(minutes=30) if preparing else timedelta()):
         raise InstagramError("This publishing schedule is not due.", "NOT_DUE")
     return connection.unseal(profile.ig_token_encrypted)
 
@@ -140,7 +140,7 @@ async def execute_publish_job(job_id: uuid.UUID, agency_id: uuid.UUID) -> dict:
                 return {"status": "already_claimed"}
             if job.status != "uncertain" and (
                 not job.scheduled_at
-                or job.scheduled_at > now
+                or job.scheduled_at > now + timedelta(minutes=30)
                 or (job.next_attempt_at and job.next_attempt_at > now)
             ):
                 return {"status": "not_due"}
@@ -180,7 +180,7 @@ async def execute_publish_job(job_id: uuid.UUID, agency_id: uuid.UUID) -> dict:
                 if credentials.get("provider") == "instagram":
                     provider = client_for_provider("instagram")
                 await provider.verify_account(
-                    job.instagram_account_id, profile.ig_metadata["page_id"], credentials
+                    job.instagram_account_id, (profile.ig_metadata or {}).get("page_id", ""), credentials
                 )
                 token = credentials["page_token"]
                 if uncertain:
@@ -275,6 +275,13 @@ async def execute_publish_job(job_id: uuid.UUID, agency_id: uuid.UUID) -> dict:
                         "Meta could not prepare this media. Check export requirements.",
                         "CONTAINER_FAILED",
                     )
+                if job.scheduled_at > datetime.now(UTC):
+                    job.stage = "ready"
+                    job.status = "scheduled"
+                    job.next_attempt_at = job.scheduled_at
+                    job.lease_id, job.lease_until = None, None
+                    await db.commit()
+                    return {"status": "ready"}
                 job.stage = "submitting"
                 await publishing.audit(db, job, "publish_submitting")
                 await (
@@ -283,7 +290,7 @@ async def execute_publish_job(job_id: uuid.UUID, agency_id: uuid.UUID) -> dict:
                 profile, job = await locked(db, job_id, client_id)
                 if job.lease_id != lease or job.status != "processing":
                     return {"status": "claim_changed"}
-                credentials = await eligible(db, job, d, profile)
+                credentials = await eligible(db, job, d, profile, preparing=False)
                 try:
                     result = await provider.publish_container(
                         job.instagram_account_id, job.container_id, credentials["page_token"]

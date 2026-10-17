@@ -119,10 +119,10 @@ export function PausePlanModal({
             <div className="size-14 rounded-full bg-amber-950/60 border border-amber-600/60 text-amber-400 mx-auto flex items-center justify-center shadow-sm">
               <CheckCircle2 className="size-7" />
             </div>
-            <h3 className="text-lg font-bold text-[#F8FAFC]">Plan Renewal Scheduled to Pause</h3>
+            <h3 className="text-lg font-bold text-[#F8FAFC]">Pause Request Sent</h3>
             <p className="text-xs text-[#97A0B3] max-w-sm mx-auto leading-relaxed">
               Your {planName} plan remains 100% active until <strong className="text-white">{renewalDate}</strong>.
-              AutoPay will skip the upcoming billing charge. You can resume at any time.
+              AutoPay remains active until an administrator approves this request.
             </p>
           </div>
         ) : (
@@ -134,7 +134,7 @@ export function PausePlanModal({
               </div>
               <div>
                 <h3 className="text-lg font-bold text-[#F8FAFC] tracking-tight">
-                  Pause Next Month&apos;s Plan
+                  Request Pause for Next Month
                 </h3>
                 <p className="text-xs text-[#97A0B3] mt-0.5">
                   Effective on your renewal date: <span className="text-white font-semibold">{renewalDate}</span>
@@ -159,7 +159,7 @@ export function PausePlanModal({
               <div className="flex items-start gap-2.5">
                 <Calendar className="size-4 text-amber-400 shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-white">Zero renewal charges:</strong> UPI AutoPay / card charge will not be deducted next month.
+                  <strong className="text-white">Admin approval required:</strong> AutoPay stops only after your administrator approves. Charges remain enabled while this request is pending.
                 </span>
               </div>
               <div className="flex items-start gap-2.5">
@@ -218,7 +218,7 @@ export function PausePlanModal({
                 className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#0B111C] text-xs font-bold transition-all shadow-md shadow-amber-500/20 inline-flex items-center gap-1.5 cursor-pointer"
               >
                 {loading ? <Loader2 className="size-3.5 animate-spin" /> : <PauseCircle className="size-3.5" />}
-                <span>Confirm Pause for Next Month</span>
+                <span>Send Pause Request</span>
               </button>
             </div>
           </form>
