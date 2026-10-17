@@ -98,3 +98,63 @@ export interface SLABreachItem {
   assignee_name: string | null;
   client_company: string | null;
 }
+
+export interface SLAPerformanceData {
+  compliance: {
+    overall: number;
+    target: number;
+    mom_change: number;
+    status: string;
+    response_rate: number;
+    resolution_rate: number;
+    trajectory_label: string;
+  };
+  watchlist: {
+    total_active: number;
+    approaching: number;
+    breached: number;
+    resolved_on_time: number;
+  };
+  priority_breakdown: Array<{
+    level: string;
+    label: string;
+    sla_met: number;
+    compliant_count: number;
+    total_count: number;
+    color: string;
+  }>;
+  pods: Array<{
+    pod: string;
+    lead: string;
+    sla_met: string;
+    sla_rate: number;
+    avg_response: string;
+    resolved: string;
+    total_tasks: number;
+    status: string;
+    bg: string;
+    text: string;
+    status_bg: string;
+  }>;
+  trend: Array<{
+    date: string;
+    response: number;
+    resolution: number;
+  }>;
+  active_warnings: Array<{
+    id: string;
+    task_id: string;
+    title: string;
+    deliverable_type: string;
+    status: string;
+    client_name: string;
+    pod_name: string;
+    assignee_name: string;
+    time_remaining: string;
+    is_breached: boolean;
+    state: string;
+    severity: string;
+    sla_due_at: string;
+  }>;
+}
+

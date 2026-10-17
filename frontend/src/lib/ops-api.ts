@@ -8,10 +8,11 @@ import type {
   AdminQueueData,
   ClientRosterItem,
   SLABreachItem,
+  SLAPerformanceData,
 } from "../types/ops";
 import { HttpError, request } from "./http";
 export { request };
-export type { ClientRosterItem, AdminDashboardData, AdminKPIs, AdminQueueData, SLABreachItem };
+export type { ClientRosterItem, AdminDashboardData, AdminKPIs, AdminQueueData, SLABreachItem, SLAPerformanceData };
 
 export async function autoAssignTask(
   taskId: string,
@@ -95,6 +96,10 @@ export async function fetchAdminQueue(_userId?: string, _role = "admin"): Promis
 
 export async function fetchSLABreaches(_userId?: string, _role = "admin"): Promise<SLABreachItem[]> {
   return request<SLABreachItem[]>("/api/v1/admin/sla");
+}
+
+export async function fetchSLAPerformance(): Promise<SLAPerformanceData> {
+  return request<SLAPerformanceData>("/api/v1/admin/sla-performance");
 }
 
 export async function suspendUser(
