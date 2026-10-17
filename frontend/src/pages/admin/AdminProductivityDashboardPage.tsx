@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { fetchProductivityMetrics } from "../../lib/productivity-api";
+import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 
 export function AdminProductivityDashboardPage() {
   const [period, setPeriod] = useState<string>("monthly");
@@ -43,37 +44,42 @@ export function AdminProductivityDashboardPage() {
   const hasImbalance = overloadedList.length > 0 || underutilizedList.length > 0;
 
   return (
-    <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1550px] w-full mx-auto space-y-6 animate-in fade-in duration-300">
-      {/* Top Controls & Refetch */}
-      <div className="flex items-center justify-end gap-2.5 flex-wrap">
-        {/* Period Selector */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl p-1 flex items-center gap-1">
-          {(["daily", "weekly", "monthly", "all"] as const).map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${
-                period === p
-                  ? "bg-[#7FA0D6] text-[#0B111C] shadow-sm font-bold"
-                  : "text-[#97A0B3] hover:text-white"
-              }`}
-            >
-              {p === "all" ? "All Time" : p}
-            </button>
-          ))}
-        </div>
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+      <AdminTopHeader activeTab="Team Productivity & Efficiency" hideTitle />
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6 animate-in fade-in duration-300">
+        {/* Top Controls: Scope & Refresh */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-bold text-[#97A0B3] uppercase tracking-wider hidden sm:inline">Scope:</span>
+            {/* Period Selector */}
+            <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl p-1 flex items-center gap-1">
+              {(["daily", "weekly", "monthly", "all"] as const).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPeriod(p)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${
+                    period === p
+                      ? "bg-[#7FA0D6] text-[#0B111C] shadow-sm font-bold"
+                      : "text-[#97A0B3] hover:text-white"
+                  }`}
+                >
+                  {p === "all" ? "All Time" : p}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <button
-          type="button"
-          onClick={() => refetch()}
-          disabled={isLoading || isRefetching}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-xs font-bold text-[#BCCCE6] hover:bg-[#1E293B] hover:text-white transition-colors cursor-pointer"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? "animate-spin text-[#7FA0D6]" : ""}`} />
-          <span>Refresh</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            disabled={isLoading || isRefetching}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs font-bold text-[#BCCCE6] hover:bg-[#1E293B] hover:text-white transition-colors cursor-pointer ml-auto"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? "animate-spin text-[#7FA0D6]" : ""}`} />
+            <span>{isRefetching ? "Refreshing..." : "Refresh Metrics"}</span>
+          </button>
+        </div>
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -485,5 +491,6 @@ export function AdminProductivityDashboardPage() {
         </div>
       </div>
     </main>
+    </div>
   );
 }

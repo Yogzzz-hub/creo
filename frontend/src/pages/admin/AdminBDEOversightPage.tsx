@@ -17,13 +17,13 @@ import {
   Sun,
   Snowflake,
   FileText,
-  Briefcase,
   Target,
 } from "lucide-react";
 import {
   fetchBDEPerformance,
   BDEPerformanceResponse,
 } from "../../lib/bde-api";
+import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 
 export function AdminBDEOversightPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -133,42 +133,11 @@ export function AdminBDEOversightPage() {
   };
 
   return (
-    <div className="space-y-6 pb-12 animate-fade-in text-[#F8FAFC]">
-      {/* ── Top Header & Context Bar ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#7FA0D6] to-indigo-600 flex items-center justify-center text-white shadow-md shadow-[#7FA0D6]/20">
-              <Briefcase className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                BDE Sales & Outreach Oversight
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30">
-                  Admin Console
-                </span>
-              </h1>
-              <p className="text-xs text-[#97A0B3] mt-0.5">
-                Executive monitoring of BDE work processes, outreach touchpoints, prospects reached, and deal velocity.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => refetch()}
-            disabled={isLoading || isRefetching}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#0B111C] hover:bg-[#202B3D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs font-semibold text-[#BCCCE6] hover:text-white transition-all shadow-xs disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 text-[#7FA0D6] ${isRefetching ? "animate-spin" : ""}`} />
-            <span>{isRefetching ? "Refreshing..." : "Sync Live Data"}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ── Metric Cards (Work Process & Outreach KPIs) ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+      <AdminTopHeader activeTab="BDE Outreach" hideTitle />
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6 text-[#F8FAFC]">
+        {/* ── Metric Cards (Work Process & Outreach KPIs) ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1: Clients Reached */}
         <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-xs relative overflow-hidden group hover:border-[#7FA0D6]/40 transition-all">
           <div className="flex items-center justify-between">
@@ -295,9 +264,20 @@ export function AdminBDEOversightPage() {
                   Clients reached, call volume, meetings scheduled, and revenue closed per agent.
                 </p>
               </div>
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#0B111C] border border-[#2A3446] text-[#BCCCE6]">
-                {reps.length} Active {reps.length === 1 ? "Agent" : "Agents"}
-              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => refetch()}
+                  disabled={isLoading || isRefetching}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#202B3D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs font-semibold text-[#BCCCE6] hover:text-white transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                  title="Sync live BDE performance data"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-[#7FA0D6] ${isRefetching ? "animate-spin" : ""}`} />
+                  <span>{isRefetching ? "Syncing..." : "Sync Live Data"}</span>
+                </button>
+                <span className="text-xs font-bold px-2.5 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[#BCCCE6]">
+                  {reps.length} Active {reps.length === 1 ? "Agent" : "Agents"}
+                </span>
+              </div>
             </div>
 
             {reps.length === 0 ? (
@@ -658,6 +638,7 @@ export function AdminBDEOversightPage() {
           </div>
         </div>
       )}
+      </main>
     </div>
   );
 }

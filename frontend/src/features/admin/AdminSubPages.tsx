@@ -5371,37 +5371,24 @@ export function AdminTeamManagementPage() {
 
         {teamTab === "freelancers" ? (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <span>Freelancer Network & Role-Based Access</span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[10px] font-black uppercase">
-                    Scoped Collaboration
-                  </span>
-                </h3>
-                <p className="text-xs text-[#97A0B3]">
-                  Provision external video editors, animators, and designers with restricted access to assigned deliverables.
-                </p>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => freelancersQuery.refetch()}
-                  disabled={freelancersQuery.isFetching}
-                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
-                  title="Refresh Freelancer Roster"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${freelancersQuery.isFetching ? "animate-spin text-purple-400" : "text-[#97A0B3]"}`} />
-                  <span>Refresh</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsAddFreelancerOpen(true)}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md shadow-purple-500/20 cursor-pointer transition-all shrink-0"
-                >
-                  <Plus className="w-4 h-4" /> Onboard Freelancer
-                </button>
-              </div>
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => freelancersQuery.refetch()}
+                disabled={freelancersQuery.isFetching}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
+                title="Refresh Freelancer Roster"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${freelancersQuery.isFetching ? "animate-spin text-purple-400" : "text-[#97A0B3]"}`} />
+                <span>Refresh</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAddFreelancerOpen(true)}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md shadow-purple-500/20 cursor-pointer transition-all shrink-0"
+              >
+                <Plus className="w-4 h-4" /> Onboard Freelancer
+              </button>
             </div>
 
             <div className="p-3.5 bg-purple-500/10 border border-purple-500/25 rounded-2xl flex items-start gap-3 text-xs text-purple-200">
@@ -5624,34 +5611,21 @@ export function AdminTeamManagementPage() {
         !activePodId ? (
           <div className="space-y-6">
             {/* Top Controls Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <span>Sprint Pods & Resource Allocation</span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
-                    Live Roster
-                  </span>
-                </h3>
-                <p className="text-xs text-[#97A0B3]">
-                  Live operational capacity, attendance status, and pod assignments across creative & outreach teams
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Link
-                  to="/admin/leaves"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold transition-all shadow-sm"
-                >
-                  <Plane className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Leave Management</span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setIsAddMemberOpen(true)}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
-                >
-                  <Plus className="w-4 h-4" /> Add Team Member
-                </button>
-              </div>
+            <div className="flex items-center justify-end gap-3">
+              <Link
+                to="/admin/leaves"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold transition-all shadow-sm"
+              >
+                <Plane className="w-3.5 h-3.5 text-amber-400" />
+                <span>Leave Management</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsAddMemberOpen(true)}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
+              >
+                <Plus className="w-4 h-4" /> Add Team Member
+              </button>
             </div>
 
             {/* Attendance & Presence Status Filter Bar */}
@@ -7025,34 +6999,20 @@ export function AdminLeaveApprovalsPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
-              <span>Leave Requests & Presence Approvals</span>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
-                Live Attendance
-              </span>
-            </h1>
-            <p className="text-xs text-[#97A0B3] mt-0.5">
-              Review and authorize time-off applications across Creative Pods, BDE Outreach, and Operations.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/team"
-              className="px-3.5 py-2 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
-            >
-              <UserCog className="w-4 h-4 text-[#7FA0D6]" /> Team Roster & Pods
-            </Link>
-            <button
-              type="button"
-              onClick={() => setIsApplyModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
-            >
-              <Plus className="w-4 h-4" /> Apply for Time Off
-            </button>
-          </div>
+        <div className="flex flex-wrap items-center justify-end gap-3 pb-2">
+          <Link
+            to="/admin/team"
+            className="px-3.5 py-2 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+          >
+            <UserCog className="w-4 h-4 text-[#7FA0D6]" /> Team Roster & Pods
+          </Link>
+          <button
+            type="button"
+            onClick={() => setIsApplyModalOpen(true)}
+            className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+          >
+            <Plus className="w-4 h-4" /> Apply for Time Off
+          </button>
         </div>
 
         {/* 2 Top KPI Summary Cards - Fully Connected & Live */}
@@ -7137,13 +7097,13 @@ export function AdminLeaveApprovalsPage() {
         {/* Requests Table */}
         <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-xl overflow-hidden">
           <div className="p-4 border-b border-[#2A3446] flex flex-wrap items-center justify-between gap-3 bg-[#0B111C]/60">
-            <div className="flex items-center gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs border border-[#2A3446]">
+            <div className="flex items-center gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs border border-[#2A3446] max-w-full overflow-x-auto scrollbar-none flex-nowrap">
               {(["all", "pending", "approved", "rejected"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setFilterTab(tab)}
-                  className={`px-3 py-1.5 rounded-lg capitalize font-bold transition-all cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg capitalize font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap text-[11px] sm:text-xs ${
                     filterTab === tab ? "bg-[#7FA0D6] text-[#0B111C] shadow-sm font-extrabold" : "text-[#97A0B3] hover:text-white"
                   }`}
                 >
@@ -7580,7 +7540,7 @@ export function AdminRevenuePage() {
 
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
-      <AdminTopHeader title="Revenue Engine" activeTab="Revenue" />
+      <AdminTopHeader activeTab="Revenue" hideTitle />
 
       <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-6 sm:space-y-8">
           <BillingPauseRequests />
@@ -7659,44 +7619,44 @@ export function AdminRevenuePage() {
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6">
           {/* Metric 1: Total Revenue (MRR) */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
-            <div className="space-y-2">
+          <div className="bg-[#161F2D] rounded-3xl p-5 sm:p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex flex-col justify-between gap-3">
+            <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                 Total Revenue (MRR)
               </span>
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-black text-white tracking-tight">₹{totalMrr.toLocaleString('en-IN')}</span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center gap-1">
-                  Active Retainers
-                </span>
-              </div>
-              <div className="text-xs text-[#97A0B3] font-medium pt-1">
-                Projected ARR: <strong className="text-white font-bold">₹{projectedArr.toLocaleString('en-IN')}</strong>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shrink-0 border border-[#7FA0D6]/30 font-black text-xl sm:text-2xl">
+                ₹
               </div>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shrink-0 border border-[#7FA0D6]/30 font-black text-2xl">
-              ₹
+            <div className="flex flex-wrap items-baseline gap-2.5">
+              <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">₹{totalMrr.toLocaleString('en-IN')}</span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center gap-1">
+                Active Retainers
+              </span>
+            </div>
+            <div className="text-xs text-[#97A0B3] font-medium pt-0.5">
+              Projected ARR: <strong className="text-white font-bold">₹{projectedArr.toLocaleString('en-IN')}</strong>
             </div>
           </div>
 
           {/* Metric 2: Collected this Month */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
-            <div className="space-y-2">
+          <div className="bg-[#161F2D] rounded-3xl p-5 sm:p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex flex-col justify-between gap-3">
+            <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                 Collected this Month
               </span>
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-black text-white tracking-tight">₹{totalCollected.toLocaleString('en-IN')}</span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
-                  {transactions.length > 0 ? `${Math.round((transactions.filter(t => t.status === "Paid").length / transactions.length) * 100)}% Rate` : "0% Rate"}
-                </span>
-              </div>
-              <div className="text-xs text-[#97A0B3] font-medium pt-1">
-                Settlement Ratio: <strong className="text-white font-bold">{transactions.filter(t => t.status === "Paid").length} of {transactions.length} Invoices</strong>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
-              <CheckCircle2 className="w-7 h-7" />
+            <div className="flex flex-wrap items-baseline gap-2.5">
+              <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">₹{totalCollected.toLocaleString('en-IN')}</span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                {transactions.length > 0 ? `${Math.round((transactions.filter(t => t.status === "Paid").length / transactions.length) * 100)}% Rate` : "0% Rate"}
+              </span>
+            </div>
+            <div className="text-xs text-[#97A0B3] font-medium pt-0.5">
+              Settlement Ratio: <strong className="text-white font-bold">{transactions.filter(t => t.status === "Paid").length} of {transactions.length} Invoices</strong>
             </div>
           </div>
         </div>
@@ -7872,11 +7832,11 @@ export function AdminRevenuePage() {
                 </div>
               </div>
 
-              {/* Transactions Table: Complete row visible with zero horizontal scrolling */}
-              <div className={`rounded-2xl border border-[#2A3446] bg-[#0B111C]/40 ${
-                revenueLayout === "split" ? "max-h-[380px] overflow-y-auto overflow-x-hidden" : "overflow-hidden"
+              {/* Transactions Table: Responsive scroll container on mobile */}
+              <div className={`rounded-2xl border border-[#2A3446] bg-[#0B111C]/40 overflow-x-auto ${
+                revenueLayout === "split" ? "max-h-[380px] overflow-y-auto" : ""
               }`}>
-                <table className="w-full text-left text-xs text-white table-auto">
+                <table className="w-full text-left text-xs text-white min-w-[700px]">
                   <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] sticky top-0 z-10">
                     {revenueLayout === "split" ? (
                       <tr>
@@ -8727,7 +8687,7 @@ export function AdminPlansPage() {
 
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
-      <AdminTopHeader activeTab="Revenue" />
+      <AdminTopHeader activeTab="Revenue" hideTitle />
       <main className="flex-1 px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
@@ -8948,9 +8908,26 @@ export function AdminPlansPage() {
                           {item.clientLogo}
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                             <h4 className="font-bold text-sm text-white">{item.clientName}</h4>
-                            <span className="text-[10px] text-[#97A0B3] font-semibold">{item.requestedAt}</span>
+                            {item.requestedAt && (
+                              <span className="text-[10px] text-[#97A0B3] font-semibold">
+                                {(() => {
+                                  try {
+                                    const d = new Date(item.requestedAt);
+                                    return isNaN(d.getTime())
+                                      ? item.requestedAt
+                                      : d.toLocaleDateString("en-IN", {
+                                          day: "numeric",
+                                          month: "short",
+                                          year: "numeric",
+                                        });
+                                  } catch {
+                                    return item.requestedAt;
+                                  }
+                                })()}
+                              </span>
+                            )}
                             {isHighlighted && (
                               <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-[#7FA0D6] border border-blue-500/30 text-[9px] font-black uppercase">
                                 Selected Target
@@ -8963,7 +8940,7 @@ export function AdminPlansPage() {
                       </div>
 
                       {/* Negotiation Details */}
-                      <div className="flex items-center gap-4 bg-[#161F2D] p-3 rounded-xl border border-[#2A3446] flex-wrap">
+                      <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 sm:gap-4 bg-[#161F2D] p-3 rounded-xl border border-[#2A3446]">
                         {item.proposedOffer && (
                           <div>
                             <span className="text-[10px] text-[#7FA0D6] uppercase block font-bold">Client Offer</span>

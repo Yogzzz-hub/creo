@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
+import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import {
   crmAgencyKey,
   crmDate,
@@ -269,11 +270,19 @@ export function RevenueCRMPage() {
     const firstAgency = options.data?.[0];
     if (options.data?.length === 1 && firstAgency && !agency) selectAgency(firstAgency.id);
   }, [options.data, agency]);
-  if (user?.role !== "super_admin") return <RevenueCRMWorkspace />;
+  if (user?.role !== "super_admin") {
+    return (
+      <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+        <AdminTopHeader activeTab="Revenue" hideTitle />
+        <RevenueCRMWorkspace />
+      </div>
+    );
+  }
   const valid = options.data?.some((item) => item.id === agency);
   return (
-    <>
-      <div className="mx-auto w-full max-w-[1600px] px-4 pt-6 sm:px-6 lg:px-8">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+      <AdminTopHeader activeTab="Revenue" hideTitle />
+      <div className="mx-auto w-full max-w-[1500px] px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6">
         <label className="block max-w-md text-sm text-[#BCCCE6]">
           Agency workspace
           <select
@@ -309,7 +318,7 @@ export function RevenueCRMPage() {
           />
         </div>
       )}
-    </>
+    </div>
   );
 }
 
@@ -409,7 +418,6 @@ function RevenueCRMWorkspace() {
     stats?.can_manage ?? ["admin", "super_admin", "bde_head"].includes(user?.role || "");
   const canConfigure = stats?.can_configure ?? ["admin", "super_admin"].includes(user?.role || "");
   const leads = leadQuery.data || [];
-  const currentSection = navigation.find((n) => n.id === section);
   const pendingTasks = (taskQuery.data || []).filter((t) => t.status === "pending");
   function filter(key: string, value: string) {
     const next = new URLSearchParams(params);
@@ -448,26 +456,9 @@ function RevenueCRMWorkspace() {
   const queryError = queries.find((q) => q.isError);
 
   return (
-    <main className="mx-auto w-full min-w-0 max-w-[1600px] space-y-6 px-4 pb-24 pt-6 text-white sm:px-6 lg:px-8">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <Link
-            to="/bde/crm/overview"
-            className="mb-2 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#8FAEDC]"
-          >
-            <BriefcaseBusiness className="size-4" />
-            Creo / Revenue workspace
-          </Link>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            {currentSection?.label || "Revenue workspace"}
-          </h1>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#96A5BB]">
-            {section === "overview"
-              ? "Every opportunity has an owner. Every conversation has a next step."
-              : "One workspace for your clients, commitments, and commercial outcomes."}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+    <main className="mx-auto w-full min-w-0 max-w-[1500px] flex-1 space-y-4 sm:space-y-6 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 text-white">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
           <Badge>
             {user?.role === "bde_head"
               ? "BDE Head"
@@ -475,6 +466,8 @@ function RevenueCRMWorkspace() {
                 ? "Agency oversight"
                 : "BDE workspace"}
           </Badge>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => openForm("lead")} className={primary}>
             <Plus className="size-4" />
             New lead

@@ -32,6 +32,7 @@ import {
   LeadStatus,
   CreateLeadPayload,
 } from "../../lib/bde-api";
+import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 
 const money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 const pipelineStages: [LeadStatus, string][] = [
@@ -119,12 +120,10 @@ export function BDEDashboardPage() {
   };
 
   return (
-    <main className="min-w-0 flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1550px] w-full mx-auto space-y-6 animate-in fade-in duration-300">
-      <header className="space-y-1">
-        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#7FA0D6]">Business development</p>
-        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">BDE dashboard</h1>
-        <p className="text-sm text-[#97A0B3]">Track your team’s leads, deal progress, and follow-ups.</p>
-      </header>
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+      <AdminTopHeader activeTab="BDE Outreach" hideTitle />
+      <main className="min-w-0 flex-1 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6 animate-in fade-in duration-300">
+
       {/* Top Controls */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="grid min-w-0 flex-1 grid-cols-2 rounded-xl border border-[#2A3446] bg-[#161F2D] p-1 sm:flex sm:flex-none sm:items-center sm:gap-1">
@@ -628,7 +627,8 @@ export function BDEDashboardPage() {
           }}
         />
       )}
-    </main>
+      </main>
+    </div>
   );
 }
 

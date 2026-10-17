@@ -85,34 +85,21 @@ export function AdminSLAPerformancePage() {
           transition={{ duration: 0.35 }}
           className="px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 sm:pb-8 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6"
         >
-          {/* Header Action Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#161F2D]/60 border border-[#2A3446]/80 rounded-2xl p-4 sm:px-6">
-            <div className="flex items-center gap-3">
-              <div className="size-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
-              <div>
-                <h1 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                  SLA Performance Center
-                  <span className="text-[10px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                    <Database className="size-2.5" /> Supabase Live
-                  </span>
-                </h1>
-                <p className="text-xs text-[#97A0B3] font-medium">
-                  Real-time contract compliance tracking and creative pod turnaround velocity
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => void refetch()}
-                disabled={isFetching}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-xs font-bold text-white transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <RefreshCw className={`size-3.5 text-[#7FA0D6] ${isFetching ? "animate-spin" : ""}`} />
-                {isFetching ? "Syncing..." : "Sync Live Data"}
-              </button>
-            </div>
+          {/* Action Bar */}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[11px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 px-2.5 py-1 rounded-full inline-flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <Database className="size-3" /> Supabase Live
+            </span>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              disabled={isFetching}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-xs font-bold text-white transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`size-3.5 text-[#7FA0D6] ${isFetching ? "animate-spin" : ""}`} />
+              {isFetching ? "Syncing..." : "Sync Live Data"}
+            </button>
           </div>
 
           {isLoading ? (

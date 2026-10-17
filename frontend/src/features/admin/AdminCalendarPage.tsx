@@ -761,18 +761,18 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                     )}
 
                     {/* Client info & Media indicator */}
-                    <div className="flex items-center justify-between pt-2 border-t border-[#2A3446]/60 mt-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#2A3446]/60 mt-1">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="size-6 rounded-full flex items-center justify-center text-[9px] font-black text-white bg-blue-600 shrink-0">
                           {event.client_name.substring(0, 2).toUpperCase()}
                         </div>
-                        <span className="text-[11px] font-bold text-slate-300 truncate max-w-[130px]" title={event.client_name}>
+                        <span className="text-[11px] font-bold text-slate-300 truncate max-w-[160px] sm:max-w-[200px]" title={event.client_name}>
                           {event.client_name}
                         </span>
                       </div>
 
                       {/* Admin Quick Action Buttons */}
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap sm:flex-nowrap ml-auto">
                         {!isApproved && (
                           <button
                             onClick={(e) => {
