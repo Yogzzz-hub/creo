@@ -105,6 +105,7 @@ import {
   IndianRupee,
   UserCheck,
   LayoutGrid,
+  ChevronDown,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CustomSelect } from "../../components/ui/CustomSelect";
@@ -1051,60 +1052,67 @@ export function AdminClientsPage() {
                   <div
                     key={client.id}
                     onClick={() => setSelectedClientId(client.id)}
-                    className="bg-[#161F2D]/80 backdrop-blur-xl rounded-3xl p-4 sm:p-6 border border-[#2A3446]/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between"
+                    className="bg-[#161F2D]/80 backdrop-blur-xl rounded-3xl p-5 border border-[#2A3446]/80 shadow-xl hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between gap-4"
                   >
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-12 h-12 rounded-2xl bg-[#0B111C] text-white font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0">
+                    <div className="space-y-3.5">
+                      {/* Top Header: Avatar + Title + Status Chip */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#121A26] to-[#0B111C] border border-[#2A3446] text-white font-black text-base flex items-center justify-center shadow-md group-hover:scale-105 group-hover:border-[#7FA0D6]/40 transition-all shrink-0">
                             {client.initials}
                           </div>
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5">
-                              <h3 className="font-bold text-base text-white group-hover:text-[#7FA0D6] transition-colors truncate">
+                              <h3 className="font-bold text-base text-white group-hover:text-[#7FA0D6] transition-colors truncate" title={client.name}>
                                 {client.name}
                               </h3>
                               {isOnboarded && (
                                 <CheckCircle2 className="w-4 h-4 text-[#7FA0D6] fill-blue-600 text-white shrink-0" />
                               )}
                             </div>
-                            <span className="text-[11px] text-[#97A0B3] font-medium block truncate max-w-[200px]">
-                              {client.industry}
+                            <span className="text-[11px] text-[#97A0B3] font-medium block truncate" title={client.industry}>
+                              {client.industry || "Digital Growth"}
                             </span>
                           </div>
                         </div>
 
+                        {/* Status Badge */}
                         {isNotPaidNotOnboarded ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0 whitespace-nowrap">
-                            user not paid and not onboarded yet
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                            Unpaid
                           </span>
                         ) : isPaidNotOnboarded ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-500/15 text-sky-400 border border-sky-500/30 shrink-0 whitespace-nowrap">
-                            user paid but not onboarded
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/30 shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+                            Paid • Pending Onboarding
                           </span>
                         ) : (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                             {client.status.replace(" RETAINER", "") || "ACTIVE"}
                           </span>
                         )}
                       </div>
 
-                      <div className="p-3 bg-[#0B111C]/80 rounded-2xl space-y-1.5 text-xs text-[#F1F5F9] border border-[#2A3446]">
-                        <div className="flex justify-between">
-                          <span className="font-medium text-[#97A0B3]">Retainer:</span>
-                          <span className="font-bold text-white">
-                            {isNotPaidNotOnboarded ? "₹0 (Unpaid)" : `₹${(client.monthlyFee ?? 0).toLocaleString()}/mo`}
+                      {/* Bento Metric Tiles */}
+                      <div className="grid grid-cols-2 gap-2 p-2.5 bg-[#0B111C]/70 rounded-2xl border border-[#2A3446]/70 text-xs">
+                        <div className="col-span-1 bg-[#161F2D]/50 rounded-xl p-2.5 border border-[#2A3446]/40">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-0.5">Retainer</span>
+                          <span className="font-extrabold text-sm text-white block">
+                            {isNotPaidNotOnboarded ? "₹0 (Unpaid)" : `₹${(client.monthlyFee ?? 0).toLocaleString()}`}
+                            {!isNotPaidNotOnboarded && <span className="text-[10px] text-[#97A0B3] font-normal">/mo</span>}
                           </span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium text-[#97A0B3]">Assigned Pod:</span>
-                          <span className={`font-bold ${isOnboarded ? "text-[#7FA0D6]" : "text-[#97A0B3]"}`}>
+                        <div className="col-span-1 bg-[#161F2D]/50 rounded-xl p-2.5 border border-[#2A3446]/40">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-0.5">Assigned Pod</span>
+                          <span className={`font-bold text-xs truncate block ${isOnboarded ? "text-[#7FA0D6]" : "text-[#97A0B3]"}`} title={client.pod?.name || (isPaidNotOnboarded ? "Awaiting Onboarding" : "Not Assigned")}>
                             {client.pod?.name || (isPaidNotOnboarded ? "Awaiting Onboarding" : "Not Assigned")}
                           </span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium text-[#97A0B3]">Primary Contact:</span>
-                          <span className="font-semibold text-white truncate max-w-[170px]">
+                        <div className="col-span-2 bg-[#161F2D]/50 rounded-xl px-2.5 py-2 border border-[#2A3446]/40 flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Primary Contact</span>
+                          <span className="font-semibold text-xs text-white truncate max-w-[190px]" title={client.contact?.name || client.name}>
                             {client.contact?.name || client.name}
                           </span>
                         </div>
@@ -1137,15 +1145,27 @@ export function AdminClientsPage() {
                       })()}
                     </div>
 
-                    <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[#97A0B3] font-medium">
-                          {isOnboarded
-                            ? `${(client.deliverables || []).length} Deliverables Active`
-                            : isPaidNotOnboarded
-                            ? "Awaiting Onboarding Form"
-                            : "Account Not Onboarded"}
+                    {/* Bento Card Footer */}
+                    <div className="pt-3 border-t border-[#2A3446]/70 space-y-2.5">
+                      {/* Status line & Details link */}
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-[#97A0B3] font-medium flex items-center gap-1.5 text-[11px] truncate mr-2">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isOnboarded ? "bg-emerald-400" : isPaidNotOnboarded ? "bg-sky-400" : "bg-amber-400"}`} />
+                          <span className="truncate">
+                            {isOnboarded
+                              ? `${(client.deliverables || []).length} Deliverables Active`
+                              : isPaidNotOnboarded
+                              ? "Awaiting Onboarding Form"
+                              : "Account Not Onboarded"}
+                          </span>
                         </span>
+                        <span className="text-[#7FA0D6] group-hover:text-blue-400 font-bold text-[11px] group-hover:translate-x-0.5 transition-all shrink-0 flex items-center gap-1">
+                          Details &rarr;
+                        </span>
+                      </div>
+
+                      {/* Action buttons row */}
+                      <div className="flex items-center gap-2 pt-1 border-t border-[#2A3446]/40">
                         {isNotPaidNotOnboarded ? (
                           <button
                             type="button"
@@ -1159,11 +1179,11 @@ export function AdminClientsPage() {
                               setDirectBypassPlanId(plansQuery.data?.[0]?.id || "");
                               setIsDirectBypassModalOpen(true);
                             }}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                            className="flex-1 py-1.5 px-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm truncate"
                             title="Bypass payment for client who paid offline"
                           >
-                            <Banknote className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>Bypass Payment</span>
+                            <Banknote className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span className="truncate">Bypass Payment</span>
                           </button>
                         ) : isPaidNotOnboarded ? (
                           <button
@@ -1175,13 +1195,14 @@ export function AdminClientsPage() {
                                 name: client.name,
                               });
                             }}
-                            className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                            className="flex-1 py-1.5 px-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm truncate"
                             title="Revoke payment bypass and return client to Step 3"
                           >
-                            <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
-                            <span>Revoke Bypass</span>
+                            <RotateCcw className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                            <span className="truncate">Revoke Bypass</span>
                           </button>
                         ) : null}
+
                         <button
                           type="button"
                           onClick={(e) => {
@@ -1192,16 +1213,13 @@ export function AdminClientsPage() {
                             });
                             setIsSplitModalOpen(true);
                           }}
-                          className="px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                          className="flex-1 py-1.5 px-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm truncate"
                           title="Configure split payment instalments & reminders"
                         >
-                          <CreditCard className="w-3.5 h-3.5 text-blue-400" />
-                          <span>Split Payment</span>
+                          <CreditCard className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                          <span className="truncate">Split Payment</span>
                         </button>
                       </div>
-                      <span className="text-[#7FA0D6] font-bold group-hover:underline flex items-center gap-1">
-                        View Client Detail View &rarr;
-                      </span>
                     </div>
                   </div>
                 );
@@ -3386,6 +3404,26 @@ export function AdminTasksPage() {
   const [isAssignPickerOpen, setIsAssignPickerOpen] = useState(false);
   const [assignFreelancerTarget, setAssignFreelancerTarget] = useState<FreelancerProfileItem | null>(null);
   const [isAdvancingStage, setIsAdvancingStage] = useState(false);
+  const [columnLimits, setColumnLimits] = useState<Record<string, number>>({
+    todo: 12,
+    in_progress: 12,
+    under_review: 12,
+    approved: 12,
+  });
+
+  const handleLoadMore = (colId: string) => {
+    setColumnLimits((prev) => ({
+      ...prev,
+      [colId]: (prev[colId] || 12) + 12,
+    }));
+  };
+
+  const handleShowAll = (colId: string, total: number) => {
+    setColumnLimits((prev) => ({
+      ...prev,
+      [colId]: total,
+    }));
+  };
 
   // In-house creation form state
   const [newTaskForm, setNewTaskForm] = useState({
@@ -4010,43 +4048,65 @@ export function AdminTasksPage() {
               ))}
             </div>
 
-            {/* 4 Pipeline Columns */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* 4 Pipeline Columns with Independent Scrollable Lanes */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
               
               {/* Column 1: TO DO (Backlog / Assigned) */}
-              <div className={`bg-[#161F2D]/50 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
-                mobileKanbanCol !== "all" && mobileKanbanCol !== "todo" ? "hidden sm:flex flex-col" : "flex flex-col"
+              <div className={`bg-[#161F2D]/60 rounded-3xl border border-[#2A3446]/80 shadow-xl overflow-hidden flex flex-col h-[calc(100vh-270px)] min-h-[560px] max-h-[820px] ${
+                mobileKanbanCol !== "all" && mobileKanbanCol !== "todo" ? "hidden sm:flex" : "flex"
               }`}>
-                <div className="flex items-center justify-between px-1">
+                <div className="p-4 bg-[#161F2D]/95 backdrop-blur-md border-b border-[#2A3446]/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
                     <h3 className="text-xs font-black text-white tracking-wider uppercase">
                       TO DO / QUEUE
                     </h3>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[11px] font-bold border border-[#2A3446]">
+                  <span className="px-2 py-0.5 rounded-full bg-[#0B111C] text-[#F1F5F9] text-[11px] font-bold border border-[#2A3446]">
                     {todoTasks.length}
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="flex-1 p-3.5 space-y-3 overflow-y-auto overflow-x-hidden custom-scrollbar">
                   {todoTasks.length === 0 ? (
                     <div className="p-6 text-center text-xs text-[#97A0B3] bg-[#0B111C]/40 rounded-2xl border border-dashed border-[#2A3446]">
                       No backlog tasks matching filter
                     </div>
                   ) : (
-                    todoTasks.map((task) => (
-                      <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
-                    ))
+                    <>
+                      {todoTasks.slice(0, columnLimits.todo || 12).map((task) => (
+                        <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
+                      ))}
+
+                      {todoTasks.length > (columnLimits.todo || 12) && (
+                        <div className="pt-2 pb-1 space-y-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleLoadMore("todo")}
+                            className="w-full py-2 px-3 rounded-xl bg-[#0B111C]/90 hover:bg-[#1a2536] border border-[#2A3446] text-xs font-bold text-[#7FA0D6] flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                            <span>Load 12 More ({todoTasks.length - (columnLimits.todo || 12)} remaining)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleShowAll("todo", todoTasks.length)}
+                            className="w-full py-1 text-[10px] font-semibold text-[#97A0B3] hover:text-white transition-colors text-center cursor-pointer"
+                          >
+                            Show All ({todoTasks.length})
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
 
               {/* Column 2: IN PRODUCTION (Active WIP / In Process) */}
-              <div className={`bg-[#161F2D]/50 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
-                mobileKanbanCol !== "all" && mobileKanbanCol !== "in_progress" ? "hidden sm:flex flex-col" : "flex flex-col"
+              <div className={`bg-[#161F2D]/60 rounded-3xl border border-[#2A3446]/80 shadow-xl overflow-hidden flex flex-col h-[calc(100vh-270px)] min-h-[560px] max-h-[820px] ${
+                mobileKanbanCol !== "all" && mobileKanbanCol !== "in_progress" ? "hidden sm:flex" : "flex"
               }`}>
-                <div className="flex items-center justify-between px-1">
+                <div className="p-4 bg-[#161F2D]/95 backdrop-blur-md border-b border-[#2A3446]/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
                     <h3 className="text-xs font-black text-white tracking-wider uppercase">
@@ -4058,24 +4118,46 @@ export function AdminTasksPage() {
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="flex-1 p-3.5 space-y-3 overflow-y-auto overflow-x-hidden custom-scrollbar">
                   {inProgressTasks.length === 0 ? (
                     <div className="p-6 text-center text-xs text-[#97A0B3] bg-[#0B111C]/40 rounded-2xl border border-dashed border-[#2A3446]">
                       No active production tasks
                     </div>
                   ) : (
-                    inProgressTasks.map((task) => (
-                      <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
-                    ))
+                    <>
+                      {inProgressTasks.slice(0, columnLimits.in_progress || 12).map((task) => (
+                        <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
+                      ))}
+
+                      {inProgressTasks.length > (columnLimits.in_progress || 12) && (
+                        <div className="pt-2 pb-1 space-y-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleLoadMore("in_progress")}
+                            className="w-full py-2 px-3 rounded-xl bg-[#0B111C]/90 hover:bg-[#1a2536] border border-[#2A3446] text-xs font-bold text-[#7FA0D6] flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                            <span>Load 12 More ({inProgressTasks.length - (columnLimits.in_progress || 12)} remaining)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleShowAll("in_progress", inProgressTasks.length)}
+                            className="w-full py-1 text-[10px] font-semibold text-[#97A0B3] hover:text-white transition-colors text-center cursor-pointer"
+                          >
+                            Show All ({inProgressTasks.length})
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
 
               {/* Column 3: UNDER REVIEW (Internal QA & Client Review) */}
-              <div className={`bg-[#161F2D]/50 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
-                mobileKanbanCol !== "all" && mobileKanbanCol !== "under_review" ? "hidden sm:flex flex-col" : "flex flex-col"
+              <div className={`bg-[#161F2D]/60 rounded-3xl border border-[#2A3446]/80 shadow-xl overflow-hidden flex flex-col h-[calc(100vh-270px)] min-h-[560px] max-h-[820px] ${
+                mobileKanbanCol !== "all" && mobileKanbanCol !== "under_review" ? "hidden sm:flex" : "flex"
               }`}>
-                <div className="flex items-center justify-between px-1">
+                <div className="p-4 bg-[#161F2D]/95 backdrop-blur-md border-b border-[#2A3446]/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                     <h3 className="text-xs font-black text-white tracking-wider uppercase">
@@ -4087,24 +4169,46 @@ export function AdminTasksPage() {
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="flex-1 p-3.5 space-y-3 overflow-y-auto overflow-x-hidden custom-scrollbar">
                   {underReviewTasks.length === 0 ? (
                     <div className="p-6 text-center text-xs text-[#97A0B3] bg-[#0B111C]/40 rounded-2xl border border-dashed border-[#2A3446]">
                       No tasks awaiting review
                     </div>
                   ) : (
-                    underReviewTasks.map((task) => (
-                      <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
-                    ))
+                    <>
+                      {underReviewTasks.slice(0, columnLimits.under_review || 12).map((task) => (
+                        <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
+                      ))}
+
+                      {underReviewTasks.length > (columnLimits.under_review || 12) && (
+                        <div className="pt-2 pb-1 space-y-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleLoadMore("under_review")}
+                            className="w-full py-2 px-3 rounded-xl bg-[#0B111C]/90 hover:bg-[#1a2536] border border-[#2A3446] text-xs font-bold text-[#7FA0D6] flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                            <span>Load 12 More ({underReviewTasks.length - (columnLimits.under_review || 12)} remaining)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleShowAll("under_review", underReviewTasks.length)}
+                            className="w-full py-1 text-[10px] font-semibold text-[#97A0B3] hover:text-white transition-colors text-center cursor-pointer"
+                          >
+                            Show All ({underReviewTasks.length})
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
 
               {/* Column 4: APPROVED / DONE */}
-              <div className={`bg-[#161F2D]/50 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
-                mobileKanbanCol !== "all" && mobileKanbanCol !== "approved" ? "hidden sm:flex flex-col" : "flex flex-col"
+              <div className={`bg-[#161F2D]/60 rounded-3xl border border-[#2A3446]/80 shadow-xl overflow-hidden flex flex-col h-[calc(100vh-270px)] min-h-[560px] max-h-[820px] ${
+                mobileKanbanCol !== "all" && mobileKanbanCol !== "approved" ? "hidden sm:flex" : "flex"
               }`}>
-                <div className="flex items-center justify-between px-1">
+                <div className="p-4 bg-[#161F2D]/95 backdrop-blur-md border-b border-[#2A3446]/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                     <h3 className="text-xs font-black text-white tracking-wider uppercase">
@@ -4116,15 +4220,37 @@ export function AdminTasksPage() {
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="flex-1 p-3.5 space-y-3 overflow-y-auto overflow-x-hidden custom-scrollbar">
                   {approvedTasks.length === 0 ? (
                     <div className="p-6 text-center text-xs text-[#97A0B3] bg-[#0B111C]/40 rounded-2xl border border-dashed border-[#2A3446]">
                       No completed tasks
                     </div>
                   ) : (
-                    approvedTasks.map((task) => (
-                      <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
-                    ))
+                    <>
+                      {approvedTasks.slice(0, columnLimits.approved || 12).map((task) => (
+                        <TaskCard key={task.id} task={task} onSelect={() => setPreviewTask(task)} />
+                      ))}
+
+                      {approvedTasks.length > (columnLimits.approved || 12) && (
+                        <div className="pt-2 pb-1 space-y-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleLoadMore("approved")}
+                            className="w-full py-2 px-3 rounded-xl bg-[#0B111C]/90 hover:bg-[#1a2536] border border-[#2A3446] text-xs font-bold text-[#7FA0D6] flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                            <span>Load 12 More ({approvedTasks.length - (columnLimits.approved || 12)} remaining)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleShowAll("approved", approvedTasks.length)}
+                            className="w-full py-1 text-[10px] font-semibold text-[#97A0B3] hover:text-white transition-colors text-center cursor-pointer"
+                          >
+                            Show All ({approvedTasks.length})
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
