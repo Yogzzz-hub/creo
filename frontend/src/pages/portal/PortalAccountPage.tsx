@@ -266,14 +266,14 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
   const currentIgHandle = (ig?.username || "").replace(/^@/, "");
 
   return (
-    <main className="text-white space-y-6 pb-16 max-w-6xl mx-auto">
+    <main className="text-white space-y-4 pb-4 w-full">
       {/* Tab Navigation & User Preview Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#2A3446]/60">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#2A3446]/60">
         <nav aria-label="Account Settings Tabs" className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
           <button
             type="button"
             onClick={() => setParams({ tab: "account" })}
-            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
               activeTab === "account"
                 ? "bg-[#BCCCE6] text-[#0B111C] shadow-lg shadow-[#BCCCE6]/10 scale-[1.02]"
                 : "bg-[#161F2D] text-[#97A0B3] hover:text-white hover:bg-[#1E293B] border border-[#2A3446]"
@@ -287,7 +287,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           <button
             type="button"
             onClick={() => setParams({ tab: "integrations" })}
-            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer relative ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer relative ${
               activeTab === "integrations"
                 ? "bg-[#BCCCE6] text-[#0B111C] shadow-lg shadow-[#BCCCE6]/10 scale-[1.02]"
                 : "bg-[#161F2D] text-[#97A0B3] hover:text-white hover:bg-[#1E293B] border border-[#2A3446]"
@@ -319,7 +319,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           <button
             type="button"
             onClick={() => setParams({ tab: "security" })}
-            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
               activeTab === "security"
                 ? "bg-[#BCCCE6] text-[#0B111C] shadow-lg shadow-[#BCCCE6]/10 scale-[1.02]"
                 : "bg-[#161F2D] text-[#97A0B3] hover:text-white hover:bg-[#1E293B] border border-[#2A3446]"
@@ -333,8 +333,8 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
 
         {/* User preview badge */}
         {(query.data || user) && (
-          <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-[#161F2D] border border-[#2A3446] shrink-0">
-            <div className="size-8 rounded-full bg-gradient-to-tr from-[#7FA0D6] to-[#BCCCE6] text-[#0B111C] font-black text-xs flex items-center justify-center uppercase shadow-sm">
+          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] shrink-0">
+            <div className="size-7 rounded-full bg-gradient-to-tr from-[#7FA0D6] to-[#BCCCE6] text-[#0B111C] font-black text-[11px] flex items-center justify-center uppercase shadow-sm">
               {(query.data?.full_name || user?.full_name || user?.email || "U").slice(0, 2)}
             </div>
             <div className="text-left">
@@ -351,19 +351,19 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
 
       {/* Loading state */}
       {!isLocked && query.isPending && (
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-12 text-center space-y-4">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-8 text-center space-y-3">
           <CreoInlineLoader />
           <p className="text-sm font-semibold text-[#97A0B3]">Loading your account settings…</p>
         </div>
       )}
       {/* Error state */}
       {!isLocked && query.isError && (
-        <div className="bg-rose-500/10 border border-rose-500/30 rounded-3xl p-8 text-center space-y-4">
-          <AlertCircle className="size-8 text-rose-400 mx-auto" />
+        <div className="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-6 text-center space-y-3">
+          <AlertCircle className="size-7 text-rose-400 mx-auto" />
           <p className="text-sm text-rose-200">{query.error.message}</p>
           <button
             onClick={() => void query.refetch()}
-            className="px-5 py-2 rounded-xl bg-rose-500 text-white font-bold text-xs hover:bg-rose-600 transition-colors"
+            className="px-4 py-2 rounded-xl bg-rose-500 text-white font-bold text-xs hover:bg-rose-600 transition-colors"
           >
             Retry Loading
           </button>
@@ -393,23 +393,23 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
 
       {/* TAB 1: INSTAGRAM & INTEGRATIONS */}
       {query.data && activeTab === "integrations" && (
-        <section className="space-y-8 animate-in fade-in duration-300">
+        <section className="space-y-4 animate-in fade-in duration-300">
           {/* STATE 1: ALREADY CONNECTED - SHOW RICH CUSTOMER INSTAGRAM PROFILE */}
           {isIgConnected ? (
-            <div className="space-y-6">
-              <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 space-y-8">
+            <div className="space-y-4">
+              <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 space-y-4">
                 {/* Customer Profile Banner */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-[#2A3446]">
-                  <div className="flex items-center gap-4 sm:gap-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#2A3446]">
+                  <div className="flex items-center gap-3.5 sm:gap-4">
                     <div className="p-1 rounded-full bg-[#0B111C] border border-[#2A3446]">
-                      <div className="size-16 sm:size-20 rounded-full bg-[#161F2D] flex items-center justify-center text-white">
-                        <Instagram className="size-8 sm:size-10 text-[#BCCCE6]" />
+                      <div className="size-14 sm:size-16 rounded-full bg-[#161F2D] flex items-center justify-center text-white">
+                        <Instagram className="size-7 sm:size-8 text-[#BCCCE6]" />
                       </div>
                     </div>
 
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                        <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
                           @{currentIgHandle}
                         </h3>
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
@@ -420,7 +420,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                       <p className="text-xs text-[#97A0B3]">
                         {form.company || query.data.company_name || query.data.full_name || "Client Brand"} · Business / Creator Account
                       </p>
-                      <p className="text-[11px] text-[#7FA0D6] flex items-center gap-1">
+                      <p className="text-[11px] text-[#7FA0D6] flex items-center gap-1 pt-0.5">
                         <Radio className="size-3 animate-pulse text-emerald-400" />
                         Ready for 9:16 vertical reels, carousels & stories auto-publishing
                       </p>
@@ -428,23 +428,23 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2.5">
                     <a
                       href={`https://www.instagram.com/${currentIgHandle}/`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-4 py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs font-bold hover:bg-white transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+                      className="px-3.5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs font-bold hover:bg-white transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                     >
-                      <Instagram className="size-4" />
+                      <Instagram className="size-3.5" />
                       <span>View Live Profile</span>
-                      <ExternalLink className="size-3.5" />
+                      <ExternalLink className="size-3" />
                     </a>
 
                     <button
                       type="button"
                       disabled={isVerifyingIg}
                       onClick={() => void handleVerifyInstagram()}
-                      className="px-4 py-2.5 rounded-full bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6] text-xs font-bold text-[#BCCCE6] hover:text-white transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="px-3.5 py-2 rounded-full bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6] text-xs font-bold text-[#BCCCE6] hover:text-white transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                     >
                       {isVerifyingIg ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}
                       <span>Verify</span>
@@ -454,7 +454,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                       type="button"
                       disabled={isConnectingIg}
                       onClick={() => void handleConnectInstagram()}
-                      className="px-4 py-2.5 rounded-full bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6] text-xs font-bold text-[#BCCCE6] hover:text-white transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="px-3.5 py-2 rounded-full bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6] text-xs font-bold text-[#BCCCE6] hover:text-white transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                     >
                       {isConnectingIg ? <Loader2 className="size-3.5 animate-spin" /> : <Edit3 className="size-3.5" />}
                       <span>Reconnect</span>
@@ -463,7 +463,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                     <button
                       type="button"
                       onClick={() => setConfirmDisconnectModal(true)}
-                      className="px-4 py-2.5 rounded-full bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 text-xs font-bold text-rose-400 hover:text-rose-300 transition-all flex items-center gap-2 cursor-pointer"
+                      className="px-3.5 py-2 rounded-full bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 text-xs font-bold text-rose-400 hover:text-rose-300 transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <Trash2 className="size-3.5" />
                       <span>Disconnect</span>
@@ -476,35 +476,35 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                 )}
 
                 {/* Feature Status Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl p-5 space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3.5 sm:p-4 space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">Auto-Publishing</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Auto-Publishing</span>
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-emerald-500/15 text-emerald-400">Active</span>
                     </div>
-                    <p className="text-sm font-bold text-white">Direct Meta Pipeline</p>
+                    <p className="text-xs sm:text-sm font-bold text-white">Direct Meta Pipeline</p>
                     <p className="text-xs text-[#97A0B3] leading-relaxed">
                       Approved deliverables are immediately queued and pushed directly to your Instagram feed without manual mobile uploads.
                     </p>
                   </div>
 
-                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl p-5 space-y-2">
+                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3.5 sm:p-4 space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">Creative Formats</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Creative Formats</span>
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-[#7FA0D6]/20 text-[#BCCCE6]">Optimized</span>
                     </div>
-                    <p className="text-sm font-bold text-white">Safe Margins & Specs</p>
+                    <p className="text-xs sm:text-sm font-bold text-white">Safe Margins & Specs</p>
                     <p className="text-xs text-[#97A0B3] leading-relaxed">
                       Reels (9:16) and Carousels (4:5) are crafted to avoid Instagram UI overlays, captions, and profile badges.
                     </p>
                   </div>
 
-                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl p-5 space-y-2">
+                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3.5 sm:p-4 space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">Live Insights</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Live Insights</span>
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-purple-500/15 text-purple-300">Syncing</span>
                     </div>
-                    <p className="text-sm font-bold text-white">Reach & Saves Tracking</p>
+                    <p className="text-xs sm:text-sm font-bold text-white">Reach & Saves Tracking</p>
                     <p className="text-xs text-[#97A0B3] leading-relaxed">
                       Displays organic reach, video completions, and saves on your Creo dashboard as your audience engages.
                     </p>
@@ -518,23 +518,23 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                 { provider: "instagram", title: "Instagram", subtitle: "Connect directly", description: "Connect your Business or Creator account. No Facebook Page needed.", label: "Connect Instagram", Icon: Instagram, badge: "Direct connection", color: "bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF]" },
                 { provider: "facebook", title: "Facebook", subtitle: "Connect a linked Instagram account", description: "Sign in with Facebook and choose the Page linked to your Instagram professional account.", label: "Connect with Facebook", Icon: Facebook, badge: "Via Facebook Page", color: "bg-[#1877F2]" },
               ] as const).map(({ provider, title, subtitle, description, label, Icon, badge, color }) => (
-                <section key={provider} className="flex flex-col rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-6">
+                <section key={provider} className="flex flex-col rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-5">
                   <div className="flex items-start justify-between gap-3">
-                    <span className={`inline-flex size-12 shrink-0 items-center justify-center rounded-2xl text-white ${color}`}><Icon className="size-6" aria-hidden="true" /></span>
-                    <span className="rounded-full border border-[#2A3446] px-3 py-1 text-[10px] font-semibold text-[#BCCCE6]">{badge}</span>
+                    <span className={`inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-white ${color}`}><Icon className="size-5" aria-hidden="true" /></span>
+                    <span className="rounded-full border border-[#2A3446] px-2.5 py-0.5 text-[10px] font-semibold text-[#BCCCE6]">{badge}</span>
                   </div>
-                  <h3 className="mt-5 text-lg font-bold text-white">{title}</h3>
-                  <p className="mt-1 text-xs font-semibold text-[#BCCCE6]">{subtitle}</p>
-                  <p className="mt-3 flex-1 text-xs leading-relaxed text-[#97A0B3]">{description}</p>
+                  <h3 className="mt-3.5 text-base sm:text-lg font-bold text-white">{title}</h3>
+                  <p className="mt-0.5 text-xs font-semibold text-[#BCCCE6]">{subtitle}</p>
+                  <p className="mt-2 flex-1 text-xs leading-relaxed text-[#97A0B3]">{description}</p>
                   <button type="button" disabled={isConnectingIg || igQuery.isPending} onClick={() => void handleConnectInstagram(provider)}
-                    className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#BCCCE6] px-4 py-3 text-sm font-bold text-[#0B111C] hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer focus-visible:ring-2 focus-visible:ring-[#7FA0D6]">
-                    <Icon className={`size-4 ${isConnectingIg && connectingProvider === provider ? "animate-pulse motion-reduce:animate-none" : ""}`} aria-hidden="true" />
+                    className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#BCCCE6] px-4 py-2.5 text-xs sm:text-sm font-bold text-[#0B111C] hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer focus-visible:ring-2 focus-visible:ring-[#7FA0D6]">
+                    <Icon className={`size-3.5 ${isConnectingIg && connectingProvider === provider ? "animate-pulse motion-reduce:animate-none" : ""}`} aria-hidden="true" />
                     {isConnectingIg && connectingProvider === provider ? "Opening authorization..." : label}
-                    {!(isConnectingIg && connectingProvider === provider) && <ArrowUpRight className="size-4" aria-hidden="true" />}
+                    {!(isConnectingIg && connectingProvider === provider) && <ArrowUpRight className="size-3.5" aria-hidden="true" />}
                   </button>
                 </section>
               ))}
-              <p className="md:col-span-2 flex items-center justify-center gap-2 text-[11px] text-[#97A0B3]"><ShieldCheck className="size-4 shrink-0" />Your password stays with Instagram or Facebook. You can disconnect anytime.</p>
+              <p className="md:col-span-2 flex items-center justify-center gap-2 text-[11px] text-[#97A0B3]"><ShieldCheck className="size-3.5 shrink-0" />Your password stays with Instagram or Facebook. You can disconnect anytime.</p>
               {igNeedsReconnect && <p role="alert" className="md:col-span-2 text-xs text-amber-300">{ig?.error || "Choose a connection method to reconnect."}</p>}
               {igQuery.isError && <p role="alert" className="md:col-span-2 text-xs text-rose-300">Could not check your connection. <button type="button" className="underline" onClick={() => void igQuery.refetch()}>Retry</button></p>}
             </div>
@@ -544,23 +544,23 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
 
       {/* TAB 2: PROFILE & COMPANY SETTINGS */}
       {query.data && activeTab === "account" && (
-        <section className="space-y-6 animate-in fade-in duration-300">
-          <form onSubmit={save} className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-[#2A3446]">
+        <section className="space-y-4 animate-in fade-in duration-300">
+          <form onSubmit={save} className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
               <div>
-                <h2 className="text-xl font-bold text-white tracking-tight">Personal & Company Information</h2>
+                <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">Personal & Company Information</h2>
                 <p className="text-xs text-[#97A0B3] mt-0.5">
                   Update the primary contact info and company name associated with your Creo workspace.
                 </p>
               </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#0B111C] border border-[#2A3446] text-[#BCCCE6]">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#0B111C] border border-[#2A3446] text-[#BCCCE6]">
                 Client Profile
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <label className="space-y-2">
-                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="space-y-1.5">
+                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-1.5">
                   <User className="size-3.5 text-[#7FA0D6]" />
                   Full Name
                 </span>
@@ -569,12 +569,12 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="Your full name"
-                  className="w-full px-4 py-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-xs sm:text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
                 />
               </label>
 
-              <label className="space-y-2">
-                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-2">
+              <label className="space-y-1.5">
+                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-1.5">
                   <Building2 className="size-3.5 text-[#7FA0D6]" />
                   Company / Organization
                 </span>
@@ -583,12 +583,12 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                   value={form.company}
                   onChange={(e) => setForm({ ...form, company: e.target.value })}
                   placeholder="e.g. Acme Studio"
-                  className="w-full px-4 py-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-xs sm:text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
                 />
               </label>
 
-              <label className="space-y-2">
-                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-2">
+              <label className="space-y-1.5">
+                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-1.5">
                   <Phone className="size-3.5 text-[#7FA0D6]" />
                   Phone Number
                 </span>
@@ -597,32 +597,32 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="+1 (555) 000-0000"
-                  className="w-full px-4 py-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-xs sm:text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
                 />
               </label>
 
-              <div className="space-y-2">
-                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-2">
+              <div className="space-y-1.5">
+                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-1.5">
                   <Mail className="size-3.5 text-[#7FA0D6]" />
                   Email Address
                 </span>
-                <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-[#0B111C]/80 border border-[#2A3446] text-[#97A0B3] text-sm">
-                  <span>{query.data.email || user?.email || "Not provided"}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400">
+                <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#0B111C]/80 border border-[#2A3446] text-[#97A0B3] text-xs sm:text-sm">
+                  <span className="truncate">{query.data.email || user?.email || "Not provided"}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 ml-2">
                     Verified
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="pt-4 border-t border-[#2A3446] flex items-center justify-between">
+            <div className="pt-3.5 border-t border-[#2A3446] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <p className="text-xs text-[#97A0B3]">
                 Changes apply immediately to your team communications and invoice records.
               </p>
               <button
                 type="submit"
                 disabled={busy}
-                className="px-6 py-2.5 rounded-full bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-xs transition-all disabled:opacity-50 cursor-pointer shadow-sm"
+                className="px-5 py-2 rounded-full bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-xs transition-all disabled:opacity-50 cursor-pointer shadow-sm self-end sm:self-auto"
               >
                 {busy ? "Saving Changes…" : "Save Changes"}
               </button>
@@ -633,31 +633,31 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
 
       {/* TAB 3: SECURITY & ACCESS */}
       {query.data && activeTab === "security" && (
-        <section className="space-y-6 animate-in fade-in duration-300">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <section className="space-y-4 animate-in fade-in duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Password Sign-in Card */}
-            <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between">
+            <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="size-12 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] flex items-center justify-center">
-                  <KeyRound className="size-6" />
+                <div className="size-10 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] flex items-center justify-center">
+                  <KeyRound className="size-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white tracking-tight">Creo Password Sign-In</h3>
-                  <p className="text-xs text-[#97A0B3] mt-1 leading-relaxed">
+                  <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">Creo Password Sign-In</h3>
+                  <p className="text-xs text-[#97A0B3] mt-0.5 leading-relaxed">
                     Set a standalone password for your email to log in directly without Google OAuth.
                   </p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-[#97A0B3] space-y-1">
+                <div className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-[#97A0B3] space-y-1">
                   <p className="font-bold text-white">Google SSO Connected</p>
                   <p>You can continue using Google Single Sign-On with {query.data.email || user?.email}.</p>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#2A3446]">
+              <div className="pt-3.5 border-t border-[#2A3446]">
                 <button
                   type="button"
                   onClick={() => setRecoveryOpen(true)}
-                  className="w-full py-3 rounded-full bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+                  className="w-full py-2.5 rounded-full bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-sm"
                 >
                   Set or Reset Password
                 </button>
@@ -665,18 +665,18 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
             </div>
 
             {/* Two-Factor Authentication Card */}
-            <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between">
+            <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="size-12 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] flex items-center justify-center">
-                  <ShieldAlert className="size-6" />
+                <div className="size-10 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] flex items-center justify-center">
+                  <ShieldAlert className="size-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white tracking-tight">Two-Factor Authentication</h3>
-                  <p className="text-xs text-[#97A0B3] mt-1 leading-relaxed">
+                  <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">Two-Factor Authentication</h3>
+                  <p className="text-xs text-[#97A0B3] mt-0.5 leading-relaxed">
                     Add an extra layer of security when changing billing cards or modifying account credentials.
                   </p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-between text-xs">
+                <div className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-between text-xs">
                   <div>
                     <p className="font-bold text-white">Protection Status</p>
                     <p className="text-[#97A0B3]">
@@ -695,19 +695,19 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#2A3446]">
+              <div className="pt-3.5 border-t border-[#2A3446]">
                 <button
                   type="button"
                   disabled={twoFaBusy}
                   onClick={() => void handleToggle2FA()}
-                  className={`w-full py-3 rounded-full font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+                  className={`w-full py-2.5 rounded-full font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
                     query.data?.two_fa_enabled
                       ? "bg-rose-500/15 border border-rose-500/30 text-rose-300 hover:bg-rose-500/25"
                       : "bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6] text-white"
                   }`}
                 >
                   {twoFaBusy ? (
-                    <Loader2 className="size-4 animate-spin mx-auto" />
+                    <Loader2 className="size-3.5 animate-spin mx-auto" />
                   ) : query.data?.two_fa_enabled ? (
                     "Disable Two-Factor Auth"
                   ) : (

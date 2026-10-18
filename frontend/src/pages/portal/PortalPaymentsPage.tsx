@@ -388,9 +388,9 @@ export function PortalPaymentsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         
         {/* Top Left: Current Plan */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6 flex flex-col justify-between">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
           {!hasActivePlan ? (
-            <div className="flex flex-col justify-between h-full space-y-5">
+            <div className="flex flex-col justify-between h-full space-y-4">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <span className="text-[11px] uppercase font-bold tracking-[0.16em] text-amber-400">
@@ -406,7 +406,7 @@ export function PortalPaymentsPage() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#0B111C]/80 border border-[#2A3446] space-y-2 text-xs">
+              <div className="p-3.5 rounded-xl bg-[#0B111C]/80 border border-[#2A3446] space-y-2 text-xs">
                 <p className="text-white font-semibold flex items-center gap-2">
                   <span className="size-2 rounded-full bg-[#7FA0D6]" />
                   What unlocks with an active retainer:
@@ -420,7 +420,7 @@ export function PortalPaymentsPage() {
 
               <Link
                 to="/onboarding?step=3"
-                className="w-full py-3 px-6 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-sm text-center transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mt-auto"
+                className="w-full py-2.5 px-6 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-sm text-center transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mt-auto"
               >
                 <span>Choose Retainer Plan</span>
                 <ArrowRight className="w-4 h-4" />
@@ -428,23 +428,23 @@ export function PortalPaymentsPage() {
             </div>
           ) : (
             <>
-              <div className="flex justify-between items-start mb-10">
+              <div className="flex justify-between items-start mb-4">
                 <div>
                   <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-1">
                     CURRENT PLAN
                   </p>
-                  <h2 className="text-3xl font-bold text-white">{planName}</h2>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white">{planName}</h2>
                 </div>
                 <div className="text-right">
-                  <h2 className="text-3xl font-bold text-white">₹{planPrice.toLocaleString('en-IN')}</h2>
-                  <p className="text-xs text-[#97A0B3] mt-1">per month • ₹{costPerAsset.toLocaleString('en-IN')} per asset</p>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white">₹{planPrice.toLocaleString('en-IN')}</h2>
+                  <p className="text-xs text-[#97A0B3] mt-0.5">per month • ₹{costPerAsset.toLocaleString('en-IN')} per asset</p>
                 </div>
               </div>
 
-              <div className="space-y-6 mb-8">
+              <div className="space-y-3.5 mb-4">
                 {usageBars.map(item => (
                   <div key={item.label}>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1.5">
                       <span className="text-[13px] font-bold text-white">{item.label}</span>
                       <span className="text-[13px] font-medium text-[#97A0B3]">
                         {item.current} / {item.max}
@@ -466,16 +466,16 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Top Right: Add to this cycle */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6">
-          <h3 className="text-sm font-bold text-white mb-6">Add to this cycle</h3>
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5">
+          <h3 className="text-sm font-bold text-white mb-3.5">Add to this cycle</h3>
           {!hasActivePlan && (
-            <p className="text-xs text-[#97A0B3] -mt-3 mb-4">
+            <p className="text-xs text-[#97A0B3] -mt-1.5 mb-3">
               An active plan is required before you can add extras.
             </p>
           )}
           <div className="divide-y divide-white/[0.05]">
             {addons.map(addon => (
-              <div key={addon.id} className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div key={addon.id} className="py-2.5 sm:py-3 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h4 className="text-[13px] font-bold text-white mb-1">{addon.name}</h4>
                   <p className="text-xs text-[#97A0B3]">{addon.desc}</p>
@@ -501,42 +501,42 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Bottom Left: Invoices */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6">
-          <h3 className="text-sm font-bold text-white mb-6">Invoices</h3>
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5">
+          <h3 className="text-sm font-bold text-white mb-3.5">Invoices</h3>
           <div className="overflow-x-auto scrollbar-hide">
             <table className="w-full min-w-[500px]">
               <thead>
                 <tr className="border-b border-[#2A3446]">
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Invoice</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Period</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Amount</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Status</th>
-                  <th className="pb-3"></th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Invoice</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Period</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Amount</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Status</th>
+                  <th className="pb-2"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.05]">
                 {invoices.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-sm text-[#97A0B3]">
+                    <td colSpan={5} className="py-6 text-center text-sm text-[#97A0B3]">
                       No invoices generated yet.
                     </td>
                   </tr>
                 ) : (
                   invoices.map((inv: any) => (
                     <tr key={inv.id}>
-                      <td className="py-4 text-[13px] font-medium text-[#97A0B3] font-mono">{inv.id}</td>
-                      <td className="py-4 text-[13px] text-white">{inv.period}</td>
-                      <td className="py-4 text-[13px] font-bold text-white">₹{inv.amount.toLocaleString('en-IN')}</td>
-                      <td className="py-4">
-                        <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-[#7FA0D6]/15 text-[#BCCCE6] text-xs font-bold">
+                      <td className="py-2.5 text-[13px] font-medium text-[#97A0B3] font-mono">{inv.id}</td>
+                      <td className="py-2.5 text-[13px] text-white">{inv.period}</td>
+                      <td className="py-2.5 text-[13px] font-bold text-white">₹{inv.amount.toLocaleString('en-IN')}</td>
+                      <td className="py-2.5">
+                        <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#BCCCE6] text-xs font-bold">
                           {inv.status}
                         </span>
                       </td>
-                      <td className="py-4 text-right">
+                      <td className="py-2.5 text-right">
                         {inv.status?.toLowerCase() === "paid" ? (
                           <button 
                             onClick={() => handleDownload(inv.id)}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#2A3446] text-xs font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
                           >
                             {downloadingInv === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <Download className="w-3.5 h-3.5" />}
                             GST invoice
@@ -555,11 +555,11 @@ export function PortalPaymentsPage() {
 
         {/* Bottom Right: Payment method */}
         <div className="space-y-4">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6 flex flex-col justify-between">
+          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
             <div>
-              <h3 className="text-sm font-bold text-white mb-6">Payment method</h3>
+              <h3 className="text-sm font-bold text-white mb-3.5">Payment method</h3>
               
-              <div className="space-y-4 mb-8">
+              <div className="space-y-3 mb-4">
                 <div className="flex items-center justify-between">
                   <span className="text-[13px] text-[#97A0B3]">Method</span>
                   <span className="text-[13px] font-bold text-white">{(subData as any)?.autopay?.recurring ? "Razorpay AutoPay" : "No AutoPay mandate"}</span>
@@ -595,7 +595,7 @@ export function PortalPaymentsPage() {
                   () => {}
                 );
               }}
-              className="w-full py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors mt-auto cursor-pointer"
+              className="w-full py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors mt-auto cursor-pointer"
             >
               Change payment method
             </button>

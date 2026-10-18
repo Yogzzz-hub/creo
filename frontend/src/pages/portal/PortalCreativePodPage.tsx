@@ -170,14 +170,16 @@ export function PortalCreativePodPage() {
       )}
 
       {/* Page Header */}
-      <h1 className="text-2xl font-semibold text-white">Your pod</h1>
+      <div className="flex items-center justify-between pb-1">
+        <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">Your pod</h1>
+      </div>
 
       {/* ── Team Cards Grid ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {isLoading ? (
           <CreoInlineLoader />
         ) : allMembers.length === 0 ? (
-          <div className="col-span-full py-16 text-center">
+          <div className="col-span-full py-12 text-center">
             <p className="text-sm text-[#97A0B3]">Your creative pod hasn't been assembled yet.</p>
             <p className="text-xs text-[#97A0B3] mt-1">Team members will appear here once onboarding is complete.</p>
           </div>
@@ -190,27 +192,27 @@ export function PortalCreativePodPage() {
             return (
               <div
                 key={memberId || i}
-                className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] flex flex-col animate-in fade-in zoom-in-95 duration-500 fill-mode-both"
+                className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] flex flex-col animate-in fade-in zoom-in-95 duration-500 fill-mode-both"
                 style={{ animationDelay: `${i * 100}ms` }}
               >
                 {/* Avatar + Name */}
-                <div className="flex items-center gap-4 mb-4">
-                  <div className={`w-12 h-12 rounded-full ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center text-white text-sm font-bold shrink-0`}>
+                <div className="flex items-center gap-3.5 mb-3">
+                  <div className={`w-11 h-11 rounded-full ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
                     {initials}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-base font-semibold text-white truncate">{member.name}</h3>
-                    <p className="text-[13px] text-[#97A0B3]">{member.role}</p>
+                    <h3 className="text-sm sm:text-base font-bold text-white truncate">{member.name}</h3>
+                    <p className="text-xs text-[#97A0B3]">{member.role}</p>
                   </div>
                 </div>
 
                 {/* Description */}
-                <p className="text-sm text-[#97A0B3] leading-relaxed mb-4 flex-1">
+                <p className="text-xs sm:text-sm text-[#97A0B3] leading-relaxed mb-3 flex-1">
                   {roleDesc}
                 </p>
 
                 {/* Working hours */}
-                <p className="text-xs text-[#97A0B3] mb-4">
+                <p className="text-xs text-[#97A0B3] mb-3">
                   Working hours: <span className="text-[#97A0B3]">Mon-Fri, 10am-7pm IST</span>
                 </p>
 
@@ -218,7 +220,7 @@ export function PortalCreativePodPage() {
                 {member.role.toLowerCase().includes("lead") ? (
                   <Link
                     to={`/portal/slack?dm=${encodeURIComponent(member.name)}`}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-[#7FA0D6]/40 bg-[#7FA0D6]/10 text-white hover:bg-[#7FA0D6]/20 text-[13px] font-bold cursor-pointer transition-all duration-200 mt-auto"
+                    className="w-full flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/10 text-white hover:bg-[#7FA0D6]/20 text-xs sm:text-[13px] font-bold cursor-pointer transition-all duration-200 mt-auto"
                   >
                     <MessageCircle className="w-4 h-4 text-[#7FA0D6]" strokeWidth={1.8} />
                     Message Team Lead
@@ -226,7 +228,7 @@ export function PortalCreativePodPage() {
                 ) : (
                   <Link
                     to="/portal/slack?channel=pod-creative-hub"
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-[#2A3446] text-[#97A0B3] bg-[#161F2D]/60 text-[13px] font-medium cursor-pointer transition-all duration-200 hover:border-[#7FA0D6] hover:text-[#BCCCE6] hover:bg-[#7FA0D6]/[0.08] mt-auto"
+                    className="w-full flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-[#2A3446] text-[#97A0B3] bg-[#161F2D]/60 text-xs sm:text-[13px] font-medium cursor-pointer transition-all duration-200 hover:border-[#7FA0D6] hover:text-[#BCCCE6] hover:bg-[#7FA0D6]/[0.08] mt-auto"
                   >
                     <MessageCircle className="w-4 h-4" strokeWidth={1.8} />
                     Chat in Pod Hub
@@ -241,33 +243,33 @@ export function PortalCreativePodPage() {
       {/* ── Bottom Section: Slack Hub Access + Booking ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Slack Hub Banner (2 cols) */}
-        <div className="lg:col-span-2 bg-gradient-to-br from-[#161F2D] to-[#0D1522] rounded-2xl p-5 sm:p-6 border border-[#2A3446] flex flex-col justify-between shadow-sm relative overflow-hidden">
+        <div className="lg:col-span-2 bg-gradient-to-br from-[#161F2D] to-[#0D1522] rounded-2xl p-4 sm:p-5 border border-[#2A3446] flex flex-col justify-between shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#7FA0D6]/5 rounded-full blur-3xl pointer-events-none" />
           
           <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7FA0D6]/10 border border-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold mb-4">
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/10 border border-[#7FA0D6]/20 text-[#7FA0D6] text-[11px] font-bold mb-2.5">
               <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
               Real-Time Collaboration Hub
             </div>
-            <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mb-2">
+            <h3 className="text-lg sm:text-xl font-black text-white tracking-tight mb-1.5">
               Creo Slack Hub
             </h3>
-            <p className="text-sm text-[#97A0B3] max-w-lg leading-relaxed mb-6">
+            <p className="text-xs sm:text-sm text-[#97A0B3] max-w-lg leading-relaxed mb-4">
               Connect directly with your dedicated Creative Specialists, Pod Lead, and <strong className="text-white">Super Admin</strong>. Post sprint requests, share assets, and receive live instant updates.
             </p>
           </div>
 
-          <div className="relative z-10 flex flex-wrap items-center gap-3 pt-4 border-t border-[#2A3446]/60">
+          <div className="relative z-10 flex flex-wrap items-center gap-2.5 pt-3 border-t border-[#2A3446]/60">
             <Link
               to="/portal/slack"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black bg-[#7FA0D6] hover:bg-white text-[#0B111C] shadow-lg shadow-[#7FA0D6]/20 transition-all cursor-pointer active:scale-95"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black bg-[#7FA0D6] hover:bg-white text-[#0B111C] shadow-lg shadow-[#7FA0D6]/20 transition-all cursor-pointer active:scale-95"
             >
               <MessageSquare className="size-4" />
-              <span>Open Slack Workspace Hub &rarr;</span>
+              <span>Open Workspace Hub &rarr;</span>
             </Link>
             <Link
               to="/portal/slack?dm=super-admin"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#161F2D] hover:bg-[#2A3446] text-[#BCCCE6] border border-[#2A3446] transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#161F2D] hover:bg-[#2A3446] text-[#BCCCE6] border border-[#2A3446] transition-all cursor-pointer"
             >
               <span>⚡ Direct Line to Super Admin</span>
             </Link>
@@ -275,41 +277,41 @@ export function PortalCreativePodPage() {
         </div>
 
         {/* Booking (1 col) */}
-        <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] flex flex-col overflow-hidden shadow-sm">
+        <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] flex flex-col overflow-hidden shadow-sm">
           <div className="shrink-0">
-            <h3 className="text-base font-semibold text-white mb-1">Book a call</h3>
-            <p className="text-[13px] text-[#97A0B3] mb-5">15-minute slots with {callAvailability?.lead?.name || podLead?.name || "your pod lead"}</p>
+            <h3 className="text-sm sm:text-base font-bold text-white mb-0.5">Book a call</h3>
+            <p className="text-xs text-[#97A0B3] mb-3">15-minute slots with {callAvailability?.lead?.name || podLead?.name || "your pod lead"}</p>
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto space-y-0 divide-y divide-white/[0.05] pr-1 scrollbar-thin scrollbar-thumb-[#2A3446]">
             {(callAvailability?.bookings || []).map((booking) => (
-              <div key={`booked-${booking.id}`} className="flex items-center justify-between gap-3 py-4">
-                <span className="text-sm text-[#BCCCE6]">{booking.date_label}</span>
-                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#7FA0D6]/20 px-3 py-1 text-[13px] font-medium text-[#BCCCE6]">
-                  <Check className="size-3.5" /> Booked · {booking.time_label}
+              <div key={`booked-${booking.id}`} className="flex items-center justify-between gap-3 py-2.5 sm:py-3">
+                <span className="text-xs sm:text-sm text-[#BCCCE6]">{booking.date_label}</span>
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#7FA0D6]/20 px-2.5 py-0.5 text-xs font-medium text-[#BCCCE6]">
+                  <Check className="size-3" /> Booked · {booking.time_label}
                 </span>
               </div>
             ))}
             {callAvailability?.slots.map((slot) => {
               const isBooking = bookingSlotId === slot.id;
               return (
-                <div key={slot.id} className="flex items-center justify-between py-4">
-                  <span className="text-sm text-[#97A0B3]">{slot.date_label}</span>
+                <div key={slot.id} className="flex items-center justify-between py-2.5 sm:py-3">
+                  <span className="text-xs sm:text-sm text-[#97A0B3]">{slot.date_label}</span>
                   <button 
                     type="button"
                     onClick={() => void handleBookSlot(slot)}
                     disabled={bookingSlotId !== null}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.08] px-3 py-1 text-[13px] font-medium text-white transition-colors hover:bg-white/[0.12] disabled:cursor-wait disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.08] px-2.5 py-0.5 text-xs font-medium text-white transition-colors hover:bg-white/[0.12] disabled:cursor-wait disabled:opacity-60"
                   >
                     {isBooking ? "Booking…" : slot.time_label}
                   </button>
                 </div>
               );
             })}
-            {isLoadingCallAvailability && <p className="py-4 text-sm text-[#97A0B3]">Loading available call times…</p>}
-            {!isLoadingCallAvailability && callAvailabilityError && <p className="py-4 text-sm text-rose-300">Call times could not load. Refresh to try again.</p>}
+            {isLoadingCallAvailability && <p className="py-3 text-xs sm:text-sm text-[#97A0B3]">Loading available call times…</p>}
+            {!isLoadingCallAvailability && callAvailabilityError && <p className="py-3 text-xs sm:text-sm text-rose-300">Call times could not load. Refresh to try again.</p>}
             {!isLoadingCallAvailability && !callAvailabilityError && !callAvailability?.slots.length && !callAvailability?.bookings.length && (
-              <p className="py-4 text-sm text-[#97A0B3]">There are no available call times right now. Please check again shortly.</p>
+              <p className="py-3 text-xs sm:text-sm text-[#97A0B3]">There are no available call times right now. Please check again shortly.</p>
             )}
           </div>
         </div>

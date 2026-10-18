@@ -9,9 +9,7 @@ import {
   CheckCircle2,
   Bell,
   Clock,
-  RefreshCw,
   ArrowRight,
-  Database,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { fetchSLAPerformance, type SLAPerformanceData } from "../../lib/ops-api";
@@ -25,7 +23,6 @@ export function AdminSLAPerformancePage() {
     isError,
     error,
     refetch,
-    isFetching,
   } = useQuery<SLAPerformanceData>({
     queryKey: ["admin_sla_performance"],
     queryFn: () => fetchSLAPerformance(),
@@ -83,24 +80,8 @@ export function AdminSLAPerformancePage() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 sm:pb-8 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6"
+          className="px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 sm:pb-8 max-w-7xl w-full mx-auto space-y-4 sm:space-y-6"
         >
-          {/* Action Bar */}
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-[11px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 px-2.5 py-1 rounded-full inline-flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <Database className="size-3" /> Supabase Live
-            </span>
-            <button
-              type="button"
-              onClick={() => void refetch()}
-              disabled={isFetching}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-xs font-bold text-white transition-colors cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw className={`size-3.5 text-[#7FA0D6] ${isFetching ? "animate-spin" : ""}`} />
-              {isFetching ? "Syncing..." : "Sync Live Data"}
-            </button>
-          </div>
 
           {isLoading ? (
             /* Skeleton Loading State */
@@ -109,12 +90,12 @@ export function AdminSLAPerformancePage() {
                 <div className="h-32 bg-[#161F2D] border border-[#2A3446] rounded-2xl" />
                 <div className="h-32 bg-[#161F2D] border border-[#2A3446] rounded-2xl" />
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                <div className="lg:col-span-2 h-72 bg-[#161F2D] border border-[#2A3446] rounded-2xl" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <div className="h-72 bg-[#161F2D] border border-[#2A3446] rounded-2xl" />
                 <div className="h-72 bg-[#161F2D] border border-[#2A3446] rounded-2xl" />
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                <div className="lg:col-span-2 h-72 bg-[#161F2D] border border-[#2A3446] rounded-2xl" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <div className="h-72 bg-[#161F2D] border border-[#2A3446] rounded-2xl" />
                 <div className="h-72 bg-[#161F2D] border border-[#2A3446] rounded-2xl" />
               </div>
             </div>
@@ -215,10 +196,10 @@ export function AdminSLAPerformancePage() {
                 </div>
               </div>
 
-              {/* Row 1: Chart & Compliance by Priority */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                {/* Chart Card (2 Cols) */}
-                <div className="lg:col-span-2 bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 hover-card-innovative">
+              {/* Row 1: Chart & Compliance by Priority (Equal 50/50 Split) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                {/* Chart Card */}
+                <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col justify-between hover-card-innovative">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2A3446] pb-4">
                     <div>
                       <h3 className="text-base font-black text-white">Response & Resolution Trend</h3>
@@ -302,210 +283,247 @@ export function AdminSLAPerformancePage() {
                   </div>
                 </div>
 
-                {/* Compliance by Priority Card (1 Col) */}
-                <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-5 hover-card-innovative">
-                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                    <div>
-                      <h3 className="text-base font-black text-white">Compliance by Priority</h3>
-                      <p className="text-xs sm:text-sm text-[#97A0B3] font-medium mt-0.5">
-                        Strict contract adherence by urgency level
-                      </p>
+                {/* Compliance by Priority Card */}
+                <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col justify-between hover-card-innovative">
+                  <div className="space-y-4 sm:space-y-5">
+                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                      <div>
+                        <h3 className="text-base font-black text-white">Compliance by Priority</h3>
+                        <p className="text-xs sm:text-sm text-[#97A0B3] font-medium mt-0.5">
+                          Strict contract adherence by urgency level
+                        </p>
+                      </div>
+                      <Sliders className="size-4.5 text-[#7FA0D6]" />
                     </div>
-                    <Sliders className="size-4.5 text-[#7FA0D6]" />
+
+                    {/* Progress Bars Stack */}
+                    <div className="space-y-3.5">
+                      {data?.priority_breakdown?.map((item) => {
+                        const colorClass =
+                          item.color === "rose"
+                            ? "bg-rose-500"
+                            : item.color === "blue"
+                            ? "bg-blue-500"
+                            : item.color === "cyan"
+                            ? "bg-cyan-400"
+                            : "bg-emerald-400";
+
+                        return (
+                          <div key={item.label} className="space-y-1.5">
+                            <div className="flex justify-between text-xs sm:text-sm font-bold">
+                              <span className="flex items-center gap-1.5 text-white">
+                                <span className={`size-2.5 rounded-full ${colorClass}`} />
+                                {item.label}
+                              </span>
+                              <span className="text-white">
+                                {item.sla_met.toFixed(1)}%{" "}
+                                <span className="text-[#97A0B3] font-normal">
+                                  ({item.compliant_count}/{item.total_count} Compliant)
+                                </span>
+                              </span>
+                            </div>
+                            <div className="h-2.5 w-full rounded-full bg-[#0B111C] overflow-hidden border border-[#2A3446]">
+                              <div
+                                className={`h-full ${colorClass} rounded-full transition-all duration-500`}
+                                style={{ width: `${Math.max(0, Math.min(100, item.sla_met))}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  {/* Progress Bars Stack */}
-                  <div className="space-y-4">
-                    {data?.priority_breakdown?.map((item) => {
-                      const colorClass =
-                        item.color === "rose"
-                          ? "bg-rose-500"
-                          : item.color === "blue"
-                          ? "bg-blue-500"
-                          : item.color === "cyan"
-                          ? "bg-cyan-400"
-                          : "bg-emerald-400";
-
-                      return (
-                        <div key={item.label} className="space-y-1.5">
-                          <div className="flex justify-between text-xs sm:text-sm font-bold">
-                            <span className="flex items-center gap-1.5 text-white">
-                              <span className={`size-2.5 rounded-full ${colorClass}`} />
-                              {item.label}
-                            </span>
-                            <span className="text-white">
-                              {item.sla_met.toFixed(1)}%{" "}
-                              <span className="text-[#97A0B3] font-normal">
-                                ({item.compliant_count}/{item.total_count} Compliant)
-                              </span>
-                            </span>
-                          </div>
-                          <div className="h-2.5 w-full rounded-full bg-[#0B111C] overflow-hidden border border-[#2A3446]">
-                            <div
-                              className={`h-full ${colorClass} rounded-full transition-all duration-500`}
-                              style={{ width: `${Math.max(0, Math.min(100, item.sla_met))}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="pt-3 border-t border-[#2A3446]/80 flex items-center justify-between text-[11px] text-[#97A0B3] mt-3">
+                    <span>Priority SLA Policy: 24h Rush / 48h Standard</span>
+                    <span className="text-emerald-400 font-semibold">Contract Enforced</span>
                   </div>
                 </div>
               </div>
 
-              {/* Row 2: Pod Efficiency Leaderboard & Active Breach Warnings */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                {/* Leaderboard (2 Cols) */}
-                <div className="lg:col-span-2 bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 hover-card-innovative">
-                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                    <div>
-                      <h3 className="text-sm font-bold text-white">Pod Efficiency Leaderboard</h3>
-                      <p className="text-xs text-[#97A0B3]">Operational velocity across dedicated creative pods</p>
+              {/* Row 2: Pod Efficiency Leaderboard & Active Breach Warnings (Equal 50/50 Split & Equal Height) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                {/* Leaderboard Card */}
+                <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col justify-between hover-card-innovative">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                      <div>
+                        <h3 className="text-sm font-bold text-white">Pod Efficiency Leaderboard</h3>
+                        <p className="text-xs text-[#97A0B3]">Operational velocity across dedicated creative pods</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
+                          {data?.pods?.length || 0} ACTIVE PODS
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => navigate("/admin/teams")}
+                          className="text-xs font-bold text-[#7FA0D6] hover:text-white flex items-center gap-1 cursor-pointer"
+                        >
+                          Manage Teams <ArrowRight className="size-3" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
-                        {data?.pods?.length || 0} ACTIVE PODS
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => navigate("/admin/teams")}
-                        className="text-xs font-bold text-[#7FA0D6] hover:text-white flex items-center gap-1 cursor-pointer"
-                      >
-                        Manage Teams <ArrowRight className="size-3" />
-                      </button>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
+                          <tr>
+                            <th className="px-3.5 py-2.5">POD / LEAD</th>
+                            <th className="px-3.5 py-2.5">SLA MET</th>
+                            <th className="px-3.5 py-2.5">AVG RESPONSE</th>
+                            <th className="px-3.5 py-2.5">TASKS</th>
+                            <th className="px-3.5 py-2.5 text-right">STATUS</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#2A3446] font-medium">
+                          {!data?.pods || data.pods.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="px-4 py-8 text-center text-[#97A0B3]">
+                                No active creative pods currently configured in database.
+                              </td>
+                            </tr>
+                          ) : (
+                            data.pods.map((item) => (
+                              <tr
+                                key={item.pod}
+                                onClick={() => navigate("/admin/teams")}
+                                className="hover:bg-[#0B111C] transition-colors cursor-pointer"
+                              >
+                                <td className="px-3.5 py-3">
+                                  <div className="flex items-center gap-2.5">
+                                    <div
+                                      className={`size-7 rounded-lg ${item.bg} ${item.text} font-black text-xs flex items-center justify-center shrink-0`}
+                                    >
+                                      {item.pod.replace("Pod ", "")}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="font-bold text-white truncate">{item.pod}</div>
+                                      <div className="text-[10px] text-[#97A0B3] truncate">{item.lead}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-3.5 py-3 font-bold text-white">{item.sla_met}</td>
+                                <td className="px-3.5 py-3 text-[#F1F5F9] font-mono">{item.avg_response}</td>
+                                <td className="px-3.5 py-3 text-[#F1F5F9]">
+                                  {item.total_tasks} total
+                                </td>
+                                <td className="px-3.5 py-3 text-right">
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${item.status_bg}`}
+                                  >
+                                    • {item.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
-                        <tr>
-                          <th className="px-4 py-3">POD / LEAD</th>
-                          <th className="px-4 py-3">SLA MET</th>
-                          <th className="px-4 py-3">AVG RESPONSE</th>
-                          <th className="px-4 py-3">TASKS</th>
-                          <th className="px-4 py-3 text-right">STATUS</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#2A3446] font-medium">
-                        {!data?.pods || data.pods.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="px-4 py-8 text-center text-[#97A0B3]">
-                              No active creative pods currently configured in database.
-                            </td>
-                          </tr>
-                        ) : (
-                          data.pods.map((item) => (
-                            <tr
-                              key={item.pod}
-                              onClick={() => navigate("/admin/teams")}
-                              className="hover:bg-[#0B111C] transition-colors cursor-pointer"
-                            >
-                              <td className="px-4 py-3.5">
-                                <div className="flex items-center gap-3">
-                                  <div
-                                    className={`size-8 rounded-lg ${item.bg} ${item.text} font-black text-xs flex items-center justify-center`}
-                                  >
-                                    {item.pod.replace("Pod ", "")}
-                                  </div>
-                                  <div>
-                                    <div className="font-bold text-white">{item.pod}</div>
-                                    <div className="text-[11px] text-[#97A0B3]">{item.lead}</div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3.5 font-bold text-white">{item.sla_met}</td>
-                              <td className="px-4 py-3.5 text-[#F1F5F9] font-mono">{item.avg_response}</td>
-                              <td className="px-4 py-3.5 text-[#F1F5F9]">
-                                {item.total_tasks} total · {item.resolved}
-                              </td>
-                              <td className="px-4 py-3.5 text-right">
-                                <span
-                                  className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${item.status_bg}`}
-                                >
-                                  • {item.status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+                  <div className="pt-3 border-t border-[#2A3446]/80 flex items-center justify-between text-[11px] text-[#97A0B3] mt-3">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <span className="size-2 rounded-full bg-emerald-400" />
+                      Target threshold: <strong className="text-white">98.0% SLA</strong>
+                    </span>
+                    <span className="font-semibold text-emerald-400/90">
+                      All pods active & responsive
+                    </span>
                   </div>
                 </div>
 
-                {/* Active Breach Warnings (1 Col) */}
-                <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 hover-card-innovative">
-                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                    <h3 className="text-sm font-bold text-white">Active Breach Warnings</h3>
-                    <span className="text-[11px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2.5 py-0.5 rounded-full border border-[#7FA0D6]/30">
-                      Live Dispatch
-                    </span>
+                {/* Active Breach Warnings Card */}
+                <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col justify-between hover-card-innovative">
+                  <div className="space-y-4 flex-1 flex flex-col">
+                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-3 shrink-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-white">Active Breach Warnings</h3>
+                        {data?.active_warnings && data.active_warnings.length > 0 && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                            {data.active_warnings.length}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2.5 py-0.5 rounded-full border border-[#7FA0D6]/30">
+                        Live Dispatch
+                      </span>
+                    </div>
+
+                    <div className="space-y-2.5 overflow-y-auto pr-1 flex-1 max-h-[225px]">
+                      {!data?.active_warnings || data.active_warnings.length === 0 ? (
+                        <div className="p-6 rounded-xl bg-emerald-950/20 border border-emerald-800/40 text-center space-y-2">
+                          <CheckCircle2 className="size-6 text-emerald-400 mx-auto" />
+                          <h4 className="text-xs font-bold text-white">All Deliverables in Compliance</h4>
+                          <p className="text-[11px] text-[#97A0B3]">
+                            Zero active SLA breaches or imminent deadline risks detected across all client pods.
+                          </p>
+                        </div>
+                      ) : (
+                        data.active_warnings.map((warning) => {
+                          const isBreach = warning.is_breached;
+                          const containerClass = isBreach
+                            ? "bg-rose-950/40 border-rose-800/50 text-rose-200"
+                            : "bg-amber-950/40 border-amber-800/50 text-amber-200";
+
+                          const badgeClass = isBreach
+                            ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                            : "bg-amber-500/20 text-amber-300 border-amber-500/30";
+
+                          const iconColor = isBreach ? "text-rose-400" : "text-amber-400";
+                          const textColor = isBreach ? "text-rose-400" : "text-amber-400";
+
+                          return (
+                            <div
+                              key={warning.id}
+                              className={`p-3 rounded-xl border backdrop-blur-md space-y-1.5 ${containerClass}`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold flex items-center gap-1.5">
+                                  <AlertTriangle className={`size-3.5 ${iconColor}`} />
+                                  {isBreach ? "SLA Overdue Breach" : "Approaching Deadline"}
+                                </span>
+                                <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border ${badgeClass}`}>
+                                  {warning.severity}
+                                </span>
+                              </div>
+
+                              <p className="text-[11px] opacity-90 truncate">
+                                <strong className="font-mono text-white">{warning.title}</strong> •{" "}
+                                {warning.client_name} • {warning.pod_name} ({warning.assignee_name})
+                              </p>
+
+                              <div className="flex items-center justify-between pt-1">
+                                <span className={`text-xs font-bold flex items-center gap-1 ${textColor}`}>
+                                  <Clock className="size-3.5" /> {warning.time_remaining}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => navigate("/admin/tasks")}
+                                  className={`px-3 py-1 rounded-lg text-white font-bold text-[11px] shadow-2xs transition-colors cursor-pointer ${
+                                    isBreach
+                                      ? "bg-rose-600/90 hover:bg-rose-600"
+                                      : "bg-amber-600/90 hover:bg-amber-600"
+                                  }`}
+                                >
+                                  Intervene
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
 
-                  <div className="space-y-3">
-                    {!data?.active_warnings || data.active_warnings.length === 0 ? (
-                      <div className="p-6 rounded-xl bg-emerald-950/20 border border-emerald-800/40 text-center space-y-2">
-                        <CheckCircle2 className="size-6 text-emerald-400 mx-auto" />
-                        <h4 className="text-xs font-bold text-white">All Deliverables in Compliance</h4>
-                        <p className="text-[11px] text-[#97A0B3]">
-                          Zero active SLA breaches or imminent deadline risks detected across all client pods.
-                        </p>
-                      </div>
-                    ) : (
-                      data.active_warnings.map((warning) => {
-                        const isBreach = warning.is_breached;
-                        const containerClass = isBreach
-                          ? "bg-rose-950/40 border-rose-800/50 text-rose-200"
-                          : "bg-amber-950/40 border-amber-800/50 text-amber-200";
-
-                        const badgeClass = isBreach
-                          ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
-                          : "bg-amber-500/20 text-amber-300 border-amber-500/30";
-
-                        const iconColor = isBreach ? "text-rose-400" : "text-amber-400";
-                        const textColor = isBreach ? "text-rose-400" : "text-amber-400";
-
-                        return (
-                          <div
-                            key={warning.id}
-                            className={`p-4 rounded-xl border backdrop-blur-md space-y-2 ${containerClass}`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold flex items-center gap-1.5">
-                                <AlertTriangle className={`size-3.5 ${iconColor}`} />
-                                {isBreach ? "SLA Overdue Breach" : "Approaching Deadline"}
-                              </span>
-                              <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border ${badgeClass}`}>
-                                {warning.severity}
-                              </span>
-                            </div>
-
-                            <p className="text-[11px] opacity-90">
-                              <strong className="font-mono text-white">{warning.title}</strong> •{" "}
-                              {warning.client_name} • {warning.pod_name} ({warning.assignee_name})
-                            </p>
-
-                            <div className="flex items-center justify-between pt-1">
-                              <span className={`text-xs font-bold flex items-center gap-1 ${textColor}`}>
-                                <Clock className="size-3.5" /> {warning.time_remaining}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => navigate("/admin/tasks")}
-                                className={`px-3 py-1 rounded-lg text-white font-bold text-[11px] shadow-2xs transition-colors cursor-pointer ${
-                                  isBreach
-                                    ? "bg-rose-600/90 hover:bg-rose-600"
-                                    : "bg-amber-600/90 hover:bg-amber-600"
-                                }`}
-                              >
-                                Intervene
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
+                  <div className="pt-3 border-t border-[#2A3446]/80 flex items-center justify-between text-[11px] text-[#97A0B3] mt-3">
+                    <span>
+                      {data?.active_warnings?.length ? `${data.active_warnings.length} active alerts queued` : "Zero active alerts"}
+                    </span>
+                    <span className="text-[#7FA0D6] font-medium">
+                      Auto-monitored 24/7
+                    </span>
                   </div>
                 </div>
               </div>

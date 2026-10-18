@@ -429,9 +429,19 @@ async def upload_voice_note(
     scope = _scope_from_actor(actor)
     d = await _get_deliverable_or_404(deliverable_id, scope, db)
 
-    mime_type = audio.content_type or "audio/webm"
-    if mime_type not in storage_service.ALLOWED_MIMES:
-        mime_type = "audio/webm"
+    filename = getattr(audio, "filename", "") or ""
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    ext_to_mime = {
+        "mp3": "audio/mpeg",
+        "wav": "audio/wav",
+        "m4a": "audio/mp4",
+        "ogg": "audio/ogg",
+        "webm": "audio/webm",
+        "aac": "audio/aac",
+    }
+    mime_type = audio.content_type or ""
+    if not mime_type or mime_type not in storage_service.ALLOWED_MIMES:
+        mime_type = ext_to_mime.get(ext, "audio/webm")
 
     content = await audio.read()
     size = len(content)

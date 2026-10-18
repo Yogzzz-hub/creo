@@ -25,6 +25,7 @@ import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { StoryApprovalModal } from "../../components/ops/StoryApprovalModal";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 export type CalendarEvent = {
   id: string;
@@ -137,6 +138,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
   const { user } = useAuth();
   const canSchedulePublication = user?.role === "admin" || user?.role === "super_admin";
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
 
   // Calendar State
   const [month, setMonth] = useState(() => {
@@ -1113,8 +1115,21 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                   </button>
 
                   <button
-                    onClick={() => {
-                      if (confirm("Are you sure you want to remove this publication from the calendar?")) {
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "Remove Publication Slot",
+                        description: `Are you sure you want to remove "${inspectEvent.title || "this publication"}" from the calendar?`,
+                        details: [
+                          `Client: ${inspectEvent.client_name}`,
+                          `Scheduled Date: ${inspectEvent.date} at ${inspectEvent.time}`,
+                          "This removes the scheduled publication slot from the calendar pipeline.",
+                        ],
+                        confirmText: "Delete Slot",
+                        cancelText: "Cancel",
+                        tone: "danger",
+                        icon: "trash",
+                      });
+                      if (ok) {
                         deleteEventMutation.mutate(inspectEvent.id);
                       }
                     }}

@@ -68,10 +68,21 @@ export async function uploadVoiceNote(
   deliverableId: string,
   audioBlob: Blob,
   durationSeconds?: number,
+  fileName?: string,
 ): Promise<{ storage_key: string; voice_note_url: string; duration?: number; file_size_bytes: number }> {
   const token = getAuthToken();
   const formData = new FormData();
-  formData.append("audio", audioBlob, "voice_feedback.webm");
+  const determinedName =
+    fileName ||
+    (audioBlob instanceof File ? audioBlob.name : undefined) ||
+    (audioBlob.type.includes("mp4")
+      ? "voice_feedback.m4a"
+      : audioBlob.type.includes("wav")
+      ? "voice_feedback.wav"
+      : audioBlob.type.includes("mpeg")
+      ? "voice_feedback.mp3"
+      : "voice_feedback.webm");
+  formData.append("audio", audioBlob, determinedName);
   if (durationSeconds !== undefined && durationSeconds !== null) {
     formData.append("duration", String(durationSeconds));
   }

@@ -59,14 +59,14 @@ export function PortalLayout() {
             className={
               isSlack
                 ? "portal-main flex-1 w-full px-2 sm:px-4 lg:px-6 pt-3 sm:pt-4 pb-3 sm:pb-4 flex flex-col min-h-0 overflow-hidden"
-                : "portal-main flex-1 w-full px-3.5 sm:px-6 lg:px-8 pt-7 sm:pt-9 lg:pt-12 pb-12 sm:pb-16 min-w-0 overflow-x-hidden"
+                : "portal-main flex-1 w-full px-3.5 sm:px-5 lg:px-6 pt-3.5 sm:pt-4.5 lg:pt-5 pb-6 sm:pb-8 min-w-0 overflow-x-hidden"
             }
           >
             <div
               className={
                 isSlack
                   ? "mx-auto w-full max-w-[1700px] flex-1 min-h-0 flex flex-col h-full max-h-full overflow-hidden"
-                  : "mx-auto w-full max-w-[1400px] min-w-0"
+                  : "mx-auto w-full max-w-[1600px] min-w-0"
               }
             >
               {!isSlack && pathname !== "/portal" && pathname !== "/portal/" && (
