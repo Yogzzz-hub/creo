@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 import io
+import json
 import os
+import re
 import uuid
 from typing import Any
 
@@ -32,14 +35,40 @@ STAFF_CHANNELS = frozenset(
     {"general", "deliverables-handoff", "urgent-escalations", "all-pod-leads", "bde-sales-hub"}
 )
 
+_CUSTOM_GROUPS_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "custom_groups.json")
+
+
+def _load_custom_groups() -> list[dict[str, Any]]:
+    if not os.path.exists(_CUSTOM_GROUPS_FILE):
+        return []
+    try:
+        with open(_CUSTOM_GROUPS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+
+def _save_custom_groups(groups: list[dict[str, Any]]) -> None:
+    try:
+        with open(_CUSTOM_GROUPS_FILE, "w", encoding="utf-8") as f:
+            json.dump(groups, f, indent=2)
+    except Exception as e:
+        print(f"Error saving custom groups: {e}")
+
 
 def _is_staff_channel(channel: str | None) -> bool:
-    """Staff rooms: the fixed set above plus per-pod rooms such as `pod-beta-team`."""
+    """Staff rooms: the fixed set above plus per-pod rooms such as `pod-beta-team` and custom groups."""
     if not channel:
         return False
-    return channel in STAFF_CHANNELS or (
-        channel.startswith("pod-") and channel.endswith("-team")
-    )
+    if channel in STAFF_CHANNELS:
+        return True
+    if channel.startswith("pod-") and channel.endswith("-team"):
+        return True
+    if channel.startswith("grp-") or channel.startswith("group-"):
+        return True
+    custom_ids = {g["id"] for g in _load_custom_groups()}
+    return channel in custom_ids
+
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 POD_CHAT_ROLES = ("team_lead", "video_editor", "editor", "graphic_designer", "designer")
@@ -332,6 +361,95 @@ async def chat_websocket(websocket: WebSocket, user_id: str) -> None:
         ws_manager.disconnect(user_id, websocket)
 
 
+class CreateGroupRequest(BaseModel):
+    name: str = Field(..., min_length=2, max_length=60)
+    desc: str = Field(default="", max_length=255)
+    member_ids: list[str] = Field(default_factory=list)
+    is_pod_channel: bool = Field(default=False)
+
+
+@router.post("/groups", response_model=dict[str, Any], status_code=201)
+async def create_chat_group(
+    payload: CreateGroupRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Create a new chat group. Permitted ONLY for Workspace Administrators and Team Leads."""
+    current_user_id = actor.user_id
+    current_user = await db.get(User, current_user_id)
+    raw_role = current_user.role if current_user else actor.role
+    role_val = getattr(raw_role, "value", str(raw_role)).lower()
+
+    is_admin = role_val in ("admin", "super_admin", "ops_admin") or "admin" in role_val
+    is_tl = role_val in ("team_lead", "lead") or "lead" in role_val
+
+    if not (is_admin or is_tl):
+        raise HTTPException(
+            status_code=403,
+            detail="Only Workspace Administrators and Team Leads have permission to create chat groups.",
+        )
+
+    creator_name = (current_user.full_name if current_user else "") or ("Team Lead" if is_tl else "Admin")
+
+    raw_name = payload.name.strip().lstrip("#")
+    slug = re.sub(r"[^a-z0-9]+", "-", raw_name.lower()).strip("-")[:35]
+    if not slug:
+        slug = f"group-{uuid.uuid4().hex[:6]}"
+
+    group_id = f"grp-{slug}"
+    existing_groups = _load_custom_groups()
+
+    if any(g.get("id") == group_id for g in existing_groups):
+        group_id = f"grp-{slug[:30]}-{uuid.uuid4().hex[:4]}"
+
+    member_ids_clean = list({str(m) for m in payload.member_ids if m} | {str(current_user_id)})
+
+    new_group = {
+        "id": group_id,
+        "label": raw_name,
+        "desc": payload.desc.strip() or f"Created by {creator_name} • {len(member_ids_clean)} members",
+        "created_by": str(current_user_id),
+        "creator_name": creator_name,
+        "creator_role": user_role,
+        "member_ids": member_ids_clean,
+        "is_pod_channel": payload.is_pod_channel,
+        "is_custom_group": True,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+
+    existing_groups.append(new_group)
+    _save_custom_groups(existing_groups)
+
+    # Seed an intro welcome message in DirectMessage
+    try:
+        welcome_msg = DirectMessage(
+            client_id=current_user_id,
+            specialist_id=current_user_id,
+            sender_id=current_user_id,
+            message=f"👋 Welcome to #{raw_name}! Group created by {creator_name}.",
+            thread_type=group_id,
+        )
+        db.add(welcome_msg)
+        await db.commit()
+    except Exception as e:
+        print(f"Warning: could not insert welcome message: {e}")
+
+    # Broadcast new group creation to connected websockets
+    try:
+        recipient_uuids = {uuid.UUID(mid) for mid in member_ids_clean if mid}
+        await ws_manager.broadcast_new_message(
+            {
+                "type": "GROUP_CREATED",
+                "group": new_group,
+            },
+            recipient_uuids,
+        )
+    except Exception:
+        pass
+
+    return new_group
+
+
 class SendMessageRequest(BaseModel):
     recipient_id: uuid.UUID | None = None
     channel: str | None = None
@@ -482,9 +600,11 @@ async def get_chat_channels(
             }
         ]
 
+    channels: list[dict[str, Any]] = []
+
     # 3. Admin: All pods, BDE team, Team Leads council, and global channels
     if is_admin:
-        return [
+        channels.extend([
             {
                 "id": "all-pod-leads",
                 "label": "all-pod-leads",
@@ -521,14 +641,14 @@ async def get_chat_channels(
                 "desc": "Workspace standups, milestones, and announcements",
                 "is_pod_channel": False,
             },
-        ]
+        ])
 
     # 4. Team Lead: Own pod group, all-pod-leads, global channels
-    if is_tl:
+    elif is_tl:
         pod_info = await _get_user_pod_info(current_user_id, db)
         slug = pod_info.get("channel_slug") or "pod-beta-team"
         pod_name = pod_info.get("team_name") or "Your Pod"
-        return [
+        channels.extend([
             {
                 "id": "all-pod-leads",
                 "label": "all-pod-leads",
@@ -547,14 +667,14 @@ async def get_chat_channels(
                 "desc": "Workspace standups, milestones, and announcements",
                 "is_pod_channel": False,
             },
-        ]
+        ])
 
     # 5. Team Member: ONLY their own pod group, NO other pods!
-    if is_team_member:
+    elif is_team_member:
         pod_info = await _get_user_pod_info(current_user_id, db)
         slug = pod_info.get("channel_slug") or "pod-beta-team"
         pod_name = pod_info.get("team_name") or "Your Pod"
-        return [
+        channels.extend([
             {
                 "id": slug,
                 "label": slug,
@@ -567,11 +687,11 @@ async def get_chat_channels(
                 "desc": "Workspace standups, milestones, and announcements",
                 "is_pod_channel": False,
             },
-        ]
+        ])
 
     # 6. BDE: BDE Sales Hub and announcements
-    if is_bde:
-        return [
+    elif is_bde:
+        channels.extend([
             {
                 "id": "bde-sales-hub",
                 "label": "bde-sales-hub",
@@ -584,9 +704,34 @@ async def get_chat_channels(
                 "desc": "Workspace standups, milestones, and announcements",
                 "is_pod_channel": False,
             },
-        ]
+        ])
 
-    return []
+    # Load custom groups created by Admin / TL
+    custom_groups = _load_custom_groups()
+    user_id_str = str(current_user_id)
+    accessible_custom: list[dict[str, Any]] = []
+
+    for cg in custom_groups:
+        cg_obj = {
+            "id": cg["id"],
+            "label": cg.get("label") or cg["id"].removeprefix("grp-"),
+            "desc": cg.get("desc") or "Custom Group",
+            "is_pod_channel": cg.get("is_pod_channel", False),
+            "is_custom_group": True,
+            "created_by": cg.get("created_by"),
+            "creator_name": cg.get("creator_name"),
+            "member_ids": cg.get("member_ids", []),
+        }
+        if is_admin:
+            accessible_custom.append(cg_obj)
+        elif is_tl:
+            if cg.get("created_by") == user_id_str or user_id_str in cg.get("member_ids", []) or not cg.get("member_ids"):
+                accessible_custom.append(cg_obj)
+        elif is_team_member or is_bde:
+            if user_id_str in cg.get("member_ids", []):
+                accessible_custom.append(cg_obj)
+
+    return channels + accessible_custom
 
 
 @router.get("/contacts", response_model=list[dict[str, Any]])
