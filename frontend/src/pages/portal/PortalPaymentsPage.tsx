@@ -107,7 +107,7 @@ export function PortalPaymentsPage() {
   const usageBars = [
     { label: "Reels", current: usage.reel?.used || 0, max: usage.reel?.quota ?? (subData as any)?.plan?.reel_quota ?? 0, color: "bg-[#7FA0D6]" },
     { label: "Posts", current: (usage.static_post?.used ?? usage.poster?.used) || 0, max: (usage.static_post?.quota ?? usage.poster?.quota) ?? (subData as any)?.plan?.poster_quota ?? 0, color: "bg-[#7FA0D6]" },
-    { label: "Stories", current: usage.story?.used || 0, max: usage.story?.quota ?? (subData as any)?.plan?.story_quota ?? 0, color: "bg-[#7FA0D6]" }
+    { label: "Stories", current: (usage.story?.used ?? usage.carousel?.used) || 0, max: (usage.story?.quota ?? usage.carousel?.quota) ?? (subData as any)?.plan?.story_quota ?? 0, color: "bg-[#7FA0D6]" }
   ];
 
   const totalMax = usageBars.reduce((sum, item) => sum + item.max, 0);
@@ -446,7 +446,10 @@ export function PortalPaymentsPage() {
                   <div key={item.label}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[13px] font-bold text-white">{item.label}</span>
-                      <span className="text-[13px] font-medium text-[#97A0B3]">{item.current} / {item.max}</span>
+                      <span className="text-[13px] font-medium text-[#97A0B3]">
+                        {item.current} / {item.max}
+                        <span className="text-emerald-400 font-semibold ml-1.5">({Math.max(0, item.max - item.current)} remaining)</span>
+                      </span>
                     </div>
                     <div className="h-1.5 w-full bg-white/[0.05] rounded-full overflow-hidden">
                       <div className={`h-full ${item.color} rounded-full`} style={{ width: `${(item.current / item.max) * 100}%` }} />

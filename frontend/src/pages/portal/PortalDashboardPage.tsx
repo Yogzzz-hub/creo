@@ -29,6 +29,7 @@ interface DashboardData {
   instagram_username?: string | null;
   instagram_connected?: boolean;
   account_status?: string;
+  quotas?: Record<string, { quota: number; used: number; remaining?: number }>;
   active_plan?: {
     status: string;
     name?: string;
@@ -443,7 +444,7 @@ export function PortalDashboardPage() {
                 </Link>
               </div>
             ) : (() => {
-              const quotas = subData?.quotas || subData?.usage || {};
+              const quotas = dashboard?.quotas || subData?.quotas || subData?.usage || {};
               const plan = dashboard?.active_plan;
               const renewalDateStr = subData?.subscription?.current_period_end
                 ? new Date(subData.subscription.current_period_end).toLocaleDateString("en-US", { day: "numeric", month: "short" })
@@ -464,8 +465,8 @@ export function PortalDashboardPage() {
                 },
                 {
                   label: "Stories",
-                  used: quotas.story?.used ?? 0,
-                  total: quotas.story?.quota ?? plan?.story_quota ?? 0,
+                  used: (quotas.story?.used ?? quotas.carousel?.used) ?? 0,
+                  total: quotas.story?.quota ?? quotas.carousel?.quota ?? plan?.story_quota ?? 0,
                 },
               ];
 
@@ -475,12 +476,14 @@ export function PortalDashboardPage() {
                     {usageItems.map((item) => {
                       const totalSafe = item.total > 0 ? item.total : 1;
                       const pct = Math.min(100, Math.round((item.used / totalSafe) * 100));
+                      const remaining = Math.max(0, item.total - item.used);
                       return (
                         <div key={item.label}>
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-sm text-[#97A0B3]">{item.label}</span>
-                            <span className="text-sm text-white font-medium">
-                              {item.used} <span className="text-[#97A0B3]">/ {item.total}</span>
+                            <span className="text-sm text-white font-medium flex items-center gap-1.5">
+                              <span>{item.used} <span className="text-[#97A0B3]">/ {item.total}</span></span>
+                              <span className="text-xs text-emerald-400 font-semibold">({remaining} remaining)</span>
                             </span>
                           </div>
                           <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden">

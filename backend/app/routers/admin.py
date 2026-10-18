@@ -579,7 +579,8 @@ async def get_client_roster(
                     json_build_object(
                         'kind', uc.kind,
                         'quota', uc.quota,
-                        'used', uc.used
+                        'used', uc.used,
+                        'remaining', GREATEST(0, uc.quota - uc.used)
                     )
                 ) FILTER (WHERE uc.id IS NOT NULL),
                 '[]'::json
@@ -593,7 +594,7 @@ async def get_client_roster(
         LEFT JOIN client_profiles cp ON cp.user_id = u.id
         LEFT JOIN subscriptions s ON s.client_id = u.id AND s.status IN ('trialing', 'active')
         LEFT JOIN plans p ON p.id = s.plan_id
-        LEFT JOIN usage_counters uc ON uc.client_id = u.id
+        LEFT JOIN usage_counters uc ON uc.client_id = u.id AND uc.period_start <= CURRENT_DATE AND uc.period_end >= CURRENT_DATE
         LEFT JOIN questionnaires q ON q.user_id = u.id
         WHERE u.role = 'client'
         GROUP BY
@@ -870,10 +871,20 @@ async def get_client_brand_profile(
     }
 
     # 7. Quota usage
-    usage_stmt = select(UsageCounter).where(UsageCounter.client_id == client_uuid)
+    today_date = date.today()
+    usage_stmt = select(UsageCounter).where(
+        UsageCounter.client_id == client_uuid,
+        UsageCounter.period_start <= today_date,
+        UsageCounter.period_end >= today_date,
+    )
     usage_rows = (await db.execute(usage_stmt)).scalars().all()
     quota_usage = [
-        {"kind": uc.kind, "quota": uc.quota, "used": uc.used}
+        {
+            "kind": uc.kind.value if hasattr(uc.kind, "value") else str(uc.kind),
+            "quota": uc.quota,
+            "used": uc.used,
+            "remaining": max(0, uc.quota - uc.used),
+        }
         for uc in usage_rows
     ]
 
@@ -4899,7 +4910,25 @@ async def get_pod_dashboard(
                 "brand_summary": c_profile.brand_summary if c_profile else "Active Content Retainer",
                 "brand_dna": c_profile.brand_dna if c_profile else {},
                 "instagram": c_profile.instagram_username if c_profile else None,
+                "quota_usage": [],
             }
+
+    if client_ids:
+        cur_d = date.today()
+        uc_stmt = select(UsageCounter).where(
+            UsageCounter.client_id.in_(client_ids),
+            UsageCounter.period_start <= cur_d,
+            UsageCounter.period_end >= cur_d,
+        )
+        for uc in (await db.execute(uc_stmt)).scalars().all():
+            cid_str = str(uc.client_id)
+            if cid_str in assigned_clients_dict:
+                assigned_clients_dict[cid_str]["quota_usage"].append({
+                    "kind": uc.kind.value if hasattr(uc.kind, "value") else str(uc.kind),
+                    "quota": uc.quota,
+                    "used": uc.used,
+                    "remaining": max(0, uc.quota - uc.used),
+                })
 
     # 5. Query tasks scoped to this pod
     now = datetime.now(timezone.utc)

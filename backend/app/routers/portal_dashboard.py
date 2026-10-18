@@ -445,6 +445,11 @@ async def _portal_dashboard_snapshot(
             "story_quota": plan.story_quota,
         }
 
+    from app.services.quota_service import get_client_quotas
+    quotas_map = await get_client_quotas(db, target_client_id)
+    if active_plan:
+        active_plan["quotas"] = quotas_map
+
     # 5. Recent deliverables for activity feed
     # Internal drafts and QA rejections are never shown to the client.
     from app.models.work import Task
@@ -530,6 +535,7 @@ async def _portal_dashboard_snapshot(
             else None
         ),
         "active_plan": active_plan,
+        "quotas": quotas_map,
         "has_active_subscription": sub_check["is_active"],
         "is_subscription_expired": sub_check["is_expired"],
         "seconds_remaining": sub_check["seconds_remaining"],

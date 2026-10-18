@@ -72,7 +72,11 @@ export function PodLeadDashboardPage() {
       showToast(res.message || "QA Decision recorded successfully", "success");
       setRevisionModalItem(null);
       setRevisionFeedback("");
-      queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
+      void queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin_clients"] });
+      void queryClient.invalidateQueries({ queryKey: ["client-subscription"] });
+      void queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] });
+      void queryClient.invalidateQueries({ queryKey: ["portal-dashboard-deliverables"] });
     },
     onError: (err: any) => {
       showToast(err?.message || "Failed to submit QA decision", "error");
@@ -905,6 +909,27 @@ export function PodLeadDashboardPage() {
                   </NativeSelect>
                 </div>
               </div>
+
+              {(() => {
+                const selectedClient = data?.clients?.find((c) => c.id === (assignForm.client || data?.clients[0]?.id));
+                const qUsage: any[] = (selectedClient as any)?.quota_usage || [];
+                const fmt = assignForm.format === "Reel" ? "reel" : assignForm.format === "Post" ? "static_post" : "carousel";
+                const qItem = qUsage.find((q: any) => 
+                  q.kind === fmt || 
+                  (fmt === "static_post" && ["post", "posts", "poster"].includes(q.kind)) ||
+                  (fmt === "carousel" && ["story", "stories"].includes(q.kind))
+                );
+                if (!qItem) return null;
+                const rem = Math.max(0, qItem.quota - qItem.used);
+                return (
+                  <div className="p-3 rounded-2xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-between text-xs">
+                    <span className="text-[#97A0B3] font-medium">Monthly Package Quota ({assignForm.format}s):</span>
+                    <span className={`font-bold ${rem > 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      {qItem.used} / {qItem.quota} sent ({rem} remaining)
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
             <div className="flex justify-end gap-3 pt-3">
               <button

@@ -761,6 +761,9 @@ export function AdminClientBrandPage() {
                           / {q.quota}
                         </span>
                       </p>
+                      <p className="text-[10px] font-bold text-emerald-400 mt-0.5">
+                        {Math.max(0, q.quota - q.used)} remaining
+                      </p>
                       <div className="w-full h-1.5 bg-[#0B111C] border border-[#2A3446] rounded-full mt-1.5 overflow-hidden">
                         <div
                           className="h-full bg-gradient-to-r from-blue-500 to-[#7FA0D6] rounded-full transition-all"
