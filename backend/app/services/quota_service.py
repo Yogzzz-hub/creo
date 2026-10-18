@@ -215,3 +215,58 @@ async def initialize_quotas_for_client(db: AsyncSession, client_id: uuid.UUID) -
             )
             await db.execute(c_stmt)
 
+
+async def reconcile_usage_counters(db: AsyncSession, client_id: uuid.UUID | None = None) -> None:
+    """Reconcile usage counters against actual sent deliverables."""
+    client_param = {"client_id": client_id} if client_id else {}
+    sql = text(f"""
+        UPDATE usage_counters uc
+        SET used = LEAST(uc.quota, GREATEST(0, COALESCE(sub.sent_count, 0))),
+            updated_at = NOW()
+        FROM (
+            SELECT d.client_id, 
+                   COALESCE(t.deliverable_type::text, CASE WHEN d.file_type LIKE '%video%' OR d.file_type LIKE '%mp4%' THEN 'reel' WHEN d.file_type LIKE '%story%' THEN 'carousel' ELSE 'static_post' END) as kind,
+                   COUNT(DISTINCT d.root_id) as sent_count
+            FROM deliverables d
+            LEFT JOIN tasks t ON t.id = d.task_id
+            WHERE d.status IN ('pending_approval', 'revision_requested', 'approved', 'scheduled', 'publishing', 'published')
+            {"AND d.client_id = :client_id" if client_id else ""}
+            GROUP BY d.client_id, kind
+        ) sub
+        WHERE uc.client_id = sub.client_id
+          AND (uc.kind::text = sub.kind OR (sub.kind = 'carousel' AND uc.kind::text = 'story'))
+          AND uc.period_start <= CURRENT_DATE
+          AND uc.period_end >= CURRENT_DATE
+          {"AND uc.client_id = :client_id" if client_id else ""};
+    """)
+    await db.execute(sql, client_param)
+    await db.commit()
+
+
+async def get_client_quotas(db: AsyncSession, client_id: uuid.UUID) -> dict[str, dict[str, int]]:
+    """Return dictionary of current quotas, used, and remaining for a client."""
+    today = date.today()
+    from app.models.billing import UsageCounter
+    from sqlalchemy import select
+
+    stmt = select(UsageCounter).where(
+        UsageCounter.client_id == client_id,
+        UsageCounter.period_start <= today,
+        UsageCounter.period_end >= today,
+    )
+    rows = (await db.execute(stmt)).scalars().all()
+    if not rows:
+        await initialize_quotas_for_client(db, client_id)
+        rows = (await db.execute(stmt)).scalars().all()
+
+    res = {}
+    for uc in rows:
+        k = uc.kind.value if hasattr(uc.kind, "value") else str(uc.kind)
+        res[k] = {
+            "quota": uc.quota,
+            "used": uc.used,
+            "remaining": max(0, uc.quota - uc.used),
+        }
+    return res
+
+

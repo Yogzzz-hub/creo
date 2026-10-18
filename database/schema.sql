@@ -362,6 +362,82 @@ CREATE TRIGGER trg_deliverables_updated_at
     BEFORE UPDATE ON deliverables
     FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
 
+-- Synchronize usage_counters automatically whenever a deliverable is sent to client or approved
+CREATE OR REPLACE FUNCTION trg_sync_deliverable_usage_counter()
+RETURNS TRIGGER AS $func$
+DECLARE
+    target_client_id UUID;
+    deliv_kind deliverable_type;
+    actual_used INT;
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        target_client_id := OLD.client_id;
+    ELSE
+        target_client_id := NEW.client_id;
+    END IF;
+
+    IF target_client_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    IF (TG_OP != 'DELETE' AND NEW.task_id IS NOT NULL) THEN
+        SELECT deliverable_type INTO deliv_kind FROM tasks WHERE id = NEW.task_id;
+    ELSIF (TG_OP = 'DELETE' AND OLD.task_id IS NOT NULL) THEN
+        SELECT deliverable_type INTO deliv_kind FROM tasks WHERE id = OLD.task_id;
+    END IF;
+
+    IF deliv_kind IS NULL THEN
+        IF (COALESCE(CASE WHEN TG_OP = 'DELETE' THEN OLD.file_type ELSE NEW.file_type END, '') ILIKE '%video%' 
+            OR COALESCE(CASE WHEN TG_OP = 'DELETE' THEN OLD.file_type ELSE NEW.file_type END, '') ILIKE '%mp4%' 
+            OR COALESCE(CASE WHEN TG_OP = 'DELETE' THEN OLD.file_type ELSE NEW.file_type END, '') ILIKE '%mov%') THEN
+            deliv_kind := 'reel'::deliverable_type;
+        ELSIF (COALESCE(CASE WHEN TG_OP = 'DELETE' THEN OLD.file_type ELSE NEW.file_type END, '') ILIKE '%story%') THEN
+            deliv_kind := 'carousel'::deliverable_type;
+        ELSE
+            deliv_kind := 'static_post'::deliverable_type;
+        END IF;
+    END IF;
+
+    IF deliv_kind = 'story'::deliverable_type THEN
+        deliv_kind := 'carousel'::deliverable_type;
+    END IF;
+
+    SELECT COUNT(DISTINCT d.root_id) INTO actual_used
+    FROM deliverables d
+    LEFT JOIN tasks t ON t.id = d.task_id
+    WHERE d.client_id = target_client_id
+      AND (
+          (t.deliverable_type = deliv_kind)
+          OR (t.deliverable_type IS NULL AND (
+              (deliv_kind = 'reel'::deliverable_type AND (d.file_type ILIKE '%video%' OR d.file_type ILIKE '%mp4%' OR d.file_type ILIKE '%mov%'))
+              OR (deliv_kind = 'carousel'::deliverable_type AND d.file_type ILIKE '%story%')
+              OR (deliv_kind = 'static_post'::deliverable_type AND NOT (d.file_type ILIKE '%video%' OR d.file_type ILIKE '%mp4%' OR d.file_type ILIKE '%mov%' OR d.file_type ILIKE '%story%'))
+          ))
+      )
+      AND d.status IN ('pending_approval', 'revision_requested', 'approved', 'scheduled', 'publishing', 'published');
+
+    UPDATE usage_counters
+       SET used = LEAST(quota, GREATEST(0, actual_used)),
+           updated_at = NOW()
+     WHERE client_id = target_client_id
+       AND (kind = deliv_kind OR (deliv_kind = 'carousel'::deliverable_type AND kind = 'story'::deliverable_type))
+       AND period_start <= CURRENT_DATE
+       AND period_end >= CURRENT_DATE;
+
+    IF TG_OP = 'DELETE' THEN
+        RETURN OLD;
+    ELSE
+        RETURN NEW;
+    END IF;
+END;
+$func$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_sync_deliverables_usage ON deliverables;
+CREATE TRIGGER trg_sync_deliverables_usage
+    AFTER INSERT OR UPDATE OF status, client_id, task_id, root_id OR DELETE ON deliverables
+    FOR EACH ROW
+    EXECUTE FUNCTION trg_sync_deliverable_usage_counter();
+
 -- 4.10 CONTENT CALENDAR
 CREATE TABLE IF NOT EXISTS content_calendar (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
