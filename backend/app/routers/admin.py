@@ -770,26 +770,15 @@ async def get_client_brand_profile(
 
     client_uuid = client_user.id
 
-    # 2. Access control for non-admin staff
-    is_admin_role = actor.role in ("admin", "super_admin")
-    if not is_admin_role:
-        # A team lead manages their whole pod, and the Client Allocations list shows every
-        # client assigned to any pod member, so allow those as well as their own.
+    # 2. Access control for staff:
+    # Admins, Super Admins, and Team Leads / Pod Leads oversee client accounts, brand DNA, and team allocations.
+    # Contributing staff (editors, designers, freelancers) are restricted to clients assigned to them or their tasks.
+    is_admin_or_lead = (
+        str(actor.role).lower() in ("admin", "super_admin", "team_lead")
+        or actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.TEAM_LEAD)
+    )
+    if not is_admin_or_lead:
         allowed_user_ids: list[uuid.UUID] = [actor.user_id]
-        if str(actor.role) in ("team_lead", UserRole.TEAM_LEAD.value):
-            pod_member_ids = (
-                (
-                    await db.execute(
-                        select(StaffProfile.user_id).where(
-                            StaffProfile.team_lead_id == actor.user_id
-                        )
-                    )
-                )
-                .scalars()
-                .all()
-            )
-            allowed_user_ids.extend(pod_member_ids)
-
         ca_check = await db.execute(
             select(ClientAssignment.id).where(
                 ClientAssignment.client_id == client_uuid,
@@ -797,10 +786,17 @@ async def get_client_brand_profile(
             ).limit(1)
         )
         if not ca_check.scalar_one_or_none():
-            raise Forbidden(
-                "You are not assigned to this client",
-                code="NOT_ASSIGNED_TO_CLIENT",
+            task_check = await db.execute(
+                select(Task.id).where(
+                    Task.client_id == client_uuid,
+                    Task.assigned_to == actor.user_id,
+                ).limit(1)
             )
+            if not task_check.scalar_one_or_none():
+                raise Forbidden(
+                    "You are not assigned to this client",
+                    code="NOT_ASSIGNED_TO_CLIENT",
+                )
 
     # 3. Fetch client profile with brand DNA
     profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_uuid)
@@ -1313,7 +1309,7 @@ async def get_dispatch_queue(
 @router.get("/sla")
 async def get_sla_breaches(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = TeamLeadActor,
 ) -> list[dict[str, Any]]:
     """Open SLA breaches and escalations."""
     sql = text("""
@@ -1353,7 +1349,7 @@ async def get_sla_breaches(
 @router.get("/sla-performance")
 async def get_sla_performance(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = TeamLeadActor,
 ) -> dict[str, Any]:
     """Consolidated SLA metrics, active breaches, compliance trajectory, priority breakdowns, and pod leaderboard."""
     now = datetime.now(timezone.utc)
