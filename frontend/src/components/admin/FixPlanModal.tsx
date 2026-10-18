@@ -59,9 +59,9 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
     if (client) {
       setSelectedPreset(client.plan_name || "");
       setCustomPrice(client.monthly_price ?? 0);
-      setCustomReels(client.quota_usage.find(q => q.kind === "reel")?.quota ?? 0);
-      setCustomPosters(client.quota_usage.find(q => ["static_post", "poster"].includes(q.kind))?.quota ?? 0);
-      setCustomStories(client.quota_usage.find(q => ["story", "carousel"].includes(q.kind))?.quota ?? 0);
+      setCustomReels(client.quota_usage.find(q => ["reel", "reels", "video"].includes((q.kind || "").toLowerCase()))?.quota ?? 0);
+      setCustomPosters(client.quota_usage.find(q => ["static_post", "poster", "posts", "post"].includes((q.kind || "").toLowerCase()))?.quota ?? 0);
+      setCustomStories(client.quota_usage.find(q => ["story", "carousel", "stories"].includes((q.kind || "").toLowerCase()))?.quota ?? 0);
       setCustomName(
         client.company_name
           ? `Negotiated Plan - ${client.company_name}`

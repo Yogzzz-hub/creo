@@ -25,7 +25,6 @@ export function PodScheduleLeavePage() {
   return <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-slate-100">
     <AdminTopHeader title="Team Schedule & Leave" activeTab="Team Details" />
     <main className="max-w-7xl mx-auto p-3 sm:p-6 pb-24 space-y-6">
-      <Link to="/lead/dashboard" className="inline-flex min-h-11 items-center text-sm text-blue-300">Back to Dashboard</Link>
       <section className="rounded-2xl border border-slate-800 bg-[#161F2D] p-4 sm:p-5">
         <div className="flex flex-wrap justify-between items-center gap-3 mb-4"><h2 className="text-xl font-semibold">Pending leave requests</h2><Link to="/workstation/schedule" className="min-h-11 inline-flex items-center px-4 rounded-xl bg-blue-500 text-sm">Request my leave</Link></div>
         {leaves.isPending && <p role="status" className="text-slate-400">Loading requests...</p>}

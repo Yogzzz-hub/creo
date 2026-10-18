@@ -484,12 +484,19 @@ async def get_client_subscription(
                 "amount": float(inc_sub.amount if inc_sub.amount is not None else inc_plan.monthly_price),
             }
 
-    counters_stmt = select(UsageCounter).where(UsageCounter.client_id == client_id)
+    from datetime import date
+    today_date = date.today()
+    counters_stmt = select(UsageCounter).where(
+        UsageCounter.client_id == client_id,
+        UsageCounter.period_start <= today_date,
+        UsageCounter.period_end >= today_date,
+    )
     counters = (await db.execute(counters_stmt)).scalars().all()
     quota_map = {
         (c.kind.value if hasattr(c.kind, "value") else str(c.kind)): {
             "quota": c.quota,
             "used": c.used,
+            "remaining": max(0, c.quota - c.used),
         }
         for c in counters
     }

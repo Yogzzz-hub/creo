@@ -579,7 +579,8 @@ async def get_client_roster(
                     json_build_object(
                         'kind', uc.kind,
                         'quota', uc.quota,
-                        'used', uc.used
+                        'used', uc.used,
+                        'remaining', GREATEST(0, uc.quota - uc.used)
                     )
                 ) FILTER (WHERE uc.id IS NOT NULL),
                 '[]'::json
@@ -593,7 +594,7 @@ async def get_client_roster(
         LEFT JOIN client_profiles cp ON cp.user_id = u.id
         LEFT JOIN subscriptions s ON s.client_id = u.id AND s.status IN ('trialing', 'active')
         LEFT JOIN plans p ON p.id = s.plan_id
-        LEFT JOIN usage_counters uc ON uc.client_id = u.id
+        LEFT JOIN usage_counters uc ON uc.client_id = u.id AND uc.period_start <= CURRENT_DATE AND uc.period_end >= CURRENT_DATE
         LEFT JOIN questionnaires q ON q.user_id = u.id
         WHERE u.role = 'client'
         GROUP BY
@@ -1041,26 +1042,15 @@ async def get_client_brand_profile(
 
     client_uuid = client_user.id
 
-    # 2. Access control for non-admin staff
-    is_admin_role = actor.role in ("admin", "super_admin")
-    if not is_admin_role:
-        # A team lead manages their whole pod, and the Client Allocations list shows every
-        # client assigned to any pod member, so allow those as well as their own.
+    # 2. Access control for staff:
+    # Admins, Super Admins, and Team Leads / Pod Leads oversee client accounts, brand DNA, and team allocations.
+    # Contributing staff (editors, designers, freelancers) are restricted to clients assigned to them or their tasks.
+    is_admin_or_lead = (
+        str(actor.role).lower() in ("admin", "super_admin", "team_lead")
+        or actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.TEAM_LEAD)
+    )
+    if not is_admin_or_lead:
         allowed_user_ids: list[uuid.UUID] = [actor.user_id]
-        if str(actor.role) in ("team_lead", UserRole.TEAM_LEAD.value):
-            pod_member_ids = (
-                (
-                    await db.execute(
-                        select(StaffProfile.user_id).where(
-                            StaffProfile.team_lead_id == actor.user_id
-                        )
-                    )
-                )
-                .scalars()
-                .all()
-            )
-            allowed_user_ids.extend(pod_member_ids)
-
         ca_check = await db.execute(
             select(ClientAssignment.id).where(
                 ClientAssignment.client_id == client_uuid,
@@ -1068,10 +1058,17 @@ async def get_client_brand_profile(
             ).limit(1)
         )
         if not ca_check.scalar_one_or_none():
-            raise Forbidden(
-                "You are not assigned to this client",
-                code="NOT_ASSIGNED_TO_CLIENT",
+            task_check = await db.execute(
+                select(Task.id).where(
+                    Task.client_id == client_uuid,
+                    Task.assigned_to == actor.user_id,
+                ).limit(1)
             )
+            if not task_check.scalar_one_or_none():
+                raise Forbidden(
+                    "You are not assigned to this client",
+                    code="NOT_ASSIGNED_TO_CLIENT",
+                )
 
     # 3. Fetch client profile with brand DNA
     profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_uuid)
@@ -1142,10 +1139,20 @@ async def get_client_brand_profile(
     }
 
     # 7. Quota usage
-    usage_stmt = select(UsageCounter).where(UsageCounter.client_id == client_uuid)
+    today_date = date.today()
+    usage_stmt = select(UsageCounter).where(
+        UsageCounter.client_id == client_uuid,
+        UsageCounter.period_start <= today_date,
+        UsageCounter.period_end >= today_date,
+    )
     usage_rows = (await db.execute(usage_stmt)).scalars().all()
     quota_usage = [
-        {"kind": uc.kind, "quota": uc.quota, "used": uc.used}
+        {
+            "kind": uc.kind.value if hasattr(uc.kind, "value") else str(uc.kind),
+            "quota": uc.quota,
+            "used": uc.used,
+            "remaining": max(0, uc.quota - uc.used),
+        }
         for uc in usage_rows
     ]
 
@@ -1574,7 +1581,7 @@ async def get_dispatch_queue(
 @router.get("/sla")
 async def get_sla_breaches(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = TeamLeadActor,
 ) -> list[dict[str, Any]]:
     """Open SLA breaches and escalations."""
     sql = text("""
@@ -1614,7 +1621,7 @@ async def get_sla_breaches(
 @router.get("/sla-performance")
 async def get_sla_performance(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = TeamLeadActor,
 ) -> dict[str, Any]:
     """Consolidated SLA metrics, active breaches, compliance trajectory, priority breakdowns, and pod leaderboard."""
     now = datetime.now(timezone.utc)
@@ -5254,7 +5261,25 @@ async def get_pod_dashboard(
                 "brand_summary": c_profile.brand_summary if c_profile else "Active Content Retainer",
                 "brand_dna": c_profile.brand_dna if c_profile else {},
                 "instagram": c_profile.instagram_username if c_profile else None,
+                "quota_usage": [],
             }
+
+    if client_ids:
+        cur_d = date.today()
+        uc_stmt = select(UsageCounter).where(
+            UsageCounter.client_id.in_(client_ids),
+            UsageCounter.period_start <= cur_d,
+            UsageCounter.period_end >= cur_d,
+        )
+        for uc in (await db.execute(uc_stmt)).scalars().all():
+            cid_str = str(uc.client_id)
+            if cid_str in assigned_clients_dict:
+                assigned_clients_dict[cid_str]["quota_usage"].append({
+                    "kind": uc.kind.value if hasattr(uc.kind, "value") else str(uc.kind),
+                    "quota": uc.quota,
+                    "used": uc.used,
+                    "remaining": max(0, uc.quota - uc.used),
+                })
 
     # 5. Query tasks scoped to this pod
     now = datetime.now(timezone.utc)

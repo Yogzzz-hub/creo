@@ -242,6 +242,71 @@ async def transition(
         if reason:
             deliverable.rejection_comment = reason
 
+    # 3b. Quota exhaustion check when sending work to client (pending_approval or approved)
+    if to_str in (DeliverableStatus.PENDING_APPROVAL, DeliverableStatus.APPROVED) and from_str not in (
+        DeliverableStatus.PENDING_APPROVAL,
+        DeliverableStatus.APPROVED,
+        DeliverableStatus.SCHEDULED,
+        DeliverableStatus.PUBLISHING,
+        DeliverableStatus.PUBLISHED,
+    ):
+        from datetime import date
+        from sqlalchemy import func
+        from app.models.billing import UsageCounter
+
+        # Check if this root deliverable has already been counted toward client quota
+        already_sent = await db.scalar(
+            select(func.count(Deliverable.id)).where(
+                Deliverable.root_id == deliverable.root_id,
+                Deliverable.id != deliverable.id,
+                Deliverable.status.in_([
+                    DeliverableStatus.PENDING_APPROVAL,
+                    DeliverableStatus.REVISION_REQUESTED,
+                    DeliverableStatus.APPROVED,
+                    DeliverableStatus.SCHEDULED,
+                    DeliverableStatus.PUBLISHING,
+                    DeliverableStatus.PUBLISHED,
+                ]),
+            )
+        )
+        if not already_sent:
+            deliv_kind = DeliverableType.REEL
+            if deliverable.task_id:
+                t_obj = await db.get(Task, deliverable.task_id)
+                if t_obj and t_obj.deliverable_type:
+                    deliv_kind = t_obj.deliverable_type
+            else:
+                ft = (deliverable.file_type or "").lower()
+                if "video" in ft or "mp4" in ft or "mov" in ft:
+                    deliv_kind = DeliverableType.REEL
+                elif "story" in ft or "carousel" in ft:
+                    deliv_kind = DeliverableType.CAROUSEL
+                else:
+                    deliv_kind = DeliverableType.STATIC_POST
+
+            effective_kind = DeliverableType.CAROUSEL if deliv_kind == DeliverableType.STORY else deliv_kind
+            today_date = date.today()
+            counter = await db.scalar(
+                select(UsageCounter).where(
+                    UsageCounter.client_id == deliverable.client_id,
+                    UsageCounter.kind == effective_kind,
+                    UsageCounter.period_start <= today_date,
+                    UsageCounter.period_end >= today_date,
+                )
+            )
+            if counter and counter.used >= counter.quota:
+                raise Conflict(
+                    f"Monthly {deliv_kind.value} quota exhausted ({counter.used}/{counter.quota}). "
+                    f"The client has received all deliverables allocated in their package for this cycle.",
+                    code="QUOTA_EXHAUSTED",
+                    details={
+                        "kind": deliv_kind.value,
+                        "used": counter.used,
+                        "quota": counter.quota,
+                        "remaining": 0,
+                    },
+                )
+
     # 4. Apply the transition — the ONLY assignment in the codebase
     deliverable.status = to_status  # direct assignment guarded by this function
 

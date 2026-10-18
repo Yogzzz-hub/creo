@@ -367,11 +367,16 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
           const tier = isPaid ? (client.plan_display_name || client.plan_name || "Enterprise Retainer") : "No Active Plan";
           const pod = getPodInfo(company_name);
           const price = isPaid ? (client.monthly_price || getMonthlyPrice(tier)) : 0;
-          const deliverables_total = isOnboarded ? (client.quota_usage.reduce((sum, q) => sum + q.quota, 0) || 30) : 0;
-          const deliverables_completed = isOnboarded ? client.quota_usage.reduce((sum, q) => sum + q.used, 0) : 0;
-          const postsItem = client.quota_usage.find((q) => q.kind.toLowerCase() === "posts") || { quota: 0, used: 0 };
-          const reelsItem = client.quota_usage.find((q) => q.kind.toLowerCase() === "reels") || { quota: 0, used: 0 };
-          const storiesItem = client.quota_usage.find((q) => q.kind.toLowerCase() === "stories") || { quota: 0, used: 0 };
+          const normalizeKind = (k?: string) => (k || "").toLowerCase().trim();
+          const isPosts = (k?: string) => ["static_post", "post", "posts", "poster", "posters"].includes(normalizeKind(k));
+          const isReels = (k?: string) => ["reel", "reels", "video"].includes(normalizeKind(k));
+          const isStories = (k?: string) => ["carousel", "story", "stories"].includes(normalizeKind(k));
+
+          const postsItem = client.quota_usage.find((q) => isPosts(q.kind)) || { quota: 0, used: 0 };
+          const reelsItem = client.quota_usage.find((q) => isReels(q.kind)) || { quota: 0, used: 0 };
+          const storiesItem = client.quota_usage.find((q) => isStories(q.kind)) || { quota: 0, used: 0 };
+          const deliverables_total = isOnboarded ? client.quota_usage.reduce((sum, q) => sum + (q.quota || 0), 0) : 0;
+          const deliverables_completed = isOnboarded ? client.quota_usage.reduce((sum, q) => sum + (q.used || 0), 0) : 0;
 
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-xs animate-fade-in">
@@ -537,7 +542,7 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                       </div>
                       <span className="text-xs font-bold text-[#7FA0D6]">
                         {isOnboarded
-                          ? `${deliverables_completed} of ${deliverables_total} Posts (${Math.round((deliverables_completed / deliverables_total) * 100)}%)`
+                          ? `${deliverables_completed} of ${deliverables_total} Delivered • ${Math.max(0, deliverables_total - deliverables_completed)} Remaining (${deliverables_total > 0 ? Math.round((deliverables_completed / deliverables_total) * 100) : 0}%)`
                           : "0 of 0 Posts (Onboarding Pending)"}
                       </span>
                     </div>
@@ -556,25 +561,40 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                         <span className="text-base font-black text-white block">
                           {isOnboarded ? `${postsItem.used}/${postsItem.quota}` : "0/0"}
                         </span>
-                        <span className="text-[9px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        <span className="text-[9px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
                           Static Posts
                         </span>
+                        {isOnboarded && (
+                          <span className="text-[9px] font-bold text-emerald-400 block mt-0.5">
+                            {Math.max(0, postsItem.quota - postsItem.used)} remaining
+                          </span>
+                        )}
                       </div>
                       <div className="p-3 rounded-xl bg-[#161F2D] border border-[#2A3446] text-center">
                         <span className="text-base font-black text-white block">
                           {isOnboarded ? `${reelsItem.used}/${reelsItem.quota}` : "0/0"}
                         </span>
-                        <span className="text-[9px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        <span className="text-[9px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
                           9:16 Reels
                         </span>
+                        {isOnboarded && (
+                          <span className="text-[9px] font-bold text-emerald-400 block mt-0.5">
+                            {Math.max(0, reelsItem.quota - reelsItem.used)} remaining
+                          </span>
+                        )}
                       </div>
                       <div className="p-3 rounded-xl bg-[#161F2D] border border-[#2A3446] text-center">
                         <span className="text-base font-black text-white block">
                           {isOnboarded ? `${storiesItem.used}/${storiesItem.quota}` : "0/0"}
                         </span>
-                        <span className="text-[9px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        <span className="text-[9px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
                           Stories
                         </span>
+                        {isOnboarded && (
+                          <span className="text-[9px] font-bold text-emerald-400 block mt-0.5">
+                            {Math.max(0, storiesItem.quota - storiesItem.used)} remaining
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

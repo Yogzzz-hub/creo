@@ -1,4 +1,3 @@
-import { Link } from "react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
@@ -34,7 +33,6 @@ export function MemberSchedulePTOPage() {
   return <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-slate-100">
     <AdminTopHeader activeTab="Leave Requests" hideTitle />
     <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-24 space-y-5">
-      <Link to={user?.role === "team_lead" ? "/lead/dashboard" : "/workstation/overview"} className="inline-flex min-h-11 items-center text-sm text-blue-300">Back to Dashboard</Link>
       {notice && <p role="status" className="rounded-xl bg-emerald-500/10 text-emerald-300 p-3">{notice}</p>}
       {error && <p role="alert" className="rounded-xl bg-rose-500/10 text-rose-300 p-3">{error instanceof Error ? error.message : "Unable to process the request."}</p>}
       <div className="grid md:grid-cols-2 gap-5">

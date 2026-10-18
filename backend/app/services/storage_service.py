@@ -186,7 +186,12 @@ def _check_s3_health() -> bool:
 
 
 def _is_s3_configured() -> bool:
-    return _check_s3_health()
+    return bool(
+        settings.STORAGE_S3_ENABLED
+        and _s3_healthy is not False
+        and settings.AWS_ACCESS_KEY_ID
+        and settings.AWS_SECRET_ACCESS_KEY
+    )
 
 
 def _is_supabase_configured() -> bool:

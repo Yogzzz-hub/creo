@@ -148,12 +148,16 @@ export interface ClientDetailData {
   billingMethod: string;
   totalAssetsDelivered: number;
   totalAssetsQuota: number;
+  totalAssetsRemaining?: number;
   postsDelivered: number;
   postsQuota: number;
+  postsRemaining?: number;
   reelsDelivered: number;
   reelsQuota: number;
+  reelsRemaining?: number;
   storiesDelivered: number;
   storiesQuota: number;
+  storiesRemaining?: number;
   sprintNumber: number;
   daysRemainingInSprint: number;
   contact: {
@@ -468,12 +472,22 @@ export function AdminClientsPage() {
       ? (sc.monthly_price || (tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000))
       : 0;
     
-    const postsQuota = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "posts")?.quota || 0;
-    const postsDelivered = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "posts")?.used || 0;
-    const reelsQuota = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "reels")?.quota || 0;
-    const reelsDelivered = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "reels")?.used || 0;
-    const storiesQuota = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "stories")?.quota || 0;
-    const storiesDelivered = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "stories")?.used || 0;
+    const normalizeKind = (k?: string) => (k || "").toLowerCase().trim();
+    const isPosts = (k?: string) => ["static_post", "post", "posts", "poster", "posters"].includes(normalizeKind(k));
+    const isReels = (k?: string) => ["reel", "reels", "video"].includes(normalizeKind(k));
+    const isStories = (k?: string) => ["carousel", "story", "stories"].includes(normalizeKind(k));
+
+    const postsUsage = (sc.quota_usage || []).find((q) => isPosts(q?.kind));
+    const postsQuota = postsUsage?.quota || 0;
+    const postsDelivered = postsUsage?.used || 0;
+
+    const reelsUsage = (sc.quota_usage || []).find((q) => isReels(q?.kind));
+    const reelsQuota = reelsUsage?.quota || 0;
+    const reelsDelivered = reelsUsage?.used || 0;
+
+    const storiesUsage = (sc.quota_usage || []).find((q) => isStories(q?.kind));
+    const storiesQuota = storiesUsage?.quota || 0;
+    const storiesDelivered = storiesUsage?.used || 0;
 
     // Check for match with existing baseline client
     const existingKey = Object.keys(mergedClientsData).find(
@@ -550,12 +564,16 @@ export function AdminClientsPage() {
         pod: assignedPod,
         totalAssetsDelivered: isOnboarded ? (postsDelivered + reelsDelivered + storiesDelivered) : 0,
         totalAssetsQuota: isOnboarded ? (postsQuota + reelsQuota + storiesQuota) : 0,
+        totalAssetsRemaining: isOnboarded ? Math.max(0, (postsQuota + reelsQuota + storiesQuota) - (postsDelivered + reelsDelivered + storiesDelivered)) : 0,
         postsDelivered: isOnboarded ? postsDelivered : 0,
         postsQuota: isOnboarded ? postsQuota : 0,
+        postsRemaining: isOnboarded ? Math.max(0, postsQuota - postsDelivered) : 0,
         reelsDelivered: isOnboarded ? reelsDelivered : 0,
         reelsQuota: isOnboarded ? reelsQuota : 0,
+        reelsRemaining: isOnboarded ? Math.max(0, reelsQuota - reelsDelivered) : 0,
         storiesDelivered: isOnboarded ? storiesDelivered : 0,
         storiesQuota: isOnboarded ? storiesQuota : 0,
+        storiesRemaining: isOnboarded ? Math.max(0, storiesQuota - storiesDelivered) : 0,
         contact: {
           ...existing.contact,
           name: sc.full_name || existing.contact.name || formattedName,
@@ -594,12 +612,16 @@ export function AdminClientsPage() {
         billingMethod: isPaid ? "Direct ACH / Razorpay" : "Unpaid",
         totalAssetsDelivered: isOnboarded ? (postsDelivered + reelsDelivered + storiesDelivered) : 0,
         totalAssetsQuota: isOnboarded ? (postsQuota + reelsQuota + storiesQuota) : 0,
+        totalAssetsRemaining: isOnboarded ? Math.max(0, (postsQuota + reelsQuota + storiesQuota) - (postsDelivered + reelsDelivered + storiesDelivered)) : 0,
         postsDelivered: isOnboarded ? postsDelivered : 0,
         postsQuota: isOnboarded ? postsQuota : 0,
+        postsRemaining: isOnboarded ? Math.max(0, postsQuota - postsDelivered) : 0,
         reelsDelivered: isOnboarded ? reelsDelivered : 0,
         reelsQuota: isOnboarded ? reelsQuota : 0,
+        reelsRemaining: isOnboarded ? Math.max(0, reelsQuota - reelsDelivered) : 0,
         storiesDelivered: isOnboarded ? storiesDelivered : 0,
         storiesQuota: isOnboarded ? storiesQuota : 0,
+        storiesRemaining: isOnboarded ? Math.max(0, storiesQuota - storiesDelivered) : 0,
         sprintNumber: isOnboarded ? 44 : 0,
         daysRemainingInSprint: isOnboarded ? 14 : 0,
         contact: {
@@ -1714,6 +1736,9 @@ export function AdminClientsPage() {
                         <span className="text-[#7FA0D6]">
                           {activeClient?.totalAssetsDelivered ?? 0} / {activeClient?.totalAssetsQuota ?? 0} Assets Delivered (
                           {Math.round((((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100))}%)
+                          {isClientOnboarded && (
+                            <span className="text-white ml-1.5 font-extrabold">• {Math.max(0, (activeClient?.totalAssetsQuota ?? 0) - (activeClient?.totalAssetsDelivered ?? 0))} Remaining</span>
+                          )}
                         </span>
                       </div>
                       <div className="w-full bg-[#161F2D] rounded-full h-2.5 overflow-hidden">
@@ -1737,18 +1762,33 @@ export function AdminClientsPage() {
                         {isClientOnboarded ? `${activeClient?.postsDelivered ?? 0}/${activeClient?.postsQuota ?? 0}` : "0/0"}
                       </span>
                       <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">POSTS</span>
+                      {isClientOnboarded && (
+                        <span className="text-[10px] font-bold text-emerald-400 block">
+                          {Math.max(0, (activeClient?.postsQuota ?? 0) - (activeClient?.postsDelivered ?? 0))} left
+                        </span>
+                      )}
                     </div>
                     <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
                       <span className="text-sm font-black text-white">
                         {isClientOnboarded ? `${activeClient?.reelsDelivered ?? 0}/${activeClient?.reelsQuota ?? 0}` : "0/0"}
                       </span>
                       <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">REELS</span>
+                      {isClientOnboarded && (
+                        <span className="text-[10px] font-bold text-emerald-400 block">
+                          {Math.max(0, (activeClient?.reelsQuota ?? 0) - (activeClient?.reelsDelivered ?? 0))} left
+                        </span>
+                      )}
                     </div>
                     <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
                       <span className="text-sm font-black text-white">
                         {isClientOnboarded ? `${activeClient?.storiesDelivered ?? 0}/${activeClient?.storiesQuota ?? 0}` : "0/0"}
                       </span>
                       <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">STORIES</span>
+                      {isClientOnboarded && (
+                        <span className="text-[10px] font-bold text-emerald-400 block">
+                          {Math.max(0, (activeClient?.storiesQuota ?? 0) - (activeClient?.storiesDelivered ?? 0))} left
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

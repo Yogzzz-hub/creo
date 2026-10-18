@@ -110,13 +110,23 @@ export function PodClientAllocationsPage() {
     }
     const dynamicClients: ClientAccount[] = rosterData.map((r) => {
       const name = String(r.company_name || (r.instagram_username ? `@${r.instagram_username}` : (r.email ? r.email.split("@")[0] : "Client")));
-      const initials = name.slice(0, 2).toUpperCase();
-      const reelsQuota = r.quota_usage?.find((q) => q.kind === "reel")?.quota || 4;
-      const reelsUsed = r.quota_usage?.find((q) => q.kind === "reel")?.used || 0;
-      const postersQuota = r.quota_usage?.find((q) => q.kind === "poster")?.quota || 8;
-      const postersUsed = r.quota_usage?.find((q) => q.kind === "poster")?.used || 0;
-      const storiesQuota = r.quota_usage?.find((q) => q.kind === "story")?.quota || 8;
-      const storiesUsed = r.quota_usage?.find((q) => q.kind === "story")?.used || 0;
+      const initials = (name.replace(/[^a-zA-Z0-9 ]/g, "").trim().slice(0, 2) || "CL").toUpperCase();
+      const normalizeKind = (k?: string) => (k || "").toLowerCase().trim();
+      const isPosts = (k?: string) => ["static_post", "post", "posts", "poster", "posters"].includes(normalizeKind(k));
+      const isReels = (k?: string) => ["reel", "reels", "video"].includes(normalizeKind(k));
+      const isStories = (k?: string) => ["carousel", "story", "stories"].includes(normalizeKind(k));
+
+      const reelsUsage = r.quota_usage?.find((q) => isReels(q.kind));
+      const reelsQuota = reelsUsage?.quota || 4;
+      const reelsUsed = reelsUsage?.used || 0;
+
+      const postersUsage = r.quota_usage?.find((q) => isPosts(q.kind));
+      const postersQuota = postersUsage?.quota || 8;
+      const postersUsed = postersUsage?.used || 0;
+
+      const storiesUsage = r.quota_usage?.find((q) => isStories(q.kind));
+      const storiesQuota = storiesUsage?.quota || 8;
+      const storiesUsed = storiesUsage?.used || 0;
 
       return {
         id: r.client_id || "",

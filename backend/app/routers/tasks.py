@@ -288,7 +288,30 @@ async def create_task(
         .order_by(Subscription.created_at.desc())
         .limit(1)
     )
-    plan_name = sub_res.scalar_one_or_none()
+    # Verify monthly deliverable quota is not exhausted
+    from app.models.billing import UsageCounter
+    today_date = date.today()
+    effective_kind = DeliverableType.CAROUSEL if payload.deliverable_type == DeliverableType.STORY else payload.deliverable_type
+    counter = await db.scalar(
+        select(UsageCounter).where(
+            UsageCounter.client_id == payload.client_id,
+            UsageCounter.kind == effective_kind,
+            UsageCounter.period_start <= today_date,
+            UsageCounter.period_end >= today_date,
+        )
+    )
+    if counter and counter.used >= counter.quota:
+        raise Conflict(
+            f"Monthly {payload.deliverable_type.value} quota exhausted ({counter.used}/{counter.quota}). "
+            f"Client has reached their plan limit for this cycle. Upgrade plan or purchase add-ons to dispatch more.",
+            code="QUOTA_EXHAUSTED",
+            details={
+                "kind": payload.deliverable_type.value,
+                "used": counter.used,
+                "quota": counter.quota,
+                "remaining": 0,
+            },
+        )
 
     sla_due = compute_sla_due_at(plan_name, payload.deliverable_type)
 
