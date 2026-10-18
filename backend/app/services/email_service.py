@@ -619,9 +619,18 @@ async def send_credentials_email(
     role: str,
     password: str,
     login_url: str | None = None,
+    account_email: str | None = None,
 ) -> bool:
-    """Send workstation account credentials (email and password) to the user."""
+    """Send workstation account credentials (email and password) to the user.
+    
+    If account_email is provided, it is displayed as the login identifier while the
+    credentials email is physically delivered to to_email (the separate/dispatch address).
+    """
     from html import escape
+
+    clean_to = to_email.strip()
+    login_id = (account_email or clean_to).strip()
+    is_separate_dispatch = bool(account_email and clean_to.lower() != account_email.strip().lower())
 
     base_url = (login_url or settings.FRONTEND_URL or "http://localhost:5173").rstrip("/")
     action_url = f"{base_url}/auth"
@@ -629,12 +638,13 @@ async def send_credentials_email(
     subject = "Your Creo Workstation Credentials - Welcome to Creo"
     formatted_role = role.replace("_", " ").title()
 
+    dispatch_notice_text = f"\n- Dispatch Recipient: {clean_to}\n" if is_separate_dispatch else ""
     text_content = f"""Welcome to Creo, {full_name}!
 
 Your Creo workstation account has been provisioned.
 
 Account Credentials:
-- Email ID: {to_email}
+- Login Email ID: {login_id}{dispatch_notice_text}
 - Password: {password}
 - Assigned Role: {formatted_role}
 - Login URL: {action_url}
@@ -643,6 +653,12 @@ Please log in and update your password in Settings if required.
 
 -- Creo Creative Studio Team
 """
+
+    dispatch_notice_html = f"""
+                <div style="margin-top: 6px; font-size: 11px; color: #94A3B8;">
+                  Delivered to personal/dispatch contact: <span style="color: #7FA0D6; font-family: monospace;">{escape(clean_to)}</span>
+                </div>
+""" if is_separate_dispatch else ""
 
     html_content = f"""<!DOCTYPE html>
 <html>
@@ -676,7 +692,8 @@ Please log in and update your password in Settings if required.
               <div style="background-color: #0B111C; border: 1px solid #2A3446; border-radius: 16px; padding: 20px; margin-bottom: 28px;">
                 <div style="margin-bottom: 14px;">
                   <span style="display: block; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Login Email ID</span>
-                  <span style="display: block; font-size: 14px; font-family: monospace; font-weight: 700; color: #FFFFFF; background: #161F2D; padding: 8px 12px; border-radius: 8px; border: 1px solid #2A3446;">{escape(to_email)}</span>
+                  <span style="display: block; font-size: 14px; font-family: monospace; font-weight: 700; color: #FFFFFF; background: #161F2D; padding: 8px 12px; border-radius: 8px; border: 1px solid #2A3446;">{escape(login_id)}</span>
+                  {dispatch_notice_html}
                 </div>
                 <div style="margin-bottom: 14px;">
                   <span style="display: block; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Password</span>

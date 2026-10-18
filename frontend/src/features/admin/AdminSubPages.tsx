@@ -72,6 +72,7 @@ import {
   Plane,
   Zap,
   ArrowLeft,
+  ArrowRight,
   Download,
   Printer,
   SlidersHorizontal,
@@ -106,15 +107,18 @@ import {
   Columns2,
   IndianRupee,
   UserCheck,
+  UserX,
   LayoutGrid,
   ChevronDown,
   KeyRound,
   EyeOff,
+  Volume2,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CustomSelect } from "../../components/ui/CustomSelect";
 import { DeliverableHistoryModal } from "../../components/portal/DeliverableHistoryModal";
 import { WithdrawDeliverableModal } from "../../components/portal/WithdrawDeliverableModal";
+import { VoicePlayer } from "../../components/portal/VoicePlayer";
 import { AdminSplitPaymentModal } from "../../components/admin/AdminSplitPaymentModal";
 import { AdminFreelancerModal } from "../../components/admin/AdminFreelancerModal";
 import { AdminAssignFreelancerModal } from "../../components/admin/AdminAssignFreelancerModal";
@@ -280,10 +284,62 @@ export function AdminClientsPage() {
   const manualPayments = manualPaymentsQuery.data || [];
   const pendingManualPayments = manualPayments.filter((p) => p.status === "PENDING");
   const [newClientNameInput, setNewClientNameInput] = useState("");
+  const [newClientContactNameInput, setNewClientContactNameInput] = useState("");
+  const [newClientEmailInput, setNewClientEmailInput] = useState("");
+  const [newClientPasswordInput, setNewClientPasswordInput] = useState(`Creo@${Math.floor(1000 + Math.random() * 9000)}!`);
+  const [showNewClientPassword, setShowNewClientPassword] = useState(false);
+  const [newClientDispatchEmail, setNewClientDispatchEmail] = useState("");
+  const [newClientSendEmail, setNewClientSendEmail] = useState(true);
+  const [isOnboardingClient, setIsOnboardingClient] = useState(false);
   const [newClientIndustryInput, setNewClientIndustryInput] = useState("");
-  const [newClientPodInput, setNewClientPodInput] = useState("Creative Pod");
+  const [newClientPodInput, setNewClientPodInput] = useState("Pod A (Creative & Brand Strategy)");
+
+  // Provisioned client credentials modal state
+  const [clientProvisionedCreds, setClientProvisionedCreds] = useState<{
+    company_name: string;
+    contact_name: string;
+    email: string;
+    password: string;
+    email_dispatched: boolean;
+    dispatch_email?: string;
+  } | null>(null);
+
+  // Client Team Member Onboarding Modal State
+  const [isOnboardClientMemberModalOpen, setIsOnboardClientMemberModalOpen] = useState(false);
+  const [clientMemberForm, setClientMemberForm] = useState({
+    full_name: "",
+    email: "",
+    role_title: "Marketing Lead",
+    password: `Creo@${Math.floor(1000 + Math.random() * 9000)}!`,
+    dispatch_email: "",
+    send_credentials_email: true,
+  });
+  const [showClientMemberPassword, setShowClientMemberPassword] = useState(false);
+  const [isOnboardingClientMember, setIsOnboardingClientMember] = useState(false);
+  const [clientMemberProvisionedCreds, setClientMemberProvisionedCreds] = useState<{
+    full_name: string;
+    email: string;
+    password: string;
+    role_title: string;
+    email_dispatched: boolean;
+    dispatch_email?: string;
+  } | null>(null);
+
+  const clientTeamMembersQuery = useQuery({
+    queryKey: ["admin-client-team-members", selectedClientId],
+    queryFn: async () => {
+      if (!selectedClientId) return [];
+      try {
+        return await request<any[]>(`/api/v1/admin/clients/${selectedClientId}/team-members`);
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!selectedClientId,
+  });
+
   const [clientToRemoveInput, setClientToRemoveInput] = useState("");
-  const [customClients, setCustomClients] = useState<Record<string, ClientDetailData>>({});
+  const [customClients] = useState<Record<string, ClientDetailData>>({});
   const [removingClient, setRemovingClient] = useState(false);
   const [removeError, setRemoveError] = useState<string | null>(null);
   const [removedClientIds, setRemovedClientIds] = useState<Set<string>>(new Set());
@@ -1494,16 +1550,30 @@ export function AdminClientsPage() {
 
             {/* 4 Main Grid Cards matching Screenshot (2x2) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-6">
-              {/* CARD 1: PRIMARY CONTACT */}
+              {/* CARD 1: PRIMARY CONTACT & CLIENT TEAM */}
               <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                     <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
-                      PRIMARY CONTACT
+                      PRIMARY CONTACT &amp; CLIENT TEAM
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold">
-                      Authorized Signer
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setClientMemberForm({
+                          full_name: "",
+                          email: "",
+                          role_title: "Marketing Lead",
+                          password: `Creo@${Math.floor(1000 + Math.random() * 9000)}!`,
+                          dispatch_email: "",
+                          send_credentials_email: true,
+                        });
+                        setIsOnboardClientMemberModalOpen(true);
+                      }}
+                      className="px-2.5 py-1 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-all"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Onboard Team Member
+                    </button>
                   </div>
 
                   <div className="flex items-center gap-3.5">
@@ -1540,6 +1610,46 @@ export function AdminClientsPage() {
                             : "Not provided yet")}
                       </span>
                     </div>
+                  </div>
+
+                  {/* Additional Client Team Members Section */}
+                  <div className="pt-2 space-y-2 border-t border-[#2A3446]/60">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        Client Stakeholders &amp; Team Members
+                      </span>
+                      <span className="text-[10px] font-bold text-[#7FA0D6]">
+                        {clientTeamMembersQuery.data?.length || 0} Member{clientTeamMembersQuery.data?.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+
+                    {clientTeamMembersQuery.data && clientTeamMembersQuery.data.length > 0 ? (
+                      <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                        {clientTeamMembersQuery.data.map((m: any) => (
+                          <div
+                            key={m.id}
+                            className="p-2.5 bg-[#0B111C]/90 rounded-xl border border-[#2A3446] flex items-center justify-between gap-2"
+                          >
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-xs text-white truncate">{m.full_name}</span>
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                                  {m.role_title}
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-[#97A0B3] font-mono truncate block">{m.email}</span>
+                            </div>
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+                              Active
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-[#0B111C]/40 rounded-xl border border-[#2A3446] text-center text-[11px] text-[#97A0B3]">
+                        No additional client team members added yet. Click &quot;Onboard Team Member&quot; to invite colleagues with credentials.
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -2401,12 +2511,17 @@ export function AdminClientsPage() {
 
         {/* 6. Onboard New Client Modal */}
         {isOnboardClientModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in overflow-y-auto">
+            <div className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-[#2A3446] my-8">
               <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                 <div className="flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-[#7FA0D6]" />
-                  <h3 className="text-base font-black text-white">Onboard New Client</h3>
+                  <div className="size-8 rounded-xl bg-blue-600/20 text-[#7FA0D6] flex items-center justify-center border border-blue-500/30">
+                    <Plus className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white">Onboard New Client Brand</h3>
+                    <p className="text-[11px] text-[#97A0B3]">Create portal credentials &amp; assign creative pod</p>
+                  </div>
                 </div>
                 <button type="button" onClick={() => setIsOnboardClientModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
                   <X className="w-4 h-4" />
@@ -2414,136 +2529,189 @@ export function AdminClientsPage() {
               </div>
 
               <form
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
                   const trimmedName = newClientNameInput.trim();
-                  if (!trimmedName) return;
+                  const trimmedEmail = newClientEmailInput.trim();
+                  if (!trimmedName || !trimmedEmail) {
+                    setToast("Company name and login email are required.");
+                    return;
+                  }
 
-                  const newId = trimmedName.toLowerCase().replace(/[^a-z0-9]/g, "-") || `client-${Date.now()}`;
-                  const words = trimmedName.split(/\s+/).filter(Boolean);
-                  const firstLetter = words[0]?.[0] || "";
-                  const secondLetter = words[1]?.[0] || "";
-                  const initials = (firstLetter && secondLetter)
-                    ? (firstLetter + secondLetter).toUpperCase() 
-                    : trimmedName.slice(0, 2).toUpperCase();
+                  setIsOnboardingClient(true);
+                  try {
+                    const res = await request<any>("/api/v1/admin/clients/onboard", {
+                      method: "POST",
+                      body: JSON.stringify({
+                        company_name: trimmedName,
+                        contact_name: newClientContactNameInput.trim() || `${trimmedName} Executive`,
+                        email: trimmedEmail,
+                        password: newClientPasswordInput.trim(),
+                        dispatch_email: newClientDispatchEmail.trim() || undefined,
+                        industry: newClientIndustryInput.trim() || "DTC E-Commerce & Retail",
+                        pod_name: newClientPodInput,
+                        send_credentials_email: newClientSendEmail,
+                      }),
+                    });
 
-                  const newClientObj: ClientDetailData = {
-                    id: newId,
-                    name: trimmedName,
-                    initials,
-                    industry: newClientIndustryInput.trim() || "DTC E-Commerce & Retail",
-                    timezone: "Client Time: IST (UTC+5:30)",
-                    activeSince: "Active since Oct 2026",
-                    tier: "Growth Retainer",
-                    tierBadge: "GROWTH RETAINER",
-                    status: "ACTIVE RETAINER",
-                    monthlyFee: 50000,
-                    addon: "Add-on: Creative Pod",
-                    nextBilling: "Nov 1, 2026",
-                    billingMethod: "Direct ACH / Razorpay",
-                    totalAssetsDelivered: 0,
-                    totalAssetsQuota: 48,
-                    postsDelivered: 0,
-                    postsQuota: 18,
-                    reelsDelivered: 0,
-                    reelsQuota: 10,
-                    storiesDelivered: 0,
-                    storiesQuota: 20,
-                    sprintNumber: 44,
-                    daysRemainingInSprint: 14,
-                    contact: {
-                      name: `${trimmedName} Executive`,
-                      title: "Primary Account Owner",
-                      email: `${newId}@clientbrand.com`,
-                      phone: "+91 98401 99887",
-                      renewedDate: "Oct 1, 2026",
-                      termMonths: 12,
-                    },
-                    brand: {
-                      kitVersion: "Design Kit v1.0",
-                      headingsFont: "Plus Jakarta Sans",
-                      bodyFont: "Inter Sans",
-                      monoFont: "JetBrains Mono",
-                      toneSummary: `Dynamic, high-impact social media creatives engineered for ${trimmedName}. High-clarity typography with conversion-optimized video hooks.`,
-                      toneTags: ["High Conversion", "Brand Growth", "Active Retainer"],
-                      colors: [
-                        { name: "Primary Deep Navy", hex: "#0B111C" },
-                        { name: "Accent Royal Blue", hex: "#7FA0D6" },
-                        { name: "Cyan Highlight", hex: "#7FA0D6" },
-                        { name: "Clean Neutral", hex: "#F8FAFC", isLight: true },
-                      ],
-                      social: {
-                        handle: `@${newId}`,
-                        followers: "API Connected",
-                        status: "API CONNECTED",
-                        syncInterval: "15m refresh",
-                      },
-                      brandVaultLink: `${trimmedName} Brand Drive`,
-                      figmaLink: `${trimmedName} Master Design Kit`,
-                      lastAuditDate: "Just Now",
-                    },
-                    pod: {
-                      name: newClientPodInput.split(" ")[0] || "Pod A",
-                      tagline: "Creative & Brand Strategy",
-                      leadName: "Alex Rivera",
-                      leadTitle: "Lead Producer",
-                      leadAvatar: "AR",
-                      squad: [
-                        { name: "Production Squad", role: "Creative Specialist", hoursPerWeek: 32, avatar: "PS" },
-                      ],
-                      capacityAllocatedHrs: 32,
-                      bandwidthPercent: 80,
-                      dailySyncTime: "11:00 AM IST",
-                    },
-                    deliverables: [],
-                  };
-
-                  setCustomClients((prev) => ({ ...prev, [newId]: newClientObj }));
-                  showToast(`Successfully onboarded client "${trimmedName}"!`);
-                  setIsOnboardClientModalOpen(false);
-                  setNewClientNameInput("");
-                  setNewClientIndustryInput("");
+                    await queryClient.invalidateQueries({ queryKey: ["admin-client-roster"] });
+                    setIsOnboardClientModalOpen(false);
+                    setClientProvisionedCreds({
+                      company_name: trimmedName,
+                      contact_name: newClientContactNameInput.trim() || `${trimmedName} Executive`,
+                      email: trimmedEmail,
+                      password: newClientPasswordInput.trim(),
+                      email_dispatched: Boolean(res?.email_dispatched),
+                      dispatch_email: res?.dispatch_email || (newClientDispatchEmail.trim() || undefined),
+                    });
+                    setToast(
+                      `Client "${trimmedName}" onboarded! ${
+                        res?.email_dispatched
+                          ? `Credentials dispatched to ${res?.dispatch_email || newClientDispatchEmail.trim() || trimmedEmail}.`
+                          : "Account active in database."
+                      }`
+                    );
+                    setNewClientNameInput("");
+                    setNewClientContactNameInput("");
+                    setNewClientEmailInput("");
+                    setNewClientDispatchEmail("");
+                    setNewClientPasswordInput(`Creo@${Math.floor(1000 + Math.random() * 9000)}!`);
+                  } catch (err: any) {
+                    setToast(err?.message || "Failed to onboard client.");
+                  } finally {
+                    setIsOnboardingClient(false);
+                  }
                 }}
                 className="space-y-3.5 text-xs"
               >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-[#F1F5F9] mb-1">Company / Brand Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Acme Studio"
+                      value={newClientNameInput}
+                      onChange={(e) => setNewClientNameInput(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-[#F1F5F9] mb-1">Authorized Contact Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Marcus Vance (Owner)"
+                      value={newClientContactNameInput}
+                      onChange={(e) => setNewClientContactNameInput(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Client / Brand Name</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Official Account Login Email *</label>
                   <input
-                    type="text"
+                    type="email"
                     required
-                    placeholder="e.g. Acme Corp"
-                    value={newClientNameInput}
-                    onChange={(e) => setNewClientNameInput(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
+                    placeholder="e.g. marcus@acmestudio.com"
+                    value={newClientEmailInput}
+                    onChange={(e) => setNewClientEmailInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
                   />
+                  <p className="text-[10px] text-[#97A0B3] mt-1">This official email is used by the client to sign in to the portal workspace.</p>
                 </div>
 
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Industry / Category</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-bold text-[#F1F5F9]">Temporary Password *</label>
+                    <button
+                      type="button"
+                      onClick={() => setNewClientPasswordInput(`Creo@${Math.floor(1000 + Math.random() * 9000)}!`)}
+                      className="text-[11px] text-[#7FA0D6] hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <RefreshCw className="size-2.5" /> Regenerate
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showNewClientPassword ? "text" : "password"}
+                      required
+                      value={newClientPasswordInput}
+                      onChange={(e) => setNewClientPasswordInput(e.target.value)}
+                      className="w-full px-3 py-2 pr-10 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-mono font-bold text-amber-300 focus:outline-none focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewClientPassword(!showNewClientPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white"
+                    >
+                      {showNewClientPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-[#F1F5F9] mb-1">Industry / Category</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. DTC E-Commerce & Retail"
+                      value={newClientIndustryInput}
+                      onChange={(e) => setNewClientIndustryInput(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-[#F1F5F9] mb-1">Assigned Creative Pod</label>
+                    <NativeSelect
+                      value={newClientPodInput}
+                      onChange={(e) => setNewClientPodInput(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
+                    >
+                      <option value="Pod A (Creative & Brand Strategy)">Pod A (Creative & Brand Strategy)</option>
+                      <option value="Pod B (Performance & Video Ops)">Pod B (Performance & Video Ops)</option>
+                      <option value="Pod C (3D Motion & Visual Design)">Pod C (3D Motion & Visual Design)</option>
+                    </NativeSelect>
+                  </div>
+                </div>
+
+                {/* Separate Dispatch Email Option */}
+                <div>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">
+                    Send Credentials To (Worker / Client Personal Email)
+                  </label>
                   <input
-                    type="text"
-                    required
-                    placeholder="e.g. DTC E-Commerce & Retail"
-                    value={newClientIndustryInput}
-                    onChange={(e) => setNewClientIndustryInput(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
+                    type="email"
+                    placeholder="e.g. marcus.personal@gmail.com (Leave blank to use login email)"
+                    value={newClientDispatchEmail}
+                    onChange={(e) => setNewClientDispatchEmail(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
                   />
+                  <p className="text-[10px] text-[#97A0B3] mt-1">
+                    Optional separate email address to receive login credentials while keeping account email clean.
+                  </p>
                 </div>
 
-                <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Assigned Creative Pod</label>
-                  <NativeSelect
-                    value={newClientPodInput}
-                    onChange={(e) => setNewClientPodInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
-                  >
-                    <option value="Pod A (Creative & Brand Strategy)">Pod A (Creative & Brand Strategy)</option>
-                    <option value="Pod B (Performance & Video Ops)">Pod B (Performance & Video Ops)</option>
-                    <option value="Pod C (3D Motion & Visual Design)">Pod C (3D Motion & Visual Design)</option>
-                  </NativeSelect>
+                {/* Email Dispatch Checkbox Card with high-contrast amber/white styling */}
+                <div className="p-3 bg-[#0B111C] rounded-xl border border-amber-500/40 flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="client-send-email-toggle"
+                    checked={newClientSendEmail}
+                    onChange={(e) => setNewClientSendEmail(e.target.checked)}
+                    className="mt-0.5 rounded border-[#2A3446] bg-[#161F2D] text-amber-500 focus:ring-amber-500 size-4 accent-amber-500 cursor-pointer"
+                  />
+                  <label htmlFor="client-send-email-toggle" className="cursor-pointer space-y-0.5 select-none">
+                    <span className="block text-xs font-bold text-amber-300">
+                      Send login credentials via email immediately
+                    </span>
+                    <span className="block text-[11px] text-[#F1F5F9] leading-relaxed">
+                      Automatically delivers sign-in link, username, and temporary password to {newClientDispatchEmail.trim() ? newClientDispatchEmail.trim() : "the client email address"}.
+                    </span>
+                  </label>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                <div className="flex justify-end gap-2 pt-3 border-t border-[#2A3446]">
                   <button
                     type="button"
                     onClick={() => setIsOnboardClientModalOpen(false)}
@@ -2553,12 +2721,402 @@ export function AdminClientsPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm cursor-pointer"
+                    disabled={isOnboardingClient}
+                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white text-xs font-bold shadow-md shadow-blue-600/20 cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
                   >
-                    Onboard Client
+                    {isOnboardingClient ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Provisioning...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-3.5 h-3.5" /> Onboard Client
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Provisioned Client Credentials Modal */}
+        {clientProvisionedCreds && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in">
+            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl border border-emerald-500/30 space-y-4">
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="size-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white">Client Provisioned Successfully</h3>
+                    <p className="text-[11px] text-[#97A0B3]">{clientProvisionedCreds.company_name}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setClientProvisionedCreds(null)}
+                  className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="p-3 bg-[#0B111C] rounded-xl border border-[#2A3446] flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase block">Login Email</span>
+                    <span className="text-xs font-mono font-bold text-white select-all">{clientProvisionedCreds.email}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(clientProvisionedCreds.email);
+                      setToast("Login email copied to clipboard!");
+                    }}
+                    className="p-1.5 rounded-lg bg-[#161F2D] text-[#7FA0D6] hover:text-white border border-[#2A3446]"
+                    title="Copy Email"
+                  >
+                    <Copy className="size-3.5" />
+                  </button>
+                </div>
+
+                <div className="p-3 bg-[#0B111C] rounded-xl border border-[#2A3446] flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase block">Temporary Password</span>
+                    <span className="text-xs font-mono font-bold text-amber-300 select-all">{clientProvisionedCreds.password}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(clientProvisionedCreds.password);
+                      setToast("Password copied to clipboard!");
+                    }}
+                    className="p-1.5 rounded-lg bg-[#161F2D] text-amber-300 hover:text-white border border-[#2A3446]"
+                    title="Copy Password"
+                  >
+                    <Copy className="size-3.5" />
+                  </button>
+                </div>
+
+                {clientProvisionedCreds.email_dispatched ? (
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-2 text-xs text-emerald-300">
+                    <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
+                    <span>Credentials dispatched to <strong>{clientProvisionedCreds.dispatch_email || clientProvisionedCreds.email}</strong>.</span>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-[#0B111C] border border-[#2A3446] rounded-xl text-xs text-[#97A0B3]">
+                    Email dispatch was disabled or skipped. Share credentials manually with the client.
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setClientProvisionedCreds(null)}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 6b. Onboard Client Team Member Modal */}
+        {isOnboardClientMemberModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in overflow-y-auto">
+            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446] my-8">
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="size-8 rounded-xl bg-blue-600/20 text-[#7FA0D6] flex items-center justify-center border border-blue-500/30">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white">Onboard Client Team Member</h3>
+                    <p className="text-[11px] text-[#97A0B3]">Add collaborator / stakeholder to this client brand</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsOnboardClientMemberModalOpen(false)}
+                  className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!selectedClientId) return;
+                  const trimmedName = clientMemberForm.full_name.trim();
+                  const trimmedEmail = clientMemberForm.email.trim();
+                  if (!trimmedName || !trimmedEmail) {
+                    setToast("Name and login email are required.");
+                    return;
+                  }
+
+                  setIsOnboardingClientMember(true);
+                  try {
+                    const res = await request<any>(`/api/v1/admin/clients/${selectedClientId}/team-members`, {
+                      method: "POST",
+                      body: JSON.stringify({
+                        full_name: trimmedName,
+                        email: trimmedEmail,
+                        role_title: clientMemberForm.role_title.trim() || "Client Team Member",
+                        password: clientMemberForm.password.trim(),
+                        dispatch_email: clientMemberForm.dispatch_email.trim() || undefined,
+                        send_credentials_email: clientMemberForm.send_credentials_email,
+                      }),
+                    });
+
+                    await clientTeamMembersQuery.refetch();
+                    setIsOnboardClientMemberModalOpen(false);
+                    setClientMemberProvisionedCreds({
+                      full_name: trimmedName,
+                      email: trimmedEmail,
+                      password: clientMemberForm.password.trim(),
+                      role_title: clientMemberForm.role_title.trim() || "Client Team Member",
+                      email_dispatched: Boolean(res?.email_dispatched),
+                      dispatch_email: res?.dispatch_email || (clientMemberForm.dispatch_email.trim() || undefined),
+                    });
+                    setToast(
+                      `Client team member "${trimmedName}" onboarded! ${
+                        res?.email_dispatched
+                          ? `Credentials dispatched to ${res?.dispatch_email || clientMemberForm.dispatch_email.trim() || trimmedEmail}.`
+                          : "Account active in database."
+                      }`
+                    );
+                    setClientMemberForm({
+                      full_name: "",
+                      email: "",
+                      role_title: "Marketing Lead",
+                      password: `Creo@${Math.floor(1000 + Math.random() * 9000)}!`,
+                      dispatch_email: "",
+                      send_credentials_email: true,
+                    });
+                  } catch (err: any) {
+                    setToast(err?.message || "Failed to onboard client team member.");
+                  } finally {
+                    setIsOnboardingClientMember(false);
+                  }
+                }}
+                className="space-y-3.5 text-xs"
+              >
+                <div>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Member Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Jessica Chen"
+                    value={clientMemberForm.full_name}
+                    onChange={(e) => setClientMemberForm({ ...clientMemberForm, full_name: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Login Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="e.g. jessica@brand.com"
+                    value={clientMemberForm.email}
+                    onChange={(e) => setClientMemberForm({ ...clientMemberForm, email: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
+                  />
+                  <p className="text-[10px] text-[#97A0B3] mt-1">Official work address used to sign in to the client portal.</p>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Member Role / Designation</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Brand Marketing Manager / Content Reviewer"
+                    value={clientMemberForm.role_title}
+                    onChange={(e) => setClientMemberForm({ ...clientMemberForm, role_title: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-bold text-[#F1F5F9]">Temporary Password *</label>
+                    <button
+                      type="button"
+                      onClick={() => setClientMemberForm({ ...clientMemberForm, password: `Creo@${Math.floor(1000 + Math.random() * 9000)}!` })}
+                      className="text-[11px] text-[#7FA0D6] hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <RefreshCw className="size-2.5" /> Regenerate
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showClientMemberPassword ? "text" : "password"}
+                      required
+                      value={clientMemberForm.password}
+                      onChange={(e) => setClientMemberForm({ ...clientMemberForm, password: e.target.value })}
+                      className="w-full px-3 py-2 pr-10 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-mono font-bold text-amber-300 focus:outline-none focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowClientMemberPassword(!showClientMemberPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white"
+                    >
+                      {showClientMemberPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Separate Dispatch Email Option */}
+                <div>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">
+                    Send Credentials To (Worker / Member Personal Email)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="e.g. jessica.personal@gmail.com (Leave blank to use login email)"
+                    value={clientMemberForm.dispatch_email}
+                    onChange={(e) => setClientMemberForm({ ...clientMemberForm, dispatch_email: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
+                  />
+                  <p className="text-[10px] text-[#97A0B3] mt-1">
+                    Optional separate email address to receive login credentials while keeping account email clean.
+                  </p>
+                </div>
+
+                {/* Email Dispatch Checkbox Card with high-contrast amber/white styling */}
+                <div className="p-3 bg-[#0B111C] rounded-xl border border-amber-500/40 flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="client-member-send-email-toggle"
+                    checked={clientMemberForm.send_credentials_email}
+                    onChange={(e) => setClientMemberForm({ ...clientMemberForm, send_credentials_email: e.target.checked })}
+                    className="mt-0.5 rounded border-[#2A3446] bg-[#161F2D] text-amber-500 focus:ring-amber-500 size-4 accent-amber-500 cursor-pointer"
+                  />
+                  <label htmlFor="client-member-send-email-toggle" className="cursor-pointer space-y-0.5 select-none">
+                    <span className="block text-xs font-bold text-amber-300">
+                      Send login credentials via email immediately
+                    </span>
+                    <span className="block text-[11px] text-[#F1F5F9] leading-relaxed">
+                      Automatically delivers sign-in link, username, and temporary password to {clientMemberForm.dispatch_email.trim() ? clientMemberForm.dispatch_email.trim() : "the member email address"}.
+                    </span>
+                  </label>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3 border-t border-[#2A3446]">
+                  <button
+                    type="button"
+                    onClick={() => setIsOnboardClientMemberModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isOnboardingClientMember}
+                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
+                  >
+                    {isOnboardingClientMember ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Provisioning...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-3.5 h-3.5" /> Onboard Member
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Provisioned Client Member Credentials Modal */}
+        {clientMemberProvisionedCreds && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in">
+            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl border border-emerald-500/30 space-y-4">
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="size-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white">Client Member Provisioned</h3>
+                    <p className="text-[11px] text-[#97A0B3]">{clientMemberProvisionedCreds.full_name} ({clientMemberProvisionedCreds.role_title})</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setClientMemberProvisionedCreds(null)}
+                  className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="p-3 bg-[#0B111C] rounded-xl border border-[#2A3446] flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase block">Login Email</span>
+                    <span className="text-xs font-mono font-bold text-white select-all">{clientMemberProvisionedCreds.email}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(clientMemberProvisionedCreds.email);
+                      setToast("Login email copied to clipboard!");
+                    }}
+                    className="p-1.5 rounded-lg bg-[#161F2D] text-[#7FA0D6] hover:text-white border border-[#2A3446]"
+                    title="Copy Email"
+                  >
+                    <Copy className="size-3.5" />
+                  </button>
+                </div>
+
+                <div className="p-3 bg-[#0B111C] rounded-xl border border-[#2A3446] flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase block">Temporary Password</span>
+                    <span className="text-xs font-mono font-bold text-amber-300 select-all">{clientMemberProvisionedCreds.password}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(clientMemberProvisionedCreds.password);
+                      setToast("Password copied to clipboard!");
+                    }}
+                    className="p-1.5 rounded-lg bg-[#161F2D] text-amber-300 hover:text-white border border-[#2A3446]"
+                    title="Copy Password"
+                  >
+                    <Copy className="size-3.5" />
+                  </button>
+                </div>
+
+                {clientMemberProvisionedCreds.email_dispatched ? (
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-2 text-xs text-emerald-300">
+                    <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
+                    <span>Credentials dispatched to <strong>{clientMemberProvisionedCreds.dispatch_email || clientMemberProvisionedCreds.email}</strong>.</span>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-[#0B111C] border border-[#2A3446] rounded-xl text-xs text-[#97A0B3]">
+                    Email dispatch was disabled or skipped. Share credentials manually with the member.
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setClientMemberProvisionedCreds(null)}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -3176,8 +3734,16 @@ export function AdminDeliverablesPage() {
                     onClick={() => setCommentModalItem(item)}
                     className="text-[#97A0B3] hover:text-[#7FA0D6] text-[11px] font-bold flex items-center gap-1 cursor-pointer"
                   >
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    Review notes
+                    {item.voice_note_url ? (
+                      <span className="flex items-center gap-1 text-indigo-400 font-bold bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/30">
+                        <Volume2 className="w-3.5 h-3.5" /> Voice note
+                      </span>
+                    ) : (
+                      <>
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        Review notes
+                      </>
+                    )}
                   </button>
                 </div>
 
@@ -3315,13 +3881,43 @@ export function AdminDeliverablesPage() {
                 </button>
               </div>
 
-              <p className="text-sm text-[#BCCCE6] whitespace-pre-wrap">{commentModalItem.description || "No revision feedback recorded for this upload."}</p>
+              {commentModalItem.description && (
+                <p className="text-sm text-[#BCCCE6] whitespace-pre-wrap">{commentModalItem.description}</p>
+              )}
 
-              <div className="pt-2 flex justify-end">
+              {commentModalItem.voice_note_url && (
+                <div className="mt-2 space-y-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] flex items-center gap-1.5">
+                    <Volume2 className="w-3.5 h-3.5 text-[#7FA0D6]" /> Attached Voice Note
+                  </span>
+                  <VoicePlayer
+                    audioUrl={commentModalItem.voice_note_url}
+                    durationSeconds={commentModalItem.voice_note_duration}
+                    authorName={`${commentModalItem.client || "Client"}'s Voice Feedback`}
+                  />
+                </div>
+              )}
+
+              {!commentModalItem.description && !commentModalItem.voice_note_url && (
+                <p className="text-sm text-[#97A0B3]">No revision feedback recorded for this upload.</p>
+              )}
+
+              <div className="pt-2 flex justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const item = commentModalItem;
+                    setCommentModalItem(null);
+                    setHistoryModalItem({ id: item.id, title: item.title });
+                  }}
+                  className="px-4 py-2.5 bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] hover:text-white rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5"
+                >
+                  <History className="w-3.5 h-3.5" /> Full Audit Trail
+                </button>
                 <button
                   type="button"
                   onClick={() => setCommentModalItem(null)}
-                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer"
+                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer"
                 >
                   Close Notes
                 </button>
@@ -3388,19 +3984,13 @@ interface AdminTaskItem {
 }
 
 export function AdminTasksPage() {
-  const [searchParams] = useSearchParams();
-  const isFreelancerParam = searchParams.get("view") === "freelancers" || searchParams.get("view") === "freelancer_roster";
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPod, setSelectedPod] = useState("all");
   const [selectedClient, setSelectedClient] = useState("all");
   const [priorityFilter, _setPriorityFilter] = useState<"all" | "urgent" | "high">("all"); void _setPriorityFilter;
-  const [assigneeTypeFilter, setAssigneeTypeFilter] = useState<"all" | "freelancers" | "in_house">(
-    isFreelancerParam ? "freelancers" : "all"
-  );
+  const [assigneeTypeFilter, setAssigneeTypeFilter] = useState<"all" | "freelancers" | "in_house">("all");
   const [selectedFreelancer, setSelectedFreelancer] = useState("all");
-  const [viewMode, setViewMode] = useState<"kanban" | "freelancer_roster">(
-    isFreelancerParam ? "freelancer_roster" : "kanban"
-  );
+  const [viewMode, setViewMode] = useState<"kanban" | "freelancer_roster">("kanban");
   const [mobileKanbanCol, setMobileKanbanCol] = useState<"all" | "todo" | "in_progress" | "under_review" | "approved">("all");
   const [toast, setToast] = useState<string | null>(null);
   const [previewTask, setPreviewTask] = useState<any | null>(null);
@@ -3812,36 +4402,14 @@ export function AdminTasksPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            {/* View Switcher: Kanban vs Freelancer Table */}
+            {/* View Switcher: Pipeline Board */}
             <div className="p-1 bg-[#161F2D] rounded-2xl border border-[#2A3446] flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => setViewMode("kanban")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  viewMode === "kanban"
-                    ? "bg-[#7FA0D6] text-white shadow-sm"
-                    : "text-[#97A0B3] hover:text-white"
-                }`}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-[#7FA0D6] text-white shadow-sm"
               >
                 <LayoutGrid className="w-3.5 h-3.5" /> Pipeline Board
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setViewMode("freelancer_roster");
-                  setAssigneeTypeFilter("freelancers");
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  viewMode === "freelancer_roster"
-                    ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
-                    : "text-purple-300/80 hover:text-white"
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                Freelancer Queue
-                <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-purple-500/30 text-purple-200">
-                  {freelancerTasks.length}
-                </span>
               </button>
             </div>
 
@@ -4897,10 +5465,14 @@ export interface TeamMember {
 export function AdminTeamManagementPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const confirm = useConfirm();
+  const queryClient = useQueryClient();
   const [activePodId, setActivePodId] = useState<string | null>(null);
   const [attendanceFilter, setAttendanceFilter] = useState<"all" | "present" | "leave">("all");
   const [roleCategoryFilter, setRoleCategoryFilter] = useState<string>("all");
   const [memberSort, setMemberSort] = useState<"default" | "workload" | "name">("default");
+  const [mobileSubView, setMobileSubView] = useState<"all" | "pods" | "specialists">("all");
+  const [memberSearchQuery, _setMemberSearchQuery] = useState(""); void _setMemberSearchQuery;
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -4928,6 +5500,7 @@ export function AdminTeamManagementPage() {
   const [isOnboardBdeOpen, setIsOnboardBdeOpen] = useState(false);
   const [bdeCredModalUser, setBdeCredModalUser] = useState<any | null>(null);
   const [bdeCredNewPassword, setBdeCredNewPassword] = useState("");
+  const [bdeCredDispatchEmail, setBdeCredDispatchEmail] = useState("");
   const [bdeCredSendEmail, setBdeCredSendEmail] = useState(true);
   const [showCredPassword, setShowCredPassword] = useState(false);
   const [isUpdatingCreds, setIsUpdatingCreds] = useState(false);
@@ -4935,6 +5508,7 @@ export function AdminTeamManagementPage() {
   const [bdeForm, setBdeForm] = useState({
     full_name: "",
     email: "",
+    dispatch_email: "",
     phone: "",
     designation: "Business Development Executive",
     monthly_quota: 2500000,
@@ -4949,6 +5523,7 @@ export function AdminTeamManagementPage() {
     password: string;
     full_name: string;
     email_dispatched: boolean;
+    dispatch_email?: string;
   } | null>(null);
   const [bdeCopiedKey, setBdeCopiedKey] = useState<string | null>(null);
 
@@ -4965,6 +5540,7 @@ export function AdminTeamManagementPage() {
     setBdeForm({
       full_name: "",
       email: "",
+      dispatch_email: "",
       phone: "",
       designation: "Business Development Executive",
       monthly_quota: 2500000,
@@ -4989,6 +5565,7 @@ export function AdminTeamManagementPage() {
         body: JSON.stringify({
           full_name: bdeForm.full_name.trim(),
           email: bdeForm.email.trim(),
+          dispatch_email: bdeForm.dispatch_email.trim() || undefined,
           phone: bdeForm.phone.trim(),
           designation: bdeForm.designation.trim() || "Business Development Executive",
           monthly_quota: Number(bdeForm.monthly_quota) || 2500000,
@@ -5005,10 +5582,13 @@ export function AdminTeamManagementPage() {
         password: bdeForm.password.trim(),
         full_name: bdeForm.full_name.trim(),
         email_dispatched: res?.email_dispatched ?? false,
+        dispatch_email: res?.dispatch_email || (bdeForm.dispatch_email.trim() || undefined),
       });
       setToast(
         `BDE ${bdeForm.full_name} onboarded! ${
-          res?.email_dispatched ? "Credentials email dispatched successfully." : "Credentials generated."
+          res?.email_dispatched
+            ? `Credentials dispatched to ${res?.dispatch_email || bdeForm.dispatch_email.trim() || bdeForm.email.trim()}.`
+            : "Credentials generated."
         }`
       );
     } catch (err: any) {
@@ -5021,6 +5601,7 @@ export function AdminTeamManagementPage() {
   const handleOpenBdeCredModal = (bde: any) => {
     setBdeCredModalUser(bde);
     setBdeCredNewPassword(`Creo@${Math.floor(1000 + Math.random() * 9000)}!`);
+    setBdeCredDispatchEmail("");
     setBdeCredSendEmail(true);
     setShowCredPassword(false);
   };
@@ -5037,16 +5618,20 @@ export function AdminTeamManagementPage() {
         method: "PATCH",
         body: JSON.stringify({
           password: bdeCredNewPassword.trim(),
+          dispatch_email: bdeCredDispatchEmail.trim() || undefined,
           send_credentials_email: bdeCredSendEmail,
         }),
       });
       setToast(
         `Credentials updated for ${bdeCredModalUser.full_name}! ${
-          res?.email_dispatched ? "Credentials email sent." : ""
+          res?.email_dispatched
+            ? `Credentials email sent to ${res?.dispatch_email || bdeCredDispatchEmail.trim() || bdeCredModalUser.email}.`
+            : ""
         }`
       );
       setBdeCredModalUser(null);
       setBdeCredNewPassword("");
+      setBdeCredDispatchEmail("");
     } catch (err: any) {
       setToast(err?.message || "Failed to update credentials.");
     } finally {
@@ -5054,14 +5639,107 @@ export function AdminTeamManagementPage() {
     }
   };
 
-  const handleDeactivateBde = async (bdeId: string, bdeName: string) => {
-    if (!window.confirm(`Are you sure you want to suspend/deactivate ${bdeName}'s access?`)) return;
+  const handleDeactivateBde = async (bdeOrId: any, fallbackName?: string) => {
+    let bdeId: string;
+    let bdeName: string;
+    let bdeEmail: string | undefined;
+    let bdeDesignation: string | undefined;
+
+    if (typeof bdeOrId === "object" && bdeOrId !== null) {
+      bdeId = bdeOrId.id;
+      bdeName = bdeOrId.full_name || bdeOrId.name || fallbackName || bdeOrId.email || "BDE Specialist";
+      bdeEmail = bdeOrId.email;
+      bdeDesignation = bdeOrId.designation;
+    } else {
+      bdeId = String(bdeOrId);
+      bdeName = fallbackName || "BDE Specialist";
+    }
+
+    const ok = await confirm({
+      title: "Suspend BDE Access",
+      description: `Are you sure you want to suspend/deactivate ${bdeName}'s access?`,
+      details: [
+        `Representative: ${bdeName}${bdeEmail ? ` (${bdeEmail})` : ""}`,
+        bdeDesignation ? `Designation: ${bdeDesignation}` : "Role: Business Development Executive",
+        "Active login sessions and JWT authentication tokens will be immediately revoked.",
+        "The representative will be blocked from accessing leads until an administrator reactivates their account.",
+      ],
+      confirmText: "Suspend Access",
+      cancelText: "Cancel",
+      tone: "warning",
+      icon: "warning",
+    });
+    if (!ok) return;
+
     try {
       await request<any>(`/api/v1/admin/bde/${bdeId}`, { method: "DELETE" });
+      await queryClient.invalidateQueries({ queryKey: ["admin-bde-team-list"] });
       await bdeTeamQuery.refetch();
-      setToast(`${bdeName}'s account has been deactivated.`);
+      setToast(`${bdeName}'s account has been suspended.`);
     } catch (err: any) {
       setToast(err?.message || "Failed to deactivate BDE.");
+    }
+  };
+
+  const handleReactivateBde = async (bdeOrId: any, fallbackName?: string) => {
+    let bdeId: string;
+    let bdeName: string;
+
+    if (typeof bdeOrId === "object" && bdeOrId !== null) {
+      bdeId = bdeOrId.id;
+      bdeName = bdeOrId.full_name || bdeOrId.name || fallbackName || bdeOrId.email || "BDE Specialist";
+    } else {
+      bdeId = String(bdeOrId);
+      bdeName = fallbackName || "BDE Specialist";
+    }
+
+    try {
+      await request<any>(`/api/v1/admin/bde/${bdeId}/reactivate`, { method: "POST" });
+      await queryClient.invalidateQueries({ queryKey: ["admin-bde-team-list"] });
+      await bdeTeamQuery.refetch();
+      setToast(`${bdeName}'s account has been reactivated!`);
+    } catch (err: any) {
+      setToast(err?.message || "Failed to reactivate BDE.");
+    }
+  };
+
+  const handleDeleteBdePermanent = async (bdeOrId: any, fallbackName?: string) => {
+    let bdeId: string;
+    let bdeName: string;
+    let bdeEmail: string | undefined;
+
+    if (typeof bdeOrId === "object" && bdeOrId !== null) {
+      bdeId = bdeOrId.id;
+      bdeName = bdeOrId.full_name || bdeOrId.name || fallbackName || bdeOrId.email || "BDE Specialist";
+      bdeEmail = bdeOrId.email;
+    } else {
+      bdeId = String(bdeOrId);
+      bdeName = fallbackName || "BDE Specialist";
+    }
+
+    const ok = await confirm({
+      title: "Permanently Remove Worker",
+      description: `Are you sure you want to permanently delete and remove ${bdeName} from Creo?`,
+      details: [
+        `Representative: ${bdeName}${bdeEmail ? ` (${bdeEmail})` : ""}`,
+        "All associated quota targets and worker profile records will be permanently deleted.",
+        "Any active leads will be unassigned and returned to the unassigned lead pool.",
+        "Warning: This action cannot be undone.",
+      ],
+      confirmText: "Remove Worker",
+      cancelText: "Cancel",
+      tone: "danger",
+      icon: "trash",
+    });
+    if (!ok) return;
+
+    try {
+      await request<any>(`/api/v1/admin/bde/${bdeId}?permanent=true`, { method: "DELETE" });
+      await queryClient.invalidateQueries({ queryKey: ["admin-bde-team-list"] });
+      await bdeTeamQuery.refetch();
+      setToast(`${bdeName} has been permanently removed from Creo.`);
+    } catch (err: any) {
+      setToast(err?.message || "Failed to remove worker.");
     }
   };
 
@@ -5274,7 +5952,25 @@ export function AdminTeamManagementPage() {
     else if (roleCategoryFilter === "present") matchesCategory = m.status !== "On Leave";
     else if (roleCategoryFilter === "leave") matchesCategory = m.status === "On Leave";
 
-    return matchesPod && matchesAttendance && matchesCategory;
+    let matchesSearch = true;
+    if (memberSearchQuery.trim()) {
+      const q = memberSearchQuery.toLowerCase().trim();
+      const squadName =
+        m.podId === "pod-a"
+          ? "pod alpha"
+          : m.podId === "pod-b"
+          ? "pod beta"
+          : m.podId === "pod-c"
+          ? "pod gamma"
+          : "sales & bde";
+      matchesSearch =
+        m.name.toLowerCase().includes(q) ||
+        m.role.toLowerCase().includes(q) ||
+        m.email.toLowerCase().includes(q) ||
+        squadName.includes(q);
+    }
+
+    return matchesPod && matchesAttendance && matchesCategory && matchesSearch;
   });
 
   const getRoleIcon = (cat: string) => {
@@ -5312,6 +6008,8 @@ export function AdminTeamManagementPage() {
   const [newMemberForm, setNewMemberForm] = useState({
     name: "",
     email: "",
+    dispatch_email: "",
+    send_email: true,
     password: generateStrongPassword(),
     handle: "",
     role: "Senior Visual Designer",
@@ -5329,6 +6027,7 @@ export function AdminTeamManagementPage() {
     password: string;
     role: string;
     podName: string;
+    dispatchEmail?: string;
   } | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -5337,6 +6036,8 @@ export function AdminTeamManagementPage() {
   const [credentialForm, setCredentialForm] = useState({
     email: "",
     password: "",
+    dispatch_email: "",
+    send_email: true,
   });
   const [showCredentialPassword, setShowCredentialPassword] = useState(false);
   const [isUpdatingCredentials, setIsUpdatingCredentials] = useState(false);
@@ -5394,6 +6095,7 @@ export function AdminTeamManagementPage() {
       const resp = await request<{
         id: string;
         email: string;
+        dispatch_email?: string;
         credentials?: { email: string; password: string };
       }>("/api/v1/admin/teams", {
         method: "POST",
@@ -5405,6 +6107,8 @@ export function AdminTeamManagementPage() {
           department: backendDept,
           daily_capacity: 4,
           skills: capsArray,
+          dispatch_email: newMemberForm.dispatch_email.trim() || undefined,
+          send_email: newMemberForm.send_email,
         }),
       });
       if (resp?.id) createdUserId = resp.id;
@@ -5447,10 +6151,14 @@ export function AdminTeamManagementPage() {
       )
     );
 
+    const savedDispatchEmail = newMemberForm.dispatch_email.trim();
+
     setIsAddMemberOpen(false);
     setNewMemberForm({
       name: "",
       email: "",
+      dispatch_email: "",
+      send_email: true,
       password: generateStrongPassword(),
       handle: "",
       role: "Senior Visual Designer",
@@ -5465,6 +6173,7 @@ export function AdminTeamManagementPage() {
       password: provisionedPass,
       role: roleTitle,
       podName: targetPodName,
+      dispatchEmail: savedDispatchEmail || undefined,
     });
   };
 
@@ -5473,6 +6182,8 @@ export function AdminTeamManagementPage() {
     setCredentialForm({
       email: member.email,
       password: generateStrongPassword(),
+      dispatch_email: "",
+      send_email: true,
     });
     setShowCredentialPassword(false);
   };
@@ -5490,13 +6201,18 @@ export function AdminTeamManagementPage() {
     const updatedPass = credentialForm.password.trim();
 
     try {
-      await request(`/api/v1/admin/teams/${credentialModalMember.id}/credentials`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          email: updatedEmail,
-          password: updatedPass,
-        }),
-      });
+      const res = await request<{ status: string; dispatch_email?: string; email_delivered?: boolean }>(
+        `/api/v1/admin/teams/${credentialModalMember.id}/credentials`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            email: updatedEmail,
+            password: updatedPass,
+            dispatch_email: credentialForm.dispatch_email.trim() || undefined,
+            send_email: credentialForm.send_email,
+          }),
+        }
+      );
 
       setMembersList((prev) =>
         prev.map((m) =>
@@ -5509,6 +6225,7 @@ export function AdminTeamManagementPage() {
       const targetName = credentialModalMember.name;
       const targetRole = credentialModalMember.role;
       const targetPod = pods.find((p) => p.id === credentialModalMember.podId)?.name || "Sprint Pod";
+      const targetDispatch = res?.dispatch_email || (credentialForm.dispatch_email.trim() || undefined);
       setCredentialModalMember(null);
 
       setProvisionedCredentials({
@@ -5517,8 +6234,13 @@ export function AdminTeamManagementPage() {
         password: updatedPass,
         role: targetRole,
         podName: targetPod,
+        dispatchEmail: targetDispatch,
       });
-      setToast(`Credentials updated for ${targetName}`);
+      setToast(
+        `Credentials updated for ${targetName}${
+          targetDispatch ? ` (Dispatched to ${targetDispatch})` : ""
+        }`
+      );
     } catch (err: any) {
       setToast(err?.message || "Failed to update credentials");
     } finally {
@@ -5622,31 +6344,36 @@ export function AdminTeamManagementPage() {
         activeTab="Team Details"
       />
 
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
+      <main className="flex-1 px-3 sm:px-6 lg:px-10 pt-4 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {toast && (
-          <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>{toast}</span>
+          <div className="p-3.5 sm:p-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-sm animate-fade-in">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="break-all">{toast}</span>
             </div>
-            <button onClick={() => setToast(null)} className="text-emerald-400 hover:text-emerald-200 font-bold">
+            <button
+              onClick={() => setToast(null)}
+              className="self-end sm:self-auto text-emerald-300 hover:text-emerald-100 font-bold px-2 py-0.5 rounded-md hover:bg-emerald-500/20 transition-colors shrink-0 text-xs"
+            >
               Dismiss
             </button>
           </div>
         )}
 
         {/* Network & Role Switcher */}
-        <div className="flex items-center gap-2 border-b border-[#2A3446] pb-3">
+        <div className="flex items-center gap-2 border-b border-[#2A3446] pb-3 overflow-x-auto no-scrollbar scroll-smooth -mx-3 px-3 sm:mx-0 sm:px-0 flex-nowrap">
           <button
             type="button"
             onClick={() => setTeamTab("internal")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap shrink-0 ${
               teamTab === "internal"
                 ? "bg-[#7FA0D6] text-white shadow-md"
                 : "text-[#97A0B3] hover:text-white hover:bg-[#161F2D]"
             }`}
           >
-            <Users className="w-4 h-4" /> Internal Sprint Pods
+            <Users className="w-4 h-4 shrink-0" />
+            <span className="sm:hidden">Internal Pods</span>
+            <span className="hidden sm:inline">Internal Sprint Pods</span>
           </button>
           <button
             type="button"
@@ -5654,13 +6381,15 @@ export function AdminTeamManagementPage() {
               setTeamTab("bde");
               bdeTeamQuery.refetch();
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap shrink-0 ${
               teamTab === "bde"
                 ? "bg-amber-600 text-white shadow-md shadow-amber-600/25"
                 : "text-[#97A0B3] hover:text-white hover:bg-[#161F2D]"
             }`}
           >
-            <Briefcase className="w-4 h-4" /> BDE Sales Team & Onboarding
+            <Briefcase className="w-4 h-4 shrink-0" />
+            <span className="sm:hidden">BDE Sales</span>
+            <span className="hidden sm:inline">BDE Sales Team & Onboarding</span>
             {bdeTeamQuery.data && bdeTeamQuery.data.length > 0 && (
               <span className="px-1.5 py-0.5 rounded-full bg-amber-950 text-amber-200 text-[10px] font-black">
                 {bdeTeamQuery.data.length}
@@ -5673,13 +6402,15 @@ export function AdminTeamManagementPage() {
               setTeamTab("freelancers");
               freelancersQuery.refetch();
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap shrink-0 ${
               teamTab === "freelancers"
                 ? "bg-purple-600 text-white shadow-md"
                 : "text-[#97A0B3] hover:text-white hover:bg-[#161F2D]"
             }`}
           >
-            <Sparkles className="w-4 h-4" /> Freelancer Network & Role Access
+            <Sparkles className="w-4 h-4 shrink-0" />
+            <span className="sm:hidden">Freelancer Network</span>
+            <span className="hidden sm:inline">Freelancer Network & Role Access</span>
             {freelancersQuery.data && freelancersQuery.data.length > 0 && (
               <span className="px-1.5 py-0.5 rounded-full bg-purple-950 text-purple-200 text-[10px] font-black">
                 {freelancersQuery.data.length}
@@ -5690,44 +6421,24 @@ export function AdminTeamManagementPage() {
 
         {teamTab === "bde" ? (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <span>BDE Sales Team & Revenue Quota Management</span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider">
-                    Revenue Engine
-                  </span>
-                </h3>
-                <p className="text-xs text-[#97A0B3]">
-                  Onboard Business Development Executives, set monthly target quotas & commission rates, manage passwords, and dispatch welcome credentials emails.
-                </p>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => bdeTeamQuery.refetch()}
-                  disabled={bdeTeamQuery.isFetching}
-                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
-                  title="Refresh BDE Roster"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${bdeTeamQuery.isFetching ? "animate-spin text-amber-400" : "text-[#97A0B3]"}`} />
-                  <span>Refresh</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleOpenOnboardBde}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/20 cursor-pointer transition-all shrink-0"
-                >
-                  <UserCheck className="w-4 h-4" /> Onboard BDE
-                </button>
-              </div>
-            </div>
-
-            <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex items-start gap-3 text-xs text-amber-200">
-              <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-              <div>
-                <strong>Role-Based Sales Portal:</strong> BDE accounts have dedicated access to the BDE CRM dashboard, client pipeline stages, deal-won metrics, and sales Slack channels. When onboarding or updating, login credentials can be instantly dispatched directly to their inbox with Brevo/SMTP.
-              </div>
+            <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full">
+              <button
+                type="button"
+                onClick={() => bdeTeamQuery.refetch()}
+                disabled={bdeTeamQuery.isFetching}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
+                title="Refresh BDE Roster"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${bdeTeamQuery.isFetching ? "animate-spin text-amber-400" : "text-[#97A0B3]"}`} />
+                <span>Refresh</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenOnboardBde}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/20 cursor-pointer transition-all shrink-0"
+              >
+                <UserCheck className="w-4 h-4" /> <span>Onboard BDE</span>
+              </button>
             </div>
 
             {(() => {
@@ -5741,7 +6452,7 @@ export function AdminTeamManagementPage() {
               const overallWinRate = totalLeads > 0 ? Math.round((totalWon / totalLeads) * 100) : 0;
 
               return (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
+                <div className="hidden md:grid sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
                   <div className="bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-amber-500/30 transition-all shadow-xl flex flex-col justify-between">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
@@ -5786,7 +6497,7 @@ export function AdminTeamManagementPage() {
                         ACTIVE PIPELINE
                       </span>
                       <div className="w-8 h-8 rounded-2xl bg-blue-500/15 text-blue-400 flex items-center justify-center">
-                        <TrendingUp className="w-4 h-4" />
+                        <TrendingUp className="w-3.5 h-3.5" />
                       </div>
                     </div>
                     <div className="flex items-baseline gap-2">
@@ -5846,16 +6557,27 @@ export function AdminTeamManagementPage() {
                   const quota = bde.monthly_quota || 2500000;
                   const closed = bde.closed_revenue || 0;
                   const achievedPct = Math.min(100, Math.round((closed / Math.max(1, quota)) * 100));
+                  const isBdeActive =
+                    bde.is_active === true ||
+                    (bde.account_status ? bde.account_status.toLowerCase() === "active" : bde.status === "Active");
 
                   return (
                     <div
                       key={bde.id}
-                      className="bg-[#161F2D] rounded-3xl p-5 border border-[#2A3446] hover:border-amber-500/40 transition-all flex flex-col justify-between space-y-4 shadow-xl"
+                      className={`bg-[#161F2D] rounded-3xl p-5 border transition-all flex flex-col justify-between space-y-4 shadow-xl ${
+                        isBdeActive
+                          ? "border-[#2A3446] hover:border-amber-500/40"
+                          : "border-rose-500/30 bg-gradient-to-b from-[#161F2D] to-rose-950/15"
+                      }`}
                     >
                       <div>
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-md shadow-amber-500/20">
+                            <div className={`w-11 h-11 rounded-2xl text-white font-black text-sm flex items-center justify-center shrink-0 shadow-md ${
+                              isBdeActive
+                                ? "bg-gradient-to-br from-amber-500 to-amber-700 shadow-amber-500/20"
+                                : "bg-gradient-to-br from-rose-600 to-slate-800 shadow-rose-500/20"
+                            }`}>
                               {(bde.full_name || bde.name || "BDE")
                                 .split(" ")
                                 .map((n: string) => n[0])
@@ -5874,12 +6596,12 @@ export function AdminTeamManagementPage() {
                           </div>
                           <span
                             className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 border ${
-                              bde.is_active !== false
+                              isBdeActive
                                 ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
                                 : "bg-rose-500/15 text-rose-300 border-rose-500/30"
                             }`}
                           >
-                            {bde.is_active !== false ? "Active BDE" : "Suspended"}
+                            {isBdeActive ? "Active BDE" : "Suspended"}
                           </span>
                         </div>
 
@@ -5946,16 +6668,37 @@ export function AdminTeamManagementPage() {
                             <MessageSquare className="w-3.5 h-3.5 text-[#7FA0D6]" />
                             <span>Chat</span>
                           </button>
-                          {bde.is_active !== false && (
+
+                          {isBdeActive ? (
                             <button
                               type="button"
-                              onClick={() => handleDeactivateBde(bde.id, bde.full_name)}
-                              className="p-1.5 rounded-xl text-rose-400 hover:text-rose-200 hover:bg-rose-500/20 border border-transparent hover:border-rose-500/30 transition-all cursor-pointer"
-                              title="Deactivate account"
+                              onClick={() => handleDeactivateBde(bde, bde.full_name || bde.name)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold transition-all cursor-pointer"
+                              title="Suspend BDE Access"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <UserX className="w-3.5 h-3.5" />
+                              <span>Suspend</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleReactivateBde(bde, bde.full_name || bde.name)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition-all cursor-pointer"
+                              title="Reactivate BDE Account"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              <span>Reactivate</span>
                             </button>
                           )}
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteBdePermanent(bde, bde.full_name || bde.name)}
+                            className="p-1.5 rounded-xl text-rose-400 hover:text-rose-200 hover:bg-rose-500/20 border border-transparent hover:border-rose-500/30 transition-all cursor-pointer"
+                            title="Permanently remove worker from team"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -5966,12 +6709,12 @@ export function AdminTeamManagementPage() {
           </div>
         ) : teamTab === "freelancers" ? (
           <div className="space-y-6">
-            <div className="flex items-center justify-end gap-2.5">
+            <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full">
               <button
                 type="button"
                 onClick={() => freelancersQuery.refetch()}
                 disabled={freelancersQuery.isFetching}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
                 title="Refresh Freelancer Roster"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${freelancersQuery.isFetching ? "animate-spin text-purple-400" : "text-[#97A0B3]"}`} />
@@ -5980,16 +6723,16 @@ export function AdminTeamManagementPage() {
               <button
                 type="button"
                 onClick={() => setIsAddFreelancerOpen(true)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md shadow-purple-500/20 cursor-pointer transition-all shrink-0"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md shadow-purple-500/20 cursor-pointer transition-all shrink-0"
               >
-                <Plus className="w-4 h-4" /> Onboard Freelancer
+                <Plus className="w-4 h-4" /> <span>Onboard Freelancer</span>
               </button>
             </div>
 
-            <div className="p-3.5 bg-purple-500/10 border border-purple-500/25 rounded-2xl flex items-start gap-3 text-xs text-purple-200">
+            <div className="p-3 sm:p-3.5 bg-purple-950/40 border border-purple-500/35 rounded-2xl flex items-start gap-2.5 text-xs text-[#F1F5F9] leading-relaxed shadow-sm">
               <ShieldCheck className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
               <div>
-                <strong>Role-Based Security Boundary:</strong> Freelancer accounts are strictly isolated. They cannot access client billing records, agency financials, team member personal data, or unrelated client project repositories.
+                <strong className="text-white font-bold">Role-Based Security Boundary:</strong> Freelancer accounts are strictly isolated. They cannot access client billing records, agency financials, team member personal data, or unrelated client project repositories.
               </div>
             </div>
 
@@ -6000,7 +6743,7 @@ export function AdminTeamManagementPage() {
               const totalActive = list.reduce((acc, f) => acc + (f.active_tasks_count || 0), 0);
 
               return (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-6">
+                <div className="hidden md:grid md:grid-cols-3 gap-3.5 sm:gap-6">
                   <div className="bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-purple-500/30 transition-all shadow-xl flex flex-col justify-between">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
@@ -6206,20 +6949,20 @@ export function AdminTeamManagementPage() {
         !activePodId ? (
           <div className="space-y-6">
             {/* Top Controls Bar */}
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full">
               <Link
                 to="/admin/leaves"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold transition-all shadow-sm"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold transition-all shadow-sm"
               >
-                <Plane className="w-3.5 h-3.5 text-amber-400" />
+                <Plane className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 <span>Leave Management</span>
               </Link>
               <button
                 type="button"
                 onClick={() => setIsAddMemberOpen(true)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
               >
-                <Plus className="w-4 h-4" /> Add Team Member
+                <Plus className="w-4 h-4 shrink-0" /> <span>Add Team Member</span>
               </button>
             </div>
 
@@ -6231,35 +6974,35 @@ export function AdminTeamManagementPage() {
 
               return (
                 <div className="space-y-3">
-                  <div className="p-4 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] mr-1 flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-[#7FA0D6]" /> Today's Attendance:
+                  <div className="p-3 sm:p-4 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth -mx-1 px-1 sm:mx-0 sm:px-0 flex-nowrap w-full sm:w-auto">
+                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] mr-1 flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                        <Clock className="w-3.5 h-3.5 text-[#7FA0D6]" /> Attendance:
                       </span>
                       <button
                         type="button"
                         onClick={() => setAttendanceFilter("all")}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                           attendanceFilter === "all"
                             ? "bg-[#7FA0D6] text-[#0B111C] shadow-sm font-black"
                             : "bg-[#0B111C] text-[#97A0B3] hover:text-white border border-[#2A3446]"
                         }`}
                       >
-                        <span>All Specialists</span>
+                        <span>All</span>
                         <span className="px-1.5 py-0.2 rounded-full bg-black/20 text-[10px] font-black">{totalStaff}</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setAttendanceFilter("present")}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                           attendanceFilter === "present"
                             ? "bg-emerald-600 text-white shadow-sm font-black"
                             : "bg-[#0B111C] text-emerald-400 hover:text-emerald-300 border border-emerald-500/30"
                         }`}
                       >
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>Present In-Office</span>
+                        <span>Present</span>
                         <span className="px-1.5 py-0.2 rounded-full bg-emerald-950 text-emerald-200 text-[10px] font-black">
                           {presentStaff.length}
                         </span>
@@ -6268,14 +7011,14 @@ export function AdminTeamManagementPage() {
                       <button
                         type="button"
                         onClick={() => setAttendanceFilter("leave")}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                           attendanceFilter === "leave"
                             ? "bg-amber-600 text-white shadow-sm font-black"
                             : "bg-[#0B111C] text-amber-400 hover:text-amber-300 border border-amber-500/30"
                         }`}
                       >
                         <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                        <span>On Leave Today</span>
+                        <span>On Leave</span>
                         <span className="px-1.5 py-0.2 rounded-full bg-amber-950 text-amber-200 text-[10px] font-black">
                           {leaveStaff.length}
                         </span>
@@ -6284,10 +7027,10 @@ export function AdminTeamManagementPage() {
 
                     <Link
                       to="/admin/leaves"
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7FA0D6] hover:text-blue-300 hover:underline transition-colors ml-auto"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7FA0D6] hover:text-blue-300 hover:underline transition-colors sm:ml-auto self-end sm:self-auto shrink-0"
                     >
-                      <Plane className="w-3.5 h-3.5 text-amber-400" />
-                      <span>{leaveStaff.length} on approved leave &rarr;</span>
+                      <Plane className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>{leaveStaff.length} on leave &rarr;</span>
                     </Link>
                   </div>
 
@@ -6329,7 +7072,7 @@ export function AdminTeamManagementPage() {
               const lastPodLetter = pods[pods.length - 1]?.letter || String.fromCharCode(65 + Math.max(0, pods.length - 1));
 
               return (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-6">
+                <div className="hidden md:grid md:grid-cols-3 gap-3.5 sm:gap-6">
                   {/* Card 1: NO OF PODS */}
                   <div className="kpi-card bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
                     <div className="flex items-center justify-between mb-3">
@@ -6395,226 +7138,156 @@ export function AdminTeamManagementPage() {
               );
             })()}
 
-            {/* Team Pods Section Header */}
-            <div className="flex items-center justify-between pt-2">
-              <div>
-                <h3 className="text-lg font-bold text-white tracking-tight">Team Pods & Operational Squads</h3>
-                <p className="text-xs text-[#97A0B3]">Real-time capacity distribution, attendance status, and pod velocity</p>
-              </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Sprint Cycle 08 • 4 Days Remaining
-              </span>
+            {/* Mobile Sub-Section Switcher: Toggle between Pods and Specialists to eliminate endless scrolling */}
+            <div className="flex md:hidden items-center p-1 bg-[#161F2D] border border-[#2A3446] rounded-xl gap-1">
+              <button
+                type="button"
+                onClick={() => setMobileSubView("all")}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  mobileSubView === "all"
+                    ? "bg-[#7FA0D6] text-white shadow-xs"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileSubView("pods")}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  mobileSubView === "pods"
+                    ? "bg-[#7FA0D6] text-white shadow-xs"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+              >
+                Pods ({pods.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileSubView("specialists")}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  mobileSubView === "specialists"
+                    ? "bg-[#7FA0D6] text-white shadow-xs"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+              >
+                Specialists ({filteredMembers.length})
+              </button>
             </div>
 
-            {/* Pod Cards Grid matching Screenshot 1 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6">
-              {pods.map((pod) => (
-                <div
-                  key={pod.id}
-                  onClick={() => setActivePodId(pod.id)}
-                  className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.04)] space-y-5 hover:shadow-xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group relative overflow-hidden"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-2xl ${pod.color} text-white font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform`}>
-                        {pod.letter}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-base text-white">{pod.name}</h4>
-                          <span className="px-2 py-0.5 rounded-full bg-[#0B111C] text-[#F1F5F9] border border-[#2A3446] text-[10px] font-bold">
-                            {pod.id === "pod-bde" ? "Outreach Squad" : "Creative Pod"}
-                          </span>
+            {/* Team Pods Section (Collapsible/Hideable on mobile when Specialists sub-view selected) */}
+            <div className={mobileSubView === "specialists" ? "hidden md:block space-y-4" : "space-y-4"}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2">
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">Team Pods & Operational Squads</h3>
+                  <p className="text-xs text-[#97A0B3]">Real-time capacity distribution, attendance status, and pod velocity</p>
+                </div>
+                <span className="self-start sm:self-auto px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Sprint Cycle 08 • 4 Days Remaining
+                </span>
+              </div>
+
+              {/* Pod Cards Grid: Horizontal swipe carousel on mobile (< md), 2-column grid on desktop */}
+              <div className="flex md:grid overflow-x-auto snap-x snap-mandatory gap-3.5 pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 md:grid-cols-2 md:gap-6 no-scrollbar">
+                {pods.map((pod) => (
+                  <div
+                    key={pod.id}
+                    onClick={() => setActivePodId(pod.id)}
+                    className="min-w-[85vw] sm:min-w-[320px] md:min-w-0 snap-center shrink-0 md:shrink bg-[#161F2D] rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.04)] space-y-4 sm:space-y-5 hover:shadow-xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group relative overflow-hidden"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${pod.color} text-white font-black text-base sm:text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0`}>
+                          {pod.letter}
                         </div>
-                        <p className="text-xs text-[#97A0B3]">{pod.description.slice(0, 52)}...</p>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-sm sm:text-base text-white truncate">{pod.name}</h4>
+                            <span className="px-2 py-0.5 rounded-full bg-[#0B111C] text-[#F1F5F9] border border-[#2A3446] text-[10px] font-bold shrink-0 hidden xs:inline">
+                              {pod.id === "pod-bde" ? "Outreach Squad" : "Creative Pod"}
+                            </span>
+                          </div>
+                          <p className="text-xs text-[#97A0B3] truncate">{pod.description.slice(0, 52)}...</p>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Live Presence / On Leave Badge */}
-                    {pod.onLeaveCount > 0 ? (
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 shadow-xs">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                        <span>{pod.onLeaveCount} On Leave Today</span>
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                        <span>All {pod.membersCount} Present</span>
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Lead Info & Member Stack */}
-                  <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl flex items-center justify-between border border-[#2A3446]">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-8 h-8 rounded-full ${pod.color} text-white font-bold text-xs flex items-center justify-center`}>
-                        {pod.lead[0]}
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-white">{pod.lead}</div>
-                        <div className="text-[10px] text-[#97A0B3] font-medium">{pod.leadRole}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs font-bold text-[#F1F5F9]">
-                      <span>{pod.presentCount} Present / {pod.membersCount} Total</span>
-                      {pod.onLeaveCount > 0 && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
-                          {pod.onLeaveMembers.map((m: any) => m.name.split(" ")[0]).join(", ")} away
+                      {/* Live Presence / On Leave Badge */}
+                      {pod.onLeaveCount > 0 ? (
+                        <span className="px-2 sm:px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 shadow-xs shrink-0">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                          <span>{pod.onLeaveCount} On Leave</span>
+                        </span>
+                      ) : (
+                        <span className="px-2 sm:px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 shrink-0">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          <span>{pod.membersCount} Present</span>
                         </span>
                       )}
                     </div>
-                  </div>
 
-                  {/* Velocity Bar */}
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center text-[#F1F5F9] font-semibold">
-                      <span>Sprint Velocity</span>
-                      <span className="font-bold text-white">{pod.velocityPct}% on track</span>
-                    </div>
-                    <div className="w-full bg-[#0B111C] rounded-full h-2.5 overflow-hidden border border-[#2A3446]">
-                      <div className={`h-full rounded-full ${pod.color}`} style={{ width: `${pod.velocityPct}%` }} />
-                    </div>
-                    <div className="flex justify-between text-[11px] text-[#97A0B3] font-medium pt-0.5">
-                      <span>{pod.tasksClosed} tasks closed</span>
-                      <span className="text-[#7FA0D6] font-bold">{pod.pendingReview} pending review</span>
-                    </div>
-                  </div>
-
-                  {/* Card Footer Action */}
-                  <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                    <span className="text-[#97A0B3] font-medium text-[11px]">
-                      Allocated: <strong className="text-white">{pod.allocatedHours}h / {pod.totalHours}h</strong>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActivePodId(pod.id);
-                      }}
-                      className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform cursor-pointer"
-                    >
-                      View Pod Members ({pod.membersCount}) &rarr;
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Specialist Attendance & Roster Directory (Directly on View 1) */}
-            <div className="pt-4 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2A3446] pb-3">
-                <div>
-                  <h3 className="text-base font-bold text-white flex items-center gap-2">
-                    <span>Specialist Roster & Live Attendance</span>
-                    <span className="px-2 py-0.5 rounded-full bg-[#161F2D] border border-[#2A3446] text-[10px] text-slate-300 font-bold">
-                      {filteredMembers.length} Specialists
-                    </span>
-                  </h3>
-                  <p className="text-xs text-[#97A0B3]">
-                    {attendanceFilter === "leave"
-                      ? "Showing all specialists currently away on approved leave"
-                      : attendanceFilter === "present"
-                      ? "Showing all specialists actively present and working in office today"
-                      : "Direct overview of all specialists across creative pods and outreach squads"}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-[#97A0B3]">Filter:</span>
-                  <select
-                    value={roleCategoryFilter}
-                    onChange={(e) => setRoleCategoryFilter(e.target.value)}
-                    className="px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] text-xs font-bold text-white focus:outline-none"
-                  >
-                    <option value="all">All Roles</option>
-                    <option value="lead">Leads</option>
-                    <option value="designer">Designers</option>
-                    <option value="editor">Editors</option>
-                    <option value="bde">BDE Specialists</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Roster Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {filteredMembers.map((member) => (
-                  <div
-                    key={member.id}
-                    className="bg-[#161F2D] rounded-2xl border border-[#2A3446] p-4 space-y-3 flex flex-col justify-between hover:border-[#7FA0D6]/40 transition-all shadow-md"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className="relative">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1E293B] to-[#334155] border border-[#2A3446] text-white font-extrabold text-xs flex items-center justify-center shadow-xs">
-                              {member.name.slice(0, 2).toUpperCase()}
-                            </div>
-                            <span
-                              className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full ring-2 ring-[#161F2D] ${
-                                member.status === "On Leave" ? "bg-amber-400" : "bg-emerald-500"
-                              }`}
-                              title={member.status === "On Leave" ? "On Approved Leave Today" : "Present & Active"}
-                            />
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-xs text-white flex items-center gap-1">
-                              <span>{member.name}</span>
-                              {member.isLead && <CheckCircle2 className="w-3 h-3 text-[#7FA0D6]" />}
-                            </h4>
-                            <span className="text-[10px] text-[#97A0B3] font-medium flex items-center gap-1 mt-0.5">
-                              {getRoleIcon(member.category)}
-                              <span>{member.role}</span>
-                            </span>
-                          </div>
+                    {/* Lead Info & Member Stack */}
+                    <div className="p-3 sm:p-3.5 bg-[#0B111C]/70 rounded-2xl flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 border border-[#2A3446]">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${pod.color} text-white font-bold text-xs flex items-center justify-center shrink-0`}>
+                          {pod.lead[0]}
                         </div>
-
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${member.statusColor}`}>
-                          {member.status}
-                        </span>
+                        <div>
+                          <div className="text-xs font-bold text-white">{pod.lead}</div>
+                          <div className="text-[10px] text-[#97A0B3] font-medium">{pod.leadRole}</div>
+                        </div>
                       </div>
 
-                      {/* Pod Tag & Email */}
-                      <div className="p-2.5 bg-[#0B111C] rounded-xl text-[10px] font-mono space-y-0.5 border border-[#2A3446]">
-                        <div className="text-white font-sans font-bold flex items-center justify-between">
-                          <span className="text-[#97A0B3]">Squad:</span>
-                          <span className="text-[#7FA0D6]">
-                            {member.podId === "pod-a"
-                              ? "Pod Alpha"
-                              : member.podId === "pod-b"
-                              ? "Pod Beta"
-                              : member.podId === "pod-c"
-                              ? "Pod Gamma"
-                              : "Sales & BDE"}
+                      <div className="flex items-center gap-2 text-xs font-bold text-[#F1F5F9]">
+                        <span>{pod.presentCount}/{pod.membersCount} Present</span>
+                        {pod.onLeaveCount > 0 && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
+                            {pod.onLeaveMembers.map((m: any) => m.name.split(" ")[0]).join(", ")} away
                           </span>
-                        </div>
-                        <div className="text-[#97A0B3] truncate">{member.email}</div>
-                      </div>
-
-                      {/* Attendance Row */}
-                      <div className="flex items-center justify-between text-xs pt-1 border-t border-[#2A3446]/60">
-                        <span className="text-[#97A0B3] text-[10px] font-bold uppercase tracking-wider">Attendance:</span>
-                        <span className={`text-[11px] font-bold flex items-center gap-1 ${
-                          member.status === "On Leave" ? "text-amber-300" : "text-emerald-400"
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${member.status === "On Leave" ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
-                          {member.status === "On Leave" ? "On Leave Today" : "In Office / Present"}
-                        </span>
+                        )}
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                      <span className="text-[11px] text-[#97A0B3]">Workload: <strong>{member.allocatedPct}%</strong></span>
+                    {/* Velocity Bar */}
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between items-center text-[#F1F5F9] font-semibold">
+                        <span>Sprint Velocity</span>
+                        <span className="font-bold text-white">{pod.velocityPct}% on track</span>
+                      </div>
+                      <div className="w-full bg-[#0B111C] rounded-full h-2.5 overflow-hidden border border-[#2A3446]">
+                        <div className={`h-full rounded-full ${pod.color}`} style={{ width: `${pod.velocityPct}%` }} />
+                      </div>
+                      <div className="flex justify-between text-[11px] text-[#97A0B3] font-medium pt-0.5">
+                        <span>{pod.tasksClosed} tasks closed</span>
+                        <span className="text-[#7FA0D6] font-bold">{pod.pendingReview} pending review</span>
+                      </div>
+                    </div>
+
+                    {/* Card Footer Action */}
+                    <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs gap-2">
+                      <span className="text-[#97A0B3] font-medium text-[11px]">
+                        Allocated: <strong className="text-white">{pod.allocatedHours}h / {pod.totalHours}h</strong>
+                      </span>
                       <button
                         type="button"
-                        onClick={() => setActivePodId(member.podId)}
-                        className="text-[#7FA0D6] hover:underline font-bold text-[11px] cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActivePodId(pod.id);
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 border border-[#7FA0D6]/35 text-[#BCCCE6] hover:text-white text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 group/btn"
                       >
-                        View Pod &rarr;
+                        <Users className="w-3.5 h-3.5 text-[#7FA0D6]" />
+                        <span>View Pod Members ({pod.membersCount})</span>
+                        <ArrowRight className="w-3.5 h-3.5 text-[#7FA0D6] group-hover/btn:translate-x-0.5 transition-transform" />
                       </button>
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Mobile Pod Carousel Swipe Hint */}
+              <div className="flex md:hidden items-center justify-between text-[11px] text-[#97A0B3] px-1 pt-0.5">
+                <span className="flex items-center gap-1 font-medium">Swipe sideways to browse pods</span>
+                <span className="font-bold text-[#7FA0D6]">{pods.length} Pods &rarr;</span>
               </div>
             </div>
           </div>
@@ -7340,6 +8013,38 @@ export function AdminTeamManagementPage() {
                   </div>
                 </div>
 
+                {/* Dispatch / Personal Email Field */}
+                <div className="bg-[#0B111C]/80 p-3 rounded-2xl border border-blue-500/25 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5">
+                      <Mail className="size-3.5 text-[#7FA0D6]" />
+                      <span>Send Credentials To (Worker Personal Email)</span>
+                    </label>
+                    <span className="text-[10px] text-[#7FA0D6] font-semibold px-2 py-0.5 rounded-full bg-[#7FA0D6]/10 border border-[#7FA0D6]/20">
+                      Optional
+                    </span>
+                  </div>
+                  <input
+                    type="email"
+                    value={newMemberForm.dispatch_email}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, dispatch_email: e.target.value })}
+                    placeholder="e.g. jordan.personal@gmail.com (leaves Login Email intact)"
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs text-white bg-[#161F2D] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                  />
+                  <div className="flex items-center justify-between text-[11px] text-[#97A0B3] pt-0.5">
+                    <span>Account login stays under Login Email ID; credentials will be delivered to this address.</span>
+                    <label className="flex items-center gap-1.5 cursor-pointer text-[#7FA0D6] font-medium select-none">
+                      <input
+                        type="checkbox"
+                        checked={newMemberForm.send_email}
+                        onChange={(e) => setNewMemberForm({ ...newMemberForm, send_email: e.target.checked })}
+                        className="size-3.5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <span>Send email</span>
+                    </label>
+                  </div>
+                </div>
+
                 {/* Account Password Field */}
                 <div className="bg-[#0B111C]/80 p-3.5 rounded-2xl border border-[#2A3446] space-y-2">
                   <div className="flex items-center justify-between">
@@ -7585,6 +8290,31 @@ export function AdminTeamManagementPage() {
                     </button>
                   </div>
                 </div>
+
+                {provisionedCredentials.dispatchEmail && provisionedCredentials.dispatchEmail.toLowerCase() !== provisionedCredentials.email.toLowerCase() && (
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#7FA0D6] block mb-1">
+                      Delivered To (Worker Personal Email)
+                    </label>
+                    <div className="flex items-center justify-between bg-[#161F2D] px-3.5 py-2.5 rounded-xl border border-blue-500/30">
+                      <span className="text-xs font-mono font-bold text-blue-300 truncate select-all">
+                        {provisionedCredentials.dispatchEmail}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(provisionedCredentials.dispatchEmail!);
+                          setCopiedKey("dispatch");
+                          setTimeout(() => setCopiedKey(null), 2000);
+                        }}
+                        className="text-xs font-bold text-[#7FA0D6] hover:text-white flex items-center gap-1 cursor-pointer ml-2 shrink-0"
+                      >
+                        {copiedKey === "dispatch" ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+                        <span>{copiedKey === "dispatch" ? "Copied" : "Copy"}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Email Dispatched Status Banner */}
@@ -7596,14 +8326,14 @@ export function AdminTeamManagementPage() {
                   <div>
                     <span className="text-xs font-bold text-emerald-300 block">Credentials Sent via Email</span>
                     <span className="text-[10px] text-[#97A0B3] block truncate max-w-[200px] sm:max-w-[250px]">
-                      Dispatched to {provisionedCredentials.email}
+                      Dispatched to {provisionedCredentials.dispatchEmail || provisionedCredentials.email}
                     </span>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => {
-                    setToast(`Credentials re-dispatched to ${provisionedCredentials.email}`);
+                    setToast(`Credentials re-dispatched to ${provisionedCredentials.dispatchEmail || provisionedCredentials.email}`);
                   }}
                   className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[10px] font-bold transition-colors cursor-pointer shrink-0"
                 >
@@ -7725,6 +8455,38 @@ export function AdminTeamManagementPage() {
                   </p>
                 </div>
 
+                {/* Optional separate dispatch email */}
+                <div className="bg-[#0B111C]/80 p-3 rounded-2xl border border-blue-500/25 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5">
+                      <Mail className="size-3.5 text-[#7FA0D6]" />
+                      <span>Send Credentials To (Worker Personal Email)</span>
+                    </label>
+                    <span className="text-[10px] text-[#7FA0D6] font-semibold px-2 py-0.5 rounded-full bg-[#7FA0D6]/10 border border-[#7FA0D6]/20">
+                      Optional
+                    </span>
+                  </div>
+                  <input
+                    type="email"
+                    value={credentialForm.dispatch_email}
+                    onChange={(e) => setCredentialForm({ ...credentialForm, dispatch_email: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs text-white bg-[#161F2D] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                    placeholder="e.g. member.personal@gmail.com (leave blank to send to Login Email)"
+                  />
+                  <div className="flex items-center justify-between text-[11px] text-[#97A0B3] pt-0.5">
+                    <span>Credentials will be dispatched to this separate inbox.</span>
+                    <label className="flex items-center gap-1.5 cursor-pointer text-[#7FA0D6] font-medium select-none">
+                      <input
+                        type="checkbox"
+                        checked={credentialForm.send_email}
+                        onChange={(e) => setCredentialForm({ ...credentialForm, send_email: e.target.checked })}
+                        className="size-3.5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <span>Send email</span>
+                    </label>
+                  </div>
+                </div>
+
                 {/* Actions */}
                 <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
                   <button
@@ -7816,7 +8578,7 @@ export function AdminTeamManagementPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Email Address *</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">CRM Login Email *</label>
                     <input
                       type="email"
                       required
@@ -7826,6 +8588,29 @@ export function AdminTeamManagementPage() {
                       className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                     />
                   </div>
+                </div>
+
+                {/* Dispatch / Notification Email Field */}
+                <div className="p-3 bg-[#0B111C] rounded-2xl border border-amber-500/25 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5">
+                      <Mail className="size-3.5 text-amber-400" />
+                      <span>Send Credentials To (Worker Personal Email)</span>
+                    </label>
+                    <span className="text-[10px] text-amber-400 font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                      Optional
+                    </span>
+                  </div>
+                  <input
+                    type="email"
+                    value={bdeForm.dispatch_email}
+                    onChange={(e) => setBdeForm({ ...bdeForm, dispatch_email: e.target.value })}
+                    placeholder="e.g. rahul.personal@gmail.com (leaves CRM Login Email unchanged)"
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  />
+                  <p className="text-[10px] text-[#97A0B3]">
+                    The BDE will log in using their CRM Email ID. Credentials will be delivered to this personal contact address.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -7915,16 +8700,21 @@ export function AdminTeamManagementPage() {
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3">
+                <div className="p-3.5 rounded-2xl bg-[#0B111C] border border-amber-500/40 shadow-sm shadow-amber-500/10 flex items-start gap-3">
                   <input
                     type="checkbox"
                     id="send_bde_email"
                     checked={bdeForm.send_credentials_email}
                     onChange={(e) => setBdeForm({ ...bdeForm, send_credentials_email: e.target.checked })}
-                    className="mt-0.5 size-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                    className="mt-1 size-4 rounded border-[#2A3446] bg-[#161F2D] text-amber-500 focus:ring-amber-400 cursor-pointer shrink-0"
                   />
-                  <label htmlFor="send_bde_email" className="text-xs text-amber-200 cursor-pointer leading-relaxed">
-                    <strong>Send Credentials Email via Brevo/SMTP:</strong> Instantly dispatch a branded transactional welcome email to the BDE containing their email, temporary password, login portal URL, and getting started instructions.
+                  <label htmlFor="send_bde_email" className="text-xs cursor-pointer select-none">
+                    <span className="font-bold text-amber-300 block mb-0.5 text-xs">
+                      Send Credentials Email via Brevo/SMTP:
+                    </span>
+                    <span className="text-[#F1F5F9] text-xs leading-relaxed block font-medium">
+                      Instantly dispatch a branded transactional welcome email to the BDE containing their email, temporary password, login portal URL, and getting started instructions.
+                    </span>
                   </label>
                 </div>
 
@@ -8021,16 +8811,44 @@ export function AdminTeamManagementPage() {
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3">
+                {/* Optional separate dispatch email */}
+                <div className="p-3 bg-[#0B111C] rounded-2xl border border-amber-500/25 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5">
+                      <Mail className="size-3.5 text-amber-400" />
+                      <span>Send Credentials To (Worker Personal Email)</span>
+                    </label>
+                    <span className="text-[10px] text-amber-400 font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                      Optional
+                    </span>
+                  </div>
+                  <input
+                    type="email"
+                    value={bdeCredDispatchEmail}
+                    onChange={(e) => setBdeCredDispatchEmail(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    placeholder={`e.g. personal@gmail.com (leave blank to send to ${bdeCredModalUser.email})`}
+                  />
+                  <p className="text-[10px] text-[#97A0B3]">
+                    Updated credentials will be delivered to this inbox while leaving login email as {bdeCredModalUser.email}.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-[#0B111C] border border-amber-500/40 shadow-sm shadow-amber-500/10 flex items-start gap-3">
                   <input
                     type="checkbox"
                     id="send_cred_update_email"
                     checked={bdeCredSendEmail}
                     onChange={(e) => setBdeCredSendEmail(e.target.checked)}
-                    className="mt-0.5 size-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                    className="mt-1 size-4 rounded border-[#2A3446] bg-[#161F2D] text-amber-500 focus:ring-amber-400 cursor-pointer shrink-0"
                   />
-                  <label htmlFor="send_cred_update_email" className="text-xs text-amber-200 cursor-pointer leading-relaxed">
-                    <strong>Dispatch Updated Credentials Email:</strong> Send an immediate transactional notification to {bdeCredModalUser.email} with the new password and direct sign-in link.
+                  <label htmlFor="send_cred_update_email" className="text-xs cursor-pointer select-none">
+                    <span className="font-bold text-amber-300 block mb-0.5 text-xs">
+                      Dispatch Updated Credentials Email:
+                    </span>
+                    <span className="text-[#F1F5F9] text-xs leading-relaxed block font-medium">
+                      Send an immediate transactional notification to <strong className="text-white font-mono">{bdeCredModalUser.email}</strong> with the new password and direct sign-in link.
+                    </span>
                   </label>
                 </div>
 
@@ -8149,6 +8967,31 @@ export function AdminTeamManagementPage() {
                     </button>
                   </div>
                 </div>
+
+                {bdeProvisionedCreds.dispatch_email && bdeProvisionedCreds.dispatch_email.toLowerCase() !== bdeProvisionedCreds.email.toLowerCase() && (
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block mb-1">
+                      Delivered To (Personal Email)
+                    </label>
+                    <div className="flex items-center justify-between bg-[#161F2D] px-3.5 py-2.5 rounded-xl border border-amber-500/30">
+                      <span className="text-xs font-mono font-bold text-amber-300 truncate select-all">
+                        {bdeProvisionedCreds.dispatch_email}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(bdeProvisionedCreds.dispatch_email!);
+                          setBdeCopiedKey("dispatch");
+                          setTimeout(() => setBdeCopiedKey(null), 2000);
+                        }}
+                        className="text-xs font-bold text-amber-400 hover:text-white flex items-center gap-1 cursor-pointer ml-2 shrink-0"
+                      >
+                        {bdeCopiedKey === "dispatch" ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+                        <span>{bdeCopiedKey === "dispatch" ? "Copied" : "Copy"}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-2 pt-1">
@@ -8293,17 +9136,114 @@ export function AdminLeaveApprovalsPage() {
     return "bg-[#161F2D] text-slate-300 border-[#2A3446]";
   };
 
+  const cleanPodName = (podRaw?: string | null) => {
+    if (!podRaw) return "";
+    let clean = podRaw.trim();
+    // Remove repeated "(Pod X)" or "(Pod B)" e.g. "Pod Beta (Pod B)" -> "Pod Beta"
+    clean = clean.replace(/\s*\(\s*pod\s*([a-z0-9]+)\s*\)/gi, "");
+    clean = clean.replace(/\s*\(\s*pod\s*\)/gi, "");
+    clean = clean.replace(/\s*\(\s*bde\s*\)/gi, "");
+    clean = clean.replace(/\s*\(\s*(lead|designer|editor|specialist)\s*-\s*pod\s*([a-z0-9]+)\s*\)/gi, "");
+    clean = clean.replace(/[\s•·\-–—]+$/, "").trim();
+    clean = clean.replace(/^[\s•·\-–—]+/, "").trim();
+    return clean;
+  };
+
   const getPodBadge = (lr: LeaveRequestItem) => {
-    if (lr.pod_name) return lr.pod_name;
+    if (lr.pod_name) return cleanPodName(lr.pod_name);
     const email = (lr.employee_email || lr.email || "").toLowerCase();
     const tl = (lr.team_lead_name || "").toLowerCase();
     const role = (lr.role || lr.user_role || "").toLowerCase();
-    if (email.includes(".alpha") || tl.includes("vikram")) return "Pod Alpha (Pod A)";
-    if (email.includes(".beta") || tl.includes("sarah")) return "Pod Beta (Pod B)";
-    if (email.includes(".gamma") || tl.includes("rohan")) return "Pod Gamma (Pod C)";
-    if (role.includes("sales") || role.includes("bde")) return "Sales & Outreach (BDE)";
+    if (email.includes(".alpha") || tl.includes("vikram")) return "Pod Alpha";
+    if (email.includes(".beta") || tl.includes("sarah")) return "Pod Beta";
+    if (email.includes(".gamma") || tl.includes("rohan")) return "Pod Gamma";
+    if (role.includes("sales") || role.includes("bde")) return "Sales & Outreach";
     if (role.includes("admin")) return "Operations Leadership";
-    return lr.department ? `${lr.department.toUpperCase()} Squad` : "Creative Squad";
+    if (lr.department) return cleanPodName(`${lr.department.toUpperCase()} Squad`);
+    return "Creative Squad";
+  };
+
+  const parseLeaveReason = (rawReason?: string | null) => {
+    const raw = (rawReason || "").trim();
+    if (!raw) {
+      return {
+        category: "Scheduled Time Off",
+        notes: "",
+        tagType: "general" as const,
+      };
+    }
+
+    const bracketMatch = raw.match(/^\[(.*?)\]\s*(.*)$/s);
+    if (bracketMatch && bracketMatch[1]) {
+      const category = bracketMatch[1].trim();
+      let notes = (bracketMatch[2] || "").trim();
+      notes = notes.replace(/^[,;:\-\s]+/, "").trim();
+
+      const catLower = category.toLowerCase();
+      let tagType: "casual" | "sick" | "blackout" | "vacation" | "general" = "general";
+      if (catLower.includes("sick") || catLower.includes("medical") || catLower.includes("health")) {
+        tagType = "sick";
+      } else if (catLower.includes("blackout") || catLower.includes("freelancer") || catLower.includes("studio")) {
+        tagType = "blackout";
+      } else if (catLower.includes("casual") || catLower.includes("personal")) {
+        tagType = "casual";
+      } else if (catLower.includes("vacation") || catLower.includes("annual") || catLower.includes("holiday")) {
+        tagType = "vacation";
+      }
+
+      return { category, notes, tagType };
+    }
+
+    const lower = raw.toLowerCase();
+    if (
+      lower.includes("fever") ||
+      lower.includes("sick") ||
+      lower.includes("doctor") ||
+      lower.includes("hospital") ||
+      lower.includes("headache") ||
+      lower.includes("cold") ||
+      lower.includes("unwell")
+    ) {
+      return {
+        category: "Sick / Medical Leave",
+        notes: raw,
+        tagType: "sick" as const,
+      };
+    }
+    if (
+      lower.includes("family") ||
+      lower.includes("function") ||
+      lower.includes("wedding") ||
+      lower.includes("personal") ||
+      lower.includes("casual") ||
+      lower.includes("emergency")
+    ) {
+      return {
+        category: "Personal / Casual Leave",
+        notes: raw,
+        tagType: "casual" as const,
+      };
+    }
+    if (lower.includes("vacation") || lower.includes("travel") || lower.includes("trip")) {
+      return {
+        category: "Vacation / Travel",
+        notes: raw,
+        tagType: "vacation" as const,
+      };
+    }
+    if (lower.includes("blackout") || lower.includes("maintenance")) {
+      return {
+        category: "Studio Blackout",
+        notes: raw,
+        tagType: "blackout" as const,
+      };
+    }
+
+    return {
+      category: "Time Off Request",
+      notes: raw,
+      tagType: "general" as const,
+    };
   };
 
   const calculateDays = (start: string, end: string) => {
@@ -8349,67 +9289,67 @@ export function AdminLeaveApprovalsPage() {
           </button>
         </div>
 
-        {/* 2 Top KPI Summary Cards - Fully Connected & Live */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        {/* 2 Top KPI Summary Cards - Compact & Clean */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
           {/* Card 1: PEOPLE WORKING TODAY */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-lg flex flex-col justify-between">
+          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] shadow-md flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                   PEOPLE WORKING TODAY
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold">
-                  <Users className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold">
+                  <Users className="w-3.5 h-3.5" />
                 </div>
               </div>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">{inOfficeCount}</span>
+              <div className="flex items-baseline gap-2 mt-0.5">
+                <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">{inOfficeCount}</span>
                 <span className="text-xs font-bold text-emerald-400">Present & Active</span>
                 <span className="text-xs font-semibold text-[#97A0B3]">/ {totalMembersCount} Total Staff</span>
               </div>
             </div>
 
-            <div className="mt-5 pt-4 border-t border-[#2A3446] flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
-              <span className="flex items-center gap-1.5 text-emerald-400">
+            <div className="mt-3 pt-2.5 border-t border-[#2A3446] flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
+              <span className="flex items-center gap-1.5 text-emerald-400 text-xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 Pod Alpha, Beta, Gamma & Sales Active
               </span>
-              <span className="text-white font-extrabold px-2 py-0.5 rounded-lg bg-[#0B111C] border border-[#2A3446]">
+              <span className="text-white font-extrabold px-2 py-0.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-xs">
                 {inOfficePct}% In-Office
               </span>
             </div>
           </div>
 
           {/* Card 2: ON LEAVE TODAY */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-lg flex flex-col justify-between">
+          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] shadow-md flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                   ON LEAVE TODAY
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">
-                  <Plane className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">
+                  <Plane className="w-3.5 h-3.5" />
                 </div>
               </div>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">{actualOnLeaveToday.length}</span>
+              <div className="flex items-baseline gap-2 mt-0.5">
+                <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">{actualOnLeaveToday.length}</span>
                 <span className="text-xs font-bold text-amber-400">Specialists Away</span>
                 <span className="text-xs font-semibold text-[#97A0B3]">({totalMembersCount - actualOnLeaveToday.length} in office)</span>
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-[#2A3446]">
+            <div className="mt-3 pt-2.5 border-t border-[#2A3446]">
               {actualOnLeaveToday.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-wide mr-1">Away Now:</span>
                   {actualOnLeaveToday.map((m) => (
                     <span
                       key={m.id}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-bold"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-bold"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
                       <span>{m.employee_name || m.user_name || "Specialist"}</span>
-                      <span className="text-amber-400/80 text-[10px]">
+                      <span className="text-amber-400/80 text-[9px]">
                         ({m.role_display || m.role || getPodBadge(m)})
                       </span>
                     </span>
@@ -8536,13 +9476,13 @@ export function AdminLeaveApprovalsPage() {
                                 >
                                   {roleLabel}
                                 </span>
-                                <span className="text-[#97A0B3] text-[10px]">•</span>
-                                <span className="text-slate-300 text-[11px] font-bold">{podName}</span>
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#0B111C] border border-[#2A3446] text-slate-300">
+                                  {podName}
+                                </span>
                                 {lr.team_lead_name && lr.team_lead_name !== "Unassigned Lead" && (
-                                  <>
-                                    <span className="text-[#97A0B3] text-[10px]">•</span>
-                                    <span className="text-[#97A0B3] text-[10px]">Lead: {lr.team_lead_name}</span>
-                                  </>
+                                  <span className="text-[10px] text-[#97A0B3] font-medium bg-[#161F2D] px-2 py-0.5 rounded-md border border-[#2A3446]/60">
+                                    Lead: {lr.team_lead_name}
+                                  </span>
                                 )}
                               </div>
                               <div className="text-[10px] text-[#97A0B3] font-mono mt-0.5 truncate">{empEmail}</div>
@@ -8572,11 +9512,46 @@ export function AdminLeaveApprovalsPage() {
                           </div>
                         </td>
 
-                        {/* 3. Reason */}
-                        <td className="px-4 sm:px-6 py-4 max-w-xs">
-                          <div className="text-xs text-[#F1F5F9] leading-relaxed break-words bg-[#0B111C]/50 p-2.5 rounded-xl border border-[#2A3446]">
-                            {lr.reason || "Scheduled Time Off"}
-                          </div>
+                        {/* 3. Reason / Notes */}
+                        <td className="px-4 sm:px-6 py-4 max-w-sm">
+                          {(() => {
+                            const { category, notes, tagType } = parseLeaveReason(lr.reason);
+                            return (
+                              <div className="flex flex-col gap-1.5 bg-[#0B111C]/60 p-2.5 rounded-xl border border-[#2A3446]/80 hover:border-[#7FA0D6]/40 transition-colors">
+                                <div className="flex items-center gap-1.5">
+                                  <span
+                                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
+                                      tagType === "sick"
+                                        ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
+                                        : tagType === "blackout"
+                                        ? "bg-purple-500/15 text-purple-300 border-purple-500/30"
+                                        : tagType === "casual"
+                                        ? "bg-indigo-500/15 text-indigo-300 border-indigo-500/30"
+                                        : tagType === "vacation"
+                                        ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                                        : "bg-blue-500/15 text-[#7FA0D6] border-[#7FA0D6]/30"
+                                    }`}
+                                  >
+                                    {tagType === "sick" && <AlertCircle className="w-3 h-3 text-rose-400" />}
+                                    {tagType === "blackout" && <ShieldCheck className="w-3 h-3 text-purple-400" />}
+                                    {tagType === "casual" && <Calendar className="w-3 h-3 text-indigo-400" />}
+                                    {tagType === "vacation" && <Plane className="w-3 h-3 text-emerald-400" />}
+                                    {tagType === "general" && <FileText className="w-3 h-3 text-[#7FA0D6]" />}
+                                    <span>{category}</span>
+                                  </span>
+                                </div>
+                                {notes ? (
+                                  <p className="text-xs text-[#F1F5F9] font-medium leading-relaxed pl-2 border-l-2 border-[#7FA0D6]/40 break-words">
+                                    {notes}
+                                  </p>
+                                ) : (
+                                  <p className="text-[10px] text-[#97A0B3] italic pl-2 border-l-2 border-[#2A3446]">
+                                    No additional notes provided
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </td>
 
                         {/* 4. Status */}
@@ -9195,10 +10170,8 @@ export function AdminRevenuePage() {
                 </div>
               </div>
 
-              {/* Transactions Table: Responsive scroll container on mobile */}
-              <div className={`rounded-2xl border border-[#2A3446] bg-[#0B111C]/40 overflow-x-auto ${
-                revenueLayout === "split" ? "max-h-[380px] overflow-y-auto" : ""
-              }`}>
+              {/* Transactions Table: Responsive scroll container on mobile & desktop */}
+              <div className="rounded-2xl border border-[#2A3446] bg-[#0B111C]/40 overflow-x-auto max-h-[420px] sm:max-h-[480px] overflow-y-auto overscroll-contain pr-0.5 scrollbar-thin scrollbar-thumb-[#2A3446] hover:scrollbar-thumb-[#7FA0D6]/40 scrollbar-track-transparent">
                 <table className="w-full text-left text-xs text-white min-w-[700px]">
                   <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] sticky top-0 z-10">
                     {revenueLayout === "split" ? (
@@ -10051,7 +11024,7 @@ export function AdminPlansPage() {
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Revenue" hideTitle />
-      <main className="flex-1 px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-4 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-5 sm:space-y-8">
         {toast && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
@@ -10065,9 +11038,56 @@ export function AdminPlansPage() {
         )}
 
         {/* ─────────────────────────────────────────────────────────────────────────────
-            TOP 4 COMMERCIAL & PLAN KPI CARDS
+            MOBILE: COMPACT HORIZONTAL QUICK-STATS RIBBON (Replaces 4 giant stacked cards on phone)
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="sm:hidden flex items-center gap-2.5 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar snap-x overscroll-x-contain -mx-1 px-1">
+          <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
+            <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+              <span>Active Retainers</span>
+              <Briefcase className="w-3.5 h-3.5 text-[#7FA0D6]" />
+            </div>
+            <div className="text-xl font-black text-white">
+              {plans.reduce((acc, p) => acc + p.subscribers, 0)} Active
+            </div>
+            <p className="text-[10px] text-[#7FA0D6] font-bold truncate">MRR: ₹{totalRetainerRevenue.toLocaleString("en-IN")}</p>
+          </div>
+
+          <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
+            <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+              <span>Pending</span>
+              <Zap className="w-3.5 h-3.5 text-amber-500" />
+            </div>
+            <div className="text-xl font-black text-white">{pendingCount} Actionable</div>
+            <p className="text-[10px] text-amber-500 font-bold truncate">Requires review</p>
+          </div>
+
+          <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
+            <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+              <span>Avg Value</span>
+              <span className="text-xs font-black text-emerald-400">₹</span>
+            </div>
+            <div className="text-xl font-black text-white">
+              ₹{(plans.reduce((acc, p) => acc + p.subscribers, 0) > 0 
+                ? Math.round(totalRetainerRevenue / plans.reduce((acc, p) => acc + p.subscribers, 0))
+                : 72500).toLocaleString("en-IN")}/mo
+            </div>
+            <p className="text-[10px] text-emerald-400 font-bold truncate">High LTV retention</p>
+          </div>
+
+          <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
+            <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+              <span>Win Rate</span>
+              <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
+            </div>
+            <div className="text-xl font-black text-white">68%</div>
+            <p className="text-[10px] text-purple-400 font-bold truncate">↗ Top velocity</p>
+          </div>
+        </div>
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            DESKTOP/TABLET: TOP 4 COMMERCIAL & PLAN KPI CARDS (Hidden on phone)
+        ───────────────────────────────────────────────────────────────────────────── */}
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">ACTIVE RETAINERS</span>
@@ -10122,7 +11142,7 @@ export function AdminPlansPage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             RETAINER TIERS & QUOTA ALLOCATION CARDS
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
+        <div className="bg-[#161F2D] rounded-3xl p-4 sm:p-6 lg:p-8 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-5 sm:space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-bold text-white tracking-tight">Agency Retainer Plans & Quotas</h3>

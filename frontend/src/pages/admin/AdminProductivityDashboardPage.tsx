@@ -81,8 +81,51 @@ export function AdminProductivityDashboardPage() {
           </button>
         </div>
 
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ── MOBILE: COMPACT HORIZONTAL STATS RIBBON (Replaces giant stacked cards on phone) ── */}
+      <div className="sm:hidden flex items-center gap-2.5 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar snap-x overscroll-x-contain -mx-1 px-1">
+        <div className="min-w-[145px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+            <span>Completed</span>
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+          </div>
+          <div className="text-xl font-black text-white">{summary ? summary.tasks_completed : "--"}</div>
+          <p className="text-[10px] text-emerald-400 font-bold truncate">
+            {summary && summary.total_assigned > 0
+              ? Math.round((summary.tasks_completed / summary.total_assigned) * 100)
+              : 100}% of {summary?.total_assigned ?? 0}
+          </p>
+        </div>
+
+        <div className="min-w-[145px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+            <span>Turnaround</span>
+            <Clock className="w-3.5 h-3.5 text-[#7FA0D6]" />
+          </div>
+          <div className="text-xl font-black text-white">{summary ? `${summary.avg_turnaround_hours}h` : "--"}</div>
+          <p className="text-[10px] text-emerald-400 font-bold truncate">Target &le; 24h speed</p>
+        </div>
+
+        <div className="min-w-[145px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+            <span>On-Time SLA</span>
+            <Award className="w-3.5 h-3.5 text-indigo-400" />
+          </div>
+          <div className="text-xl font-black text-indigo-400 truncate">{summary ? `${summary.on_time_completion_pct}%` : "--"}</div>
+          <p className="text-[10px] text-indigo-400/80 font-bold truncate">On-schedule</p>
+        </div>
+
+        <div className="min-w-[145px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+            <span>Rework Rate</span>
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+          </div>
+          <div className="text-xl font-black text-amber-400 truncate">{summary ? `${summary.revision_rate_pct}%` : "--"}</div>
+          <p className="text-[10px] text-amber-400/80 font-bold truncate">{summary ? summary.tasks_pending : 0} in review</p>
+        </div>
+      </div>
+
+      {/* KPI Cards Grid (Desktop / Tablet) */}
+      <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Tasks Completed */}
         <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 relative overflow-hidden group hover:border-[#7FA0D6]/40 transition-all shadow-lg">
           <div className="flex items-center justify-between mb-3">
@@ -321,7 +364,7 @@ export function AdminProductivityDashboardPage() {
               <select
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
-                className="bg-[#0B111C] border border-[#2A3446] rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#7FA0D6] cursor-pointer"
+                className="bg-[#161F2D] border border-[#2A3446] rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#7FA0D6] shadow-sm cursor-pointer"
               >
                 <option value="all">All Departments</option>
                 <option value="video">Video & Motion</option>
@@ -337,7 +380,7 @@ export function AdminProductivityDashboardPage() {
               <select
                 value={taskType}
                 onChange={(e) => setTaskType(e.target.value)}
-                className="bg-[#0B111C] border border-[#2A3446] rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#7FA0D6] cursor-pointer"
+                className="bg-[#161F2D] border border-[#2A3446] rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#7FA0D6] shadow-sm cursor-pointer"
               >
                 <option value="all">All Deliverable Types</option>
                 <option value="reel">Reels / Shorts</option>
@@ -350,9 +393,9 @@ export function AdminProductivityDashboardPage() {
         </div>
 
         {/* Table Content */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto overflow-y-auto max-h-[520px] custom-scrollbar">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[#97A0B3] uppercase text-[10px] tracking-wider font-bold">
+            <thead className="sticky top-0 z-10 bg-[#0B111C] border-b border-[#2A3446] text-[#97A0B3] uppercase text-[10px] tracking-wider font-bold">
               <tr>
                 <th className="py-3.5 px-4">Specialist & Craft</th>
                 <th className="py-3.5 px-3 text-center">Assigned</th>

@@ -3,7 +3,7 @@ import { PublishingPanel } from "../../components/ops/PublishingPanel";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Check, Clock, Download, Film, ImageIcon, RefreshCw, History, Loader2 } from "lucide-react";
+import { AlertTriangle, Check, Clock, Download, Film, ImageIcon, RefreshCw, History, Loader2, Volume2 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import {
   approveDeliverable,
@@ -17,6 +17,7 @@ import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
 import { DeliverableHistoryModal } from "../../components/portal/DeliverableHistoryModal";
 import { VoiceFeedbackRecorder } from "../../components/portal/VoiceFeedbackRecorder";
+import { VoicePlayer } from "../../components/portal/VoicePlayer";
 
 import type { DeliverableItem, DeletedDeliverableRecord } from "../../types/api";
 
@@ -48,10 +49,20 @@ function StatusBadge({ item }: { item: DeliverableItem }) {
     item.status === "pending_approval"
       ? "bg-[#D8BF9B]/15 text-[#D8BF9B]"
       : item.status === "revision_requested"
-        ? "bg-white/[0.06] text-[#F1F5F9]"
+        ? "bg-amber-500/20 text-amber-300 border border-amber-500/35 font-bold"
         : "bg-[#7FA0D6]/15 text-[#BCCCE6]";
-  const label = item.status === "pending_approval" ? "Needs you" : item.status_label;
-  return <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-bold ${tone}`}>{label}</span>;
+  const label =
+    item.status === "pending_approval"
+      ? "Needs you"
+      : item.status === "revision_requested"
+        ? "Revision Requested"
+        : item.status_label;
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold ${tone}`}>
+      {item.status === "revision_requested" && <RefreshCw className="w-3 h-3 text-amber-400" />}
+      {label}
+    </span>
+  );
 }
 
 /**
@@ -539,9 +550,12 @@ export function PortalDeliverablesPage() {
                 )}
 
                 {shownItem.rejection_comment && (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-[13px] font-bold text-white">Your requested changes</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="text-[13px] font-bold text-white flex items-center gap-1.5">
+                        <span className="size-1.5 rounded-full bg-amber-400" />
+                        Your requested changes
+                      </h4>
                       <button
                         type="button"
                         onClick={() => setHistoryModalDeliverable({ id: shownItem.id, title: shownItem.title || "Deliverable" })}
@@ -554,6 +568,15 @@ export function PortalDeliverablesPage() {
                     <p className="text-[13px] text-[#97A0B3] leading-relaxed bg-[#0B111C]/50 rounded-xl p-4 border border-[#2A3446] whitespace-pre-wrap">
                       {shownItem.rejection_comment}
                     </p>
+                    {shownItem.voice_note_url && (
+                      <div className="mt-2.5">
+                        <VoicePlayer
+                          audioUrl={shownItem.voice_note_url}
+                          durationSeconds={shownItem.voice_note_duration}
+                          authorName="Your Revision Voice Note"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -656,11 +679,36 @@ export function PortalDeliverablesPage() {
                 )}
 
                 {!viewingOlder && shownItem.status === "revision_requested" && (
-                  <div className="flex gap-3 bg-[#0B111C]/50 rounded-xl p-4 border border-[#2A3446]">
-                    <Clock className="w-4 h-4 text-[#97A0B3] shrink-0 mt-0.5" />
-                    <p className="text-[13px] text-[#97A0B3] leading-relaxed">
-                      Your pod is working on the revision. The new version will appear here after a quality check, and we'll notify you.
-                    </p>
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="flex size-2 rounded-full bg-amber-400 animate-ping" />
+                        <h4 className="text-sm font-bold text-amber-300">Revision Requested</h4>
+                      </div>
+                      <span className="text-[11px] font-mono font-bold text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">
+                        In Progress
+                      </span>
+                    </div>
+
+                    {shownItem.voice_note_url && !shownItem.rejection_comment && (
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1.5 flex items-center gap-1.5">
+                          <Volume2 className="w-3.5 h-3.5 text-[#7FA0D6]" /> Attached Voice Note
+                        </p>
+                        <VoicePlayer
+                          audioUrl={shownItem.voice_note_url}
+                          durationSeconds={shownItem.voice_note_duration}
+                          authorName="Your Revision Voice Note"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex gap-2.5 items-start text-xs text-[#97A0B3] leading-relaxed pt-1">
+                      <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <p>
+                        Your creative pod has received your revision request and is currently producing the revised version. You will receive an instant notification once it passes quality assurance and is ready for your review.
+                      </p>
+                    </div>
                   </div>
                 )}
 

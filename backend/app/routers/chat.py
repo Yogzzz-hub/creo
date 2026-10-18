@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
+import io
+import os
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +19,12 @@ from app.models.chat import DirectMessage
 from app.models.enums import UserRole
 from app.models.ops import Notification
 from app.models.user import User
+from app.services.storage_service import (
+    ALLOWED_MIMES,
+    _LOCAL_STATIC_DIR,
+    put_object,
+    resolve_media_url,
+)
 
 # Shared staff rooms with no client attached. They are keyed only by thread_type, so a
 # client_id must not be required to read them.
@@ -327,8 +336,70 @@ class SendMessageRequest(BaseModel):
     recipient_id: uuid.UUID | None = None
     channel: str | None = None
     client_id: uuid.UUID | None = None
-    message: str = Field(..., min_length=1, max_length=10_000)
+    message: str = Field(default="", max_length=10_000)
     thread_type: str = "direct"
+    attachment_url: str | None = None
+    attachment_name: str | None = None
+    attachment_type: str | None = None
+    attachment_size: int | None = None
+
+
+@router.post("/upload", response_model=dict[str, Any])
+async def upload_chat_attachment(
+    file: UploadFile = File(...),
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Upload a file attachment for direct or channel chat."""
+    await _require_completed_onboarding(actor, db)
+
+    filename = file.filename or "attachment"
+    content_type = file.content_type or "application/octet-stream"
+
+    contents = await file.read()
+    size_bytes = len(contents)
+    if size_bytes == 0:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+    if size_bytes > 50 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Attachment size exceeds 50MB limit.")
+
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "bin"
+    storage_mime = content_type
+    if content_type not in ALLOWED_MIMES:
+        for mime, allowed_ext in ALLOWED_MIMES.items():
+            if allowed_ext == ext:
+                storage_mime = mime
+                break
+        else:
+            storage_mime = "application/octet-stream"
+
+    storage_key = f"chat/{actor.user_id}/{uuid.uuid4().hex}.{ext}"
+
+    try:
+        raw_stored_url = await asyncio.to_thread(
+            put_object,
+            storage_key,
+            io.BytesIO(contents),
+            storage_mime if storage_mime in ALLOWED_MIMES else "application/pdf",
+            size_bytes,
+        )
+    except Exception:
+        local_dir = os.path.join(_LOCAL_STATIC_DIR, "chat")
+        os.makedirs(local_dir, exist_ok=True)
+        file_path = os.path.join(local_dir, f"{uuid.uuid4().hex}_{filename}")
+        with open(file_path, "wb") as f:
+            f.write(contents)
+        rel_path = os.path.relpath(file_path, _LOCAL_STATIC_DIR).replace("\\", "/")
+        raw_stored_url = f"/static/{rel_path}"
+
+    resolved_url = resolve_media_url(raw_stored_url)
+
+    return {
+        "attachment_url": resolved_url,
+        "attachment_name": filename,
+        "attachment_type": content_type,
+        "attachment_size": size_bytes,
+    }
 
 
 @router.get("/super-admin", response_model=dict[str, Any])
@@ -450,18 +521,6 @@ async def get_chat_channels(
                 "desc": "Workspace standups, milestones, and announcements",
                 "is_pod_channel": False,
             },
-            {
-                "id": "deliverables-handoff",
-                "label": "deliverables-handoff",
-                "desc": "Master asset sync, reel drops & Figma releases",
-                "is_pod_channel": False,
-            },
-            {
-                "id": "urgent-escalations",
-                "label": "urgent-escalations",
-                "desc": "SLA priority alert queue & executive requests",
-                "is_pod_channel": False,
-            },
         ]
 
     # 4. Team Lead: Own pod group, all-pod-leads, global channels
@@ -488,18 +547,6 @@ async def get_chat_channels(
                 "desc": "Workspace standups, milestones, and announcements",
                 "is_pod_channel": False,
             },
-            {
-                "id": "deliverables-handoff",
-                "label": "deliverables-handoff",
-                "desc": "Master asset sync, reel drops & Figma releases",
-                "is_pod_channel": False,
-            },
-            {
-                "id": "urgent-escalations",
-                "label": "urgent-escalations",
-                "desc": "SLA priority alert queue & executive requests",
-                "is_pod_channel": False,
-            },
         ]
 
     # 5. Team Member: ONLY their own pod group, NO other pods!
@@ -518,12 +565,6 @@ async def get_chat_channels(
                 "id": "general",
                 "label": "general",
                 "desc": "Workspace standups, milestones, and announcements",
-                "is_pod_channel": False,
-            },
-            {
-                "id": "deliverables-handoff",
-                "label": "deliverables-handoff",
-                "desc": "Master asset sync, reel drops & Figma releases",
                 "is_pod_channel": False,
             },
         ]
@@ -1000,6 +1041,10 @@ async def get_messages(
             else "User",
             "message": m.message,
             "thread_type": m.thread_type,
+            "attachment_url": m.attachment_url,
+            "attachment_name": m.attachment_name,
+            "attachment_type": m.attachment_type,
+            "attachment_size": m.attachment_size,
             "created_at": m.created_at.isoformat() if m.created_at else None,
         }
         for m in messages
@@ -1015,8 +1060,8 @@ async def send_message(
     """Send a direct message or channel message with real-time broadcast."""
     current_user_id = actor.user_id
     role = _role_name(actor.role)
-    if not payload.message.strip():
-        raise HTTPException(status_code=400, detail="Message cannot be blank")
+    if not payload.message.strip() and not payload.attachment_url:
+        raise HTTPException(status_code=400, detail="Message or attachment is required")
     await _require_completed_onboarding(actor, db)
 
     sender_user = await db.get(User, current_user_id)
@@ -1114,8 +1159,12 @@ async def send_message(
             client_id=client_id,
             specialist_id=specialist_id,
             sender_id=current_user_id,
-            message=payload.message,
+            message=payload.message or (payload.attachment_name or "Attachment"),
             thread_type=payload.channel,
+            attachment_url=payload.attachment_url,
+            attachment_name=payload.attachment_name,
+            attachment_type=payload.attachment_type,
+            attachment_size=payload.attachment_size,
         )
         db.add(new_msg)
 
@@ -1174,17 +1223,12 @@ async def send_message(
                     detail="Team members are only permitted to message Administrators."
                 )
 
-        # RULE 4: ADMIN CAN MESSAGE LEADS, CLIENTS, AND BDE SPECIALISTS
+        # RULE 4: ADMIN CAN MESSAGE ANYONE (LEADS, CLIENTS, SPECIALISTS, BDE, FREELANCERS)
         elif is_sender_admin:
             if target_user.id == current_user_id:
                 raise HTTPException(
                     status_code=400,
                     detail="Cannot direct message yourself."
-                )
-            if not (is_target_tl or is_target_client or is_target_bde):
-                raise HTTPException(
-                    status_code=403,
-                    detail="Administrators can only direct message Team Leads, Clients, and BDE Specialists. Use Pod Group channels to collaborate with team members."
                 )
 
         # RULE 5: BDE CAN ONLY MESSAGE CLIENTS, ADMINS, AND OTHER BDE MEMBERS
@@ -1210,8 +1254,12 @@ async def send_message(
             client_id=client_id,
             specialist_id=specialist_id,
             sender_id=current_user_id,
-            message=payload.message,
+            message=payload.message or (payload.attachment_name or "Attachment"),
             thread_type="direct",
+            attachment_url=payload.attachment_url,
+            attachment_name=payload.attachment_name,
+            attachment_type=payload.attachment_type,
+            attachment_size=payload.attachment_size,
         )
         db.add(new_msg)
         websocket_recipients.add(target_user.id)
@@ -1239,6 +1287,10 @@ async def send_message(
         "sender_name": sender_name,
         "message": new_msg.message,
         "thread_type": new_msg.thread_type,
+        "attachment_url": new_msg.attachment_url,
+        "attachment_name": new_msg.attachment_name,
+        "attachment_type": new_msg.attachment_type,
+        "attachment_size": new_msg.attachment_size,
         "created_at": new_msg.created_at.isoformat() if new_msg.created_at else None,
     }
 

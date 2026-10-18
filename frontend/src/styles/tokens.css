@@ -1211,4 +1211,103 @@ iframe[id*="razorpay"] {
   background: #7FA0D6;
 }
 
+/* ==========================================================================
+   Global Container Animations & Premium Hover Effects
+   ========================================================================== */
+
+/* Keyframe Animations */
+@keyframes containerFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes subtleGlowPulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(127, 160, 214, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(127, 160, 214, 0.18);
+  }
+}
+
+@keyframes borderShimmer {
+  0% {
+    border-color: rgba(42, 52, 70, 0.9);
+  }
+  50% {
+    border-color: rgba(127, 160, 214, 0.35);
+  }
+  100% {
+    border-color: rgba(42, 52, 70, 0.9);
+  }
+}
+
+.animate-fade-in-up {
+  animation: containerFadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Primary Innovative Hover Card Styling (used across dashboards, widgets, and pages) */
+.hover-card-innovative {
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.28s ease,
+              box-shadow 0.28s ease,
+              background-color 0.28s ease;
+  will-change: transform, border-color, box-shadow;
+  position: relative;
+}
+
+.hover-card-innovative:hover {
+  transform: translateY(-2.5px);
+  border-color: rgba(127, 160, 214, 0.45) !important;
+  box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.6),
+              0 0 20px rgba(127, 160, 214, 0.12),
+              0 0 0 1px rgba(127, 160, 214, 0.22);
+}
+
+/* Global Container Hover Highlights across Admin, Client Portal & Workstation */
+[data-surface="ops"] .bg-\[\#161F2D\],
+[data-surface="ops"] .bg-\[\#121926\],
+[data-surface="ops"] .bg-\[\#131C2A\],
+.portal-card,
+.workstation-card,
+div[class*="rounded-2xl"][class*="border-[#2A3446]"]:not(input):not(textarea):not(button):not(select),
+div[class*="rounded-3xl"][class*="border-[#2A3446]"]:not(input):not(textarea):not(button):not(select) {
+  transition: border-color 0.25s ease,
+              box-shadow 0.25s ease,
+              transform 0.25s ease;
+}
+
+@media (hover: hover) {
+  /* Highlight on hover for rounded dashboard containers */
+  div[class*="rounded-2xl"][class*="border-[#2A3446]"]:not(input):not(textarea):not(button):not(select):hover,
+  div[class*="rounded-3xl"][class*="border-[#2A3446]"]:not(input):not(textarea):not(button):not(select):hover {
+    border-color: rgba(127, 160, 214, 0.4);
+    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5),
+                0 0 16px rgba(127, 160, 214, 0.08);
+  }
+
+  /* Table Rows Interactive Hover */
+  tbody tr {
+    transition: background-color 0.18s ease, transform 0.18s ease;
+  }
+  tbody tr:hover {
+    background-color: rgba(22, 31, 45, 0.75);
+  }
+  
+  /* Mini badge / chip hover micro-effects */
+  span[class*="rounded-full"][class*="border"] {
+    transition: transform 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
+  }
+  span[class*="rounded-full"][class*="border"]:hover {
+    filter: brightness(1.15);
+    transform: scale(1.02);
+  }
+}
+
 

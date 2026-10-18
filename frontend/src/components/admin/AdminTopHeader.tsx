@@ -84,7 +84,7 @@ export function AdminTopHeader({
       : location.pathname.startsWith("/portal/account")
       ? "Account Settings"
       : location.pathname.startsWith("/portal/slack")
-      ? "Slack Workspace Hub"
+      ? "Workspace Hub"
       : location.pathname.startsWith("/workstation/tasks") || location.pathname.startsWith("/member/tasks")
       ? "My Tasks"
       : location.pathname.startsWith("/workstation/schedule") || location.pathname.startsWith("/member/schedule")
@@ -92,7 +92,7 @@ export function AdminTopHeader({
       : location.pathname.startsWith("/workstation") || location.pathname.startsWith("/member")
       ? "Workstation Overview"
       : location.pathname.includes("/slack")
-      ? "Slack Workspace Hub"
+      ? "Workspace Hub"
       : location.pathname.includes("/admin/pod-dashboard") || location.pathname.includes("/lead/dashboard")
       ? "Team Details"
       : location.pathname.includes("/lead/tasks")
@@ -124,7 +124,7 @@ export function AdminTopHeader({
       : location.pathname.includes("/admin/clients")
       ? "Client Details"
       : location.pathname.includes("/admin/support/sla") || location.pathname.includes("/admin/sla")
-      ? "SLA Performance"
+      ? "Performance Hub"
       : location.pathname.includes("/admin/support")
       ? "Support Tickets"
       : location.pathname.includes("/admin/announcements")
@@ -171,17 +171,22 @@ export function AdminTopHeader({
                 ? "/workstation"
                 : "/portal"
             }
-            className="md:hidden flex items-center gap-0.5 font-extrabold text-white text-sm sm:text-base tracking-tight shrink-0 px-1 hover:opacity-85 transition-opacity"
+            className="md:hidden flex items-center gap-0.5 font-extrabold text-white text-sm sm:text-base tracking-tight shrink-0 px-0.5 hover:opacity-85 transition-opacity"
             title="Creo. Home"
           >
             Creo<span className="text-[#7FA0D6] text-base sm:text-lg leading-none">.</span>
           </Link>
 
-          {/* Active Page Title */}
+          {/* Active Page Title with subtle breadcrumb separator */}
           {!hideTitle && resolvedTitle && (
-            <h1 className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
-              {resolvedTitle}
-            </h1>
+            <>
+              <span className="text-[#3A4659] text-xs font-semibold select-none shrink-0" aria-hidden="true">
+                /
+              </span>
+              <h1 className="text-xs sm:text-sm font-bold text-white/95 tracking-tight truncate max-w-[120px] xs:max-w-[190px] sm:max-w-xs md:max-w-md">
+                {resolvedTitle}
+              </h1>
+            </>
           )}
         </div>
 

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic, Square, Play, Pause, RotateCcw, AlertCircle, CheckCircle } from "lucide-react";
+import { Mic, Square, Play, Pause, AlertCircle, CheckCircle, Upload, Trash2, RotateCcw, FileAudio } from "lucide-react";
 
 interface VoiceFeedbackRecorderProps {
   onRecordingComplete: (blob: Blob, durationSeconds: number) => void;
@@ -15,6 +15,8 @@ export function VoiceFeedbackRecorder({
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioFileName, setAudioFileName] = useState<string | null>(null);
+  const [isUploaded, setIsUploaded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackTime, setPlaybackTime] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +26,7 @@ export function VoiceFeedbackRecorder({
   const audioChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<number | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const startedAtRef = useRef(0);
   const mountedRef = useRef(true);
 
@@ -41,8 +44,11 @@ export function VoiceFeedbackRecorder({
       }
     };
   }, []);
+
   useEffect(() => {
-    return () => { if (audioUrl) URL.revokeObjectURL(audioUrl); };
+    return () => {
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+    };
   }, [audioUrl]);
 
   const startRecording = async () => {
@@ -51,6 +57,8 @@ export function VoiceFeedbackRecorder({
     setError(null);
     audioChunksRef.current = [];
     setRecordingDuration(0);
+    setAudioFileName(null);
+    setIsUploaded(false);
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
       setAudioUrl(null);
@@ -60,7 +68,7 @@ export function VoiceFeedbackRecorder({
     let stream: MediaStream | undefined;
     try {
       if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-        setError("Voice recording is unavailable in this browser. Use a supported browser or enter written feedback.");
+        setError("Voice recording is unavailable in this browser. You can upload an audio file below or enter written feedback.");
         return;
       }
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -85,7 +93,6 @@ export function VoiceFeedbackRecorder({
       };
 
       mediaRecorder.onstop = () => {
-        // Stop all audio tracks to release microphone hardware
         mediaRecorder.stream.getTracks().forEach((track) => track.stop());
         if (!mountedRef.current) return;
         const duration = Math.min(maxDurationSeconds, Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000)));
@@ -95,10 +102,12 @@ export function VoiceFeedbackRecorder({
         const recordedBlob = new Blob(audioChunksRef.current, { type: mime });
         const url = URL.createObjectURL(recordedBlob);
         setAudioUrl(url);
+        setIsUploaded(false);
+        setAudioFileName(null);
         onRecordingComplete(recordedBlob, duration);
       };
 
-      mediaRecorder.start(250); // Slice into 250ms chunks
+      mediaRecorder.start(250);
       setIsRecording(true);
 
       const startTime = Date.now();
@@ -114,9 +123,9 @@ export function VoiceFeedbackRecorder({
       stream?.getTracks().forEach((track) => track.stop());
       if (!mountedRef.current) return;
       if (err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "PermissionDeniedError")) {
-        setError("Microphone permission was denied. Please allow microphone access in your browser settings to record voice feedback.");
+        setError("Microphone permission was denied. You can upload a pre-recorded audio file or allow microphone access in browser settings.");
       } else {
-        setError("Unable to access microphone. Please verify an audio input device is connected.");
+        setError("Unable to access microphone. You can upload an audio file or verify an audio input device is connected.");
       }
     } finally {
       if (mountedRef.current) setRequesting(false);
@@ -134,13 +143,69 @@ export function VoiceFeedbackRecorder({
     }
   };
 
-  const handleReset = () => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError(null);
+
+    // Limit to 25MB
+    if (file.size > 25 * 1024 * 1024) {
+      setError("Audio file is too large (maximum size is 25MB).");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    if (!file.type.startsWith("audio/") && !/\.(mp3|wav|m4a|webm|ogg|aac|flac)$/i.test(file.name)) {
+      setError("Please select a valid audio file (e.g. MP3, WAV, M4A, WEBM, OGG).");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    if (audioElementRef.current) {
+      audioElementRef.current.pause();
+    }
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+      setAudioUrl(null);
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    const audioObj = new Audio();
+    audioObj.src = objectUrl;
+
+    audioObj.onloadedmetadata = () => {
+      const dur = Math.max(1, Math.round(audioObj.duration) || 1);
+      setRecordingDuration(dur);
+      setAudioUrl(objectUrl);
+      setAudioFileName(file.name);
+      setIsUploaded(true);
+      onRecordingComplete(file, dur);
+    };
+
+    audioObj.onerror = () => {
+      // In case metadata parsing fails, fallback safely
+      const fallbackDur = 10;
+      setRecordingDuration(fallbackDur);
+      setAudioUrl(objectUrl);
+      setAudioFileName(file.name);
+      setIsUploaded(true);
+      onRecordingComplete(file, fallbackDur);
+    };
+  };
+
+  const handleDelete = () => {
     if (audioElementRef.current) {
       audioElementRef.current.pause();
     }
     setIsPlaying(false);
     setPlaybackTime(0);
     setRecordingDuration(0);
+    setAudioFileName(null);
+    setIsUploaded(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
       setAudioUrl(null);
@@ -167,20 +232,29 @@ export function VoiceFeedbackRecorder({
 
   return (
     <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl p-4 space-y-3">
-      <div className="flex items-center justify-between">
+      {/* Hidden File Input for Audio Upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="audio/*,.mp3,.wav,.m4a,.webm,.ogg,.aac"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
+
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
             <Mic className="w-4 h-4" />
           </div>
           <div>
             <h4 className="text-xs font-bold text-white uppercase tracking-wider">Voice Note Revision</h4>
-            <p className="text-[11px] text-[#97A0B3]">Explain changes verbally to avoid typing lengthy instructions</p>
+            <p className="text-[11px] text-[#97A0B3]">Explain changes verbally by recording live or uploading an audio file</p>
           </div>
         </div>
         {audioUrl && (
           <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
             <CheckCircle className="w-3.5 h-3.5" />
-            Voice Note Ready ({formatTime(recordingDuration)})
+            {isUploaded ? "Audio File Ready" : "Voice Recording Ready"} ({formatTime(recordingDuration)})
           </span>
         )}
       </div>
@@ -192,19 +266,31 @@ export function VoiceFeedbackRecorder({
         </div>
       )}
 
-      {/* Recording State */}
+      {/* Recording & Upload Options State */}
       {!audioUrl && (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center flex-wrap gap-2.5">
           {!isRecording ? (
-            <button
-              type="button"
-              onClick={startRecording}
-              disabled={requesting}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#7FA0D6]/20 border border-[#7FA0D6]/40 text-[#BCCCE6] hover:bg-[#7FA0D6]/30 hover:text-white transition-all text-xs font-semibold cursor-pointer group"
-            >
-              <Mic className="w-4 h-4 text-[#7FA0D6] group-hover:scale-110 transition-transform" />
-              <span>{requesting ? "Waiting for microphone…" : "Record Voice Note"}</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={startRecording}
+                disabled={requesting}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#7FA0D6]/20 border border-[#7FA0D6]/40 text-[#BCCCE6] hover:bg-[#7FA0D6]/30 hover:text-white transition-all text-xs font-semibold cursor-pointer group disabled:opacity-50"
+              >
+                <Mic className="w-4 h-4 text-[#7FA0D6] group-hover:scale-110 transition-transform" />
+                <span>{requesting ? "Waiting for microphone…" : "Record Voice Note"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={requesting}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/50 text-[#BCCCE6] hover:bg-[#1E293B] hover:text-white transition-all text-xs font-semibold cursor-pointer group disabled:opacity-50"
+              >
+                <Upload className="w-4 h-4 text-[#7FA0D6] group-hover:scale-110 transition-transform" />
+                <span>Upload Audio File</span>
+              </button>
+            </>
           ) : (
             <div className="flex items-center justify-between w-full bg-[#161F2D] border border-red-500/40 rounded-xl px-4 py-2.5 animate-pulse">
               <div className="flex items-center gap-3">
@@ -237,16 +323,24 @@ export function VoiceFeedbackRecorder({
             className="hidden"
           />
 
+          {audioFileName && (
+            <div className="flex items-center gap-1.5 text-[11px] text-[#BCCCE6] bg-[#0B111C]/60 px-2.5 py-1 rounded-lg border border-[#2A3446]">
+              <FileAudio className="w-3.5 h-3.5 text-[#7FA0D6] shrink-0" />
+              <span className="truncate">{audioFileName}</span>
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={togglePlayback}
               className="w-8 h-8 rounded-full bg-[#7FA0D6] text-[#0B111C] flex items-center justify-center hover:bg-white transition-colors cursor-pointer shrink-0 shadow-md"
+              title={isPlaying ? "Pause" : "Play Voice Note"}
             >
               {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
             </button>
 
-            <div className="flex-1 flex flex-col gap-1">
+            <div className="flex-1 flex flex-col gap-1 min-w-0">
               <div className="flex justify-between text-[11px] font-mono text-[#97A0B3]">
                 <span>{formatTime(playbackTime)}</span>
                 <span>{formatTime(recordingDuration)}</span>
@@ -271,11 +365,23 @@ export function VoiceFeedbackRecorder({
               </div>
             </div>
 
+            {/* Explicit Delete Button */}
             <button
               type="button"
-              onClick={handleReset}
-              title="Delete and re-record"
-              className="p-1.5 rounded-lg border border-[#2A3446] text-[#97A0B3] hover:text-rose-400 hover:border-rose-500/40 transition-colors cursor-pointer"
+              onClick={handleDelete}
+              title="Delete Voice Note"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-semibold transition-colors cursor-pointer shrink-0"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+              <span>Delete</span>
+            </button>
+
+            {/* Re-record / Re-upload button */}
+            <button
+              type="button"
+              onClick={handleDelete}
+              title="Replace / Re-record voice note"
+              className="p-1.5 rounded-lg border border-[#2A3446] text-[#97A0B3] hover:text-white hover:bg-[#0B111C] transition-colors cursor-pointer shrink-0"
             >
               <RotateCcw className="w-4 h-4" />
             </button>

@@ -499,6 +499,8 @@ async def qa_decide(
         )
         # Internal QA notes never reach the client.
         deliverable.rejection_comment = None
+        deliverable.voice_note_url = None
+        deliverable.voice_note_duration = None
         # The client now reviews this version instead of the one they sent back.
         previous = (await db.execute(
             select(Deliverable).where(
@@ -609,6 +611,8 @@ async def client_request_changes(
         db, deliverable, DeliverableStatus.REVISION_REQUESTED,
         actor_id=actor.user_id, actor_role=actor.role, reason=comment, commit=False,
     )
+    deliverable.voice_note_url = voice_note_url
+    deliverable.voice_note_duration = voice_note_duration
     # transition() linked or created the task; start the revision clock on it.
     task = await db.get(Task, deliverable.task_id) if deliverable.task_id else task
     if task is not None:
@@ -689,6 +693,8 @@ def serialize_for_client(
         "revisions_used": deliverable.revision_round or 0,
         "revisions_allowed": revisions_allowed,
         "rejection_comment": feedback,
+        "voice_note_url": storage_service.resolve_media_url(deliverable.voice_note_url, request) if getattr(deliverable, "voice_note_url", None) else None,
+        "voice_note_duration": getattr(deliverable, "voice_note_duration", None),
         "approved_at": deliverable.approved_at.isoformat() if deliverable.approved_at else None,
         "scheduled_at": deliverable.scheduled_at.isoformat() if deliverable.scheduled_at else None,
         "due_date": task.due_date.isoformat() if task is not None and task.due_date else None,
@@ -710,6 +716,8 @@ def serialize_for_team(deliverable: Deliverable, request: Any | None = None,
         "status": _status(deliverable.status).value,
         "revision_round": deliverable.revision_round or 0,
         "rejection_comment": deliverable.rejection_comment,
+        "voice_note_url": storage_service.resolve_media_url(deliverable.voice_note_url, request) if getattr(deliverable, "voice_note_url", None) else None,
+        "voice_note_duration": getattr(deliverable, "voice_note_duration", None),
         "is_archived": getattr(deliverable, "is_archived", False),
         "deleted_at": deliverable.deleted_at.isoformat() if getattr(deliverable, "deleted_at", None) else None,
         "deletion_reason": getattr(deliverable, "deletion_reason", None),

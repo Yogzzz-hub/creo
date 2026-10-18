@@ -726,6 +726,278 @@ async def get_client_roster(
     return clients
 
 
+
+class ClientOnboardRequest(BaseModel):
+    company_name: str
+    contact_name: str = ""
+    email: str
+    password: str | None = None
+    dispatch_email: str | None = None
+    industry: str | None = "DTC E-Commerce & Retail"
+    pod_name: str | None = "Pod A"
+    send_credentials_email: bool = True
+
+
+class ClientTeamMemberCreateRequest(BaseModel):
+    full_name: str
+    email: str
+    password: str | None = None
+    role_title: str | None = "Client Team Member"
+    dispatch_email: str | None = None
+    send_credentials_email: bool = True
+
+
+class ClientTeamMemberCredentialsUpdateRequest(BaseModel):
+    password: str
+    dispatch_email: str | None = None
+    send_credentials_email: bool = True
+
+
+@router.post("/clients/onboard")
+@router.post("/clients")
+async def onboard_client(
+    payload: ClientOnboardRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Onboard a new client brand, create client user account, profile, and dispatch credentials email."""
+    from app.core.security import hash_password
+    from app.services.email_service import send_credentials_email
+
+    clean_email = payload.email.lower().strip()
+    if not clean_email or "@" not in clean_email:
+        raise HTTPException(status_code=400, detail="A valid client login email is required.")
+
+    existing = (await db.execute(select(User).where(func.lower(User.email) == clean_email))).scalar_one_or_none()
+    if existing:
+        raise HTTPException(status_code=400, detail="A user or client account with this email address already exists.")
+
+    chosen_password = payload.password.strip() if (payload.password and payload.password.strip()) else f"Creo@{uuid.uuid4().hex[:8]}!"
+    contact_name = payload.contact_name.strip() if payload.contact_name and payload.contact_name.strip() else f"{payload.company_name.strip()} Executive"
+
+    new_user = User(
+        agency_id=actor.agency_id if actor else None,
+        auth_id=f"auth-client-{uuid.uuid4().hex[:12]}",
+        email=clean_email,
+        full_name=contact_name,
+        role=UserRole.CLIENT,
+        account_status=AccountStatus.ACTIVE,
+        hashed_password=hash_password(chosen_password),
+    )
+    db.add(new_user)
+    await db.flush()
+
+    # Create ClientProfile
+    client_profile = ClientProfile(
+        user_id=new_user.id,
+        company_name=payload.company_name.strip(),
+        timezone="Asia/Kolkata",
+        brand_summary=f"Dynamic brand & content creative suite for {payload.company_name.strip()}.",
+        brand_dna={
+            "industry": payload.industry.strip() if payload.industry else "DTC E-Commerce & Retail",
+            "pod_assigned": payload.pod_name.strip() if payload.pod_name else "Pod A",
+            "company_name": payload.company_name.strip(),
+            "contact_name": contact_name,
+        },
+    )
+    db.add(client_profile)
+    await db.commit()
+
+    # Dispatch credentials email
+    email_delivered = False
+    target_dispatch = payload.dispatch_email.strip() if (payload.dispatch_email and payload.dispatch_email.strip()) else clean_email
+    if payload.send_credentials_email:
+        try:
+            email_delivered = await send_credentials_email(
+                to_email=target_dispatch,
+                full_name=contact_name,
+                role=f"Client Portal Account ({payload.company_name.strip()})",
+                password=chosen_password,
+                account_email=new_user.email,
+            )
+        except Exception as exc:
+            logger.warning(f"Failed to dispatch client credentials email to {target_dispatch}: {exc}")
+
+    return {
+        "status": "success",
+        "message": f"Client '{payload.company_name}' successfully onboarded.",
+        "client_id": str(new_user.id),
+        "id": str(new_user.id),
+        "company_name": payload.company_name.strip(),
+        "contact_name": contact_name,
+        "email": new_user.email,
+        "email_dispatched": email_delivered,
+        "dispatch_email": target_dispatch,
+        "credentials": {
+            "email": new_user.email,
+            "password": chosen_password,
+        },
+    }
+
+
+@router.post("/clients/{client_id}/team-members")
+async def create_client_team_member(
+    client_id: uuid.UUID,
+    payload: ClientTeamMemberCreateRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = StaffActor,
+) -> dict[str, Any]:
+    """Onboard a new client team member / stakeholder for an active client account."""
+    from app.core.security import hash_password
+    from app.services.email_service import send_credentials_email
+
+    client = await db.get(User, client_id)
+    if not client:
+        raise NotFound(f"Client account {client_id} not found.")
+
+    clean_email = payload.email.lower().strip()
+    if not clean_email or "@" not in clean_email:
+        raise HTTPException(status_code=400, detail="A valid member login email is required.")
+
+    existing = (await db.execute(select(User).where(func.lower(User.email) == clean_email))).scalar_one_or_none()
+    if existing:
+        raise Conflict("A user with this email address already exists.")
+
+    chosen_password = payload.password.strip() if (payload.password and payload.password.strip()) else f"Creo@{uuid.uuid4().hex[:8]}!"
+
+    new_member = User(
+        agency_id=actor.agency_id if actor else None,
+        auth_id=f"auth-client-member-{uuid.uuid4().hex[:12]}",
+        email=clean_email,
+        full_name=payload.full_name.strip(),
+        role=UserRole.CLIENT,
+        account_status=AccountStatus.ACTIVE,
+        hashed_password=hash_password(chosen_password),
+    )
+    db.add(new_member)
+    await db.flush()
+
+    # Link to client account via ClientAssignment
+    assignment = ClientAssignment(
+        agency_id=actor.agency_id if actor else None,
+        client_id=client.id,
+        user_id=new_member.id,
+        role=payload.role_title.strip() if payload.role_title else "Client Team Member",
+        craft_role=f"client_{new_member.id.hex[:10]}",
+    )
+    db.add(assignment)
+    await db.commit()
+
+    # Email dispatch
+    email_delivered = False
+    target_dispatch = payload.dispatch_email.strip() if (payload.dispatch_email and payload.dispatch_email.strip()) else clean_email
+    if payload.send_credentials_email:
+        try:
+            client_profile = await db.get(ClientProfile, client.id)
+            comp_name = client_profile.company_name if client_profile and client_profile.company_name else (client.full_name or "Client Brand")
+            email_delivered = await send_credentials_email(
+                to_email=target_dispatch,
+                full_name=new_member.full_name or new_member.email,
+                role=f"{payload.role_title or 'Client Team Member'} ({comp_name})",
+                password=chosen_password,
+                account_email=new_member.email,
+            )
+        except Exception as exc:
+            logger.warning(f"Failed to dispatch client team member credentials to {target_dispatch}: {exc}")
+
+    return {
+        "status": "success",
+        "message": f"Client team member '{new_member.full_name}' successfully onboarded.",
+        "id": str(new_member.id),
+        "client_id": str(client.id),
+        "email": new_member.email,
+        "full_name": new_member.full_name,
+        "role_title": payload.role_title or "Client Team Member",
+        "email_dispatched": email_delivered,
+        "dispatch_email": target_dispatch,
+        "credentials": {
+            "email": new_member.email,
+            "password": chosen_password,
+        },
+    }
+
+
+@router.get("/clients/{client_id}/team-members")
+async def list_client_team_members(
+    client_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = StaffActor,
+) -> list[dict[str, Any]]:
+    """List team members / contacts associated with a specific client."""
+    client = await db.get(User, client_id)
+    if not client:
+        raise NotFound(f"Client {client_id} not found.")
+
+    stmt = (
+        select(ClientAssignment, User)
+        .join(User, User.id == ClientAssignment.user_id)
+        .where(
+            ClientAssignment.client_id == client_id,
+            or_(
+                ClientAssignment.craft_role.like("client_%"),
+                User.role == UserRole.CLIENT,
+            ),
+            User.id != client_id,
+        )
+        .order_by(ClientAssignment.created_at.desc())
+    )
+    rows = (await db.execute(stmt)).all()
+    members = []
+    for ca, u in rows:
+        members.append({
+            "id": str(u.id),
+            "full_name": u.full_name or u.email,
+            "email": u.email,
+            "role_title": ca.role or "Client Team Member",
+            "account_status": u.account_status.value if hasattr(u.account_status, "value") else str(u.account_status),
+            "created_at": ca.created_at.isoformat() if ca.created_at else None,
+        })
+    return members
+
+
+@router.post("/clients/{client_id}/team-members/{user_id}/credentials")
+async def update_client_team_member_credentials(
+    client_id: uuid.UUID,
+    user_id: uuid.UUID,
+    payload: ClientTeamMemberCredentialsUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = StaffActor,
+) -> dict[str, Any]:
+    """Update password and optionally re-send credentials email to personal dispatch email."""
+    from app.core.security import hash_password
+    from app.services.email_service import send_credentials_email
+
+    member = await db.get(User, user_id)
+    if not member:
+        raise NotFound("Member not found.")
+
+    member.hashed_password = hash_password(payload.password.strip())
+    member.token_version += 1
+    await db.commit()
+
+    email_delivered = False
+    target_dispatch = payload.dispatch_email.strip() if (payload.dispatch_email and payload.dispatch_email.strip()) else member.email
+    if payload.send_credentials_email:
+        try:
+            client_profile = await db.get(ClientProfile, client_id)
+            comp_name = client_profile.company_name if client_profile and client_profile.company_name else "Client Brand"
+            email_delivered = await send_credentials_email(
+                to_email=target_dispatch,
+                full_name=member.full_name or member.email,
+                role=f"Client Team Member ({comp_name})",
+                password=payload.password.strip(),
+                account_email=member.email,
+            )
+        except Exception as exc:
+            logger.warning(f"Failed to re-send client member credentials: {exc}")
+
+    return {
+        "status": "success",
+        "email_dispatched": email_delivered,
+        "dispatch_email": target_dispatch,
+    }
+
+
 @router.get("/clients/{client_id}")
 async def get_client_brand_profile(
     client_id: str,
@@ -2406,6 +2678,8 @@ class TeamMemberCreateRequest(BaseModel):
     daily_capacity: int = 4
     skills: list[str] = []
     team_lead_id: uuid.UUID | None = None
+    dispatch_email: str | None = None
+    send_email: bool = True
 
 
 class TeamMemberUpdateRequest(BaseModel):
@@ -2550,18 +2824,21 @@ async def create_team_member(
     db.add(staff_profile)
     await db.commit()
 
-    # Dispatch credentials email to the newly provisioned staff member
+    # Dispatch credentials email to the newly provisioned staff member or dispatch address
     email_delivered = False
-    try:
-        from app.services.email_service import send_credentials_email
-        email_delivered = await send_credentials_email(
-            to_email=new_user.email,
-            full_name=new_user.full_name or new_user.email,
-            role=new_user.role.value,
-            password=chosen_password,
-        )
-    except Exception as exc:
-        logger.warning(f"Failed to send credentials email to {new_user.email}: {exc}")
+    target_dispatch = payload.dispatch_email.strip() if (payload.dispatch_email and payload.dispatch_email.strip()) else new_user.email
+    if payload.send_email:
+        try:
+            from app.services.email_service import send_credentials_email
+            email_delivered = await send_credentials_email(
+                to_email=target_dispatch,
+                full_name=new_user.full_name or new_user.email,
+                role=new_user.role.value,
+                password=chosen_password,
+                account_email=new_user.email,
+            )
+        except Exception as exc:
+            logger.warning(f"Failed to send credentials email to {target_dispatch}: {exc}")
 
     return {
         "status": "created",
@@ -2573,6 +2850,7 @@ async def create_team_member(
         "daily_capacity": staff_profile.daily_capacity,
         "team_lead_id": str(target_tl_id) if target_tl_id else None,
         "email_delivered": email_delivered,
+        "dispatch_email": target_dispatch,
         "credentials": {
             "email": new_user.email,
             "password": chosen_password,
@@ -2583,6 +2861,8 @@ async def create_team_member(
 class UpdateMemberCredentialsRequest(BaseModel):
     email: str | None = None
     password: str = Field(..., min_length=6)
+    dispatch_email: str | None = None
+    send_email: bool = True
 
 
 @router.patch("/teams/{user_id}/credentials")
@@ -2611,16 +2891,19 @@ async def update_member_credentials(
     await db.commit()
 
     email_delivered = False
-    try:
-        from app.services.email_service import send_credentials_email
-        email_delivered = await send_credentials_email(
-            to_email=user.email,
-            full_name=user.full_name or user.email,
-            role=user.role.value,
-            password=new_password,
-        )
-    except Exception as exc:
-        logger.warning(f"Failed to send credentials update email to {user.email}: {exc}")
+    target_dispatch = payload.dispatch_email.strip() if (payload.dispatch_email and payload.dispatch_email.strip()) else user.email
+    if payload.send_email:
+        try:
+            from app.services.email_service import send_credentials_email
+            email_delivered = await send_credentials_email(
+                to_email=target_dispatch,
+                full_name=user.full_name or user.email,
+                role=user.role.value,
+                password=new_password,
+                account_email=user.email,
+            )
+        except Exception as exc:
+            logger.warning(f"Failed to send credentials update email to {target_dispatch}: {exc}")
 
     return {
         "status": "success",
@@ -2629,11 +2912,13 @@ async def update_member_credentials(
         "email": user.email,
         "password": new_password,
         "email_delivered": email_delivered,
+        "dispatch_email": target_dispatch,
     }
 
 
 class SendCredentialsEmailRequest(BaseModel):
     password: str = Field(..., min_length=6)
+    dispatch_email: str | None = None
 
 
 @router.post("/teams/{user_id}/send-credentials-email")
@@ -2643,25 +2928,28 @@ async def resend_credentials_email(
     db: AsyncSession = Depends(get_db),
     actor: Actor = TeamLeadActor,
 ) -> dict[str, Any]:
-    """Re-dispatch credentials email to the specified staff or BDE user."""
+    """Re-dispatch credentials email to the specified staff or BDE user or separate dispatch email."""
     from app.services.email_service import send_credentials_email
 
     user = await db.get(User, user_id)
     if not user:
         raise NotFound(f"User {user_id} not found")
 
+    target_dispatch = payload.dispatch_email.strip() if (payload.dispatch_email and payload.dispatch_email.strip()) else user.email
     delivered = await send_credentials_email(
-        to_email=user.email,
+        to_email=target_dispatch,
         full_name=user.full_name or user.email,
         role=user.role.value,
         password=payload.password.strip(),
+        account_email=user.email,
     )
 
     return {
         "status": "success",
         "delivered": delivered,
         "email": user.email,
-        "message": f"Credentials email {'sent successfully' if delivered else 'attempted'} to {user.email}.",
+        "dispatch_email": target_dispatch,
+        "message": f"Credentials email {'sent successfully' if delivered else 'attempted'} to {target_dispatch}.",
     }
 
 
@@ -2738,12 +3026,14 @@ class BDEOnboardRequest(BaseModel):
     designation: str = "Business Development Executive (BDE)"
     monthly_quota: int = Field(default=2500000, ge=0)
     commission_rate: float = Field(default=5.0, ge=0.0, le=100.0)
+    dispatch_email: str | None = None
     send_email: bool = True
 
 
 class BDECredentialsUpdateRequest(BaseModel):
     email: str | None = None
     password: str = Field(..., min_length=6)
+    dispatch_email: str | None = None
     send_email: bool = True
 
 
@@ -2803,15 +3093,18 @@ async def list_bde_team(
         monthly_quota = target.monthly_quota if target else 2500000
         commission_rate = target.commission_rate if target else 5.0
 
+        is_active = (u.account_status == AccountStatus.ACTIVE)
         results.append({
             "id": str(u.id),
             "name": u.full_name or u.email.split("@")[0].capitalize(),
+            "full_name": u.full_name or u.email.split("@")[0].capitalize(),
             "email": u.email,
             "phone": phone_num or "+91 98765 43210",
             "role": u.role.value if hasattr(u.role, "value") else str(u.role),
             "designation": designation,
-            "status": "Active" if u.account_status == AccountStatus.ACTIVE else "Suspended",
+            "status": "Active" if is_active else "Suspended",
             "account_status": u.account_status.value if hasattr(u.account_status, "value") else str(u.account_status),
+            "is_active": is_active,
             "monthly_quota": monthly_quota,
             "commission_rate": commission_rate,
             "total_leads": total_leads,
@@ -2885,17 +3178,19 @@ async def onboard_bde(
     await db.commit()
 
     email_delivered = False
+    target_dispatch = payload.dispatch_email.strip() if (payload.dispatch_email and payload.dispatch_email.strip()) else new_bde.email
     if payload.send_email:
         try:
             from app.services.email_service import send_credentials_email
             email_delivered = await send_credentials_email(
-                to_email=new_bde.email,
+                to_email=target_dispatch,
                 full_name=new_bde.full_name or new_bde.email,
                 role=f"{payload.designation} (Sales)",
                 password=chosen_password,
+                account_email=new_bde.email,
             )
         except Exception as exc:
-            logger.warning(f"Failed to dispatch BDE credentials email to {new_bde.email}: {exc}")
+            logger.warning(f"Failed to dispatch BDE credentials email to {target_dispatch}: {exc}")
 
     return {
         "status": "created",
@@ -2903,6 +3198,7 @@ async def onboard_bde(
         "id": str(new_bde.id),
         "full_name": new_bde.full_name,
         "email": new_bde.email,
+        "dispatch_email": target_dispatch,
         "phone": payload.phone or "",
         "designation": payload.designation,
         "monthly_quota": payload.monthly_quota,
@@ -2942,23 +3238,26 @@ async def update_bde_credentials(
     await db.commit()
 
     email_delivered = False
+    target_dispatch = payload.dispatch_email.strip() if (payload.dispatch_email and payload.dispatch_email.strip()) else user.email
     if payload.send_email:
         try:
             from app.services.email_service import send_credentials_email
             email_delivered = await send_credentials_email(
-                to_email=user.email,
+                to_email=target_dispatch,
                 full_name=user.full_name or user.email,
                 role="BDE Sales Specialist",
                 password=new_password,
+                account_email=user.email,
             )
         except Exception as exc:
-            logger.warning(f"Failed to re-dispatch BDE credentials email to {user.email}: {exc}")
+            logger.warning(f"Failed to re-dispatch BDE credentials email to {target_dispatch}: {exc}")
 
     return {
         "status": "success",
         "message": f"Credentials for {user.full_name or user.email} updated successfully.",
         "user_id": str(user.id),
         "email": user.email,
+        "dispatch_email": target_dispatch,
         "password": new_password,
         "email_delivered": email_delivered,
     }
@@ -2967,20 +3266,74 @@ async def update_bde_credentials(
 @router.delete("/bde/{bde_id}")
 async def deactivate_bde(
     bde_id: uuid.UUID,
+    permanent: bool = Query(False),
     db: AsyncSession = Depends(get_db),
     actor: Actor = AdminActor,
 ) -> dict[str, Any]:
-    """Deactivate a BDE representative."""
+    """Deactivate or permanently remove a BDE representative."""
+    from app.models.crm import BDETarget, Lead
+
     user = await db.get(User, bde_id)
     if not user:
         raise NotFound(f"BDE user {bde_id} not found")
 
-    user.account_status = AccountStatus.SUSPENDED
+    if permanent:
+        # Unassign any leads assigned to this BDE
+        await db.execute(
+            update(Lead).where(Lead.assigned_bde_id == bde_id).values(assigned_bde_id=None)
+        )
+        # Delete BDETargets
+        await db.execute(
+            delete(BDETarget).where(BDETarget.bde_id == bde_id)
+        )
+        # Delete StaffProfile
+        sp = await db.get(StaffProfile, bde_id)
+        if sp:
+            await db.delete(sp)
+        # Delete user
+        await db.delete(user)
+        await db.commit()
+        return {
+            "status": "deleted",
+            "bde_id": str(bde_id),
+            "message": f"{user.full_name or user.email} has been permanently removed.",
+        }
+    else:
+        user.account_status = AccountStatus.SUSPENDED
+        user.token_version = (user.token_version or 0) + 1
+        sp = await db.get(StaffProfile, bde_id)
+        if sp:
+            sp.is_accepting_work = False
+        await db.commit()
+        return {
+            "status": "deactivated",
+            "bde_id": str(bde_id),
+            "message": f"{user.full_name or user.email} has been suspended.",
+        }
+
+
+@router.post("/bde/{bde_id}/reactivate")
+async def reactivate_bde(
+    bde_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Reactivate a suspended BDE account."""
+    user = await db.get(User, bde_id)
+    if not user:
+        raise NotFound(f"BDE user {bde_id} not found")
+
+    user.account_status = AccountStatus.ACTIVE
+    user.token_version = (user.token_version or 0) + 1
     sp = await db.get(StaffProfile, bde_id)
     if sp:
-        sp.is_accepting_work = False
+        sp.is_accepting_work = True
     await db.commit()
-    return {"status": "deactivated", "bde_id": str(bde_id)}
+    return {
+        "status": "reactivated",
+        "bde_id": str(bde_id),
+        "message": f"{user.full_name or user.email} has been reactivated.",
+    }
 
 
 # --- Addons Endpoints ---
@@ -3607,6 +3960,8 @@ async def list_admin_deliverables(
             "file_type": d.file_type,
             "is_video": deliverable_workflow.is_video(d.file_type, d.file_url),
             "description": d.rejection_comment or "",
+            "voice_note_url": storage_service.resolve_media_url(d.voice_note_url, request) if getattr(d, "voice_note_url", None) else None,
+            "voice_note_duration": getattr(d, "voice_note_duration", None),
             "task_id": str(task.id) if task else None,
             "task_status": task.status.value if task else None,
             "assigned_name": staff_user.full_name if staff_user else "Creative Studio",
@@ -4025,13 +4380,13 @@ async def list_admin_leave_requests(
         email_lower = (email or "").lower()
         tl_lower = (tl_name or "").lower()
         if "vikram" in tl_lower or ".alpha" in email_lower:
-            pod_name = "Pod Alpha (Pod A)"
+            pod_name = "Pod Alpha"
         elif "sarah" in tl_lower or ".beta" in email_lower:
-            pod_name = "Pod Beta (Pod B)"
+            pod_name = "Pod Beta"
         elif "rohan" in tl_lower or ".gamma" in email_lower:
-            pod_name = "Pod Gamma (Pod C)"
+            pod_name = "Pod Gamma"
         elif role_str in ("sales", "bde", "bde_head"):
-            pod_name = "Sales & Outreach (BDE)"
+            pod_name = "Sales & Outreach"
         elif role_str in ("admin", "super_admin"):
             pod_name = "Operations Leadership"
         else:
@@ -6155,6 +6510,8 @@ class CreateFreelancerRequest(BaseModel):
     portfolio_url: str | None = None
     portfolio_link: str | None = None
     notes: str | None = None
+    dispatch_email: str | None = None
+    send_email: bool = True
 
 
 class UpdateFreelancerStatusRequest(BaseModel):
@@ -6226,10 +6583,27 @@ async def create_freelancer(
     db.add(freelancer_profile)
     await db.commit()
 
+    email_delivered = False
+    target_dispatch = payload.dispatch_email.strip() if (payload.dispatch_email and payload.dispatch_email.strip()) else new_user.email
+    if payload.send_email:
+        try:
+            from app.services.email_service import send_credentials_email
+            email_delivered = await send_credentials_email(
+                to_email=target_dispatch,
+                full_name=new_user.full_name or new_user.email,
+                role=f"{freelancer_profile.specialty} (Freelancer)",
+                password=chosen_password,
+                account_email=new_user.email,
+            )
+        except Exception as exc:
+            logger.warning(f"Failed to dispatch freelancer credentials email to {target_dispatch}: {exc}")
+
     return {
         "status": "success",
         "message": f"Freelancer {new_user.full_name} created successfully.",
         "freelancer_id": str(new_user.id),
+        "email_delivered": email_delivered,
+        "dispatch_email": target_dispatch,
         "freelancer": {
             "id": str(new_user.id),
             "email": new_user.email,
@@ -6933,11 +7307,13 @@ class OnboardBDERequest(BaseModel):
     monthly_quota: int = 2500000
     commission_rate: float = 5.0
     password: str
+    dispatch_email: str | None = None
     send_credentials_email: bool = True
 
 
 class UpdateBDECredsRequest(BaseModel):
     password: str
+    dispatch_email: str | None = None
     send_credentials_email: bool = True
 
 
@@ -7080,8 +7456,12 @@ async def onboard_bde(
     await db.commit()
 
     email_sent = False
+    target_dispatch = payload.dispatch_email.strip() if (payload.dispatch_email and payload.dispatch_email.strip()) else clean_email
+    is_separate_dispatch = bool(target_dispatch.lower() != clean_email.lower())
+
     if payload.send_credentials_email:
         subject = "Welcome to Creo Agency — Your BDE Sales Specialist Portal Access"
+        dispatch_line = f"""<p style="margin: 6px 0; font-size: 13px; color: #7FA0D6;">Dispatched to personal contact: <strong style="color: #FFFFFF;">{target_dispatch}</strong></p>""" if is_separate_dispatch else ""
         html = f"""
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #0B111C; color: #FFFFFF; border-radius: 16px;">
           <h2 style="color: #F59E0B; margin-top: 0;">Welcome to Creo, {user.full_name}!</h2>
@@ -7090,7 +7470,8 @@ async def onboard_bde(
           </p>
           <div style="background: #161F2D; border: 1px solid #2A3446; border-radius: 12px; padding: 18px; margin: 20px 0;">
             <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Portal URL: <a href="http://localhost:5173/auth" style="color: #38BDF8; font-weight: bold;">Login to Creo Portal</a></p>
-            <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Email: <strong style="color: #FFFFFF;">{clean_email}</strong></p>
+            <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Login Email ID: <strong style="color: #FFFFFF;">{clean_email}</strong></p>
+            {dispatch_line}
             <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Temporary Password: <code style="background: #0B111C; padding: 4px 8px; border-radius: 6px; color: #F59E0B; font-size: 14px; font-weight: bold;">{payload.password.strip()}</code></p>
             <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Monthly Quota: <strong style="color: #10B981;">₹{payload.monthly_quota:,}</strong></p>
             <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Commission: <strong style="color: #A855F7;">{payload.commission_rate}%</strong></p>
@@ -7099,15 +7480,16 @@ async def onboard_bde(
         </div>
         """
         try:
-            email_sent = await send_email(to_email=clean_email, subject=subject, html_content=html)
+            email_sent = await send_email(to_email=target_dispatch, subject=subject, html_content=html)
         except Exception as e:
-            logger.warning(f"Failed to send BDE credentials email: {e}")
+            logger.warning(f"Failed to send BDE credentials email to {target_dispatch}: {e}")
 
     return {
         "status": "success",
         "id": str(user.id),
         "email": user.email,
         "full_name": user.full_name,
+        "dispatch_email": target_dispatch,
         "email_dispatched": email_sent,
         "message": f"BDE {user.full_name} onboarded successfully.",
     }
@@ -7136,8 +7518,12 @@ async def update_bde_credentials(
     await db.commit()
 
     email_sent = False
+    target_dispatch = payload.dispatch_email.strip() if (payload.dispatch_email and payload.dispatch_email.strip()) else user.email
+    is_separate_dispatch = bool(target_dispatch.lower() != user.email.lower())
+
     if payload.send_credentials_email:
         subject = "Your Creo BDE Account Credentials Have Been Updated"
+        dispatch_line = f"""<p style="margin: 6px 0; font-size: 13px; color: #7FA0D6;">Dispatched to personal contact: <strong style="color: #FFFFFF;">{target_dispatch}</strong></p>""" if is_separate_dispatch else ""
         html = f"""
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #0B111C; color: #FFFFFF; border-radius: 16px;">
           <h2 style="color: #F59E0B; margin-top: 0;">Updated Creo Login Credentials</h2>
@@ -7146,39 +7532,26 @@ async def update_bde_credentials(
           </p>
           <div style="background: #161F2D; border: 1px solid #2A3446; border-radius: 12px; padding: 18px; margin: 20px 0;">
             <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Portal URL: <a href="http://localhost:5173/auth" style="color: #38BDF8; font-weight: bold;">Login to Creo Portal</a></p>
-            <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Email: <strong style="color: #FFFFFF;">{user.email}</strong></p>
+            <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">Login Email ID: <strong style="color: #FFFFFF;">{user.email}</strong></p>
+            {dispatch_line}
             <p style="margin: 6px 0; font-size: 13px; color: #94A3B8;">New Password: <code style="background: #0B111C; padding: 4px 8px; border-radius: 6px; color: #F59E0B; font-size: 14px; font-weight: bold;">{new_pass}</code></p>
           </div>
         </div>
         """
         try:
-            email_sent = await send_email(to_email=user.email, subject=subject, html_content=html)
+            email_sent = await send_email(to_email=target_dispatch, subject=subject, html_content=html)
         except Exception as e:
-            logger.warning(f"Failed to send updated BDE credentials email: {e}")
+            logger.warning(f"Failed to send updated BDE credentials email to {target_dispatch}: {e}")
 
     return {
         "status": "success",
         "email_dispatched": email_sent,
+        "dispatch_email": target_dispatch,
         "message": f"Credentials updated for {user.full_name}.",
     }
 
 
-@router.delete("/bde/{bde_id}")
-async def deactivate_bde(
-    bde_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    actor: Actor = Depends(get_current_actor),
-) -> dict[str, Any]:
-    """Deactivate/suspend a BDE account."""
-    user = (await db.execute(select(User).where(User.id == bde_id))).scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=404, detail="BDE account not found.")
 
-    user.account_status = AccountStatus.SUSPENDED
-    user.token_version += 1
-    await db.commit()
-
-    return {"status": "success", "message": f"{user.full_name} has been deactivated."}
 
 
 

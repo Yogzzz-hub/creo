@@ -13,10 +13,14 @@ import {
   RefreshCw,
   ShieldCheck,
   Users,
+  History,
+  Volume2,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
 import { PublishingControl } from "../../components/ops/PublishingPanel";
+import { DeliverableHistoryModal } from "../../components/portal/DeliverableHistoryModal";
+import { VoicePlayer } from "../../components/portal/VoicePlayer";
 import { useAuth } from "../../lib/auth-context";
 import { qaApproveDeliverable, qaRejectDeliverable } from "../../lib/deliverables-api";
 import { fetchPodDashboard, type PodDashboardData, type PodTask } from "../../lib/ops-api";
@@ -46,6 +50,7 @@ export function PodDeliverablesReviewPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [checks, setChecks] = useState<boolean[]>(RUBRIC.map(() => false));
   const [feedbackNote, setFeedbackNote] = useState("");
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
   // Hide decided uploads at once; the refetch that removes them can lag a moment.
   const [decided, setDecided] = useState<Set<string>>(() => new Set());
 
@@ -157,7 +162,7 @@ export function PodDeliverablesReviewPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3">
+        <div className="flex md:grid md:grid-cols-3 overflow-x-auto gap-2.5 sm:gap-3 pb-1.5 md:pb-0 no-scrollbar snap-x overscroll-x-contain -mx-1 px-1 md:mx-0 md:px-0">
           {[
             { label: "Pending lead sign-off", value: isLoading ? "..." : isError ? "Unavailable" : queue.length, note: `${queue.filter((t) => t.is_near_sla).length} due within 24h`, icon: FileCheck2 },
             { label: "With the client", value: isLoading ? "..." : isError ? "Unavailable" : withClient, note: "awaiting client approval", icon: Users },
@@ -168,14 +173,14 @@ export function PodDeliverablesReviewPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.05 * (i + 1) }}
-              className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-3 border border-[#2A3446]/80"
+              className="min-w-[150px] md:min-w-0 flex-1 shrink-0 bg-[#161F2D] rounded-2xl p-3 border border-[#2A3446]/80 snap-start shadow-xs"
             >
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">{card.label}</span>
-                <card.icon className="size-3.5 text-[#7FA0D6]" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] truncate">{card.label}</span>
+                <card.icon className="size-3.5 text-[#7FA0D6] shrink-0 ml-1" />
               </div>
               <div className="text-xl font-black text-white">{card.value}</div>
-              <div className="text-[11px] text-[#97A0B3] mt-1">{card.note}</div>
+              <div className="text-[10px] sm:text-[11px] text-[#97A0B3] mt-1 truncate">{card.note}</div>
             </motion.div>
           ))}
         </div>
@@ -244,9 +249,18 @@ export function PodDeliverablesReviewPage() {
                     Creative: <span className="font-bold text-white">{current.assignee_name}</span>
                   </p>
                 </div>
-                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1 self-start sm:self-auto">
-                  <Clock className="size-3" /> Pending QA sign-off
-                </span>
+                <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setHistoryModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#2A3446] bg-[#0B111C] hover:bg-[#161F2D] text-xs font-semibold text-[#7FA0D6] transition-colors cursor-pointer"
+                  >
+                    <History className="size-3" /> Full History & Audio
+                  </button>
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                    <Clock className="size-3" /> Pending QA sign-off
+                  </span>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -272,6 +286,29 @@ export function PodDeliverablesReviewPage() {
                 </div>
 
                 <div className="lg:col-span-7 space-y-4">
+                  {(deliverable.voice_note_url || deliverable.rejection_comment) && (
+                    <div className="bg-[#0B111C] rounded-2xl p-3.5 border border-[#D8BF9B]/50 space-y-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-[#D8BF9B] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                          <Volume2 className="size-3.5 text-[#7FA0D6]" /> Client Revision Instructions & Notes
+                        </span>
+                        <span className="text-[10px] text-[#97A0B3]">v{deliverable.version} Revision</span>
+                      </div>
+                      {deliverable.rejection_comment && (
+                        <p className="text-white leading-relaxed whitespace-pre-wrap">{deliverable.rejection_comment}</p>
+                      )}
+                      {deliverable.voice_note_url && (
+                        <div className="pt-1">
+                          <VoicePlayer
+                            audioUrl={deliverable.voice_note_url}
+                            durationSeconds={deliverable.voice_note_duration}
+                            authorName={`${current.client_name} (Client)`}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {current.blueprint?.brief && (
                     <div className="bg-[#0B111C] rounded-2xl p-3.5 border border-[#2A3446] text-xs text-[#F1F5F9]">
                       <span className="block text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1">Brief</span>
@@ -335,6 +372,16 @@ export function PodDeliverablesReviewPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {historyModalOpen && deliverable && (
+          <DeliverableHistoryModal
+            isOpen={true}
+            onClose={() => setHistoryModalOpen(false)}
+            deliverableId={deliverable.id}
+            deliverableTitle={titleOf(current)}
+            isClient={false}
+          />
         )}
       </main>
     </div>

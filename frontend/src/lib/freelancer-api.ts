@@ -29,6 +29,8 @@ export interface CreateFreelancerPayload {
   portfolio_url?: string;
   notes?: string;
   skills?: string[];
+  dispatch_email?: string;
+  send_email?: boolean;
 }
 
 export interface AssignFreelancerPayload {

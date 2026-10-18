@@ -112,6 +112,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS story_quota integer DEFAULT 15;",
                 "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS order_id varchar(255);",
                 "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS razorpay_custom_plan_id varchar(255);",
+                "ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS voice_note_url text;",
+                "ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS voice_note_duration integer;",
+                "ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS attachment_url text;",
+                "ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS attachment_name varchar(255);",
+                "ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS attachment_type varchar(100);",
+                "ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS attachment_size bigint;",
             ]
             for col_stmt in col_stmts:
                 try:
