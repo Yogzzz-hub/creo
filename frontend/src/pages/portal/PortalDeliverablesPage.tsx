@@ -360,7 +360,7 @@ export function PortalDeliverablesPage() {
       )}
 
       {deliverables.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-10">
+        <div className="flex-1 flex flex-col items-center justify-center text-center bg-[#161F2D] rounded-2xl border border-[#2A3446] p-8">
           <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-[#2A3446] flex items-center justify-center mb-4">
             <Film className="w-5 h-5 text-[#97A0B3]" />
           </div>
@@ -370,25 +370,47 @@ export function PortalDeliverablesPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0 pb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0 pb-2">
           {/* Left Column: Batch List */}
-          <div className="col-span-1 lg:col-span-3 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-4 flex flex-col overflow-hidden max-h-[420px] lg:max-h-none">
-            <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#0B111C]/80 rounded-xl border border-[#2A3446] mb-3" role="tablist" aria-label="Filter deliverables">
+          <div className="col-span-1 lg:col-span-3 bg-[#161F2D] rounded-2xl border border-[#2A3446] p-3.5 sm:p-4 flex flex-col overflow-hidden max-h-[420px] lg:max-h-none">
+            {/* Filter Grid: Symmetrical 2-Column Grid with Master 'All' on top */}
+            <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-[#0B111C]/90 rounded-xl border border-[#2A3446] mb-3" role="tablist" aria-label="Filter deliverables">
               {FILTERS.map((f) => {
                 const isActive = filter === f.key;
+                const isAll = f.key === "all";
+                const count =
+                  f.key === "all"
+                    ? deliverables.length
+                    : f.key === "deleted"
+                    ? deletedRecords.length
+                    : deliverables.filter((d) => matchesFilter(d, f.key)).length;
+
                 return (
                   <button
                     key={f.key}
                     role="tab"
                     aria-selected={isActive}
                     onClick={() => setFilter(f.key)}
-                    className={`w-full py-1.5 px-2.5 rounded-lg text-[11px] font-semibold transition-all text-center flex items-center justify-center cursor-pointer ${
+                    className={`${
+                      isAll ? "col-span-2 py-2" : "col-span-1 py-1.5"
+                    } w-full flex items-center justify-center gap-1.5 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${
                       isActive
-                        ? "bg-[#161F2D] text-white border border-[#2A3446] shadow-xs font-bold"
-                        : "text-[#97A0B3] hover:text-white hover:bg-white/[0.03]"
+                        ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm shadow-[#BCCCE6]/20 font-black border border-[#BCCCE6]"
+                        : "text-[#97A0B3] bg-[#161F2D]/60 hover:text-white hover:bg-[#161F2D] border border-[#2A3446]/60 hover:border-[#7FA0D6]/40"
                     }`}
                   >
-                    {f.label}
+                    <span className="truncate">{f.label}</span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none shrink-0 ${
+                        isActive
+                          ? "bg-[#0B111C]/25 text-[#0B111C]"
+                          : f.key === "needs_you" && count > 0
+                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                          : "bg-[#0B111C] text-[#97A0B3] border border-[#2A3446]"
+                      }`}
+                    >
+                      {count}
+                    </span>
                   </button>
                 );
               })}
@@ -438,8 +460,10 @@ export function PortalDeliverablesPage() {
                     <button
                       key={d.id}
                       onClick={() => select(d.id)}
-                      className={`w-full flex items-center gap-4 p-3 rounded-2xl border text-left transition-all ${
-                        isSelected ? "bg-[#0B111C]/40 border-white/[0.1] shadow-lg" : "border-transparent hover:bg-white/[0.02]"
+                      className={`w-full flex items-center gap-3.5 p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-[#0B111C] border-[#7FA0D6]/60 shadow-lg ring-1 ring-[#7FA0D6]/30"
+                          : "border-[#2A3446]/40 bg-transparent hover:border-[#2A3446] hover:bg-white/[0.02]"
                       }`}
                     >
                       <div className="w-14 h-14 rounded-xl bg-black overflow-hidden shrink-0 border border-[#2A3446] flex items-center justify-center">
@@ -458,17 +482,17 @@ export function PortalDeliverablesPage() {
           </div>
 
           {/* Middle Column: Player */}
-          <div className="col-span-1 lg:col-span-5 bg-[#161F2D] rounded-[24px] border border-[#2A3446] flex flex-col relative overflow-hidden min-h-[420px] sm:min-h-[500px]">
+          <div className="col-span-1 lg:col-span-5 bg-[#161F2D] rounded-2xl border border-[#2A3446] flex flex-col relative overflow-hidden min-h-[420px] sm:min-h-[500px]">
             {versions.length > 1 && selectedItem && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex p-1 bg-[#0B111C]/80 backdrop-blur-md rounded-full border border-[#2A3446]">
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex p-1 bg-[#0B111C]/80 backdrop-blur-md rounded-full border border-[#2A3446]">
                 {[...versions].reverse().map((v) => {
                   const active = shownItem?.id === v.id;
                   return (
                     <button
                       key={v.id}
                       onClick={() => setViewVersionId(v.id === selectedItem.id ? null : v.id)}
-                      className={`px-3 sm:px-4 py-1.5 rounded-full text-[12px] sm:text-[13px] font-bold transition-colors ${
-                        active ? "bg-[#161F2D] text-white shadow-sm border border-[#2A3446]" : "text-[#97A0B3] hover:text-white"
+                      className={`px-3 sm:px-4 py-1 rounded-full text-[12px] sm:text-[13px] font-bold transition-all cursor-pointer ${
+                        active ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm font-black" : "text-[#97A0B3] hover:text-white"
                       }`}
                     >
                       v{v.version}{v.id === selectedItem.id ? " · latest" : ""}
@@ -478,19 +502,19 @@ export function PortalDeliverablesPage() {
               </div>
             )}
 
-            <div className="flex-1 flex items-center justify-center p-6 pt-16 bg-[#0B111C]/30">
+            <div className="flex-1 flex items-center justify-center p-4 sm:p-5 pt-12 sm:pt-14 bg-[#0B111C]/30">
               {shownItem ? (
                 <MediaPreview item={shownItem} onRefresh={refresh} />
               ) : deliverableId && detailQuery.isLoading ? (
                 <CreoInlineLoader />
               ) : (
-                <div className="text-sm text-[#97A0B3] text-center px-6">
+                <div className="text-sm text-[#97A0B3] text-center px-4">
                   {deliverableId ? "This deliverable isn't available. It may still be in production." : "Select an asset to view"}
                 </div>
               )}
             </div>
 
-            <div className="h-[64px] shrink-0 border-t border-[#2A3446] px-6 flex items-center justify-between bg-[#0B111C]/30 gap-3">
+            <div className="h-[52px] shrink-0 border-t border-[#2A3446] px-4 sm:px-5 flex items-center justify-between bg-[#0B111C]/30 gap-3">
               <span className="text-[13px] text-[#97A0B3] truncate">
                 {shownItem ? `${shownItem.type_label} · v${shownItem.version}${viewingOlder ? " · earlier version" : ""}` : "No asset selected"}
               </span>
@@ -501,9 +525,9 @@ export function PortalDeliverablesPage() {
           </div>
 
           {/* Right Column: Details & Actions */}
-          <div className="col-span-1 lg:col-span-4 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-5 sm:p-6 flex flex-col overflow-hidden">
+          <div className="col-span-1 lg:col-span-4 bg-[#161F2D] rounded-2xl border border-[#2A3446] p-4 sm:p-5 flex flex-col overflow-hidden">
             {shownItem ? (
-              <div className="flex-1 overflow-y-auto pr-1 scrollbar-hide space-y-6">
+              <div className="flex-1 overflow-y-auto pr-1 scrollbar-hide space-y-4">
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#97A0B3] mb-2">
                     {shownItem.type_label} ·{" "}
@@ -596,16 +620,24 @@ export function PortalDeliverablesPage() {
                       </p>
                     ) : (
                       <>
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {["Less text", "Different music", "Stronger hook", "Colour feels off-brand", "Wrong product"].map((tag) => (
-                            <button
-                              key={tag}
-                              onClick={() => setCommentText((prev) => (prev ? `${prev} · ${tag}` : tag))}
-                              className="px-3 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-[#2A3446] text-xs font-bold text-[#97A0B3] transition-colors"
-                            >
-                              {tag}
-                            </button>
-                          ))}
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                          {["Less text", "Different music", "Stronger hook", "Colour feels off-brand", "Wrong product"].map((tag) => {
+                            const isSelectedTag = commentText.includes(tag);
+                            return (
+                              <button
+                                key={tag}
+                                type="button"
+                                onClick={() => setCommentText((prev) => (prev ? `${prev} · ${tag}` : tag))}
+                                className={`px-2.5 py-1 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                                  isSelectedTag
+                                    ? "bg-[#7FA0D6]/20 border-[#7FA0D6]/50 text-[#BCCCE6] shadow-xs"
+                                    : "bg-white/[0.03] hover:bg-white/[0.08] border-[#2A3446] text-[#97A0B3] hover:text-white"
+                                }`}
+                              >
+                                {tag}
+                              </button>
+                            );
+                          })}
                         </div>
                         <label htmlFor="change-request" className="sr-only">Describe the changes you need</label>
                         <textarea
@@ -613,9 +645,9 @@ export function PortalDeliverablesPage() {
                           value={commentText}
                           onChange={(e) => setCommentText(e.target.value)}
                           placeholder="Tell your creative pod what to change (or record voice note below)…"
-                          className="w-full bg-[#0B111C]/50 border border-[#2A3446] rounded-xl p-4 text-[13px] text-white placeholder:text-[#97A0B3] resize-none focus:outline-none focus:border-white/[0.2] transition-colors h-20 mb-3"
+                          className="w-full bg-[#0B111C]/50 border border-[#2A3446] rounded-xl p-3 text-[13px] text-white placeholder:text-[#97A0B3] resize-none focus:outline-none focus:border-white/[0.2] transition-colors h-18 mb-2.5"
                         />
-                        <div className="mb-4">
+                        <div className="mb-3">
                           <VoiceFeedbackRecorder
                             onRecordingComplete={(blob, duration) => setRecordedAudio({ blob, duration })}
                             onClearRecording={() => setRecordedAudio(null)}
@@ -623,7 +655,7 @@ export function PortalDeliverablesPage() {
                         </div>
                       </>
                     )}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5">
                       {!lastRoundUsed && (
                         <button
                           onClick={async () => {
@@ -652,7 +684,7 @@ export function PortalDeliverablesPage() {
                             isUploadingVoice ||
                             (!commentText.trim() && !recordedAudio?.blob)
                           }
-                          className="flex-1 px-4 py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#0B111C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          className="flex-1 px-4 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#0B111C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                           {isUploadingVoice ? (
                             <>
@@ -669,7 +701,7 @@ export function PortalDeliverablesPage() {
                       <button
                         onClick={() => approveMutation.mutate(shownItem.id)}
                         disabled={approveMutation.isPending}
-                        className="flex-1 px-4 py-3 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Check className="w-4 h-4" />
                         {approveMutation.isPending ? "Approving..." : "Approve"}

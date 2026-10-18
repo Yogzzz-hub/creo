@@ -13,8 +13,11 @@ import {
   Mail,
   Instagram,
   AlertTriangle,
+  Bell,
+  Loader2,
 } from "lucide-react";
 import { ClientRosterItem } from "@/types/ops";
+import { sendClientReminder } from "../../lib/ops-api";
 
 interface ClientDetailsWidgetProps {
   clients: ClientRosterItem[];
@@ -24,6 +27,8 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [selectedClient, setSelectedClient] = useState<ClientRosterItem | null>(null);
+  const [reminderStatus, setReminderStatus] = useState<string | null>(null);
+  const [isSendingReminder, setIsSendingReminder] = useState(false);
 
   const getClientDisplayName = (client: ClientRosterItem): string => {
     if (client.company_name && client.company_name.trim() !== "" && client.company_name.toLowerCase() !== "unknown") {
@@ -444,22 +449,83 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                 <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1 custom-scrollbar">
                   {/* Status Banner in Modal */}
                   {lifecycleStatus === "not_paid_not_onboarded" && (
-                    <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-2.5">
-                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                      <div>
-                        <span className="font-bold uppercase tracking-wider block text-amber-400 text-[11px]">user not paid and not onboarded yet</span>
-                        <span className="text-[11px] text-[#F1F5F9]">This client has logged in but has not paid for a plan and has not completed onboarding.</span>
+                    <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                        <div>
+                          <span className="font-bold uppercase tracking-wider block text-amber-400 text-[11px]">user not paid and not onboarded yet</span>
+                          <span className="text-[11px] text-[#F1F5F9]">This client has logged in but has not paid for a plan and has not completed onboarding.</span>
+                        </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            setIsSendingReminder(true);
+                            const res = await sendClientReminder({
+                              client_id: client.client_id,
+                              client_name: company_name,
+                              reminder_type: "payment",
+                            });
+                            setReminderStatus(res.message || "Payment reminder sent to client!");
+                          } catch (err: any) {
+                            setReminderStatus(err?.message || "Failed to send reminder.");
+                          } finally {
+                            setIsSendingReminder(false);
+                            setTimeout(() => setReminderStatus(null), 4000);
+                          }
+                        }}
+                        disabled={isSendingReminder}
+                        className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 self-start sm:self-center disabled:opacity-60"
+                        title="Send payment reminder notification to client"
+                      >
+                        {isSendingReminder ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bell className="w-3.5 h-3.5" />}
+                        <span>Send Payment Reminder</span>
+                      </button>
                     </div>
                   )}
 
                   {lifecycleStatus === "paid_not_onboarded" && (
-                    <div className="p-3.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-300 text-xs font-semibold flex items-center gap-2.5">
-                      <Sparkles className="w-4 h-4 text-sky-400 shrink-0" />
-                      <div>
-                        <span className="font-bold uppercase tracking-wider block text-sky-400 text-[11px]">user paid but not onboarded</span>
-                        <span className="text-[11px] text-[#F1F5F9]">Client payment is active. Awaiting completion of the onboarding questionnaire.</span>
+                    <div className="p-3.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-300 text-xs font-semibold flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Sparkles className="w-4 h-4 text-sky-400 shrink-0" />
+                        <div>
+                          <span className="font-bold uppercase tracking-wider block text-sky-400 text-[11px]">user paid but not onboarded</span>
+                          <span className="text-[11px] text-[#F1F5F9]">Client payment is active. Awaiting completion of the onboarding questionnaire.</span>
+                        </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            setIsSendingReminder(true);
+                            const res = await sendClientReminder({
+                              client_id: client.client_id,
+                              client_name: company_name,
+                              reminder_type: "onboarding",
+                            });
+                            setReminderStatus(res.message || "Onboarding reminder sent to client!");
+                          } catch (err: any) {
+                            setReminderStatus(err?.message || "Failed to send reminder.");
+                          } finally {
+                            setIsSendingReminder(false);
+                            setTimeout(() => setReminderStatus(null), 4000);
+                          }
+                        }}
+                        disabled={isSendingReminder}
+                        className="px-2.5 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 self-start sm:self-center disabled:opacity-60"
+                        title="Send onboarding reminder notification to client"
+                      >
+                        {isSendingReminder ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bell className="w-3.5 h-3.5" />}
+                        <span>Send Onboarding Reminder</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {reminderStatus && (
+                    <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-fade-in">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      <span>{reminderStatus}</span>
                     </div>
                   )}
 

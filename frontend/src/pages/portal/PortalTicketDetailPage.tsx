@@ -284,38 +284,38 @@ export function ClientTicketDetailPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className={`rounded-2xl sm:rounded-3xl p-5 sm:p-6 border shadow-xl relative overflow-hidden ${
+        className={`rounded-2xl border shadow-xl relative overflow-hidden p-4 sm:p-5 ${
           isSolved
             ? "bg-gradient-to-br from-emerald-950/80 via-[#161F2D] to-[#0B111C] border-emerald-500/40 shadow-emerald-950/30"
             : "bg-gradient-to-br from-blue-950/70 via-[#161F2D] to-[#0B111C] border-blue-500/30 shadow-blue-950/20"
         }`}
       >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-start sm:items-center gap-4 sm:gap-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+          <div className="flex items-start sm:items-center gap-3.5 sm:gap-4">
             <div
-              className={`size-14 sm:size-16 rounded-2xl flex items-center justify-center shrink-0 border ${
+              className={`size-12 sm:size-14 rounded-2xl flex items-center justify-center shrink-0 border ${
                 isSolved
                   ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_24px_rgba(16,185,129,0.25)]"
                   : "bg-blue-500/20 text-[#7FA0D6] border-blue-500/30 shadow-[0_0_24px_rgba(59,130,246,0.2)]"
               }`}
             >
               {isSolved ? (
-                <CheckCircle2 className="size-8 sm:size-9" />
+                <CheckCircle2 className="size-7 sm:size-8" />
               ) : (
-                <Clock className="size-8 sm:size-9 animate-pulse" />
+                <Clock className="size-7 sm:size-8 animate-pulse" />
               )}
             </div>
 
             <div>
-              <div className="flex items-center gap-2.5 mb-1.5 flex-wrap">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border ${
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider border ${
                     isSolved
                       ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
                       : "bg-amber-500/20 text-amber-300 border-amber-500/30"
                   }`}
                 >
-                  <span className={`size-2 rounded-full ${isSolved ? "bg-emerald-400" : "bg-amber-400 animate-pulse"}`} />
+                  <span className={`size-1.5 rounded-full ${isSolved ? "bg-emerald-400" : "bg-amber-400 animate-pulse"}`} />
                   {isSolved ? "TICKET SOLVED" : "TICKET IN PROGRESS"}
                 </span>
                 <span className="text-xs text-[#97A0B3] hidden sm:inline">
@@ -323,13 +323,13 @@ export function ClientTicketDetailPage() {
                 </span>
               </div>
 
-              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              <h1 className="text-lg sm:text-xl font-black text-white tracking-tight">
                 {isSolved
                   ? "This ticket has been marked Solved"
                   : "Your creative pod is working on this ticket"}
               </h1>
 
-              <p className="text-xs sm:text-sm text-[#97A0B3] mt-1 max-w-xl">
+              <p className="text-xs text-[#97A0B3] mt-0.5 max-w-xl">
                 {isSolved
                   ? "All required adjustments or answers have been completed by your creative team. Check the resolution details below."
                   : "Your inquiry is currently in queue with our dedicated specialists. We review and resolve deliverables and support inquiries rapidly."}
@@ -338,11 +338,11 @@ export function ClientTicketDetailPage() {
           </div>
 
           {/* Quick Action Button in Banner */}
-          <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
             {isSolved ? (
               <Link
                 to="/portal/deliverables"
-                className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-[#0B111C] font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-[#0B111C] font-black text-xs flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer"
               >
                 <FileCheck className="size-4" />
                 <span>View Deliverables</span>
@@ -350,7 +350,7 @@ export function ClientTicketDetailPage() {
             ) : (
               <Link
                 to="/portal/slack"
-                className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-[#7FA0D6] hover:bg-[#7FA0D6]/90 text-[#0B111C] font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2 rounded-full bg-[#7FA0D6] hover:bg-[#7FA0D6]/90 text-[#0B111C] font-black text-xs flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer"
               >
                 <MessageSquare className="size-4" />
                 <span>Chat in Slack Hub</span>
@@ -360,7 +360,7 @@ export function ClientTicketDetailPage() {
         </div>
 
         {/* Status Timeline Bar */}
-        <div className="mt-6 pt-5 border-t border-white/[0.08] grid grid-cols-3 gap-2 sm:gap-4 text-center">
+        <div className="mt-4 pt-3.5 border-t border-white/[0.08] grid grid-cols-3 gap-2 sm:gap-4 text-center">
           <div className="flex flex-col items-center">
             <div className="size-6 rounded-full bg-emerald-500 text-[#0B111C] flex items-center justify-center text-xs font-black mb-1">
               ✓
@@ -410,8 +410,8 @@ export function ClientTicketDetailPage() {
         {/* Left Column: Your Original Report & Conversation (2 Cols) */}
         <div className="lg:col-span-2 space-y-4">
           {/* Your Original Request Card */}
-          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] shadow-sm space-y-4">
-            <div className="flex items-start justify-between gap-4 border-b border-[#2A3446] pb-4">
+          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] shadow-sm space-y-3.5">
+            <div className="flex items-start justify-between gap-4 border-b border-[#2A3446] pb-3">
               <div>
                 <span className="text-[11px] font-bold text-[#7FA0D6] uppercase tracking-wider block mb-1">
                   Subject
@@ -429,16 +429,16 @@ export function ClientTicketDetailPage() {
               <span className="text-xs font-bold text-[#97A0B3] block mb-2">
                 What you reported:
               </span>
-              <div className="p-4 rounded-xl bg-[#0B111C] border border-white/[0.04] text-sm text-[#F1F5F9] whitespace-pre-wrap leading-relaxed">
+              <div className="p-3.5 rounded-xl bg-[#0B111C] border border-white/[0.04] text-xs sm:text-sm text-[#F1F5F9] whitespace-pre-wrap leading-relaxed">
                 {ticketData?.description || "No description provided."}
               </div>
             </div>
           </div>
 
           {/* Conversation & Pod Responses */}
-          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
+          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] shadow-sm space-y-3.5">
+            <div className="flex items-center justify-between border-b border-[#2A3446] pb-2.5">
+              <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
                 <MessageSquare className="size-4 text-[#7FA0D6]" />
                 <span>Updates & Responses</span>
               </h3>
@@ -447,10 +447,10 @@ export function ClientTicketDetailPage() {
               </span>
             </div>
 
-            <div className="space-y-3.5">
+            <div className="space-y-3">
               {messages.length === 0 ? (
-                <div className="p-8 text-center text-[#97A0B3] bg-[#0B111C]/50 rounded-xl">
-                  <Clock className="size-8 mx-auto mb-2 opacity-40 text-[#7FA0D6]" />
+                <div className="p-6 text-center text-[#97A0B3] bg-[#0B111C]/50 rounded-xl">
+                  <Clock className="size-7 mx-auto mb-2 opacity-40 text-[#7FA0D6]" />
                   <p className="text-sm font-semibold text-white">No updates yet</p>
                   <p className="text-xs text-[#97A0B3] mt-1">
                     Your pod lead will post updates and confirmation here once resolved.
@@ -460,7 +460,7 @@ export function ClientTicketDetailPage() {
                 messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className="p-4 rounded-xl bg-[#0B111C] border border-white/[0.04] space-y-2"
+                    className="p-3.5 rounded-xl bg-[#0B111C] border border-white/[0.04] space-y-2"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
@@ -491,7 +491,7 @@ export function ClientTicketDetailPage() {
 
             {/* Follow-up reply box */}
             <form onSubmit={handleSendFollowUp} className="pt-2 border-t border-[#2A3446]">
-              <label className="block text-xs font-bold text-[#97A0B3] mb-2">
+              <label className="block text-xs font-bold text-[#97A0B3] mb-1.5">
                 Need to add extra details or follow up with your team?
               </label>
               <div className="flex gap-2">
@@ -500,7 +500,7 @@ export function ClientTicketDetailPage() {
                   onChange={(e) => setFollowUpText(e.target.value)}
                   placeholder="Type a follow-up message to your creative pod..."
                   rows={2}
-                  className="flex-1 p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs sm:text-sm text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] resize-none"
+                  className="flex-1 p-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] resize-none"
                 />
                 <button
                   type="submit"
@@ -518,14 +518,14 @@ export function ClientTicketDetailPage() {
         {/* Right Column: Resolution Summary & Help Card (1 Col) */}
         <div className="space-y-4">
           {/* Resolution Result Summary Card */}
-          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] shadow-sm space-y-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2 border-b border-[#2A3446] pb-3">
+          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] shadow-sm space-y-3.5">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2 border-b border-[#2A3446] pb-2.5">
               <ShieldCheck className="size-4 text-[#7FA0D6]" />
               <span>Resolution Status</span>
             </h3>
 
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-[#0B111C] border border-white/[0.04]">
+            <div className="space-y-2.5 text-xs">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#0B111C] border border-white/[0.04]">
                 <span className="text-[#97A0B3]">Final Result</span>
                 <span
                   className={`font-black uppercase tracking-wider ${
@@ -536,14 +536,14 @@ export function ClientTicketDetailPage() {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-xl bg-[#0B111C] border border-white/[0.04]">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#0B111C] border border-white/[0.04]">
                 <span className="text-[#97A0B3]">Assigned Pod</span>
                 <span className="font-bold text-white">
                   {ticketData?.assignee_name || "Creative Pod Specialists"}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-xl bg-[#0B111C] border border-white/[0.04]">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#0B111C] border border-white/[0.04]">
                 <span className="text-[#97A0B3]">SLA Target</span>
                 <span className="font-bold text-emerald-400">
                   {isSolved ? "Met On Time" : "Standard SLA Active"}
@@ -552,7 +552,7 @@ export function ClientTicketDetailPage() {
             </div>
 
             {isSolved && (
-              <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/20 text-xs text-emerald-300 flex items-start gap-2">
+              <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/20 text-xs text-emerald-300 flex items-start gap-2">
                 <Check className="size-4 text-emerald-400 shrink-0 mt-0.5" />
                 <span>
                   All requests on this ticket have been resolved. If you need any further changes, you can submit a new request anytime.
@@ -562,7 +562,7 @@ export function ClientTicketDetailPage() {
           </div>
 
           {/* Direct Support Options */}
-          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] shadow-sm space-y-3">
+          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] shadow-sm space-y-3">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <HelpCircle className="size-4 text-[#7FA0D6]" />
               <span>Direct Assistance</span>
@@ -575,7 +575,7 @@ export function ClientTicketDetailPage() {
             <div className="space-y-2 pt-1">
               <Link
                 to="/portal/slack"
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-[#0B111C] hover:bg-[#2A3446] border border-white/[0.04] text-xs font-semibold text-white transition-colors cursor-pointer group"
+                className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#0B111C] hover:bg-[#2A3446] border border-white/[0.04] text-xs font-semibold text-white transition-colors cursor-pointer group"
               >
                 <div className="flex items-center gap-2.5">
                   <MessageSquare className="size-4 text-[#7FA0D6]" />
