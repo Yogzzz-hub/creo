@@ -269,8 +269,55 @@ export function FreelancerTasksPage() {
         </div>
       )}
 
-      {/* ── 4 Financial & Earnings Summary Cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ── MOBILE: COMPACT HORIZONTAL QUICK-STATS RIBBON (Replaces 4 massive stacked cards on phone) ── */}
+      <div className="sm:hidden flex items-center gap-2.5 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar snap-x overscroll-x-contain -mx-1 px-1">
+        <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+            <span>Earned</span>
+            <IndianRupee className="w-3.5 h-3.5 text-emerald-400" />
+          </div>
+          <div className="text-xl font-black text-emerald-400">
+            ₹{earnings.earnedSettled.toLocaleString("en-IN")}
+          </div>
+          <p className="text-[10px] text-emerald-400/80 font-bold truncate">{earnings.completedCount} approved</p>
+        </div>
+
+        <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+            <span>In QA</span>
+            <Clock className="w-3.5 h-3.5 text-blue-400" />
+          </div>
+          <div className="text-xl font-black text-blue-400">
+            ₹{earnings.pendingReview.toLocaleString("en-IN")}
+          </div>
+          <p className="text-[10px] text-blue-400/80 font-bold truncate">{earnings.reviewCount} pending</p>
+        </div>
+
+        <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+            <span>Workload</span>
+            <Briefcase className="w-3.5 h-3.5 text-purple-400" />
+          </div>
+          <div className="text-xl font-black text-purple-300">
+            ₹{earnings.activeInProgress.toLocaleString("en-IN")}
+          </div>
+          <p className="text-[10px] text-purple-400/80 font-bold truncate">{earnings.activeCount} in work</p>
+        </div>
+
+        <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+            <span>Target</span>
+            <Wallet className="w-3.5 h-3.5 text-amber-400" />
+          </div>
+          <div className="text-xl font-black text-amber-400">
+            ₹{earnings.projectedMonthly.toLocaleString("en-IN")}
+          </div>
+          <p className="text-[10px] text-amber-400/80 font-bold truncate">~₹{earnings.projectedWeekly.toLocaleString("en-IN")}/wk</p>
+        </div>
+      </div>
+
+      {/* ── DESKTOP/TABLET: 4 Financial & Earnings Summary Cards (Hidden on phone) ── */}
+      <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Earned & Settled */}
         <div className="bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-emerald-500/30 transition-all shadow-xl flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">

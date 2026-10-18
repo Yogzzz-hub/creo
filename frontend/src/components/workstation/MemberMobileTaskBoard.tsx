@@ -14,6 +14,7 @@ import type { UseMutationResult } from "@tanstack/react-query";
 import type { PodTask } from "../../lib/ops-api";
 import { DeliverableMedia } from "../ops/DeliverableMedia";
 import { PublishingControl } from "../ops/PublishingPanel";
+import { VoicePlayer } from "../portal/VoicePlayer";
 
 type Column = "assigned" | "production" | "qa" | "review";
 
@@ -49,7 +50,12 @@ interface MemberMobileTaskBoardProps {
   formatLabel: (type: string) => string;
   taskTitle: (task: PodTask) => string;
   dueText: (task: PodTask) => { text: string; urgent: boolean };
-  feedbackFor: (task: PodTask) => { source: "Lead QA" | "Client"; text: string } | null;
+  feedbackFor: (task: PodTask) => {
+    source: "Lead QA" | "Client";
+    text: string;
+    voice_note_url?: string | null;
+    voice_note_duration?: number | null;
+  } | null;
 }
 
 export function MemberMobileTaskBoard({
@@ -353,13 +359,27 @@ export function MemberMobileTaskBoard({
 
                     {/* Production stage feedback note */}
                     {feedback && (
-                      <div className="p-2.5 my-2 rounded-lg bg-[#0B111C] border border-amber-400/40 text-xs space-y-1">
-                        <div className="font-bold text-amber-300 text-[10px] uppercase tracking-wider">
-                          {feedback.source} requested changes
+                      <div className="p-2.5 my-2 rounded-lg bg-[#0B111C] border border-amber-400/40 text-xs space-y-1.5">
+                        <div className="font-bold text-amber-300 text-[10px] uppercase tracking-wider flex items-center justify-between">
+                          <span>{feedback.source} requested changes</span>
+                          {feedback.voice_note_url && (
+                            <span className="text-sky-400 font-mono text-[9px] bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20">Voice Note</span>
+                          )}
                         </div>
-                        <p className="text-[11px] text-slate-200 leading-snug line-clamp-3">
-                          "{feedback.text}"
-                        </p>
+                        {feedback.text && (
+                          <p className="text-[11px] text-slate-200 leading-snug line-clamp-3">
+                            "{feedback.text}"
+                          </p>
+                        )}
+                        {feedback.voice_note_url && (
+                          <div className="pt-1">
+                            <VoicePlayer
+                              audioUrl={feedback.voice_note_url}
+                              durationSeconds={feedback.voice_note_duration}
+                              authorName={`${feedback.source}'s Voice Note`}
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

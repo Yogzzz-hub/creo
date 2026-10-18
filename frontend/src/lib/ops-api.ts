@@ -429,6 +429,8 @@ export interface PodTask {
     revision_round: number;
     /** QA notes (qa_rejected) or the client's change request (revision_requested). */
     rejection_comment?: string | null;
+    voice_note_url?: string | null;
+    voice_note_duration?: number | null;
     created_at?: string | null;
   } | null;
 }

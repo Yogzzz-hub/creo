@@ -127,6 +127,8 @@ class Deliverable(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         nullable=True,
     )
     rejection_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
+    voice_note_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    voice_note_duration: Mapped[int | None] = mapped_column(Integer, nullable=True)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     rejected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

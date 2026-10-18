@@ -125,16 +125,16 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
           <span>{filteredClients.length} Active Retainers</span>
         </div>
 
-        {/* List Header (Desktop Only) */}
-        <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-1.5 text-[9px] font-black uppercase tracking-wider text-[#97A0B3] mb-1">
+        {/* List Header (Wide Desktop Only) */}
+        <div className="hidden xl:grid grid-cols-12 gap-3 px-4 py-1.5 text-[9px] font-black uppercase tracking-wider text-[#97A0B3] mb-1">
           <div className="col-span-4">Client & Tier</div>
-          <div className="col-span-2">Status</div>
+          <div className="col-span-3">Status</div>
           <div className="col-span-3">Pod Assigned</div>
-          <div className="col-span-3 text-right">Deliverables & Action</div>
+          <div className="col-span-2 text-right">Deliverables & Action</div>
         </div>
 
-        {/* List Content */}
-        <div className="flex flex-col space-y-2 sm:space-y-1.5">
+        {/* List Content - Fixed Container Size with Internal Scroll */}
+        <div className="flex flex-col space-y-2 sm:space-y-1.5 max-h-[440px] sm:max-h-[500px] overflow-y-auto overscroll-contain pr-1 sm:pr-1.5 scrollbar-thin scrollbar-thumb-[#2A3446] hover:scrollbar-thumb-[#7FA0D6]/40 scrollbar-track-transparent">
           {filteredClients.map((client, i) => {
             const isPaid = Boolean(
               (client.subscription_status && ["active", "trialing", "paid"].includes(client.subscription_status.toLowerCase())) ||
@@ -161,8 +161,8 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                 onClick={() => setSelectedClient(client)}
                 className="bg-[#0B111C]/80 hover:bg-[#0B111C] rounded-2xl sm:rounded-xl border border-[#2A3446] hover:border-[#7FA0D6] hover:shadow-md transition-all group cursor-pointer"
               >
-                {/* ── Desktop Grid Row (sm and up) ── */}
-                <div className="hidden sm:grid grid-cols-12 gap-3 items-center px-4 py-2.5">
+                {/* ── Wide Desktop Grid Row (xl and up) ── */}
+                <div className="hidden xl:grid grid-cols-12 gap-3 items-center px-4 py-2.5">
                   {/* Client & Tier */}
                   <div className="col-span-4 flex items-center space-x-2.5 min-w-0">
                     <div className={`flex-shrink-0 w-8 h-8 rounded-lg ${isOnboarded ? pod.avatarColor : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446]"} text-white flex items-center justify-center font-bold text-xs shadow-2xs`}>
@@ -173,7 +173,7 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                         <span className="text-xs font-bold text-white truncate tracking-tight group-hover:text-[#7FA0D6] transition-colors">
                           {company_name}
                         </span>
-                        <span className={`text-[8px] font-black tracking-wider px-1.5 py-0.2 rounded-md border ${getTierColor(tier)}`}>
+                        <span className={`text-[8px] font-black tracking-wider px-1.5 py-0.2 rounded-md border ${getTierColor(tier)} shrink-0`}>
                           {tier}
                         </span>
                       </div>
@@ -182,35 +182,35 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                   </div>
 
                   {/* Status */}
-                  <div className="col-span-2">
+                  <div className="col-span-3 min-w-0 flex items-center">
                     {lifecycleStatus === "not_paid_not_onboarded" ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-amber-400 bg-amber-500/15 border border-amber-500/30 whitespace-nowrap">
-                        <span className="w-1 h-1 rounded-full bg-amber-400" />
-                        user not paid and not onboarded yet
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold text-amber-400 bg-amber-500/15 border border-amber-500/30 truncate max-w-full" title="user not paid and not onboarded yet">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                        <span className="truncate">Unpaid · Not Onboarded</span>
                       </span>
                     ) : lifecycleStatus === "paid_not_onboarded" ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-sky-400 bg-sky-500/15 border border-sky-500/30 whitespace-nowrap">
-                        <span className="w-1 h-1 rounded-full bg-sky-400 animate-pulse" />
-                        user paid but not onboarded
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold text-sky-400 bg-sky-500/15 border border-sky-500/30 truncate max-w-full" title="user paid but not onboarded">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse shrink-0" />
+                        <span className="truncate">Paid · Awaiting Setup</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-emerald-400 bg-emerald-500/15 border border-emerald-500/30">
-                        <span className="w-1 h-1 rounded-full bg-emerald-400" />
-                        {client.subscription_status || client.account_status || "active"}
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 truncate max-w-full capitalize">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        <span className="truncate">{client.subscription_status || client.account_status || "active"}</span>
                       </span>
                     )}
                   </div>
 
                   {/* Pod Assigned */}
-                  <div className="col-span-3 flex items-center space-x-2">
+                  <div className="col-span-3 flex items-center space-x-2 min-w-0">
                     {isOnboarded ? (
                       <>
                         <div className="flex-shrink-0 w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold text-[10px]">
                           {pod.letter}
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-[11px] font-bold text-white tracking-tight">{pod.name}</span>
-                          <span className="text-[9px] text-[#97A0B3] font-medium">{pod.lead}</span>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-[11px] font-bold text-white tracking-tight truncate">{pod.name}</span>
+                          <span className="text-[9px] text-[#97A0B3] font-medium truncate">{pod.lead}</span>
                         </div>
                       </>
                     ) : (
@@ -218,11 +218,11 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                         <div className="flex-shrink-0 w-6 h-6 rounded-md bg-[#161F2D] text-[#97A0B3] border border-[#2A3446] flex items-center justify-center font-bold text-[10px]">
                           —
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-[11px] font-bold text-[#97A0B3] tracking-tight">
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-[11px] font-bold text-[#97A0B3] tracking-tight truncate">
                             {isPaid ? "Awaiting Onboarding" : "Not Assigned"}
                           </span>
-                          <span className="text-[9px] text-[#97A0B3]/70 font-medium">
+                          <span className="text-[9px] text-[#97A0B3]/70 font-medium truncate">
                             {isPaid ? "Intake pending" : "Unpaid client"}
                           </span>
                         </div>
@@ -231,9 +231,9 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                   </div>
 
                   {/* Deliverables & Quick View */}
-                  <div className="col-span-3 text-right flex items-center justify-end space-x-2.5">
-                    <span className="text-[11px] font-bold text-[#F1F5F9] tracking-tight">
-                      {isOnboarded ? `${deliverables_completed}/${deliverables_total} Posts` : "Pending Onboarding"}
+                  <div className="col-span-2 text-right flex items-center justify-end space-x-2 min-w-0">
+                    <span className="text-[11px] font-bold text-[#F1F5F9] tracking-tight truncate">
+                      {isOnboarded ? `${deliverables_completed}/${deliverables_total} Posts` : "Pending"}
                     </span>
                     {isOnboarded && (
                       <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
@@ -261,7 +261,7 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                         e.stopPropagation();
                         setSelectedClient(client);
                       }}
-                      className="px-2 py-1 rounded-lg bg-[#161F2D] group-hover:bg-[#7FA0D6] text-[#97A0B3] group-hover:text-[#0B111C] text-[10px] font-bold border border-[#2A3446] group-hover:border-transparent transition-all flex items-center gap-0.5"
+                      className="px-2 py-1 rounded-lg bg-[#161F2D] group-hover:bg-[#7FA0D6] text-[#97A0B3] group-hover:text-[#0B111C] text-[10px] font-bold border border-[#2A3446] group-hover:border-transparent transition-all flex items-center gap-0.5 shrink-0"
                     >
                       <span>Details</span>
                       <ChevronRight className="w-3 h-3" />
@@ -269,10 +269,10 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                   </div>
                 </div>
 
-                {/* ── Mobile Card Layout (< sm) ── */}
-                <div className="sm:hidden p-3.5 space-y-3">
+                {/* ── Compact & Rotation Card Layout (< xl) ── */}
+                <div className="xl:hidden p-3.5 space-y-3">
                   {/* Top row: Client + Tier + Status */}
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className={`size-8 rounded-lg ${isOnboarded ? pod.avatarColor : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446]"} text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs`}>
                         {initials}
@@ -285,35 +285,35 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
                       </div>
                     </div>
                     {lifecycleStatus === "not_paid_not_onboarded" ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-amber-400 bg-amber-500/15 border border-amber-500/30 shrink-0 whitespace-nowrap">
-                        <span className="w-1 h-1 rounded-full bg-amber-400" />
-                        user not paid and not onboarded yet
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold text-amber-400 bg-amber-500/15 border border-amber-500/30 shrink-0" title="user not paid and not onboarded yet">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                        <span>Unpaid · Not Onboarded</span>
                       </span>
                     ) : lifecycleStatus === "paid_not_onboarded" ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-sky-400 bg-sky-500/15 border border-sky-500/30 shrink-0 whitespace-nowrap">
-                        <span className="w-1 h-1 rounded-full bg-sky-400 animate-pulse" />
-                        user paid but not onboarded
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold text-sky-400 bg-sky-500/15 border border-sky-500/30 shrink-0" title="user paid but not onboarded">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse shrink-0" />
+                        <span>Paid · Awaiting Setup</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 shrink-0">
-                        <span className="w-1 h-1 rounded-full bg-emerald-400" />
-                        {client.subscription_status || client.account_status || "active"}
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 shrink-0 capitalize">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        <span>{client.subscription_status || client.account_status || "active"}</span>
                       </span>
                     )}
                   </div>
 
                   {/* Middle row: Tier + Pod info */}
                   <div className="flex items-center justify-between text-[11px] pt-2 border-t border-[#2A3446]/60">
-                    <div className="flex items-center gap-1.5">
-                      <span className={`text-[9px] font-black tracking-wider px-1.5 py-0.5 rounded-md border ${getTierColor(tier)}`}>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className={`text-[9px] font-black tracking-wider px-1.5 py-0.5 rounded-md border ${getTierColor(tier)} shrink-0`}>
                         {tier}
                       </span>
-                      <span className="text-[10px] font-bold text-[#97A0B3]">
+                      <span className="text-[10px] font-bold text-[#97A0B3] truncate">
                         · {isOnboarded ? pod.name : isPaid ? "Awaiting Onboarding" : "Not Assigned"}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <span className="text-[10px] font-bold text-[#F1F5F9]">
                         {isOnboarded ? `${deliverables_completed}/${deliverables_total} Posts` : "Pending"}
                       </span>

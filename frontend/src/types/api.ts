@@ -228,6 +228,8 @@ export interface DeliverableItem {
   revisions_allowed: number | null;
   /** The client's own change request; internal QA notes are never sent. */
   rejection_comment: string | null;
+  voice_note_url?: string | null;
+  voice_note_duration?: number | null;
   approved_at: string | null;
   scheduled_at: string | null;
   due_date: string | null;

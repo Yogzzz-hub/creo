@@ -17,11 +17,13 @@ import {
   Upload,
   Loader2,
   Clock,
+  Volume2,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams, useLocation } from "react-router";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
+import { VoicePlayer } from "../../components/portal/VoicePlayer";
 import { useAuth } from "../../lib/auth-context";
 import {
   UPLOAD_ACCEPT,
@@ -91,11 +93,30 @@ function dueText(task: PodTask): { text: string; urgent: boolean } {
 }
 
 /** Feedback the creative must act on: lead QA notes or the client's change request. */
-function feedbackFor(task: PodTask): { source: "Lead QA" | "Client"; text: string } | null {
+function feedbackFor(task: PodTask): {
+  source: "Lead QA" | "Client";
+  text: string;
+  voice_note_url?: string | null;
+  voice_note_duration?: number | null;
+} | null {
   const d = task.deliverable;
-  if (!d?.rejection_comment) return null;
-  if (d.status === "qa_rejected") return { source: "Lead QA", text: d.rejection_comment };
-  if (d.status === "revision_requested") return { source: "Client", text: d.rejection_comment };
+  if (!d?.rejection_comment && !d?.voice_note_url) return null;
+  if (d.status === "qa_rejected") {
+    return {
+      source: "Lead QA",
+      text: d.rejection_comment || "[QA Notes Attached]",
+      voice_note_url: d.voice_note_url,
+      voice_note_duration: d.voice_note_duration,
+    };
+  }
+  if (d.status === "revision_requested") {
+    return {
+      source: "Client",
+      text: d.rejection_comment || "[Voice Note Revision Attached]",
+      voice_note_url: d.voice_note_url,
+      voice_note_duration: d.voice_note_duration,
+    };
+  }
   return null;
 }
 
@@ -611,9 +632,27 @@ export function MemberTaskBoardPage() {
                       <h4 className="text-xs font-black text-white leading-snug">{taskTitle(task)}</h4>
                       <p className="text-[11px] text-[#97A0B3]">{formatLabel(task.deliverable_type)}{task.deliverable ? ` · last upload v${task.deliverable.version}` : ""}</p>
                       {feedback && (
-                        <div className="p-2 rounded-lg bg-[#0B111C] border border-[#D8BF9B]/50 text-xs space-y-0.5">
-                          <div className="font-bold text-[#D8BF9B] text-[10px]">{feedback.source} requested changes</div>
-                          <p className="text-[11px] text-[#F1F5F9] leading-snug line-clamp-3">"{feedback.text}"</p>
+                        <div className="p-2.5 rounded-xl bg-[#0B111C] border border-[#D8BF9B]/50 text-xs space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-[#D8BF9B] text-[10px] uppercase tracking-wider">{feedback.source} requested changes</span>
+                            {feedback.voice_note_url && (
+                              <span className="flex items-center gap-1 text-[10px] text-[#7FA0D6] font-semibold bg-[#7FA0D6]/10 px-1.5 py-0.5 rounded border border-[#7FA0D6]/30">
+                                <Volume2 className="size-2.5" /> Voice Note
+                              </span>
+                            )}
+                          </div>
+                          {feedback.text && (
+                            <p className="text-[11px] text-[#F1F5F9] leading-snug line-clamp-3">"{feedback.text}"</p>
+                          )}
+                          {feedback.voice_note_url && (
+                            <div className="pt-1">
+                              <VoicePlayer
+                                audioUrl={feedback.voice_note_url}
+                                durationSeconds={feedback.voice_note_duration}
+                                authorName={`${feedback.source}'s Voice Note`}
+                              />
+                            </div>
+                          )}
                         </div>
                       )}
                       <div className="pt-1.5 border-t border-[#2A3446]">
@@ -762,9 +801,27 @@ export function MemberTaskBoardPage() {
             </div>
 
             {modalFeedback && (
-              <div className="p-3 rounded-2xl bg-[#0B111C] border border-[#D8BF9B]/50 space-y-1 text-xs">
-                <div className="font-bold text-[#D8BF9B]">{modalFeedback.source} requested changes on v{uploadTask.deliverable?.version}</div>
-                <p className="text-[#F1F5F9] leading-relaxed whitespace-pre-wrap">{modalFeedback.text}</p>
+              <div className="p-3.5 rounded-2xl bg-[#0B111C] border border-[#D8BF9B]/50 space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-[#D8BF9B]">{modalFeedback.source} requested changes on v{uploadTask.deliverable?.version}</span>
+                  {modalFeedback.voice_note_url && (
+                    <span className="flex items-center gap-1 text-[10px] text-[#7FA0D6] font-semibold bg-[#7FA0D6]/10 px-2 py-0.5 rounded border border-[#7FA0D6]/30">
+                      <Volume2 className="size-3" /> Voice Note Attached
+                    </span>
+                  )}
+                </div>
+                {modalFeedback.text && (
+                  <p className="text-[#F1F5F9] leading-relaxed whitespace-pre-wrap">{modalFeedback.text}</p>
+                )}
+                {modalFeedback.voice_note_url && (
+                  <div className="mt-2">
+                    <VoicePlayer
+                      audioUrl={modalFeedback.voice_note_url}
+                      durationSeconds={modalFeedback.voice_note_duration}
+                      authorName={`${modalFeedback.source}'s Revision Instructions`}
+                    />
+                  </div>
+                )}
               </div>
             )}
 

@@ -4,7 +4,6 @@
  */
 
 import { useState, lazy, Suspense } from "react";
-import { Link } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import {
   fetchAdminKPIs,
@@ -15,7 +14,7 @@ import {
 } from "../../lib/ops-api";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
-import { AlertTriangle, CheckCircle2, Users, Briefcase } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 // Widgets
 const RevenueEngineWidget = lazy(() => import("../../components/admin/RevenueEngineWidget").then((module) => ({ default: module.RevenueEngineWidget })));
@@ -110,64 +109,6 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
           )}
         </AnimatePresence>
 
-        {/* Operations Oversight: Freelancer Deliverables & BDE Sales Pipeline */}
-        {activeTab === "Dashboard" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mb-4">
-            <Link
-              to="/admin/tasks?view=freelancer_roster"
-              className="p-4 bg-[#161F2D] border border-[#2A3446] hover:border-purple-500/50 rounded-2xl flex items-center justify-between transition-all group shadow-sm hover:shadow-purple-500/5"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
-                  <Users className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors">
-                      Freelancers Workload & Dispatch
-                    </p>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                      Roster
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-[#97A0B3] mt-0.5">
-                    Monitor live assignments, milestone fees, submissions, and approval status
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs text-purple-400 font-bold group-hover:translate-x-1 transition-transform ml-2 shrink-0">
-                View &rarr;
-              </span>
-            </Link>
-
-            <Link
-              to="/admin/bde-oversight"
-              className="p-4 bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/50 rounded-2xl flex items-center justify-between transition-all group shadow-sm hover:shadow-[#7FA0D6]/5"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 flex items-center justify-center text-[#7FA0D6] shrink-0">
-                  <Briefcase className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs font-bold text-white group-hover:text-[#7FA0D6] transition-colors">
-                      BDE Outreach & Pipeline Oversight
-                    </p>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30">
-                      Work Process
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-[#97A0B3] mt-0.5">
-                    Track clients reached, touchpoint velocity, calls & meetings logged, and deal conversions
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs text-[#7FA0D6] font-bold group-hover:translate-x-1 transition-transform ml-2 shrink-0">
-                View &rarr;
-              </span>
-            </Link>
-          </div>
-        )}
 
         {/* Top 3 Containers Aligned in 1 Single Row (3 Columns) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-4 items-stretch mb-3.5 sm:mb-4">

@@ -78,6 +78,9 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
   const [portfolioLink, setPortfolioLink] = useState("");
   const [notes, setNotes] = useState("");
 
+  const [dispatchEmail, setDispatchEmail] = useState("");
+  const [sendEmail, setSendEmail] = useState(true);
+
   const [selectedSkills, setSelectedSkills] = useState<string[]>([
     "Premiere Pro",
     "After Effects",
@@ -138,6 +141,8 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
         portfolio_url: portfolioLink.trim() || undefined,
         notes: notes.trim() ? `${rateType === "fixed" ? "[Per-Deliverable Rate] " : ""}${notes.trim()}` : undefined,
         skills: selectedSkills,
+        dispatch_email: dispatchEmail.trim() || undefined,
+        send_email: sendEmail,
       });
 
       onSuccess();
@@ -195,10 +200,10 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
         )}
 
         {/* Security Sandbox Banner */}
-        <div className="p-3 bg-purple-500/10 border border-purple-500/25 rounded-2xl flex items-start gap-2.5 text-xs text-purple-200">
+        <div className="p-3 bg-[#0B111C] border border-purple-500/40 rounded-2xl flex items-start gap-2.5 text-xs text-[#F1F5F9] shadow-sm shadow-purple-500/10">
           <ShieldCheck className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
           <div className="leading-relaxed text-[11px]">
-            <strong>Role-Based Security Boundary:</strong> Freelancer accounts are strictly restricted. They will only have visibility over tasks and deliverables explicitly assigned to them. Agency billing, client lists, and internal squad financials remain invisible.
+            <strong className="text-purple-300 font-bold">Role-Based Security Boundary:</strong> Freelancer accounts are strictly restricted. They will only have visibility over tasks and deliverables explicitly assigned to them. Agency billing, client lists, and internal squad financials remain invisible.
           </div>
         </div>
 
@@ -236,6 +241,38 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                   className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Dispatch / Personal Email Option */}
+          <div className="p-3 bg-[#0B111C]/90 rounded-2xl border border-purple-500/25 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="font-bold text-[#F1F5F9] flex items-center gap-1.5 text-xs">
+                <Mail className="w-3.5 h-3.5 text-purple-400" />
+                <span>Send Credentials To (Separate Worker Email)</span>
+              </label>
+              <span className="text-[10px] text-purple-300 font-semibold px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20">
+                Optional
+              </span>
+            </div>
+            <input
+              type="email"
+              value={dispatchEmail}
+              onChange={(e) => setDispatchEmail(e.target.value)}
+              placeholder="e.g. alex.personal@gmail.com (leaves login email intact)"
+              className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white focus:outline-none focus:border-purple-400 text-xs"
+            />
+            <div className="flex items-center justify-between text-[11px] text-[#97A0B3] pt-0.5">
+              <span>Login email stays unchanged; access details will be delivered here.</span>
+              <label className="flex items-center gap-1.5 cursor-pointer text-purple-300 font-medium select-none">
+                <input
+                  type="checkbox"
+                  checked={sendEmail}
+                  onChange={(e) => setSendEmail(e.target.checked)}
+                  className="size-3.5 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+                />
+                <span>Send email</span>
+              </label>
             </div>
           </div>
 

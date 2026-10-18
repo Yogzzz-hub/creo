@@ -230,8 +230,8 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
           </div>
         </div>
 
-        {/* 3 KPI Summary Pills with Active Hover Highlight */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        {/* 3 KPI Summary Pills with Active Hover Highlight (Hidden on mobile to eliminate clutter, 3-cols on desktop) */}
+        <div className="hidden sm:grid sm:grid-cols-3 gap-2">
           <div className="bg-[#0B111C] hover:bg-[#161F2D] hover:border-[#7FA0D6]/60 hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-200 rounded-xl p-2.5 border border-[#2A3446] flex flex-col items-center justify-center text-center cursor-pointer shadow-sm group/pill" title="Monthly Recurring Revenue">
             <span className="text-xs sm:text-sm font-black text-white group-hover/pill:text-[#7FA0D6] transition-colors leading-none">{displayRevenue}</span>
             <span className="text-[9px] text-[#97A0B3] uppercase font-bold tracking-wider mt-1">Total MRR</span>
@@ -248,7 +248,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
       </div>
 
       {/* Redirecting Buttons Directly Below Graph */}
-      <div className="pt-2.5 mt-2 border-t border-[#2A3446] flex flex-col sm:flex-row gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+      <div className="pt-2.5 mt-2 border-t border-[#2A3446] flex flex-row gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
         <Link
           to="/admin/revenue"
           onClick={(e) => e.stopPropagation()}

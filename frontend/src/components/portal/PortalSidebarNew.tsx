@@ -115,7 +115,7 @@ export function PortalSidebarNew() {
     {
       label: "Your Brand",
       items: [
-        { label: "Slack Chat", href: "/portal/slack", icon: MessageSquare, badge: "Chat" },
+        { label: "Workspace Hub", href: "/portal/slack", icon: MessageSquare, badge: "Chat" },
         { label: "Brand DNA", href: "/portal/brand", icon: Dna },
       ],
     },

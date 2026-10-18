@@ -232,13 +232,14 @@ export function ConfirmDialog({
 
   const getConfirmButtonStyle = () => {
     switch (tone) {
-      case "success":
-        return "bg-[#BCCCE6] text-[#0B111C] enabled:hover:bg-[#D2DDF0] shadow-md";
-      case "warning":
-        return "bg-[#D8BF9B] text-[#0B111C] enabled:hover:bg-[#E8D3B5] shadow-md";
-      case "info":
-        return "bg-[#BCCCE6] text-[#0B111C] enabled:hover:bg-[#D2DDF0] shadow-md";
       case "danger":
+        return "bg-rose-600 text-white enabled:hover:bg-rose-500 shadow-md shadow-rose-950/50";
+      case "warning":
+        return "bg-amber-600 text-white enabled:hover:bg-amber-500 shadow-md shadow-amber-950/50";
+      case "success":
+        return "bg-emerald-600 text-white enabled:hover:bg-emerald-500 shadow-md shadow-emerald-950/50";
+      case "info":
+        return "bg-[#7FA0D6] text-white enabled:hover:bg-[#7FA0D6]/90 shadow-md shadow-[#7FA0D6]/20";
       default:
         return "bg-[#D8BF9B] text-[#0B111C] enabled:hover:bg-[#E8D3B5] shadow-md";
     }
@@ -246,7 +247,7 @@ export function ConfirmDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[99999] flex min-h-dvh items-center justify-center overflow-y-auto bg-[#05080E]/75 p-4 backdrop-blur-md transition-opacity duration-200"
+      className="fixed inset-0 z-[99999] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md transition-all duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isProcessing) {
           onClose();
@@ -254,7 +255,7 @@ export function ConfirmDialog({
       }}
     >
       <div
-        className="relative w-full max-w-md rounded-3xl border border-[#2A3446] bg-[#161F2D] p-6 text-left text-white shadow-2xl shadow-black/40 transition-all duration-200 scale-100"
+        className="relative w-full max-w-md rounded-3xl border border-[#2A3446] bg-[#161F2D] p-6 text-left text-white shadow-2xl shadow-black/60 transition-all duration-200 scale-100"
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"

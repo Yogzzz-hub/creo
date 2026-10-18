@@ -133,7 +133,7 @@ export function AdminBottomNav() {
   const activeItems = isBDE ? bdeItems : isMemberRole ? memberItems : isTeamLead ? leadItems : adminItems;
 
   const memberMoreLinks = [
-    { label: "Slack Workspace Hub", href: "/workstation/slack", icon: MessageSquare, desc: "Team & project communication" },
+    { label: "Workspace Hub", href: "/workstation/slack", icon: MessageSquare, desc: "Team & project communication" },
     { label: "My Schedule & PTO", href: "/workstation/schedule", icon: CalendarCheck, desc: "Request leave & shift schedule" },
     { label: "Asset Handoff QA", href: "/workstation/tasks", icon: CheckSquare, desc: "Submit files for lead sign-off" },
     { label: "Agency Calendar", href: "/admin/calendar", icon: CalendarDays, desc: "View all scheduled content" },
@@ -152,19 +152,19 @@ export function AdminBottomNav() {
       ]
     : isTeamLead
     ? [
-        { label: "Slack Workspace Hub", href: "/slack", icon: MessageSquare, desc: "Pod chat & in-channel task assignment" },
+        { label: "Workspace Hub", href: "/slack", icon: MessageSquare, desc: "Pod chat & in-channel task assignment" },
         { label: "Publishing Calendar", href: "/admin/calendar", icon: CalendarDays, desc: "Scheduled creative posts" },
         { label: "Support Desk", href: "/admin/support", icon: LifeBuoy, desc: "Client tickets & queries" },
-        { label: "SLA Hub", href: "/admin/sla", icon: ShieldCheck, desc: "Turnaround times & metrics" },
+        { label: "Performance Hub", href: "/admin/sla", icon: ShieldCheck, desc: "Turnaround times & metrics" },
       ]
     : [
-        { label: "Slack Workspace Hub", href: "/slack", icon: MessageSquare, desc: "Direct team & client chat, task creation" },
+        { label: "Workspace Hub", href: "/slack", icon: MessageSquare, desc: "Direct team & client chat, task creation" },
         { label: "BDE Overview", href: "/admin/bde-oversight", icon: Users, desc: "Monitor prospect reach & sales velocity" },
         { label: "Plans & Negotiations", href: "/admin/plans", icon: IndianRupee, desc: "Commercial deal retainers & pricing tiers" },
         { label: "Team Management", href: "/admin/team", icon: Users, desc: "Roster, pod capacity & leads" },
         { label: "Leave Requests", href: "/admin/leaves", icon: CalendarCheck, desc: "Staff time-off approvals" },
         { label: "Support Desk", href: "/admin/support", icon: LifeBuoy, desc: "Client support tickets" },
-        { label: "SLA Performance", href: "/admin/support/sla", icon: ShieldCheck, desc: "Response & resolution metrics" },
+        { label: "Performance Hub", href: "/admin/support/sla", icon: ShieldCheck, desc: "Response & resolution metrics" },
         { label: "Content Calendar", href: "/admin/calendar", icon: CalendarDays, desc: "Agency content pipeline" },
         { label: "Task Queue", href: "/admin/tasks", icon: Layers, desc: "Agency-wide Kanban" },
       ];
