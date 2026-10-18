@@ -58,7 +58,7 @@ export function SplitPaymentCard() {
 
   if (isLoading) {
     return (
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 flex items-center justify-center min-h-[220px]">
+      <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 flex items-center justify-center min-h-[180px]">
         <Loader2 className="w-6 h-6 animate-spin text-[#7FA0D6]" />
       </div>
     );
@@ -67,7 +67,7 @@ export function SplitPaymentCard() {
   // If agency hasn't configured a split package yet, show clean state with instructions
   if (!data || !data.active_package || data.total_package_amount === 0) {
     return (
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6 space-y-4">
+      <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 space-y-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
@@ -82,7 +82,7 @@ export function SplitPaymentCard() {
             Standard Retainer
           </span>
         </div>
-        <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl p-5 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-4 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             <p className="text-xs font-semibold text-white mb-1">Single Retainer Billing Active</p>
             <p className="text-xs text-[#97A0B3] max-w-lg leading-relaxed">
@@ -133,11 +133,11 @@ export function SplitPaymentCard() {
   };
 
   return (
-    <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6 space-y-6">
+    <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2A3446] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2A3446] pb-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] shrink-0">
             <CreditCard className="w-5 h-5" />
           </div>
           <div>
@@ -168,31 +168,31 @@ export function SplitPaymentCard() {
 
       {/* 3 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl p-4 space-y-1">
+        <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3.5 space-y-1">
           <span className="text-[10px] uppercase font-bold tracking-wider text-[#97A0B3]">
             Total Package Amount
           </span>
-          <p className="text-2xl font-black text-white">
+          <p className="text-xl sm:text-2xl font-black text-white">
             ₹{total_package_amount.toLocaleString("en-IN")}
           </p>
           <p className="text-[11px] text-[#97A0B3]">Agreed service package</p>
         </div>
 
-        <div className="bg-[#0B111C] border border-emerald-500/20 rounded-2xl p-4 space-y-1">
+        <div className="bg-[#0B111C] border border-emerald-500/20 rounded-xl p-3.5 space-y-1">
           <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">
             Amount Paid
           </span>
-          <p className="text-2xl font-black text-emerald-400">
+          <p className="text-xl sm:text-2xl font-black text-emerald-400">
             ₹{total_paid.toLocaleString("en-IN")}
           </p>
           <p className="text-[11px] text-[#97A0B3]">{pctPaid}% of total package cleared</p>
         </div>
 
-        <div className="bg-[#0B111C] border border-amber-500/20 rounded-2xl p-4 space-y-1">
+        <div className="bg-[#0B111C] border border-amber-500/20 rounded-xl p-3.5 space-y-1">
           <span className="text-[10px] uppercase font-bold tracking-wider text-amber-400">
             Pending Balance
           </span>
-          <p className="text-2xl font-black text-amber-300">
+          <p className="text-xl sm:text-2xl font-black text-amber-300">
             ₹{pending_balance.toLocaleString("en-IN")}
           </p>
           <p className="text-[11px] text-[#97A0B3]">Remaining to be collected</p>
@@ -214,7 +214,7 @@ export function SplitPaymentCard() {
       </div>
 
       {/* Instalments List */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         <h4 className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">
           Instalments Schedule & Deadlines
         </h4>

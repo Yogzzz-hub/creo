@@ -74,6 +74,20 @@ export async function fetchAdminTransactions(): Promise<any[]> {
   return request<any[]>("/api/v1/admin/transactions");
 }
 
+export async function sendClientReminder(payload: {
+  client_id?: string;
+  subscription_id?: string;
+  invoice_id?: string;
+  client_name?: string;
+  reminder_type?: "auto" | "payment" | "onboarding";
+  custom_message?: string;
+}): Promise<{ status: string; message: string; reminder_type: string; notification_id?: string }> {
+  return request("/api/v1/admin/send-reminder", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function fetchAdminDashboard(
   _userId?: string,
   _role = "admin",

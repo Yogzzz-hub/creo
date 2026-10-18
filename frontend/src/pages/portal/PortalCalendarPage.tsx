@@ -359,28 +359,28 @@ export function PortalCalendarPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-stretch">
         
         {/* Left Column: Calendar View (xl:col-span-2) */}
-        <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-5 sm:p-6 min-w-0 flex-col h-full">
+        <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-4 sm:p-5 min-w-0 flex-col h-full">
           {/* Calendar Header */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-            <div className="flex items-center gap-3">
-              <h2 className="text-[20px] font-black text-white tracking-tight">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3.5 sm:mb-4">
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-lg sm:text-[20px] font-black text-white tracking-tight">
                 {MONTH_NAMES[currentMonth]} {currentYear}
               </h2>
-              <span className="text-sm font-semibold text-[#97A0B3]">Production Horizon</span>
+              <span className="text-xs sm:text-sm font-semibold text-[#97A0B3]">Production Horizon</span>
             </div>
             
             <div className="flex items-center gap-2">
-              {user?.role === "client" && <button type="button" disabled={isRebalancing} onClick={rebuildDraftSchedule} className="rounded-full border border-[#2A3446] px-3 py-2 text-xs disabled:opacity-60">
+              {user?.role === "client" && <button type="button" disabled={isRebalancing} onClick={rebuildDraftSchedule} className="rounded-full border border-[#2A3446] px-3 py-1.5 text-xs disabled:opacity-60">
                 {isRebalancing ? "Updating schedule…" : "Rebuild draft schedule"}
               </button>}
               <button
                 type="button"
                 onClick={() => { setSelectedDate(null); goToToday(); }}
-                className="px-4 py-1.5 text-xs font-bold text-slate-200 hover:text-white bg-[#0B111C]/80 hover:bg-[#0B111C] rounded-full border border-[#2A3446] shadow-2xs transition-all cursor-pointer"
+                className="px-3.5 py-1.5 text-xs font-bold text-slate-200 hover:text-white bg-[#0B111C]/80 hover:bg-[#0B111C] rounded-full border border-[#2A3446] shadow-2xs transition-all cursor-pointer"
               >
                 Today
               </button>
-              <div className="flex items-center bg-[#0B111C]/80 border border-[#2A3446] rounded-full p-1 shadow-2xs">
+              <div className="flex items-center bg-[#0B111C]/80 border border-[#2A3446] rounded-full p-0.5 shadow-2xs">
                 <button onClick={() => { setSelectedDate(null); navigateMonth(-1); }} className="p-1.5 text-slate-400 hover:text-white rounded-full transition-all cursor-pointer" aria-label="Previous Month">
                   <ChevronLeft className="size-4" strokeWidth={2.5} />
                 </button>
@@ -392,7 +392,7 @@ export function PortalCalendarPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mb-4 text-xs text-slate-300 min-h-[30px]" aria-label="Monthly content totals">
+          <div className="flex flex-wrap items-center gap-2 mb-3 text-xs text-slate-300 min-h-[28px]" aria-label="Monthly content totals">
             {["reel", "poster", "story", "carousel"].map((kind) => {
               const count = monthEntries.filter(entry => (entry.type || entry.slot_kind) === kind).length;
               const config = getTypeConfig(kind);
@@ -407,14 +407,14 @@ export function PortalCalendarPage() {
             })}
             <span className="px-2 py-1 text-[#97A0B3]">{monthEntries.length} planned this month</span>
           </div>
-          {scheduleMessage && <p role="status" className="mb-4 text-sm text-slate-300">{scheduleMessage}</p>}
+          {scheduleMessage && <p role="status" className="mb-3 text-sm text-slate-300">{scheduleMessage}</p>}
 
           {/* Month Grid */}
-          <div className="flex-1 flex flex-col min-h-[500px]">
+          <div className="flex-1 flex flex-col min-h-[460px]">
             {/* Weekday Headers */}
-            <div className="grid grid-cols-7 mb-4">
+            <div className="grid grid-cols-7 mb-2">
               {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day: string) => (
-                <div key={day} className="py-2 text-center text-xs font-black text-[#97A0B3] uppercase tracking-wider">
+                <div key={day} className="py-1 text-center text-xs font-black text-[#97A0B3] uppercase tracking-wider">
                   {day}
                 </div>
               ))}
@@ -425,7 +425,7 @@ export function PortalCalendarPage() {
               {calendarCells.map((cell) => {
                 if (!cell.isCurrentMonth) {
                   return (
-                    <div key={cell.key} className="rounded-[1.5rem] bg-transparent p-2"></div>
+                    <div key={cell.key} className="rounded-xl bg-transparent p-1"></div>
                   );
                 }
 
@@ -483,16 +483,16 @@ export function PortalCalendarPage() {
         </div>
 
         {/* Right Column: Dispatch Queue (xl:col-span-1) */}
-        <div className="xl:col-span-1 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-5 sm:p-6 flex flex-col h-full min-w-0">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[20px] font-black text-white tracking-tight">
+        <div className="xl:col-span-1 bg-[#161F2D] border border-[#2A3446] rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-4 sm:p-5 flex flex-col h-full min-w-0">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg sm:text-[20px] font-black text-white tracking-tight">
               {selectedDate ? `Task Queue for ${selectedDate}th` : "Today's Dispatch Queue"}
             </h3>
             {(() => {
               const activeDay = selectedDate || (isCurrentMonth ? today.getDate() : 1);
               const tasks = getDayEntries(activeDay);
               return (
-                <span className="inline-flex items-center rounded-full bg-[#161F2D] border border-[#2A3446] px-3 py-1 text-[12px] font-bold text-[#7FA0D6]">
+                <span className="inline-flex items-center rounded-full bg-[#161F2D] border border-[#2A3446] px-2.5 py-0.5 text-[11px] font-bold text-[#7FA0D6]">
                   {tasks.length > 0 ? `${tasks.length} Active` : '0 Active'}
                 </span>
               );
@@ -503,7 +503,7 @@ export function PortalCalendarPage() {
             const activeDay = selectedDate || (isCurrentMonth ? today.getDate() : 1);
             const tasks = getDayEntries(activeDay);
             return (
-              <div className="flex flex-wrap items-center gap-2 mb-4 text-xs text-slate-300 min-h-[30px]" aria-label="Daily deliverables summary">
+              <div className="flex flex-wrap items-center gap-2 mb-3 text-xs text-slate-300 min-h-[28px]" aria-label="Daily deliverables summary">
                 <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#2A3446] px-2.5 py-1 font-semibold text-[#7FA0D6] bg-[#0B111C]/60">
                   <Sparkles className="size-3.5 shrink-0 stroke-[2.2] text-[#7FA0D6]" />
                   <span>{tasks.length} {tasks.length === 1 ? 'Deliverable' : 'Deliverables'}</span>
@@ -515,14 +515,14 @@ export function PortalCalendarPage() {
             );
           })()}
 
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1 min-h-0">
+          <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 min-h-0">
             {(() => {
               const activeDay = selectedDate || (isCurrentMonth ? today.getDate() : 1);
               let tasks = getDayEntries(activeDay);
               
               if (tasks.length === 0) {
                 return (
-                  <div className="flex flex-col items-center justify-center flex-1 min-h-[260px] h-full p-8 text-[#97A0B3] text-sm font-bold bg-[#0B111C]/60 rounded-[1.5rem] border-2 border-dashed border-[#2A3446] text-center shadow-inner space-y-2">
+                  <div className="flex flex-col items-center justify-center flex-1 min-h-[200px] h-full p-5 text-[#97A0B3] text-sm font-bold bg-[#0B111C]/60 rounded-xl border-2 border-dashed border-[#2A3446] text-center shadow-inner space-y-2">
                     <div className="w-10 h-10 rounded-full bg-[#161F2D] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] mb-1">
                       <Clock className="w-5 h-5" />
                     </div>
@@ -543,7 +543,7 @@ export function PortalCalendarPage() {
                   <div 
                     key={entry.id} 
                     onClick={() => openEntryModal(entry)}
-                    className="p-5 rounded-[1.5rem] border border-[#2A3446] hover:border-[#7FA0D6]/50 bg-[#0B111C]/70 hover:bg-[#0B111C] transition-all cursor-pointer shadow-xs group space-y-3"
+                    className="p-3.5 sm:p-4 rounded-xl border border-[#2A3446] hover:border-[#7FA0D6]/50 bg-[#0B111C]/70 hover:bg-[#0B111C] transition-all cursor-pointer shadow-xs group space-y-2.5"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">

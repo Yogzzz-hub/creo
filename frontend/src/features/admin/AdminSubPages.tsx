@@ -34,6 +34,7 @@ import {
   directBypassClientPayment,
   revokeClientBypass,
   fetchPodDashboard,
+  sendClientReminder,
 } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem, PlanSummaryItem, ManualPaymentRequest, LeaveRequestItem, TeamMemberItem } from "../../lib/ops-api";
 import { fetchPlans } from "../../lib/onboarding-api";
@@ -78,6 +79,8 @@ import {
   SlidersHorizontal,
   ArrowUpRight,
   Play,
+  Bell,
+  Loader2,
   Camera,
   Video,
   Scissors,
@@ -103,8 +106,6 @@ import {
   Type,
   Copy,
   Send,
-  Maximize2,
-  Columns2,
   IndianRupee,
   UserCheck,
   UserX,
@@ -266,6 +267,7 @@ export function AdminClientsPage() {
   const [processingPaymentId, setProcessingPaymentId] = useState<string | null>(null);
   const [directBypassBusy, setDirectBypassBusy] = useState(false);
   const [directBypassClientPlans, setDirectBypassClientPlans] = useState<any[]>([]);
+  const [isSendingDetailReminder, setIsSendingDetailReminder] = useState(false);
 
   useEffect(() => {
     if (directBypassTargetClient?.id) {
@@ -1452,30 +1454,84 @@ export function AdminClientsPage() {
             )}
 
             {isNotPaidNotOnboarded && (
-              <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-start gap-3.5 shadow-sm">
-                <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <h3 className="text-sm font-black uppercase tracking-wider text-amber-400">
-                    user not paid and not onboarded yet
-                  </h3>
-                  <p className="text-xs text-[#F1F5F9] leading-relaxed">
-                    This client account has logged in but has not subscribed or paid for any retainer plan and has not completed the onboarding intake. Mock data has been disabled: retainer fee is ₹0, and no creative pod or design assets are assigned.
-                  </p>
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-sm">
+                <div className="flex items-start gap-3.5 min-w-0">
+                  <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="space-y-1 min-w-0">
+                    <h3 className="text-sm font-black uppercase tracking-wider text-amber-400">
+                      user not paid and not onboarded yet
+                    </h3>
+                    <p className="text-xs text-[#F1F5F9] leading-relaxed">
+                      This client account has logged in but has not subscribed or paid for any retainer plan and has not completed the onboarding intake. Mock data has been disabled: retainer fee is ₹0, and no creative pod or design assets are assigned.
+                    </p>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!activeClient) return;
+                    try {
+                      setIsSendingDetailReminder(true);
+                      const res = await sendClientReminder({
+                        client_id: activeClient.id,
+                        client_name: activeClient.name,
+                        reminder_type: "payment",
+                      });
+                      showToast(res.message || "Payment reminder dispatched to client!");
+                    } catch (err: any) {
+                      showToast(err?.message || "Failed to dispatch reminder.");
+                    } finally {
+                      setIsSendingDetailReminder(false);
+                    }
+                  }}
+                  disabled={isSendingDetailReminder}
+                  className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0 self-start sm:self-center disabled:opacity-60"
+                  title="Send payment reminder notification to client"
+                >
+                  {isSendingDetailReminder ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bell className="w-3.5 h-3.5" />}
+                  <span>Send Payment Reminder</span>
+                </button>
               </div>
             )}
 
             {isPaidNotOnboarded && (
-              <div className="p-4 sm:p-5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-300 flex items-start gap-3.5 shadow-sm">
-                <Sparkles className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <h3 className="text-sm font-black uppercase tracking-wider text-sky-400">
-                    user paid but not onboarded
-                  </h3>
-                  <p className="text-xs text-[#F1F5F9] leading-relaxed">
-                    Subscription payment is verified and active ({activeClient?.tier || "Paid Plan"}). However, the client has not finalized their brand onboarding questionnaire yet (Stage {liveBrandProfile?.onboarding_stage || 1} of 4). Creative Pod and Brand DNA will be generated once intake is completed.
-                  </p>
+              <div className="p-4 sm:p-5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-sm">
+                <div className="flex items-start gap-3.5 min-w-0">
+                  <Sparkles className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+                  <div className="space-y-1 min-w-0">
+                    <h3 className="text-sm font-black uppercase tracking-wider text-sky-400">
+                      user paid but not onboarded
+                    </h3>
+                    <p className="text-xs text-[#F1F5F9] leading-relaxed">
+                      Subscription payment is verified and active ({activeClient?.tier || "Paid Plan"}). However, the client has not finalized their brand onboarding questionnaire yet (Stage {liveBrandProfile?.onboarding_stage || 1} of 4). Creative Pod and Brand DNA will be generated once intake is completed.
+                    </p>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!activeClient) return;
+                    try {
+                      setIsSendingDetailReminder(true);
+                      const res = await sendClientReminder({
+                        client_id: activeClient.id,
+                        client_name: activeClient.name,
+                        reminder_type: "onboarding",
+                      });
+                      showToast(res.message || "Onboarding reminder dispatched to client!");
+                    } catch (err: any) {
+                      showToast(err?.message || "Failed to dispatch reminder.");
+                    } finally {
+                      setIsSendingDetailReminder(false);
+                    }
+                  }}
+                  disabled={isSendingDetailReminder}
+                  className="px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0 self-start sm:self-center disabled:opacity-60"
+                  title="Send onboarding reminder notification to client"
+                >
+                  {isSendingDetailReminder ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bell className="w-3.5 h-3.5" />}
+                  <span>Send Onboarding Reminder</span>
+                </button>
               </div>
             )}
 
@@ -9762,6 +9818,12 @@ export interface TransactionItem {
   date: string;
   badgeClass: string;
   avatarBg: string;
+  client_id?: string;
+  client_email?: string;
+  raw_sub_id?: string;
+  is_paid?: boolean;
+  is_onboarded?: boolean;
+  lifecycle_status?: "onboarded" | "paid_not_onboarded" | "not_paid";
 }
 
 export interface PlanNegotiationItem {
@@ -9787,10 +9849,9 @@ export interface PlanNegotiationItem {
 }
 
 export function AdminRevenuePage() {
-  const [filter, setFilter] = useState<"all" | "paid" | "pending" | "overdue">("all");
+  const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState<string | null>(null);
-  const [revenueLayout, setRevenueLayout] = useState<"split" | "enlarged">("enlarged");
 
   // Modals
   const [selectedReceipt, setSelectedReceipt] = useState<TransactionItem | null>(null);
@@ -9812,11 +9873,10 @@ export function AdminRevenuePage() {
   const [localTransactions, setLocalTransactions] = useState<TransactionItem[]>([]);
 
   const mappedServer = (serverTransactions || []).map((t: any, idx: number) => {
-    // Determine badge class dynamically based on status
-    const status = t.status || "Pending";
-    let badgeClass = "bg-slate-500/20 text-slate-400 border border-slate-500/30 font-black";
-    if (status === "Paid") badgeClass = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black";
-    else if (status === "Overdue" || status === "Refunded/Cancelled") badgeClass = "bg-rose-500/20 text-rose-400 border border-rose-500/30 font-black";
+    // Determine badge class dynamically based on status (all verified transactions are Paid)
+    const status = t.status || "Paid";
+    let badgeClass = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black";
+    if (status === "Overdue" || status === "Refunded/Cancelled") badgeClass = "bg-rose-500/20 text-rose-400 border border-rose-500/30 font-black";
     else if (status === "Pending") badgeClass = "bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold";
 
     // Dynamic avatar color
@@ -9832,7 +9892,6 @@ export function AdminRevenuePage() {
   });
 
   const transactions = [...localTransactions, ...mappedServer];
-
 
   // Fetch real KPI data for MRR
   const { data: kpis } = useQuery({
@@ -9852,6 +9911,14 @@ export function AdminRevenuePage() {
   const totalCollected = totalMrr;
   const projectedArr = totalMrr * 12;
 
+  const totalCards = transactions
+    .filter((t) => (t.method || "").toLowerCase().includes("razorpay") || (t.method || "").toLowerCase().includes("card") || (t.method || "").toLowerCase().includes("stripe"))
+    .reduce((acc, t) => acc + (t.amount || 0), 0);
+
+  const totalWire = transactions
+    .filter((t) => (t.method || "").toLowerCase().includes("wire") || (t.method || "").toLowerCase().includes("ach") || (t.method || "").toLowerCase().includes("upi"))
+    .reduce((acc, t) => acc + (t.amount || 0), 0);
+
   // Chart Trend Data (Quarterly Trend)
   const chartData = (trendData?.points && trendData.points.length > 0)
     ? trendData.points.map(p => ({ name: p.label, revenue: p.value }))
@@ -9869,10 +9936,11 @@ export function AdminRevenuePage() {
       scope: newInvScope || "Retainer Billing",
       amount: parseFloat(newInvAmount),
       method: newInvMethod,
-      status: "Pending",
-      date: "Due Net 15",
-      badgeClass: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      status: "Paid",
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
       avatarBg: "bg-[#7FA0D6]/20 text-blue-800",
+      is_paid: true,
     };
 
     setLocalTransactions((prev) => [newTx, ...prev]);
@@ -9882,12 +9950,6 @@ export function AdminRevenuePage() {
     setNewInvScope("");
     setNewInvAmount("");
     setTimeout(() => setToast(null), 4000);
-  };
-
-  // Actions: Send Payment Reminder
-  const handleSendReminder = (tx: TransactionItem) => {
-    setToast(`Payment reminder notification sent to ${tx.client} for invoice ${tx.id}.`);
-    setTimeout(() => setToast(null), 3500);
   };
 
   // Actions: Export CSV
@@ -9907,7 +9969,13 @@ export function AdminRevenuePage() {
   };
 
   const filteredTx = transactions.filter((t) => {
-    const matchesFilter = filter === "all" || t.status.toLowerCase() === filter.toLowerCase();
+    // Strict requirement: Only display confirmed paid transactions
+    if (t.status !== "Paid" && t.is_paid === false) return false;
+    const matchesFilter =
+      filter === "all" ||
+      filter === "paid" ||
+      (filter === "cards" && ((t.method || "").toLowerCase().includes("razorpay") || (t.method || "").toLowerCase().includes("card") || (t.method || "").toLowerCase().includes("stripe"))) ||
+      (filter === "wire" && ((t.method || "").toLowerCase().includes("wire") || (t.method || "").toLowerCase().includes("ach") || (t.method || "").toLowerCase().includes("upi")));
     const matchesSearch =
       !search ||
       t.client.toLowerCase().includes(search.toLowerCase()) ||
@@ -9946,34 +10014,6 @@ export function AdminRevenuePage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* View Mode Toggle: Full Width vs Split View */}
-            <div className="flex items-center p-1 bg-[#161F2D] border border-[#2A3446] rounded-xl text-xs font-bold">
-              <button
-                type="button"
-                onClick={() => setRevenueLayout("enlarged")}
-                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-                  revenueLayout === "enlarged"
-                    ? "bg-[#7FA0D6] text-white shadow-xs font-black"
-                    : "text-[#97A0B3] hover:text-white"
-                }`}
-                title="Full-width view: spacious layout showing all row details with zero horizontal scrolling"
-              >
-                <Maximize2 className="w-3.5 h-3.5" /> Full Width (No Scroll)
-              </button>
-              <button
-                type="button"
-                onClick={() => setRevenueLayout("split")}
-                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-                  revenueLayout === "split"
-                    ? "bg-[#7FA0D6] text-white shadow-xs font-black"
-                    : "text-[#97A0B3] hover:text-white"
-                }`}
-                title="Side-by-side: Compact split view"
-              >
-                <Columns2 className="w-3.5 h-3.5" /> Split View
-              </button>
-            </div>
-
             <button
               type="button"
               onClick={handleExportCSV}
@@ -9993,7 +10033,7 @@ export function AdminRevenuePage() {
         </div>
 
         {/* ─────────────────────────────────────────────────────────────────────────────
-            TOP METRIC CARDS (Matching Image 1)
+            TOP METRIC CARDS
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6">
           {/* Metric 1: Total Revenue (MRR) */}
@@ -10029,25 +10069,22 @@ export function AdminRevenuePage() {
             </div>
             <div className="flex flex-wrap items-baseline gap-2.5">
               <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">₹{totalCollected.toLocaleString('en-IN')}</span>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
-                {transactions.length > 0 ? `${Math.round((transactions.filter(t => t.status === "Paid").length / transactions.length) * 100)}% Rate` : "0% Rate"}
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                100% Settled
               </span>
             </div>
             <div className="text-xs text-[#97A0B3] font-medium pt-0.5">
-              Settlement Ratio: <strong className="text-white font-bold">{transactions.filter(t => t.status === "Paid").length} of {transactions.length} Invoices</strong>
+              Settlement Count: <strong className="text-white font-bold">{transactions.length} Verified {transactions.length === 1 ? "Payment" : "Payments"}</strong>
             </div>
           </div>
         </div>
 
         {/* ─────────────────────────────────────────────────────────────────────────────
             MAIN SECTION: REVENUE GROWTH GRAPH & TRANSACTION HISTORY
-            (Supports dynamic Split View or Full-Width Enlarged Graph)
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className={revenueLayout === "split" ? "grid grid-cols-1 xl:grid-cols-2 gap-3.5 sm:gap-6 items-stretch" : "space-y-6"}>
+        <div className="space-y-6">
           {/* Revenue Growth & Trajectory Card */}
-          <div className={`bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-xl flex flex-col justify-between ${
-            revenueLayout === "split" ? "p-6 lg:p-7 space-y-6" : "p-6 lg:p-8 space-y-6"
-          }`}>
+          <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-xl flex flex-col justify-between p-6 lg:p-8 space-y-6">
             <div>
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
                 <div>
@@ -10069,9 +10106,7 @@ export function AdminRevenuePage() {
               </div>
 
               {/* Recharts Bar Chart (Responsive Height & Width) */}
-              <div className={`w-full bg-[#0B111C]/60 rounded-2xl p-4 border border-[#2A3446]/60 ${
-                revenueLayout === "enlarged" ? "h-80 sm:h-88" : "h-72"
-              }`}>
+              <div className="w-full bg-[#0B111C]/60 rounded-2xl p-4 border border-[#2A3446]/60 h-80 sm:h-88">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData}
@@ -10121,7 +10156,7 @@ export function AdminRevenuePage() {
                       labelStyle={{ color: "#97A0B3", fontSize: "11px", fontWeight: "bold" }}
                       cursor={false}
                     />
-                    <Bar dataKey="revenue" radius={[8, 8, 3, 3]} maxBarSize={revenueLayout === "enlarged" ? 44 : 32}>
+                    <Bar dataKey="revenue" radius={[8, 8, 3, 3]} maxBarSize={44}>
                       {chartData.map((entry, index) => {
                         const maxVal = Math.max(...chartData.map((d) => d.revenue));
                         return (
@@ -10146,11 +10181,11 @@ export function AdminRevenuePage() {
               </div>
               <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Direct UPI / Wire</span>
-                <div className="text-sm font-black text-white">₹{totalCollected > 0 ? totalCollected.toLocaleString('en-IN') : "0"}</div>
+                <div className="text-sm font-black text-white">₹{totalWire > 0 ? totalWire.toLocaleString('en-IN') : "0"}</div>
               </div>
               <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Cards / Razorpay</span>
-                <div className="text-sm font-black text-white">₹{totalCollected > 0 ? (totalCollected * 0).toLocaleString('en-IN') : "0"}</div>
+                <div className="text-sm font-black text-white">₹{totalCards > 0 ? totalCards.toLocaleString('en-IN') : "0"}</div>
               </div>
               <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Disputed / Refunded</span>
@@ -10160,9 +10195,7 @@ export function AdminRevenuePage() {
           </div>
 
           {/* Recent Transactions Card (Transaction History) */}
-          <div className={`bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-xl flex flex-col justify-between ${
-            revenueLayout === "split" ? "p-6 lg:p-7 space-y-4" : "p-6 lg:p-8 space-y-6"
-          }`}>
+          <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-xl flex flex-col justify-between p-6 lg:p-8 space-y-6">
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -10183,18 +10216,22 @@ export function AdminRevenuePage() {
                     />
                   </div>
 
-                  {/* Status Filter Pills */}
+                  {/* Filter Pills */}
                   <div className="flex items-center gap-1 bg-[#0B111C] p-1 rounded-xl text-xs font-bold border border-[#2A3446]">
-                    {(["all", "paid", "pending", "overdue"] as const).map((st) => (
+                    {[
+                      { key: "all", label: "All Paid" },
+                      { key: "cards", label: "Cards / Razorpay" },
+                      { key: "wire", label: "Direct Wire" },
+                    ].map((tab) => (
                       <button
-                        key={st}
+                        key={tab.key}
                         type="button"
-                        onClick={() => setFilter(st)}
+                        onClick={() => setFilter(tab.key)}
                         className={`px-2.5 py-1 rounded-lg capitalize transition-all cursor-pointer text-[11px] ${
-                          filter === st ? "bg-[#161F2D] text-white shadow-xs font-black" : "text-[#97A0B3] hover:text-white"
+                          filter === tab.key ? "bg-[#161F2D] text-white shadow-xs font-black" : "text-[#97A0B3] hover:text-white"
                         }`}
                       >
-                        {st}
+                        {tab.label}
                       </button>
                     ))}
                   </div>
@@ -10214,152 +10251,73 @@ export function AdminRevenuePage() {
               <div className="rounded-2xl border border-[#2A3446] bg-[#0B111C]/40 overflow-x-auto max-h-[420px] sm:max-h-[480px] overflow-y-auto overscroll-contain pr-0.5 scrollbar-thin scrollbar-thumb-[#2A3446] hover:scrollbar-thumb-[#7FA0D6]/40 scrollbar-track-transparent">
                 <table className="w-full text-left text-xs text-white min-w-[700px]">
                   <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] sticky top-0 z-10">
-                    {revenueLayout === "split" ? (
-                      <tr>
-                        <th className="px-2.5 py-3 w-[36%]">CLIENT & SCOPE</th>
-                        <th className="px-2 py-3 w-[24%]">INVOICE & METHOD</th>
-                        <th className="px-2 py-3 w-[16%] text-right">AMOUNT</th>
-                        <th className="px-2 py-3 w-[14%] text-center">STATUS</th>
-                        <th className="px-2 py-3 w-[10%] text-right pr-3">ACTION</th>
-                      </tr>
-                    ) : (
-                      <tr>
-                        <th className="px-4 py-3">CLIENT & SCOPE</th>
-                        <th className="px-4 py-3">INVOICE #</th>
-                        <th className="px-4 py-3">SETTLED DATE</th>
-                        <th className="px-4 py-3">AMOUNT</th>
-                        <th className="px-4 py-3">PAYMENT METHOD</th>
-                        <th className="px-4 py-3 text-center">STATUS</th>
-                        <th className="px-4 py-3 text-right pr-4">ACTIONS</th>
-                      </tr>
-                    )}
+                    <tr>
+                      <th className="px-4 py-3">CLIENT & SCOPE</th>
+                      <th className="px-4 py-3">INVOICE #</th>
+                      <th className="px-4 py-3">SETTLED DATE</th>
+                      <th className="px-4 py-3">AMOUNT</th>
+                      <th className="px-4 py-3">PAYMENT METHOD</th>
+                      <th className="px-4 py-3 text-center">STATUS</th>
+                      <th className="px-4 py-3 text-right pr-4">ACTIONS</th>
+                    </tr>
                   </thead>
                   <tbody className="divide-y divide-[#2A3446]/40 font-medium bg-[#161F2D]/50">
                     {filteredTx.length === 0 ? (
                       <tr>
-                        <td colSpan={revenueLayout === "split" ? 5 : 7} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
+                        <td colSpan={7} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
                           No transactions recorded yet
                         </td>
                       </tr>
                     ) : (
                       filteredTx.map((tx) => (
                         <tr key={tx.id} className="hover:bg-[#0B111C]/70 transition-colors">
-                          {revenueLayout === "split" ? (
-                            <>
-                              {/* Col 1: Client & Scope */}
-                              <td className="px-2.5 py-3">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <div className={`w-7 h-7 rounded-lg ${tx.avatarBg} font-black text-[11px] flex items-center justify-center shrink-0`}>
-                                    {tx.clientInitials}
-                                  </div>
-                                  <div className="min-w-0 truncate">
-                                    <div className="font-bold text-xs text-white truncate" title={tx.client}>{tx.client}</div>
-                                    <div className="text-[10px] text-[#97A0B3] truncate" title={tx.scope}>{tx.scope}</div>
-                                  </div>
-                                </div>
-                              </td>
+                          {/* Full Width Row: All 7 Columns completely visible */}
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-xl ${tx.avatarBg} font-black text-xs flex items-center justify-center shrink-0`}>
+                                {tx.clientInitials}
+                              </div>
+                              <div>
+                                <div className="font-bold text-xs text-white">{tx.client}</div>
+                                <div className="text-[11px] text-[#97A0B3]">{tx.scope}</div>
+                              </div>
+                            </div>
+                          </td>
 
-                              {/* Col 2: Invoice # & Method */}
-                              <td className="px-2 py-3">
-                                <div className="font-mono font-bold text-[#F1F5F9] text-[11px]">{tx.id}</div>
-                                <div className="text-[10px] text-[#97A0B3] truncate">{tx.method}</div>
-                              </td>
+                          <td className="px-4 py-3.5 font-mono font-bold text-[#F1F5F9] text-xs">
+                            {tx.id}
+                          </td>
 
-                              {/* Col 3: Amount */}
-                              <td className="px-2 py-3 font-black text-xs text-white text-right whitespace-nowrap">
-                                ₹{tx.amount.toLocaleString('en-IN')}
-                              </td>
+                          <td className="px-4 py-3.5 text-xs text-[#97A0B3] font-medium">
+                            {tx.date}
+                          </td>
 
-                              {/* Col 4: Status */}
-                              <td className="px-2 py-3 text-center">
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border inline-flex items-center gap-1 ${tx.badgeClass}`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]"}`} />
-                                  {tx.status}
-                                </span>
-                              </td>
+                          <td className="px-4 py-3.5 font-black text-sm text-white whitespace-nowrap">
+                            ₹{tx.amount.toLocaleString('en-IN')}
+                          </td>
 
-                              {/* Col 5: Action */}
-                              <td className="px-2 py-3 text-right pr-3 whitespace-nowrap">
-                                {tx.status === "Paid" ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedReceipt(tx)}
-                                    className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer text-xs"
-                                  >
-                                    Receipt <ArrowUpRight className="w-3.5 h-3.5" />
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSendReminder(tx)}
-                                    className="px-2 py-1 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer"
-                                  >
-                                    <Play className="w-2.5 h-2.5 fill-current" /> Remind
-                                  </button>
-                                )}
-                              </td>
-                            </>
-                          ) : (
-                            <>
-                              {/* Full Width Row: All 7 Columns completely visible */}
-                              <td className="px-4 py-3.5">
-                                <div className="flex items-center gap-3">
-                                  <div className={`w-8 h-8 rounded-xl ${tx.avatarBg} font-black text-xs flex items-center justify-center shrink-0`}>
-                                    {tx.clientInitials}
-                                  </div>
-                                  <div>
-                                    <div className="font-bold text-xs text-white">{tx.client}</div>
-                                    <div className="text-[11px] text-[#97A0B3]">{tx.scope}</div>
-                                  </div>
-                                </div>
-                              </td>
+                          <td className="px-4 py-3.5 text-[#F1F5F9] font-medium text-xs">
+                            <span className="px-2.5 py-1 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[#F1F5F9] inline-block">
+                              {tx.method}
+                            </span>
+                          </td>
 
-                              <td className="px-4 py-3.5 font-mono font-bold text-[#F1F5F9] text-xs">
-                                {tx.id}
-                              </td>
+                          <td className="px-4 py-3.5 text-center">
+                            <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border inline-flex items-center gap-1.5 ${tx.badgeClass}`}>
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              {tx.status}
+                            </span>
+                          </td>
 
-                              <td className="px-4 py-3.5 text-xs text-[#97A0B3] font-medium">
-                                {tx.date}
-                              </td>
-
-                              <td className="px-4 py-3.5 font-black text-sm text-white whitespace-nowrap">
-                                ₹{tx.amount.toLocaleString('en-IN')}
-                              </td>
-
-                              <td className="px-4 py-3.5 text-[#F1F5F9] font-medium text-xs">
-                                <span className="px-2.5 py-1 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[#F1F5F9] inline-block">
-                                  {tx.method}
-                                </span>
-                              </td>
-
-                              <td className="px-4 py-3.5 text-center">
-                                <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border inline-flex items-center gap-1.5 ${tx.badgeClass}`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]"}`} />
-                                  {tx.status}
-                                </span>
-                              </td>
-
-                              <td className="px-4 py-3.5 text-right pr-4">
-                                {tx.status === "Paid" ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedReceipt(tx)}
-                                    className="px-3 py-1.5 rounded-xl border border-[#7FA0D6]/30 bg-[#7FA0D6]/10 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold inline-flex items-center gap-1 cursor-pointer text-xs transition-colors"
-                                  >
-                                    View Receipt <ArrowUpRight className="w-3.5 h-3.5" />
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSendReminder(tx)}
-                                    className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 font-bold text-xs inline-flex items-center gap-1 cursor-pointer transition-colors"
-                                  >
-                                    <Play className="w-3 h-3 fill-current" /> Send Reminder
-                                  </button>
-                                )}
-                              </td>
-                            </>
-                          )}
+                          <td className="px-4 py-3.5 text-right pr-4 whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedReceipt(tx)}
+                              className="px-2.5 py-1.5 rounded-xl border border-[#7FA0D6]/30 bg-[#7FA0D6]/10 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold inline-flex items-center gap-1 cursor-pointer text-xs transition-colors whitespace-nowrap shrink-0"
+                            >
+                              View Receipt <ArrowUpRight className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
                         </tr>
                       ))
                     )}

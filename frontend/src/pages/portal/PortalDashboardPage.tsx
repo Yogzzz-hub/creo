@@ -216,9 +216,9 @@ export function PortalDashboardPage() {
         {/* Left Column: Batch Status + Asset List (2/3 width) */}
         <div className="lg:col-span-2 flex flex-col gap-4">
           {/* Batch Status Card */}
-          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
+          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-white">
                 {pendingDeliverables.length > 0 
                   ? "Deliverables · Ready for Review" 
@@ -262,7 +262,7 @@ export function PortalDashboardPage() {
               const steps = ["Brief", "Production", "Internal QA", "Your review", "Scheduled"];
 
               return (
-                <ol className="flex items-stretch gap-1.5 sm:gap-2 mb-6">
+                <ol className="flex items-stretch gap-1.5 sm:gap-2 mb-4">
                   {steps.map((label, i) => {
                     const done = i < activeStep;
                     const active = i === activeStep;
@@ -275,7 +275,7 @@ export function PortalDashboardPage() {
                           }`}
                         />
                         <span
-                          className={`mt-2.5 block truncate text-center text-[11px] sm:text-[13px] leading-tight ${
+                          className={`mt-2 block truncate text-center text-[11px] sm:text-[13px] leading-tight ${
                             active ? "text-white font-bold" : "text-[#97A0B3] font-medium"
                           }`}
                         >
@@ -290,7 +290,7 @@ export function PortalDashboardPage() {
 
             {/* Alert Box (Only when review is needed) */}
             {pendingDeliverables.length > 0 && (
-              <div className="rounded-xl border border-[#2A3446] bg-[#0B111C]/60 p-4 mb-5">
+              <div className="rounded-xl border border-[#2A3446] bg-[#0B111C]/60 p-3.5 mb-3.5">
                 <p className="text-[13px] text-[#97A0B3] leading-relaxed">
                   You have <span className="text-white font-medium">{pendingDeliverables.length} {pendingDeliverables.length === 1 ? 'deliverable' : 'deliverables'}</span> awaiting your review. Approving or requesting changes keeps your batch on its delivery SLA.
                 </p>
@@ -309,7 +309,7 @@ export function PortalDashboardPage() {
             ) : (
               <div className="space-y-0 divide-y divide-white/[0.05]">
                 {pendingDeliverables.slice(0, 3).map((item: any) => (
-                  <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 py-4">
+                  <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 py-3">
                     {/* Thumbnail + Info */}
                     <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                       <Link
@@ -368,8 +368,8 @@ export function PortalDashboardPage() {
           </div>
 
           {/* Coming Up */}
-          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-5">
+          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] flex-1 flex flex-col">
+            <div className="flex items-center justify-between mb-3.5">
               <h3 className="text-base font-semibold text-white">Coming up</h3>
               <span className="text-xs font-medium text-[#97A0B3]">
                 next 7 days
@@ -427,10 +427,10 @@ export function PortalDashboardPage() {
         {/* Right Column: Plan + Results + Pod */}
         <div className="flex flex-col gap-4">
           {/* Your plan this cycle */}
-          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
-            <h3 className="text-base font-semibold text-white mb-5">Your plan this cycle</h3>
+          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]">
+            <h3 className="text-base font-semibold text-white mb-3.5">Your plan this cycle</h3>
             {isLocked ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <p className="text-sm text-[#97A0B3] leading-relaxed">
                   {gate.isPaid
                     ? "Your plan is active. Usage tracking starts with your first production cycle."
@@ -472,7 +472,7 @@ export function PortalDashboardPage() {
 
               return (
                 <>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {usageItems.map((item) => {
                       const totalSafe = item.total > 0 ? item.total : 1;
                       const pct = Math.min(100, Math.round((item.used / totalSafe) * 100));
@@ -496,7 +496,7 @@ export function PortalDashboardPage() {
                       );
                     })}
                   </div>
-                  <div className="mt-6 pt-4 border-t border-[#2A3446]">
+                  <div className="mt-4 pt-3 border-t border-[#2A3446]">
                     <p className="text-xs text-[#97A0B3]">
                       Renews {renewalDateStr} · <Link to="/portal/payments" className="text-white hover:underline">Add-ons available</Link>
                     </p>
@@ -507,8 +507,8 @@ export function PortalDashboardPage() {
           </div>
 
           {/* Results & Instagram Publishing */}
-          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]">
-            <div className="flex items-center justify-between mb-5">
+          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]">
+            <div className="flex items-center justify-between mb-3.5">
               <h3 className="text-base font-semibold text-white">Results & Publishing</h3>
               {dashboard?.instagram_connected && dashboard?.instagram_username && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
@@ -519,7 +519,7 @@ export function PortalDashboardPage() {
             </div>
 
             {dashboard?.instagram_connected && dashboard?.instagram_username ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <p className="text-sm text-[#97A0B3] leading-relaxed">
                   Your workspace is linked to Instagram. Approved deliverables are auto-published directly to your account.
                 </p>
@@ -558,7 +558,7 @@ export function PortalDashboardPage() {
               </div>
             ) : (
               <div>
-                <p className="text-sm text-[#97A0B3] mb-4 leading-relaxed">
+                <p className="text-sm text-[#97A0B3] mb-3 leading-relaxed">
                   Connect Instagram to see reach and saves for every post we publish, and enable direct publishing of approved deliverables.
                 </p>
                 <div>
@@ -575,8 +575,8 @@ export function PortalDashboardPage() {
           </div>
 
           {/* From your pod */}
-          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-5">
+          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] flex-1 flex flex-col">
+            <div className="flex items-center justify-between mb-3.5">
               <h3 className="text-base font-semibold text-white">From your pod</h3>
               {!isLocked && (
                 <Link
