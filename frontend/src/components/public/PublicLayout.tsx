@@ -13,6 +13,7 @@ export function PublicLayout() {
   const { pathname } = useLocation();
   const reduce = useReducedMotion();
   const landing = pathname === "/";
+  const hasDedicatedMobileView = ["/", "/pricing", "/about", "/work", "/portfolio"].includes(pathname);
   const outlet = useOutlet();
 
   return (
@@ -20,7 +21,9 @@ export function PublicLayout() {
       <a href="#main-content" className="public-skip-link">Skip to content</a>
       <SmoothScroll />
       <ScrollProgressBar />
-      <Navbar landing={landing} />
+      <div className={hasDedicatedMobileView ? "hidden md:block" : ""}>
+        <Navbar landing={landing} />
+      </div>
       <main id="main-content" className="min-w-0 flex-1">
         <Suspense fallback={<CreoInlineLoader className="min-h-[70vh]" />}>
           <AnimatePresence mode="wait">
@@ -40,7 +43,9 @@ export function PublicLayout() {
           </AnimatePresence>
         </Suspense>
       </main>
-      <Footer landing={landing} />
+      <div className={hasDedicatedMobileView ? "hidden md:block" : ""}>
+        <Footer landing={landing} />
+      </div>
     </div>
   );
 }

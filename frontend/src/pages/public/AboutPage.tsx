@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { CountUp, EASE_OUT_EXPO, Reveal, SplitText, Stagger, StaggerItem, TiltCard } from "../../components/motion";
+import { MobileAboutPage } from "../../components/public/MobileAboutPage";
 import { 
   MessageSquare, 
   AlertCircle, ChevronRight, BarChart3, FileSpreadsheet, HardDrive
@@ -12,7 +13,14 @@ export function AboutPage() {
   const [activeMilestone, setActiveMilestone] = useState("01");
 
   return (
-    <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen pb-20 lg:pb-24 font-sans selection:bg-[#7FA0D6]/30">
+    <>
+      {/* Mobile-only view (< md) */}
+      <div className="block md:hidden">
+        <MobileAboutPage />
+      </div>
+
+      {/* Desktop & tablet view (>= md) */}
+      <div className="hidden md:block w-full bg-[#050810] text-[#F8FAFC] min-h-screen pb-20 lg:pb-24 font-sans selection:bg-[#7FA0D6]/30">
       
       {/* ── Section 1: Hero (2-Column Grid) ── */}
       <section className="relative isolate overflow-clip max-w-[1240px] mx-auto px-4 sm:px-6 pt-8 pb-16 sm:pt-12 sm:pb-20 lg:pt-14 lg:pb-24">
@@ -497,7 +505,8 @@ export function AboutPage() {
         </Stagger>
       </section>
 
-    </div>
+      </div>
+    </>
   );
 }
 

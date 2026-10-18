@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useScroll } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, AlertCircle, ArrowRight, Layers, User, Database, ChevronDown, Zap, Loader2, Instagram, Mail, Check, Layout, Clock } from "lucide-react";
 import { LandingPricingCards } from "../../components/public/LandingPricingCards";
+import { MobileLandingPage } from "../../components/public/MobileLandingPage";
 import { request } from "../../lib/http";
 import {
   EASE_OUT_EXPO,
@@ -183,7 +184,14 @@ export function HomePage() {
   };
 
   return (
-    <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#7FA0D6]/30">
+    <>
+      {/* Mobile-only view (< md) */}
+      <div className="block md:hidden">
+        <MobileLandingPage />
+      </div>
+
+      {/* Desktop & tablet view (>= md) */}
+      <div className="hidden md:block w-full bg-[#050810] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#7FA0D6]/30">
 
       {/* 1. Hero Section + Collage */}
       <section className="relative isolate overflow-hidden creo-grain">
@@ -675,6 +683,7 @@ export function HomePage() {
         </Reveal>
       </section>
 
-    </div>
+      </div>
+    </>
   );
 }
