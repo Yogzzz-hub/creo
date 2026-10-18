@@ -325,13 +325,13 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
   const content = (
     <div className="flex flex-col gap-6 w-full max-w-[1440px] mx-auto text-white">
       {/* Top Admin Actions */}
-      <div className="flex flex-wrap items-center justify-end gap-2.5">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-end gap-2 sm:gap-2.5 w-full">
         <button
           onClick={() => {
             setSelectedSlotForEdit(null);
             setStoryModalOpen(true);
           }}
-          className="min-h-9 px-3.5 rounded-xl border border-blue-500/30 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+          className="w-full sm:w-auto justify-center min-h-10 sm:min-h-9 px-3.5 rounded-xl border border-blue-500/30 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
         >
           <Plus size={15} strokeWidth={2.5} />
           Schedule Story & Approval
@@ -343,7 +343,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               if (clientRoster.length > 0 && clientRoster[0]?.client_id) setNewClient(clientRoster[0].client_id);
               setIsScheduleOpen(true);
             }}
-            className="min-h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer hover:shadow-blue-500/20"
+            className="w-full sm:w-auto justify-center min-h-10 sm:min-h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer hover:shadow-blue-500/20 active:scale-95"
           >
             <Plus size={15} strokeWidth={2.5} />
             Schedule Publication

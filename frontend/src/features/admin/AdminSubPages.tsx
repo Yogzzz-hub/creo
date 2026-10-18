@@ -1058,7 +1058,7 @@ export function AdminClientsPage() {
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
                 />
               </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
                 <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20 shrink-0">
                   <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
                   {rosterQuery.isPending ? "Loading clients…" : `${clientList.filter(c => c.lifecycleStatus === "onboarded").length} Active · ${clientList.length} Total Clients`}
@@ -1080,9 +1080,9 @@ export function AdminClientsPage() {
                 <button
                   type="button"
                   onClick={() => setIsManualPaymentsModalOpen(true)}
-                  className="px-3.5 py-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-bold flex items-center gap-2 cursor-pointer transition-all shrink-0"
+                  className="flex-1 sm:flex-initial justify-center px-3.5 py-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-bold flex items-center gap-2 cursor-pointer transition-all active:scale-95"
                 >
-                  <Banknote className="w-4 h-4 text-amber-400" />
+                  <Banknote className="w-4 h-4 text-amber-400 shrink-0" />
                   <span>Offline Payments</span>
                   {pendingManualPayments.length > 0 && (
                     <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-black leading-none">
@@ -1093,16 +1093,16 @@ export function AdminClientsPage() {
                 <button
                   type="button"
                   onClick={() => setIsOnboardClientModalOpen(true)}
-                  className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer transition-all shrink-0"
+                  className="flex-1 sm:flex-initial justify-center px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer transition-all active:scale-95"
                 >
-                  <Plus className="w-4 h-4" /> Onboard Client
+                  <Plus className="w-4 h-4 shrink-0" /> Onboard Client
                 </button>
                 <button
                   type="button"
                   onClick={() => { setRemoveError(null); setClientToRemoveInput(clientList[0]?.id || ""); setIsRemoveClientModalOpen(true); }}
-                  className="px-3 py-2.5 rounded-xl border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
+                  className="flex-1 sm:flex-initial justify-center px-3 py-2.5 rounded-xl border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Remove Client
+                  <Trash2 className="w-3.5 h-3.5 text-rose-400 shrink-0" /> Remove Client
                 </button>
               </div>
             </div>
@@ -4489,59 +4489,90 @@ export function AdminTasksPage() {
       <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1550px] w-full mx-auto space-y-5 sm:space-y-6">
         
         {/* Global Controls & View Switcher */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Top row: Live Sync badge on desktop; on mobile includes compact View Switcher & Refresh */}
+          <div className="flex items-center justify-between w-full sm:w-auto gap-2">
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
               <span className={`w-2 h-2 rounded-full bg-[#7FA0D6] ${isTasksFetching ? "animate-spin" : "animate-pulse"}`} />
               Live Sync
             </span>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* View Switcher: Pipeline Board */}
-            <div className="p-1 bg-[#161F2D] rounded-2xl border border-[#2A3446] flex items-center gap-1">
+            {/* Mobile View Switcher & Refresh Controls (paired with Live Sync) */}
+            <div className="flex items-center gap-2 sm:hidden">
+              <div className="p-1 bg-[#161F2D] rounded-2xl border border-[#2A3446] flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("kanban")}
+                  className="px-2.5 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1 bg-[#7FA0D6] text-white shadow-xs"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" /> Board
+                </button>
+              </div>
+
               <button
                 type="button"
-                onClick={() => setViewMode("kanban")}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-[#7FA0D6] text-white shadow-sm"
+                onClick={() => {
+                  refetchTasks();
+                  refetchFreelancers();
+                  setToast("Tasks synchronized with server.");
+                }}
+                className="p-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#97A0B3] hover:text-white transition-colors"
+                title="Refresh Task Queue"
               >
-                <LayoutGrid className="w-3.5 h-3.5" /> Pipeline Board
+                <RefreshCw className={`w-3.5 h-3.5 ${isTasksFetching ? "animate-spin text-purple-400" : ""}`} />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+            {/* Desktop View Switcher & Refresh Controls */}
+            <div className="hidden sm:flex items-center gap-2.5">
+              <div className="p-1 bg-[#161F2D] rounded-2xl border border-[#2A3446] flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("kanban")}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-[#7FA0D6] text-white shadow-sm"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" /> Pipeline Board
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  refetchTasks();
+                  refetchFreelancers();
+                  setToast("Tasks synchronized with server.");
+                }}
+                className="p-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#97A0B3] hover:text-white transition-colors"
+                title="Refresh Task Queue"
+              >
+                <RefreshCw className={`w-4 h-4 ${isTasksFetching ? "animate-spin text-purple-400" : ""}`} />
               </button>
             </div>
 
-            {/* Quick Refresh Button */}
-            <button
-              type="button"
-              onClick={() => {
-                refetchTasks();
-                refetchFreelancers();
-                setToast("Tasks synchronized with server.");
-              }}
-              className="p-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#97A0B3] hover:text-white transition-colors"
-              title="Refresh Task Queue"
-            >
-              <RefreshCw className={`w-4 h-4 ${isTasksFetching ? "animate-spin text-purple-400" : ""}`} />
-            </button>
+            {/* Action Buttons: 2-column grid on mobile for perfect alignment, inline on desktop */}
+            <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center sm:gap-2.5">
+              {/* Assign Freelancer Task CTA */}
+              <button
+                type="button"
+                onClick={() => setIsAssignPickerOpen(true)}
+                className="w-full sm:w-auto justify-center px-3 sm:px-3.5 py-2.5 sm:py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer transition-all active:scale-95 truncate"
+              >
+                <UserCheck className="w-4 h-4 stroke-[2.5] shrink-0" />
+                <span className="truncate">Assign Freelancer</span>
+              </button>
 
-            {/* Assign Freelancer Task CTA */}
-            <button
-              type="button"
-              onClick={() => setIsAssignPickerOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer transition-all"
-            >
-              <UserCheck className="w-4 h-4 stroke-[2.5]" />
-              Assign Freelancer
-            </button>
-
-            {/* Create Production Task */}
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              Create Task
-            </button>
+              {/* Create Production Task */}
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="w-full sm:w-auto justify-center px-3 sm:px-3.5 py-2.5 sm:py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors active:scale-95 truncate"
+              >
+                <Plus className="w-4 h-4 stroke-[3] shrink-0" />
+                <span className="truncate">Create Task</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -7512,9 +7543,9 @@ export function AdminTeamManagementPage() {
                 <button
                   type="button"
                   onClick={() => setIsAddMemberOpen(true)}
-                  className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="w-full sm:w-auto justify-center px-3.5 py-2.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
                 >
-                  <Plus className="w-4 h-4" /> Add Member to {activePod?.name}
+                  <Plus className="w-4 h-4 shrink-0" /> Add Member to {activePod?.name}
                 </button>
               </div>
 
@@ -9369,19 +9400,21 @@ export function AdminLeaveApprovalsPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-end gap-3 pb-2">
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:flex sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3 w-full pb-2">
           <Link
             to="/admin/team"
-            className="px-3.5 py-2 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+            className="w-full sm:w-auto justify-center px-3.5 py-2.5 sm:py-2 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 truncate"
           >
-            <UserCog className="w-4 h-4 text-[#7FA0D6]" /> Team Roster & Pods
+            <UserCog className="w-4 h-4 text-[#7FA0D6] shrink-0" />
+            <span className="truncate">Team Roster & Pods</span>
           </Link>
           <button
             type="button"
             onClick={() => setIsApplyModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+            className="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all active:scale-95 truncate"
           >
-            <Plus className="w-4 h-4" /> Apply for Time Off
+            <Plus className="w-4 h-4 shrink-0" />
+            <span className="truncate">Apply for Time Off</span>
           </button>
         </div>
 
@@ -10005,7 +10038,7 @@ export function AdminRevenuePage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             TOP CONTROLS & TIMEFRAME ACTIONS
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -10013,22 +10046,55 @@ export function AdminRevenuePage() {
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={handleExportCSV}
-              className="px-4 py-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:bg-[#0B111C] text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer"
-            >
-              <Download className="w-4 h-4 text-[#97A0B3]" /> Export Report
-            </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+            {/* View Mode Toggle: Full Width vs Split View */}
+            <div className="flex items-center justify-center p-1 bg-[#161F2D] border border-[#2A3446] rounded-xl text-xs font-bold w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setRevenueLayout("enlarged")}
+                className={`flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+                  revenueLayout === "enlarged"
+                    ? "bg-[#7FA0D6] text-white shadow-xs font-black"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+                title="Full-width view: spacious layout showing all row details with zero horizontal scrolling"
+              >
+                <Maximize2 className="w-3.5 h-3.5" /> Full Width
+              </button>
+              <button
+                type="button"
+                onClick={() => setRevenueLayout("split")}
+                className={`flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+                  revenueLayout === "split"
+                    ? "bg-[#7FA0D6] text-white shadow-xs font-black"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+                title="Side-by-side: Compact split view"
+              >
+                <Columns2 className="w-3.5 h-3.5" /> Split View
+              </button>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => setIsCreateInvoiceOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
-            >
-              <Plus className="w-4 h-4" /> Create Invoice
-            </button>
+            {/* Action Buttons: 2-column grid on mobile for perfect alignment, inline on desktop */}
+            <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center sm:gap-2.5">
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="w-full sm:w-auto justify-center px-3.5 py-2.5 sm:py-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:bg-[#0B111C] text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 truncate"
+              >
+                <Download className="w-4 h-4 text-[#97A0B3] shrink-0" />
+                <span className="truncate">Export Report</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsCreateInvoiceOpen(true)}
+                className="w-full sm:w-auto justify-center px-3.5 py-2.5 sm:py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all active:scale-95 truncate"
+              >
+                <Plus className="w-4 h-4 shrink-0" />
+                <span className="truncate">Create Invoice</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -11215,9 +11281,9 @@ export function AdminPlansPage() {
             <button
               type="button"
               onClick={() => setIsNewProposalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+              className="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors active:scale-95"
             >
-              <Plus className="w-4 h-4" /> Initiate Custom Proposal
+              <Plus className="w-4 h-4 shrink-0" /> Initiate Custom Proposal
             </button>
           </div>
 
