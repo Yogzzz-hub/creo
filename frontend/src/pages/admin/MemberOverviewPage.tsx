@@ -491,7 +491,7 @@ export function MemberOverviewPage() {
   return (
     <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
       {/* Main Container */}
-      <main className="flex-1 max-w-[1440px] w-full mx-auto px-3.5 sm:px-6 lg:px-8 pt-0 sm:pt-6 pb-20 sm:pb-8 space-y-3 sm:space-y-6">
+      <main className="flex-1 max-w-[1440px] w-full mx-auto px-3.5 sm:px-6 lg:px-8 pt-0 sm:pt-6 pb-3 sm:pb-8 space-y-3 sm:space-y-6">
         {/* Toast Alert */}
         {toastMessage && (
           <div

@@ -1,11 +1,23 @@
 import { NativeSelect } from "../../ui/NativeSelect";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { submitPodQAReview, fetchPodDashboard, createPodTask, type PodDashboardData } from "../../lib/ops-api";
+import { submitPodQAReview, fetchPodDashboard, createPodTask, type PodDashboardData, type PodTask } from "../../lib/ops-api";
+import { startProductionTask } from "../../lib/deliverables-api";
 import { useAuth } from "../../lib/auth-context";
 import { motion } from "motion/react";
+import {
+  type Column,
+  formatLabel,
+  taskTitle,
+  columnOf,
+  dueText,
+  feedbackFor,
+  isHighPriority,
+  compareTaskDueDates,
+} from "./MemberTaskBoardPage";
+import { MemberMobileTaskBoard } from "../../components/workstation/MemberMobileTaskBoard";
 import {
   FolderKanban,
   AlertTriangle,
@@ -117,13 +129,156 @@ export function PodTaskBoardPage() {
     showToast("Downloaded Pod A Sprint Task Board CSV report", "success");
   };
 
+  // ── Mobile Task Board States (< md) ──
+  const [mobileSearchQuery, setMobileSearchQuery] = useState("");
+  const [mobileSelectedClient, setMobileSelectedClient] = useState("all");
+  const [mobileUrgencyFilter, setMobileUrgencyFilter] = useState("All");
+  const [mobileKanbanTab, setMobileKanbanTab] = useState<Column>("assigned");
+
+  const mobileTasks = useMemo(() => {
+    if (!data?.tasks) return [] as { task: PodTask; column: Column }[];
+    const buckets: (keyof PodDashboardData["tasks"])[] = [
+      "backlog", "in_production", "internal_qa", "client_review", "ready_to_publish", "completed",
+    ];
+    return buckets.flatMap((bucket) =>
+      (data.tasks[bucket] || []).map((task) => ({ task, column: columnOf(bucket) })),
+    );
+  }, [data]);
+
+  const availableClients = useMemo(() => {
+    const list: { id: string; name: string }[] = [];
+    const seenIds = new Set<string>();
+    const seenNames = new Set<string>();
+    (data?.clients || []).forEach((c) => {
+      if (c.id && !seenIds.has(c.id)) {
+        seenIds.add(c.id);
+        seenNames.add(c.name);
+        list.push({ id: c.id, name: c.name });
+      }
+    });
+    mobileTasks.forEach(({ task }) => {
+      const cId = task.client_id || task.client_name;
+      const cName = task.client_name;
+      if (cName && !seenNames.has(cName)) {
+        seenNames.add(cName);
+        seenIds.add(cId);
+        list.push({ id: cId, name: cName });
+      }
+    });
+    return list;
+  }, [data?.clients, mobileTasks]);
+
+  const filteredMobileTasks = useMemo(() => {
+    const q = mobileSearchQuery.toLowerCase();
+    const result = mobileTasks.filter(({ task }) => {
+      const matchesSearch =
+        !q ||
+        taskTitle(task).toLowerCase().includes(q) ||
+        task.client_name?.toLowerCase().includes(q) ||
+        formatLabel(task.deliverable_type).toLowerCase().includes(q);
+      const matchesClient =
+        mobileSelectedClient === "all" ||
+        mobileSelectedClient === "All Clients" ||
+        task.client_id === mobileSelectedClient ||
+        task.client_name === mobileSelectedClient;
+      const matchesUrgency =
+        mobileUrgencyFilter === "All" || (mobileUrgencyFilter === "High" ? isHighPriority(task) : !isHighPriority(task));
+      return matchesSearch && matchesClient && matchesUrgency;
+    });
+    return result.sort((a, b) => compareTaskDueDates(a.task, b.task));
+  }, [mobileTasks, mobileSearchQuery, mobileSelectedClient, mobileUrgencyFilter]);
+
+  const byCol = (column: Column) =>
+    filteredMobileTasks
+      .filter((t) => t.column === column)
+      .map((t) => t.task)
+      .sort(compareTaskDueDates);
+
+  const assigned = byCol("assigned");
+  const production = byCol("production");
+  const qa = byCol("qa");
+  const review = byCol("review");
+
+  const currentMobileTasks =
+    mobileKanbanTab === "assigned"
+      ? assigned
+      : mobileKanbanTab === "production"
+      ? production
+      : mobileKanbanTab === "qa"
+      ? qa
+      : review;
+
+  const userInitials = (user?.full_name || "TL")
+    .replace(/\(.*?\)/g, "")
+    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase() || "TL";
+
+  const startMutation = useMutation({
+    mutationFn: (taskId: string) => startProductionTask(taskId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
+      showToast("Task moved to In Production.");
+    },
+    onError: (err: Error) => showToast(err.message || "Could not start the task.", "error"),
+  });
+
+  const handleQaApprove = (taskId: string) => {
+    qaMutation.mutate({
+      taskId,
+      decision: "approve",
+      comment: "Direct QA sign-off from mobile Task Queue.",
+    });
+  };
+
   return (
     <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
       {/* Top Header */}
       <AdminTopHeader title="Content Engine" activeTab="Content Engine" />
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-[1440px] w-full mx-auto px-3 sm:px-5 lg:px-6 py-3.5 pb-20 sm:pb-6 space-y-3.5 sm:space-y-4">
+      {/* ── MOBILE TASK BOARD VIEW (< md) ── */}
+      <MemberMobileTaskBoard
+        user={user}
+        userInitials={userInitials}
+        leadName={leadName}
+        searchQuery={mobileSearchQuery}
+        setSearchQuery={setMobileSearchQuery}
+        selectedClient={mobileSelectedClient}
+        setSelectedClient={setMobileSelectedClient}
+        urgencyFilter={mobileUrgencyFilter}
+        setUrgencyFilter={setMobileUrgencyFilter}
+        mobileKanbanTab={mobileKanbanTab}
+        setMobileKanbanTab={setMobileKanbanTab}
+        tasks={mobileTasks}
+        availableClients={availableClients}
+        assigned={assigned}
+        production={production}
+        qa={qa}
+        review={review}
+        currentMobileTasks={currentMobileTasks}
+        toastMessage={toastMessage}
+        setToastMessage={setToastMessage}
+        showToast={showToast}
+        startMutation={startMutation}
+        onQaApprove={handleQaApprove}
+        openUpload={() => {}}
+        setCreateOpen={setAssignModalOpen}
+        setNewClientId={setNewCardClient}
+        isAdmin={false}
+        clients={data?.clients || []}
+        formatLabel={formatLabel}
+        taskTitle={taskTitle}
+        dueText={dueText}
+        feedbackFor={feedbackFor}
+      />
+
+      {/* ── DESKTOP TASK BOARD VIEW (>= md) ── */}
+      <main className="hidden md:flex flex-1 flex-col max-w-[1440px] w-full mx-auto px-3 sm:px-5 lg:px-6 py-3.5 pb-20 sm:pb-6 space-y-3.5 sm:space-y-4">
         {isPending && <p role="status">Loading task queue...</p>}
         {isError && <p role="alert" className="text-amber-200">{error.message}<button onClick={() => void refetch()} className="ml-3 underline">Retry</button></p>}
         {/* Toast Alert */}

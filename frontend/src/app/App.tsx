@@ -76,9 +76,6 @@ const AdminSupportTicketsPage = lazyModule(() =>
 const AdminTicketDetailPage = lazyModule(() =>
   import("../features/admin/AdminTicketDetailPage").then((m) => ({ default: m.AdminTicketDetailPage }))
 );
-const AdminSLAPerformancePage = lazyModule(() =>
-  import("../features/admin/AdminSLAPerformancePage").then((m) => ({ default: m.AdminSLAPerformancePage }))
-);
 const ClientTicketDetailPage = lazyModule(() =>
   import("../pages/portal/PortalTicketDetailPage").then((m) => ({ default: m.ClientTicketDetailPage }))
 );
@@ -331,8 +328,6 @@ const dashboardRoutes = {
   "/admin/support": AdminSupportTicketsPage,
   "/admin/support/tickets": AdminSupportTicketsPage,
   "/admin/support/tickets/:ticketId": AdminTicketDetailPage,
-  "/admin/support/sla": AdminSLAPerformancePage,
-  "/admin/sla": AdminSLAPerformancePage,
   "/admin/teams": AdminTeamManagementPage,
   "/admin/team": AdminTeamManagementPage,
   "/admin/bde-management": AdminTeamManagementPage,
@@ -676,8 +671,8 @@ export function App() {
                 <Route path="/admin/support/tickets" element={<AdminSupportTicketsPage />} />
                 <Route path="/admin/support/tickets/:ticketId" element={<AdminTicketDetailPage />} />
                 <Route path="/admin/support/:ticketId" element={<AdminTicketDetailPage />} />
-                <Route path="/admin/support/sla" element={<AdminSLAPerformancePage />} />
-                <Route path="/admin/sla" element={<AdminSLAPerformancePage />} />
+                <Route path="/admin/support/sla" element={<Navigate to="/admin/support" replace />} />
+                <Route path="/admin/sla" element={<Navigate to="/admin/support" replace />} />
                 <Route
                   path="/admin/teams"
                   element={
