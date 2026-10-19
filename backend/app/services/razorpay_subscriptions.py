@@ -10,7 +10,7 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-def rejected_response(status: int, data: dict, operation: str) -> AppError:
+def rejected_response(status: int, data: dict, operation: str, *, key_id: str = "", secret_len: int = 0) -> AppError:
     error = data.get("error") if isinstance(data.get("error"), dict) else {}
     description = str(error.get("description") or "").lower()
     field = error.get("field")
@@ -32,10 +32,11 @@ def rejected_response(status: int, data: dict, operation: str) -> AppError:
     provider_code = error.get("code")
     if provider_code not in {"BAD_REQUEST_ERROR", "GATEWAY_ERROR", "SERVER_ERROR", "AUTHENTICATION_ERROR"}:
         provider_code = "UNKNOWN"
+    is_default = (key_id == "rzp_test_TO2r0YMjDZSpuC")
     logger.warning("razorpay_subscription_rejected", operation=operation, http_status=status,
-        provider_code=provider_code, field=field, classification=code)
+        provider_code=provider_code, field=field, classification=code, is_default_key=is_default)
     return AppError(message, code=code, status_code=503 if status in (401, 403, 429) or status >= 500 else 409,
-        details={"operation": operation, "provider_http_status": status, "field": field})
+        details={"operation": operation, "provider_http_status": status, "field": field, "is_default_key": is_default})
 
 
 def identifier(value: str, prefix: str) -> str:
@@ -63,7 +64,7 @@ async def call(method: str, path: str, payload: dict | None = None, *, key_id: s
                     raise
                 data = {}
             if response.is_error or isinstance(data, dict) and "error" in data:
-                raise rejected_response(response.status_code, data if isinstance(data, dict) else {}, operation)
+                raise rejected_response(response.status_code, data if isinstance(data, dict) else {}, operation, key_id=active_key_id, secret_len=len(active_key_secret))
             if not isinstance(data, dict):
                 raise ValueError()
             return data
