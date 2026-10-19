@@ -16,7 +16,7 @@ export function OpsLayout() {
   return (
     <PortalWrapper>
       <AdminSidebarProvider>
-        <div className={isSlack ? "h-screen max-h-screen w-full flex bg-[#0B111C] overflow-hidden" : "min-h-screen w-full flex bg-[#0B111C]"}>
+        <div className={isSlack ? "h-screen max-h-screen w-full flex bg-app-base overflow-hidden" : "min-h-screen w-full flex bg-app-base"}>
           {/* Permanent Desktop Sidebar (Always Visible) & Mobile Drawer */}
           <AdminSidebar />
 

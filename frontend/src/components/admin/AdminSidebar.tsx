@@ -252,16 +252,16 @@ export function AdminSidebar() {
   const renderNavContent = (onItemClick?: () => void) => (
     <>
       {/* Brand Header */}
-      <div className="p-4 sm:p-5 border-b border-[#2A3446] flex items-center justify-between bg-[#0B111C]/60 shrink-0">
+      <div className="p-4 sm:p-5 border-b border-app-line flex items-center justify-between bg-app-base/60 shrink-0">
         <div className="flex items-center gap-2.5">
           <Link
             to={homeHref}
             onClick={onItemClick}
-            className="flex items-center gap-0.5 font-black text-white text-xl tracking-tight"
+            className="flex items-center gap-0.5 font-black text-hi text-xl tracking-tight"
           >
-            creo<span className="text-[#7FA0D6] text-2xl leading-none">.</span>
+            creo<span className="text-app-accent text-2xl leading-none">.</span>
           </Link>
-          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-app-accent/15 text-app-accent border border-app-accent/30">
             {user?.role === "client"
               ? "Client Portal"
               : isMemberRole
@@ -275,7 +275,7 @@ export function AdminSidebar() {
           <button
             type="button"
             onClick={onItemClick}
-            className="md:hidden size-8 rounded-xl flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] border border-transparent hover:border-[#2A3446] transition-colors cursor-pointer"
+            className="md:hidden size-8 rounded-xl flex items-center justify-center text-app-mist hover:text-hi hover:bg-app-surface border border-transparent hover:border-app-line transition-colors cursor-pointer"
             aria-label="Close navigation sidebar"
           >
             <X className="w-5 h-5" />
@@ -285,11 +285,11 @@ export function AdminSidebar() {
 
       {/* Quick Return Banner for Staff/Admins inspecting Client Portal */}
       {isAdminOrSuper && location.pathname.startsWith("/portal") && (
-        <div className="p-3 bg-[#7FA0D6]/10 border-b border-[#2A3446] text-left">
+        <div className="p-3 bg-app-accent/10 border-b border-app-line text-left">
           <Link
             to="/admin"
             onClick={onItemClick}
-            className="flex items-center justify-between text-xs font-bold text-[#7FA0D6] hover:text-white px-3 py-2 rounded-xl bg-[#0B111C] border border-[#7FA0D6]/30 hover:border-[#7FA0D6]/60 transition-colors shadow-xs"
+            className="flex items-center justify-between text-xs font-bold text-app-accent hover:text-hi px-3 py-2 rounded-xl bg-app-base border border-app-accent/30 hover:border-app-accent/60 transition-colors shadow-xs"
           >
             <span>← Return to Admin Console</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -297,11 +297,11 @@ export function AdminSidebar() {
         </div>
       )}
       {isTeamLead && location.pathname.startsWith("/portal") && (
-        <div className="p-3 bg-[#7FA0D6]/10 border-b border-[#2A3446] text-left">
+        <div className="p-3 bg-app-accent/10 border-b border-app-line text-left">
           <Link
             to="/admin/pod-dashboard"
             onClick={onItemClick}
-            className="flex items-center justify-between text-xs font-bold text-[#7FA0D6] hover:text-white px-3 py-2 rounded-xl bg-[#0B111C] border border-[#7FA0D6]/30 hover:border-[#7FA0D6]/60 transition-colors shadow-xs"
+            className="flex items-center justify-between text-xs font-bold text-app-accent hover:text-hi px-3 py-2 rounded-xl bg-app-base border border-app-accent/30 hover:border-app-accent/60 transition-colors shadow-xs"
           >
             <span>← Return to Pod Dashboard</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -310,10 +310,10 @@ export function AdminSidebar() {
       )}
 
       {/* Scrollable Navigation - All menus directly visible, zero hover */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-3.5 space-y-4 text-left [scrollbar-width:thin] [scrollbar-color:#2A3446_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#2A3446] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#7FA0D6]/50">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-3.5 space-y-4 text-left [scrollbar-width:thin] [scrollbar-color:#2A3446_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-app-line [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-app-accent/50">
         {currentNavSections.map((section) => (
           <div key={section.label} className="space-y-1">
-            <div className="px-3 pb-1 text-[10px] font-black uppercase tracking-wider text-[#7FA0D6]">
+            <div className="px-3 pb-1 text-[10px] font-black uppercase tracking-wider text-app-accent">
               {section.label}
             </div>
             <div className="space-y-0.5">
@@ -327,18 +327,18 @@ export function AdminSidebar() {
                     onClick={onItemClick}
                     className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
                       active
-                        ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm font-black"
-                        : "text-[#97A0B3] hover:text-white hover:bg-[#161F2D]"
+                        ? "bg-app-accent-soft text-app-base shadow-sm font-black"
+                        : "text-app-mist hover:text-white hover:bg-app-surface"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <Icon className={`w-4 h-4 shrink-0 ${active ? "text-[#0B111C]" : "text-[#7FA0D6]"}`} />
+                      <Icon className={`w-4 h-4 shrink-0 ${active ? "text-app-base" : "text-app-accent"}`} />
                       <span className="truncate">{item.label}</span>
                     </div>
                     {item.badge && (
                       <span
                         className={`text-[10px] px-1.5 py-0.5 rounded font-black shrink-0 ${
-                          active ? "bg-[#0B111C]/20 text-[#0B111C]" : "bg-[#7FA0D6]/20 text-[#7FA0D6]"
+                          active ? "bg-app-base/20 text-app-base" : "bg-app-accent/20 text-app-accent"
                         }`}
                       >
                         {item.badge}
@@ -353,23 +353,23 @@ export function AdminSidebar() {
       </div>
 
       {/* Footer: User Profile Card & Direct Sign Out */}
-      <div className="p-3 border-t border-[#2A3446] bg-[#0B111C]/80 shrink-0 space-y-2 text-left">
-        <div className="flex items-center gap-2.5 p-2 rounded-xl bg-[#161F2D] border border-[#2A3446]">
-          <div className="size-8 rounded-full bg-[#BCCCE6] text-[#0B111C] font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+      <div className="p-3 border-t border-app-line bg-app-base/80 shrink-0 space-y-2 text-left">
+        <div className="flex items-center gap-2.5 p-2 rounded-xl bg-app-surface border border-app-line">
+          <div className="size-8 rounded-full bg-app-accent-soft text-app-base font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
             {(user?.full_name?.[0] || user?.email?.[0] || (isClientRole ? "C" : isMemberRole ? "D" : "A")).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="text-xs font-bold text-white truncate">
+            <h4 className="text-xs font-bold text-hi truncate">
               {user?.full_name || (isClientRole ? (user?.company_name || "Client Account") : isMemberRole ? "Team Specialist" : user?.role === "team_lead" ? "Pod Lead" : "Creo Admin")}
             </h4>
-            <p className="text-[10px] text-[#97A0B3] font-medium truncate">
+            <p className="text-[10px] text-app-mist font-medium truncate">
               {user?.email || (isClientRole ? "client@portal.creo" : isMemberRole ? "specialist@creo.agency" : "admin@creo.agency")}
             </p>
           </div>
           <button
             type="button"
             onClick={() => void handleLogout(onItemClick)}
-            className="p-1.5 rounded-lg text-[#97A0B3] hover:text-[#D8BF9B] hover:bg-[#D8BF9B]/10 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-app-mist hover:text-app-warm hover:bg-app-warm/10 transition-colors cursor-pointer"
             title="Sign Out / Log Out"
             aria-label="Sign Out"
           >
@@ -386,7 +386,7 @@ export function AdminSidebar() {
       {typeof document !== "undefined" &&
         createPortal(
           <aside
-            className="hidden md:flex fixed top-0 bottom-0 left-0 w-64 lg:w-72 h-screen h-[100dvh] bg-[#161F2D] border-r border-[#2A3446] shadow-2xl z-30 flex-col overflow-hidden"
+            className="hidden md:flex fixed top-0 bottom-0 left-0 w-64 lg:w-72 h-screen h-[100dvh] bg-app-surface border-r border-app-line shadow-2xl z-30 flex-col overflow-hidden"
             aria-label="Admin Navigation Sidebar"
           >
             {renderNavContent()}
@@ -400,13 +400,13 @@ export function AdminSidebar() {
           <>
             {mobileOpen && (
               <div
-                className="fixed inset-0 bg-[#050810]/75 backdrop-blur-sm z-[9998] md:hidden transition-opacity duration-300"
+                className="fixed inset-0 bg-app-void/75 backdrop-blur-sm z-[9998] md:hidden transition-opacity duration-300"
                 onClick={() => setMobileOpen(false)}
                 aria-hidden="true"
               />
             )}
             <aside
-              className={`fixed top-0 bottom-0 left-0 h-screen h-[100dvh] w-72 max-w-[85vw] bg-[#161F2D] border-r border-[#2A3446] shadow-2xl z-[9999] flex flex-col md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+              className={`fixed top-0 bottom-0 left-0 h-screen h-[100dvh] w-72 max-w-[85vw] bg-app-surface border-r border-app-line shadow-2xl z-[9999] flex flex-col md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
                 mobileOpen
                   ? "translate-x-0 opacity-100 visible"
                   : "-translate-x-full opacity-0 invisible pointer-events-none"

@@ -18,7 +18,7 @@ export function DeliverableMedia({ url, isVideo, title, controls = true, classNa
 
   if (!url || failed) {
     return (
-      <div className={`flex flex-col items-center justify-center gap-1.5 text-[#97A0B3] text-[11px] font-bold ${className}`}>
+      <div className={`flex flex-col items-center justify-center gap-1.5 text-app-mist text-[11px] font-bold ${className}`}>
         {isVideo ? <Film className="size-5" /> : <ImageIcon className="size-5" />}
         <span>{url ? "Preview link expired — refresh" : "No file uploaded yet"}</span>
       </div>

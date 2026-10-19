@@ -100,10 +100,10 @@ export function PasswordRecoveryModal({
 	}
 
 	const field =
-		"w-full bg-[#0A0F18] border border-[#222F44] rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-[#7FA0D6]";
-	const label = "block text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1.5";
+		"w-full bg-app-nested border border-app-line-soft rounded-xl px-3 py-3 text-sm text-hi focus:outline-none focus:border-app-accent";
+	const label = "block text-[11px] font-bold uppercase tracking-wider text-app-mist mb-1.5";
 	const secondaryButton =
-		"inline-flex min-h-10 items-center justify-center rounded-xl border border-[#2A3446] bg-[#0A0F18] px-3.5 py-2 text-sm font-semibold text-[#BCCCE6] transition-colors hover:border-[#7FA0D6]/60 hover:bg-[#1A2433] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] disabled:cursor-not-allowed disabled:opacity-45";
+		"inline-flex min-h-10 items-center justify-center rounded-xl border border-app-line bg-app-nested px-3.5 py-2 text-sm font-semibold text-app-accent-soft transition-colors hover:border-app-accent/60 hover:bg-app-surface hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent disabled:cursor-not-allowed disabled:opacity-45";
 
 	const title =
 		step === "password" && !hasPassword
@@ -126,17 +126,17 @@ export function PasswordRecoveryModal({
 					: `You can now sign in with your email and password${hasGoogle ? " or with Google" : ""}.`;
 
 	return createPortal(
-		<div className="fixed inset-0 z-[1000] grid min-h-dvh place-items-center overflow-y-auto p-4 sm:p-6 bg-[#0B111C]/80 backdrop-blur-md">
+		<div className="fixed inset-0 z-[1000] grid min-h-dvh place-items-center overflow-y-auto p-4 sm:p-6 bg-app-base/80 backdrop-blur-md">
 			<dialog
 				open
 				aria-modal="true"
 				aria-labelledby="recovery-title"
-				className="static m-0 w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto bg-[#121926] border border-[#222F44] rounded-2xl p-6 text-white space-y-4"
+				className="static m-0 w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto bg-app-bento border border-app-line-soft rounded-2xl p-6 text-hi space-y-4"
 			>
 				<h2 id="recovery-title" className="text-lg font-bold">
 					{title}
 				</h2>
-				<p className="text-sm text-[#97A0B3]">{description}</p>
+				<p className="text-sm text-app-mist">{description}</p>
 				{error && (
 					<p role="alert" className="text-sm text-red-300">
 						{error}
@@ -146,7 +146,7 @@ export function PasswordRecoveryModal({
 					<button
 						type="button"
 						onClick={onClose}
-						className="w-full py-3 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold"
+						className="w-full py-3 rounded-xl bg-app-accent-soft text-app-base font-bold"
 					>
 						Done
 					</button>
@@ -216,7 +216,7 @@ export function PasswordRecoveryModal({
 										<button
 											type="button"
 											onClick={() => setShowPassword(!showPassword)}
-											className="absolute right-3 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white"
+											className="absolute right-3 top-1/2 -translate-y-1/2 text-app-mist hover:text-hi"
 											aria-label={showPassword ? "Hide password" : "Show password"}
 										>
 											{showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -243,7 +243,7 @@ export function PasswordRecoveryModal({
 						)}
 						<button
 							disabled={busy}
-							className="w-full py-3 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold disabled:opacity-50"
+							className="w-full py-3 rounded-xl bg-app-accent-soft text-app-base font-bold disabled:opacity-50"
 						>
 							{busy
 								? "Please wait..."

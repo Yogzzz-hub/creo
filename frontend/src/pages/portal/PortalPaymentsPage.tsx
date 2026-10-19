@@ -104,9 +104,9 @@ export function PortalPaymentsPage() {
 
   const usage = (subData as any)?.quotas || (subData as any)?.usage || {};
   const usageBars = [
-    { label: "Reels", current: usage.reel?.used || 0, max: usage.reel?.quota ?? (subData as any)?.plan?.reel_quota ?? 0, color: "bg-[#7FA0D6]" },
-    { label: "Posts", current: (usage.static_post?.used ?? usage.poster?.used) || 0, max: (usage.static_post?.quota ?? usage.poster?.quota) ?? (subData as any)?.plan?.poster_quota ?? 0, color: "bg-[#7FA0D6]" },
-    { label: "Stories", current: usage.story?.used || 0, max: usage.story?.quota ?? (subData as any)?.plan?.story_quota ?? 0, color: "bg-[#7FA0D6]" }
+    { label: "Reels", current: usage.reel?.used || 0, max: usage.reel?.quota ?? (subData as any)?.plan?.reel_quota ?? 0, color: "bg-app-accent" },
+    { label: "Posts", current: (usage.static_post?.used ?? usage.poster?.used) || 0, max: (usage.static_post?.quota ?? usage.poster?.quota) ?? (subData as any)?.plan?.poster_quota ?? 0, color: "bg-app-accent" },
+    { label: "Stories", current: usage.story?.used || 0, max: usage.story?.quota ?? (subData as any)?.plan?.story_quota ?? 0, color: "bg-app-accent" }
   ];
 
   const totalMax = usageBars.reduce((sum, item) => sum + item.max, 0);
@@ -233,16 +233,16 @@ export function PortalPaymentsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-2">
+          <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-app-mist mb-2">
             {hasActivePlan ? `${planName} PLAN • RENEWS ${renewalDate}` : "NO ACTIVE RETAINER • ONBOARDING INCOMPLETE"}
           </p>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Plan & billing</h1>
+          <h1 className="text-3xl font-bold text-hi tracking-tight">Plan & billing</h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button 
             type="button"
             onClick={() => setCompareModalOpen(true)}
-            className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
+            className="px-5 py-2.5 rounded-full border border-app-line text-[13px] font-bold text-hi hover:bg-app-surface transition-colors cursor-pointer"
           >
             Compare plans
           </button>
@@ -266,7 +266,7 @@ export function PortalPaymentsPage() {
               <button 
                 type="button"
                 onClick={() => setPauseModalOpen(true)}
-                className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] hover:border-amber-500/40 transition-colors cursor-pointer"
+                className="px-5 py-2.5 rounded-full border border-app-line text-[13px] font-bold text-hi hover:bg-app-surface hover:border-amber-500/40 transition-colors cursor-pointer"
               >
                 Pause next month
               </button>
@@ -295,7 +295,7 @@ export function PortalPaymentsPage() {
             type="button"
             onClick={handleResumePlan}
             disabled={resumingSub}
-            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#0B111C] text-xs font-bold transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-app-base text-xs font-bold transition-colors shrink-0 cursor-pointer disabled:opacity-50"
           >
             {resumingSub ? "Resuming..." : "Resume Renewal"}
           </button>
@@ -312,16 +312,16 @@ export function PortalPaymentsPage() {
               ? "border-blue-500/40 bg-blue-950/25 text-blue-200"
               : latestNeg.status === "Declined"
               ? "border-rose-500/30 bg-rose-950/20 text-rose-200"
-              : "border-[#7FA0D6]/40 bg-[#0B111C] text-[#BCCCE6]"
+              : "border-app-accent/40 bg-app-base text-app-accent-soft"
           }`}
         >
           <div className="flex items-start sm:items-center gap-3.5">
-            <div className="size-9 rounded-xl bg-[#161F2D] border border-[#2A3446] flex items-center justify-center shrink-0 text-[#7FA0D6]">
+            <div className="size-9 rounded-xl bg-app-surface border border-app-line flex items-center justify-center shrink-0 text-app-accent">
               <PhoneCall className="size-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">Plan Negotiation</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-app-mist">Plan Negotiation</span>
                 <span
                   className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
                     latestNeg.status === "Accepted"
@@ -330,13 +330,13 @@ export function PortalPaymentsPage() {
                       ? "bg-blue-500/20 text-blue-400 border border-blue-500/40"
                       : latestNeg.status === "Declined"
                       ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
-                      : "bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/40"
+                      : "bg-app-accent/20 text-app-accent border border-app-accent/40"
                   }`}
                 >
                   {latestNeg.status}
                 </span>
               </div>
-              <p className="text-sm font-bold text-white mt-0.5">
+              <p className="text-sm font-bold text-hi mt-0.5">
                 {latestNeg.targetTopic}
                 {latestNeg.proposedOffer ? ` (${latestNeg.proposedOffer})` : ""}
               </p>
@@ -347,7 +347,7 @@ export function PortalPaymentsPage() {
                     {latestNeg.counterNote ? ` • "${latestNeg.counterNote}"` : ""}
                   </p>
                   {(latestNeg.reelQuota || latestNeg.posterQuota || latestNeg.storyQuota) && (
-                    <p className="text-[11px] text-[#BCCCE6] font-semibold">
+                    <p className="text-[11px] text-app-accent-soft font-semibold">
                       Agreed Deliverables: {latestNeg.reelQuota || 8} Reels • {latestNeg.posterQuota || 12} Posters • {latestNeg.storyQuota || 15} Stories
                     </p>
                   )}
@@ -360,7 +360,7 @@ export function PortalPaymentsPage() {
                     {latestNeg.counterNote ? ` • "${latestNeg.counterNote}"` : ""}
                   </p>
                   {(latestNeg.reelQuota || latestNeg.posterQuota || latestNeg.storyQuota) && (
-                    <p className="text-[11px] text-[#BCCCE6] font-semibold">
+                    <p className="text-[11px] text-app-accent-soft font-semibold">
                       Proposed Deliverables: {latestNeg.reelQuota || 8} Reels • {latestNeg.posterQuota || 12} Posters • {latestNeg.storyQuota || 15} Stories
                     </p>
                   )}
@@ -372,7 +372,7 @@ export function PortalPaymentsPage() {
                 </p>
               )}
               {latestNeg.status === "Pending Review" && (
-                <p className="text-xs text-[#97A0B3] mt-0.5">
+                <p className="text-xs text-app-mist mt-0.5">
                   Our Agency Director will call you at {latestNeg.phoneNumber} ({latestNeg.preferredTime}).
                 </p>
               )}
@@ -384,7 +384,7 @@ export function PortalPaymentsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         
         {/* Top Left: Current Plan */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6 flex flex-col justify-between">
+        <div className="bg-app-surface border border-app-line rounded-[24px] p-5 sm:p-6 flex flex-col justify-between">
           {!hasActivePlan ? (
             <div className="flex flex-col justify-between h-full space-y-5">
               <div>
@@ -396,18 +396,18 @@ export function PortalPaymentsPage() {
                     Step 3 Pending
                   </span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">No Active Retainer</h2>
-                <p className="text-xs text-[#97A0B3] mt-1.5 leading-relaxed">
+                <h2 className="text-2xl sm:text-3xl font-bold text-hi tracking-tight">No Active Retainer</h2>
+                <p className="text-xs text-app-mist mt-1.5 leading-relaxed">
                   You have not completed plan selection or payment yet. Pick a subscription tier to launch your dedicated creative pod.
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#0B111C]/80 border border-[#2A3446] space-y-2 text-xs">
-                <p className="text-white font-semibold flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-[#7FA0D6]" />
+              <div className="p-4 rounded-2xl bg-app-base/80 border border-app-line space-y-2 text-xs">
+                <p className="text-hi font-semibold flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-app-accent" />
                   What unlocks with an active retainer:
                 </p>
-                <ul className="space-y-1.5 text-[#97A0B3] pl-4 list-disc">
+                <ul className="space-y-1.5 text-app-mist pl-4 list-disc">
                   <li>Dedicated Creative Director, Copywriter & Motion Lead</li>
                   <li>Monthly batches of Reels, Posts, and Story creatives</li>
                   <li>Automated Instagram publishing, scheduling & SLA delivery</li>
@@ -416,7 +416,7 @@ export function PortalPaymentsPage() {
 
               <Link
                 to="/onboarding?step=3"
-                className="w-full py-3 px-6 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-sm text-center transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mt-auto"
+                className="w-full py-3 px-6 rounded-xl bg-app-accent-soft hover:bg-hi text-app-base font-bold text-sm text-center transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mt-auto"
               >
                 <span>Choose Retainer Plan</span>
                 <ArrowRight className="w-4 h-4" />
@@ -426,14 +426,14 @@ export function PortalPaymentsPage() {
             <>
               <div className="flex justify-between items-start mb-10">
                 <div>
-                  <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-1">
+                  <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-app-mist mb-1">
                     CURRENT PLAN
                   </p>
-                  <h2 className="text-3xl font-bold text-white">{planName}</h2>
+                  <h2 className="text-3xl font-bold text-hi">{planName}</h2>
                 </div>
                 <div className="text-right">
-                  <h2 className="text-3xl font-bold text-white">₹{planPrice.toLocaleString('en-IN')}</h2>
-                  <p className="text-xs text-[#97A0B3] mt-1">per month • ₹{costPerAsset.toLocaleString('en-IN')} per asset</p>
+                  <h2 className="text-3xl font-bold text-hi">₹{planPrice.toLocaleString('en-IN')}</h2>
+                  <p className="text-xs text-app-mist mt-1">per month • ₹{costPerAsset.toLocaleString('en-IN')} per asset</p>
                 </div>
               </div>
 
@@ -441,17 +441,17 @@ export function PortalPaymentsPage() {
                 {usageBars.map(item => (
                   <div key={item.label}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[13px] font-bold text-white">{item.label}</span>
-                      <span className="text-[13px] font-medium text-[#97A0B3]">{item.current} / {item.max}</span>
+                      <span className="text-[13px] font-bold text-hi">{item.label}</span>
+                      <span className="text-[13px] font-medium text-app-mist">{item.current} / {item.max}</span>
                     </div>
-                    <div className="h-1.5 w-full bg-white/[0.05] rounded-full overflow-hidden">
+                    <div className="h-1.5 w-full bg-hi/[0.05] rounded-full overflow-hidden">
                       <div className={`h-full ${item.color} rounded-full`} style={{ width: `${(item.current / item.max) * 100}%` }} />
                     </div>
                   </div>
                 ))}
               </div>
 
-              <p className="text-xs text-[#97A0B3] font-medium leading-relaxed">
+              <p className="text-xs text-app-mist font-medium leading-relaxed">
                 2 revision rounds per asset • 2 business-day batch SLA • dedicated account director
               </p>
             </>
@@ -459,30 +459,30 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Top Right: Add to this cycle */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6">
-          <h3 className="text-sm font-bold text-white mb-6">Add to this cycle</h3>
+        <div className="bg-app-surface border border-app-line rounded-[24px] p-5 sm:p-6">
+          <h3 className="text-sm font-bold text-hi mb-6">Add to this cycle</h3>
           {!hasActivePlan && (
-            <p className="text-xs text-[#97A0B3] -mt-3 mb-4">
+            <p className="text-xs text-app-mist -mt-3 mb-4">
               An active plan is required before you can add extras.
             </p>
           )}
-          <div className="divide-y divide-white/[0.05]">
+          <div className="divide-y divide-hi/[0.05]">
             {addons.map(addon => (
               <div key={addon.id} className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h4 className="text-[13px] font-bold text-white mb-1">{addon.name}</h4>
-                  <p className="text-xs text-[#97A0B3]">{addon.desc}</p>
+                  <h4 className="text-[13px] font-bold text-hi mb-1">{addon.name}</h4>
+                  <p className="text-xs text-app-mist">{addon.desc}</p>
                 </div>
                 <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0">
-                  <span className="text-[13px] font-bold text-white">₹{addon.price.toLocaleString('en-IN')}</span>
+                  <span className="text-[13px] font-bold text-hi">₹{addon.price.toLocaleString('en-IN')}</span>
                   <button 
                     onClick={() => handleAddon(addon)}
                     disabled={!hasActivePlan || !!processingAddon}
                     title={!hasActivePlan ? "An active plan is required to add extras" : undefined}
-                    className={`px-5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold transition-colors w-20 flex items-center justify-center disabled:opacity-50 ${
+                    className={`px-5 py-2 rounded-full bg-app-accent-soft text-app-base text-[13px] font-bold transition-colors w-20 flex items-center justify-center disabled:opacity-50 ${
                       !hasActivePlan
                         ? "cursor-not-allowed"
-                        : "cursor-pointer hover:bg-white disabled:cursor-wait"
+                        : "cursor-pointer hover:bg-hi disabled:cursor-wait"
                     }`}
                   >
                     {processingAddon === addon.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Add"}
@@ -494,34 +494,34 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Bottom Left: Invoices */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6">
-          <h3 className="text-sm font-bold text-white mb-6">Invoices</h3>
+        <div className="bg-app-surface border border-app-line rounded-[24px] p-5 sm:p-6">
+          <h3 className="text-sm font-bold text-hi mb-6">Invoices</h3>
           <div className="overflow-x-auto scrollbar-hide">
             <table className="w-full min-w-[500px]">
               <thead>
-                <tr className="border-b border-[#2A3446]">
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Invoice</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Period</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Amount</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Status</th>
+                <tr className="border-b border-app-line">
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-app-mist pb-3 font-mono">Invoice</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-app-mist pb-3 font-mono">Period</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-app-mist pb-3 font-mono">Amount</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-app-mist pb-3 font-mono">Status</th>
                   <th className="pb-3"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.05]">
+              <tbody className="divide-y divide-hi/[0.05]">
                 {invoices.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-sm text-[#97A0B3]">
+                    <td colSpan={5} className="py-8 text-center text-sm text-app-mist">
                       No invoices generated yet.
                     </td>
                   </tr>
                 ) : (
                   invoices.map((inv: any) => (
                     <tr key={inv.id}>
-                      <td className="py-4 text-[13px] font-medium text-[#97A0B3] font-mono">{inv.id}</td>
-                      <td className="py-4 text-[13px] text-white">{inv.period}</td>
-                      <td className="py-4 text-[13px] font-bold text-white">₹{inv.amount.toLocaleString('en-IN')}</td>
+                      <td className="py-4 text-[13px] font-medium text-app-mist font-mono">{inv.id}</td>
+                      <td className="py-4 text-[13px] text-hi">{inv.period}</td>
+                      <td className="py-4 text-[13px] font-bold text-hi">₹{inv.amount.toLocaleString('en-IN')}</td>
                       <td className="py-4">
-                        <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-[#7FA0D6]/15 text-[#BCCCE6] text-xs font-bold">
+                        <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-app-accent/15 text-app-accent-soft text-xs font-bold">
                           {inv.status}
                         </span>
                       </td>
@@ -529,13 +529,13 @@ export function PortalPaymentsPage() {
                         {inv.status?.toLowerCase() === "paid" ? (
                           <button 
                             onClick={() => handleDownload(inv.id)}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-app-line text-[13px] font-bold text-hi hover:bg-app-surface transition-colors cursor-pointer"
                           >
-                            {downloadingInv === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <Download className="w-3.5 h-3.5" />}
+                            {downloadingInv === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-hi" /> : <Download className="w-3.5 h-3.5" />}
                             GST invoice
                           </button>
                         ) : (
-                          <span className="text-xs text-[#97A0B3] italic pr-2">Payment incomplete</span>
+                          <span className="text-xs text-app-mist italic pr-2">Payment incomplete</span>
                         )}
                       </td>
                     </tr>
@@ -547,24 +547,24 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Bottom Right: Payment method */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6 flex flex-col justify-between">
+        <div className="bg-app-surface border border-app-line rounded-[24px] p-5 sm:p-6 flex flex-col justify-between">
           <div>
-            <h3 className="text-sm font-bold text-white mb-6">Payment method</h3>
+            <h3 className="text-sm font-bold text-hi mb-6">Payment method</h3>
             
             <div className="space-y-4 mb-8">
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-[#97A0B3]">Method</span>
-                <span className="text-[13px] font-bold text-white">UPI AutoPay • Razorpay</span>
+                <span className="text-[13px] text-app-mist">Method</span>
+                <span className="text-[13px] font-bold text-hi">UPI AutoPay • Razorpay</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-[#97A0B3]">Next charge</span>
-                <span className="text-[13px] font-bold text-white">
+                <span className="text-[13px] text-app-mist">Next charge</span>
+                <span className="text-[13px] font-bold text-hi">
                   {hasActivePlan ? `₹${planPrice.toLocaleString('en-IN')} • ${renewalDate}` : "No upcoming charge (Plan inactive)"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-[#97A0B3]">GSTIN on invoices</span>
-                <span className="text-[13px] font-bold text-white">Added</span>
+                <span className="text-[13px] text-app-mist">GSTIN on invoices</span>
+                <span className="text-[13px] font-bold text-hi">Added</span>
               </div>
             </div>
           </div>
@@ -587,7 +587,7 @@ export function PortalPaymentsPage() {
                 () => {}
               );
             }}
-            className="w-full py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors mt-auto cursor-pointer"
+            className="w-full py-3 rounded-full border border-app-line text-[13px] font-bold text-hi hover:bg-app-surface transition-colors mt-auto cursor-pointer"
           >
             Change payment method
           </button>

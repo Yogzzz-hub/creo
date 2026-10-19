@@ -875,7 +875,7 @@ export function AdminClientsPage() {
   });
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-app-base flex flex-col">
       <AdminTopHeader
         title={selectedClientId && activeClient ? `${activeClient.name} • Client Details` : "Client Details"}
         activeTab="Client Details"
@@ -902,13 +902,13 @@ export function AdminClientsPage() {
             {/* Controls */}
             <div className="flex flex-col sm:flex-row items-center gap-3">
               <div className="relative flex-1 w-full">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#97A0B3]" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-app-mist" />
                 <input
                   type="text"
                   placeholder="Search by brand name, industry, or contact email..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-app-line bg-app-surface text-xs font-medium text-hi focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
                 />
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
@@ -917,7 +917,7 @@ export function AdminClientsPage() {
                   {clientList.filter(c => c.lifecycleStatus === "onboarded").length} Active · {clientList.length} Total Clients
                 </span>
                 <div className="flex items-center gap-1.5">
-                  <Filter className="size-4 text-[#97A0B3]" />
+                  <Filter className="size-4 text-app-mist" />
                   <CustomSelect
                     value={statusFilter}
                     onChange={setStatusFilter}
@@ -971,24 +971,24 @@ export function AdminClientsPage() {
                   <div
                     key={client.id}
                     onClick={() => setSelectedClientId(client.id)}
-                    className="bg-[#161F2D]/80 backdrop-blur-xl rounded-3xl p-4 sm:p-6 border border-[#2A3446]/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between"
+                    className="bg-app-surface/80 backdrop-blur-xl rounded-3xl p-4 sm:p-6 border border-app-line/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-app-accent/40 transition-all cursor-pointer group flex flex-col justify-between"
                   >
                     <div className="space-y-4">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-12 h-12 rounded-2xl bg-[#0B111C] text-white font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0">
+                          <div className="w-12 h-12 rounded-2xl bg-app-base text-hi font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0">
                             {client.initials}
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <h3 className="font-bold text-base text-white group-hover:text-[#7FA0D6] transition-colors truncate">
+                              <h3 className="font-bold text-base text-hi group-hover:text-app-accent transition-colors truncate">
                                 {client.name}
                               </h3>
                               {isOnboarded && (
-                                <CheckCircle2 className="w-4 h-4 text-[#7FA0D6] fill-blue-600 text-white shrink-0" />
+                                <CheckCircle2 className="w-4 h-4 text-app-accent fill-blue-600 text-hi shrink-0" />
                               )}
                             </div>
-                            <span className="text-[11px] text-[#97A0B3] font-medium block truncate max-w-[200px]">
+                            <span className="text-[11px] text-app-mist font-medium block truncate max-w-[200px]">
                               {client.industry}
                             </span>
                           </div>
@@ -1009,22 +1009,22 @@ export function AdminClientsPage() {
                         )}
                       </div>
 
-                      <div className="p-3 bg-[#0B111C]/80 rounded-2xl space-y-1.5 text-xs text-[#F1F5F9] border border-[#2A3446]">
+                      <div className="p-3 bg-app-base/80 rounded-2xl space-y-1.5 text-xs text-app-ink-2 border border-app-line">
                         <div className="flex justify-between">
-                          <span className="font-medium text-[#97A0B3]">Retainer:</span>
-                          <span className="font-bold text-white">
+                          <span className="font-medium text-app-mist">Retainer:</span>
+                          <span className="font-bold text-hi">
                             {isNotPaidNotOnboarded ? "₹0 (Unpaid)" : `₹${(client.monthlyFee ?? 0).toLocaleString()}/mo`}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="font-medium text-[#97A0B3]">Assigned Pod:</span>
-                          <span className={`font-bold ${isOnboarded ? "text-[#7FA0D6]" : "text-[#97A0B3]"}`}>
+                          <span className="font-medium text-app-mist">Assigned Pod:</span>
+                          <span className={`font-bold ${isOnboarded ? "text-app-accent" : "text-app-mist"}`}>
                             {client.pod?.name || (isPaidNotOnboarded ? "Awaiting Onboarding" : "Not Assigned")}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="font-medium text-[#97A0B3]">Primary Contact:</span>
-                          <span className="font-semibold text-white truncate max-w-[170px]">
+                          <span className="font-medium text-app-mist">Primary Contact:</span>
+                          <span className="font-semibold text-hi truncate max-w-[170px]">
                             {client.contact?.name || client.name}
                           </span>
                         </div>
@@ -1048,7 +1048,7 @@ export function AdminClientsPage() {
                             <Link
                               to={`/admin/plans?negId=${cardNeg.id}&clientId=${client.id}`}
                               onClick={(e) => e.stopPropagation()}
-                              className="text-purple-300 hover:text-white underline text-[10px] font-black shrink-0 ml-1"
+                              className="text-purple-300 hover:text-hi underline text-[10px] font-black shrink-0 ml-1"
                             >
                               Review &rarr;
                             </Link>
@@ -1057,9 +1057,9 @@ export function AdminClientsPage() {
                       })()}
                     </div>
 
-                    <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
+                    <div className="pt-3 border-t border-app-line flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
-                        <span className="text-[#97A0B3] font-medium">
+                        <span className="text-app-mist font-medium">
                           {isOnboarded
                             ? `${(client.deliverables || []).length} Deliverables Active`
                             : isPaidNotOnboarded
@@ -1087,7 +1087,7 @@ export function AdminClientsPage() {
                           </button>
                         )}
                       </div>
-                      <span className="text-[#7FA0D6] font-bold group-hover:underline flex items-center gap-1">
+                      <span className="text-app-accent font-bold group-hover:underline flex items-center gap-1">
                         View Client Detail View &rarr;
                       </span>
                     </div>
@@ -1098,11 +1098,11 @@ export function AdminClientsPage() {
           </div>
         ) : !activeClient ? (
           <div className="py-20 text-center space-y-4">
-            <div className="inline-block p-4 rounded-2xl bg-[#161F2D] border border-[#2A3446]">
-              <Clock className="w-8 h-8 text-[#7FA0D6] mx-auto animate-pulse" />
+            <div className="inline-block p-4 rounded-2xl bg-app-surface border border-app-line">
+              <Clock className="w-8 h-8 text-app-accent mx-auto animate-pulse" />
             </div>
-            <h3 className="text-base font-bold text-white">Loading Client Details...</h3>
-            <p className="text-xs text-[#97A0B3]">Synchronizing live roster and brand profile.</p>
+            <h3 className="text-base font-bold text-hi">Loading Client Details...</h3>
+            <p className="text-xs text-app-mist">Synchronizing live roster and brand profile.</p>
             <button
               type="button"
               onClick={() => setSelectedClientId(null)}
@@ -1141,18 +1141,18 @@ export function AdminClientsPage() {
           <div className="space-y-4 sm:space-y-6 animate-fade-in">
             {/* Top Breadcrumb & Live Status */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-bold text-[#97A0B3] flex-wrap">
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-bold text-app-mist flex-wrap">
                 <button
                   type="button"
                   onClick={() => setSelectedClientId(null)}
-                  className="hover:text-[#7FA0D6] flex items-center gap-1 transition-colors cursor-pointer text-[#F1F5F9]"
+                  className="hover:text-app-accent flex items-center gap-1 transition-colors cursor-pointer text-app-ink-2"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back to Client Roster
                 </button>
                 <span>/</span>
-                <span className="text-[#97A0B3]">Client Details</span>
+                <span className="text-app-mist">Client Details</span>
                 <span>/</span>
-                <span className="text-white font-black">{displayName}</span>
+                <span className="text-hi font-black">{displayName}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -1186,7 +1186,7 @@ export function AdminClientsPage() {
                     user paid but not onboarded
                   </span>
                 ) : (
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#161F2D] text-white border border-[#2A3446] flex items-center gap-1.5 shadow-2xs">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-app-surface text-hi border border-app-line flex items-center gap-1.5 shadow-2xs">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     Live Client • Onboarded
                   </span>
@@ -1196,7 +1196,7 @@ export function AdminClientsPage() {
 
             {/* Lifecycle Notification Banner */}
             {activeClientPendingNeg && (
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-[#161F2D] to-blue-950/40 border-2 border-purple-500/50 text-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg animate-fade-in">
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-app-surface to-blue-950/40 border-2 border-purple-500/50 text-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg animate-fade-in">
                 <div className="flex items-start gap-3.5">
                   <div className="size-9 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0 mt-0.5">
                     <Zap className="size-5 text-purple-400 animate-pulse" />
@@ -1210,10 +1210,10 @@ export function AdminClientsPage() {
                         Offer: {activeClientPendingNeg.proposedOffer || "Custom Offer"}
                       </span>
                     </div>
-                    <p className="text-xs text-[#F1F5F9]">
+                    <p className="text-xs text-app-ink-2">
                       This client requested custom pricing terms for: <strong>{activeClientPendingNeg.targetTopic}</strong>.
                       {activeClientPendingNeg.notes && (
-                        <span className="text-[#97A0B3] italic block mt-0.5">
+                        <span className="text-app-mist italic block mt-0.5">
                           "{activeClientPendingNeg.notes}"
                         </span>
                       )}
@@ -1236,7 +1236,7 @@ export function AdminClientsPage() {
                   <h3 className="text-sm font-black uppercase tracking-wider text-amber-400">
                     user not paid and not onboarded yet
                   </h3>
-                  <p className="text-xs text-[#F1F5F9] leading-relaxed">
+                  <p className="text-xs text-app-ink-2 leading-relaxed">
                     This client account has logged in but has not subscribed or paid for any retainer plan and has not completed the onboarding intake. Mock data has been disabled: retainer fee is ₹0, and no creative pod or design assets are assigned.
                   </p>
                 </div>
@@ -1250,7 +1250,7 @@ export function AdminClientsPage() {
                   <h3 className="text-sm font-black uppercase tracking-wider text-sky-400">
                     user paid but not onboarded
                   </h3>
-                  <p className="text-xs text-[#F1F5F9] leading-relaxed">
+                  <p className="text-xs text-app-ink-2 leading-relaxed">
                     Subscription payment is verified and active ({activeClient?.tier || "Paid Plan"}). However, the client has not finalized their brand onboarding questionnaire yet (Stage {liveBrandProfile?.onboarding_stage || 1} of 4). Creative Pod and Brand DNA will be generated once intake is completed.
                   </p>
                 </div>
@@ -1258,15 +1258,15 @@ export function AdminClientsPage() {
             )}
 
             {/* Client Header Card matching Screenshot */}
-            <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-4">
+            <div className="bg-app-surface rounded-3xl p-6 lg:p-7 border border-app-line shadow-[0_4px_30px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-4">
               <div className="flex flex-col gap-6">
                 <div className="flex items-start gap-4 min-w-0">
-                  <div className="w-16 h-16 rounded-2xl bg-[#0B111C] text-white font-black text-2xl flex items-center justify-center shadow-lg shrink-0">
+                  <div className="w-16 h-16 rounded-2xl bg-app-base text-hi font-black text-2xl flex items-center justify-center shadow-lg shrink-0">
                     {displayInitials}
                   </div>
                   <div className="space-y-1.5 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2.5">
-                      <h1 className="text-2xl font-black text-white tracking-tight break-words">
+                      <h1 className="text-2xl font-black text-hi tracking-tight break-words">
                         {displayName}
                       </h1>
                       {isNotPaidNotOnboarded ? (
@@ -1291,8 +1291,8 @@ export function AdminClientsPage() {
                         </>
                       ) : (
                         <>
-                          <CheckCircle2 className="w-5 h-5 text-[#7FA0D6] fill-blue-600 text-white" />
-                          <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-[10px] font-black uppercase tracking-wider">
+                          <CheckCircle2 className="w-5 h-5 text-app-accent fill-blue-600 text-hi" />
+                          <span className="px-2.5 py-0.5 rounded-full bg-app-accent/15 text-app-accent border border-app-accent/30 text-[10px] font-black uppercase tracking-wider">
                             {activeClient?.tierBadge || "ACTIVE"}
                           </span>
                           <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
@@ -1303,19 +1303,19 @@ export function AdminClientsPage() {
                       )}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-[#97A0B3] font-medium">
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-app-mist font-medium">
                       <span className="flex items-center gap-1">
-                        <Folder className="w-3.5 h-3.5 text-[#97A0B3]" />
+                        <Folder className="w-3.5 h-3.5 text-app-mist" />
                         {displayIndustry}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-[#97A0B3]" />
+                        <Clock className="w-3.5 h-3.5 text-app-mist" />
                         {displayTimezone}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-[#97A0B3]" />
+                        <Calendar className="w-3.5 h-3.5 text-app-mist" />
                         {activeClient?.activeSince || "Active Retainer"}
                       </span>
                     </div>
@@ -1323,19 +1323,19 @@ export function AdminClientsPage() {
                 </div>
 
                 {/* Header Action Buttons */}
-                <div className="flex flex-wrap items-center gap-2.5 w-full border-t border-[#2A3446] pt-4">
+                <div className="flex flex-wrap items-center gap-2.5 w-full border-t border-app-line pt-4">
                   <Link
                     to={`/admin/clients/${liveBrandProfile?.client_id || activeClient?.id || ""}/brand`}
-                    className="px-4 py-2.5 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-xs font-bold text-[#7FA0D6] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl border border-app-accent/40 bg-app-accent/15 hover:bg-app-accent/25 text-xs font-bold text-app-accent flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
-                    <ExternalLink className="w-3.5 h-3.5 text-[#7FA0D6]" /> Brand Brief & Profile
+                    <ExternalLink className="w-3.5 h-3.5 text-app-accent" /> Brand Brief & Profile
                   </Link>
                   <button
                     type="button"
                     onClick={() => setIsInvoiceModalOpen(true)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl border border-app-line bg-app-surface hover:bg-app-base text-xs font-bold text-app-ink-2 flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
-                    <FileText className="w-3.5 h-3.5 text-[#97A0B3]" /> Monthly Invoice
+                    <FileText className="w-3.5 h-3.5 text-app-mist" /> Monthly Invoice
                   </button>
                   <button
                     type="button"
@@ -1351,13 +1351,13 @@ export function AdminClientsPage() {
             {/* 4 Main Grid Cards matching Screenshot (2x2) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-6">
               {/* CARD 1: PRIMARY CONTACT */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+              <div className="bg-app-surface rounded-3xl p-6 border border-app-line shadow-[0_4px_25px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-5 flex flex-col justify-between">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                    <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  <div className="flex items-center justify-between border-b border-app-line pb-3">
+                    <span className="text-[11px] font-extrabold text-app-mist uppercase tracking-wider">
                       PRIMARY CONTACT
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-app-surface text-app-ink-2 text-[10px] font-bold">
                       Authorized Signer
                     </span>
                   </div>
@@ -1367,28 +1367,28 @@ export function AdminClientsPage() {
                       {displayInitials[0] || "C"}
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-white">{displaySignerName}</h3>
-                      <p className="text-xs text-[#97A0B3] font-medium">{activeClient?.contact?.title || "Account Owner & Authorized Contact"}</p>
+                      <h3 className="text-base font-bold text-hi">{displaySignerName}</h3>
+                      <p className="text-xs text-app-mist font-medium">{activeClient?.contact?.title || "Account Owner & Authorized Contact"}</p>
                     </div>
                   </div>
 
                   <div className="space-y-2 pt-2">
-                    <div className="p-3 bg-[#0B111C]/80 rounded-2xl flex items-center justify-between border border-[#2A3446] text-xs">
-                      <div className="flex items-center gap-2 text-[#97A0B3] font-medium">
-                        <Mail className="w-4 h-4 text-[#97A0B3]" />
+                    <div className="p-3 bg-app-base/80 rounded-2xl flex items-center justify-between border border-app-line text-xs">
+                      <div className="flex items-center gap-2 text-app-mist font-medium">
+                        <Mail className="w-4 h-4 text-app-mist" />
                         <span>Email</span>
                       </div>
-                      <a href={`mailto:${displaySignerEmail}`} className="text-[#7FA0D6] font-bold hover:underline">
+                      <a href={`mailto:${displaySignerEmail}`} className="text-app-accent font-bold hover:underline">
                         {displaySignerEmail || "N/A"}
                       </a>
                     </div>
 
-                    <div className="p-3 bg-[#0B111C]/80 rounded-2xl flex items-center justify-between border border-[#2A3446] text-xs">
-                      <div className="flex items-center gap-2 text-[#97A0B3] font-medium">
-                        <Phone className="w-4 h-4 text-[#97A0B3]" />
+                    <div className="p-3 bg-app-base/80 rounded-2xl flex items-center justify-between border border-app-line text-xs">
+                      <div className="flex items-center gap-2 text-app-mist font-medium">
+                        <Phone className="w-4 h-4 text-app-mist" />
                         <span>Direct Phone</span>
                       </div>
-                      <span className="font-bold text-white font-mono">
+                      <span className="font-bold text-hi font-mono">
                         {liveBrandProfile?.phone ||
                           (liveBrandProfile?.brand_dna as any)?.phone ||
                           (activeClient?.contact?.phone && activeClient.contact.phone !== "+91 98401 23890" && activeClient.contact.phone !== "Not provided yet"
@@ -1399,7 +1399,7 @@ export function AdminClientsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
+                <div className="flex items-center justify-between text-xs text-app-mist pt-3 border-t border-app-line font-medium">
                   <span className="flex items-center gap-1 text-emerald-400 font-semibold">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                     Contract: {isNotPaidNotOnboarded ? "Pending Subscription" : isPaidNotOnboarded ? "Payment Confirmed" : (activeClient?.contact?.renewedDate || "Current Sprint")}
@@ -1409,23 +1409,23 @@ export function AdminClientsPage() {
               </div>
 
               {/* CARD 2: TIER TERMS & SCOPE */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+              <div className="bg-app-surface rounded-3xl p-6 border border-app-line shadow-[0_4px_25px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-5 flex flex-col justify-between">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                    <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  <div className="flex items-center justify-between border-b border-app-line pb-3">
+                    <span className="text-[11px] font-extrabold text-app-mist uppercase tracking-wider">
                       TIER TERMS & SCOPE
                     </span>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${isNotPaidNotOnboarded ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : isPaidNotOnboarded ? "bg-sky-500/15 text-sky-400 border-sky-500/30" : "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30"}`}>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${isNotPaidNotOnboarded ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : isPaidNotOnboarded ? "bg-sky-500/15 text-sky-400 border-sky-500/30" : "bg-app-accent/15 text-app-accent border-app-accent/30"}`}>
                       {isNotPaidNotOnboarded ? "Unpaid" : isPaidNotOnboarded ? "Payment Verified" : "Active Cycle"}
                     </span>
                   </div>
 
                   <div className="flex items-baseline justify-between">
                     <div>
-                      <span className="text-3xl font-black text-white">
+                      <span className="text-3xl font-black text-hi">
                         {isNotPaidNotOnboarded ? "₹0" : `₹${(activeClient?.monthlyFee ?? 0).toLocaleString()}`}
                       </span>
-                      <span className="text-xs font-bold text-[#97A0B3]">
+                      <span className="text-xs font-bold text-app-mist">
                         {isNotPaidNotOnboarded ? " /mo (Unpaid Account)" : " /mo"}
                       </span>
                     </div>
@@ -1437,7 +1437,7 @@ export function AdminClientsPage() {
                     )}
                   </div>
 
-                  <p className="text-xs text-[#97A0B3]">
+                  <p className="text-xs text-app-mist">
                     {isNotPaidNotOnboarded
                       ? "No active subscription billing scheduled. Client has not subscribed to any plan."
                       : isPaidNotOnboarded
@@ -1447,8 +1447,8 @@ export function AdminClientsPage() {
 
                   {/* Monthly Output Burn bar */}
                   {!isClientOnboarded ? (
-                    <div className="p-3 bg-[#0B111C]/60 rounded-2xl border border-[#2A3446] text-xs text-[#97A0B3]">
-                      <span className="font-bold text-white block mb-0.5">Production Queue Inactive</span>
+                    <div className="p-3 bg-app-base/60 rounded-2xl border border-app-line text-xs text-app-mist">
+                      <span className="font-bold text-hi block mb-0.5">Production Queue Inactive</span>
                       {isPaidNotOnboarded
                         ? "Asset deliveries and quota burn will activate as soon as onboarding intake is complete."
                         : "Asset production and quota burn are inactive because user is not paid and not onboarded yet."}
@@ -1456,15 +1456,15 @@ export function AdminClientsPage() {
                   ) : (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-xs font-bold">
-                        <span className="text-[#F1F5F9]">Monthly Output Burn</span>
-                        <span className="text-[#7FA0D6]">
+                        <span className="text-app-ink-2">Monthly Output Burn</span>
+                        <span className="text-app-accent">
                           {activeClient?.totalAssetsDelivered ?? 0} / {activeClient?.totalAssetsQuota ?? 0} Assets Delivered (
                           {Math.round((((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100))}%)
                         </span>
                       </div>
-                      <div className="w-full bg-[#161F2D] rounded-full h-2.5 overflow-hidden">
+                      <div className="w-full bg-app-surface rounded-full h-2.5 overflow-hidden">
                         <div
-                          className="bg-[#7FA0D6] h-full rounded-full transition-all"
+                          className="bg-app-accent h-full rounded-full transition-all"
                           style={{
                             width: `${Math.min(
                               (((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100),
@@ -1478,28 +1478,28 @@ export function AdminClientsPage() {
 
                   {/* 3 Metric Counters */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 pt-1">
-                    <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
-                      <span className="text-sm font-black text-white">
+                    <div className="p-3 bg-app-base rounded-2xl text-center space-y-0.5 border border-app-line">
+                      <span className="text-sm font-black text-hi">
                         {isClientOnboarded ? `${activeClient?.postsDelivered ?? 0}/${activeClient?.postsQuota ?? 0}` : "0/0"}
                       </span>
-                      <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">POSTS</span>
+                      <span className="text-[10px] font-bold text-app-mist block uppercase">POSTS</span>
                     </div>
-                    <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
-                      <span className="text-sm font-black text-white">
+                    <div className="p-3 bg-app-base rounded-2xl text-center space-y-0.5 border border-app-line">
+                      <span className="text-sm font-black text-hi">
                         {isClientOnboarded ? `${activeClient?.reelsDelivered ?? 0}/${activeClient?.reelsQuota ?? 0}` : "0/0"}
                       </span>
-                      <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">REELS</span>
+                      <span className="text-[10px] font-bold text-app-mist block uppercase">REELS</span>
                     </div>
-                    <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
-                      <span className="text-sm font-black text-white">
+                    <div className="p-3 bg-app-base rounded-2xl text-center space-y-0.5 border border-app-line">
+                      <span className="text-sm font-black text-hi">
                         {isClientOnboarded ? `${activeClient?.storiesDelivered ?? 0}/${activeClient?.storiesQuota ?? 0}` : "0/0"}
                       </span>
-                      <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">STORIES</span>
+                      <span className="text-[10px] font-bold text-app-mist block uppercase">STORIES</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
+                <div className="flex items-center justify-between text-xs text-app-mist pt-3 border-t border-app-line font-medium">
                   <span>
                     {isClientOnboarded
                       ? `Sprint ${activeClient?.sprintNumber ?? 1}: ${activeClient?.daysRemainingInSprint ?? 14} days remaining`
@@ -1508,7 +1508,7 @@ export function AdminClientsPage() {
                   <button
                     type="button"
                     onClick={() => showToast(isClientOnboarded ? "Opening Client Quota Ledger..." : "Quota ledger unavailable for un-onboarded client.")}
-                    className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
+                    className="text-app-accent font-bold hover:underline cursor-pointer"
                   >
                     View Quota Log
                   </button>
@@ -1517,12 +1517,12 @@ export function AdminClientsPage() {
 
               {/* CARD 3: CLIENT BRAND ECOSYSTEM & GUIDELINES */}
               {!isClientOnboarded ? (
-                <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+                <div className="bg-app-surface rounded-3xl p-6 border border-app-line shadow-[0_4px_25px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-5 flex flex-col justify-between">
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                    <div className="flex items-center justify-between border-b border-app-line pb-3">
                       <div className="flex items-center gap-2">
                         <Palette className={`w-4 h-4 ${isPaidNotOnboarded ? "text-sky-400" : "text-amber-400"}`} />
-                        <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
+                        <h2 className="text-xs font-extrabold text-hi uppercase tracking-wider">
                           Client Brand Ecosystem & Guidelines
                         </h2>
                       </div>
@@ -1531,99 +1531,99 @@ export function AdminClientsPage() {
                       </span>
                     </div>
 
-                    <div className="p-8 text-center space-y-3 bg-[#0B111C]/60 rounded-2xl border border-[#2A3446]">
+                    <div className="p-8 text-center space-y-3 bg-app-base/60 rounded-2xl border border-app-line">
                       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto border ${isPaidNotOnboarded ? "bg-sky-500/10 border-sky-500/20 text-sky-400" : "bg-amber-500/10 border-amber-500/20 text-amber-400"}`}>
                         <Palette className="w-6 h-6" />
                       </div>
-                      <h4 className="text-sm font-bold text-white">
+                      <h4 className="text-sm font-bold text-hi">
                         {isPaidNotOnboarded ? "Brand DNA Brief In Progress" : "Brand DNA Not Available"}
                       </h4>
-                      <p className="text-xs text-[#97A0B3] max-w-md mx-auto leading-relaxed">
+                      <p className="text-xs text-app-mist max-w-md mx-auto leading-relaxed">
                         {isPaidNotOnboarded
                           ? "The client has paid for their subscription. Approved brand color palette, typography hierarchy, tone voice, and asset vault will be generated once they complete the onboarding questionnaire."
                           : "user not paid and not onboarded yet. Brand guidelines, visual spectrum, and drive vaults will be configured after plan activation and onboarding completion."}
                       </p>
                       {isPaidNotOnboarded && (
-                        <span className="inline-block mt-2 px-3 py-1 rounded-full text-[11px] font-bold bg-[#161F2D] text-sky-300 border border-sky-500/30">
+                        <span className="inline-block mt-2 px-3 py-1 rounded-full text-[11px] font-bold bg-app-surface text-sky-300 border border-sky-500/30">
                           Onboarding Progress: Stage {liveBrandProfile?.onboarding_stage || 1} of 4
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between text-xs text-[#97A0B3] font-medium pt-3 border-t border-[#2A3446] gap-2">
-                    <span className="text-[#97A0B3]">Brand Kit Status: {isPaidNotOnboarded ? "Awaiting Submission" : "Not Initialized"}</span>
+                  <div className="flex flex-wrap items-center justify-between text-xs text-app-mist font-medium pt-3 border-t border-app-line gap-2">
+                    <span className="text-app-mist">Brand Kit Status: {isPaidNotOnboarded ? "Awaiting Submission" : "Not Initialized"}</span>
                     <Link
                       to={`/admin/clients/${liveBrandProfile?.client_id || activeClient?.id || ""}/brand`}
-                      className="text-[#7FA0D6] font-bold hover:underline flex items-center gap-1"
+                      className="text-app-accent font-bold hover:underline flex items-center gap-1"
                     >
                       View Brand Intake Overview &rarr;
                     </Link>
                   </div>
                 </div>
               ) : (
-                <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5">
-                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <div className="bg-app-surface rounded-3xl p-6 border border-app-line shadow-[0_4px_25px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-5">
+                  <div className="flex items-center justify-between border-b border-app-line pb-3">
                     <div className="flex items-center gap-2">
-                      <Palette className="w-4 h-4 text-[#7FA0D6]" />
-                      <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
+                      <Palette className="w-4 h-4 text-app-accent" />
+                      <h2 className="text-xs font-extrabold text-hi uppercase tracking-wider">
                         Client Brand Ecosystem & Guidelines
                       </h2>
                     </div>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-app-surface text-app-ink-2 text-[10px] font-bold">
                       {activeClient?.brand?.kitVersion || "Design Kit v2.4"}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Typography Pairing & System */}
-                    <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs">
-                      <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
-                        <Type className="size-3.5 text-[#7FA0D6]" />
+                    <div className="p-3.5 bg-app-base/70 rounded-2xl space-y-2 border border-app-line text-xs">
+                      <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-app-mist uppercase tracking-wider">
+                        <Type className="size-3.5 text-app-accent" />
                         <span>TYPOGRAPHY PAIRING & SYSTEM</span>
                       </div>
-                      <div className="space-y-2 pt-1 text-[#F1F5F9]">
-                        <div className="p-2.5 bg-[#161F2D]/60 rounded-xl border border-[#2A3446]">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-0.5">
+                      <div className="space-y-2 pt-1 text-app-ink-2">
+                        <div className="p-2.5 bg-app-surface/60 rounded-xl border border-app-line">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-app-mist block mb-0.5">
                             Headlines / Display
                           </span>
-                          <p className="font-bold text-sm text-white">{realTypography.headingsFont}</p>
-                          <p className="text-[11px] text-[#97A0B3] mt-0.5">Bold, punchy titles optimized for feed stops.</p>
+                          <p className="font-bold text-sm text-hi">{realTypography.headingsFont}</p>
+                          <p className="text-[11px] text-app-mist mt-0.5">Bold, punchy titles optimized for feed stops.</p>
                         </div>
-                        <div className="p-2.5 bg-[#161F2D]/60 rounded-xl border border-[#2A3446]">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-0.5">
+                        <div className="p-2.5 bg-app-surface/60 rounded-xl border border-app-line">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-app-mist block mb-0.5">
                             Body Copy / Subtitles
                           </span>
-                          <p className="font-medium text-xs text-white">{realTypography.bodyFont}</p>
-                          <p className="text-[11px] text-[#97A0B3] mt-0.5">High legibility for reel captions and carousel body copy.</p>
+                          <p className="font-medium text-xs text-hi">{realTypography.bodyFont}</p>
+                          <p className="text-[11px] text-app-mist mt-0.5">High legibility for reel captions and carousel body copy.</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Persona & Voice Tone */}
-                    <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs flex flex-col justify-between">
+                    <div className="p-3.5 bg-app-base/70 rounded-2xl space-y-2 border border-app-line text-xs flex flex-col justify-between">
                       <div>
-                        <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                        <span className="text-[10px] font-extrabold text-app-mist uppercase tracking-wider block">
                           PERSONA & VOICE TONE
                         </span>
-                        <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed">
+                        <p className="text-[11px] text-app-ink-2 mt-1 leading-relaxed">
                           {realTone.summary}
                         </p>
                       </div>
                       <div className="space-y-2">
                         {realTone.audience && (
-                          <div className="pt-2 border-t border-[#2A3446]/60">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block">
+                          <div className="pt-2 border-t border-app-line/60">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-app-mist block">
                               Target Audience
                             </span>
-                            <p className="text-[11px] text-[#F1F5F9] mt-0.5 line-clamp-2">
+                            <p className="text-[11px] text-app-ink-2 mt-0.5 line-clamp-2">
                               {realTone.audience}
                             </p>
                           </div>
                         )}
                         <div className="flex flex-wrap gap-1.5 pt-1">
                           {realTone.tags.map((tag: string, tagIdx: number) => (
-                            <span key={`${tag}-${tagIdx}`} className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[10px] font-bold text-[#F1F5F9] shadow-2xs">
+                            <span key={`${tag}-${tagIdx}`} className="px-2 py-0.5 rounded-md bg-app-surface border border-app-line text-[10px] font-bold text-app-ink-2 shadow-2xs">
                               {tag}
                             </span>
                           ))}
@@ -1636,12 +1636,12 @@ export function AdminClientsPage() {
                   <div className="space-y-2 pt-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Palette className="size-3.5 text-[#7FA0D6]" />
-                        <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                        <Palette className="size-3.5 text-app-accent" />
+                        <span className="text-[10px] font-extrabold text-app-mist uppercase tracking-wider">
                           VISUAL PALETTE & TOKENS
                         </span>
                       </div>
-                      <span className="text-[10px] font-medium text-[#97A0B3]">
+                      <span className="text-[10px] font-medium text-app-mist">
                         Click swatch to copy hex
                       </span>
                     </div>
@@ -1651,14 +1651,14 @@ export function AdminClientsPage() {
                         <div
                           key={`${c.hex}-${cIdx}`}
                           onClick={() => handleCopyHex(c.hex, cIdx)}
-                          className="group relative bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/50 rounded-xl p-2.5 cursor-pointer transition-all hover:scale-[1.02] shadow-sm"
+                          className="group relative bg-app-base border border-app-line hover:border-app-accent/50 rounded-xl p-2.5 cursor-pointer transition-all hover:scale-[1.02] shadow-sm"
                           title="Click to copy hex"
                         >
                           <div
-                            className="w-full aspect-[4/3] rounded-lg mb-2.5 border border-[#2A3446] shadow-inner relative flex items-center justify-center"
+                            className="w-full aspect-[4/3] rounded-lg mb-2.5 border border-app-line shadow-inner relative flex items-center justify-center"
                             style={{ backgroundColor: c.hex }}
                           >
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 rounded-md px-2 py-1 flex items-center gap-1 text-[10px] text-white font-medium">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 rounded-md px-2 py-1 flex items-center gap-1 text-[10px] text-hi font-medium">
                               {copiedHexIndex === cIdx ? (
                                 <Check className="size-3 text-emerald-400" />
                               ) : (
@@ -1667,8 +1667,8 @@ export function AdminClientsPage() {
                               <span>{copiedHexIndex === cIdx ? "Copied" : "Copy"}</span>
                             </div>
                           </div>
-                          <p className="text-[11px] font-bold text-white truncate">{c.name}</p>
-                          <p className="font-mono text-[10px] text-[#97A0B3] uppercase tracking-wider mt-0.5">
+                          <p className="text-[11px] font-bold text-hi truncate">{c.name}</p>
+                          <p className="font-mono text-[10px] text-app-mist uppercase tracking-wider mt-0.5">
                             {c.hex}
                           </p>
                         </div>
@@ -1677,14 +1677,14 @@ export function AdminClientsPage() {
                   </div>
 
                   {/* Social Channel */}
-                  <div className="p-3.5 bg-[#0B111C]/80 rounded-2xl border border-[#2A3446] flex items-center justify-between">
+                  <div className="p-3.5 bg-app-base/80 rounded-2xl border border-app-line flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center shadow-xs">
                         <Instagram className="w-5 h-5" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-white">
+                          <span className="font-bold text-xs text-hi">
                             {liveBrandProfile?.instagram_username
                               ? `@${liveBrandProfile.instagram_username}`
                               : (activeClient?.brand?.social?.handle && activeClient.brand.social.handle !== "Not connected"
@@ -1701,7 +1701,7 @@ export function AdminClientsPage() {
                             </span>
                           )}
                         </div>
-                        <span className="text-[11px] text-[#97A0B3]">
+                        <span className="text-[11px] text-app-mist">
                           {liveBrandProfile?.instagram_username
                             ? "Real-time Profile Connected • Verified Brand DNA"
                             : "Awaiting Instagram handle connection during onboarding"}
@@ -1715,15 +1715,15 @@ export function AdminClientsPage() {
                           const handle = (liveBrandProfile.instagram_username || "").replace("@", "");
                           if (handle) window.open(`https://instagram.com/${handle}`, "_blank");
                         }}
-                        className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] shadow-2xs cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl border border-app-line bg-app-surface hover:bg-app-base text-xs font-bold text-app-ink-2 shadow-2xs cursor-pointer"
                       >
                         Launch Channel
                       </button>
                     )}
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between text-xs text-[#97A0B3] font-medium pt-3 border-t border-[#2A3446] gap-2">
-                    <div className="flex items-center gap-3 text-[#7FA0D6] font-bold">
+                  <div className="flex flex-wrap items-center justify-between text-xs text-app-mist font-medium pt-3 border-t border-app-line gap-2">
+                    <div className="flex items-center gap-3 text-app-accent font-bold">
                       <span className="cursor-pointer hover:underline flex items-center gap-1">
                         <Folder className="w-3.5 h-3.5" /> {activeClient?.brand?.brandVaultLink || "Client Brand Vault Drive"}
                       </span>
@@ -1734,7 +1734,7 @@ export function AdminClientsPage() {
                       <span>•</span>
                       <Link
                         to={`/admin/clients/${activeClient?.id || ""}/brand`}
-                        className="cursor-pointer hover:underline flex items-center gap-1 text-[#7FA0D6]"
+                        className="cursor-pointer hover:underline flex items-center gap-1 text-app-accent"
                       >
                         Brand DNA & Brief →
                       </Link>
@@ -1746,12 +1746,12 @@ export function AdminClientsPage() {
 
               {/* CARD 4: ASSIGNED CREATIVE POD */}
               {!isClientOnboarded ? (
-                <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+                <div className="bg-app-surface rounded-3xl p-6 border border-app-line shadow-[0_4px_25px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-5 flex flex-col justify-between">
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                    <div className="flex items-center justify-between border-b border-app-line pb-3">
                       <div className="flex items-center gap-2">
                         <Users className={`w-4 h-4 ${isPaidNotOnboarded ? "text-sky-400" : "text-amber-400"}`} />
-                        <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
+                        <h2 className="text-xs font-extrabold text-hi uppercase tracking-wider">
                           Assigned creative pod
                         </h2>
                       </div>
@@ -1760,14 +1760,14 @@ export function AdminClientsPage() {
                       </span>
                     </div>
 
-                    <div className="p-8 text-center space-y-3 bg-[#0B111C]/60 rounded-2xl border border-[#2A3446]">
+                    <div className="p-8 text-center space-y-3 bg-app-base/60 rounded-2xl border border-app-line">
                       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto border ${isPaidNotOnboarded ? "bg-sky-500/10 border-sky-500/20 text-sky-400" : "bg-amber-500/10 border-amber-500/20 text-amber-400"}`}>
                         <Users className="w-6 h-6" />
                       </div>
-                      <h4 className="text-sm font-bold text-white">
+                      <h4 className="text-sm font-bold text-hi">
                         {isPaidNotOnboarded ? "Creative Pod Allocation in Progress" : "No Creative Pod Allocated"}
                       </h4>
-                      <p className="text-xs text-[#97A0B3] max-w-md mx-auto leading-relaxed">
+                      <p className="text-xs text-app-mist max-w-md mx-auto leading-relaxed">
                         {isPaidNotOnboarded
                           ? "Pod Lead (Creative Director), Video Editor, and Graphic Designer will be allocated to this client once their onboarding brand requirements are submitted."
                           : "user not paid and not onboarded yet. Creative Pod squad specialists are assigned upon active plan subscription and onboarding intake completion."}
@@ -1775,45 +1775,45 @@ export function AdminClientsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
+                  <div className="flex items-center justify-between text-xs text-app-mist pt-3 border-t border-app-line font-medium">
                     <span>Pod Allocation: {isPaidNotOnboarded ? "Awaiting Onboarding" : "Not Started"}</span>
-                    <span className="text-[#97A0B3] font-mono">0 hrs/wk committed</span>
+                    <span className="text-app-mist font-mono">0 hrs/wk committed</span>
                   </div>
                 </div>
               ) : (
-                <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+                <div className="bg-app-surface rounded-3xl p-6 border border-app-line shadow-[0_4px_25px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-5 flex flex-col justify-between">
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                    <div className="flex items-center justify-between border-b border-app-line pb-3">
                       <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-[#7FA0D6]" />
-                        <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
+                        <Users className="w-4 h-4 text-app-accent" />
+                        <h2 className="text-xs font-extrabold text-hi uppercase tracking-wider">
                           Assigned creative pod
                         </h2>
                       </div>
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold border border-[#7FA0D6]/30">
+                      <span className="px-2.5 py-0.5 rounded-full bg-app-accent/15 text-app-accent text-[10px] font-bold border border-app-accent/30">
                         {activeClient?.pod?.name || "Pod A"}: {activeClient?.pod?.tagline || "Creative Strategy"}
                       </span>
                     </div>
 
                     {/* Pod Lead */}
                     <div className="space-y-2">
-                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                      <span className="text-[10px] font-extrabold text-app-mist uppercase tracking-wider block">
                         POD LEAD & CREATIVE DIRECTOR
                       </span>
-                      <div className="p-3 bg-[#0B111C]/70 rounded-2xl flex items-center justify-between border border-[#2A3446]">
+                      <div className="p-3 bg-app-base/70 rounded-2xl flex items-center justify-between border border-app-line">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
                             {activeClient?.pod?.leadAvatar || "CD"}
                           </div>
                           <div>
-                            <h4 className="text-xs font-bold text-white">{activeClient?.pod?.leadName || "Pod Creative Director"}</h4>
-                            <span className="text-[11px] text-[#97A0B3]">{activeClient?.pod?.leadTitle || "Lead Producer"}</span>
+                            <h4 className="text-xs font-bold text-hi">{activeClient?.pod?.leadName || "Pod Creative Director"}</h4>
+                            <span className="text-[11px] text-app-mist">{activeClient?.pod?.leadTitle || "Lead Producer"}</span>
                           </div>
                         </div>
                         <button
                           type="button"
                           onClick={() => showToast(`Connecting to ${activeClient?.pod?.leadName || "Pod Lead"} via Slack/Creo Chat...`)}
-                          className="p-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] shadow-2xs cursor-pointer"
+                          className="p-2 rounded-xl bg-app-surface border border-app-line text-app-ink-2 hover:text-app-accent shadow-2xs cursor-pointer"
                           title="Chat with Pod Lead"
                         >
                           <MessageSquare className="w-4 h-4" />
@@ -1823,22 +1823,22 @@ export function AdminClientsPage() {
 
                     {/* Squad Members */}
                     <div className="space-y-2">
-                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                      <span className="text-[10px] font-extrabold text-app-mist uppercase tracking-wider block">
                         SQUAD MEMBERS
                       </span>
                       <div className="space-y-1.5">
                         {(activeClient?.pod?.squad || []).map((member, mIdx) => (
-                          <div key={`${member.name || mIdx}`} className="p-2.5 bg-[#0B111C]/50 rounded-xl flex items-center justify-between text-xs border border-[#2A3446]">
+                          <div key={`${member.name || mIdx}`} className="p-2.5 bg-app-base/50 rounded-xl flex items-center justify-between text-xs border border-app-line">
                             <div className="flex items-center gap-2.5">
-                              <div className="w-7 h-7 rounded-full bg-gray-200 text-[#F1F5F9] font-bold text-[10px] flex items-center justify-center">
+                              <div className="w-7 h-7 rounded-full bg-gray-200 text-app-ink-2 font-bold text-[10px] flex items-center justify-center">
                                 {member.avatar || "PS"}
                               </div>
                               <div>
-                                <span className="font-bold text-white block leading-tight">{member.name}</span>
-                                <span className="text-[10px] text-[#97A0B3]">{member.role}</span>
+                                <span className="font-bold text-hi block leading-tight">{member.name}</span>
+                                <span className="text-[10px] text-app-mist">{member.role}</span>
                               </div>
                             </div>
-                            <span className="font-mono font-bold text-[11px] text-[#F1F5F9]">{member.hoursPerWeek}h/wk</span>
+                            <span className="font-mono font-bold text-[11px] text-app-ink-2">{member.hoursPerWeek}h/wk</span>
                           </div>
                         ))}
                       </div>
@@ -1847,29 +1847,29 @@ export function AdminClientsPage() {
                     {/* Pod Capacity Commitment */}
                     <div className="space-y-2 pt-1">
                       <div className="flex items-center justify-between text-xs font-bold">
-                        <span className="text-[#F1F5F9]">Pod Capacity Commitment</span>
-                        <span className="text-[#7FA0D6] font-mono">
+                        <span className="text-app-ink-2">Pod Capacity Commitment</span>
+                        <span className="text-app-accent font-mono">
                           {activeClient?.pod?.capacityAllocatedHrs ?? 32} hrs/week allocated
                         </span>
                       </div>
-                      <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
+                      <div className="w-full bg-app-surface rounded-full h-2 overflow-hidden">
                         <div
-                          className="bg-[#7FA0D6] h-full rounded-full transition-all"
+                          className="bg-app-accent h-full rounded-full transition-all"
                           style={{ width: `${activeClient?.pod?.bandwidthPercent ?? 80}%` }}
                         />
                       </div>
-                      <span className="text-[11px] text-[#97A0B3] font-medium block">
+                      <span className="text-[11px] text-app-mist font-medium block">
                         Sprint {activeClient?.sprintNumber ?? 1} • {activeClient?.pod?.bandwidthPercent ?? 80}% bandwidth filled
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
+                  <div className="flex items-center justify-between text-xs text-app-mist pt-3 border-t border-app-line font-medium">
                     <span>Daily Sync: {activeClient?.pod?.dailySyncTime || "11:00 AM IST"}</span>
                     <button
                       type="button"
                       onClick={() => showToast(`Opening Pod Reallocation Studio for ${activeClient?.pod?.name || "Pod"}...`)}
-                      className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
+                      className="text-app-accent font-bold hover:underline cursor-pointer"
                     >
                       Reallocate Pod Hours
                     </button>
@@ -1881,16 +1881,16 @@ export function AdminClientsPage() {
             {/* ═════════════════════════════════════════════════════════════════
                 BOTTOM SECTION: ACTIVE DELIVERABLES IN PRODUCTION
             ═════════════════════════════════════════════════════════════════ */}
-            <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
+            <div className="bg-app-surface rounded-3xl p-6 lg:p-7 border border-app-line shadow-[0_4px_30px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-app-line pb-4">
                 <div>
                   <div className="flex items-center gap-2.5">
-                    <h2 className="text-base font-black text-white">Active Deliverables in Production</h2>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-[10px] font-black uppercase">
+                    <h2 className="text-base font-black text-hi">Active Deliverables in Production</h2>
+                    <span className="px-2.5 py-0.5 rounded-full bg-app-accent/15 text-app-accent border border-app-accent/30 text-[10px] font-black uppercase">
                       {filteredDeliverables.length} Items Requiring Attention
                     </span>
                   </div>
-                  <p className="text-xs text-[#97A0B3] mt-0.5">
+                  <p className="text-xs text-app-mist mt-0.5">
                     Manage approvals, review video renders, and coordinate asset distribution across all client pipelines.
                   </p>
                 </div>
@@ -1898,36 +1898,36 @@ export function AdminClientsPage() {
                 {/* Filter Controls */}
                 <div className="flex items-center gap-2">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#97A0B3]" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-app-mist" />
                     <input
                       type="text"
                       placeholder="Filter deliverable..."
                       value={deliverableSearch}
                       onChange={(e) => setDeliverableSearch(e.target.value)}
-                      className="pl-8 pr-3 py-1.5 rounded-xl border border-[#2A3446] text-xs bg-[#0B111C] focus:bg-[#161F2D] focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
+                      className="pl-8 pr-3 py-1.5 rounded-xl border border-app-line text-xs bg-app-base focus:bg-app-surface focus:outline-none focus:ring-1 focus:ring-blue-500 text-hi"
                     />
                   </div>
                   <button
                     type="button"
-                    className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1 shadow-2xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl border border-app-line bg-app-surface hover:bg-app-base text-xs font-bold text-app-ink-2 flex items-center gap-1 shadow-2xs cursor-pointer"
                   >
-                    <Filter className="w-3.5 h-3.5 text-[#97A0B3]" /> Filter
+                    <Filter className="w-3.5 h-3.5 text-app-mist" /> Filter
                   </button>
                 </div>
               </div>
 
               {/* Deliverable Cards Grid with Empty State */}
               {filteredDeliverables.length === 0 ? (
-                <div className="py-12 border border-dashed border-[#2A3446] rounded-2xl text-center space-y-2">
-                  <CheckCircle2 className="size-8 text-[#97A0B3] mx-auto opacity-40" />
-                  <p className="text-sm font-bold text-white">
+                <div className="py-12 border border-dashed border-app-line rounded-2xl text-center space-y-2">
+                  <CheckCircle2 className="size-8 text-app-mist mx-auto opacity-40" />
+                  <p className="text-sm font-bold text-hi">
                     {!isClientOnboarded
                       ? isPaidNotOnboarded
                         ? "Deliverables Awaiting Onboarding Form"
                         : "Deliverables Inactive"
                       : "No Deliverables in Queue"}
                   </p>
-                  <p className="text-xs text-[#97A0B3]">
+                  <p className="text-xs text-app-mist">
                     {!isClientOnboarded
                       ? isPaidNotOnboarded
                         ? "Creative asset drafting begins once the client completes their onboarding intake questionnaire."
@@ -1947,7 +1947,7 @@ export function AdminClientsPage() {
                     return (
                       <div
                         key={deliv.id || delivIdx}
-                        className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_2px_15px_rgba(0,0,0,0.03)] p-5 space-y-4 flex flex-col justify-between hover:shadow-lg hover:border-[#7FA0D6]/30 transition-all"
+                        className="bg-app-surface rounded-3xl border border-app-line shadow-[0_2px_15px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] p-5 space-y-4 flex flex-col justify-between hover:shadow-lg hover:border-app-accent/30 transition-all"
                       >
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
@@ -1961,36 +1961,36 @@ export function AdminClientsPage() {
                             }`}>
                               {(deliv.status || "IN PRODUCTION").replace(/_/g, " ")}
                             </span>
-                            <span className="text-[10px] font-mono text-[#97A0B3] font-bold">
+                            <span className="text-[10px] font-mono text-app-mist font-bold">
                               {deliv.code || `DEL-${deliv.id ? deliv.id.slice(0, 4) : String(delivIdx + 1).padStart(2, "0")}`}
                             </span>
                           </div>
 
                           <div>
-                            <h4 className="text-sm font-black text-white leading-snug">{deliv.title}</h4>
-                            <p className="text-[11px] text-[#97A0B3] mt-1 line-clamp-2 leading-relaxed">
+                            <h4 className="text-sm font-black text-hi leading-snug">{deliv.title}</h4>
+                            <p className="text-[11px] text-app-mist mt-1 line-clamp-2 leading-relaxed">
                               {deliv.description || "Production asset managed through Creo creative pod."}
                             </p>
                           </div>
 
-                          <div className="p-3 bg-[#0B111C]/70 rounded-2xl space-y-1.5 text-[11px] text-[#F1F5F9] border border-[#2A3446]">
+                          <div className="p-3 bg-app-base/70 rounded-2xl space-y-1.5 text-[11px] text-app-ink-2 border border-app-line">
                             <div className="flex justify-between">
-                              <span className="text-[#97A0B3]">Format:</span>
-                              <span className="font-bold text-white">{deliv.format || deliv.type || deliv.deliverable_type || "Asset"}</span>
+                              <span className="text-app-mist">Format:</span>
+                              <span className="font-bold text-hi">{deliv.format || deliv.type || deliv.deliverable_type || "Asset"}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-[#97A0B3]">Due Date:</span>
+                              <span className="text-app-mist">Due Date:</span>
                               <span className="font-bold text-rose-500">{deliv.dueDate || deliv.date || "Next Cycle"}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-[#97A0B3]">Assigned:</span>
-                              <span className="font-semibold text-white">{deliv.assignedTo || deliv.assigned_name || "Creative Squad"}</span>
+                              <span className="text-app-mist">Assigned:</span>
+                              <span className="font-semibold text-hi">{deliv.assignedTo || deliv.assigned_name || "Creative Squad"}</span>
                             </div>
                           </div>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="space-y-2 pt-2 border-t border-[#2A3446]">
+                        <div className="space-y-2 pt-2 border-t border-app-line">
                           {isReview && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               <button
@@ -2003,7 +2003,7 @@ export function AdminClientsPage() {
                               <button
                                 type="button"
                                 onClick={() => handleDeclineDeliverable(deliv.id, deliv.title)}
-                                className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                                className="w-full py-2 rounded-xl border border-app-line hover:bg-app-base text-app-ink-2 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
                               >
                                 <X className="w-3.5 h-3.5" /> Decline
                               </button>
@@ -2015,14 +2015,14 @@ export function AdminClientsPage() {
                               <button
                                 type="button"
                                 onClick={() => setPreviewDeliverable(deliv)}
-                                className="w-full py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                                className="w-full py-2 rounded-xl bg-app-accent/15 hover:bg-app-accent/20 text-app-accent text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
                               >
                                 <Eye className="w-3.5 h-3.5" /> Preview Canvas
                               </button>
                               <button
                                 type="button"
                                 onClick={() => showToast(`Revision request sent for "${deliv.title}".`)}
-                                className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold cursor-pointer transition-colors"
+                                className="w-full py-2 rounded-xl border border-app-line hover:bg-app-base text-app-ink-2 text-xs font-bold cursor-pointer transition-colors"
                               >
                                 Request Revisions
                               </button>
@@ -2040,7 +2040,7 @@ export function AdminClientsPage() {
                               <button
                                 type="button"
                                 onClick={() => showToast("Viewing scheduled metadata...")}
-                                className="w-full py-1.5 text-center text-[11px] font-bold text-[#97A0B3] hover:text-white cursor-pointer"
+                                className="w-full py-1.5 text-center text-[11px] font-bold text-app-mist hover:text-hi cursor-pointer"
                               >
                                 View Scheduled Meta
                               </button>
@@ -2060,7 +2060,7 @@ export function AdminClientsPage() {
                                 <button
                                   type="button"
                                   onClick={() => showToast(`Feedback notes opened for "${deliv.title}".`)}
-                                  className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                                  className="w-full py-2 rounded-xl border border-app-line hover:bg-app-base text-app-ink-2 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
                                 >
                                   <Edit3 className="w-3.5 h-3.5" /> Notes
                                 </button>
@@ -2068,7 +2068,7 @@ export function AdminClientsPage() {
                               <button
                                 type="button"
                                 onClick={() => setPreviewDeliverable(deliv)}
-                                className="w-full py-1.5 text-center text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer flex items-center justify-center gap-1"
+                                className="w-full py-1.5 text-center text-[11px] font-bold text-app-accent hover:underline cursor-pointer flex items-center justify-center gap-1"
                               >
                                 <FileText className="w-3.5 h-3.5" /> Open Full Presentation
                               </button>
@@ -2079,7 +2079,7 @@ export function AdminClientsPage() {
                             <button
                               type="button"
                               onClick={() => setPreviewDeliverable(deliv)}
-                              className="w-full py-1.5 text-center text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer flex items-center justify-center gap-1"
+                              className="w-full py-1.5 text-center text-[11px] font-bold text-app-accent hover:underline cursor-pointer flex items-center justify-center gap-1"
                             >
                               <Play className="w-3 h-3 fill-blue-600" /> Preview Video Draft (0:45)
                             </button>
@@ -2104,35 +2104,35 @@ export function AdminClientsPage() {
         {/* 2. Monthly Invoice Modal */}
         {isInvoiceModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <h3 className="text-base font-black text-white">Current Retainer Invoice</h3>
-                <button type="button" onClick={() => setIsInvoiceModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+            <div className="bg-app-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-app-line">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
+                <h3 className="text-base font-black text-hi">Current Retainer Invoice</h3>
+                <button type="button" onClick={() => setIsInvoiceModalOpen(false)} className="p-1 text-app-mist hover:text-app-ink-2 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="p-4 bg-[#0B111C] rounded-2xl space-y-2 text-xs text-[#F1F5F9] border border-[#2A3446]">
+              <div className="p-4 bg-app-base rounded-2xl space-y-2 text-xs text-app-ink-2 border border-app-line">
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Invoice ID:</span>
-                  <span className="font-mono font-bold text-white">INV-2024-NL-11</span>
+                  <span className="text-app-mist">Invoice ID:</span>
+                  <span className="font-mono font-bold text-hi">INV-2024-NL-11</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Client:</span>
-                  <span className="font-bold text-white">{activeClient?.name}</span>
+                  <span className="text-app-mist">Client:</span>
+                  <span className="font-bold text-hi">{activeClient?.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Billing Cycle:</span>
-                  <span className="font-medium text-white">Nov 1 – Nov 30, 2024</span>
+                  <span className="text-app-mist">Billing Cycle:</span>
+                  <span className="font-medium text-hi">Nov 1 – Nov 30, 2024</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Payment Status:</span>
+                  <span className="text-app-mist">Payment Status:</span>
                   <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">
                     PAID (ACH)
                   </span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-[#2A3446] font-black text-sm">
+                <div className="flex justify-between pt-2 border-t border-app-line font-black text-sm">
                   <span>Total Amount:</span>
-                  <span className="text-[#7FA0D6]">₹{(activeClient?.monthlyFee ?? 0).toLocaleString()}.00</span>
+                  <span className="text-app-accent">₹{(activeClient?.monthlyFee ?? 0).toLocaleString()}.00</span>
                 </div>
               </div>
               <button
@@ -2154,26 +2154,26 @@ export function AdminClientsPage() {
         {/* 4. Preview Canvas / Video Modal */}
         {previewDeliverable && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-app-surface rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-app-line">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
                 <div>
-                  <span className="text-[10px] font-mono text-[#97A0B3] font-bold">{previewDeliverable.code}</span>
-                  <h3 className="text-base font-black text-white">{previewDeliverable.title}</h3>
+                  <span className="text-[10px] font-mono text-app-mist font-bold">{previewDeliverable.code}</span>
+                  <h3 className="text-base font-black text-hi">{previewDeliverable.title}</h3>
                 </div>
-                <button type="button" onClick={() => setPreviewDeliverable(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setPreviewDeliverable(null)} className="p-1 text-app-mist hover:text-app-ink-2 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="aspect-video bg-[#0B111C] rounded-2xl flex flex-col items-center justify-center text-white p-6 relative overflow-hidden shadow-inner">
-                <div className="w-14 h-14 rounded-full bg-[#161F2D]/20 backdrop-blur-md flex items-center justify-center text-white mb-2 cursor-pointer hover:scale-110 transition-transform">
-                  <Play className="w-6 h-6 fill-white ml-0.5" />
+              <div className="aspect-video bg-app-base rounded-2xl flex flex-col items-center justify-center text-hi p-6 relative overflow-hidden shadow-inner">
+                <div className="w-14 h-14 rounded-full bg-app-surface/20 backdrop-blur-md flex items-center justify-center text-hi mb-2 cursor-pointer hover:scale-110 transition-transform">
+                  <Play className="w-6 h-6 fill-hi ml-0.5" />
                 </div>
                 <span className="text-xs font-bold text-gray-200">{previewDeliverable?.format || "Asset"} Preview</span>
-                <span className="text-[10px] text-[#97A0B3] mt-0.5">Assigned Specialist: {previewDeliverable?.assignedTo || previewDeliverable?.assigned_name || "Creative Specialist"}</span>
+                <span className="text-[10px] text-app-mist mt-0.5">Assigned Specialist: {previewDeliverable?.assignedTo || previewDeliverable?.assigned_name || "Creative Specialist"}</span>
               </div>
 
-              <div className="p-3.5 bg-[#0B111C] rounded-2xl text-xs text-[#F1F5F9] space-y-1">
+              <div className="p-3.5 bg-app-base rounded-2xl text-xs text-app-ink-2 space-y-1">
                 <div><strong>Creative Scope:</strong> {previewDeliverable?.description || "Asset Scope"}</div>
                 <div><strong>Target Delivery:</strong> {previewDeliverable?.dueDate || previewDeliverable?.date || "Current Sprint"}</div>
               </div>
@@ -2182,7 +2182,7 @@ export function AdminClientsPage() {
                 <button
                   type="button"
                   onClick={() => setPreviewDeliverable(null)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-app-line text-xs font-bold text-app-ink-2 hover:bg-app-base cursor-pointer"
                 >
                   Close Preview
                 </button>
@@ -2204,20 +2204,20 @@ export function AdminClientsPage() {
         {/* 5. Cancel Client Plan & Remove Retainer Modal */}
         {isCancelClientModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-rose-500/40">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-app-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-rose-500/40">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
                 <div className="flex items-center gap-2">
                   <Trash2 className="w-5 h-5 text-rose-500" />
-                  <h3 className="text-base font-black text-white">Cancel Plan & Remove Client</h3>
+                  <h3 className="text-base font-black text-hi">Cancel Plan & Remove Client</h3>
                 </div>
-                <button type="button" onClick={() => setIsCancelClientModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setIsCancelClientModalOpen(false)} className="p-1 text-app-mist hover:text-app-ink-2 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="space-y-3 text-xs text-[#F1F5F9]">
-                <p className="text-[#97A0B3] leading-relaxed">
-                  Are you sure you want to cancel the retainer plan for <strong className="text-white">{activeClient?.name}</strong>?
+              <div className="space-y-3 text-xs text-app-ink-2">
+                <p className="text-app-mist leading-relaxed">
+                  Are you sure you want to cancel the retainer plan for <strong className="text-hi">{activeClient?.name}</strong>?
                 </p>
                 <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-300 font-semibold space-y-1">
                   <div>• Monthly Retainer: ₹{(activeClient?.monthlyFee ?? 0).toLocaleString()}/mo</div>
@@ -2225,12 +2225,12 @@ export function AdminClientsPage() {
                 </div>
               </div>
 
-              {removeError && <p role="alert" className="text-sm text-[#D8BF9B]">{removeError}</p>}
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+              {removeError && <p role="alert" className="text-sm text-app-warm">{removeError}</p>}
+              <div className="flex justify-end gap-2 pt-2 border-t border-app-line">
                 <button
                   type="button"
                   onClick={() => setIsCancelClientModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-app-line text-xs font-bold text-app-ink-2 hover:bg-app-base cursor-pointer"
                 >
                   Keep Active
                 </button>
@@ -2250,13 +2250,13 @@ export function AdminClientsPage() {
         {/* 6. Onboard New Client Modal */}
         {isOnboardClientModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-app-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-app-line">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
                 <div className="flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-[#7FA0D6]" />
-                  <h3 className="text-base font-black text-white">Onboard New Client</h3>
+                  <Plus className="w-5 h-5 text-app-accent" />
+                  <h3 className="text-base font-black text-hi">Onboard New Client</h3>
                 </div>
-                <button type="button" onClick={() => setIsOnboardClientModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setIsOnboardClientModalOpen(false)} className="p-1 text-app-mist hover:text-app-ink-2 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -2355,35 +2355,35 @@ export function AdminClientsPage() {
                 className="space-y-3.5 text-xs"
               >
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Client / Brand Name</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Client / Brand Name</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Acme Corp"
                     value={newClientNameInput}
                     onChange={(e) => setNewClientNameInput(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3.5 py-2 rounded-xl border border-app-line bg-app-base text-xs font-medium text-hi focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Industry / Category</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Industry / Category</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. DTC E-Commerce & Retail"
                     value={newClientIndustryInput}
                     onChange={(e) => setNewClientIndustryInput(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3.5 py-2 rounded-xl border border-app-line bg-app-base text-xs font-medium text-hi focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Assigned Creative Pod</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Assigned Creative Pod</label>
                   <NativeSelect
                     value={newClientPodInput}
                     onChange={(e) => setNewClientPodInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line text-xs font-bold bg-app-base text-hi"
                   >
                     <option value="Pod A (Creative & Brand Strategy)">Pod A (Creative & Brand Strategy)</option>
                     <option value="Pod B (Performance & Video Ops)">Pod B (Performance & Video Ops)</option>
@@ -2391,11 +2391,11 @@ export function AdminClientsPage() {
                   </NativeSelect>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                <div className="flex justify-end gap-2 pt-2 border-t border-app-line">
                   <button
                     type="button"
                     onClick={() => setIsOnboardClientModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-app-line text-xs font-bold text-app-ink-2 hover:bg-app-base cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -2414,24 +2414,24 @@ export function AdminClientsPage() {
         {/* 7. Remove Client Modal */}
         {isRemoveClientModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-rose-500/40">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-app-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-rose-500/40">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
                 <div className="flex items-center gap-2">
                   <Trash2 className="w-5 h-5 text-rose-500" />
-                  <h3 className="text-base font-black text-white">Remove / Offboard Client</h3>
+                  <h3 className="text-base font-black text-hi">Remove / Offboard Client</h3>
                 </div>
-                <button type="button" onClick={() => setIsRemoveClientModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setIsRemoveClientModalOpen(false)} className="p-1 text-app-mist hover:text-app-ink-2 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="space-y-3.5 text-xs">
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Select Client to Remove</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Select Client to Remove</label>
                   <NativeSelect
                     value={clientToRemoveInput}
                     onChange={(e) => setClientToRemoveInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line text-xs font-bold bg-app-base text-hi"
                   >
                     {clientList.map((client) => (
                       <option key={client.id} value={client.id}>
@@ -2441,16 +2441,16 @@ export function AdminClientsPage() {
                   </NativeSelect>
                 </div>
 
-                <p className="text-[#97A0B3] text-[11px] leading-relaxed">
-                  Offboarding <strong className="text-white">{clientToRemoveInput}</strong> will cancel their active plan, revoke account access, and remove their team mapping. Billing and content history will be retained.
+                <p className="text-app-mist text-[11px] leading-relaxed">
+                  Offboarding <strong className="text-hi">{clientToRemoveInput}</strong> will cancel their active plan, revoke account access, and remove their team mapping. Billing and content history will be retained.
                 </p>
 
-                {removeError && <p role="alert" className="text-sm text-[#D8BF9B]">{removeError}</p>}
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                {removeError && <p role="alert" className="text-sm text-app-warm">{removeError}</p>}
+              <div className="flex justify-end gap-2 pt-2 border-t border-app-line">
                   <button
                     type="button"
                     onClick={() => setIsRemoveClientModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-app-line text-xs font-bold text-app-ink-2 hover:bg-app-base cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -2474,28 +2474,28 @@ export function AdminClientsPage() {
         {/* 8. Offline Payment Requests Review Modal */}
         {isManualPaymentsModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-[#2A3446] overflow-hidden">
-              <div className="flex items-center justify-between border-b border-[#2A3446] p-5 shrink-0">
+            <div className="bg-app-surface rounded-3xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-app-line overflow-hidden">
+              <div className="flex items-center justify-between border-b border-app-line p-5 shrink-0">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
                     <Banknote className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-white">Offline Payment Verification Claims</h3>
-                    <p className="text-xs text-[#97A0B3]">Review offline payment claims (cash, bank transfer, cheque, contract) and bypass Step 3 payment.</p>
+                    <h3 className="text-base font-black text-hi">Offline Payment Verification Claims</h3>
+                    <p className="text-xs text-app-mist">Review offline payment claims (cash, bank transfer, cheque, contract) and bypass Step 3 payment.</p>
                   </div>
                 </div>
-                <button type="button" onClick={() => setIsManualPaymentsModalOpen(false)} className="p-1.5 text-[#97A0B3] hover:text-white rounded-lg">
+                <button type="button" onClick={() => setIsManualPaymentsModalOpen(false)} className="p-1.5 text-app-mist hover:text-hi rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="p-5 flex-1 overflow-y-auto space-y-4">
                 {manualPayments.length === 0 ? (
-                  <div className="py-12 border border-dashed border-[#2A3446] rounded-2xl text-center space-y-2">
-                    <Banknote className="size-8 text-[#97A0B3] mx-auto opacity-40" />
-                    <p className="text-sm font-bold text-white">No Offline Payment Claims</p>
-                    <p className="text-xs text-[#97A0B3]">No clients have submitted an offline verification request yet.</p>
+                  <div className="py-12 border border-dashed border-app-line rounded-2xl text-center space-y-2">
+                    <Banknote className="size-8 text-app-mist mx-auto opacity-40" />
+                    <p className="text-sm font-bold text-hi">No Offline Payment Claims</p>
+                    <p className="text-xs text-app-mist">No clients have submitted an offline verification request yet.</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -2504,14 +2504,14 @@ export function AdminClientsPage() {
                         key={req.id}
                         className={`p-4 rounded-2xl border transition-all ${
                           req.status === "PENDING"
-                            ? "bg-[#0B111C] border-amber-500/40 shadow-sm"
-                            : "bg-[#0B111C]/60 border-[#2A3446]"
+                            ? "bg-app-base border-amber-500/40 shadow-sm"
+                            : "bg-app-base/60 border-app-line"
                         }`}
                       >
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#2A3446]/60">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-app-line/60">
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-white text-sm">{req.client_email}</span>
+                              <span className="font-bold text-hi text-sm">{req.client_email}</span>
                               <span
                                 className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
                                   req.status === "PENDING"
@@ -2524,16 +2524,16 @@ export function AdminClientsPage() {
                                 {req.status}
                               </span>
                             </div>
-                            <span className="text-[11px] text-[#97A0B3] mt-0.5 block">
+                            <span className="text-[11px] text-app-mist mt-0.5 block">
                               Claimed on {new Date(req.created_at).toLocaleString()}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-2 text-xs">
-                            <span className="px-2.5 py-1 rounded-lg bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] font-bold">
+                            <span className="px-2.5 py-1 rounded-lg bg-app-surface border border-app-line text-app-accent font-bold">
                               {req.plan_name}
                             </span>
-                            <span className="px-2.5 py-1 rounded-lg bg-[#161F2D] border border-[#2A3446] text-white font-mono font-bold">
+                            <span className="px-2.5 py-1 rounded-lg bg-app-surface border border-app-line text-hi font-mono font-bold">
                               ₹{req.amount.toLocaleString()}
                             </span>
                             <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-bold uppercase">
@@ -2543,20 +2543,20 @@ export function AdminClientsPage() {
                         </div>
 
                         {req.reference_note && (
-                          <div className="mt-3 p-2.5 bg-[#161F2D] rounded-xl text-xs text-[#F1F5F9] border border-[#2A3446]/50">
-                            <span className="text-[10px] font-bold uppercase text-[#97A0B3] block mb-0.5">Client Note / Reference</span>
+                          <div className="mt-3 p-2.5 bg-app-surface rounded-xl text-xs text-app-ink-2 border border-app-line/50">
+                            <span className="text-[10px] font-bold uppercase text-app-mist block mb-0.5">Client Note / Reference</span>
                             {req.reference_note}
                           </div>
                         )}
 
                         {req.admin_notes && (
-                          <div className="mt-2 text-[11px] text-[#97A0B3] italic">
+                          <div className="mt-2 text-[11px] text-app-mist italic">
                             Admin Note: {req.admin_notes}
                           </div>
                         )}
 
                         {req.status === "PENDING" && (
-                          <div className="mt-3 pt-3 border-t border-[#2A3446]/60 flex items-center justify-end gap-2">
+                          <div className="mt-3 pt-3 border-t border-app-line/60 flex items-center justify-end gap-2">
                             <button
                               type="button"
                               disabled={processingPaymentId === req.id}
@@ -2582,14 +2582,14 @@ export function AdminClientsPage() {
                 )}
               </div>
 
-              <div className="p-4 border-t border-[#2A3446] flex justify-between items-center bg-[#0B111C]/40">
-                <span className="text-xs text-[#97A0B3]">
+              <div className="p-4 border-t border-app-line flex justify-between items-center bg-app-base/40">
+                <span className="text-xs text-app-mist">
                   {pendingManualPayments.length} pending verification {pendingManualPayments.length === 1 ? "claim" : "claims"}
                 </span>
                 <button
                   type="button"
                   onClick={() => setIsManualPaymentsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#161F2D] cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-app-line text-xs font-bold text-app-ink-2 hover:bg-app-surface cursor-pointer"
                 >
                   Close
                 </button>
@@ -2601,13 +2601,13 @@ export function AdminClientsPage() {
         {/* 9. Direct Bypass Payment Modal */}
         {isDirectBypassModalOpen && directBypassTargetClient && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-emerald-500/40">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-app-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-emerald-500/40">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
                 <div className="flex items-center gap-2">
                   <Banknote className="w-5 h-5 text-emerald-400" />
-                  <h3 className="text-base font-black text-white">Direct Payment Bypass (Step 3)</h3>
+                  <h3 className="text-base font-black text-hi">Direct Payment Bypass (Step 3)</h3>
                 </div>
-                <button type="button" onClick={() => setIsDirectBypassModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setIsDirectBypassModalOpen(false)} className="p-1 text-app-mist hover:text-app-ink-2 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -2620,11 +2620,11 @@ export function AdminClientsPage() {
 
               <form onSubmit={handleDirectBypassSubmit} className="space-y-3.5 text-xs">
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Select Retainer Plan</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Select Retainer Plan</label>
                   <NativeSelect
                     value={directBypassPlanId}
                     onChange={(e) => setDirectBypassPlanId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line text-xs font-bold bg-app-base text-hi"
                   >
                     {plansQuery.data?.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -2635,11 +2635,11 @@ export function AdminClientsPage() {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Payment Method / Source</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Payment Method / Source</label>
                   <NativeSelect
                     value={directBypassPaymentMethod}
                     onChange={(e) => setDirectBypassPaymentMethod(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line text-xs font-bold bg-app-base text-hi"
                   >
                     <option value="cash">Cash in Hand</option>
                     <option value="bank_transfer">Direct Bank NEFT/RTGS/IMPS</option>
@@ -2650,21 +2650,21 @@ export function AdminClientsPage() {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Admin Reference / Approval Notes (Optional)</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Admin Reference / Approval Notes (Optional)</label>
                   <textarea
                     rows={2}
                     value={directBypassNotes}
                     onChange={(e) => setDirectBypassNotes(e.target.value)}
                     placeholder="e.g. Received cash payment at agency office on Oct 12, receipt #4092"
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-base text-xs font-medium text-hi focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                <div className="flex justify-end gap-2 pt-2 border-t border-app-line">
                   <button
                     type="button"
                     onClick={() => setIsDirectBypassModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-app-line text-xs font-bold text-app-ink-2 hover:bg-app-base cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -2709,9 +2709,9 @@ export function AdminDeliverablesPage() {
     title: d.title || "Untitled upload",
     client: d.client || d.client_name || "Client unavailable",
     clientInitial: (d.client || d.client_name || "?").slice(0, 2).toUpperCase(),
-    clientBg: "bg-[#2A3446]",
+    clientBg: "bg-app-line",
     statusLabel: (d.status || "unknown").replaceAll("_", " "),
-    statusBadge: "bg-[#161F2D] text-[#7FA0D6] border-[#2A3446]",
+    statusBadge: "bg-app-surface text-app-accent border-app-line",
     formatType: d.deliverable_type || d.type || "unknown",
     formatLabel: d.type || d.deliverable_type || "Format unavailable",
     format: d.type || d.deliverable_type || "Format unavailable",
@@ -2719,7 +2719,7 @@ export function AdminDeliverablesPage() {
     pod: d.pod_name || "Not provided",
     podLead: d.pod_lead || null,
     slaText: d.scheduled_at ? `Scheduled ${new Date(d.scheduled_at).toLocaleDateString()}` : "Not scheduled",
-    slaColor: "text-[#97A0B3]",
+    slaColor: "text-app-mist",
   }));
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -2787,12 +2787,12 @@ export function AdminDeliverablesPage() {
   });
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-app-base flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
       <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {/* Toast Notification */}
         {toastMessage && (
-          <div className="fixed top-20 right-4 sm:right-8 left-4 sm:left-auto z-50 bg-[#0B111C] text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2.5 animate-bounce">
+          <div className="fixed top-20 right-4 sm:right-8 left-4 sm:left-auto z-50 bg-app-base text-hi px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2.5 animate-bounce">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             <span>{toastMessage}</span>
           </div>
@@ -2800,61 +2800,61 @@ export function AdminDeliverablesPage() {
 
         {/* 4 KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-3.5 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-app-surface rounded-3xl p-3.5 sm:p-5 border-2 border-app-surface hover:border-app-accent-soft transition-all shadow-[0_2px_15px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
+              <span className="text-[10px] font-black text-app-mist uppercase tracking-wider truncate">
                 MOVED TO PRODUCTION
               </span>
-              <div className="w-7 h-7 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold shrink-0">
+              <div className="w-7 h-7 rounded-xl bg-app-accent/15 text-app-accent flex items-center justify-center font-bold shrink-0">
                 <Zap className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">{movedToProductionCount}</div>
+            <div className="text-2xl sm:text-3xl font-black text-hi tracking-tight">{movedToProductionCount}</div>
             <div className="text-xs font-bold text-emerald-400 flex items-center gap-1">
               {movedToProductionCount === 0 ? "0 active" : `${movedToProductionCount} active`}
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-3.5 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-app-surface rounded-3xl p-3.5 sm:p-5 border-2 border-app-surface hover:border-app-accent-soft transition-all shadow-[0_2px_15px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
+              <span className="text-[10px] font-black text-app-mist uppercase tracking-wider truncate">
                 PENDING REVIEW
               </span>
               <div className="w-7 h-7 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-bold shrink-0">
                 <Clock className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">{pendingReviewCount}</div>
+            <div className="text-2xl sm:text-3xl font-black text-hi tracking-tight">{pendingReviewCount}</div>
             <div className="text-xs font-bold text-amber-400 flex items-center gap-1">
               {pendingReviewCount === 0 ? "0 review" : `${pendingReviewCount} in review`}
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-3.5 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-app-surface rounded-3xl p-3.5 sm:p-5 border-2 border-app-surface hover:border-app-accent-soft transition-all shadow-[0_2px_15px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
+              <span className="text-[10px] font-black text-app-mist uppercase tracking-wider truncate">
                 APPROVED TODAY
               </span>
               <div className="w-7 h-7 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold shrink-0">
                 <CheckCircle2 className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">{approvedTodayCount}</div>
+            <div className="text-2xl sm:text-3xl font-black text-hi tracking-tight">{approvedTodayCount}</div>
             <div className="text-xs font-bold text-emerald-400 flex items-center gap-1">
               {approvedTodayCount === 0 ? "0 approved" : `${approvedTodayCount} approved`}
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-3.5 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-app-surface rounded-3xl p-3.5 sm:p-5 border-2 border-app-surface hover:border-app-accent-soft transition-all shadow-[0_2px_15px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
+              <span className="text-[10px] font-black text-app-mist uppercase tracking-wider truncate">
                 DECLINED / REVISE
               </span>
               <div className="w-7 h-7 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center font-bold shrink-0">
                 <AlertTriangle className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">{declinedCount}</div>
+            <div className="text-2xl sm:text-3xl font-black text-hi tracking-tight">{declinedCount}</div>
             <div className="text-xs font-bold text-rose-400 flex items-center gap-1">
               {declinedCount === 0 ? "0 revisions" : `${declinedCount} revisions`}
             </div>
@@ -2862,16 +2862,16 @@ export function AdminDeliverablesPage() {
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-[#161F2D] rounded-2xl p-3.5 sm:p-4 border border-[#2A3446] shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="bg-app-surface rounded-2xl p-3.5 sm:p-4 border border-app-line shadow-[0_2px_12px_rgb(var(--shadow-rgb)/calc(0.02*var(--shadow-k)))] flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-app-mist" />
               <input
                 type="text"
                 placeholder="Search deliverables, code, tags..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white placeholder-[#97A0B3] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]/20 shadow-2xs"
+                className="pl-10 pr-4 py-2 w-full rounded-xl border border-app-line bg-app-base text-xs font-medium text-hi placeholder-app-mist focus:outline-none focus:ring-2 focus:ring-app-accent/20 shadow-2xs"
               />
             </div>
 
@@ -2898,35 +2898,35 @@ export function AdminDeliverablesPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-[#97A0B3]">
+            <span className="text-xs font-bold text-app-mist">
               Showing {filteredDeliverables.length} deliverables
             </span>
           </div>
         </div>
 
-        {deliverablesQuery.isPending && <p role="status" className="p-4 text-[#97A0B3]">Loading uploaded deliverables…</p>}
-        {(deliverablesQuery.error || reviewError) && !revisionItem && <div role="alert" className="p-4 border border-[#D8BF9B] rounded-xl text-[#D8BF9B]">{reviewError || deliverablesQuery.error?.message}<button onClick={() => void deliverablesQuery.refetch()} className="ml-3 underline">Retry loading</button></div>}
+        {deliverablesQuery.isPending && <p role="status" className="p-4 text-app-mist">Loading uploaded deliverables…</p>}
+        {(deliverablesQuery.error || reviewError) && !revisionItem && <div role="alert" className="p-4 border border-app-warm rounded-xl text-app-warm">{reviewError || deliverablesQuery.error?.message}<button onClick={() => void deliverablesQuery.refetch()} className="ml-3 underline">Retry loading</button></div>}
         <Dialog.Root open={!!revisionItem} onOpenChange={open => { if (!open && !reviewBusy) setRevisionItem(null); }}>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[10000]" />
-            <Dialog.Content className="fixed z-[10001] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw_-_2rem)] max-w-lg bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 text-white shadow-2xl">
+            <Dialog.Content className="fixed z-[10001] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw_-_2rem)] max-w-lg bg-app-surface border border-app-line rounded-2xl p-6 text-hi shadow-2xl">
               <Dialog.Title className="text-lg font-bold">Request an edit</Dialog.Title>
-              <Dialog.Description className="text-sm text-[#97A0B3] mt-2 mb-5">Explain what needs to change in {revisionItem?.title}. Feedback is saved to this upload and returned to the production team.</Dialog.Description>
+              <Dialog.Description className="text-sm text-app-mist mt-2 mb-5">Explain what needs to change in {revisionItem?.title}. Feedback is saved to this upload and returned to the production team.</Dialog.Description>
               <form onSubmit={submitRevision} className="space-y-4">
                 <label className="block text-sm font-semibold" htmlFor="admin-revision-reason">Revision feedback</label>
-                <textarea id="admin-revision-reason" value={revisionReason} onChange={event => setRevisionReason(event.target.value)} required maxLength={2000} rows={5} disabled={reviewBusy} className="w-full p-3 bg-[#0B111C] border border-[#2A3446] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]" placeholder="Describe the changes needed…" />
-                {reviewError && <p role="alert" className="text-sm text-[#D8BF9B]">{reviewError}</p>}
-                <div className="flex justify-end gap-3"><Dialog.Close disabled={reviewBusy} className="px-4 py-3 rounded-xl border border-[#2A3446]">Cancel</Dialog.Close><button type="submit" disabled={reviewBusy || !revisionReason.trim()} className="px-4 py-3 rounded-xl bg-[#BCCCE6] text-[#050810] font-semibold disabled:opacity-50">{reviewBusy ? "Saving…" : "Send revision request"}</button></div>
+                <textarea id="admin-revision-reason" value={revisionReason} onChange={event => setRevisionReason(event.target.value)} required maxLength={2000} rows={5} disabled={reviewBusy} className="w-full p-3 bg-app-base border border-app-line rounded-xl focus:outline-none focus:ring-2 focus:ring-app-accent" placeholder="Describe the changes needed…" />
+                {reviewError && <p role="alert" className="text-sm text-app-warm">{reviewError}</p>}
+                <div className="flex justify-end gap-3"><Dialog.Close disabled={reviewBusy} className="px-4 py-3 rounded-xl border border-app-line">Cancel</Dialog.Close><button type="submit" disabled={reviewBusy || !revisionReason.trim()} className="px-4 py-3 rounded-xl bg-app-accent-soft text-app-void font-semibold disabled:opacity-50">{reviewBusy ? "Saving…" : "Send revision request"}</button></div>
               </form>
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog.Root>
         {/* 3-Column Deliverables Grid or Empty State */}
         {!deliverablesQuery.isPending && !deliverablesQuery.isError && filteredDeliverables.length === 0 ? (
-          <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] p-12 text-center text-[#97A0B3] space-y-3">
-            <Layers className="w-10 h-10 text-[#2A3446] mx-auto" />
-            <h3 className="text-base font-bold text-white">No deliverables in queue</h3>
-            <p className="text-xs text-[#97A0B3] max-w-sm mx-auto">
+          <div className="bg-app-surface rounded-3xl border border-app-line p-12 text-center text-app-mist space-y-3">
+            <Layers className="w-10 h-10 text-app-line mx-auto" />
+            <h3 className="text-base font-bold text-hi">No deliverables in queue</h3>
+            <p className="text-xs text-app-mist max-w-sm mx-auto">
               Creative pod sprints will automatically submit finished reels, brand assets, and creative packages here for admin review.
             </p>
           </div>
@@ -2935,22 +2935,22 @@ export function AdminDeliverablesPage() {
           {filteredDeliverables.map((item) => (
             <div
               key={item.id}
-              className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all overflow-hidden flex flex-col justify-between"
+              className="bg-app-surface rounded-3xl border border-app-line shadow-[0_4px_25px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] hover:shadow-[0_8px_30px_rgb(var(--shadow-rgb)/calc(0.06*var(--shadow-k)))] transition-all overflow-hidden flex flex-col justify-between"
             >
               {/* Card Header */}
               <div className="p-5 pb-3">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2.5">
                     <div
-                      className={`w-7 h-7 rounded-xl ${item.clientBg} text-white font-black text-xs flex items-center justify-center shadow-xs`}
+                      className={`w-7 h-7 rounded-xl ${item.clientBg} text-hi font-black text-xs flex items-center justify-center shadow-xs`}
                     >
                       {item.clientInitial}
                     </div>
                     <div>
-                      <div className="text-xs font-black text-white leading-tight">
+                      <div className="text-xs font-black text-hi leading-tight">
                         {item.client}
                       </div>
-                      <div className="text-[10px] font-bold text-[#97A0B3]">
+                      <div className="text-[10px] font-bold text-app-mist">
                         {item.assetCode}
                       </div>
                     </div>
@@ -2963,12 +2963,12 @@ export function AdminDeliverablesPage() {
                 </div>
 
                 {/* Deliverable Title & Format */}
-                <h3 className="text-sm font-black text-white line-clamp-2 mb-1.5">
+                <h3 className="text-sm font-black text-hi line-clamp-2 mb-1.5">
                   {item.title}
                 </h3>
                 <PublishingControl deliverableId={item.id} />
-                <p className="text-[11px] font-semibold text-[#97A0B3] flex items-center gap-1.5">
-                  <Tag className="w-3 h-3 text-[#97A0B3]" />
+                <p className="text-[11px] font-semibold text-app-mist flex items-center gap-1.5">
+                  <Tag className="w-3 h-3 text-app-mist" />
                   {item.format}
                 </p>
               </div>
@@ -2980,8 +2980,8 @@ export function AdminDeliverablesPage() {
               >
                 <DeliverableMedia url={item.previewUrl} isVideo={!!item.is_video} title={item.title} controls={false} className="w-full h-full" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="px-4 py-2 bg-[#161F2D]/90 backdrop-blur-md rounded-xl text-xs font-black text-white shadow-xl flex items-center gap-1.5">
-                    <Eye className="w-3.5 h-3.5 text-[#7FA0D6]" /> Quick Preview
+                  <span className="px-4 py-2 bg-app-surface/90 backdrop-blur-md rounded-xl text-xs font-black text-hi shadow-xl flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-app-accent" /> Quick Preview
                   </span>
                 </div>
               </div>
@@ -2991,27 +2991,27 @@ export function AdminDeliverablesPage() {
                 {/* Pod & Retainer Info */}
                 <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-50">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-[#97A0B3] text-[10px] uppercase">
+                    <span className="font-bold text-app-mist text-[10px] uppercase">
                       Pod:
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] text-[11px] font-black">
+                    <span className="px-2 py-0.5 rounded-md bg-app-accent/15 text-app-accent text-[11px] font-black">
                       {item.pod} {item.podLead ? `(${item.podLead})` : ""}
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold text-[#97A0B3]">
+                  <span className="text-[11px] font-bold text-app-mist">
                     {item.retainer}
                   </span>
                 </div>
 
                 {/* SLA Target / Status */}
-                <div className="flex items-center justify-between text-xs bg-[#0B111C]/80 p-2.5 rounded-xl border border-[#2A3446]">
+                <div className="flex items-center justify-between text-xs bg-app-base/80 p-2.5 rounded-xl border border-app-line">
                   <span className={`text-[11px] ${item.slaColor}`}>
                     {item.slaText}
                   </span>
                   <button
                     type="button"
                     onClick={() => setCommentModalItem(item)}
-                    className="text-[#97A0B3] hover:text-[#7FA0D6] text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                    className="text-app-mist hover:text-app-accent text-[11px] font-bold flex items-center gap-1 cursor-pointer"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
                     Review notes
@@ -3032,7 +3032,7 @@ export function AdminDeliverablesPage() {
                     type="button"
                     disabled={reviewBusy || item.status !== "pending_qa" || !item.previewUrl}
                     onClick={() => handleDecline(item.id, item.title)}
-                    className="flex-1 py-2.5 bg-[#161F2D] hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex-1 py-2.5 bg-app-surface hover:bg-rose-50 text-app-ink-2 hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <X className="w-3.5 h-3.5 stroke-[2.5]" /> Request Edit
                   </button>
@@ -3046,23 +3046,23 @@ export function AdminDeliverablesPage() {
         {/* Media Preview Modal */}
         {previewItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-3xl w-full p-6 shadow-2xl space-y-4 border border-[#2A3446] max-h-[90vh] overflow-y-auto">
-              <div className="flex items-start justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-app-surface rounded-3xl max-w-3xl w-full p-6 shadow-2xl space-y-4 border border-app-line max-h-[90vh] overflow-y-auto">
+              <div className="flex items-start justify-between border-b border-app-line pb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-black uppercase">
+                    <span className="px-2.5 py-0.5 rounded-full bg-app-accent/15 text-app-accent text-[10px] font-black uppercase">
                       {previewItem.assetCode}
                     </span>
-                    <span className="text-xs font-bold text-[#97A0B3]">
+                    <span className="text-xs font-bold text-app-mist">
                       {previewItem.client}
                     </span>
                   </div>
-                  <h2 className="text-lg font-black text-white">{previewItem.title}</h2>
+                  <h2 className="text-lg font-black text-hi">{previewItem.title}</h2>
                 </div>
                 <button
                   type="button"
                   onClick={() => setPreviewItem(null)}
-                  className="p-1.5 rounded-xl hover:bg-[#161F2D] text-[#97A0B3] hover:text-white cursor-pointer"
+                  className="p-1.5 rounded-xl hover:bg-app-surface text-app-mist hover:text-hi cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -3072,10 +3072,10 @@ export function AdminDeliverablesPage() {
                 <DeliverableMedia url={previewItem.previewUrl} isVideo={!!previewItem.is_video} title={previewItem.title} className="w-full max-h-[420px]" />
               </div>
 
-              <div className="p-4 bg-[#0B111C] rounded-2xl space-y-2 text-xs">
-                <div className="font-bold text-white">Deliverable Blueprint:</div>
-                <p className="text-[#F1F5F9] leading-relaxed">{previewItem.description}</p>
-                <div className="flex flex-wrap gap-4 pt-2 text-[11px] text-[#97A0B3] border-t border-[#2A3446]">
+              <div className="p-4 bg-app-base rounded-2xl space-y-2 text-xs">
+                <div className="font-bold text-hi">Deliverable Blueprint:</div>
+                <p className="text-app-ink-2 leading-relaxed">{previewItem.description}</p>
+                <div className="flex flex-wrap gap-4 pt-2 text-[11px] text-app-mist border-t border-app-line">
                   <span><strong>Format:</strong> {previewItem.format}</span>
                   <span><strong>Pod:</strong> {previewItem.pod} {previewItem.podLead ? `(${previewItem.podLead})` : ""}</span>
                   <span><strong>SLA:</strong> {previewItem.slaText}</span>
@@ -3090,7 +3090,7 @@ export function AdminDeliverablesPage() {
                     handleDecline(previewItem.id, previewItem.title);
                     setPreviewItem(null);
                   }}
-                  className="px-4 py-2 rounded-xl bg-[#161F2D] hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 text-xs font-bold cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-app-surface hover:bg-rose-50 text-app-ink-2 hover:text-rose-600 text-xs font-bold cursor-pointer"
                 >
                   Request Revision
                 </button>
@@ -3113,24 +3113,24 @@ export function AdminDeliverablesPage() {
         {/* Notes & Comments Modal */}
         {commentModalItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-app-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-app-line">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-[#7FA0D6]" />
-                  <h3 className="text-sm font-black text-white">
+                  <MessageSquare className="w-4 h-4 text-app-accent" />
+                  <h3 className="text-sm font-black text-hi">
                     Production Notes & Feedback
                   </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setCommentModalItem(null)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-app-mist hover:text-app-ink-2 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <p className="text-sm text-[#BCCCE6] whitespace-pre-wrap">{commentModalItem.description || "No revision feedback recorded for this upload."}</p>
+              <p className="text-sm text-app-accent-soft whitespace-pre-wrap">{commentModalItem.description || "No revision feedback recorded for this upload."}</p>
 
               <div className="pt-2 flex justify-end">
                 <button
@@ -3178,7 +3178,7 @@ export function AdminTasksPage() {
       id: "task-101",
       column: "in_progress",
       client: "Ryze Mushroom Coffee",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      clientPill: "bg-app-accent/15 text-app-accent border-app-accent/30",
       priority: "Urgent",
       priorityPill: "bg-rose-600 text-white font-black",
       title: "3D Product Render & Motion Hook (15s Reel)",
@@ -3194,7 +3194,7 @@ export function AdminTasksPage() {
       id: "task-102",
       column: "todo",
       client: "Ryze Mushroom Coffee",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      clientPill: "bg-app-accent/15 text-app-accent border-app-accent/30",
       priority: "High",
       priorityPill: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
       title: "DTC Ad Hook Variations (15s Reel Clips)",
@@ -3210,7 +3210,7 @@ export function AdminTasksPage() {
       id: "task-103",
       column: "under_review",
       client: "Acme Corp",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      clientPill: "bg-app-accent/15 text-app-accent border-app-accent/30",
       priority: "High",
       priorityPill: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
       title: "Instagram Story Templates (1080x1920 Figma Kit)",
@@ -3226,9 +3226,9 @@ export function AdminTasksPage() {
       id: "task-104",
       column: "approved",
       client: "Kavya Organics",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      clientPill: "bg-app-accent/15 text-app-accent border-app-accent/30",
       priority: "Normal",
-      priorityPill: "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
+      priorityPill: "bg-app-surface text-app-ink-2 border-app-line",
       title: "Brand Guidelines & Color Palette Audit (v2.0)",
       type: "Brand Strategy",
       avatar: "MB",
@@ -3242,13 +3242,13 @@ export function AdminTasksPage() {
       id: "task-105",
       column: "in_progress",
       client: "Ryze Mushroom Coffee",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      clientPill: "bg-app-accent/15 text-app-accent border-app-accent/30",
       priority: "High",
       priorityPill: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
       title: "TikTok Motion Hook (Rec.709 Color Grading)",
       type: "Color Grading",
       avatar: "AR",
-      avatarBg: "bg-[#7FA0D6]",
+      avatarBg: "bg-app-accent",
       assigneeName: "Alex Rivera",
       sp: 6,
       due: "Today, 8:00 PM",
@@ -3258,7 +3258,7 @@ export function AdminTasksPage() {
       id: "task-106",
       column: "todo",
       client: "Acme Corp",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      clientPill: "bg-app-accent/15 text-app-accent border-app-accent/30",
       priority: "Urgent",
       priorityPill: "bg-rose-600 text-white font-black",
       title: "Motion Graphics Carousel Post (5 Slides)",
@@ -3286,9 +3286,9 @@ export function AdminTasksPage() {
           id: t.id,
           column: t.column,
           client: t.client_name || "Client",
-          clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+          clientPill: "bg-app-accent/15 text-app-accent border-app-accent/30",
           priority: t.is_near_sla ? "Urgent" : (t.priority || "Normal"),
-          priorityPill: t.is_near_sla ? "bg-rose-600 text-white font-black" : "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
+          priorityPill: t.is_near_sla ? "bg-rose-600 text-white font-black" : "bg-app-surface text-app-ink-2 border-app-line",
           title: t.deliverable?.title || t.deliverable_type || "Design Task",
           type: t.deliverable_type || "Design",
           avatar: t.assignee_name ? t.assignee_name.split(" ").map((n: string) => n[0]).join("").slice(0,2).toUpperCase() : "UN",
@@ -3311,14 +3311,14 @@ export function AdminTasksPage() {
       id: `task-${Date.now()}`,
       column: newTaskForm.column,
       client: newTaskForm.client,
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      clientPill: "bg-app-accent/15 text-app-accent border-app-accent/30",
       priority: newTaskForm.priority,
       priorityPill:
         newTaskForm.priority === "Urgent"
           ? "bg-rose-600 text-white font-black"
           : newTaskForm.priority === "High"
           ? "bg-rose-50 text-rose-600 border-rose-100"
-          : "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
+          : "bg-app-surface text-app-ink-2 border-app-line",
       title: newTaskForm.title.trim(),
       type: newTaskForm.category,
       avatar: newTaskForm.assignee
@@ -3377,27 +3377,27 @@ export function AdminTasksPage() {
   const approvedTasks = filteredTasks.filter((t) => t.column === "approved");
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-app-base flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
       <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {/* Header Title and Search Filter Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
-              <span className="w-2 h-2 rounded-full bg-[#7FA0D6] animate-pulse" />
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-app-accent/15 text-app-accent border border-app-accent/30">
+              <span className="w-2 h-2 rounded-full bg-app-accent animate-pulse" />
               Live Sync
             </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-app-mist" />
               <input
                 type="text"
                 placeholder="Filter deliverables, tags, owners..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 w-full rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium text-white placeholder-[#97A0B3] focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                className="pl-9 pr-4 py-2 w-full rounded-xl border border-app-line bg-app-surface text-xs font-medium text-hi placeholder-app-mist focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
               />
             </div>
 
@@ -3426,7 +3426,7 @@ export function AdminTasksPage() {
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+              className="px-4 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
             >
               <Plus className="w-4 h-4 stroke-[3]" /> Create Task
             </button>
@@ -3448,13 +3448,13 @@ export function AdminTasksPage() {
               onClick={() => setMobileKanbanCol(col.id as any)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
                 mobileKanbanCol === col.id
-                  ? "bg-[#7FA0D6] text-white shadow-sm"
-                  : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446]"
+                  ? "bg-app-accent text-white shadow-sm"
+                  : "bg-app-surface text-app-mist border border-app-line"
               }`}
             >
               <span>{col.label}</span>
               <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
-                mobileKanbanCol === col.id ? "bg-white/20 text-white" : "bg-[#0B111C] text-[#97A0B3]"
+                mobileKanbanCol === col.id ? "bg-hi/20 text-hi" : "bg-app-base text-app-mist"
               }`}>
                 {col.count}
               </span>
@@ -3465,17 +3465,17 @@ export function AdminTasksPage() {
         {/* 4 Kanban Columns */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
           {/* Column 1: TO DO */}
-          <div className={`bg-[#161F2D]/40 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
+          <div className={`bg-app-surface/40 rounded-3xl p-4 space-y-3.5 border border-app-line/60 ${
             mobileKanbanCol !== "all" && mobileKanbanCol !== "todo" ? "hidden sm:flex flex-col" : "flex flex-col"
           }`}>
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
-                <h3 className="text-xs font-black text-white tracking-wider uppercase">
+                <h3 className="text-xs font-black text-hi tracking-wider uppercase">
                   TO DO
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[11px] font-bold border border-[#2A3446] shadow-2xs">
+              <span className="px-2 py-0.5 rounded-full bg-app-surface text-app-ink-2 text-[11px] font-bold border border-app-line shadow-2xs">
                 {todoTasks.length}
               </span>
             </div>
@@ -3485,7 +3485,7 @@ export function AdminTasksPage() {
                 <div
                   key={task.id}
                   onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                  className="bg-app-surface rounded-2xl p-4 border border-app-line/70 shadow-[0_2px_8px_rgb(var(--shadow-rgb)/calc(0.02*var(--shadow-k)))] hover:shadow-md transition-all cursor-pointer space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
@@ -3495,20 +3495,20 @@ export function AdminTasksPage() {
                       {task.priority}
                     </span>
                   </div>
-                  <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
+                  <h4 className="text-xs font-bold text-hi line-clamp-2">{task.title}</h4>
                   {task.imageUrl && (
-                    <div className="h-24 rounded-xl overflow-hidden bg-[#161F2D]">
+                    <div className="h-24 rounded-xl overflow-hidden bg-app-surface">
                       <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
+                  <div className="flex items-center justify-between pt-2 border-t border-app-line text-[11px] text-app-mist">
                     <div className="flex items-center gap-1.5">
-                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
+                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-hi font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
+                      <span className="font-medium text-app-ink-2">{task.assigneeName}</span>
                     </div>
-                    <span className="font-bold text-[#7FA0D6] font-mono">{task.sp} SP</span>
+                    <span className="font-bold text-app-accent font-mono">{task.sp} SP</span>
                   </div>
                 </div>
               ))}
@@ -3516,17 +3516,17 @@ export function AdminTasksPage() {
           </div>
 
           {/* Column 2: IN PROGRESS */}
-          <div className={`bg-[#161F2D]/40 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
+          <div className={`bg-app-surface/40 rounded-3xl p-4 space-y-3.5 border border-app-line/60 ${
             mobileKanbanCol !== "all" && mobileKanbanCol !== "in_progress" ? "hidden sm:flex flex-col" : "flex flex-col"
           }`}>
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]/150 animate-pulse" />
-                <h3 className="text-xs font-black text-white tracking-wider uppercase">
+                <span className="w-2.5 h-2.5 rounded-full bg-app-accent/150 animate-pulse" />
+                <h3 className="text-xs font-black text-hi tracking-wider uppercase">
                   IN PROGRESS
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#7FA0D6] text-[11px] font-bold border border-[#2A3446] shadow-2xs">
+              <span className="px-2 py-0.5 rounded-full bg-app-surface text-app-accent text-[11px] font-bold border border-app-line shadow-2xs">
                 {inProgressTasks.length}
               </span>
             </div>
@@ -3536,7 +3536,7 @@ export function AdminTasksPage() {
                 <div
                   key={task.id}
                   onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                  className="bg-app-surface rounded-2xl p-4 border border-app-line/70 shadow-[0_2px_8px_rgb(var(--shadow-rgb)/calc(0.02*var(--shadow-k)))] hover:shadow-md transition-all cursor-pointer space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
@@ -3546,18 +3546,18 @@ export function AdminTasksPage() {
                       {task.priority}
                     </span>
                   </div>
-                  <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
+                  <h4 className="text-xs font-bold text-hi line-clamp-2">{task.title}</h4>
                   {task.imageUrl && (
-                    <div className="h-24 rounded-xl overflow-hidden bg-[#161F2D]">
+                    <div className="h-24 rounded-xl overflow-hidden bg-app-surface">
                       <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
+                  <div className="flex items-center justify-between pt-2 border-t border-app-line text-[11px] text-app-mist">
                     <div className="flex items-center gap-1.5">
-                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
+                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-hi font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
+                      <span className="font-medium text-app-ink-2">{task.assigneeName}</span>
                     </div>
                     <span className="font-bold text-rose-400">{task.due}</span>
                   </div>
@@ -3567,17 +3567,17 @@ export function AdminTasksPage() {
           </div>
 
           {/* Column 3: UNDER REVIEW */}
-          <div className={`bg-[#161F2D]/40 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
+          <div className={`bg-app-surface/40 rounded-3xl p-4 space-y-3.5 border border-app-line/60 ${
             mobileKanbanCol !== "all" && mobileKanbanCol !== "under_review" ? "hidden sm:flex flex-col" : "flex flex-col"
           }`}>
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                <h3 className="text-xs font-black text-white tracking-wider uppercase">
+                <h3 className="text-xs font-black text-hi tracking-wider uppercase">
                   UNDER REVIEW
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-amber-400 text-[11px] font-bold border border-[#2A3446] shadow-2xs">
+              <span className="px-2 py-0.5 rounded-full bg-app-surface text-amber-400 text-[11px] font-bold border border-app-line shadow-2xs">
                 {underReviewTasks.length}
               </span>
             </div>
@@ -3587,7 +3587,7 @@ export function AdminTasksPage() {
                 <div
                   key={task.id}
                   onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                  className="bg-app-surface rounded-2xl p-4 border border-app-line/70 shadow-[0_2px_8px_rgb(var(--shadow-rgb)/calc(0.02*var(--shadow-k)))] hover:shadow-md transition-all cursor-pointer space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
@@ -3597,13 +3597,13 @@ export function AdminTasksPage() {
                       {task.priority}
                     </span>
                   </div>
-                  <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
+                  <h4 className="text-xs font-bold text-hi line-clamp-2">{task.title}</h4>
+                  <div className="flex items-center justify-between pt-2 border-t border-app-line text-[11px] text-app-mist">
                     <div className="flex items-center gap-1.5">
-                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
+                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-hi font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
+                      <span className="font-medium text-app-ink-2">{task.assigneeName}</span>
                     </div>
                     <span className="font-bold text-amber-400">{task.pod}</span>
                   </div>
@@ -3613,17 +3613,17 @@ export function AdminTasksPage() {
           </div>
 
           {/* Column 4: APPROVED */}
-          <div className={`bg-[#161F2D]/40 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
+          <div className={`bg-app-surface/40 rounded-3xl p-4 space-y-3.5 border border-app-line/60 ${
             mobileKanbanCol !== "all" && mobileKanbanCol !== "approved" ? "hidden sm:flex flex-col" : "flex flex-col"
           }`}>
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                <h3 className="text-xs font-black text-white tracking-wider uppercase">
+                <h3 className="text-xs font-black text-hi tracking-wider uppercase">
                   APPROVED
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-emerald-600 text-[11px] font-bold border border-[#2A3446] shadow-2xs">
+              <span className="px-2 py-0.5 rounded-full bg-app-surface text-emerald-600 text-[11px] font-bold border border-app-line shadow-2xs">
                 {approvedTasks.length}
               </span>
             </div>
@@ -3633,7 +3633,7 @@ export function AdminTasksPage() {
                 <div
                   key={task.id}
                   onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                  className="bg-app-surface rounded-2xl p-4 border border-app-line/70 shadow-[0_2px_8px_rgb(var(--shadow-rgb)/calc(0.02*var(--shadow-k)))] hover:shadow-md transition-all cursor-pointer space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
@@ -3643,18 +3643,18 @@ export function AdminTasksPage() {
                       {task.priority}
                     </span>
                   </div>
-                  <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
+                  <h4 className="text-xs font-bold text-hi line-clamp-2">{task.title}</h4>
                   {task.imageUrl && (
-                    <div className="h-24 rounded-xl overflow-hidden bg-[#161F2D]">
+                    <div className="h-24 rounded-xl overflow-hidden bg-app-surface">
                       <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
+                  <div className="flex items-center justify-between pt-2 border-t border-app-line text-[11px] text-app-mist">
                     <div className="flex items-center gap-1.5">
-                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
+                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-hi font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
+                      <span className="font-medium text-app-ink-2">{task.assigneeName}</span>
                     </div>
                     <span className="font-bold text-emerald-600 font-mono">Completed</span>
                   </div>
@@ -3667,13 +3667,13 @@ export function AdminTasksPage() {
         {/* Create Task Modal */}
         {isCreateModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <h3 className="text-base font-black text-white">Create Production Task</h3>
+            <div className="bg-app-surface rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-app-line">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
+                <h3 className="text-base font-black text-hi">Create Production Task</h3>
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-app-mist hover:text-app-ink-2 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -3681,34 +3681,34 @@ export function AdminTasksPage() {
 
               <form onSubmit={handleCreateTask} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Task Title</label>
+                  <label className="block text-xs font-bold text-app-ink-2 mb-1">Task Title</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. 3D Hero Animation for Brand Launch"
                     value={newTaskForm.title}
                     onChange={(e) => setNewTaskForm({ ...newTaskForm, title: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Client Brand</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Client Brand</label>
                     <NativeSelect
                       value={newTaskForm.client}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, client: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-app-line text-xs font-medium"
                     >
                       <option value="Ryze Mushroom Coffee">Ryze Mushroom Coffee</option>
                     </NativeSelect>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Creative Pod</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Creative Pod</label>
                     <NativeSelect
                       value={newTaskForm.pod}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, pod: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-app-line text-xs font-medium"
                     >
                       <option value="Pod A">Pod A (Brand Strategy)</option>
                       <option value="Pod B">Pod B (Performance &amp; Video)</option>
@@ -3719,11 +3719,11 @@ export function AdminTasksPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Priority</label>
                     <NativeSelect
                       value={newTaskForm.priority}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, priority: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-app-line text-xs font-medium"
                     >
                       <option value="Normal">Normal</option>
                       <option value="High">High</option>
@@ -3731,23 +3731,23 @@ export function AdminTasksPage() {
                     </NativeSelect>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Story Points</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Story Points</label>
                     <input
                       type="number"
                       min="1"
                       max="20"
                       value={newTaskForm.sp}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, sp: Number(e.target.value) })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-app-line text-xs font-medium"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                <div className="flex justify-end gap-2 pt-2 border-t border-app-line">
                   <button
                     type="button"
                     onClick={() => setIsCreateModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-app-line text-xs font-bold text-app-ink-2 hover:bg-app-base cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -3766,25 +3766,25 @@ export function AdminTasksPage() {
         {/* Task Preview Drawer */}
         {previewTask && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-app-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-app-line">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
                 <div>
-                  <span className="text-[10px] font-bold text-[#7FA0D6] uppercase font-mono">
+                  <span className="text-[10px] font-bold text-app-accent uppercase font-mono">
                     {previewTask.pod} • {previewTask.due}
                   </span>
-                  <h3 className="text-base font-black text-white mt-0.5">{previewTask.title}</h3>
+                  <h3 className="text-base font-black text-hi mt-0.5">{previewTask.title}</h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setPreviewTask(null)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-app-mist hover:text-app-ink-2 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="space-y-2.5 text-xs text-[#F1F5F9]">
-                <div className="p-3 bg-[#0B111C] rounded-2xl space-y-1">
+              <div className="space-y-2.5 text-xs text-app-ink-2">
+                <div className="p-3 bg-app-base rounded-2xl space-y-1">
                   <div><strong>Client:</strong> {previewTask.client}</div>
                   <div><strong>Assignee:</strong> {previewTask.assigneeName}</div>
                   <div><strong>Priority:</strong> {previewTask.priority}</div>
@@ -3882,8 +3882,8 @@ export function AdminTeamManagementPage() {
       allocatedHours: 120,
       totalHours: 120,
       color: "bg-blue-600",
-      textColor: "text-[#7FA0D6]",
-      pillBg: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      textColor: "text-app-accent",
+      pillBg: "bg-app-accent/15 text-app-accent border-app-accent/30",
       squadLoad: 40,
       activeEngagements: 1,
       readyReview: 0,
@@ -3901,8 +3901,8 @@ export function AdminTeamManagementPage() {
       pendingReview: 0,
       allocatedHours: 120,
       totalHours: 120,
-      color: "bg-[#7FA0D6]",
-      textColor: "text-[#7FA0D6]",
+      color: "bg-app-accent",
+      textColor: "text-app-accent",
       pillBg: "bg-sky-50 text-sky-600 border-sky-100",
       squadLoad: 40,
       activeEngagements: 1,
@@ -3943,7 +3943,7 @@ export function AdminTeamManagementPage() {
       email: "lead.alpha@creo.agency",
       handle: "@vikram",
       status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      statusColor: "bg-app-accent/15 text-app-accent border-app-accent/30",
       allocatedPct: 60,
       projectsCount: 1,
       capabilities: ["Creative Direction", "Brand Systems", "Campaign Strategy"],
@@ -3988,7 +3988,7 @@ export function AdminTeamManagementPage() {
       email: "lead.beta@creo.agency",
       handle: "@sarah",
       status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      statusColor: "bg-app-accent/15 text-app-accent border-app-accent/30",
       allocatedPct: 60,
       projectsCount: 1,
       capabilities: ["Campaign Architecture", "Creative Direction", "Viral Hooks"],
@@ -4033,7 +4033,7 @@ export function AdminTeamManagementPage() {
       email: "lead.gamma@creo.agency",
       handle: "@rohan",
       status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      statusColor: "bg-app-accent/15 text-app-accent border-app-accent/30",
       allocatedPct: 60,
       projectsCount: 1,
       capabilities: ["Art Direction", "Minimal Aesthetics", "Design Systems"],
@@ -4089,7 +4089,7 @@ export function AdminTeamManagementPage() {
   const getRoleIcon = (cat: string) => {
     switch (cat) {
       case "lead":
-        return <UserCog className="w-3.5 h-3.5 text-[#7FA0D6]" />;
+        return <UserCog className="w-3.5 h-3.5 text-app-accent" />;
       case "designer":
         return <Palette className="w-3.5 h-3.5 text-purple-600" />;
       case "editor":
@@ -4099,7 +4099,7 @@ export function AdminTeamManagementPage() {
       case "photographer":
         return <Camera className="w-3.5 h-3.5 text-emerald-600" />;
       default:
-        return <Users className="w-3.5 h-3.5 text-[#F1F5F9]" />;
+        return <Users className="w-3.5 h-3.5 text-app-ink-2" />;
     }
   };
 
@@ -4286,7 +4286,7 @@ export function AdminTeamManagementPage() {
   };
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-app-base flex flex-col">
       <AdminTopHeader
         title={activePodId && activePod ? `${activePod.name} • Team Details` : "Team Details & Management"}
         activeTab="Team Details"
@@ -4313,13 +4313,13 @@ export function AdminTeamManagementPage() {
             {/* Top Controls Bar */}
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h3 className="text-base font-bold text-white">Sprint Pods & Resource Allocation</h3>
-                <p className="text-xs text-[#97A0B3]">Live operational capacity and roster assignments across creative pods</p>
+                <h3 className="text-base font-bold text-hi">Sprint Pods & Resource Allocation</h3>
+                <p className="text-xs text-app-mist">Live operational capacity and roster assignments across creative pods</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddMemberOpen(true)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
               >
                 <Plus className="w-4 h-4" /> Add Team Pod
               </button>
@@ -4339,28 +4339,28 @@ export function AdminTeamManagementPage() {
               return (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-6">
                   {/* Card 1: NO OF PODS */}
-                  <div className="kpi-card bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+                  <div className="kpi-card bg-app-surface rounded-3xl p-6 border-2 border-app-surface hover:border-app-accent-soft transition-all shadow-[0_4px_20px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] flex flex-col justify-between">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                      <span className="text-[10px] font-extrabold text-app-mist uppercase tracking-wider">
                         NO OF PODS
                       </span>
-                      <div className="w-9 h-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-2xl bg-app-accent/15 text-app-accent flex items-center justify-center">
                         <Users className="w-5 h-5" />
                       </div>
                     </div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-black text-white tracking-tight">{totalPodsCount} Pods</span>
-                      <span className="text-xs font-semibold text-[#97A0B3]">across {totalMembersCount} members</span>
+                      <span className="text-3xl font-black text-hi tracking-tight">{totalPodsCount} Pods</span>
+                      <span className="text-xs font-semibold text-app-mist">across {totalMembersCount} members</span>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-[#2A3446] text-xs font-bold text-[#7FA0D6] flex items-center gap-1">
+                    <div className="mt-4 pt-3 border-t border-app-line text-xs font-bold text-app-accent flex items-center gap-1">
                       <Layers className="w-3.5 h-3.5" /> Pods {firstPodLetter} – {lastPodLetter} Active Pods
                     </div>
                   </div>
 
                   {/* Card 2: CAPACITY */}
-                  <div className="kpi-card bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+                  <div className="kpi-card bg-app-surface rounded-3xl p-6 border-2 border-app-surface hover:border-app-accent-soft transition-all shadow-[0_4px_20px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] flex flex-col justify-between">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                      <span className="text-[10px] font-extrabold text-app-mist uppercase tracking-wider">
                         CAPACITY
                       </span>
                       <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -4368,11 +4368,11 @@ export function AdminTeamManagementPage() {
                       </div>
                     </div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-black text-white tracking-tight">{avgCapacityPct}%</span>
-                      <span className="text-xs font-semibold text-[#97A0B3]">optimal bandwidth</span>
+                      <span className="text-3xl font-black text-hi tracking-tight">{avgCapacityPct}%</span>
+                      <span className="text-xs font-semibold text-app-mist">optimal bandwidth</span>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-[#2A3446] flex items-center gap-2">
-                      <div className="flex-1 bg-[#161F2D] rounded-full h-2 overflow-hidden">
+                    <div className="mt-4 pt-3 border-t border-app-line flex items-center gap-2">
+                      <div className="flex-1 bg-app-surface rounded-full h-2 overflow-hidden">
                         <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${avgCapacityPct}%` }} />
                       </div>
                       <span className="text-xs font-bold text-emerald-600">
@@ -4382,9 +4382,9 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   {/* Card 3: TASKS TO BE DONE */}
-                  <div className="kpi-card bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+                  <div className="kpi-card bg-app-surface rounded-3xl p-6 border-2 border-app-surface hover:border-app-accent-soft transition-all shadow-[0_4px_20px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] flex flex-col justify-between">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                      <span className="text-[10px] font-extrabold text-app-mist uppercase tracking-wider">
                         TASKS TO BE DONE
                       </span>
                       <div className="w-9 h-9 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
@@ -4392,10 +4392,10 @@ export function AdminTeamManagementPage() {
                       </div>
                     </div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-black text-white tracking-tight">{activeTasksCount}</span>
-                      <span className="text-xs font-semibold text-[#97A0B3]">in review/progress</span>
+                      <span className="text-3xl font-black text-hi tracking-tight">{activeTasksCount}</span>
+                      <span className="text-xs font-semibold text-app-mist">in review/progress</span>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-[#2A3446] text-xs text-[#97A0B3] flex items-center gap-1 font-medium">
+                    <div className="mt-4 pt-3 border-t border-app-line text-xs text-app-mist flex items-center gap-1 font-medium">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> All squad tasks live on track
                     </div>
                   </div>
@@ -4406,8 +4406,8 @@ export function AdminTeamManagementPage() {
             {/* Team Pods Section Header */}
             <div className="flex items-center justify-between pt-2">
               <div>
-                <h3 className="text-lg font-bold text-white tracking-tight">Team Pods</h3>
-                <p className="text-xs text-[#97A0B3]">Real-time capacity distribution, pod leads, and task completion velocity</p>
+                <h3 className="text-lg font-bold text-hi tracking-tight">Team Pods</h3>
+                <p className="text-xs text-app-mist">Real-time capacity distribution, pod leads, and task completion velocity</p>
               </div>
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Sprint Cycle 08 • 4 Days Remaining
@@ -4420,21 +4420,21 @@ export function AdminTeamManagementPage() {
                 <div
                   key={pod.id}
                   onClick={() => setActivePodId(pod.id)}
-                  className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.04)] space-y-5 hover:shadow-xl transition-all cursor-pointer group relative overflow-hidden"
+                  className="bg-app-surface rounded-3xl p-6 border border-app-line shadow-[0_4px_25px_rgb(var(--shadow-rgb)/calc(0.04*var(--shadow-k)))] space-y-5 hover:shadow-xl transition-all cursor-pointer group relative overflow-hidden"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-2xl ${pod.color} text-white font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform`}>
+                      <div className={`w-12 h-12 rounded-2xl ${pod.color} text-hi font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform`}>
                         {pod.letter}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-base text-white">{pod.name}</h4>
-                          <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold">
+                          <h4 className="font-bold text-base text-hi">{pod.name}</h4>
+                          <span className="px-2 py-0.5 rounded-full bg-app-surface text-app-ink-2 text-[10px] font-bold">
                             Sprint Pod
                           </span>
                         </div>
-                        <p className="text-xs text-[#97A0B3]">{pod.description.slice(0, 48)}...</p>
+                        <p className="text-xs text-app-mist">{pod.description.slice(0, 48)}...</p>
                       </div>
                     </div>
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
@@ -4443,46 +4443,46 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   {/* Lead Info & Member Stack */}
-                  <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl flex items-center justify-between border border-[#2A3446]">
+                  <div className="p-3.5 bg-app-base/70 rounded-2xl flex items-center justify-between border border-app-line">
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
                         {pod.lead[0]}
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-white">{pod.lead}</div>
-                        <div className="text-[10px] text-[#97A0B3] font-medium">Pod Lead</div>
+                        <div className="text-xs font-bold text-hi">{pod.lead}</div>
+                        <div className="text-[10px] text-app-mist font-medium">Pod Lead</div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs font-bold text-[#F1F5F9]">
+                    <div className="flex items-center gap-2 text-xs font-bold text-app-ink-2">
                       <div className="flex -space-x-2">
-                        <div className="w-7 h-7 rounded-full bg-slate-700 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">ER</div>
-                        <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">MC</div>
-                        <div className="w-7 h-7 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">LZ</div>
+                        <div className="w-7 h-7 rounded-full bg-slate-700 text-hi text-[10px] font-bold flex items-center justify-center ring-2 ring-hi">ER</div>
+                        <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-hi">MC</div>
+                        <div className="w-7 h-7 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-hi">LZ</div>
                       </div>
-                      <span className="text-xs font-bold text-[#F1F5F9]">+{pod.membersCount - 3} Members</span>
+                      <span className="text-xs font-bold text-app-ink-2">+{pod.membersCount - 3} Members</span>
                     </div>
                   </div>
 
                   {/* Velocity Bar */}
                   <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center text-[#F1F5F9] font-semibold">
+                    <div className="flex justify-between items-center text-app-ink-2 font-semibold">
                       <span>Sprint Velocity</span>
-                      <span className="font-bold text-white">{pod.velocityPct}% on track</span>
+                      <span className="font-bold text-hi">{pod.velocityPct}% on track</span>
                     </div>
-                    <div className="w-full bg-[#161F2D] rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-app-surface rounded-full h-2.5 overflow-hidden">
                       <div className={`h-full rounded-full ${pod.color}`} style={{ width: `${pod.velocityPct}%` }} />
                     </div>
-                    <div className="flex justify-between text-[11px] text-[#97A0B3] font-medium pt-0.5">
+                    <div className="flex justify-between text-[11px] text-app-mist font-medium pt-0.5">
                       <span>{pod.tasksClosed} tasks closed</span>
-                      <span className="text-[#7FA0D6] font-bold">{pod.pendingReview} pending review</span>
+                      <span className="text-app-accent font-bold">{pod.pendingReview} pending review</span>
                     </div>
                   </div>
 
                   {/* Card Footer Action */}
-                  <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                    <span className="text-[#97A0B3] font-medium text-[11px]">
-                      Allocated: <strong className="text-white">{pod.allocatedHours}h / {pod.totalHours}h</strong>
+                  <div className="pt-3 border-t border-app-line flex items-center justify-between text-xs">
+                    <span className="text-app-mist font-medium text-[11px]">
+                      Allocated: <strong className="text-hi">{pod.allocatedHours}h / {pod.totalHours}h</strong>
                     </span>
                     <button
                       type="button"
@@ -4490,7 +4490,7 @@ export function AdminTeamManagementPage() {
                         e.stopPropagation();
                         setActivePodId(pod.id);
                       }}
-                      className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                      className="text-app-accent font-bold hover:underline inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
                     >
                       View Member Directory &rarr;
                     </button>
@@ -4506,33 +4506,33 @@ export function AdminTeamManagementPage() {
           <div className="space-y-6">
             {/* Top Breadcrumb & Action Controls */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-bold text-[#97A0B3] flex-wrap">
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-bold text-app-mist flex-wrap">
                 <button
                   type="button"
                   onClick={() => setActivePodId(null)}
-                  className="hover:text-[#7FA0D6] flex items-center gap-1 transition-colors cursor-pointer"
+                  className="hover:text-app-accent flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back to Track Overview
                 </button>
                 <span>/</span>
-                <button type="button" onClick={() => setActivePodId(null)} className="hover:text-[#7FA0D6] transition-colors cursor-pointer">
+                <button type="button" onClick={() => setActivePodId(null)} className="hover:text-app-accent transition-colors cursor-pointer">
                   Team Management
                 </button>
                 <span>/</span>
-                <span className="text-white font-black">{activePod?.name} Member Directory</span>
+                <span className="text-hi font-black">{activePod?.name} Member Directory</span>
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-app-accent/15 text-app-accent border border-app-accent/30">
                   ● Q2 Cycle Active
                 </span>
-                <span className="text-[11px] text-[#97A0B3] font-medium hidden sm:inline">
+                <span className="text-[11px] text-app-mist font-medium hidden sm:inline">
                   Last synchronized: Just now
                 </span>
                 <button
                   type="button"
                   onClick={() => setIsAddMemberOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+                  className="px-4 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all"
                 >
                   + Add Team Member
                 </button>
@@ -4540,7 +4540,7 @@ export function AdminTeamManagementPage() {
             </div>
 
             {/* Pod Summary Banner Card matching Screenshot 2 */}
-            <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
+            <div className="bg-app-surface rounded-3xl p-6 lg:p-8 border border-app-line shadow-[0_4px_30px_rgb(var(--shadow-rgb)/calc(0.04*var(--shadow-k)))] space-y-6">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="space-y-3 max-w-3xl">
                   <div className="flex items-center gap-2">
@@ -4551,49 +4551,49 @@ export function AdminTeamManagementPage() {
                       High Velocity
                     </span>
                   </div>
-                  <p className="text-xs text-[#F1F5F9] leading-relaxed font-medium">
+                  <p className="text-xs text-app-ink-2 leading-relaxed font-medium">
                     {activePod?.description}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-6 pt-2 text-xs font-bold text-[#F1F5F9]">
+                  <div className="flex flex-wrap items-center gap-6 pt-2 text-xs font-bold text-app-ink-2">
                     <div>
-                      <span className="text-[10px] uppercase text-[#97A0B3] block font-extrabold tracking-wider">POD LEAD</span>
-                      <span className="text-white font-black">{activePod?.lead}</span>
+                      <span className="text-[10px] uppercase text-app-mist block font-extrabold tracking-wider">POD LEAD</span>
+                      <span className="text-hi font-black">{activePod?.lead}</span>
                     </div>
                     <div className="h-6 w-px bg-gray-200" />
                     <div>
-                      <span className="text-[10px] uppercase text-[#97A0B3] block font-extrabold tracking-wider">MEMBERS</span>
-                      <span className="text-white font-black">{filteredMembers.length} Active Members</span>
+                      <span className="text-[10px] uppercase text-app-mist block font-extrabold tracking-wider">MEMBERS</span>
+                      <span className="text-hi font-black">{filteredMembers.length} Active Members</span>
                     </div>
                     <div className="h-6 w-px bg-gray-200" />
                     <div>
-                      <span className="text-[10px] uppercase text-[#97A0B3] block font-extrabold tracking-wider">VELOCITY</span>
+                      <span className="text-[10px] uppercase text-app-mist block font-extrabold tracking-wider">VELOCITY</span>
                       <span className="text-emerald-600 font-black">{activePod?.velocityPct}% Sprint Delivery</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Right Side Stats */}
-                <div className="flex gap-4 border-t lg:border-t-0 lg:border-l border-[#2A3446] pt-4 lg:pt-0 lg:pl-8">
-                  <div className="bg-[#0B111C] p-4 rounded-2xl border border-[#2A3446] min-w-[130px] space-y-1">
-                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase">AVG SQUAD LOAD</span>
-                    <div className="text-2xl font-black text-white">{activePod?.squadLoad}%</div>
+                <div className="flex gap-4 border-t lg:border-t-0 lg:border-l border-app-line pt-4 lg:pt-0 lg:pl-8">
+                  <div className="bg-app-base p-4 rounded-2xl border border-app-line min-w-[130px] space-y-1">
+                    <span className="text-[10px] font-bold text-app-mist uppercase">AVG SQUAD LOAD</span>
+                    <div className="text-2xl font-black text-hi">{activePod?.squadLoad}%</div>
                     <span className="text-[10px] text-emerald-600 font-bold">↓ Optimal</span>
                   </div>
-                  <div className="bg-[#0B111C] p-4 rounded-2xl border border-[#2A3446] min-w-[130px] space-y-1">
-                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase">ACTIVE ENGAGEMENTS</span>
-                    <div className="text-2xl font-black text-white">{activePod?.activeEngagements} projects</div>
-                    <span className="text-[10px] text-[#7FA0D6] font-bold">{activePod?.readyReview} ready for review</span>
+                  <div className="bg-app-base p-4 rounded-2xl border border-app-line min-w-[130px] space-y-1">
+                    <span className="text-[10px] font-bold text-app-mist uppercase">ACTIVE ENGAGEMENTS</span>
+                    <div className="text-2xl font-black text-hi">{activePod?.activeEngagements} projects</div>
+                    <span className="text-[10px] text-app-accent font-bold">{activePod?.readyReview} ready for review</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Role Category Filter Tabs & Action Controls */}
-            <div className="bg-[#161F2D] rounded-2xl border border-[#2A3446] p-4 shadow-sm space-y-4">
+            <div className="bg-app-surface rounded-2xl border border-app-line p-4 shadow-sm space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 {/* Filter Pills matching Screenshot 2 */}
-                <div className="flex flex-wrap items-center gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs font-bold">
+                <div className="flex flex-wrap items-center gap-1.5 bg-app-surface p-1 rounded-xl text-xs font-bold">
                   {[
                     { key: "all", label: `All Members (${membersList.filter((m) => !activePodId || m.podId === activePodId).length})` },
                     { key: "lead", label: "Leads" },
@@ -4610,8 +4610,8 @@ export function AdminTeamManagementPage() {
                       onClick={() => setRoleCategoryFilter(tab.key)}
                       className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                         roleCategoryFilter === tab.key
-                          ? "bg-[#7FA0D6] text-white shadow-xs"
-                          : "text-[#F1F5F9] hover:text-white"
+                          ? "bg-app-accent text-white shadow-xs"
+                          : "text-app-ink-2 hover:text-white"
                       }`}
                     >
                       {tab.label}
@@ -4629,10 +4629,10 @@ export function AdminTeamManagementPage() {
               </div>
 
               {/* Roster Counter */}
-              <div className="flex items-center justify-between text-xs text-[#97A0B3] font-semibold border-t border-[#2A3446] pt-3">
+              <div className="flex items-center justify-between text-xs text-app-mist font-semibold border-t border-app-line pt-3">
                 <span>Showing {filteredMembers.length} members assigned to {activePod?.name}</span>
                 <div className="flex items-center gap-3">
-                  <button type="button" className="hover:text-[#F1F5F9] flex items-center gap-1">
+                  <button type="button" className="hover:text-app-ink-2 flex items-center gap-1">
                     <SlidersHorizontal className="w-3.5 h-3.5" /> Advanced Sorting
                   </button>
                   <button
@@ -4650,7 +4650,7 @@ export function AdminTeamManagementPage() {
                       link.click();
                       document.body.removeChild(link);
                     }}
-                    className="hover:text-[#F1F5F9] flex items-center gap-1 cursor-pointer"
+                    className="hover:text-app-ink-2 flex items-center gap-1 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" /> Export Roster
                   </button>
@@ -4663,7 +4663,7 @@ export function AdminTeamManagementPage() {
               {filteredMembers.map((member) => (
                 <div
                   key={member.id}
-                  className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-6 space-y-4 flex flex-col justify-between hover:shadow-lg transition-shadow"
+                  className="bg-app-surface rounded-3xl border border-app-line shadow-[0_4px_20px_rgb(var(--shadow-rgb)/calc(0.04*var(--shadow-k)))] p-6 space-y-4 flex flex-col justify-between hover:shadow-lg transition-shadow"
                 >
                   <div className="space-y-4">
                     {/* Header: Avatar, Status Badge & Title */}
@@ -4673,14 +4673,14 @@ export function AdminTeamManagementPage() {
                           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-base flex items-center justify-center shadow-md">
                             {member.name[0]}
                           </div>
-                          <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                          <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-hi" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-sm text-white flex items-center gap-1">
+                          <h4 className="font-bold text-sm text-hi flex items-center gap-1">
                             {member.name}
-                            {member.isLead && <CheckCircle2 className="w-3.5 h-3.5 text-[#7FA0D6]" />}
+                            {member.isLead && <CheckCircle2 className="w-3.5 h-3.5 text-app-accent" />}
                           </h4>
-                          <span className="text-[11px] text-[#97A0B3] font-medium flex items-center gap-1 mt-0.5">
+                          <span className="text-[11px] text-app-mist font-medium flex items-center gap-1 mt-0.5">
                             {getRoleIcon(member.category)}
                             {member.role}
                           </span>
@@ -4693,21 +4693,21 @@ export function AdminTeamManagementPage() {
                     </div>
 
                     {/* Email & Handle */}
-                    <div className="p-3 bg-[#0B111C]/70 rounded-2xl text-[11px] font-mono space-y-0.5 border border-[#2A3446]">
-                      <div className="text-[#F1F5F9] truncate">{member.email}</div>
-                      <div className="text-[#7FA0D6] font-semibold">{member.handle}</div>
+                    <div className="p-3 bg-app-base/70 rounded-2xl text-[11px] font-mono space-y-0.5 border border-app-line">
+                      <div className="text-app-ink-2 truncate">{member.email}</div>
+                      <div className="text-app-accent font-semibold">{member.handle}</div>
                     </div>
 
                     {/* Core Capabilities Pills */}
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#97A0B3] block">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-app-mist block">
                         CORE CAPABILITIES
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {member.capabilities.map((cap) => (
                           <span
                             key={cap}
-                            className="px-2.5 py-1 rounded-lg bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold border border-[#2A3446]/60"
+                            className="px-2.5 py-1 rounded-lg bg-app-surface text-app-ink-2 text-[10px] font-bold border border-app-line/60"
                           >
                             {cap}
                           </span>
@@ -4717,17 +4717,17 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   {/* Footer Workload Bar & Action */}
-                  <div className="pt-4 border-t border-[#2A3446] space-y-3">
+                  <div className="pt-4 border-t border-app-line space-y-3">
                     <div className="space-y-1">
                       <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-[#97A0B3] font-semibold">
+                        <span className="text-app-mist font-semibold">
                           Workload ({member.projectsCount} Projects)
                         </span>
                         <span className={`font-bold ${member.allocatedPct >= 90 ? "text-rose-600" : "text-emerald-600"}`}>
                           {member.allocatedPct}% {member.allocatedPct >= 90 ? "Booked" : "Allocated"}
                         </span>
                       </div>
-                      <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
+                      <div className="w-full bg-app-surface rounded-full h-2 overflow-hidden">
                         <div
                           className={`h-full rounded-full ${
                             member.allocatedPct >= 90 ? "bg-rose-500" : member.allocatedPct >= 70 ? "bg-blue-600" : "bg-emerald-500"
@@ -4750,7 +4750,7 @@ export function AdminTeamManagementPage() {
                             handleOpenAssignModal(member);
                           }
                         }}
-                        className="text-[#7FA0D6] hover:text-blue-800 hover:underline cursor-pointer text-[11px] font-bold"
+                        className="text-app-accent hover:text-blue-800 hover:underline cursor-pointer text-[11px] font-bold"
                       >
                         {member.allocatedPct >= 90 ? "View Schedule" : "Assign Work"}
                       </button>
@@ -4771,60 +4771,60 @@ export function AdminTeamManagementPage() {
             onClick={() => setAssignModalMember(null)}
           >
             <div
-              className="relative w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-[#2A3446] flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
+              className="relative w-full max-w-lg rounded-3xl bg-app-surface p-6 sm:p-7 shadow-2xl border border-app-line flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
             >
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black text-sm">
+                  <div className="size-9 rounded-2xl bg-app-accent/15 text-app-accent flex items-center justify-center font-black text-sm">
                     <Briefcase className="size-4.5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-white tracking-tight">Assign Sprint Task</h3>
-                    <p className="text-[11px] text-[#97A0B3] font-medium">Allocate project work & set turnaround targets</p>
+                    <h3 className="text-base font-black text-hi tracking-tight">Assign Sprint Task</h3>
+                    <p className="text-[11px] text-app-mist font-medium">Allocate project work & set turnaround targets</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setAssignModalMember(null)}
-                  className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                  className="size-8 rounded-full bg-app-surface hover:bg-slate-200 text-app-mist flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <X className="size-4" />
                 </button>
               </div>
 
               {/* Specialist Profile Banner */}
-              <div className="bg-[#0B111C] border border-[#2A3446]/90 rounded-2xl p-3.5 flex items-center justify-between">
+              <div className="bg-app-base border border-app-line/90 rounded-2xl p-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="size-11 rounded-2xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">
                     {assignModalMember.name.split(" ").map((n) => n[0]).join("")}
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-xs font-black text-white truncate">{assignModalMember.name}</h4>
-                    <p className="text-[11px] text-[#97A0B3] font-medium truncate">{assignModalMember.role}</p>
-                    <span className="text-[10px] text-[#7FA0D6] font-bold">{assignModalMember.email}</span>
+                    <h4 className="text-xs font-black text-hi truncate">{assignModalMember.name}</h4>
+                    <p className="text-[11px] text-app-mist font-medium truncate">{assignModalMember.role}</p>
+                    <span className="text-[10px] text-app-accent font-bold">{assignModalMember.email}</span>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="text-[10px] font-bold text-[#97A0B3] block uppercase tracking-wider">CURRENT LOAD</span>
-                  <span className="text-sm font-black text-white">{assignModalMember.allocatedPct}%</span>
-                  <span className="text-[10px] text-[#97A0B3] block font-semibold">{assignModalMember.projectsCount} Projects</span>
+                  <span className="text-[10px] font-bold text-app-mist block uppercase tracking-wider">CURRENT LOAD</span>
+                  <span className="text-sm font-black text-hi">{assignModalMember.allocatedPct}%</span>
+                  <span className="text-[10px] text-app-mist block font-semibold">{assignModalMember.projectsCount} Projects</span>
                 </div>
               </div>
 
               {/* Assignment Form */}
               <form onSubmit={handleConfirmAssignWork} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Task / Deliverable Title</label>
+                  <label className="block text-xs font-bold text-app-ink-2 mb-1">Task / Deliverable Title</label>
                   <input
                     type="text"
                     required
                     value={assignForm.taskTitle}
                     onChange={(e) => setAssignForm({ ...assignForm, taskTitle: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-app-line text-xs font-medium text-hi focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     placeholder="e.g. Q4 Brand Identity Campaign Deliverables"
                   />
                   {/* Preset Pills */}
@@ -4839,7 +4839,7 @@ export function AdminTeamManagementPage() {
                         key={preset}
                         type="button"
                         onClick={() => setAssignForm({ ...assignForm, taskTitle: preset })}
-                        className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9] transition-colors cursor-pointer"
+                        className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-app-surface hover:bg-slate-200 text-app-ink-2 transition-colors cursor-pointer"
                       >
                         + {preset}
                       </button>
@@ -4849,11 +4849,11 @@ export function AdminTeamManagementPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Client Account</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Client Account</label>
                     <NativeSelect
                       value={assignForm.client}
                       onChange={(e) => setAssignForm({ ...assignForm, client: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
+                      className="w-full px-3 py-2 rounded-xl border border-app-line text-xs font-medium text-hi bg-app-surface"
                     >
                       <option value="Ryze">Ryze (Starter)</option>
                       <option value="Shanmugaraj">Shanmugaraj (Growth)</option>
@@ -4863,11 +4863,11 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority Level</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Priority Level</label>
                     <NativeSelect
                       value={assignForm.priority}
                       onChange={(e) => setAssignForm({ ...assignForm, priority: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
+                      className="w-full px-3 py-2 rounded-xl border border-app-line text-xs font-medium text-hi bg-app-surface"
                     >
                       <option value="Urgent">🔥 Urgent (Within 24h)</option>
                       <option value="High">⚡ High (Sprint Priority)</option>
@@ -4879,7 +4879,7 @@ export function AdminTeamManagementPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Workload Allocation</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Workload Allocation</label>
                     <div className="grid grid-cols-4 gap-1">
                       {[10, 15, 25, 35].map((pct) => (
                         <button
@@ -4889,7 +4889,7 @@ export function AdminTeamManagementPage() {
                           className={`py-1.5 text-center text-xs font-bold rounded-lg border transition-all cursor-pointer ${
                             assignForm.allocationIncrease === pct
                               ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
-                              : "bg-[#0B111C] text-[#F1F5F9] border-[#2A3446] hover:bg-[#161F2D]"
+                              : "bg-app-base text-app-ink-2 border-app-line hover:bg-app-surface"
                           }`}
                         >
                           +{pct}%
@@ -4899,34 +4899,34 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Sprint Target Deadline</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Sprint Target Deadline</label>
                     <input
                       type="text"
                       value={assignForm.deadline}
                       onChange={(e) => setAssignForm({ ...assignForm, deadline: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white"
+                      className="w-full px-3 py-2 rounded-xl border border-app-line text-xs font-medium text-hi"
                       placeholder="e.g. Friday, Sprint 08"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Scope & Brief</label>
+                  <label className="block text-xs font-bold text-app-ink-2 mb-1">Deliverable Scope & Brief</label>
                   <textarea
                     rows={2}
                     value={assignForm.brief}
                     onChange={(e) => setAssignForm({ ...assignForm, brief: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs text-hi focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     placeholder="Brief instructions, deliverables checklist, links to Figma/Drive..."
                   />
                 </div>
 
                 {/* Submit Row */}
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2A3446]">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-app-line">
                   <button
                     type="button"
                     onClick={() => setAssignModalMember(null)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
+                    className="px-4 py-2.5 rounded-xl border border-app-line text-xs font-bold text-app-ink-2 hover:bg-app-base cursor-pointer transition-colors"
                   >
                     Cancel
                   </button>
@@ -4951,31 +4951,31 @@ export function AdminTeamManagementPage() {
             onClick={() => setScheduleModalMember(null)}
           >
             <div
-              className="relative w-full max-w-2xl rounded-3xl bg-[#161F2D] p-5 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col space-y-5 max-h-[92vh] overflow-y-auto"
+              className="relative w-full max-w-2xl rounded-3xl bg-app-surface p-5 sm:p-8 shadow-2xl border border-app-line flex flex-col space-y-5 max-h-[92vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
             >
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
+              <div className="flex items-center justify-between border-b border-app-line pb-4">
                 <div className="flex items-center gap-3">
                   <div className="size-12 rounded-2xl bg-rose-500 text-white font-black text-base flex items-center justify-center shadow-md">
                     {scheduleModalMember.name.split(" ").map((n) => n[0]).join("")}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-black text-white tracking-tight">{scheduleModalMember.name}</h3>
+                      <h3 className="text-lg font-black text-hi tracking-tight">{scheduleModalMember.name}</h3>
                       <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                         ● {scheduleModalMember.status}
                       </span>
                     </div>
-                    <p className="text-xs text-[#97A0B3] font-medium">{scheduleModalMember.role} • {scheduleModalMember.email}</p>
+                    <p className="text-xs text-app-mist font-medium">{scheduleModalMember.role} • {scheduleModalMember.email}</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setScheduleModalMember(null)}
-                  className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                  className="size-8 rounded-full bg-app-surface hover:bg-slate-200 text-app-mist flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <X className="size-4" />
                 </button>
@@ -4983,40 +4983,40 @@ export function AdminTeamManagementPage() {
 
               {/* Capacity Overview Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="bg-[#0B111C] p-3.5 rounded-2xl border border-[#2A3446]">
-                  <span className="text-[10px] uppercase font-bold text-[#97A0B3] block tracking-wider">ALLOCATED LOAD</span>
-                  <div className="text-xl font-black text-white mt-0.5">{scheduleModalMember.allocatedPct}%</div>
+                <div className="bg-app-base p-3.5 rounded-2xl border border-app-line">
+                  <span className="text-[10px] uppercase font-bold text-app-mist block tracking-wider">ALLOCATED LOAD</span>
+                  <div className="text-xl font-black text-hi mt-0.5">{scheduleModalMember.allocatedPct}%</div>
                   <span className="text-[10px] text-rose-600 font-bold">Max Capacity</span>
                 </div>
-                <div className="bg-[#0B111C] p-3.5 rounded-2xl border border-[#2A3446]">
-                  <span className="text-[10px] uppercase font-bold text-[#97A0B3] block tracking-wider">ACTIVE ENGAGEMENTS</span>
-                  <div className="text-xl font-black text-white mt-0.5">{scheduleModalMember.projectsCount} Projects</div>
-                  <span className="text-[10px] text-[#7FA0D6] font-bold">2 in Final Review</span>
+                <div className="bg-app-base p-3.5 rounded-2xl border border-app-line">
+                  <span className="text-[10px] uppercase font-bold text-app-mist block tracking-wider">ACTIVE ENGAGEMENTS</span>
+                  <div className="text-xl font-black text-hi mt-0.5">{scheduleModalMember.projectsCount} Projects</div>
+                  <span className="text-[10px] text-app-accent font-bold">2 in Final Review</span>
                 </div>
-                <div className="bg-[#0B111C] p-3.5 rounded-2xl border border-[#2A3446]">
-                  <span className="text-[10px] uppercase font-bold text-[#97A0B3] block tracking-wider">NEXT OPEN SLOT</span>
-                  <div className="text-xl font-black text-white mt-0.5">In 4 Days</div>
+                <div className="bg-app-base p-3.5 rounded-2xl border border-app-line">
+                  <span className="text-[10px] uppercase font-bold text-app-mist block tracking-wider">NEXT OPEN SLOT</span>
+                  <div className="text-xl font-black text-hi mt-0.5">In 4 Days</div>
                   <span className="text-[10px] text-emerald-600 font-bold">Sprint Cycle 09</span>
                 </div>
               </div>
 
               {/* Weekly Calendar Schedule Timeline */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-white">
+                <div className="flex items-center justify-between text-xs font-bold text-hi">
                   <span>Weekly Time Allocation (Mon – Fri)</span>
-                  <span className="text-[#7FA0D6] font-semibold">38.0h Total Booked</span>
+                  <span className="text-app-accent font-semibold">38.0h Total Booked</span>
                 </div>
                 <div className="grid grid-cols-5 gap-2">
                   {[
-                    { day: "Mon", hours: "8.0h", task: "Ryze 3D Renders", bg: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30" },
+                    { day: "Mon", hours: "8.0h", task: "Ryze 3D Renders", bg: "bg-app-accent/15 text-app-accent border-app-accent/30" },
                     { day: "Tue", hours: "7.5h", task: "Aravindan Motion", bg: "bg-purple-50 text-purple-700 border-purple-200" },
                     { day: "Wed", hours: "8.0h", task: "Shanmugaraj Intro", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" },
                     { day: "Thu", hours: "8.0h", task: "Luma Teaser", bg: "bg-amber-50 text-amber-700 border-amber-200" },
                     { day: "Fri", hours: "6.5h", task: "Sprint Quality QA", bg: "bg-sky-50 text-sky-700 border-sky-200" },
                   ].map((item) => (
-                    <div key={item.day} className="p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] flex flex-col justify-between text-center gap-1.5">
-                      <span className="text-[11px] font-black text-[#F1F5F9]">{item.day}</span>
-                      <span className="text-xs font-black text-white">{item.hours}</span>
+                    <div key={item.day} className="p-2.5 rounded-xl border border-app-line bg-app-base flex flex-col justify-between text-center gap-1.5">
+                      <span className="text-[11px] font-black text-app-ink-2">{item.day}</span>
+                      <span className="text-xs font-black text-hi">{item.hours}</span>
                       <span className={`text-[9px] font-bold p-1 rounded-md border truncate ${item.bg}`}>
                         {item.task}
                       </span>
@@ -5027,7 +5027,7 @@ export function AdminTeamManagementPage() {
 
               {/* Active Deliverables Breakdown */}
               <div className="space-y-2.5">
-                <h4 className="text-xs font-bold text-white">Active Deliverables & Status</h4>
+                <h4 className="text-xs font-bold text-hi">Active Deliverables & Status</h4>
                 <div className="space-y-2">
                   {[
                     { client: "Ryze", name: "3D Asset Render Batch #12", due: "Due in 2 days", progress: 90, color: "bg-blue-600" },
@@ -5035,19 +5035,19 @@ export function AdminTeamManagementPage() {
                     { client: "Aravindan", name: "Brand Intro Animation Loop", due: "Due Next Tue", progress: 35, color: "bg-emerald-600" },
                     { client: "Shanmugaraj", name: "Product Showcase 9:16 Cut", due: "Due Next Fri", progress: 15, color: "bg-amber-600" },
                   ].map((proj) => (
-                    <div key={proj.name} className="p-3 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:border-[#2A3446] transition-colors flex items-center justify-between gap-4">
+                    <div key={proj.name} className="p-3 rounded-xl border border-app-line bg-app-surface hover:border-app-line transition-colors flex items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-white truncate">{proj.name}</span>
-                          <span className="text-[10px] font-bold text-[#97A0B3]">({proj.client})</span>
+                          <span className="text-xs font-bold text-hi truncate">{proj.name}</span>
+                          <span className="text-[10px] font-bold text-app-mist">({proj.client})</span>
                         </div>
-                        <div className="w-full bg-[#161F2D] rounded-full h-1.5 mt-2 overflow-hidden">
+                        <div className="w-full bg-app-surface rounded-full h-1.5 mt-2 overflow-hidden">
                           <div className={`h-full rounded-full ${proj.color}`} style={{ width: `${proj.progress}%` }} />
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="text-[10px] font-bold text-[#97A0B3] block">{proj.due}</span>
-                        <span className="text-xs font-black text-white">{proj.progress}%</span>
+                        <span className="text-[10px] font-bold text-app-mist block">{proj.due}</span>
+                        <span className="text-xs font-black text-hi">{proj.progress}%</span>
                       </div>
                     </div>
                   ))}
@@ -5055,7 +5055,7 @@ export function AdminTeamManagementPage() {
               </div>
 
               {/* Modal Footer Controls */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#2A3446]">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-app-line">
                 <button
                   type="button"
                   onClick={() => handleRebalanceWorkload(scheduleModalMember)}
@@ -5070,14 +5070,14 @@ export function AdminTeamManagementPage() {
                       setToast(`Notification dispatched to Pod Lead for ${scheduleModalMember.name}.`);
                       setScheduleModalMember(null);
                     }}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold transition-colors cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-app-line hover:bg-app-base text-app-ink-2 text-xs font-bold transition-colors cursor-pointer"
                   >
                     Notify Lead
                   </button>
                   <button
                     type="button"
                     onClick={() => setScheduleModalMember(null)}
-                    className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-hi text-xs font-bold transition-colors cursor-pointer"
                   >
                     Done
                   </button>
@@ -5096,7 +5096,7 @@ export function AdminTeamManagementPage() {
             onClick={() => setSuccessPopup(null)}
           >
             <div
-              className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-5 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
+              className="relative w-full max-w-md rounded-3xl bg-app-surface p-5 sm:p-8 shadow-2xl border border-app-line flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
@@ -5104,7 +5104,7 @@ export function AdminTeamManagementPage() {
               <button
                 type="button"
                 onClick={() => setSuccessPopup(null)}
-                className="absolute top-4 right-4 size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+                className="absolute top-4 right-4 size-8 rounded-full bg-app-surface hover:bg-slate-200 text-app-mist hover:text-app-ink-2 flex items-center justify-center transition-colors cursor-pointer"
                 aria-label="Close modal"
               >
                 <X className="size-4" />
@@ -5114,8 +5114,8 @@ export function AdminTeamManagementPage() {
                 <CheckCircle2 className="size-8" />
               </div>
 
-              <h3 className="text-xl font-black text-white tracking-tight">{successPopup.title}</h3>
-              <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm">{successPopup.message}</p>
+              <h3 className="text-xl font-black text-hi tracking-tight">{successPopup.title}</h3>
+              <p className="text-xs sm:text-sm text-app-ink-2 mt-2 leading-relaxed max-w-sm">{successPopup.message}</p>
 
               <div className="w-full mt-6">
                 <button
@@ -5140,22 +5140,22 @@ export function AdminTeamManagementPage() {
             onClick={() => setIsAddMemberOpen(false)}
           >
             <div
-              className="relative w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-[#2A3446] flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
+              className="relative w-full max-w-lg rounded-3xl bg-app-surface p-6 sm:p-7 shadow-2xl border border-app-line flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
             >
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black text-sm">
+                  <div className="size-9 rounded-2xl bg-app-accent/15 text-app-accent flex items-center justify-center font-black text-sm">
                     <Users className="size-4.5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-white tracking-tight">
+                    <h3 className="text-base font-black text-hi tracking-tight">
                       Add Team Specialist to {activePod?.name || "Sprint Pod"}
                     </h3>
-                    <p className="text-[11px] text-[#97A0B3] font-medium">
+                    <p className="text-[11px] text-app-mist font-medium">
                       Provision creative talent, set role capabilities & sprint track
                     </p>
                   </div>
@@ -5163,7 +5163,7 @@ export function AdminTeamManagementPage() {
                 <button
                   type="button"
                   onClick={() => setIsAddMemberOpen(false)}
-                  className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                  className="size-8 rounded-full bg-app-surface hover:bg-slate-200 text-app-mist flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <X className="size-4" />
                 </button>
@@ -5173,7 +5173,7 @@ export function AdminTeamManagementPage() {
               <form onSubmit={handleCreateTeamMember} className="space-y-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Full Name *</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Full Name *</label>
                     <input
                       type="text"
                       required
@@ -5190,51 +5190,51 @@ export function AdminTeamManagementPage() {
                         });
                       }}
                       placeholder="e.g. Jordan Miller"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-app-line text-xs text-hi focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Email Address</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Email Address</label>
                     <input
                       type="email"
                       required
                       value={newMemberForm.email}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, email: e.target.value })}
                       placeholder="e.g. jordan.m@creo.agency"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-app-line text-xs text-hi focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Role Title</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Role Title</label>
                     <input
                       type="text"
                       required
                       value={newMemberForm.role}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, role: e.target.value })}
                       placeholder="e.g. Senior Visual Designer"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-app-line text-xs text-hi focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Slack / Agency Handle</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Slack / Agency Handle</label>
                     <input
                       type="text"
                       value={newMemberForm.handle}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, handle: e.target.value })}
                       placeholder="e.g. @jmiller"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-app-line text-xs text-hi focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Role Track Category</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Role Track Category</label>
                     <NativeSelect
                       value={newMemberForm.category}
                       onChange={(e) => {
@@ -5246,7 +5246,7 @@ export function AdminTeamManagementPage() {
                         else if (cat === "lead") defaultRole = "Sprint Pod Lead";
                         setNewMemberForm({ ...newMemberForm, category: cat, role: defaultRole });
                       }}
-                      className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
+                      className="w-full px-3 py-2.5 rounded-xl border border-app-line text-xs font-medium text-hi bg-app-surface"
                     >
                       <option value="designer">🎨 Designer (UI, 3D, Brand)</option>
                       <option value="editor">✂️ Video & Motion Editor</option>
@@ -5257,11 +5257,11 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Assign Sprint Pod</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Assign Sprint Pod</label>
                     <NativeSelect
                       value={newMemberForm.podId}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, podId: e.target.value })}
-                      className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
+                      className="w-full px-3 py-2.5 rounded-xl border border-app-line text-xs font-medium text-hi bg-app-surface"
                     >
                       <option value="pod-a">Pod A • Enterprise Brand & Design</option>
                       <option value="pod-b">Pod B • Performance & Video</option>
@@ -5271,22 +5271,22 @@ export function AdminTeamManagementPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Core Capabilities (comma separated)</label>
+                  <label className="block text-xs font-bold text-app-ink-2 mb-1">Core Capabilities (comma separated)</label>
                   <input
                     type="text"
                     value={newMemberForm.capabilities}
                     onChange={(e) => setNewMemberForm({ ...newMemberForm, capabilities: e.target.value })}
                     placeholder="e.g. Figma Tokens, Cinema 4D, Color Grading, Kinetic Typography"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-app-line text-xs text-hi focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                   />
                 </div>
 
                 {/* Submit Row */}
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2A3446]">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-app-line">
                   <button
                     type="button"
                     onClick={() => setIsAddMemberOpen(false)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
+                    className="px-4 py-2.5 rounded-xl border border-app-line text-xs font-bold text-app-ink-2 hover:bg-app-base cursor-pointer transition-colors"
                   >
                     Cancel
                   </button>
@@ -5352,7 +5352,7 @@ export function AdminLeaveApprovalsPage() {
   const inOfficeCount = Math.max(0, 9 - onLeaveCount);
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-app-base flex flex-col">
       <AdminTopHeader activeTab="Team Details" />
       <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
@@ -5367,19 +5367,19 @@ export function AdminLeaveApprovalsPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-app-line pb-4">
 
           <div className="flex items-center gap-3">
             <Link
               to="/admin/team"
-              className="px-3.5 py-2 rounded-xl bg-[#161F2D] hover:bg-slate-200 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-app-surface hover:bg-slate-200 text-hi text-xs font-bold flex items-center gap-1.5 transition-colors"
             >
-              <UserCog className="w-4 h-4 text-[#97A0B3]" /> Team Roster
+              <UserCog className="w-4 h-4 text-app-mist" /> Team Roster
             </Link>
             <button
               type="button"
               onClick={() => setIsApplyModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-[#7FA0D6] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-app-accent hover:bg-app-accent text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <Plus className="w-4 h-4" /> Apply for Leave
             </button>
@@ -5388,58 +5388,58 @@ export function AdminLeaveApprovalsPage() {
 
         {/* 2 Top KPI Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6">
-          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+          <div className="bg-app-surface rounded-3xl p-6 border border-app-line shadow-[0_4px_20px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-app-mist uppercase tracking-wider">
                 PEOPLE WORKING TODAY
               </span>
-              <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-app-accent/15 text-app-accent flex items-center justify-center font-bold">
                 <Users className="w-4 h-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white tracking-tight">{inOfficeCount}</span>
-              <span className="text-xs font-semibold text-[#97A0B3]">Active in Pods</span>
+              <span className="text-3xl font-black text-hi tracking-tight">{inOfficeCount}</span>
+              <span className="text-xs font-semibold text-app-mist">Active in Pods</span>
             </div>
-            <div className="mt-6 pt-4 border-t border-[#2A3446] flex items-center justify-between text-xs font-semibold text-[#97A0B3]">
+            <div className="mt-6 pt-4 border-t border-app-line flex items-center justify-between text-xs font-semibold text-app-mist">
               <span className="flex items-center gap-1.5 text-emerald-600">
                 <span className="w-2 h-2 rounded-full bg-emerald-600" /> 9 Total Pod Specialists
               </span>
-              <span className="text-white font-bold">{Math.round((inOfficeCount / 9) * 100)}% In-Office</span>
+              <span className="text-hi font-bold">{Math.round((inOfficeCount / 9) * 100)}% In-Office</span>
             </div>
           </div>
 
-          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+          <div className="bg-app-surface rounded-3xl p-6 border border-app-line shadow-[0_4px_20px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-app-mist uppercase tracking-wider">
                 ON LEAVE TODAY
               </span>
-              <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-app-accent/15 text-app-accent flex items-center justify-center font-bold">
                 <Plane className="w-4 h-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white tracking-tight">{onLeaveCount}</span>
-              <span className="text-xs font-semibold text-[#97A0B3]">Specialists Away</span>
+              <span className="text-3xl font-black text-hi tracking-tight">{onLeaveCount}</span>
+              <span className="text-xs font-semibold text-app-mist">Specialists Away</span>
             </div>
-            <div className="mt-6 pt-4 border-t border-[#2A3446] flex items-center justify-between text-xs font-semibold text-[#97A0B3]">
-              <span className="text-[#97A0B3]">Pod A, B, C Active</span>
+            <div className="mt-6 pt-4 border-t border-app-line flex items-center justify-between text-xs font-semibold text-app-mist">
+              <span className="text-app-mist">Pod A, B, C Active</span>
               <span className="text-emerald-500 font-bold">{onLeaveCount === 0 ? "Full Capacity" : `${onLeaveCount} on leave`}</span>
             </div>
           </div>
         </div>
 
         {/* Requests Table */}
-        <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-[#2A3446] flex items-center justify-between bg-[#0B111C]/50">
-            <div className="flex items-center gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs">
+        <div className="rounded-2xl border border-app-line bg-app-surface shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-app-line flex items-center justify-between bg-app-base/50">
+            <div className="flex items-center gap-1.5 bg-app-surface p-1 rounded-xl text-xs">
               {(["all", "pending", "approved", "rejected"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setFilterTab(tab)}
                   className={`px-3 py-1 rounded-lg capitalize font-bold transition-all cursor-pointer ${
-                    filterTab === tab ? "bg-[#161F2D] text-white shadow-xs" : "text-[#97A0B3]"
+                    filterTab === tab ? "bg-app-surface text-hi shadow-xs" : "text-app-mist"
                   }`}
                 >
                   {tab}
@@ -5448,8 +5448,8 @@ export function AdminLeaveApprovalsPage() {
             </div>
           </div>
 
-          <table className="w-full text-left text-xs text-white">
-            <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
+          <table className="w-full text-left text-xs text-hi">
+            <thead className="bg-app-base border-b border-app-line text-[11px] font-bold uppercase tracking-wider text-app-mist">
               <tr>
                 <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Specialist</th>
                 <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Dates</th>
@@ -5461,21 +5461,21 @@ export function AdminLeaveApprovalsPage() {
             <tbody className="divide-y divide-gray-100 font-medium">
               {filteredRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
+                  <td colSpan={5} className="px-5 py-8 text-center text-app-mist text-xs font-medium">
                     No leave requests found
                   </td>
                 </tr>
               ) : (
                 filteredRequests.map((lr) => (
-                <tr key={lr.id} className="hover:bg-[#0B111C]/60">
+                <tr key={lr.id} className="hover:bg-app-base/60">
                   <td className="px-3 sm:px-5 py-3 sm:py-4">
-                    <div className="font-bold text-white">{lr.user_name || (lr as any).name || "Team Member"}</div>
-                    <div className="text-[11px] text-[#97A0B3]">{lr.user_role || (lr as any).department || "Specialist"}</div>
+                    <div className="font-bold text-hi">{lr.user_name || (lr as any).name || "Team Member"}</div>
+                    <div className="text-[11px] text-app-mist">{lr.user_role || (lr as any).department || "Specialist"}</div>
                   </td>
                   <td className="px-5 py-4 font-mono text-[11px]">
                     <div>{lr.start_date || (lr as any).startDate} to {lr.end_date || (lr as any).endDate}</div>
                   </td>
-                  <td className="px-5 py-4 text-[#F1F5F9] max-w-xs">{lr.reason}</td>
+                  <td className="px-5 py-4 text-app-ink-2 max-w-xs">{lr.reason}</td>
                   <td className="px-3 sm:px-5 py-3 sm:py-4">
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
@@ -5519,13 +5519,13 @@ export function AdminLeaveApprovalsPage() {
         {/* Apply Modal */}
         {isApplyModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-            <div className="w-full max-w-md rounded-2xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <h3 className="text-base font-bold text-white">Apply for Time Off</h3>
+            <div className="w-full max-w-md rounded-2xl bg-app-surface p-6 shadow-2xl space-y-4 border border-app-line">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
+                <h3 className="text-base font-bold text-hi">Apply for Time Off</h3>
                 <button
                   type="button"
                   onClick={() => setIsApplyModalOpen(false)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-app-mist hover:text-app-ink-2 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -5541,21 +5541,21 @@ export function AdminLeaveApprovalsPage() {
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Start Date</label>
-                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs" />
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Start Date</label>
+                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-app-line text-xs" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">End Date</label>
-                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs" />
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">End Date</label>
+                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-app-line text-xs" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Reason</label>
-                  <textarea rows={3} required placeholder="State reason for time off..." className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs resize-none" />
+                  <label className="block text-xs font-bold text-app-ink-2 mb-1">Reason</label>
+                  <textarea rows={3} required placeholder="State reason for time off..." className="w-full px-3 py-2 rounded-xl border border-app-line text-xs resize-none" />
                 </div>
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                  <button type="button" onClick={() => setIsApplyModalOpen(false)} className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C]">Cancel</button>
-                  <button type="submit" className="px-4 py-2 rounded-xl bg-[#7FA0D6] text-xs font-bold text-white hover:bg-[#7FA0D6]">Submit</button>
+                <div className="flex justify-end gap-2 pt-2 border-t border-app-line">
+                  <button type="button" onClick={() => setIsApplyModalOpen(false)} className="px-4 py-2 rounded-xl border border-app-line text-xs font-bold text-app-ink-2 hover:bg-app-base">Cancel</button>
+                  <button type="submit" className="px-4 py-2 rounded-xl bg-app-accent text-xs font-bold text-white hover:bg-app-accent">Submit</button>
                 </div>
               </form>
             </div>
@@ -5641,8 +5641,8 @@ export function AdminRevenuePage() {
     else if (status === "Pending") badgeClass = "bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold";
 
     // Dynamic avatar color
-    const colors = ["bg-blue-600", "bg-emerald-600", "bg-purple-600", "bg-amber-600", "bg-[#7FA0D6]"];
-    const avatarBg = `${colors[idx % colors.length]} text-white font-black`;
+    const colors = ["bg-blue-600", "bg-emerald-600", "bg-purple-600", "bg-amber-600", "bg-app-accent"];
+    const avatarBg = `${colors[idx % colors.length]} text-hi font-black`;
     
     return {
       ...t,
@@ -5692,8 +5692,8 @@ export function AdminRevenuePage() {
       method: newInvMethod,
       status: "Pending",
       date: "Due Net 15",
-      badgeClass: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      avatarBg: "bg-[#7FA0D6]/20 text-blue-800",
+      badgeClass: "bg-app-accent/15 text-app-accent border-app-accent/30",
+      avatarBg: "bg-app-accent/20 text-blue-800",
     };
 
     setLocalTransactions((prev) => [newTx, ...prev]);
@@ -5738,7 +5738,7 @@ export function AdminRevenuePage() {
   });
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-app-base flex flex-col">
       <AdminTopHeader title="Revenue Engine" activeTab="Revenue" />
 
       <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6 sm:space-y-8">
@@ -5767,14 +5767,14 @@ export function AdminRevenuePage() {
 
           <div className="flex flex-wrap items-center gap-3">
             {/* View Mode Toggle: Full Width vs Split View */}
-            <div className="flex items-center p-1 bg-[#161F2D] border border-[#2A3446] rounded-xl text-xs font-bold">
+            <div className="flex items-center p-1 bg-app-surface border border-app-line rounded-xl text-xs font-bold">
               <button
                 type="button"
                 onClick={() => setRevenueLayout("enlarged")}
                 className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
                   revenueLayout === "enlarged"
-                    ? "bg-[#7FA0D6] text-white shadow-xs font-black"
-                    : "text-[#97A0B3] hover:text-white"
+                    ? "bg-app-accent text-white shadow-xs font-black"
+                    : "text-app-mist hover:text-white"
                 }`}
                 title="Full-width view: spacious layout showing all row details with zero horizontal scrolling"
               >
@@ -5785,8 +5785,8 @@ export function AdminRevenuePage() {
                 onClick={() => setRevenueLayout("split")}
                 className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
                   revenueLayout === "split"
-                    ? "bg-[#7FA0D6] text-white shadow-xs font-black"
-                    : "text-[#97A0B3] hover:text-white"
+                    ? "bg-app-accent text-white shadow-xs font-black"
+                    : "text-app-mist hover:text-white"
                 }`}
                 title="Side-by-side: Compact split view"
               >
@@ -5797,15 +5797,15 @@ export function AdminRevenuePage() {
             <button
               type="button"
               onClick={handleExportCSV}
-              className="px-4 py-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:bg-[#0B111C] text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-app-surface border border-app-line text-app-ink-2 hover:bg-app-base text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer"
             >
-              <Download className="w-4 h-4 text-[#97A0B3]" /> Export Report
+              <Download className="w-4 h-4 text-app-mist" /> Export Report
             </button>
 
             <button
               type="button"
               onClick={() => setIsCreateInvoiceOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+              className="px-4 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
             >
               <Plus className="w-4 h-4" /> Create Invoice
             </button>
@@ -5817,40 +5817,40 @@ export function AdminRevenuePage() {
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6">
           {/* Metric 1: Total Revenue (MRR) */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
+          <div className="bg-app-surface rounded-3xl p-6 lg:p-7 border border-app-line shadow-[0_4px_25px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] flex items-center justify-between">
             <div className="space-y-2">
-              <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[11px] font-extrabold text-app-mist uppercase tracking-wider">
                 Total Revenue (MRR)
               </span>
               <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-black text-white tracking-tight">₹{totalMrr.toLocaleString('en-IN')}</span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center gap-1">
+                <span className="text-4xl font-black text-hi tracking-tight">₹{totalMrr.toLocaleString('en-IN')}</span>
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-app-accent/15 text-app-accent border border-app-accent/30 flex items-center gap-1">
                   Active Retainers
                 </span>
               </div>
-              <div className="text-xs text-[#97A0B3] font-medium pt-1">
-                Projected ARR: <strong className="text-white font-bold">₹{projectedArr.toLocaleString('en-IN')}</strong>
+              <div className="text-xs text-app-mist font-medium pt-1">
+                Projected ARR: <strong className="text-hi font-bold">₹{projectedArr.toLocaleString('en-IN')}</strong>
               </div>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shrink-0 border border-[#7FA0D6]/30 font-black text-2xl">
+            <div className="w-14 h-14 rounded-2xl bg-app-accent/15 text-app-accent flex items-center justify-center shrink-0 border border-app-accent/30 font-black text-2xl">
               ₹
             </div>
           </div>
 
           {/* Metric 2: Collected this Month */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
+          <div className="bg-app-surface rounded-3xl p-6 lg:p-7 border border-app-line shadow-[0_4px_25px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] flex items-center justify-between">
             <div className="space-y-2">
-              <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[11px] font-extrabold text-app-mist uppercase tracking-wider">
                 Collected this Month
               </span>
               <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-black text-white tracking-tight">₹{totalCollected.toLocaleString('en-IN')}</span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                <span className="text-4xl font-black text-hi tracking-tight">₹{totalCollected.toLocaleString('en-IN')}</span>
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-app-accent/15 text-app-accent border border-app-accent/30">
                   {transactions.length > 0 ? `${Math.round((transactions.filter(t => t.status === "Paid").length / transactions.length) * 100)}% Rate` : "0% Rate"}
                 </span>
               </div>
-              <div className="text-xs text-[#97A0B3] font-medium pt-1">
-                Settlement Ratio: <strong className="text-white font-bold">{transactions.filter(t => t.status === "Paid").length} of {transactions.length} Invoices</strong>
+              <div className="text-xs text-app-mist font-medium pt-1">
+                Settlement Ratio: <strong className="text-hi font-bold">{transactions.filter(t => t.status === "Paid").length} of {transactions.length} Invoices</strong>
               </div>
             </div>
             <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
@@ -5865,31 +5865,31 @@ export function AdminRevenuePage() {
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className={revenueLayout === "split" ? "grid grid-cols-1 xl:grid-cols-2 gap-3.5 sm:gap-6 items-stretch" : "space-y-6"}>
           {/* Revenue Growth & Trajectory Card */}
-          <div className={`bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-xl flex flex-col justify-between ${
+          <div className={`bg-app-surface rounded-3xl border border-app-line shadow-xl flex flex-col justify-between ${
             revenueLayout === "split" ? "p-6 lg:p-7 space-y-6" : "p-6 lg:p-8 space-y-6"
           }`}>
             <div>
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-white tracking-tight">Revenue Growth & Trajectory</h3>
-                  <p className="text-xs text-[#97A0B3]">Live cash flow across retainers & client billing</p>
+                  <h3 className="text-lg font-bold text-hi tracking-tight">Revenue Growth & Trajectory</h3>
+                  <p className="text-xs text-app-mist">Live cash flow across retainers & client billing</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 text-xs font-bold">
-                  <span className="flex items-center gap-1.5 text-[#7FA0D6]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]" /> Actual Inflow
+                  <span className="flex items-center gap-1.5 text-app-accent">
+                    <span className="w-2.5 h-2.5 rounded-full bg-app-accent" /> Actual Inflow
                   </span>
-                  <span className="flex items-center gap-1.5 text-[#97A0B3]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#2A3446]" /> Target Baseline
+                  <span className="flex items-center gap-1.5 text-app-mist">
+                    <span className="w-2.5 h-2.5 rounded-full bg-app-line" /> Target Baseline
                   </span>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-[#7FA0D6] text-white shadow-md ml-1" title="Monthly Recurring Revenue">
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-app-accent text-white shadow-md ml-1" title="Monthly Recurring Revenue">
                     ₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"} Current MRR
                   </span>
                 </div>
               </div>
 
               {/* Recharts Bar Chart (Responsive Height & Width) */}
-              <div className={`w-full bg-[#0B111C]/60 rounded-2xl p-4 border border-[#2A3446]/60 ${
+              <div className={`w-full bg-app-base/60 rounded-2xl p-4 border border-app-line/60 ${
                 revenueLayout === "enlarged" ? "h-80 sm:h-88" : "h-72"
               }`}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -5900,26 +5900,26 @@ export function AdminRevenuePage() {
                   >
                     <defs>
                       <linearGradient id="revenueBarGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#BCCCE6" stopOpacity={1} />
-                        <stop offset="45%" stopColor="#7FA0D6" stopOpacity={0.85} />
-                        <stop offset="100%" stopColor="#2A3446" stopOpacity={0.35} />
+                        <stop offset="0%" stopColor="var(--app-accent-soft)" stopOpacity={1} />
+                        <stop offset="45%" stopColor="var(--app-accent)" stopOpacity={0.85} />
+                        <stop offset="100%" stopColor="var(--app-line)" stopOpacity={0.35} />
                       </linearGradient>
                       <linearGradient id="revenueBarGradPeak" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#FFFFFF" stopOpacity={1} />
-                        <stop offset="35%" stopColor="#BCCCE6" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#7FA0D6" stopOpacity={0.85} />
+                        <stop offset="35%" stopColor="var(--app-accent-soft)" stopOpacity={1} />
+                        <stop offset="100%" stopColor="var(--app-accent)" stopOpacity={0.85} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A3446" opacity={0.35} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--app-line)" opacity={0.35} />
                     <XAxis
                       dataKey="name"
-                      tick={{ fontSize: 11, fill: "#97A0B3", fontWeight: 600 }}
+                      tick={{ fontSize: 11, fill: "var(--app-mist)", fontWeight: 600 }}
                       axisLine={false}
                       tickLine={false}
                       dy={3}
                     />
                     <YAxis
-                      tick={{ fontSize: 10, fill: "#97A0B3" }}
+                      tick={{ fontSize: 10, fill: "var(--app-mist)" }}
                       axisLine={false}
                       tickLine={false}
                       width={38}
@@ -5936,9 +5936,9 @@ export function AdminRevenuePage() {
                     />
                     <Tooltip
                       formatter={(val: any) => [`₹${(Number(val) / 100).toLocaleString('en-IN')}`, "Revenue"]}
-                      contentStyle={{ backgroundColor: "#0B111C", borderRadius: "12px", border: "1px solid #2A3446", color: "#F1F5F9", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}
-                      itemStyle={{ color: "#7FA0D6", fontWeight: "bold" }}
-                      labelStyle={{ color: "#97A0B3", fontSize: "11px", fontWeight: "bold" }}
+                      contentStyle={{ backgroundColor: "var(--app-base)", borderRadius: "12px", border: "1px solid var(--app-line)", color: "var(--app-ink-2)", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}
+                      itemStyle={{ color: "var(--app-accent)", fontWeight: "bold" }}
+                      labelStyle={{ color: "var(--app-mist)", fontSize: "11px", fontWeight: "bold" }}
                       cursor={false}
                     />
                     <Bar dataKey="revenue" radius={[8, 8, 3, 3]} maxBarSize={revenueLayout === "enlarged" ? 44 : 32}>
@@ -5959,59 +5959,59 @@ export function AdminRevenuePage() {
             </div>
 
             {/* Bottom Metrics Bar */}
-            <div className="pt-4 border-t border-[#2A3446] grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-center">
-              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Invoiced</span>
-                <div className="text-sm font-black text-white">₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"}</div>
+            <div className="pt-4 border-t border-app-line grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-center">
+              <div className="bg-app-base p-2.5 sm:p-3 rounded-2xl border border-app-line">
+                <span className="text-[10px] font-bold text-app-mist uppercase">Invoiced</span>
+                <div className="text-sm font-black text-hi">₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Direct UPI / Wire</span>
-                <div className="text-sm font-black text-white">₹{totalCollected > 0 ? totalCollected.toLocaleString('en-IN') : "0"}</div>
+              <div className="bg-app-base p-2.5 sm:p-3 rounded-2xl border border-app-line">
+                <span className="text-[10px] font-bold text-app-mist uppercase">Direct UPI / Wire</span>
+                <div className="text-sm font-black text-hi">₹{totalCollected > 0 ? totalCollected.toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Cards / Razorpay</span>
-                <div className="text-sm font-black text-white">₹{totalCollected > 0 ? (totalCollected * 0).toLocaleString('en-IN') : "0"}</div>
+              <div className="bg-app-base p-2.5 sm:p-3 rounded-2xl border border-app-line">
+                <span className="text-[10px] font-bold text-app-mist uppercase">Cards / Razorpay</span>
+                <div className="text-sm font-black text-hi">₹{totalCollected > 0 ? (totalCollected * 0).toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Disputed / Refunded</span>
+              <div className="bg-app-base p-2.5 sm:p-3 rounded-2xl border border-app-line">
+                <span className="text-[10px] font-bold text-app-mist uppercase">Disputed / Refunded</span>
                 <div className="text-sm font-black text-emerald-400">₹0</div>
               </div>
             </div>
           </div>
 
           {/* Recent Transactions Card (Transaction History) */}
-          <div className={`bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-xl flex flex-col justify-between ${
+          <div className={`bg-app-surface rounded-3xl border border-app-line shadow-xl flex flex-col justify-between ${
             revenueLayout === "split" ? "p-6 lg:p-7 space-y-4" : "p-6 lg:p-8 space-y-6"
           }`}>
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-xl font-black text-white tracking-tight">Recent Transactions</h3>
-                  <p className="text-xs text-[#97A0B3]">Client billing roster & payment settlements</p>
+                  <h3 className="text-xl font-black text-hi tracking-tight">Recent Transactions</h3>
+                  <p className="text-xs text-app-mist">Client billing roster & payment settlements</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2.5">
                   {/* Search */}
                   <div className="relative min-w-[200px]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-app-mist" />
                     <input
                       type="text"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Search client or invoice..."
-                      className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs text-white focus:outline-none focus:border-blue-500"
+                      className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-app-line bg-app-base text-xs text-hi focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   {/* Status Filter Pills */}
-                  <div className="flex items-center gap-1 bg-[#0B111C] p-1 rounded-xl text-xs font-bold border border-[#2A3446]">
+                  <div className="flex items-center gap-1 bg-app-base p-1 rounded-xl text-xs font-bold border border-app-line">
                     {(["all", "paid", "pending", "overdue"] as const).map((st) => (
                       <button
                         key={st}
                         type="button"
                         onClick={() => setFilter(st)}
                         className={`px-2.5 py-1 rounded-lg capitalize transition-all cursor-pointer text-[11px] ${
-                          filter === st ? "bg-[#161F2D] text-white shadow-xs font-black" : "text-[#97A0B3] hover:text-white"
+                          filter === st ? "bg-app-surface text-hi shadow-xs font-black" : "text-app-mist hover:text-hi"
                         }`}
                       >
                         {st}
@@ -6023,7 +6023,7 @@ export function AdminRevenuePage() {
                   <button
                     type="button"
                     onClick={handleExportCSV}
-                    className="px-3 py-1.5 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-[#7FA0D6]/30 transition-colors"
+                    className="px-3 py-1.5 rounded-xl bg-app-accent/15 hover:bg-app-accent/20 text-app-accent text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-app-accent/30 transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" /> CSV
                   </button>
@@ -6031,11 +6031,11 @@ export function AdminRevenuePage() {
               </div>
 
               {/* Transactions Table: Complete row visible with zero horizontal scrolling */}
-              <div className={`rounded-2xl border border-[#2A3446] bg-[#0B111C]/40 ${
+              <div className={`rounded-2xl border border-app-line bg-app-base/40 ${
                 revenueLayout === "split" ? "max-h-[380px] overflow-y-auto overflow-x-hidden" : "overflow-hidden"
               }`}>
-                <table className="w-full text-left text-xs text-white table-auto">
-                  <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] sticky top-0 z-10">
+                <table className="w-full text-left text-xs text-hi table-auto">
+                  <thead className="bg-app-base border-b border-app-line text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-app-mist sticky top-0 z-10">
                     {revenueLayout === "split" ? (
                       <tr>
                         <th className="px-2.5 py-3 w-[36%]">CLIENT & SCOPE</th>
@@ -6056,16 +6056,16 @@ export function AdminRevenuePage() {
                       </tr>
                     )}
                   </thead>
-                  <tbody className="divide-y divide-[#2A3446]/40 font-medium bg-[#161F2D]/50">
+                  <tbody className="divide-y divide-app-line/40 font-medium bg-app-surface/50">
                     {filteredTx.length === 0 ? (
                       <tr>
-                        <td colSpan={revenueLayout === "split" ? 5 : 7} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
+                        <td colSpan={revenueLayout === "split" ? 5 : 7} className="px-5 py-8 text-center text-app-mist text-xs font-medium">
                           No transactions recorded yet
                         </td>
                       </tr>
                     ) : (
                       filteredTx.map((tx) => (
-                        <tr key={tx.id} className="hover:bg-[#0B111C]/70 transition-colors">
+                        <tr key={tx.id} className="hover:bg-app-base/70 transition-colors">
                           {revenueLayout === "split" ? (
                             <>
                               {/* Col 1: Client & Scope */}
@@ -6075,27 +6075,27 @@ export function AdminRevenuePage() {
                                     {tx.clientInitials}
                                   </div>
                                   <div className="min-w-0 truncate">
-                                    <div className="font-bold text-xs text-white truncate" title={tx.client}>{tx.client}</div>
-                                    <div className="text-[10px] text-[#97A0B3] truncate" title={tx.scope}>{tx.scope}</div>
+                                    <div className="font-bold text-xs text-hi truncate" title={tx.client}>{tx.client}</div>
+                                    <div className="text-[10px] text-app-mist truncate" title={tx.scope}>{tx.scope}</div>
                                   </div>
                                 </div>
                               </td>
 
                               {/* Col 2: Invoice # & Method */}
                               <td className="px-2 py-3">
-                                <div className="font-mono font-bold text-[#F1F5F9] text-[11px]">{tx.id}</div>
-                                <div className="text-[10px] text-[#97A0B3] truncate">{tx.method}</div>
+                                <div className="font-mono font-bold text-app-ink-2 text-[11px]">{tx.id}</div>
+                                <div className="text-[10px] text-app-mist truncate">{tx.method}</div>
                               </td>
 
                               {/* Col 3: Amount */}
-                              <td className="px-2 py-3 font-black text-xs text-white text-right whitespace-nowrap">
+                              <td className="px-2 py-3 font-black text-xs text-hi text-right whitespace-nowrap">
                                 ₹{tx.amount.toLocaleString('en-IN')}
                               </td>
 
                               {/* Col 4: Status */}
                               <td className="px-2 py-3 text-center">
                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border inline-flex items-center gap-1 ${tx.badgeClass}`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]"}`} />
+                                  <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-app-accent"}`} />
                                   {tx.status}
                                 </span>
                               </td>
@@ -6106,7 +6106,7 @@ export function AdminRevenuePage() {
                                   <button
                                     type="button"
                                     onClick={() => setSelectedReceipt(tx)}
-                                    className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer text-xs"
+                                    className="text-app-accent font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer text-xs"
                                   >
                                     Receipt <ArrowUpRight className="w-3.5 h-3.5" />
                                   </button>
@@ -6114,7 +6114,7 @@ export function AdminRevenuePage() {
                                   <button
                                     type="button"
                                     onClick={() => handleSendReminder(tx)}
-                                    className="px-2 py-1 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer"
+                                    className="px-2 py-1 rounded-lg bg-app-accent/15 hover:bg-app-accent/20 text-app-accent font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer"
                                   >
                                     <Play className="w-2.5 h-2.5 fill-current" /> Remind
                                   </button>
@@ -6130,33 +6130,33 @@ export function AdminRevenuePage() {
                                     {tx.clientInitials}
                                   </div>
                                   <div>
-                                    <div className="font-bold text-xs text-white">{tx.client}</div>
-                                    <div className="text-[11px] text-[#97A0B3]">{tx.scope}</div>
+                                    <div className="font-bold text-xs text-hi">{tx.client}</div>
+                                    <div className="text-[11px] text-app-mist">{tx.scope}</div>
                                   </div>
                                 </div>
                               </td>
 
-                              <td className="px-4 py-3.5 font-mono font-bold text-[#F1F5F9] text-xs">
+                              <td className="px-4 py-3.5 font-mono font-bold text-app-ink-2 text-xs">
                                 {tx.id}
                               </td>
 
-                              <td className="px-4 py-3.5 text-xs text-[#97A0B3] font-medium">
+                              <td className="px-4 py-3.5 text-xs text-app-mist font-medium">
                                 {tx.date}
                               </td>
 
-                              <td className="px-4 py-3.5 font-black text-sm text-white whitespace-nowrap">
+                              <td className="px-4 py-3.5 font-black text-sm text-hi whitespace-nowrap">
                                 ₹{tx.amount.toLocaleString('en-IN')}
                               </td>
 
-                              <td className="px-4 py-3.5 text-[#F1F5F9] font-medium text-xs">
-                                <span className="px-2.5 py-1 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[#F1F5F9] inline-block">
+                              <td className="px-4 py-3.5 text-app-ink-2 font-medium text-xs">
+                                <span className="px-2.5 py-1 rounded-lg bg-app-base border border-app-line text-app-ink-2 inline-block">
                                   {tx.method}
                                 </span>
                               </td>
 
                               <td className="px-4 py-3.5 text-center">
                                 <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border inline-flex items-center gap-1.5 ${tx.badgeClass}`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]"}`} />
+                                  <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-app-accent"}`} />
                                   {tx.status}
                                 </span>
                               </td>
@@ -6166,7 +6166,7 @@ export function AdminRevenuePage() {
                                   <button
                                     type="button"
                                     onClick={() => setSelectedReceipt(tx)}
-                                    className="px-3 py-1.5 rounded-xl border border-[#7FA0D6]/30 bg-[#7FA0D6]/10 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold inline-flex items-center gap-1 cursor-pointer text-xs transition-colors"
+                                    className="px-3 py-1.5 rounded-xl border border-app-accent/30 bg-app-accent/10 hover:bg-app-accent/20 text-app-accent font-bold inline-flex items-center gap-1 cursor-pointer text-xs transition-colors"
                                   >
                                     View Receipt <ArrowUpRight className="w-3.5 h-3.5" />
                                   </button>
@@ -6191,7 +6191,7 @@ export function AdminRevenuePage() {
             </div>
 
             {/* Table Footer */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-[#2A3446] text-xs text-[#97A0B3] font-medium">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-app-line text-xs text-app-mist font-medium">
               <span>Showing {filteredTx.length} of {transactions.length} transactions</span>
             </div>
           </div>
@@ -6205,57 +6205,57 @@ export function AdminRevenuePage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {isCreateInvoiceOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 className="text-base font-bold text-white">Create New Invoice</h3>
-              <button type="button" onClick={() => setIsCreateInvoiceOpen(false)} className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9]">
+          <div className="w-full max-w-md rounded-3xl bg-app-surface p-6 shadow-2xl space-y-4 border border-app-line">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
+              <h3 className="text-base font-bold text-hi">Create New Invoice</h3>
+              <button type="button" onClick={() => setIsCreateInvoiceOpen(false)} className="p-1 rounded-lg text-app-mist hover:text-app-ink-2">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateInvoiceSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Client Brand Name</label>
+                <label className="block font-bold text-app-ink-2 mb-1">Client Brand Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Acme Corporation"
                   value={newInvClient}
                   onChange={(e) => setNewInvClient(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none"
+                  className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Deliverable Scope Description</label>
+                <label className="block font-bold text-app-ink-2 mb-1">Deliverable Scope Description</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Enterprise Retainer • Dec 2024"
                   value={newInvScope}
                   onChange={(e) => setNewInvScope(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none"
+                  className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Amount (₹ INR)</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Amount (₹ INR)</label>
                   <input
                     type="number"
                     required
                     placeholder="50000"
                     value={newInvAmount}
                     onChange={(e) => setNewInvAmount(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Payment Method</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Payment Method</label>
                   <NativeSelect
                     value={newInvMethod}
                     onChange={(e) => setNewInvMethod(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                    className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs font-medium"
                   >
                     <option value="Razorpay UPI">Razorpay UPI</option>
                     <option value="Bank Wire">Bank Wire</option>
@@ -6265,17 +6265,17 @@ export function AdminRevenuePage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-[#2A3446]">
+              <div className="flex justify-end gap-2 pt-3 border-t border-app-line">
                 <button
                   type="button"
                   onClick={() => setIsCreateInvoiceOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C]"
+                  className="px-4 py-2 rounded-xl border border-app-line font-bold text-app-ink-2 hover:bg-app-base"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#7FA0D6] text-white font-bold hover:bg-blue-700 shadow-sm"
+                  className="px-4 py-2 rounded-xl bg-app-accent text-white font-bold hover:bg-blue-700 shadow-sm"
                 >
                   Generate Invoice
                 </button>
@@ -6290,13 +6290,13 @@ export function AdminRevenuePage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {selectedReceipt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 lg:p-8 shadow-2xl space-y-6 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
+          <div className="w-full max-w-lg rounded-3xl bg-app-surface p-6 lg:p-8 shadow-2xl space-y-6 border border-app-line">
+            <div className="flex items-center justify-between border-b border-app-line pb-4">
               <div className="flex items-center gap-2">
-                <span className="font-black text-xl text-white tracking-tight">creo.</span>
-                <span className="text-xs font-bold text-[#97A0B3]">Payment Receipt</span>
+                <span className="font-black text-xl text-hi tracking-tight">creo.</span>
+                <span className="text-xs font-bold text-app-mist">Payment Receipt</span>
               </div>
-              <button type="button" onClick={() => setSelectedReceipt(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+              <button type="button" onClick={() => setSelectedReceipt(null)} className="p-1 text-app-mist hover:text-app-ink-2">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -6310,36 +6310,36 @@ export function AdminRevenuePage() {
                 <CheckCircle2 className="w-7 h-7 text-emerald-600" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-[#F1F5F9] font-medium">
+              <div className="grid grid-cols-2 gap-4 text-app-ink-2 font-medium">
                 <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Client</span>
-                  <strong className="text-white text-sm">{selectedReceipt.client}</strong>
+                  <span className="text-app-mist block text-[10px] uppercase font-bold">Client</span>
+                  <strong className="text-hi text-sm">{selectedReceipt.client}</strong>
                 </div>
                 <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Invoice Number</span>
-                  <strong className="text-white text-sm font-mono">{selectedReceipt.id}</strong>
+                  <span className="text-app-mist block text-[10px] uppercase font-bold">Invoice Number</span>
+                  <strong className="text-hi text-sm font-mono">{selectedReceipt.id}</strong>
                 </div>
                 <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Payment Method</span>
-                  <span className="text-white font-bold">{selectedReceipt.method}</span>
+                  <span className="text-app-mist block text-[10px] uppercase font-bold">Payment Method</span>
+                  <span className="text-hi font-bold">{selectedReceipt.method}</span>
                 </div>
                 <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Settlement Date</span>
-                  <span className="text-white font-bold">{selectedReceipt.date}</span>
+                  <span className="text-app-mist block text-[10px] uppercase font-bold">Settlement Date</span>
+                  <span className="text-hi font-bold">{selectedReceipt.date}</span>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-[#2A3446] space-y-2">
-                <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Scope Breakdown</span>
-                <div className="p-3 bg-[#0B111C] rounded-xl flex items-center justify-between font-bold text-white">
+              <div className="pt-3 border-t border-app-line space-y-2">
+                <span className="text-app-mist block text-[10px] uppercase font-bold">Scope Breakdown</span>
+                <div className="p-3 bg-app-base rounded-xl flex items-center justify-between font-bold text-hi">
                   <span>{selectedReceipt.scope}</span>
                   <span>₹{selectedReceipt.amount.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-between items-center text-sm font-black text-white border-t border-[#2A3446]">
+              <div className="pt-2 flex justify-between items-center text-sm font-black text-hi border-t border-app-line">
                 <span>Total Settled</span>
-                <span className="text-base text-[#7FA0D6]">₹{selectedReceipt.amount.toLocaleString('en-IN')} INR</span>
+                <span className="text-base text-app-accent">₹{selectedReceipt.amount.toLocaleString('en-IN')} INR</span>
               </div>
             </div>
 
@@ -6347,7 +6347,7 @@ export function AdminRevenuePage() {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="flex-1 py-2.5 rounded-xl border border-[#2A3446] font-bold text-xs text-[#F1F5F9] hover:bg-[#0B111C] flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl border border-app-line font-bold text-xs text-app-ink-2 hover:bg-app-base flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Printer className="w-4 h-4" /> Print Receipt
               </button>
@@ -6357,7 +6357,7 @@ export function AdminRevenuePage() {
                   window.print();
                   setSelectedReceipt(null);
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-[#7FA0D6] text-white font-bold text-xs hover:bg-blue-700 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-app-accent text-white font-bold text-xs hover:bg-blue-700 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Download className="w-4 h-4" /> Download PDF
               </button>
@@ -6876,7 +6876,7 @@ export function AdminPlansPage() {
   const totalRetainerRevenue = plans.reduce((acc, p) => acc + p.price_monthly * p.subscribers, 0);
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-app-base flex flex-col">
       <AdminTopHeader activeTab="Revenue" />
       <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
@@ -6895,38 +6895,38 @@ export function AdminPlansPage() {
             TOP 4 COMMERCIAL & PLAN KPI CARDS
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-app-surface rounded-3xl border-2 border-app-surface hover:border-app-accent-soft transition-all shadow-[0_2px_15px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">ACTIVE RETAINERS</span>
-              <div className="w-7 h-7 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+              <span className="text-[10px] font-black text-app-mist uppercase tracking-wider">ACTIVE RETAINERS</span>
+              <div className="w-7 h-7 rounded-xl bg-app-accent/15 text-app-accent flex items-center justify-center font-bold">
                 <Briefcase className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white">
+            <div className="text-3xl font-black text-hi">
               {plans.reduce((acc, p) => acc + p.subscribers, 0)} Active
             </div>
-            <p className="text-xs text-[#7FA0D6] font-bold">MRR: ₹{totalRetainerRevenue.toLocaleString("en-IN")}</p>
+            <p className="text-xs text-app-accent font-bold">MRR: ₹{totalRetainerRevenue.toLocaleString("en-IN")}</p>
           </div>
 
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-app-surface rounded-3xl border-2 border-app-surface hover:border-app-accent-soft transition-all shadow-[0_2px_15px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">PENDING NEGOTIATIONS</span>
+              <span className="text-[10px] font-black text-app-mist uppercase tracking-wider">PENDING NEGOTIATIONS</span>
               <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                 <Zap className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white">{pendingCount} Actionable</div>
+            <div className="text-3xl font-black text-hi">{pendingCount} Actionable</div>
             <p className="text-xs text-amber-600 font-bold">Requires executive review</p>
           </div>
 
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-app-surface rounded-3xl border-2 border-app-surface hover:border-app-accent-soft transition-all shadow-[0_2px_15px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">AVG RETAINER VALUE</span>
+              <span className="text-[10px] font-black text-app-mist uppercase tracking-wider">AVG RETAINER VALUE</span>
               <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-sm">
                 ₹
               </div>
             </div>
-            <div className="text-3xl font-black text-white">
+            <div className="text-3xl font-black text-hi">
               ₹{(plans.reduce((acc, p) => acc + p.subscribers, 0) > 0 
                 ? Math.round(totalRetainerRevenue / plans.reduce((acc, p) => acc + p.subscribers, 0))
                 : 72500).toLocaleString("en-IN")}/mo
@@ -6934,14 +6934,14 @@ export function AdminPlansPage() {
             <p className="text-xs text-emerald-600 font-bold">High LTV retention</p>
           </div>
 
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-app-surface rounded-3xl border-2 border-app-surface hover:border-app-accent-soft transition-all shadow-[0_2px_15px_rgb(var(--shadow-rgb)/calc(0.03*var(--shadow-k)))] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">WIN / CLOSING RATE</span>
+              <span className="text-[10px] font-black text-app-mist uppercase tracking-wider">WIN / CLOSING RATE</span>
               <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
                 <TrendingUp className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white">68%</div>
+            <div className="text-3xl font-black text-hi">68%</div>
             <p className="text-xs text-purple-600 font-bold">↗ Top quadrant velocity</p>
           </div>
         </div>
@@ -6949,11 +6949,11 @@ export function AdminPlansPage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             RETAINER TIERS & QUOTA ALLOCATION CARDS
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
+        <div className="bg-app-surface rounded-3xl p-6 lg:p-8 border border-app-line shadow-[0_4px_30px_rgb(var(--shadow-rgb)/calc(0.04*var(--shadow-k)))] space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-lg font-bold text-white tracking-tight">Agency Retainer Plans & Quotas</h3>
-              <p className="text-xs text-[#97A0B3] mt-0.5">
+              <h3 className="text-lg font-bold text-hi tracking-tight">Agency Retainer Plans & Quotas</h3>
+              <p className="text-xs text-app-mist mt-0.5">
                 Standard monthly subscription tiers, output deliverables quota, and SLA turnarounds.
               </p>
             </div>
@@ -6963,19 +6963,19 @@ export function AdminPlansPage() {
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className="bg-[#0B111C]/70 hover:bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] hover:border-[#2A3446] shadow-2xs hover:shadow-md transition-all space-y-5 flex flex-col justify-between"
+                className="bg-app-base/70 hover:bg-app-surface rounded-3xl p-6 border border-app-line hover:border-app-line shadow-2xs hover:shadow-md transition-all space-y-5 flex flex-col justify-between"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-base text-white">{plan.display_name}</h4>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold">
+                    <h4 className="font-bold text-base text-hi">{plan.display_name}</h4>
+                    <span className="px-2.5 py-0.5 rounded-full bg-app-accent/15 text-app-accent text-[10px] font-bold">
                       {plan.subscribers} Active Clients
                     </span>
                   </div>
-                  <div className="text-3xl font-black text-white">
-                    ₹{plan.price_monthly.toLocaleString("en-IN")} <span className="text-xs font-normal text-[#97A0B3]">/mo</span>
+                  <div className="text-3xl font-black text-hi">
+                    ₹{plan.price_monthly.toLocaleString("en-IN")} <span className="text-xs font-normal text-app-mist">/mo</span>
                   </div>
-                  <ul className="space-y-2 text-xs text-[#F1F5F9] pt-2 border-t border-[#2A3446]/60">
+                  <ul className="space-y-2 text-xs text-app-ink-2 pt-2 border-t border-app-line/60">
                     {plan.features.map((f, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <Check className="size-3.5 text-emerald-600 shrink-0" />
@@ -6992,7 +6992,7 @@ export function AdminPlansPage() {
                     setEditPriceInput(String(plan.price_monthly));
                     setEditFeaturesInput(plan.features.join("\n"));
                   }}
-                  className="w-full py-2.5 rounded-xl bg-[#161F2D] hover:bg-[#161F2D] text-white text-xs font-bold border border-[#2A3446] transition-colors cursor-pointer shadow-2xs"
+                  className="w-full py-2.5 rounded-xl bg-app-surface hover:bg-app-surface text-hi text-xs font-bold border border-app-line transition-colors cursor-pointer shadow-2xs"
                 >
                   Edit Tier Terms
                 </button>
@@ -7004,11 +7004,11 @@ export function AdminPlansPage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             CLIENT PLAN NEGOTIATIONS SECTION
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
+        <div className="bg-app-surface rounded-3xl p-6 lg:p-8 border border-app-line shadow-[0_4px_30px_rgb(var(--shadow-rgb)/calc(0.04*var(--shadow-k)))] space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-white tracking-tight">Client Plan Negotiations</h3>
+                <h3 className="text-lg font-bold text-hi tracking-tight">Client Plan Negotiations</h3>
                 {pendingCount > 0 && (
                   <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-black uppercase flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -7016,7 +7016,7 @@ export function AdminPlansPage() {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#97A0B3] mt-0.5">
+              <p className="text-xs text-app-mist mt-0.5">
                 Review custom retainer proposals, client discount counter-offers, and multi-month contract terms.
               </p>
             </div>
@@ -7024,15 +7024,15 @@ export function AdminPlansPage() {
             <button
               type="button"
               onClick={() => setIsNewProposalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-hi text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
             >
               <Plus className="w-4 h-4" /> Initiate Custom Proposal
             </button>
           </div>
 
           {/* Search and Tabs */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
-            <div className="flex items-center gap-1 bg-[#161F2D] p-1 rounded-xl text-xs font-bold text-[#F1F5F9] overflow-x-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-app-line pb-4">
+            <div className="flex items-center gap-1 bg-app-surface p-1 rounded-xl text-xs font-bold text-app-ink-2 overflow-x-auto">
               {[
                 { id: "all", label: "All Negotiations" },
                 { id: "pending", label: `Pending Review (${pendingCount})` },
@@ -7046,8 +7046,8 @@ export function AdminPlansPage() {
                   onClick={() => setFilterTab(tab.id as any)}
                   className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     filterTab === tab.id
-                      ? "bg-[#161F2D] text-[#7FA0D6] shadow-xs font-black"
-                      : "hover:text-white"
+                      ? "bg-app-surface text-app-accent shadow-xs font-black"
+                      : "hover:text-hi"
                   }`}
                 >
                   {tab.label}
@@ -7056,13 +7056,13 @@ export function AdminPlansPage() {
             </div>
 
             <div className="relative min-w-[240px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-app-mist" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search negotiations by client, scope..."
-                className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                className="w-full pl-9 pr-4 py-2 rounded-xl border border-app-line bg-app-surface text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
               />
             </div>
           </div>
@@ -7070,7 +7070,7 @@ export function AdminPlansPage() {
           {/* Proposals List */}
           <div className="space-y-4">
             {filteredNegotiations.length === 0 ? (
-              <div className="p-8 text-center text-[#97A0B3] bg-[#0B111C]/50 rounded-2xl border border-dashed border-[#2A3446]">
+              <div className="p-8 text-center text-app-mist bg-app-base/50 rounded-2xl border border-dashed border-app-line">
                 <p className="text-xs font-bold">No plan negotiations found in this filter.</p>
               </div>
             ) : (
@@ -7087,8 +7087,8 @@ export function AdminPlansPage() {
                     id={`neg-${item.id}`}
                     className={`p-5 rounded-2xl border transition-all shadow-2xs space-y-4 ${
                       isHighlighted
-                        ? "border-[#7FA0D6] bg-[#7FA0D6]/10 ring-2 ring-[#7FA0D6] shadow-lg shadow-blue-500/10"
-                        : "border-[#2A3446] bg-[#0B111C]/50 hover:bg-[#161F2D] hover:border-[#2A3446]"
+                        ? "border-app-accent bg-app-accent/10 ring-2 ring-app-accent shadow-lg shadow-blue-500/10"
+                        : "border-app-line bg-app-base/50 hover:bg-app-surface hover:border-app-line"
                     }`}
                   >
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -7099,24 +7099,24 @@ export function AdminPlansPage() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-sm text-white">{item.clientName}</h4>
-                            <span className="text-[10px] text-[#97A0B3] font-semibold">{item.requestedAt}</span>
+                            <h4 className="font-bold text-sm text-hi">{item.clientName}</h4>
+                            <span className="text-[10px] text-app-mist font-semibold">{item.requestedAt}</span>
                             {isHighlighted && (
-                              <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-[#7FA0D6] border border-blue-500/30 text-[9px] font-black uppercase">
+                              <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-app-accent border border-blue-500/30 text-[9px] font-black uppercase">
                                 Selected Target
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-[#F1F5F9] font-medium">{item.targetTopic}</p>
-                          {item.clientEmail && <p className="text-[10px] text-[#97A0B3]">{item.clientEmail}</p>}
+                          <p className="text-xs text-app-ink-2 font-medium">{item.targetTopic}</p>
+                          {item.clientEmail && <p className="text-[10px] text-app-mist">{item.clientEmail}</p>}
                         </div>
                       </div>
 
                       {/* Negotiation Details */}
-                      <div className="flex items-center gap-4 bg-[#161F2D] p-3 rounded-xl border border-[#2A3446] flex-wrap">
+                      <div className="flex items-center gap-4 bg-app-surface p-3 rounded-xl border border-app-line flex-wrap">
                         {item.proposedOffer && (
                           <div>
-                            <span className="text-[10px] text-[#7FA0D6] uppercase block font-bold">Client Offer</span>
+                            <span className="text-[10px] text-app-accent uppercase block font-bold">Client Offer</span>
                             <span className="text-sm font-black text-emerald-400">{item.proposedOffer}</span>
                           </div>
                         )}
@@ -7138,19 +7138,19 @@ export function AdminPlansPage() {
                         )}
                         {(item.status === "Accepted" || item.status === "Counter Offered") && (
                           <div>
-                            <span className="text-[10px] text-[#7FA0D6] uppercase block font-bold">Deliverables Quota</span>
-                            <span className="text-xs font-bold text-white">
+                            <span className="text-[10px] text-app-accent uppercase block font-bold">Deliverables Quota</span>
+                            <span className="text-xs font-bold text-hi">
                               {item.reelQuota || 8} Reels • {item.posterQuota || 12} Posts • {item.storyQuota || 15} Stories
                             </span>
                           </div>
                         )}
                         <div>
-                          <span className="text-[10px] text-[#97A0B3] uppercase block font-bold">Contact</span>
-                          <span className="text-xs font-bold text-white">{item.phoneNumber}</span>
+                          <span className="text-[10px] text-app-mist uppercase block font-bold">Contact</span>
+                          <span className="text-xs font-bold text-hi">{item.phoneNumber}</span>
                         </div>
                         <div>
-                          <span className="text-[10px] text-[#97A0B3] uppercase block font-bold">Preferred Time</span>
-                          <span className="text-xs font-bold text-white">{item.preferredTime}</span>
+                          <span className="text-[10px] text-app-mist uppercase block font-bold">Preferred Time</span>
+                          <span className="text-xs font-bold text-hi">{item.preferredTime}</span>
                         </div>
                       </div>
 
@@ -7191,7 +7191,7 @@ export function AdminPlansPage() {
                             <button
                               type="button"
                               onClick={() => handleOpenCounterModal(item)}
-                              className="px-4 py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-[#7FA0D6] hover:text-white font-bold text-xs border border-[#7FA0D6]/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                              className="px-4 py-2 rounded-xl bg-app-accent/15 hover:bg-app-accent/25 text-app-accent hover:text-hi font-bold text-xs border border-app-accent/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
                             >
                               <SlidersHorizontal className="w-3.5 h-3.5" /> Counter
                             </button>
@@ -7201,7 +7201,7 @@ export function AdminPlansPage() {
                             <button
                               type="button"
                               onClick={() => handleOpenAcceptModal(item)}
-                              className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:border-[#7FA0D6] text-[11px] font-bold text-[#BCCCE6] hover:text-white cursor-pointer transition-all"
+                              className="px-3 py-1.5 rounded-xl border border-app-line bg-app-base hover:border-app-accent text-[11px] font-bold text-app-accent-soft hover:text-hi cursor-pointer transition-all"
                             >
                               Edit Scope / Quotas
                             </button>
@@ -7212,8 +7212,8 @@ export function AdminPlansPage() {
 
                   {/* Scope Notes */}
                   {item.notes && (
-                    <div className="p-3 bg-[#161F2D] rounded-xl text-xs text-[#F1F5F9] border border-[#2A3446] font-medium">
-                      <strong className="text-white font-bold">Client Notes:</strong> "{item.notes}"
+                    <div className="p-3 bg-app-surface rounded-xl text-xs text-app-ink-2 border border-app-line font-medium">
+                      <strong className="text-hi font-bold">Client Notes:</strong> "{item.notes}"
                     </div>
                   )}
                 </div>
@@ -7225,13 +7225,13 @@ export function AdminPlansPage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             ACTIVE SALES & RETAINER PIPELINE TABLE
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] p-6 lg:p-8 space-y-6">
+        <div className="bg-app-surface rounded-3xl border border-app-line shadow-[0_4px_30px_rgb(var(--shadow-rgb)/calc(0.04*var(--shadow-k)))] p-6 lg:p-8 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-xl font-black text-white tracking-tight">Active Sales & Retainer Pipeline</h3>
-              <p className="text-xs text-[#97A0B3] mt-0.5">High-touch commercial prospects, contract values, and closing probabilities</p>
+              <h3 className="text-xl font-black text-hi tracking-tight">Active Sales & Retainer Pipeline</h3>
+              <p className="text-xs text-app-mist mt-0.5">High-touch commercial prospects, contract values, and closing probabilities</p>
             </div>
-            <span className="px-3 py-1 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-xs font-bold">
+            <span className="px-3 py-1 rounded-full bg-app-accent/15 text-app-accent border border-app-accent/30 text-xs font-bold">
               {deals.length} Active Deals
             </span>
           </div>
@@ -7239,7 +7239,7 @@ export function AdminPlansPage() {
           <div className="overflow-x-auto -mx-1 sm:mx-0">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-[#2A3446] text-[10px] font-black uppercase text-[#97A0B3] tracking-wider">
+                <tr className="border-b border-app-line text-[10px] font-black uppercase text-app-mist tracking-wider">
                   <th className="pb-3.5 pl-2">Client Brand</th>
                   <th className="pb-3.5">Deal Scope</th>
                   <th className="pb-3.5">Contract Value</th>
@@ -7252,36 +7252,36 @@ export function AdminPlansPage() {
               <tbody className="divide-y divide-gray-50">
                 {deals.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-10 text-center text-[#97A0B3]">
-                      <p className="text-xs font-bold text-[#F1F5F9]">No active pipeline deals</p>
-                      <p className="text-[11px] text-[#97A0B3] mt-0.5">Real sales prospect deals will appear here once initiated.</p>
+                    <td colSpan={7} className="py-10 text-center text-app-mist">
+                      <p className="text-xs font-bold text-app-ink-2">No active pipeline deals</p>
+                      <p className="text-[11px] text-app-mist mt-0.5">Real sales prospect deals will appear here once initiated.</p>
                     </td>
                   </tr>
                 ) : (
                   deals.map((d) => (
-                    <tr key={d.id} className="hover:bg-[#0B111C]/70 transition-colors">
-                      <td className="py-4 pl-2 font-bold text-white">
+                    <tr key={d.id} className="hover:bg-app-base/70 transition-colors">
+                      <td className="py-4 pl-2 font-bold text-hi">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-xl bg-slate-900 text-hi font-black text-xs flex items-center justify-center">
                             {d.clientLogo}
                           </div>
                           <span>{d.client}</span>
                         </div>
                       </td>
-                      <td className="py-4 text-[#F1F5F9] font-medium">{d.scope}</td>
-                      <td className="py-4 font-black text-white">₹{d.value.toLocaleString("en-IN")} / yr</td>
+                      <td className="py-4 text-app-ink-2 font-medium">{d.scope}</td>
+                      <td className="py-4 font-black text-hi">₹{d.value.toLocaleString("en-IN")} / yr</td>
                       <td className="py-4">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${d.stageBadge}`}>
                           {d.stage}
                         </span>
                       </td>
                       <td className="py-4 font-bold text-emerald-600">{d.probability}</td>
-                      <td className="py-4 text-[#F1F5F9] font-medium">{d.owner}</td>
+                      <td className="py-4 text-app-ink-2 font-medium">{d.owner}</td>
                       <td className="py-4 text-right pr-2">
                         <button
                           type="button"
                           onClick={() => handleOpenManageDeal(d)}
-                          className="px-3.5 py-1.5 rounded-xl bg-[#161F2D] hover:bg-blue-600 hover:text-white text-white font-bold text-xs cursor-pointer shadow-2xs transition-all active:scale-95"
+                          className="px-3.5 py-1.5 rounded-xl bg-app-surface hover:bg-blue-600 hover:text-white text-hi font-bold text-xs cursor-pointer shadow-2xs transition-all active:scale-95"
                         >
                           Manage
                         </button>
@@ -7300,47 +7300,47 @@ export function AdminPlansPage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {acceptModalItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md animate-fade-in">
-          <div className="w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl space-y-5 border border-[#2A3446] max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="w-full max-w-lg rounded-3xl bg-app-surface p-6 sm:p-7 shadow-2xl space-y-5 border border-app-line max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 font-black text-sm flex items-center justify-center">
                   <Check className="w-5 h-5 stroke-[3]" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-white">Accept Retainer Negotiation</h3>
-                  <p className="text-[11px] text-[#97A0B3]">Lock in negotiated price strictly for {acceptModalItem.clientName}</p>
+                  <h3 className="text-base font-black text-hi">Accept Retainer Negotiation</h3>
+                  <p className="text-[11px] text-app-mist">Lock in negotiated price strictly for {acceptModalItem.clientName}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setAcceptModalItem(null)}
-                className="p-1.5 text-[#97A0B3] hover:text-white rounded-lg hover:bg-[#0B111C]"
+                className="p-1.5 text-app-mist hover:text-hi rounded-lg hover:bg-app-base"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Negotiation Overview Card */}
-            <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-2.5 text-xs">
+            <div className="p-4 rounded-2xl bg-app-base border border-app-line space-y-2.5 text-xs">
               <div className="flex justify-between items-center">
-                <span className="text-[#97A0B3] font-medium">Client Account:</span>
-                <span className="font-bold text-white">{acceptModalItem.clientName} ({acceptModalItem.clientEmail || "—"})</span>
+                <span className="text-app-mist font-medium">Client Account:</span>
+                <span className="font-bold text-hi">{acceptModalItem.clientName} ({acceptModalItem.clientEmail || "—"})</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[#97A0B3] font-medium">Scope Topic:</span>
-                <span className="font-bold text-[#7FA0D6]">{acceptModalItem.targetTopic}</span>
+                <span className="text-app-mist font-medium">Scope Topic:</span>
+                <span className="font-bold text-app-accent">{acceptModalItem.targetTopic}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[#97A0B3] font-medium">Client Proposed Budget:</span>
+                <span className="text-app-mist font-medium">Client Proposed Budget:</span>
                 <span className="font-black text-emerald-400 text-sm">{acceptModalItem.proposedOffer || "—"}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[#97A0B3] font-medium">Contact / Slot:</span>
-                <span className="font-medium text-[#F1F5F9]">{acceptModalItem.phoneNumber} • {acceptModalItem.preferredTime}</span>
+                <span className="text-app-mist font-medium">Contact / Slot:</span>
+                <span className="font-medium text-app-ink-2">{acceptModalItem.phoneNumber} • {acceptModalItem.preferredTime}</span>
               </div>
               {acceptModalItem.notes && (
-                <div className="pt-2 border-t border-[#2A3446] text-[#97A0B3]">
-                  <strong className="text-[#F1F5F9]">Client Note:</strong> "{acceptModalItem.notes}"
+                <div className="pt-2 border-t border-app-line text-app-mist">
+                  <strong className="text-app-ink-2">Client Note:</strong> "{acceptModalItem.notes}"
                 </div>
               )}
             </div>
@@ -7350,25 +7350,25 @@ export function AdminPlansPage() {
               <div className="flex items-center gap-1.5 font-black uppercase text-[10px] tracking-wider text-emerald-400">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Client Price Isolation Guarantee
               </div>
-              <p className="text-[11px] text-[#F1F5F9] leading-relaxed">
+              <p className="text-[11px] text-app-ink-2 leading-relaxed">
                 This negotiated price will update <strong>ONLY for {acceptModalItem.clientName}</strong>. Standard agency tiers (Starter ₹25k, Growth ₹50k, Scale ₹1.2L) and all other client retainers remain completely unchanged.
               </p>
             </div>
 
             <form onSubmit={handleConfirmAccept} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-white mb-1">
+                <label className="block font-bold text-hi mb-1">
                   Agreed Monthly Retainer (₹ INR / month) <span className="text-emerald-400">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white font-bold text-sm">₹</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-hi font-bold text-sm">₹</span>
                   <input
                     type="number"
                     required
                     min="1"
                     value={acceptPriceInput}
                     onChange={(e) => setAcceptPriceInput(e.target.value)}
-                    className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                    className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-app-line bg-app-base text-hi font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
                     placeholder="e.g. 35000"
                   />
                 </div>
@@ -7377,56 +7377,56 @@ export function AdminPlansPage() {
               {/* Deliverable Quota Inputs */}
               <div className="grid grid-cols-3 gap-2.5">
                 <div>
-                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Reels / mo</label>
+                  <label className="block font-bold text-app-mist mb-1 text-[11px]">Reels / mo</label>
                   <input
                     type="number"
                     min="0"
                     value={acceptReelsInput}
                     onChange={(e) => setAcceptReelsInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-base text-hi font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Posters / mo</label>
+                  <label className="block font-bold text-app-mist mb-1 text-[11px]">Posters / mo</label>
                   <input
                     type="number"
                     min="0"
                     value={acceptPostersInput}
                     onChange={(e) => setAcceptPostersInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-base text-hi font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Stories / mo</label>
+                  <label className="block font-bold text-app-mist mb-1 text-[11px]">Stories / mo</label>
                   <input
                     type="number"
                     min="0"
                     value={acceptStoriesInput}
                     onChange={(e) => setAcceptStoriesInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-base text-hi font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">
+                <label className="block font-bold text-app-ink-2 mb-1">
                   Agreement Notes / Scope Terms
                 </label>
                 <textarea
                   rows={2}
                   value={acceptNotesInput}
                   onChange={(e) => setAcceptNotesInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                  className="w-full px-3.5 py-2 rounded-xl border border-app-line bg-app-base text-hi text-xs resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
                   placeholder="e.g. Approved custom retainer. Valid for 12 months."
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-app-line">
                 <button
                   type="button"
                   onClick={() => setAcceptModalItem(null)}
                   disabled={isSubmittingAccept}
-                  className="px-4 py-2.5 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-app-line font-bold text-app-ink-2 hover:bg-app-base cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -7455,39 +7455,39 @@ export function AdminPlansPage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {editingPlan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 className="text-base font-bold text-white">Edit Tier: {editingPlan.display_name}</h3>
-              <button type="button" onClick={() => setEditingPlan(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+          <div className="w-full max-w-md rounded-3xl bg-app-surface p-6 shadow-2xl space-y-4 border border-app-line">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
+              <h3 className="text-base font-bold text-hi">Edit Tier: {editingPlan.display_name}</h3>
+              <button type="button" onClick={() => setEditingPlan(null)} className="p-1 text-app-mist hover:text-app-ink-2">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSaveTierTerms} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Monthly Retainer Price (₹ INR)</label>
+                <label className="block font-bold text-app-ink-2 mb-1">Monthly Retainer Price (₹ INR)</label>
                 <input
                   type="number"
                   required
                   value={editPriceInput}
                   onChange={(e) => setEditPriceInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Features & Deliverables Quota (One per line)</label>
+                <label className="block font-bold text-app-ink-2 mb-1">Features & Deliverables Quota (One per line)</label>
                 <textarea
                   rows={4}
                   required
                   value={editFeaturesInput}
                   onChange={(e) => setEditFeaturesInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setEditingPlan(null)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2 pt-2 border-t border-app-line">
+                <button type="button" onClick={() => setEditingPlan(null)} className="px-4 py-2 rounded-xl border border-app-line font-bold text-app-ink-2 hover:bg-app-base cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer">
@@ -7504,33 +7504,33 @@ export function AdminPlansPage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {declineModalItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 className="text-base font-bold text-white">Decline Plan Negotiation</h3>
-              <button type="button" onClick={() => setDeclineModalItem(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+          <div className="w-full max-w-md rounded-3xl bg-app-surface p-6 shadow-2xl space-y-4 border border-app-line">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
+              <h3 className="text-base font-bold text-hi">Decline Plan Negotiation</h3>
+              <button type="button" onClick={() => setDeclineModalItem(null)} className="p-1 text-app-mist hover:text-app-ink-2">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleConfirmDecline} className="space-y-3 text-xs">
-              <p className="text-[#F1F5F9]">
+              <p className="text-app-ink-2">
                 Are you sure you want to decline the proposed custom retainer for <strong>{declineModalItem.clientName}</strong>?
               </p>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Reason for Rejection</label>
+                <label className="block font-bold text-app-ink-2 mb-1">Reason for Rejection</label>
                 <textarea
                   rows={3}
                   required
                   placeholder="e.g. Proposed rate falls below standard minimum margin."
                   value={declineReasonInput}
                   onChange={(e) => setDeclineReasonInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs resize-none focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs resize-none focus:outline-none focus:ring-2 focus:ring-rose-500/20"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setDeclineModalItem(null)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2 pt-2 border-t border-app-line">
+                <button type="button" onClick={() => setDeclineModalItem(null)} className="px-4 py-2 rounded-xl border border-app-line font-bold text-app-ink-2 hover:bg-app-base cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 cursor-pointer">
@@ -7547,10 +7547,10 @@ export function AdminPlansPage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {counterModalItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 className="text-base font-bold text-white">Submit Counter Offer</h3>
-              <button type="button" onClick={() => setCounterModalItem(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+          <div className="w-full max-w-md rounded-3xl bg-app-surface p-6 shadow-2xl space-y-4 border border-app-line">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
+              <h3 className="text-base font-bold text-hi">Submit Counter Offer</h3>
+              <button type="button" onClick={() => setCounterModalItem(null)} className="p-1 text-app-mist hover:text-app-ink-2">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -7560,25 +7560,25 @@ export function AdminPlansPage() {
               <div className="flex items-center gap-1.5 font-black uppercase text-[10px] tracking-wider text-purple-400">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Client Counter Scope Guarantee
               </div>
-              <p className="text-[11px] text-[#F1F5F9] leading-relaxed">
+              <p className="text-[11px] text-app-ink-2 leading-relaxed">
                 This counter proposal will update <strong>ONLY for {counterModalItem.clientName}</strong> in their client onboarding. Standard agency tiers remain completely unchanged.
               </p>
             </div>
 
             <form onSubmit={handleConfirmCounter} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-white mb-1">
+                <label className="block font-bold text-hi mb-1">
                   Counter Proposed Rate (₹ INR / mo) <span className="text-purple-400">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white font-bold text-sm">₹</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-hi font-bold text-sm">₹</span>
                   <input
                     type="number"
                     required
                     min="1"
                     value={counterPriceInput}
                     onChange={(e) => setCounterPriceInput(e.target.value)}
-                    className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                    className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-app-line bg-app-base text-hi font-bold text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                     placeholder="e.g. 40000"
                   />
                 </div>
@@ -7587,54 +7587,54 @@ export function AdminPlansPage() {
               {/* Deliverable Quota Inputs */}
               <div className="grid grid-cols-3 gap-2.5">
                 <div>
-                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Reels / mo</label>
+                  <label className="block font-bold text-app-mist mb-1 text-[11px]">Reels / mo</label>
                   <input
                     type="number"
                     min="0"
                     value={counterReelsInput}
                     onChange={(e) => setCounterReelsInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-base text-hi font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Posters / mo</label>
+                  <label className="block font-bold text-app-mist mb-1 text-[11px]">Posters / mo</label>
                   <input
                     type="number"
                     min="0"
                     value={counterPostersInput}
                     onChange={(e) => setCounterPostersInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-base text-hi font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Stories / mo</label>
+                  <label className="block font-bold text-app-mist mb-1 text-[11px]">Stories / mo</label>
                   <input
                     type="number"
                     min="0"
                     value={counterStoriesInput}
                     onChange={(e) => setCounterStoriesInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-base text-hi font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Counter Offer Notes / Scope Terms</label>
+                <label className="block font-bold text-app-ink-2 mb-1">Counter Offer Notes / Scope Terms</label>
                 <textarea
                   rows={2}
                   placeholder="e.g. We can offer ₹40,000/mo with custom deliverable package."
                   value={counterNoteInput}
                   onChange={(e) => setCounterNoteInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2 rounded-xl border border-app-line bg-app-base text-hi text-xs resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-app-line">
                 <button
                   type="button"
                   onClick={() => setCounterModalItem(null)}
                   disabled={isSubmittingCounter}
-                  className="px-4 py-2.5 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-app-line font-bold text-app-ink-2 hover:bg-app-base cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -7656,83 +7656,83 @@ export function AdminPlansPage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {isNewProposalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 className="text-base font-bold text-white">Initiate Custom Retainer Proposal</h3>
-              <button type="button" onClick={() => setIsNewProposalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+          <div className="w-full max-w-md rounded-3xl bg-app-surface p-6 shadow-2xl space-y-4 border border-app-line">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
+              <h3 className="text-base font-bold text-hi">Initiate Custom Retainer Proposal</h3>
+              <button type="button" onClick={() => setIsNewProposalOpen(false)} className="p-1 text-app-mist hover:text-app-ink-2">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateProposalSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Client Brand Name</label>
+                <label className="block font-bold text-app-ink-2 mb-1">Client Brand Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Apex Media or Stellar Corp"
                   value={newPropClient}
                   onChange={(e) => setNewPropClient(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Current Retainer Plan</label>
+                <label className="block font-bold text-app-ink-2 mb-1">Current Retainer Plan</label>
                 <input
                   type="text"
                   value={newPropCurrentPlan}
                   onChange={(e) => setNewPropCurrentPlan(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Target Plan & Custom Scope</label>
+                <label className="block font-bold text-app-ink-2 mb-1">Target Plan & Custom Scope</label>
                 <input
                   type="text"
                   required
                   value={newPropTargetPlan}
                   onChange={(e) => setNewPropTargetPlan(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Standard Rate (₹/mo)</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Standard Rate (₹/mo)</label>
                   <input
                     type="number"
                     value={newPropStandardRate}
                     onChange={(e) => setNewPropStandardRate(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Proposed Rate (₹/mo)</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Proposed Rate (₹/mo)</label>
                   <input
                     type="number"
                     required
                     value={newPropProposedRate}
                     onChange={(e) => setNewPropProposedRate(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Negotiation Scope Notes & Commitments</label>
+                <label className="block font-bold text-app-ink-2 mb-1">Negotiation Scope Notes & Commitments</label>
                 <textarea
                   rows={3}
                   placeholder="e.g. 12-month contract lock-in with 2 dedicated creative pods."
                   value={newPropNotes}
                   onChange={(e) => setNewPropNotes(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-app-line text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setIsNewProposalOpen(false)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2 pt-2 border-t border-app-line">
+                <button type="button" onClick={() => setIsNewProposalOpen(false)} className="px-4 py-2 rounded-xl border border-app-line font-bold text-app-ink-2 hover:bg-app-base cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer">
@@ -7756,22 +7756,22 @@ export function AdminPlansPage() {
           }}
         >
           <div
-            className="relative w-full max-w-xl rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-[#2A3446] flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
+            className="relative w-full max-w-xl rounded-3xl bg-app-surface p-6 sm:p-7 shadow-2xl border border-app-line flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
               <div className="flex items-center gap-3">
-                <div className="size-11 rounded-2xl bg-slate-950 text-white font-black text-sm flex items-center justify-center shadow-xs">
+                <div className="size-11 rounded-2xl bg-slate-950 text-hi font-black text-sm flex items-center justify-center shadow-xs">
                   {manageDealModal.clientLogo}
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-white tracking-tight">
+                  <h3 className="text-base font-black text-hi tracking-tight">
                     Manage Deal • {manageDealModal.client}
                   </h3>
-                  <p className="text-[11px] text-[#97A0B3] font-medium">
+                  <p className="text-[11px] text-app-mist font-medium">
                     Contract negotiation, deal stage progression & subscription controls
                   </p>
                 </div>
@@ -7782,21 +7782,21 @@ export function AdminPlansPage() {
                   setManageDealModal(null);
                   setManageMode("edit");
                 }}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                className="size-8 rounded-full bg-app-surface hover:bg-slate-200 text-app-mist flex items-center justify-center transition-colors cursor-pointer"
               >
                 <X className="size-4" />
               </button>
             </div>
 
             {/* Quick Action Navigation Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 p-1.5 bg-[#161F2D]/80 rounded-2xl">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 p-1.5 bg-app-surface/80 rounded-2xl">
               <button
                 type="button"
                 onClick={() => setManageMode("edit")}
                 className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
                   manageMode === "edit"
-                    ? "bg-[#161F2D] text-white shadow-xs font-black"
-                    : "text-[#F1F5F9] hover:text-white"
+                    ? "bg-app-surface text-hi shadow-xs font-black"
+                    : "text-app-ink-2 hover:text-hi"
                 }`}
               >
                 📝 Edit Contract
@@ -7840,26 +7840,26 @@ export function AdminPlansPage() {
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-xs space-y-2 text-[#F1F5F9]">
+                <div className="p-4 rounded-2xl bg-app-base border border-app-line text-xs space-y-2 text-app-ink-2">
                   <div className="flex justify-between">
-                    <span className="font-semibold text-[#97A0B3]">Client:</span>
-                    <strong className="text-white">{manageDealModal.client}</strong>
+                    <span className="font-semibold text-app-mist">Client:</span>
+                    <strong className="text-hi">{manageDealModal.client}</strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-semibold text-[#97A0B3]">Contract Value:</span>
-                    <strong className="text-white">₹{manageDealModal.value.toLocaleString("en-IN")} / yr</strong>
+                    <span className="font-semibold text-app-mist">Contract Value:</span>
+                    <strong className="text-hi">₹{manageDealModal.value.toLocaleString("en-IN")} / yr</strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-semibold text-[#97A0B3]">Assigned Account Owner:</span>
-                    <strong className="text-white">{manageDealModal.owner}</strong>
+                    <span className="font-semibold text-app-mist">Assigned Account Owner:</span>
+                    <strong className="text-hi">{manageDealModal.owner}</strong>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-app-line">
                   <button
                     type="button"
                     onClick={() => setManageMode("edit")}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-app-line text-xs font-bold text-app-ink-2 hover:bg-app-base cursor-pointer"
                   >
                     Go Back
                   </button>
@@ -7891,23 +7891,23 @@ export function AdminPlansPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Refund Amount (₹ INR)</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Refund Amount (₹ INR)</label>
                     <input
                       type="number"
                       required
                       value={refundAmountInput}
                       onChange={(e) => setRefundAmountInput(e.target.value)}
                       placeholder="e.g. 45000"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-app-line text-xs font-bold text-hi focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Refund Method</label>
+                    <label className="block text-xs font-bold text-app-ink-2 mb-1">Refund Method</label>
                     <NativeSelect
                       value={refundMethodInput}
                       onChange={(e) => setRefundMethodInput(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
+                      className="w-full px-3 py-2.5 rounded-xl border border-app-line text-xs font-medium text-hi bg-app-surface"
                     >
                       <option value="Original Payment Gateway (Stripe ACH / Card)">Original Payment Gateway (Stripe / ACH)</option>
                       <option value="Direct Bank Wire / IMPS / RTGS">Direct Bank Transfer (IMPS / RTGS)</option>
@@ -7917,11 +7917,11 @@ export function AdminPlansPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Reason for Refund</label>
+                  <label className="block text-xs font-bold text-app-ink-2 mb-1">Reason for Refund</label>
                   <NativeSelect
                     value={refundReasonInput}
                     onChange={(e) => setRefundReasonInput(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
+                    className="w-full px-3 py-2.5 rounded-xl border border-app-line text-xs font-medium text-hi bg-app-surface"
                   >
                     <option value="Contract Cancellation / Retainer Revocation">Contract Cancellation / Retainer Revocation</option>
                     <option value="SLA Non-Compliance / Delivery Disruption">SLA Non-Compliance / Delivery Disruption</option>
@@ -7930,11 +7930,11 @@ export function AdminPlansPage() {
                   </NativeSelect>
                 </div>
 
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-app-line">
                   <button
                     type="button"
                     onClick={() => setManageMode("edit")}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-app-line text-xs font-bold text-app-ink-2 hover:bg-app-base cursor-pointer"
                   >
                     Go Back
                   </button>
@@ -7960,7 +7960,7 @@ export function AdminPlansPage() {
           onClick={() => setDealSuccessModal(null)}
         >
           <div
-            className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-5 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
+            className="relative w-full max-w-md rounded-3xl bg-app-surface p-5 sm:p-8 shadow-2xl border border-app-line flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -7968,7 +7968,7 @@ export function AdminPlansPage() {
             <button
               type="button"
               onClick={() => setDealSuccessModal(null)}
-              className="absolute top-4 right-4 size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-4 right-4 size-8 rounded-full bg-app-surface hover:bg-slate-200 text-app-mist hover:text-app-ink-2 flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Close modal"
             >
               <X className="size-4" />
@@ -7978,8 +7978,8 @@ export function AdminPlansPage() {
               <CheckCircle2 className="size-8" />
             </div>
 
-            <h3 className="text-xl font-black text-white tracking-tight">{dealSuccessModal.title}</h3>
-            <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm">{dealSuccessModal.message}</p>
+            <h3 className="text-xl font-black text-hi tracking-tight">{dealSuccessModal.title}</h3>
+            <p className="text-xs sm:text-sm text-app-ink-2 mt-2 leading-relaxed max-w-sm">{dealSuccessModal.message}</p>
 
             <div className="w-full mt-6">
               <button

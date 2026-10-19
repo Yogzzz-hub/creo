@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, useMotionValue, useSpring } from "motion/react";
 import { useEffect, useState } from "react";
+import { useTheme } from "../../lib/theme";
 
 const INTERACTIVE = "a, button, [role='button'], summary, label, [data-cursor]";
 const TEXT_FIELDS = "input, textarea, select, [contenteditable='true']";
@@ -15,6 +16,7 @@ const RING_SIZE: Record<CursorMode, number> = { default: 34, link: 58, label: 88
  */
 export function CustomCursor() {
   const [enabled, setEnabled] = useState(false);
+  const { theme } = useTheme();
   const [mode, setMode] = useState<CursorMode>("default");
   const [label, setLabel] = useState("");
   const [pressed, setPressed] = useState(false);
@@ -99,6 +101,7 @@ export function CustomCursor() {
   const showRing = visible && mode !== "text";
   const size = RING_SIZE[mode];
   const isLabel = mode === "label";
+  const ink = theme === "light" ? "11,22,48" : "255,255,255";
 
   return (
     <>
@@ -108,7 +111,7 @@ export function CustomCursor() {
         style={{ x: ringX, y: ringY }}
       >
         <motion.div
-          className="flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border shadow-[0_0_0_1px_rgba(5,10,26,0.28),inset_0_0_0_1px_rgba(5,10,26,0.18)]"
+          className="flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border shadow-[0_0_0_1px_rgb(var(--shadow-rgb)/calc(0.28*var(--shadow-k))),inset_0_0_0_1px_rgb(var(--shadow-rgb)/calc(0.18*var(--shadow-k)))]"
           animate={{
             width: size,
             height: size,
@@ -118,9 +121,9 @@ export function CustomCursor() {
             backgroundColor: isLabel
               ? "rgba(59,107,255,0.22)"
               : mode === "link"
-                ? "rgba(255,255,255,0.12)"
-                : "rgba(255,255,255,0)",
-            borderColor: isLabel ? "rgba(220,232,255,0.85)" : "rgba(255,255,255,0.7)",
+                ? `rgba(${ink},0.12)`
+                : `rgba(${ink},0)`,
+            borderColor: isLabel ? (theme === "light" ? "rgba(43,87,230,0.85)" : "rgba(220,232,255,0.85)") : `rgba(${ink},0.7)`,
           }}
           transition={{ type: "spring", stiffness: 320, damping: 26, mass: 0.6 }}
         >
@@ -132,7 +135,7 @@ export function CustomCursor() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.6 }}
                 transition={{ duration: 0.25 }}
-                className="text-[11px] font-bold uppercase tracking-[0.16em] text-white [text-shadow:0_1px_8px_rgba(5,10,26,0.9)]"
+                className="text-[11px] font-bold uppercase tracking-[0.16em] text-hi [text-shadow:0_1px_8px_rgba(5,10,26,0.9)]"
               >
                 {label}
               </motion.span>
@@ -147,7 +150,7 @@ export function CustomCursor() {
         style={{ x, y }}
       >
         <motion.div
-          className="size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(5,10,26,0.45)]"
+          className="size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-hi shadow-[0_0_0_1.5px_rgb(var(--shadow-rgb)/calc(0.45*var(--shadow-k)))]"
           animate={{ opacity: visible && mode === "default" ? 1 : 0, scale: pressed ? 0.6 : 1 }}
           transition={{ duration: 0.15 }}
         />

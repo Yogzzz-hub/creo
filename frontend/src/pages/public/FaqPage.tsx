@@ -50,7 +50,7 @@ export function FaqPage() {
   };
 
   return (
-    <div className="min-h-screen w-full pb-12 font-sans text-[#F4F7FF] sm:pb-16">
+    <div className="min-h-screen w-full pb-12 font-sans text-site-ink sm:pb-16">
       <SEOHead
         title="Frequently Asked Questions | Creo D2C Content Pods"
         description="Learn how Creo content pods deliver weekly reels, carousels, and stories for D2C brands with transparent SLAs and clear monthly tiers."
@@ -74,7 +74,7 @@ export function FaqPage() {
               <StaggerItem
                 key={item.q}
                 className={`rounded-2xl transition-[box-shadow,background-color] duration-500 ${
-                  isOpen ? "creo-glass creo-glow-ring creo-beam" : "creo-glass hover:bg-white/[0.03]"
+                  isOpen ? "creo-glass creo-glow-ring creo-beam" : "creo-glass hover:bg-hi/[0.03]"
                 }`}
               >
                 <h3>
@@ -88,11 +88,11 @@ export function FaqPage() {
                   >
                     <span className="flex items-baseline gap-4">
                       <span
-                        className={`font-mono text-xs transition-colors duration-300 ${isOpen ? "text-[#7DA2FF]" : "text-[#4F7BFF]/70"}`}
+                        className={`font-mono text-xs transition-colors duration-300 ${isOpen ? "text-site-blue-light" : "text-site-blue/70"}`}
                       >
                         {String(index + 1).padStart(2, "0")}
                       </span>
-                      <span className="text-base font-semibold leading-snug tracking-[-0.01em] text-white sm:text-lg">
+                      <span className="text-base font-semibold leading-snug tracking-[-0.01em] text-hi sm:text-lg">
                         {item.q}
                       </span>
                     </span>
@@ -100,7 +100,7 @@ export function FaqPage() {
                       animate={{ rotate: isOpen ? 180 : 0 }}
                       transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
                       className={`flex size-9 shrink-0 items-center justify-center rounded-full border transition-colors duration-300 ${
-                        isOpen ? "border-[#4F7BFF]/60 bg-[#4F7BFF]/15 text-white" : "border-white/10 text-[#93A0BF]"
+                        isOpen ? "border-site-blue/60 bg-site-blue/15 text-hi" : "border-hi/10 text-site-mist"
                       }`}
                     >
                       <ChevronDown className="size-4" />
@@ -120,7 +120,7 @@ export function FaqPage() {
                       transition={{ duration: 0.45, ease: EASE_OUT_EXPO }}
                       className="overflow-hidden"
                     >
-                      <p className="px-5 pb-6 pl-[3.6rem] text-[15px] leading-relaxed text-[#B4BFDA] sm:px-6 sm:pl-[4.1rem]">
+                      <p className="px-5 pb-6 pl-[3.6rem] text-[15px] leading-relaxed text-site-mist-2 sm:px-6 sm:pl-[4.1rem]">
                         {item.a}
                       </p>
                     </motion.section>
@@ -135,11 +135,11 @@ export function FaqPage() {
         <MaskReveal from="bottom" zoom={1.04} className="mt-16 rounded-[32px]">
           <div className="creo-glass creo-beam relative overflow-hidden rounded-[32px] px-6 py-12 text-center sm:px-12 sm:py-14">
             <div aria-hidden="true" className="creo-grid-bg absolute inset-0 opacity-60 [mask-image:radial-gradient(60%_80%_at_50%_0%,#000,transparent)]" />
-            <div aria-hidden="true" className="absolute -top-24 left-1/2 size-[380px] -translate-x-1/2 rounded-full bg-[#4F7BFF]/20 blur-[100px]" />
-            <h2 className="relative text-2xl font-black tracking-[-0.03em] text-white sm:text-3xl">
+            <div aria-hidden="true" className="absolute -top-24 left-1/2 size-[380px] -translate-x-1/2 rounded-full bg-site-blue/20 blur-[100px]" />
+            <h2 className="relative text-2xl font-black tracking-[-0.03em] text-hi sm:text-3xl">
               Have a specific question about your brand?
             </h2>
-            <p className="relative mx-auto mb-8 mt-3 max-w-md text-[15px] leading-relaxed text-[#93A0BF]">
+            <p className="relative mx-auto mb-8 mt-3 max-w-md text-[15px] leading-relaxed text-site-mist">
               Get a free custom sample batch of reels and carousels engineered specifically for your brand identity.
             </p>
             <div className="relative flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">

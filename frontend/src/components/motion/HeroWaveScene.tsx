@@ -4,6 +4,7 @@ import {
   BufferAttribute,
   BufferGeometry,
   Color,
+  NormalBlending,
   PerspectiveCamera,
   Points,
   Scene,
@@ -121,9 +122,9 @@ export default function HeroWaveScene({ className = "" }: { className?: string }
       uPointer: { value: [0, 0] as [number, number] },
       uScroll: { value: 0 },
       uPixelRatio: { value: pixelRatio },
-      uBlue: { value: new Color("#4F7BFF") },
-      uMist: { value: new Color("#DCE8FF") },
-      uGold: { value: new Color("#7DD3FC") },
+      uBlue: { value: new Color() },
+      uMist: { value: new Color() },
+      uGold: { value: new Color() },
     };
     const material = new ShaderMaterial({
       vertexShader: VERTEX,
@@ -133,6 +134,22 @@ export default function HeroWaveScene({ className = "" }: { className?: string }
       depthWrite: false,
       blending: AdditiveBlending,
     });
+    // Glowing additive dots on the dark canvas; inked, normally blended dots on light paper
+    const applyPalette = () => {
+      const light = document.documentElement.dataset.theme === "light";
+      uniforms.uBlue.value.set(light ? "#2B57E6" : "#4F7BFF");
+      uniforms.uMist.value.set(light ? "#1A3480" : "#DCE8FF");
+      uniforms.uGold.value.set(light ? "#0A72A8" : "#7DD3FC");
+      material.blending = light ? NormalBlending : AdditiveBlending;
+      material.needsUpdate = true;
+    };
+    applyPalette();
+    const themeObserver = new MutationObserver(() => {
+      applyPalette();
+      if (reduce) renderer.render(scene, camera);
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
     const points = new Points(geometry, material);
     points.rotation.x = -0.08;
     scene.add(points);
@@ -197,6 +214,7 @@ export default function HeroWaveScene({ className = "" }: { className?: string }
       window.removeEventListener("pointermove", onPointer);
       io.disconnect();
       ro.disconnect();
+      themeObserver.disconnect();
       geometry.dispose();
       material.dispose();
       renderer.dispose();

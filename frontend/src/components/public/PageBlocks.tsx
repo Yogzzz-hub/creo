@@ -37,11 +37,11 @@ export function SectionHeading({
         as="h2"
         text={title}
         accent={accent}
-        className="mb-5 mt-6 block text-[2rem] font-black leading-[1.04] tracking-[-0.035em] text-[#F4F7FF] sm:text-5xl lg:text-[3.5rem]"
+        className="mb-5 mt-6 block text-[2rem] font-black leading-[1.04] tracking-[-0.035em] text-site-ink sm:text-5xl lg:text-[3.5rem]"
       />
       {children && (
         <Reveal delay={0.15}>
-          <p className={`text-base leading-relaxed text-[#93A0BF] sm:text-lg ${centered ? "mx-auto max-w-2xl" : "max-w-2xl"}`}>
+          <p className={`text-base leading-relaxed text-site-mist sm:text-lg ${centered ? "mx-auto max-w-2xl" : "max-w-2xl"}`}>
             {children}
           </p>
         </Reveal>
@@ -84,8 +84,8 @@ export function PageHero({
         className="creo-grid-bg absolute inset-0 -z-20 opacity-60 [mask-image:radial-gradient(75%_70%_at_50%_15%,#000_10%,transparent_75%)]"
       />
       <CursorSpotlight className="-z-10" />
-      <div aria-hidden="true" className="absolute -top-48 right-[-8%] -z-10 size-[620px] rounded-full bg-[#3B6BFF]/20 blur-[140px]" />
-      <div aria-hidden="true" className="absolute left-[-12%] top-1/3 -z-10 size-[420px] rounded-full bg-[#7DD3FC]/[0.07] blur-[120px]" />
+      <div aria-hidden="true" className="absolute -top-48 right-[-8%] -z-10 size-[620px] rounded-full bg-site-blue-deep/20 blur-[140px]" />
+      <div aria-hidden="true" className="absolute left-[-12%] top-1/3 -z-10 size-[420px] rounded-full bg-site-sky/[0.07] blur-[120px]" />
 
       <div className="mx-auto max-w-[1240px] px-6 pb-16 pt-12 sm:px-8 sm:pb-20 sm:pt-16 lg:px-12 lg:pb-24 lg:pt-20">
         <div className={centered ? "mx-auto max-w-4xl text-center" : "grid grid-cols-1 items-center gap-14 lg:grid-cols-2 lg:gap-12"}>
@@ -105,7 +105,7 @@ export function PageHero({
               delay={0.1}
               text={title}
               accent={accent}
-              className={`block text-[2.5rem] font-black leading-[1.02] tracking-[-0.045em] text-[#F4F7FF] sm:text-6xl lg:text-[4.25rem] ${
+              className={`block text-[2.5rem] font-black leading-[1.02] tracking-[-0.045em] text-site-ink sm:text-6xl lg:text-[4.25rem] ${
                 centered ? "mx-auto max-w-4xl" : ""
               }`}
             />
@@ -113,7 +113,7 @@ export function PageHero({
             {lead && (
               <Reveal delay={0.45} blur>
                 <p
-                  className={`mt-7 text-base leading-relaxed text-[#93A0BF] sm:text-lg ${
+                  className={`mt-7 text-base leading-relaxed text-site-mist sm:text-lg ${
                     centered ? "mx-auto max-w-2xl" : "max-w-xl"
                   }`}
                 >

@@ -202,17 +202,17 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
   const currentIgHandle = (query.data?.instagram_username || "").replace(/^@/, "");
 
   return (
-    <main className="text-white space-y-6 pb-16 max-w-6xl mx-auto">
+    <main className="text-hi space-y-6 pb-16 max-w-6xl mx-auto">
       {/* Tab Navigation & User Preview Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#2A3446]/60">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-app-line/60">
         <nav aria-label="Account Settings Tabs" className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
           <button
             type="button"
             onClick={() => setParams({ tab: "account" })}
             className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
               activeTab === "account"
-                ? "bg-[#BCCCE6] text-[#0B111C] shadow-lg shadow-[#BCCCE6]/10 scale-[1.02]"
-                : "bg-[#161F2D] text-[#97A0B3] hover:text-white hover:bg-[#1E293B] border border-[#2A3446]"
+                ? "bg-app-accent-soft text-app-base shadow-lg shadow-app-accent-soft/10 scale-[1.02]"
+                : "bg-app-surface text-app-mist hover:text-white hover:bg-app-line-soft border border-app-line"
             }`}
           >
             <User className="size-4" />
@@ -224,8 +224,8 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
             onClick={() => setParams({ tab: "integrations" })}
             className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer relative ${
               activeTab === "integrations"
-                ? "bg-[#BCCCE6] text-[#0B111C] shadow-lg shadow-[#BCCCE6]/10 scale-[1.02]"
-                : "bg-[#161F2D] text-[#97A0B3] hover:text-white hover:bg-[#1E293B] border border-[#2A3446]"
+                ? "bg-app-accent-soft text-app-base shadow-lg shadow-app-accent-soft/10 scale-[1.02]"
+                : "bg-app-surface text-app-mist hover:text-white hover:bg-app-line-soft border border-app-line"
             }`}
           >
             <Instagram className="size-4" />
@@ -240,8 +240,8 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
               <span
                 className={`px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ml-0.5 ${
                   activeTab === "integrations"
-                    ? "bg-[#0B111C]/20 text-[#0B111C]"
-                    : "bg-[#0B111C] text-[#97A0B3] border border-[#2A3446]"
+                    ? "bg-app-base/20 text-app-base"
+                    : "bg-app-base text-app-mist border border-app-line"
                 }`}
               >
                 Connect
@@ -254,8 +254,8 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
             onClick={() => setParams({ tab: "security" })}
             className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
               activeTab === "security"
-                ? "bg-[#BCCCE6] text-[#0B111C] shadow-lg shadow-[#BCCCE6]/10 scale-[1.02]"
-                : "bg-[#161F2D] text-[#97A0B3] hover:text-white hover:bg-[#1E293B] border border-[#2A3446]"
+                ? "bg-app-accent-soft text-app-base shadow-lg shadow-app-accent-soft/10 scale-[1.02]"
+                : "bg-app-surface text-app-mist hover:text-white hover:bg-app-line-soft border border-app-line"
             }`}
           >
             <ShieldCheck className="size-4" />
@@ -265,15 +265,15 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
 
         {/* User preview badge */}
         {query.data && (
-          <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-[#161F2D] border border-[#2A3446] shrink-0">
-            <div className="size-8 rounded-full bg-gradient-to-tr from-[#7FA0D6] to-[#BCCCE6] text-[#0B111C] font-black text-xs flex items-center justify-center uppercase shadow-sm">
+          <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-app-surface border border-app-line shrink-0">
+            <div className="size-8 rounded-full bg-gradient-to-tr from-app-accent to-app-accent-soft text-app-base font-black text-xs flex items-center justify-center uppercase shadow-sm">
               {(query.data.full_name || user?.email || "U").slice(0, 2)}
             </div>
             <div className="text-left">
-              <p className="text-xs font-bold text-white leading-none truncate max-w-[140px]">
+              <p className="text-xs font-bold text-hi leading-none truncate max-w-[140px]">
                 {query.data.full_name || "Client Member"}
               </p>
-              <p className="text-[10px] text-[#97A0B3] truncate max-w-[140px] mt-0.5">
+              <p className="text-[10px] text-app-mist truncate max-w-[140px] mt-0.5">
                 {query.data.email || user?.email}
               </p>
             </div>
@@ -283,9 +283,9 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
 
       {/* Loading state */}
       {query.isPending && (
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-12 text-center space-y-4">
-          <Loader2 className="size-8 text-[#BCCCE6] animate-spin mx-auto" />
-          <p className="text-sm font-semibold text-[#97A0B3]">Loading your account settings…</p>
+        <div className="bg-app-surface border border-app-line rounded-3xl p-12 text-center space-y-4">
+          <Loader2 className="size-8 text-app-accent-soft animate-spin mx-auto" />
+          <p className="text-sm font-semibold text-app-mist">Loading your account settings…</p>
         </div>
       )}
       {/* Error state */}
@@ -308,19 +308,19 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           {/* STATE 1: ALREADY CONNECTED - SHOW RICH CUSTOMER INSTAGRAM PROFILE */}
           {isIgConnected ? (
             <div className="space-y-6">
-              <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 space-y-8">
+              <div className="bg-app-surface border border-app-line rounded-3xl p-6 sm:p-8 space-y-8">
                 {/* Customer Profile Banner */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-[#2A3446]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-app-line">
                   <div className="flex items-center gap-4 sm:gap-5">
-                    <div className="p-1 rounded-full bg-[#0B111C] border border-[#2A3446]">
-                      <div className="size-16 sm:size-20 rounded-full bg-[#161F2D] flex items-center justify-center text-white">
-                        <Instagram className="size-8 sm:size-10 text-[#BCCCE6]" />
+                    <div className="p-1 rounded-full bg-app-base border border-app-line">
+                      <div className="size-16 sm:size-20 rounded-full bg-app-surface flex items-center justify-center text-hi">
+                        <Instagram className="size-8 sm:size-10 text-app-accent-soft" />
                       </div>
                     </div>
 
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                        <h3 className="text-xl sm:text-2xl font-black text-hi tracking-tight">
                           @{currentIgHandle}
                         </h3>
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
@@ -328,10 +328,10 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                           Active Meta Sync
                         </span>
                       </div>
-                      <p className="text-xs text-[#97A0B3]">
+                      <p className="text-xs text-app-mist">
                         {form.company || query.data.company_name || query.data.full_name || "Client Brand"} · Business / Creator Account
                       </p>
-                      <p className="text-[11px] text-[#7FA0D6] flex items-center gap-1">
+                      <p className="text-[11px] text-app-accent flex items-center gap-1">
                         <Radio className="size-3 animate-pulse text-emerald-400" />
                         Ready for 9:16 vertical reels, carousels & stories auto-publishing
                       </p>
@@ -344,7 +344,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                       href={`https://www.instagram.com/${currentIgHandle}/`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-4 py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs font-bold hover:bg-white transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+                      className="px-4 py-2.5 rounded-full bg-app-accent-soft text-app-base text-xs font-bold hover:bg-hi transition-all flex items-center gap-2 shadow-sm cursor-pointer"
                     >
                       <Instagram className="size-4" />
                       <span>View Live Profile</span>
@@ -357,7 +357,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                         setIgInput(query.data.instagram_username || "");
                         setIsEditingIg(!isEditingIg);
                       }}
-                      className="px-4 py-2.5 rounded-full bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6] text-xs font-bold text-[#BCCCE6] hover:text-white transition-all flex items-center gap-2 cursor-pointer"
+                      className="px-4 py-2.5 rounded-full bg-app-base border border-app-line hover:border-app-accent text-xs font-bold text-app-accent-soft hover:text-hi transition-all flex items-center gap-2 cursor-pointer"
                     >
                       <Edit3 className="size-3.5" />
                       <span>{isEditingIg ? "Cancel Edit" : "Change Handle"}</span>
@@ -376,24 +376,24 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
 
                 {/* Inline Edit Handle Form */}
                 {isEditingIg && (
-                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl p-5 space-y-3 animate-in fade-in duration-200">
-                    <p className="text-xs font-bold text-white">Update Connected Instagram Handle</p>
+                  <div className="bg-app-base border border-app-line rounded-2xl p-5 space-y-3 animate-in fade-in duration-200">
+                    <p className="text-xs font-bold text-hi">Update Connected Instagram Handle</p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       <div className="relative flex-1">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-[#97A0B3]">@</span>
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-app-mist">@</span>
                         <input
                           type="text"
                           value={igInput.replace(/^@/, "")}
                           onChange={(e) => setIgInput(e.target.value)}
                           placeholder="new_handle"
-                          className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-[#161F2D] border border-[#2A3446] text-white text-sm focus:border-[#7FA0D6] focus:outline-none"
+                          className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-app-surface border border-app-line text-hi text-sm focus:border-app-accent focus:outline-none"
                         />
                       </div>
                       <button
                         type="button"
                         disabled={isConnectingIg}
                         onClick={() => void handleConnectInstagram()}
-                        className="px-6 py-2.5 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-xs hover:bg-white transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                        className="px-6 py-2.5 rounded-xl bg-app-accent-soft text-app-base font-bold text-xs hover:bg-hi transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                       >
                         {isConnectingIg ? <Loader2 className="size-4 animate-spin" /> : "Save Handle"}
                       </button>
@@ -403,35 +403,35 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
 
                 {/* Feature Status Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl p-5 space-y-2">
+                  <div className="bg-app-base border border-app-line rounded-2xl p-5 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">Auto-Publishing</span>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-app-mist">Auto-Publishing</span>
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-emerald-500/15 text-emerald-400">Active</span>
                     </div>
-                    <p className="text-sm font-bold text-white">Direct Meta Pipeline</p>
-                    <p className="text-xs text-[#97A0B3] leading-relaxed">
+                    <p className="text-sm font-bold text-hi">Direct Meta Pipeline</p>
+                    <p className="text-xs text-app-mist leading-relaxed">
                       Approved deliverables are immediately queued and pushed directly to your Instagram feed without manual mobile uploads.
                     </p>
                   </div>
 
-                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl p-5 space-y-2">
+                  <div className="bg-app-base border border-app-line rounded-2xl p-5 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">Creative Formats</span>
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-[#7FA0D6]/20 text-[#BCCCE6]">Optimized</span>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-app-mist">Creative Formats</span>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-app-accent/20 text-app-accent-soft">Optimized</span>
                     </div>
-                    <p className="text-sm font-bold text-white">Safe Margins & Specs</p>
-                    <p className="text-xs text-[#97A0B3] leading-relaxed">
+                    <p className="text-sm font-bold text-hi">Safe Margins & Specs</p>
+                    <p className="text-xs text-app-mist leading-relaxed">
                       Reels (9:16) and Carousels (4:5) are crafted to avoid Instagram UI overlays, captions, and profile badges.
                     </p>
                   </div>
 
-                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl p-5 space-y-2">
+                  <div className="bg-app-base border border-app-line rounded-2xl p-5 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">Live Insights</span>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-app-mist">Live Insights</span>
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-purple-500/15 text-purple-300">Syncing</span>
                     </div>
-                    <p className="text-sm font-bold text-white">Reach & Saves Tracking</p>
-                    <p className="text-xs text-[#97A0B3] leading-relaxed">
+                    <p className="text-sm font-bold text-hi">Reach & Saves Tracking</p>
+                    <p className="text-xs text-app-mist leading-relaxed">
                       Displays organic reach, video completions, and saves on your Creo dashboard as your audience engages.
                     </p>
                   </div>
@@ -442,38 +442,38 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
             /* STATE 2: NOT CONNECTED YET - OFFER TO CONNECT OR CREATE AN INSTAGRAM ID */
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Option 1: Link Existing Handle */}
-              <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between">
+              <div className="bg-app-surface border border-app-line rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between">
                 <div className="space-y-4">
-                  <div className="size-12 rounded-2xl bg-gradient-to-tr from-[#7FA0D6] to-[#BCCCE6] text-[#0B111C] flex items-center justify-center font-black">
-                    <Instagram className="size-6 text-[#0B111C]" />
+                  <div className="size-12 rounded-2xl bg-gradient-to-tr from-app-accent to-app-accent-soft text-app-base flex items-center justify-center font-black">
+                    <Instagram className="size-6 text-app-base" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white tracking-tight">
+                    <h3 className="text-lg font-bold text-hi tracking-tight">
                       Already Have an Instagram Account?
                     </h3>
-                    <p className="text-xs text-[#97A0B3] mt-1 leading-relaxed">
+                    <p className="text-xs text-app-mist mt-1 leading-relaxed">
                       Enter your brand or company handle below to link your profile to Creo's automated publishing pipeline.
                     </p>
                   </div>
 
                   <div className="space-y-2 pt-2">
-                    <label className="text-xs font-bold text-[#BCCCE6] block">
+                    <label className="text-xs font-bold text-app-accent-soft block">
                       Instagram Handle
                     </label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-[#97A0B3]">@</span>
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-app-mist">@</span>
                       <input
                         type="text"
                         value={igInput.replace(/^@/, "")}
                         onChange={(e) => setIgInput(e.target.value)}
                         placeholder="yourbrandname"
-                        className="w-full pl-9 pr-4 py-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
+                        className="w-full pl-9 pr-4 py-3 rounded-xl bg-app-base border border-app-line text-hi text-sm focus:border-app-accent focus:outline-none transition-colors"
                       />
                     </div>
                     {igInput && (
-                      <p className="text-[11px] text-[#97A0B3]">
+                      <p className="text-[11px] text-app-mist">
                         Target profile:{" "}
-                        <span className="text-[#BCCCE6] font-mono">
+                        <span className="text-app-accent-soft font-mono">
                           instagram.com/{igInput.replace(/^@/, "")}
                         </span>
                       </p>
@@ -481,12 +481,12 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                   </div>
                 </div>
 
-                <div className="space-y-3 pt-4 border-t border-[#2A3446]">
+                <div className="space-y-3 pt-4 border-t border-app-line">
                   <button
                     type="button"
                     disabled={isConnectingIg || !igInput.trim()}
                     onClick={() => void handleConnectInstagram()}
-                    className="w-full py-3.5 rounded-full bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-40 flex items-center justify-center gap-2 shadow-lg shadow-[#BCCCE6]/10 cursor-pointer"
+                    className="w-full py-3.5 rounded-full bg-app-accent-soft hover:bg-hi text-app-base font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-40 flex items-center justify-center gap-2 shadow-lg shadow-app-accent-soft/10 cursor-pointer"
                   >
                     {isConnectingIg ? (
                       <>
@@ -500,66 +500,66 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                       </>
                     )}
                   </button>
-                  <p className="text-[10px] text-center text-[#97A0B3]">
+                  <p className="text-[10px] text-center text-app-mist">
                     You can disconnect or update your handle at any time.
                   </p>
                 </div>
               </div>
 
               {/* Option 2: CREATE A NEW INSTAGRAM ID */}
-              <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between">
+              <div className="bg-app-surface border border-app-line rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="size-12 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-[#BCCCE6] flex items-center justify-center shadow-sm">
-                      <Sparkles className="size-6 text-[#7FA0D6]" />
+                    <div className="size-12 rounded-2xl bg-app-base border border-app-line text-app-accent-soft flex items-center justify-center shadow-sm">
+                      <Sparkles className="size-6 text-app-accent" />
                     </div>
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#7FA0D6]/15 text-[#BCCCE6] border border-[#7FA0D6]/30">
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-app-accent/15 text-app-accent-soft border border-app-accent/30">
                       New Account Setup
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-bold text-white tracking-tight">
+                    <h3 className="text-lg font-bold text-hi tracking-tight">
                       Don't Have an Instagram Account Yet?
                     </h3>
-                    <p className="text-xs text-[#97A0B3] mt-1 leading-relaxed">
+                    <p className="text-xs text-app-mist mt-1 leading-relaxed">
                       Creo publishes high-impact content directly to Instagram. If your business doesn't have an Instagram account yet, create one in 2 minutes for free!
                     </p>
                   </div>
 
                   {/* Quick Steps Guide */}
                   <div className="space-y-2.5 pt-2">
-                    <div className="flex items-start gap-3 p-3 rounded-xl bg-[#0B111C] border border-[#2A3446]">
-                      <span className="size-5 rounded-full bg-[#7FA0D6]/20 text-[#BCCCE6] font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-app-base border border-app-line">
+                      <span className="size-5 rounded-full bg-app-accent/20 text-app-accent-soft font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
                         1
                       </span>
                       <div>
-                        <p className="text-xs font-bold text-white">Create Account on Instagram</p>
-                        <p className="text-[11px] text-[#97A0B3]">
+                        <p className="text-xs font-bold text-hi">Create Account on Instagram</p>
+                        <p className="text-[11px] text-app-mist">
                           Click the button below to register with your company email or phone.
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 p-3 rounded-xl bg-[#0B111C] border border-[#2A3446]">
-                      <span className="size-5 rounded-full bg-[#7FA0D6]/20 text-[#BCCCE6] font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-app-base border border-app-line">
+                      <span className="size-5 rounded-full bg-app-accent/20 text-app-accent-soft font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
                         2
                       </span>
                       <div>
-                        <p className="text-xs font-bold text-white">Switch to Professional / Creator</p>
-                        <p className="text-[11px] text-[#97A0B3]">
+                        <p className="text-xs font-bold text-hi">Switch to Professional / Creator</p>
+                        <p className="text-[11px] text-app-mist">
                           In the Instagram app: Settings ➔ Account type ➔ Switch to Professional (Free & enables auto-publishing).
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 p-3 rounded-xl bg-[#0B111C] border border-[#2A3446]">
-                      <span className="size-5 rounded-full bg-[#7FA0D6]/20 text-[#BCCCE6] font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-app-base border border-app-line">
+                      <span className="size-5 rounded-full bg-app-accent/20 text-app-accent-soft font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
                         3
                       </span>
                       <div>
-                        <p className="text-xs font-bold text-white">Connect Your Handle Here</p>
-                        <p className="text-[11px] text-[#97A0B3]">
+                        <p className="text-xs font-bold text-hi">Connect Your Handle Here</p>
+                        <p className="text-[11px] text-app-mist">
                           Once created, enter your new handle in the box on the left to start publishing.
                         </p>
                       </div>
@@ -568,18 +568,18 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                 </div>
 
                 {/* Direct button to Instagram account registration */}
-                <div className="space-y-3 pt-6 border-t border-[#2A3446]">
+                <div className="space-y-3 pt-6 border-t border-app-line">
                   <a
                     href="https://www.instagram.com/accounts/emailsignup/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full py-3.5 rounded-full bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                    className="w-full py-3.5 rounded-full bg-app-accent-soft hover:bg-hi text-app-base font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
                   >
                     <Instagram className="size-4" />
                     <span>Create Instagram Account ↗</span>
                     <ExternalLink className="size-3.5" />
                   </a>
-                  <p className="text-[10px] text-center text-[#97A0B3]">
+                  <p className="text-[10px] text-center text-app-mist">
                     Opens official Instagram registration page in a new secure tab.
                   </p>
                 </div>
@@ -592,23 +592,23 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
       {/* TAB 2: PROFILE & COMPANY SETTINGS */}
       {query.data && activeTab === "account" && (
         <section className="space-y-6 animate-in fade-in duration-300">
-          <form onSubmit={save} className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-[#2A3446]">
+          <form onSubmit={save} className="bg-app-surface border border-app-line rounded-3xl p-6 sm:p-8 space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-app-line">
               <div>
-                <h2 className="text-xl font-bold text-white tracking-tight">Personal & Company Information</h2>
-                <p className="text-xs text-[#97A0B3] mt-0.5">
+                <h2 className="text-xl font-bold text-hi tracking-tight">Personal & Company Information</h2>
+                <p className="text-xs text-app-mist mt-0.5">
                   Update the primary contact info and company name associated with your Creo workspace.
                 </p>
               </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#0B111C] border border-[#2A3446] text-[#BCCCE6]">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-app-base border border-app-line text-app-accent-soft">
                 Client Profile
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <label className="space-y-2">
-                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-2">
-                  <User className="size-3.5 text-[#7FA0D6]" />
+                <span className="text-xs font-bold text-app-accent-soft flex items-center gap-2">
+                  <User className="size-3.5 text-app-accent" />
                   Full Name
                 </span>
                 <input
@@ -616,13 +616,13 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="Your full name"
-                  className="w-full px-4 py-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-app-base border border-app-line text-hi text-sm focus:border-app-accent focus:outline-none transition-colors"
                 />
               </label>
 
               <label className="space-y-2">
-                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-2">
-                  <Building2 className="size-3.5 text-[#7FA0D6]" />
+                <span className="text-xs font-bold text-app-accent-soft flex items-center gap-2">
+                  <Building2 className="size-3.5 text-app-accent" />
                   Company / Organization
                 </span>
                 <input
@@ -630,13 +630,13 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                   value={form.company}
                   onChange={(e) => setForm({ ...form, company: e.target.value })}
                   placeholder="e.g. Acme Studio"
-                  className="w-full px-4 py-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-app-base border border-app-line text-hi text-sm focus:border-app-accent focus:outline-none transition-colors"
                 />
               </label>
 
               <label className="space-y-2">
-                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-2">
-                  <Phone className="size-3.5 text-[#7FA0D6]" />
+                <span className="text-xs font-bold text-app-accent-soft flex items-center gap-2">
+                  <Phone className="size-3.5 text-app-accent" />
                   Phone Number
                 </span>
                 <input
@@ -644,16 +644,16 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="+1 (555) 000-0000"
-                  className="w-full px-4 py-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-app-base border border-app-line text-hi text-sm focus:border-app-accent focus:outline-none transition-colors"
                 />
               </label>
 
               <div className="space-y-2">
-                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-2">
-                  <Mail className="size-3.5 text-[#7FA0D6]" />
+                <span className="text-xs font-bold text-app-accent-soft flex items-center gap-2">
+                  <Mail className="size-3.5 text-app-accent" />
                   Email Address
                 </span>
-                <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-[#0B111C]/80 border border-[#2A3446] text-[#97A0B3] text-sm">
+                <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-app-base/80 border border-app-line text-app-mist text-sm">
                   <span>{query.data.email || user?.email || "Not provided"}</span>
                   <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400">
                     Verified
@@ -662,14 +662,14 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
               </div>
             </div>
 
-            <div className="pt-4 border-t border-[#2A3446] flex items-center justify-between">
-              <p className="text-xs text-[#97A0B3]">
+            <div className="pt-4 border-t border-app-line flex items-center justify-between">
+              <p className="text-xs text-app-mist">
                 Changes apply immediately to your team communications and invoice records.
               </p>
               <button
                 type="submit"
                 disabled={busy}
-                className="px-6 py-2.5 rounded-full bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-xs transition-all disabled:opacity-50 cursor-pointer shadow-sm"
+                className="px-6 py-2.5 rounded-full bg-app-accent-soft hover:bg-hi text-app-base font-bold text-xs transition-all disabled:opacity-50 cursor-pointer shadow-sm"
               >
                 {busy ? "Saving Changes…" : "Save Changes"}
               </button>
@@ -683,28 +683,28 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
         <section className="space-y-6 animate-in fade-in duration-300">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Password Sign-in Card */}
-            <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between">
+            <div className="bg-app-surface border border-app-line rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="size-12 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] flex items-center justify-center">
+                <div className="size-12 rounded-2xl bg-app-base border border-app-line text-app-accent flex items-center justify-center">
                   <KeyRound className="size-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white tracking-tight">Creo Password Sign-In</h3>
-                  <p className="text-xs text-[#97A0B3] mt-1 leading-relaxed">
+                  <h3 className="text-lg font-bold text-hi tracking-tight">Creo Password Sign-In</h3>
+                  <p className="text-xs text-app-mist mt-1 leading-relaxed">
                     Set a standalone password for your email to log in directly without Google OAuth.
                   </p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-[#97A0B3] space-y-1">
-                  <p className="font-bold text-white">Google SSO Connected</p>
+                <div className="p-3.5 rounded-xl bg-app-base border border-app-line text-xs text-app-mist space-y-1">
+                  <p className="font-bold text-hi">Google SSO Connected</p>
                   <p>You can continue using Google Single Sign-On with {query.data.email || user?.email}.</p>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#2A3446]">
+              <div className="pt-4 border-t border-app-line">
                 <button
                   type="button"
                   onClick={() => setRecoveryOpen(true)}
-                  className="w-full py-3 rounded-full bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+                  className="w-full py-3 rounded-full bg-app-accent-soft hover:bg-hi text-app-base font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-sm"
                 >
                   Set or Reset Password
                 </button>
@@ -712,21 +712,21 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
             </div>
 
             {/* Two-Factor Authentication Card */}
-            <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between">
+            <div className="bg-app-surface border border-app-line rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="size-12 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] flex items-center justify-center">
+                <div className="size-12 rounded-2xl bg-app-base border border-app-line text-app-accent flex items-center justify-center">
                   <ShieldAlert className="size-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white tracking-tight">Two-Factor Authentication</h3>
-                  <p className="text-xs text-[#97A0B3] mt-1 leading-relaxed">
+                  <h3 className="text-lg font-bold text-hi tracking-tight">Two-Factor Authentication</h3>
+                  <p className="text-xs text-app-mist mt-1 leading-relaxed">
                     Add an extra layer of security when changing billing cards or modifying account credentials.
                   </p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-between text-xs">
+                <div className="p-3.5 rounded-xl bg-app-base border border-app-line flex items-center justify-between text-xs">
                   <div>
-                    <p className="font-bold text-white">Protection Status</p>
-                    <p className="text-[#97A0B3]">
+                    <p className="font-bold text-hi">Protection Status</p>
+                    <p className="text-app-mist">
                       {query.data?.two_fa_enabled ? "Two-factor verification enabled" : "Currently not enforced"}
                     </p>
                   </div>
@@ -734,7 +734,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                     className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                       query.data?.two_fa_enabled
                         ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                        : "bg-slate-800 text-[#97A0B3] border border-[#2A3446]"
+                        : "bg-slate-800 text-app-mist border border-app-line"
                     }`}
                   >
                     {query.data?.two_fa_enabled ? "Active" : "Disabled"}
@@ -742,7 +742,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#2A3446]">
+              <div className="pt-4 border-t border-app-line">
                 <button
                   type="button"
                   disabled={twoFaBusy}
@@ -750,7 +750,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                   className={`w-full py-3 rounded-full font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
                     query.data?.two_fa_enabled
                       ? "bg-rose-500/15 border border-rose-500/30 text-rose-300 hover:bg-rose-500/25"
-                      : "bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6] text-white"
+                      : "bg-app-base border border-app-line hover:border-app-accent text-hi"
                   }`}
                 >
                   {twoFaBusy ? (
@@ -783,13 +783,13 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
             onClick={() => setMessage("")}
           >
             <div
-              className="bg-[#161F2D] border border-[#2A3446] rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl relative animate-in zoom-in-95 duration-200 m-auto"
+              className="bg-app-surface border border-app-line rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl relative animate-in zoom-in-95 duration-200 m-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 type="button"
                 onClick={() => setMessage("")}
-                className="absolute top-4 right-4 size-7 rounded-lg border border-[#2A3446] bg-[#0B111C] flex items-center justify-center text-[#97A0B3] hover:text-white transition-colors cursor-pointer"
+                className="absolute top-4 right-4 size-7 rounded-lg border border-app-line bg-app-base flex items-center justify-center text-app-mist hover:text-hi transition-colors cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -799,14 +799,14 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
               </div>
 
               <div className="space-y-1.5">
-                <h3 className="text-lg font-bold text-white tracking-tight">Success</h3>
-                <p className="text-xs text-[#97A0B3] leading-relaxed">{message}</p>
+                <h3 className="text-lg font-bold text-hi tracking-tight">Success</h3>
+                <p className="text-xs text-app-mist leading-relaxed">{message}</p>
               </div>
 
               <button
                 type="button"
                 onClick={() => setMessage("")}
-                className="w-full py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] font-bold text-xs hover:bg-white transition-all shadow-sm active:scale-95 cursor-pointer"
+                className="w-full py-2.5 rounded-full bg-app-accent-soft text-app-base font-bold text-xs hover:bg-hi transition-all shadow-sm active:scale-95 cursor-pointer"
               >
                 Done
               </button>
@@ -823,13 +823,13 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
             onClick={() => setErrorMessage("")}
           >
             <div
-              className="bg-[#161F2D] border border-rose-500/30 rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl relative animate-in zoom-in-95 duration-200 m-auto"
+              className="bg-app-surface border border-rose-500/30 rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl relative animate-in zoom-in-95 duration-200 m-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 type="button"
                 onClick={() => setErrorMessage("")}
-                className="absolute top-4 right-4 size-7 rounded-lg border border-[#2A3446] bg-[#0B111C] flex items-center justify-center text-[#97A0B3] hover:text-white transition-colors cursor-pointer"
+                className="absolute top-4 right-4 size-7 rounded-lg border border-app-line bg-app-base flex items-center justify-center text-app-mist hover:text-hi transition-colors cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -839,7 +839,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
               </div>
 
               <div className="space-y-1.5">
-                <h3 className="text-lg font-bold text-white tracking-tight">Attention</h3>
+                <h3 className="text-lg font-bold text-hi tracking-tight">Attention</h3>
                 <p className="text-xs text-rose-200 leading-relaxed">{errorMessage}</p>
               </div>
 
@@ -863,7 +863,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
             onClick={() => setConfirmDisconnectModal(false)}
           >
             <div
-              className="bg-[#161F2D] border border-rose-500/30 rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl relative animate-in zoom-in-95 duration-200 m-auto"
+              className="bg-app-surface border border-rose-500/30 rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl relative animate-in zoom-in-95 duration-200 m-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="size-14 rounded-full bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400">
@@ -871,9 +871,9 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
               </div>
 
               <div className="space-y-1.5">
-                <h3 className="text-lg font-bold text-white tracking-tight">Disconnect Instagram?</h3>
-                <p className="text-xs text-[#97A0B3] leading-relaxed">
-                  Disconnecting <span className="text-white font-bold">@{currentIgHandle}</span> will pause automated publishing of approved reels and carousels.
+                <h3 className="text-lg font-bold text-hi tracking-tight">Disconnect Instagram?</h3>
+                <p className="text-xs text-app-mist leading-relaxed">
+                  Disconnecting <span className="text-hi font-bold">@{currentIgHandle}</span> will pause automated publishing of approved reels and carousels.
                 </p>
               </div>
 
@@ -881,7 +881,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                 <button
                   type="button"
                   onClick={() => setConfirmDisconnectModal(false)}
-                  className="flex-1 py-2.5 rounded-full bg-[#0B111C] border border-[#2A3446] text-white font-bold text-xs hover:bg-[#1E293B] transition-all cursor-pointer"
+                  className="flex-1 py-2.5 rounded-full bg-app-base border border-app-line text-hi font-bold text-xs hover:bg-app-line-soft transition-all cursor-pointer"
                 >
                   Cancel
                 </button>

@@ -209,7 +209,7 @@ export function ConfirmDialog({
       case "warning":
         return <AlertTriangle className="size-5 text-amber-600" />;
       case "info":
-        return <AlertCircle className="size-5 text-[#7FA0D6]" />;
+        return <AlertCircle className="size-5 text-app-accent" />;
       case "danger":
       default:
         return <AlertTriangle className="size-5 text-rose-600" />;
@@ -223,7 +223,7 @@ export function ConfirmDialog({
       case "warning":
         return "bg-amber-500/10 border-amber-500/20 text-amber-300";
       case "info":
-        return "bg-[#7FA0D6]/10 border-[#7FA0D6]/20 text-[#BCCCE6]";
+        return "bg-app-accent/10 border-app-accent/20 text-app-accent-soft";
       case "danger":
       default:
         return "bg-rose-500/10 border-rose-500/20 text-rose-300";
@@ -233,20 +233,20 @@ export function ConfirmDialog({
   const getConfirmButtonStyle = () => {
     switch (tone) {
       case "success":
-        return "bg-[#BCCCE6] text-[#0B111C] enabled:hover:bg-[#D2DDF0] shadow-md";
+        return "bg-app-accent-soft text-app-base enabled:hover:bg-app-ink-3 shadow-md";
       case "warning":
-        return "bg-[#D8BF9B] text-[#0B111C] enabled:hover:bg-[#E8D3B5] shadow-md";
+        return "bg-app-warm text-app-base enabled:hover:bg-app-warm shadow-md";
       case "info":
-        return "bg-[#BCCCE6] text-[#0B111C] enabled:hover:bg-[#D2DDF0] shadow-md";
+        return "bg-app-accent-soft text-app-base enabled:hover:bg-app-ink-3 shadow-md";
       case "danger":
       default:
-        return "bg-[#D8BF9B] text-[#0B111C] enabled:hover:bg-[#E8D3B5] shadow-md";
+        return "bg-app-warm text-app-base enabled:hover:bg-app-warm shadow-md";
     }
   };
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[99999] flex min-h-dvh items-center justify-center overflow-y-auto bg-[#05080E]/75 p-4 backdrop-blur-md transition-opacity duration-200"
+      className="fixed inset-0 z-[99999] flex min-h-dvh items-center justify-center overflow-y-auto bg-app-void/75 p-4 backdrop-blur-md transition-opacity duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isProcessing) {
           onClose();
@@ -254,7 +254,7 @@ export function ConfirmDialog({
       }}
     >
       <div
-        className="relative w-full max-w-md rounded-3xl border border-[#2A3446] bg-[#161F2D] p-6 text-left text-white shadow-2xl shadow-black/40 transition-all duration-200 scale-100"
+        className="relative w-full max-w-md rounded-3xl border border-app-line bg-app-surface p-6 text-left text-hi shadow-2xl shadow-black/40 transition-all duration-200 scale-100"
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
@@ -264,7 +264,7 @@ export function ConfirmDialog({
           type="button"
           onClick={onClose}
           disabled={isProcessing}
-          className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full bg-[#0B111C] text-[#97A0B3] transition-colors hover:bg-[#222D3E] hover:text-white cursor-pointer"
+          className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full bg-app-base text-app-mist transition-colors hover:bg-app-line-soft hover:text-hi cursor-pointer"
           aria-label="Close dialog"
         >
           <X className="size-4" />
@@ -281,13 +281,13 @@ export function ConfirmDialog({
           <div className="flex-1 pr-4">
             <h3
               id="confirm-dialog-title"
-              className="text-base sm:text-lg font-black text-white tracking-tight leading-snug"
+              className="text-base sm:text-lg font-black text-hi tracking-tight leading-snug"
             >
               {title}
             </h3>
 
             {description && (
-              <p className="text-xs sm:text-sm text-[#97A0B3] mt-1.5 leading-relaxed">
+              <p className="text-xs sm:text-sm text-app-mist mt-1.5 leading-relaxed">
                 {description}
               </p>
             )}
@@ -304,13 +304,13 @@ export function ConfirmDialog({
                 ? "bg-amber-950/30 border-amber-900/60"
                 : tone === "success"
                 ? "bg-emerald-950/30 border-emerald-900/60"
-                : "bg-[#0B111C] border-[#2A3446]"
+                : "bg-app-base border-app-line"
             }`}
           >
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-app-mist mb-2">
               Action Summary & Impacts:
             </p>
-            <ul className="space-y-1.5 text-xs text-[#BCCCE6]">
+            <ul className="space-y-1.5 text-xs text-app-accent-soft">
               {details.map((detail, idx) => (
                 <li key={idx} className="flex items-start gap-2">
                   <span
@@ -321,7 +321,7 @@ export function ConfirmDialog({
                         ? "bg-amber-500"
                         : tone === "success"
                         ? "bg-emerald-500"
-                        : "bg-[#7FA0D6]"
+                        : "bg-app-accent"
                     }`}
                   />
                   <span className="leading-snug">{detail}</span>
@@ -338,7 +338,7 @@ export function ConfirmDialog({
               type="button"
               onClick={onClose}
               disabled={isProcessing}
-              className="rounded-xl border border-[#2A3446] bg-[#0B111C] min-h-11 px-4 py-2 text-sm font-bold text-[#BCCCE6] transition-all hover:bg-[#222D3E] active:scale-95 cursor-pointer"
+              className="rounded-xl border border-app-line bg-app-base min-h-11 px-4 py-2 text-sm font-bold text-app-accent-soft transition-all hover:bg-app-line-soft active:scale-95 cursor-pointer"
             >
               {cancelText}
             </button>

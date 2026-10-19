@@ -98,7 +98,7 @@ export function AdminSupportTicketsPage() {
           client: clientName,
           tier: st.tier || "Active Retainer",
           email: clientEmail,
-          avatarBg: "bg-[#0B111C]",
+          avatarBg: "bg-app-base",
           clientInitial,
           issueTitle: st.title || st.subject || "Support Inquiry",
           issueDesc: st.description || "",
@@ -120,7 +120,7 @@ export function AdminSupportTicketsPage() {
         client: lt.client || "Client Account",
         tier: lt.tier || "Active Retainer",
         email: lt.email || "client@creo.agency",
-        avatarBg: lt.avatarBg || "bg-[#0B111C]",
+        avatarBg: lt.avatarBg || "bg-app-base",
         issueTitle: lt.issueTitle || lt.title || "Support Request",
         issueDesc: lt.issueDesc || lt.description || "",
         priority: lt.priority || "Urgent",
@@ -269,7 +269,7 @@ export function AdminSupportTicketsPage() {
   const urgentCount = tickets.filter((t) => t.priority === "Urgent" || t.priority === "High").length;
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-app-base flex flex-col">
       <AdminTopHeader activeTab="Support" />
 
       <motion.main
@@ -281,31 +281,31 @@ export function AdminSupportTicketsPage() {
         {/* Top 4 Summary Cards Row (Symmetrical 2x2 on mobile, 4 on desktop) */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           {/* Card 1: Open Tickets */}
-          <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-3 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover-card-innovative">
+          <div className="bg-app-surface border border-app-line/90 rounded-2xl p-3 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover-card-innovative">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] truncate">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-app-mist truncate">
                 Active Tickets
               </span>
-              <div className="size-6 sm:size-8 rounded-xl bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 flex items-center justify-center text-[#7FA0D6] shrink-0">
+              <div className="size-6 sm:size-8 rounded-xl bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent shrink-0">
                 <Inbox className="size-3.5 sm:size-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-1.5 sm:gap-2">
-              <span className="text-xl sm:text-3xl font-black text-white">{openCount}</span>
-              <span className="text-[11px] sm:text-xs font-bold text-[#7FA0D6] truncate">in triage</span>
+              <span className="text-xl sm:text-3xl font-black text-hi">{openCount}</span>
+              <span className="text-[11px] sm:text-xs font-bold text-app-accent truncate">in triage</span>
             </div>
             <div className="pt-0.5">
-              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#BCCCE6] text-[10px] sm:text-[11px] font-bold border border-[#7FA0D6]/30 truncate">
-                <span className="size-1.5 rounded-full bg-[#BCCCE6] animate-pulse shrink-0" />
+              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-app-accent/15 text-app-accent-soft text-[10px] sm:text-[11px] font-bold border border-app-accent/30 truncate">
+                <span className="size-1.5 rounded-full bg-app-accent-soft animate-pulse shrink-0" />
                 Live SLA Track
               </span>
             </div>
           </div>
 
           {/* Card 2: Resolved Today */}
-          <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-3 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover-card-innovative">
+          <div className="bg-app-surface border border-app-line/90 rounded-2xl p-3 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover-card-innovative">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] truncate">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-app-mist truncate">
                 Resolved Today
               </span>
               <div className="size-6 sm:size-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
@@ -313,8 +313,8 @@ export function AdminSupportTicketsPage() {
               </div>
             </div>
             <div className="flex items-baseline gap-1.5 sm:gap-2">
-              <span className="text-xl sm:text-3xl font-black text-white">{resolvedCount + 37}</span>
-              <span className="text-[11px] sm:text-xs font-semibold text-[#97A0B3] truncate">closed</span>
+              <span className="text-xl sm:text-3xl font-black text-hi">{resolvedCount + 37}</span>
+              <span className="text-[11px] sm:text-xs font-semibold text-app-mist truncate">closed</span>
             </div>
             <div className="pt-0.5">
               <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] sm:text-[11px] font-bold border border-emerald-500/30 truncate">
@@ -325,17 +325,17 @@ export function AdminSupportTicketsPage() {
           </div>
 
           {/* Card 3: Response Speed */}
-          <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-3 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover-card-innovative">
+          <div className="bg-app-surface border border-app-line/90 rounded-2xl p-3 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover-card-innovative">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] truncate">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-app-mist truncate">
                 Avg Response
               </span>
-              <div className="size-6 sm:size-8 rounded-xl bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 flex items-center justify-center text-[#7FA0D6] shrink-0">
+              <div className="size-6 sm:size-8 rounded-xl bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent shrink-0">
                 <Clock className="size-3.5 sm:size-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-1.5 sm:gap-2">
-              <span className="text-xl sm:text-3xl font-black text-white">8.2m</span>
+              <span className="text-xl sm:text-3xl font-black text-hi">8.2m</span>
               <span className="text-[11px] sm:text-xs font-bold text-emerald-400 truncate">fast</span>
             </div>
             <div className="pt-0.5">
@@ -347,9 +347,9 @@ export function AdminSupportTicketsPage() {
           </div>
 
           {/* Card 4: Urgent & Critical */}
-          <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-3 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover-card-innovative">
+          <div className="bg-app-surface border border-app-line/90 rounded-2xl p-3 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover-card-innovative">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] truncate">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-app-mist truncate">
                 Urgent / High
               </span>
               <div className="size-6 sm:size-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
@@ -357,8 +357,8 @@ export function AdminSupportTicketsPage() {
               </div>
             </div>
             <div className="flex items-baseline gap-1.5 sm:gap-2">
-              <span className="text-xl sm:text-3xl font-black text-white">{urgentCount}</span>
-              <span className="text-[11px] sm:text-xs font-semibold text-[#97A0B3] truncate">high prio</span>
+              <span className="text-xl sm:text-3xl font-black text-hi">{urgentCount}</span>
+              <span className="text-[11px] sm:text-xs font-semibold text-app-mist truncate">high prio</span>
             </div>
             <div className="pt-0.5">
               <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400 text-[10px] sm:text-[11px] font-bold border border-rose-500/30 truncate">
@@ -370,16 +370,16 @@ export function AdminSupportTicketsPage() {
         </div>
 
         {/* 21st.dev Responsive Filter Rail */}
-        <div className="bg-[#161F2D] rounded-2xl p-3 sm:p-4 border border-[#2A3446] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="bg-app-surface rounded-2xl p-3 sm:p-4 border border-app-line shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Status Tabs (Touch-friendly horizontal scroll) */}
-          <div className="flex items-center gap-1 bg-[#0B111C] p-1 rounded-xl border border-[#2A3446] overflow-x-auto no-scrollbar shrink-0">
+          <div className="flex items-center gap-1 bg-app-base p-1 rounded-xl border border-app-line overflow-x-auto no-scrollbar shrink-0">
             <button
               type="button"
               onClick={() => setStatusFilter("active")}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                 statusFilter === "active"
-                  ? "bg-[#BCCCE6] text-[#0B111C] shadow-xs font-black"
-                  : "text-[#97A0B3] hover:text-white"
+                  ? "bg-app-accent-soft text-app-base shadow-xs font-black"
+                  : "text-app-mist hover:text-white"
               }`}
             >
               Active ({openCount})
@@ -389,8 +389,8 @@ export function AdminSupportTicketsPage() {
               onClick={() => setStatusFilter("closed")}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                 statusFilter === "closed"
-                  ? "bg-[#BCCCE6] text-[#0B111C] shadow-xs font-black"
-                  : "text-[#97A0B3] hover:text-white"
+                  ? "bg-app-accent-soft text-app-base shadow-xs font-black"
+                  : "text-app-mist hover:text-white"
               }`}
             >
               Closed Archive ({resolvedCount})
@@ -401,19 +401,19 @@ export function AdminSupportTicketsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 max-w-2xl justify-end">
             {/* Search Input */}
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#97A0B3]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-app-mist" />
               <input
                 type="text"
                 placeholder="Search ticket #, client, subject..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-medium text-white placeholder:text-[#97A0B3] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]/30 focus:border-[#7FA0D6] transition-all"
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-app-base border border-app-line text-xs font-medium text-hi placeholder:text-app-mist focus:outline-none focus:ring-2 focus:ring-app-accent/30 focus:border-app-accent transition-all"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white p-0.5 cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-app-mist hover:text-hi p-0.5 cursor-pointer"
                   aria-label="Clear search"
                 >
                   <X className="size-3" />
@@ -423,7 +423,7 @@ export function AdminSupportTicketsPage() {
 
             {/* Priority Selector Pills */}
             <div className="flex items-center gap-1 overflow-x-auto no-scrollbar shrink-0">
-              <span className="text-[10px] font-extrabold uppercase text-[#97A0B3] px-1 hidden lg:inline">Priority:</span>
+              <span className="text-[10px] font-extrabold uppercase text-app-mist px-1 hidden lg:inline">Priority:</span>
               {(["all", "Urgent", "High", "Medium"] as const).map((prio) => (
                 <button
                   key={prio}
@@ -435,8 +435,8 @@ export function AdminSupportTicketsPage() {
                         ? "bg-rose-500/20 text-rose-300 border border-rose-500/50"
                         : prio === "High"
                         ? "bg-amber-500/20 text-amber-300 border border-amber-500/50"
-                        : "bg-[#7FA0D6]/20 text-[#BCCCE6] border border-[#7FA0D6]/50"
-                      : "bg-[#0B111C] text-[#97A0B3] hover:text-white border border-[#2A3446]"
+                        : "bg-app-accent/20 text-app-accent-soft border border-app-accent/50"
+                      : "bg-app-base text-app-mist hover:text-hi border border-app-line"
                   }`}
                 >
                   {prio === "all" ? "All" : prio}
@@ -449,7 +449,7 @@ export function AdminSupportTicketsPage() {
         {/* Mobile Tickets Card List (< md) */}
         <div className="block md:hidden space-y-3">
           {filteredTickets.length === 0 ? (
-            <div className="bg-[#161F2D] rounded-2xl p-8 border border-[#2A3446] text-center text-[#97A0B3] text-xs font-bold">
+            <div className="bg-app-surface rounded-2xl p-8 border border-app-line text-center text-app-mist text-xs font-bold">
               No tickets matching the selected filters.
             </div>
           ) : (
@@ -457,21 +457,21 @@ export function AdminSupportTicketsPage() {
               <div
                 key={t.id}
                 onClick={() => navigate(`/admin/support/tickets/${t.rawId || t.id}`)}
-                className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/90 shadow-2xs space-y-3 hover:border-blue-300 transition-all cursor-pointer active:scale-[0.99]"
+                className="bg-app-surface rounded-2xl p-4 border border-app-line/90 shadow-2xs space-y-3 hover:border-blue-300 transition-all cursor-pointer active:scale-[0.99]"
               >
                 {/* Header: ID + Priority + Status */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-xs text-[#97A0B3]">#{t.id}</span>
+                    <span className="font-mono font-bold text-xs text-app-mist">#{t.id}</span>
                     <span
                       className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${
                         t.priority === "Urgent"
-                          ? "bg-blue-900/40 text-[#BCCCE6] border border-blue-500/30"
+                          ? "bg-blue-900/40 text-app-accent-soft border border-blue-500/30"
                           : t.priority === "High"
-                          ? "bg-blue-500/20 text-[#BCCCE6] border border-blue-500/30"
+                          ? "bg-blue-500/20 text-app-accent-soft border border-blue-500/30"
                           : t.priority === "Medium"
-                          ? "bg-[#7FA0D6]/20 text-[#7FA0D6]"
-                          : "bg-[#161F2D] text-[#F1F5F9]"
+                          ? "bg-app-accent/20 text-app-accent"
+                          : "bg-app-surface text-app-ink-2"
                       }`}
                     >
                       {t.priority}
@@ -480,12 +480,12 @@ export function AdminSupportTicketsPage() {
                   <span
                     className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                       t.status === "Open"
-                        ? "bg-blue-500/15 text-[#BCCCE6] border-blue-500/30"
+                        ? "bg-blue-500/15 text-app-accent-soft border-blue-500/30"
                         : t.status === "In Progress"
-                        ? "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30"
+                        ? "bg-app-accent/15 text-app-accent border-app-accent/30"
                         : t.status === "Pending Client"
-                        ? "bg-blue-500/20 text-[#BCCCE6] border-blue-500/30"
-                        : "bg-blue-600/15 text-[#BCCCE6] border-blue-500/30"
+                        ? "bg-blue-500/20 text-app-accent-soft border-blue-500/30"
+                        : "bg-blue-600/15 text-app-accent-soft border-blue-500/30"
                     }`}
                   >
                     {t.status}
@@ -495,34 +495,34 @@ export function AdminSupportTicketsPage() {
                 {/* Client info */}
                 <div className="flex items-center gap-2.5">
                   <div
-                    className={`size-8 rounded-xl ${t.avatarBg} text-white font-black text-xs flex items-center justify-center shrink-0`}
+                    className={`size-8 rounded-xl ${t.avatarBg} text-hi font-black text-xs flex items-center justify-center shrink-0`}
                   >
                     {t.clientInitial || t.client[0]}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-xs text-white truncate">{t.client}</span>
-                      <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold bg-[#7FA0D6]/20 text-[#7FA0D6] uppercase">
+                      <span className="font-bold text-xs text-hi truncate">{t.client}</span>
+                      <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold bg-app-accent/20 text-app-accent uppercase">
                         {t.tier}
                       </span>
                     </div>
-                    <div className="text-[10px] text-[#97A0B3] font-mono truncate">{t.email}</div>
+                    <div className="text-[10px] text-app-mist font-mono truncate">{t.email}</div>
                   </div>
                 </div>
 
                 {/* Issue Details */}
                 <div className="space-y-1">
-                  <h4 className="font-bold text-xs text-white leading-snug">{t.issueTitle}</h4>
-                  <p className="text-[11px] text-[#97A0B3] line-clamp-2">{t.issueDesc}</p>
+                  <h4 className="font-bold text-xs text-hi leading-snug">{t.issueTitle}</h4>
+                  <p className="text-[11px] text-app-mist line-clamp-2">{t.issueDesc}</p>
                 </div>
 
                 {/* Footer: Agent & Quick Actions */}
-                <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] gap-2">
+                <div className="flex items-center justify-between pt-2 border-t border-app-line gap-2">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <div className="size-6 rounded-full bg-slate-800 text-white font-bold text-[9px] flex items-center justify-center shrink-0">
+                    <div className="size-6 rounded-full bg-slate-800 text-hi font-bold text-[9px] flex items-center justify-center shrink-0">
                       {t.agentInitials}
                     </div>
-                    <span className="text-[10px] font-bold text-[#F1F5F9] truncate">{t.agent}</span>
+                    <span className="text-[10px] font-bold text-app-ink-2 truncate">{t.agent}</span>
                   </div>
 
                     <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -531,8 +531,8 @@ export function AdminSupportTicketsPage() {
                         onClick={() => handlePrimaryAction(t)}
                         className={`px-3 py-1.5 rounded-xl text-white text-[11px] font-bold transition-all cursor-pointer shadow-xs active:scale-95 ${
                           t.status === "Resolved"
-                            ? "bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-[#F1F5F9]"
-                            : "bg-[#7FA0D6] hover:bg-blue-600 text-white"
+                            ? "bg-app-surface hover:bg-app-line border border-app-line text-app-ink-2"
+                            : "bg-app-accent hover:bg-blue-600 text-white"
                         }`}
                       >
                         {t.primaryAction}
@@ -540,7 +540,7 @@ export function AdminSupportTicketsPage() {
                       <button
                         type="button"
                         onClick={() => navigate(`/admin/support/tickets/${t.rawId || t.id}`)}
-                        className="px-2.5 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] text-[11px] font-bold transition-colors cursor-pointer"
+                        className="px-2.5 py-1.5 rounded-xl bg-app-base hover:bg-app-surface border border-app-line text-app-ink-2 text-[11px] font-bold transition-colors cursor-pointer"
                       >
                         {t.secondaryAction}
                       </button>
@@ -552,10 +552,10 @@ export function AdminSupportTicketsPage() {
         </div>
 
         {/* Desktop Tickets Table (hidden on md) */}
-        <div className="hidden md:block bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl shadow-xs overflow-hidden">
+        <div className="hidden md:block bg-app-surface border border-app-line/90 rounded-2xl shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#0B111C]/80 border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
+              <thead className="bg-app-base/80 border-b border-app-line text-[11px] font-extrabold uppercase tracking-wider text-app-mist">
                 <tr>
                   <th className="px-4 py-3.5 w-12 text-center">
                     <input
@@ -563,7 +563,7 @@ export function AdminSupportTicketsPage() {
                       checked={selectedIds.length === filteredTickets.length && filteredTickets.length > 0}
                       onChange={toggleSelectAll}
                       aria-label="Select All Tickets"
-                      className="rounded border-[#2A3446] text-[#7FA0D6] focus:ring-blue-500"
+                      className="rounded border-app-line text-app-accent focus:ring-blue-500"
                     />
                   </th>
                   <th className="px-4 py-3.5">ID</th>
@@ -574,10 +574,10 @@ export function AdminSupportTicketsPage() {
                   <th className="px-4 py-3.5 text-right">Quick Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#2A3446] font-medium">
+              <tbody className="divide-y divide-app-line font-medium">
                 {filteredTickets.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-12 text-[#97A0B3] font-medium">
+                    <td colSpan={7} className="text-center py-12 text-app-mist font-medium">
                       No tickets matching the selected filters.
                     </td>
                   </tr>
@@ -585,7 +585,7 @@ export function AdminSupportTicketsPage() {
                   filteredTickets.map((t) => (
                     <tr
                       key={t.id}
-                      className="hover:bg-[#0B111C]/80 transition-colors group cursor-pointer"
+                      className="hover:bg-app-base/80 transition-colors group cursor-pointer"
                       onClick={() => navigate(`/admin/support/tickets/${t.rawId || t.id}`)}
                     >
                       <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
@@ -594,12 +594,12 @@ export function AdminSupportTicketsPage() {
                           checked={selectedIds.includes(t.id)}
                           onChange={() => toggleSelect(t.id)}
                           aria-label={`Select Ticket #${t.id}`}
-                          className="rounded border-[#2A3446] text-[#7FA0D6] focus:ring-blue-500"
+                          className="rounded border-app-line text-app-accent focus:ring-blue-500"
                         />
                       </td>
 
                       {/* Ticket ID */}
-                      <td className="px-4 py-4 font-mono font-bold text-[#97A0B3] group-hover:text-[#7FA0D6] transition-colors">
+                      <td className="px-4 py-4 font-mono font-bold text-app-mist group-hover:text-app-accent transition-colors">
                         #{t.id}
                       </td>
 
@@ -607,20 +607,20 @@ export function AdminSupportTicketsPage() {
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`size-9 rounded-xl ${t.avatarBg} text-white font-black text-xs flex items-center justify-center shadow-xs shrink-0`}
+                            className={`size-9 rounded-xl ${t.avatarBg} text-hi font-black text-xs flex items-center justify-center shadow-xs shrink-0`}
                           >
                             {t.client[0]}
                           </div>
                           <div>
                             <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-white group-hover:text-[#7FA0D6] transition-colors">
+                              <span className="font-bold text-hi group-hover:text-app-accent transition-colors">
                                 {t.client}
                               </span>
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 uppercase tracking-wide">
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-app-accent/15 text-app-accent border border-app-accent/30 uppercase tracking-wide">
                                 {t.tier}
                               </span>
                             </div>
-                            <div className="text-[11px] text-[#97A0B3] font-mono mt-0.5">{t.email}</div>
+                            <div className="text-[11px] text-app-mist font-mono mt-0.5">{t.email}</div>
                           </div>
                         </div>
                       </td>
@@ -632,24 +632,24 @@ export function AdminSupportTicketsPage() {
                             <span
                               className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
                                 t.priority === "Urgent"
-                                  ? "bg-blue-900/40 text-[#BCCCE6] border border-blue-500/30"
+                                  ? "bg-blue-900/40 text-app-accent-soft border border-blue-500/30"
                                   : t.priority === "High"
-                                  ? "bg-blue-500/20 text-[#BCCCE6] border border-blue-500/30"
+                                  ? "bg-blue-500/20 text-app-accent-soft border border-blue-500/30"
                                   : t.priority === "Medium"
-                                  ? "bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30"
-                                  : "bg-[#161F2D] text-[#F1F5F9] border border-[#2A3446]"
+                                  ? "bg-app-accent/20 text-app-accent border border-app-accent/30"
+                                  : "bg-app-surface text-app-ink-2 border border-app-line"
                               }`}
                             >
                               {t.priority}
                             </span>
-                            <span className="text-[11px] font-semibold text-[#BCCCE6]">
+                            <span className="text-[11px] font-semibold text-app-accent-soft">
                               {t.timeLog}
                             </span>
                           </div>
-                          <h4 className="font-bold text-white text-xs leading-snug">
+                          <h4 className="font-bold text-hi text-xs leading-snug">
                             {t.issueTitle}
                           </h4>
-                          <p className="text-[11px] text-[#97A0B3] line-clamp-1">
+                          <p className="text-[11px] text-app-mist line-clamp-1">
                             {t.issueDesc}
                           </p>
                         </div>
@@ -658,12 +658,12 @@ export function AdminSupportTicketsPage() {
                       {/* Assigned Agent */}
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="size-7 rounded-full bg-slate-800 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                          <div className="size-7 rounded-full bg-slate-800 text-hi font-bold text-[10px] flex items-center justify-center shrink-0">
                             {t.agentInitials}
                           </div>
                           <div>
-                            <div className="font-bold text-white text-xs">{t.agent}</div>
-                            <div className="text-[10px] text-[#97A0B3]">{t.pod}</div>
+                            <div className="font-bold text-hi text-xs">{t.agent}</div>
+                            <div className="text-[10px] text-app-mist">{t.pod}</div>
                           </div>
                         </div>
                       </td>
@@ -673,12 +673,12 @@ export function AdminSupportTicketsPage() {
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${
                             t.status === "Open"
-                              ? "bg-blue-500/15 text-[#BCCCE6] border border-blue-500/30"
+                              ? "bg-blue-500/15 text-app-accent-soft border border-blue-500/30"
                               : t.status === "In Progress"
-                              ? "bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30"
+                              ? "bg-app-accent/15 text-app-accent border border-app-accent/30"
                               : t.status === "Pending Client"
-                              ? "bg-blue-500/20 text-[#BCCCE6] border border-blue-500/30"
-                              : "bg-blue-600/15 text-[#BCCCE6] border border-blue-500/30"
+                              ? "bg-blue-500/20 text-app-accent-soft border border-blue-500/30"
+                              : "bg-blue-600/15 text-app-accent-soft border border-blue-500/30"
                           }`}
                         >
                           {t.status}
@@ -702,14 +702,14 @@ export function AdminSupportTicketsPage() {
                           <button
                             type="button"
                             onClick={() => navigate(`/admin/support/tickets/${t.rawId || t.id}`)}
-                            className="px-2.5 py-1 rounded-xl bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] text-[11px] font-bold transition-colors cursor-pointer"
+                            className="px-2.5 py-1 rounded-xl bg-app-base hover:bg-app-surface border border-app-line text-app-ink-2 text-[11px] font-bold transition-colors cursor-pointer"
                           >
                             {t.secondaryAction}
                           </button>
                           <button
                             type="button"
                             onClick={() => navigate(`/admin/support/tickets/${t.rawId || t.id}`)}
-                            className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded cursor-pointer"
+                            className="p-1 text-app-mist hover:text-app-ink-2 rounded cursor-pointer"
                             aria-label="More actions"
                           >
                             <MoreVertical className="size-4" />
@@ -732,7 +732,7 @@ export function AdminSupportTicketsPage() {
           onClick={() => setAlertModal(null)}
         >
           <div
-            className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
+            className="relative w-full max-w-md rounded-3xl bg-app-surface p-6 sm:p-8 shadow-2xl border border-app-line flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -741,7 +741,7 @@ export function AdminSupportTicketsPage() {
             <button
               type="button"
               onClick={() => setAlertModal(null)}
-              className="absolute top-4 right-4 size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-4 right-4 size-8 rounded-full bg-app-surface hover:bg-slate-200 text-app-mist hover:text-app-ink-2 flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Close dialog"
             >
               <X className="size-4" />
@@ -752,7 +752,7 @@ export function AdminSupportTicketsPage() {
               className={`size-16 rounded-3xl flex items-center justify-center mb-4 ring-8 shadow-inner ${
                 alertModal.type === "success"
                   ? "bg-emerald-50 text-emerald-600 ring-emerald-50/60"
-                  : "bg-[#7FA0D6]/15 text-[#7FA0D6] ring-blue-50/60"
+                  : "bg-app-accent/15 text-app-accent ring-blue-50/60"
               }`}
             >
               {alertModal.type === "success" ? (
@@ -763,27 +763,27 @@ export function AdminSupportTicketsPage() {
             </div>
 
             {/* Modal Title */}
-            <h3 className="text-xl font-black text-white tracking-tight">
+            <h3 className="text-xl font-black text-hi tracking-tight">
               {alertModal.title}
             </h3>
 
             {/* Modal Description */}
-            <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm">
+            <p className="text-xs sm:text-sm text-app-ink-2 mt-2 leading-relaxed max-w-sm">
               {alertModal.message}
             </p>
 
             {/* Ticket Context Information Box */}
             {alertModal.ticketId && (
-              <div className="w-full mt-5 p-3.5 rounded-2xl bg-[#0B111C] border border-[#2A3446]/80 flex items-center justify-between text-xs font-semibold text-[#F1F5F9]">
+              <div className="w-full mt-5 p-3.5 rounded-2xl bg-app-base border border-app-line/80 flex items-center justify-between text-xs font-semibold text-app-ink-2">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 py-0.5 rounded-md border border-[#7FA0D6]/30">
+                  <span className="font-mono font-bold text-app-accent bg-app-accent/15 px-2 py-0.5 rounded-md border border-app-accent/30">
                     #{alertModal.ticketId}
                   </span>
-                  <span className="text-[#97A0B3]">•</span>
-                  <span className="font-bold text-white">{alertModal.client}</span>
+                  <span className="text-app-mist">•</span>
+                  <span className="font-bold text-hi">{alertModal.client}</span>
                 </div>
                 {alertModal.tier && (
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#7FA0D6]/20 text-blue-800 uppercase tracking-wide">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-app-accent/20 text-blue-800 uppercase tracking-wide">
                     {alertModal.tier}
                   </span>
                 )}
@@ -808,7 +808,7 @@ export function AdminSupportTicketsPage() {
                     setAlertModal(null);
                     navigate(`/admin/support/tickets/${id}`);
                   }}
-                  className="px-5 py-3 rounded-2xl bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9] font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-5 py-3 rounded-2xl bg-app-surface hover:bg-slate-200 text-app-ink-2 font-bold text-xs active:scale-95 transition-all cursor-pointer"
                 >
                   View Ticket
                 </button>

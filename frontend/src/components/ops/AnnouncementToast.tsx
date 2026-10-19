@@ -183,41 +183,41 @@ export function AnnouncementToast({ bellRef, isClientPortal = false }: Announcem
 
   const theme = isEmergency
     ? {
-        accentGradient: "linear-gradient(90deg, #D8BF9B, #D8BF9B)",
-        badgeBg: "#161F2D",
-        badgeBorder: "#161F2D",
-        badgeText: "#D8BF9B",
-        iconBg: "#161F2D",
-        iconBorder: "#161F2D",
-        iconColor: "#D8BF9B",
+        accentGradient: "linear-gradient(90deg, var(--app-warm), var(--app-warm))",
+        badgeBg: "var(--app-surface)",
+        badgeBorder: "var(--app-surface)",
+        badgeText: "var(--app-warm)",
+        iconBg: "var(--app-surface)",
+        iconBorder: "var(--app-surface)",
+        iconColor: "var(--app-warm)",
         icon: <AlertTriangle size={18} className="text-red-600 shrink-0" />,
-        progressFill: "#D8BF9B",
+        progressFill: "var(--app-warm)",
         typeLabel: "Urgent Alert",
       }
     : isSystem
     ? {
-        accentGradient: "linear-gradient(90deg, #7FA0D6, #BCCCE6)",
-        badgeBg: "#161F2D",
-        badgeBorder: "#161F2D",
-        badgeText: "#7FA0D6",
-        iconBg: "#161F2D",
-        iconBorder: "#161F2D",
-        iconColor: "#7FA0D6",
+        accentGradient: "linear-gradient(90deg, var(--app-accent), var(--app-accent-soft))",
+        badgeBg: "var(--app-surface)",
+        badgeBorder: "var(--app-surface)",
+        badgeText: "var(--app-accent)",
+        iconBg: "var(--app-surface)",
+        iconBorder: "var(--app-surface)",
+        iconColor: "var(--app-accent)",
         icon: <Cpu size={18} className="text-indigo-600 shrink-0" />,
         typeLabel: "System Notice",
-        progressFill: "#7FA0D6",
+        progressFill: "var(--app-accent)",
       }
     : {
-        accentGradient: "linear-gradient(90deg, #7FA0D6, #BCCCE6)",
-        badgeBg: "#BCCCE6",
-        badgeBorder: "#2A3446",
-        badgeText: "#7FA0D6",
-        iconBg: "#BCCCE6",
-        iconBorder: "#2A3446",
-        iconColor: "#7FA0D6",
-        icon: <Megaphone size={18} className="text-[#7FA0D6] shrink-0" />,
+        accentGradient: "linear-gradient(90deg, var(--app-accent), var(--app-accent-soft))",
+        badgeBg: "var(--app-accent-soft)",
+        badgeBorder: "var(--app-line)",
+        badgeText: "var(--app-accent)",
+        iconBg: "var(--app-accent-soft)",
+        iconBorder: "var(--app-line)",
+        iconColor: "var(--app-accent)",
+        icon: <Megaphone size={18} className="text-app-accent shrink-0" />,
         typeLabel: "Broadcast",
-        progressFill: "#7FA0D6",
+        progressFill: "var(--app-accent)",
       };
 
   const authorName = announcement.author || "Agency Operations";
@@ -275,7 +275,7 @@ export function AnnouncementToast({ bellRef, isClientPortal = false }: Announcem
         }
         .creo-bell-ring svg {
           animation: creo-bell-ring-kf 0.8s cubic-bezier(0.36, 0.07, 0.19, 0.97) both !important;
-          color: #7FA0D6 !important;
+          color: var(--app-accent) !important;
         }
         .creo-bell-ring {
           position: relative;
@@ -285,7 +285,7 @@ export function AnnouncementToast({ bellRef, isClientPortal = false }: Announcem
           position: absolute;
           inset: -4px;
           border-radius: 50%;
-          border: 2px solid #7FA0D6;
+          border: 2px solid var(--app-accent);
           animation: creo-ping 0.8s ease-out forwards;
           pointer-events: none;
         }
@@ -321,14 +321,14 @@ export function AnnouncementToast({ bellRef, isClientPortal = false }: Announcem
         <div
           style={{
             background: "#FFFFFF",
-            border: "1px solid #2A3446",
+            border: "1px solid var(--app-line)",
             borderRadius: 16,
             padding: "16px 18px",
             boxShadow: "0 20px 40px -10px rgba(13, 33, 55, 0.14), 0 4px 12px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(43, 123, 196, 0.06)",
             fontFamily: "var(--font-body, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif)",
             position: "relative",
             overflow: "hidden",
-            color: "#0B111C",
+            color: "var(--app-base)",
           }}
         >
           {/* Top Accent Gradient Line */}
@@ -389,8 +389,8 @@ export function AnnouncementToast({ bellRef, isClientPortal = false }: Announcem
                   >
                     {theme.typeLabel}
                   </span>
-                  <span style={{ fontSize: 10, color: "#97A0B3" }}>•</span>
-                  <span style={{ fontSize: 11, fontWeight: 500, color: "#97A0B3" }}>
+                  <span style={{ fontSize: 10, color: "var(--app-mist)" }}>•</span>
+                  <span style={{ fontSize: 11, fontWeight: 500, color: "var(--app-mist)" }}>
                     {authorName}
                   </span>
                 </div>
@@ -406,7 +406,7 @@ export function AnnouncementToast({ bellRef, isClientPortal = false }: Announcem
                   style={{
                     background: "transparent",
                     border: "none",
-                    color: "#97A0B3",
+                    color: "var(--app-mist)",
                     cursor: "pointer",
                     padding: 3,
                     borderRadius: 6,
@@ -417,11 +417,11 @@ export function AnnouncementToast({ bellRef, isClientPortal = false }: Announcem
                     transition: "color 0.15s, background 0.15s",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#0B111C";
-                    e.currentTarget.style.background = "#F1F5F9";
+                    e.currentTarget.style.color = "var(--app-base)";
+                    e.currentTarget.style.background = "var(--app-ink-2)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "#97A0B3";
+                    e.currentTarget.style.color = "var(--app-mist)";
                     e.currentTarget.style.background = "transparent";
                   }}
                 >
@@ -435,7 +435,7 @@ export function AnnouncementToast({ bellRef, isClientPortal = false }: Announcem
                   margin: "6px 0 0",
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "#0B111C",
+                  color: "var(--app-base)",
                   letterSpacing: "-0.01em",
                   lineHeight: 1.35,
                 }}
@@ -448,7 +448,7 @@ export function AnnouncementToast({ bellRef, isClientPortal = false }: Announcem
                 style={{
                   margin: "4px 0 0",
                   fontSize: 12,
-                  color: "#97A0B3",
+                  color: "var(--app-mist)",
                   lineHeight: 1.45,
                   display: "-webkit-box",
                   WebkitLineClamp: 2,
@@ -469,24 +469,24 @@ export function AnnouncementToast({ bellRef, isClientPortal = false }: Announcem
               justifyContent: "space-between",
               marginTop: 10,
               paddingTop: 8,
-              borderTop: "1px solid #F1F5F9",
+              borderTop: "1px solid var(--app-ink-2)",
             }}
           >
             <span
               style={{
                 fontSize: 10.5,
                 fontWeight: 600,
-                color: "#7FA0D6",
+                color: "var(--app-accent)",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 4,
               }}
             >
-              <Sparkles size={11} className="text-[#7FA0D6]" />
+              <Sparkles size={11} className="text-app-accent" />
               Saving to notification bell...
             </span>
 
-            <span style={{ fontSize: 10, color: "#97A0B3", fontWeight: 500 }}>
+            <span style={{ fontSize: 10, color: "var(--app-mist)", fontWeight: 500 }}>
               Click to dismiss
             </span>
           </div>
@@ -500,7 +500,7 @@ export function AnnouncementToast({ bellRef, isClientPortal = false }: Announcem
                 left: 0,
                 height: 3,
                 width: "100%",
-                background: "#BCCCE6",
+                background: "var(--app-accent-soft)",
                 borderRadius: "0 0 16px 16px",
                 overflow: "hidden",
               }}

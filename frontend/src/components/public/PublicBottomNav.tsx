@@ -17,7 +17,7 @@ export function PublicBottomNav() {
   return (
     <nav
       aria-label="Mobile Navigation"
-      className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200/80 px-2 py-1.5 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]"
+      className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-hi/95 backdrop-blur-xl border-t border-slate-200/80 px-2 py-1.5 shadow-[0_-4px_20px_rgb(var(--shadow-rgb)/calc(0.06*var(--shadow-k)))]"
     >
       <div className="max-w-md mx-auto flex items-center justify-around">
         {navItems.map((item) => {
@@ -29,14 +29,14 @@ export function PublicBottomNav() {
               to={item.href}
               className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all duration-200 min-w-[54px] ${
                 isActive
-                  ? "text-[#4F7BFF] font-bold"
+                  ? "text-site-blue font-bold"
                   : "text-slate-500 hover:text-slate-900 font-medium"
               }`}
             >
               <div className="relative">
                 <Icon className={`size-5 transition-transform ${isActive ? "scale-110 stroke-[2.5]" : "stroke-[1.8]"}`} />
                 {isActive && (
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full bg-[#4F7BFF]" />
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full bg-site-blue" />
                 )}
               </div>
               <span className="text-[10px] mt-1 tracking-tight">{item.label}</span>
@@ -48,10 +48,10 @@ export function PublicBottomNav() {
         {user ? (
           <Link
             to={userHome}
-            className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-[#4F7BFF] hover:text-[#070E24] min-w-[54px]"
+            className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-site-blue hover:text-site-deep min-w-[54px]"
           >
             <div className="relative">
-              <LayoutDashboard className="size-5 stroke-[2] text-[#4F7BFF]" />
+              <LayoutDashboard className="size-5 stroke-[2] text-site-blue" />
             </div>
             <span className="text-[10px] font-bold mt-1 tracking-tight">Portal</span>
           </Link>

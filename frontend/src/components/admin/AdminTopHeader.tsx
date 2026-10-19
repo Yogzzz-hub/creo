@@ -11,6 +11,7 @@ import { useAuth } from "../../lib/auth-context";
 import { useAdminSidebar } from "./AdminSidebarContext";
 import { useConfirm } from "../ui/ConfirmDialog";
 import { NotificationMenu } from "../ui/NotificationMenu";
+import { ThemeToggle } from "../ui/ThemeToggle";
 
 interface AdminTopHeaderProps {
   title?: string;
@@ -133,15 +134,15 @@ export function AdminTopHeader({
       : activeTab);
 
   return (
-    <div className={`sticky top-0 z-40 w-full bg-[#0B111C]/90 backdrop-blur-md pt-2 sm:pt-2.5 pb-1.5 sm:pb-2 transition-all ${location.pathname.startsWith("/portal") ? "px-4 sm:px-6" : "px-3.5 sm:px-6 lg:px-8"}`}>
-      <header className="max-w-[1500px] mx-auto bg-[#161F2D] rounded-xl sm:rounded-full border border-[#2A3446] px-3.5 sm:px-5 lg:px-6 py-1.5 sm:py-2 flex items-center justify-between shadow-[0_4px_20px_rgba(5,8,16,0.5)] min-h-[44px] sm:min-h-[48px]">
+    <div className={`sticky top-0 z-40 w-full bg-app-base/90 backdrop-blur-md pt-2 sm:pt-2.5 pb-1.5 sm:pb-2 transition-all ${location.pathname.startsWith("/portal") ? "px-4 sm:px-6" : "px-3.5 sm:px-6 lg:px-8"}`}>
+      <header className="max-w-[1500px] mx-auto bg-app-surface rounded-xl sm:rounded-full border border-app-line px-3.5 sm:px-5 lg:px-6 py-1.5 sm:py-2 flex items-center justify-between shadow-[0_4px_20px_rgb(var(--shadow-rgb)/calc(0.5*var(--shadow-k)))] min-h-[44px] sm:min-h-[48px]">
         {/* Left Section: Mobile Hamburger + Back Button + Mobile Brand Logo + Title */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {/* Mobile Hamburger Menu Toggle Button */}
           <button
             type="button"
             onClick={toggleMobile}
-            className={`${location.pathname.startsWith("/portal") ? "lg:hidden" : "md:hidden"} size-8 rounded-full flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] transition-all cursor-pointer border border-transparent hover:border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] shrink-0`}
+            className={`${location.pathname.startsWith("/portal") ? "lg:hidden" : "md:hidden"} size-8 rounded-full flex items-center justify-center text-app-mist hover:text-hi hover:bg-app-surface transition-all cursor-pointer border border-transparent hover:border-app-line focus:outline-none focus:ring-2 focus:ring-app-accent shrink-0`}
             aria-expanded={mobileOpen}
             aria-label="Open navigation sidebar"
             title="Open navigation menu"
@@ -160,7 +161,7 @@ export function AdminTopHeader({
                   ? "/workstation"
                   : "/portal"
               }
-              className="p-1 rounded-full hover:bg-[#161F2D] text-[#97A0B3] hover:text-white transition-colors shrink-0"
+              className="p-1 rounded-full hover:bg-app-surface text-app-mist hover:text-hi transition-colors shrink-0"
               title="Go Back"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -178,22 +179,24 @@ export function AdminTopHeader({
                 ? "/workstation"
                 : "/portal"
             }
-            className="md:hidden flex items-center gap-0.5 font-black text-white text-sm sm:text-base tracking-tight shrink-0 px-1 hover:opacity-85 transition-opacity"
+            className="md:hidden flex items-center gap-0.5 font-black text-hi text-sm sm:text-base tracking-tight shrink-0 px-1 hover:opacity-85 transition-opacity"
             title="creo. Home"
           >
-            creo<span className="text-[#7FA0D6] text-base sm:text-lg leading-none">.</span>
+            creo<span className="text-app-accent text-base sm:text-lg leading-none">.</span>
           </Link>
 
-          <span className="h-4 w-px bg-[#2A3446] mx-1 hidden sm:block shrink-0" />
+          <span className="h-4 w-px bg-app-line mx-1 hidden sm:block shrink-0" />
 
           {/* Active Page Title */}
-          <h1 className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
+          <h1 className="text-xs sm:text-sm font-bold text-hi tracking-tight truncate">
             {resolvedTitle}
           </h1>
         </div>
 
         {/* Right Utility Icons (Bell with Functional Dropdown, Profile with Dropdown) */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 justify-end">
+          <ThemeToggle className="size-8 sm:size-8.5" />
+
           {/* Functional Notification Bell Container */}
           <NotificationMenu />
 
@@ -201,7 +204,7 @@ export function AdminTopHeader({
           {isAdminOrSuper && location.pathname.startsWith("/portal") && (
             <Link
               to="/admin"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 border border-[#7FA0D6]/30 text-[#7FA0D6] text-xs font-bold transition-all shadow-xs"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-app-accent/15 hover:bg-app-accent/25 border border-app-accent/30 text-app-accent text-xs font-bold transition-all shadow-xs"
               title="Return to Admin Ops Console"
             >
               <span>Admin Console</span>
@@ -215,7 +218,7 @@ export function AdminTopHeader({
               type="button"
               title={user?.full_name || "Profile & Account"}
               onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-              className="size-8 sm:size-8.5 rounded-full bg-[#BCCCE6] hover:bg-[#BCCCE6] text-[#0B111C] font-black text-xs sm:text-sm flex items-center justify-center shadow-md shadow-[#050810]/40 cursor-pointer ml-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]"
+              className="size-8 sm:size-8.5 rounded-full bg-app-accent-soft hover:bg-app-accent-soft text-app-base font-black text-xs sm:text-sm flex items-center justify-center shadow-md shadow-app-void/40 cursor-pointer ml-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-app-accent"
               aria-label="User profile menu"
             >
               {(user?.full_name?.[0] || user?.email?.[0] || (isClientRole ? "C" : isMemberRole ? "D" : "A")).toUpperCase()}
@@ -223,21 +226,21 @@ export function AdminTopHeader({
 
             {/* Profile Dropdown Menu */}
             {profileDropdownOpen && (
-              <div className="absolute right-0 mt-2 sm:mt-3 w-[calc(100vw-24px)] sm:w-72 max-w-[320px] bg-[#161F2D] rounded-3xl shadow-[0_12px_40px_rgba(5,8,16,0.7)] border border-[#2A3446] z-50 overflow-hidden animate-scale-up p-3 space-y-2 text-left">
+              <div className="absolute right-0 mt-2 sm:mt-3 w-[calc(100vw-24px)] sm:w-72 max-w-[320px] bg-app-surface rounded-3xl shadow-[0_12px_40px_rgb(var(--shadow-rgb)/calc(0.7*var(--shadow-k)))] border border-app-line z-50 overflow-hidden animate-scale-up p-3 space-y-2 text-left">
                 {/* User Header */}
-                <div className="p-3 bg-[#0B111C]/80 rounded-2xl border border-[#2A3446] flex items-center gap-3">
-                  <div className="size-10 rounded-full bg-[#BCCCE6] text-[#0B111C] font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
+                <div className="p-3 bg-app-base/80 rounded-2xl border border-app-line flex items-center gap-3">
+                  <div className="size-10 rounded-full bg-app-accent-soft text-app-base font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
                     {(user?.full_name?.[0] || user?.email?.[0] || (isClientRole ? "C" : isMemberRole ? "D" : "A")).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="text-xs font-bold text-white truncate">
+                    <h4 className="text-xs font-bold text-hi truncate">
                       {user?.full_name || (isClientRole ? (user?.company_name || "Client Account") : isMemberRole ? "Team Specialist" : user?.role === "team_lead" ? "Pod Lead" : "Creo Admin")}
                     </h4>
-                    <p className="text-[11px] text-[#97A0B3] font-medium truncate">
+                    <p className="text-[11px] text-app-mist font-medium truncate">
                       {user?.email || (isClientRole ? "client@portal.creo" : isMemberRole ? "specialist@creo.agency" : "admin@creo.agency")}
                     </p>
                     <div className="mt-1">
-                      <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 capitalize">
+                      <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-app-accent/15 text-app-accent border border-app-accent/30 capitalize">
                         {isClientRole
                           ? "Client Account"
                           : isMemberRole
@@ -251,7 +254,7 @@ export function AdminTopHeader({
                 </div>
 
                 {/* Logout Button */}
-                <div className="pt-2 border-t border-[#2A3446]">
+                <div className="pt-2 border-t border-app-line">
                   <button
                     type="button"
                     onClick={async () => {
@@ -272,9 +275,9 @@ export function AdminTopHeader({
                       }
                       navigate("/auth");
                     }}
-                    className="w-full flex items-center justify-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-[#D8BF9B] hover:bg-[#D8BF9B]/15 hover:border-[#D8BF9B]/30 border border-transparent transition-all cursor-pointer shadow-xs"
+                    className="w-full flex items-center justify-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-app-warm hover:bg-app-warm/15 hover:border-app-warm/30 border border-transparent transition-all cursor-pointer shadow-xs"
                   >
-                    <LogOut className="w-4 h-4 text-[#D8BF9B]" />
+                    <LogOut className="w-4 h-4 text-app-warm" />
                     <span>Sign Out / Log Out</span>
                   </button>
                 </div>

@@ -25,7 +25,7 @@ interface Selection {
 }
 const endpoint = "/api/v1/portal/integrations/instagram";
 const button =
-  "min-h-11 rounded-xl border border-[#2A3446] px-4 py-2 text-sm font-semibold cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-50 enabled:hover:bg-[#2A3446] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]";
+  "min-h-11 rounded-xl border border-app-line px-4 py-2 text-sm font-semibold cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-50 enabled:hover:bg-app-line focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent";
 
 export function InstagramConnection() {
   const { user } = useAuth();
@@ -137,17 +137,17 @@ export function InstagramConnection() {
   const data = query.data;
   return (
     <div className="space-y-5">
-      <section className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-7 text-white space-y-4">
+      <section className="rounded-2xl border border-app-line bg-app-surface p-5 sm:p-7 text-hi space-y-4">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-xl font-bold">Instagram connection</h2>
           <Link
             to="/portal/account"
-            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#2A3446] bg-[#0B111C] px-4 py-2 text-sm font-semibold text-[#BCCCE6] cursor-pointer transition-colors hover:border-[#7FA0D6]/50 hover:bg-[#1A2433] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-app-line bg-app-base px-4 py-2 text-sm font-semibold text-app-accent-soft cursor-pointer transition-colors hover:border-app-accent/50 hover:bg-app-surface hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent"
           >
             Account settings
           </Link>
         </div>
-        <p className="text-sm text-[#97A0B3]">
+        <p className="text-sm text-app-mist">
           Connect an Instagram Business account linked to a Facebook Page you manage. Approve
           content in Creo, then your authorized team schedules it. Your Instagram password is never
           shared with the team.
@@ -177,18 +177,18 @@ export function InstagramConnection() {
                 <p className="font-semibold">
                   {data.username ? `@${data.username}` : "No connected account"}
                 </p>
-                <p className="text-sm capitalize text-[#97A0B3]">
+                <p className="text-sm capitalize text-app-mist">
                   {data.status.replaceAll("_", " ")}
                 </p>
               </div>
             </div>
             {data.account_id && (
-              <p className="text-xs text-[#97A0B3] break-all">
+              <p className="text-xs text-app-mist break-all">
                 Account {data.account_id} · {data.page_name}
               </p>
             )}
             {data.last_verified_at && (
-              <p className="text-xs text-[#97A0B3]">
+              <p className="text-xs text-app-mist">
                 Last verified: {new Date(data.last_verified_at).toLocaleString()}
               </p>
             )}
@@ -204,14 +204,14 @@ export function InstagramConnection() {
               </p>
             )}
             {!data.publishing_enabled && (
-              <p className="text-sm text-[#97A0B3]">
+              <p className="text-sm text-app-mist">
                 Automatic publishing is currently disabled. Approved content remains in Creo.
               </p>
             )}
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                className={`${button} bg-[#BCCCE6] text-[#0B111C] enabled:hover:bg-white`}
+                className={`${button} bg-app-accent-soft text-app-base enabled:hover:bg-hi`}
                 disabled={busy}
                 onClick={() => void perform("connect")}
               >
@@ -260,7 +260,7 @@ export function InstagramConnection() {
             ))}
           </fieldset>
         )}
-        <p className="text-xs text-[#97A0B3]">
+        <p className="text-xs text-app-mist">
           You can revoke access here or in Facebook Business Integrations. Only you control
           authorization. Stories require an eligible Business account.
         </p>

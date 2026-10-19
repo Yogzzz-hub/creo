@@ -5,6 +5,22 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#050810" />
+    <!-- Apply the saved theme before first paint (see src/lib/theme.tsx) -->
+    <script>
+      try {
+        if (localStorage.getItem("creo-theme") === "light") {
+          var r = document.documentElement;
+          r.dataset.theme = "light";
+          r.classList.remove("dark");
+          r.style.colorScheme = "light";
+          document.querySelector('meta[name="color-scheme"]').content = "light";
+          document.querySelector('meta[name="theme-color"]').content = "#f4f7fc";
+        } else {
+          document.documentElement.dataset.theme = "dark";
+        }
+      } catch (e) {}
+    </script>
     <title>Creo Platform — Content Production SaaS</title>
     <!-- Clean Premium Fonts: Inter, Figtree, DM Sans, Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

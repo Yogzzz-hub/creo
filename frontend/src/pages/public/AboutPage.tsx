@@ -24,9 +24,9 @@ const STATS = [
 ];
 
 const ERAS = [
-  { era: "The Fragmented Era (2018–2024)", text: "WhatsApp, Drive, and Sheets created 7 disconnected blindspots.", tone: "text-[#93A0BF]" },
-  { era: "The Operating Shift (2025)", text: "Unifying creative production, capacity heatmaps, and unit margins into one engine.", tone: "text-[#F4F7FF] font-medium" },
-  { era: "The Autonomous Studio (2026+)", text: "Predictive pod resourcing and automated margin recovery across 52+ agencies.", tone: "text-[#9DB8FF] font-bold" },
+  { era: "The Fragmented Era (2018–2024)", text: "WhatsApp, Drive, and Sheets created 7 disconnected blindspots.", tone: "text-site-mist" },
+  { era: "The Operating Shift (2025)", text: "Unifying creative production, capacity heatmaps, and unit margins into one engine.", tone: "text-site-ink font-medium" },
+  { era: "The Autonomous Studio (2026+)", text: "Predictive pod resourcing and automated margin recovery across 52+ agencies.", tone: "text-site-peri font-bold" },
 ];
 
 const PAST_PAINS = [
@@ -61,7 +61,7 @@ const PODS = [
 function DrawnCheck({ delay = 0 }: { delay?: number }) {
   const reduce = useReducedMotion();
   return (
-    <svg className="mt-0.5 size-5 shrink-0 text-[#7DA2FF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+    <svg className="mt-0.5 size-5 shrink-0 text-site-blue-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
       <motion.circle
         cx="12"
         cy="12"
@@ -93,7 +93,7 @@ export function AboutPage() {
   const activeIndex = Number(activeMilestone) - 1;
 
   return (
-    <div className="min-h-screen w-full pb-16 font-sans text-[#F4F7FF] lg:pb-20">
+    <div className="min-h-screen w-full pb-16 font-sans text-site-ink lg:pb-20">
       {/* ── Hero ── */}
       <PageHero
         eyebrow="Our mission & origin"
@@ -102,12 +102,12 @@ export function AboutPage() {
         lead="Creative work should be boundless. Agency operations should be mathematical. We built CREO to replace WhatsApp chasing, lost briefs, and blind margins with a single connected operating system."
         aside={
           <TiltCard max={6} glow="rgba(125,162,255,0.16)" className="creo-glass creo-beam flex flex-col gap-6 overflow-hidden rounded-3xl p-5 sm:p-7">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.08] pb-4">
-              <div className="text-sm font-black tracking-tight text-[#F4F7FF]">CREO Kernel v2.6 &bull; Architecture Blueprint</div>
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#9DB8FF]">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hi/[0.08] pb-4">
+              <div className="text-sm font-black tracking-tight text-site-ink">CREO Kernel v2.6 &bull; Architecture Blueprint</div>
+              <div className="flex items-center gap-2 text-xs font-semibold text-site-peri">
                 <span className="relative flex size-2 items-center justify-center">
-                  <span className="absolute inset-0 animate-ping rounded-full bg-[#4F7BFF] opacity-40" />
-                  <span className="relative size-1.5 rounded-full bg-[#7DA2FF]" />
+                  <span className="absolute inset-0 animate-ping rounded-full bg-site-blue opacity-40" />
+                  <span className="relative size-1.5 rounded-full bg-site-blue-light" />
                 </span>
                 System Status: Autonomous Ops
               </div>
@@ -115,7 +115,7 @@ export function AboutPage() {
 
             <div className="relative space-y-3">
               {/* Timeline spine */}
-              <div aria-hidden="true" className="absolute bottom-4 left-[11px] top-4 w-px bg-gradient-to-b from-[#4F7BFF]/10 via-[#4F7BFF]/50 to-[#7DD3FC]/60" />
+              <div aria-hidden="true" className="absolute bottom-4 left-[11px] top-4 w-px bg-gradient-to-b from-site-blue/10 via-site-blue/50 to-site-sky/60" />
               {ERAS.map((item, i) => (
                 <motion.div
                   key={item.era}
@@ -124,21 +124,21 @@ export function AboutPage() {
                   transition={{ duration: 0.8, delay: 0.7 + i * 0.15, ease: EASE_OUT_EXPO }}
                   className="relative flex gap-4"
                 >
-                  <span className={`relative z-10 mt-4 flex size-[23px] shrink-0 items-center justify-center rounded-full ring-1 ring-inset ${i === 2 ? "bg-[#4F7BFF]/25 ring-[#7DA2FF]/70" : "bg-[#050A1A] ring-white/15"}`}>
-                    <span className={`size-1.5 rounded-full ${i === 2 ? "bg-[#DCE8FF] shadow-[0_0_8px_2px_rgba(79,123,255,0.8)]" : "bg-[#4F7BFF]/70"}`} />
+                  <span className={`relative z-10 mt-4 flex size-[23px] shrink-0 items-center justify-center rounded-full ring-1 ring-inset ${i === 2 ? "bg-site-blue/25 ring-site-blue-light/70" : "bg-site-bg ring-hi/15"}`}>
+                    <span className={`size-1.5 rounded-full ${i === 2 ? "bg-site-ice shadow-[0_0_8px_2px_rgba(79,123,255,0.8)]" : "bg-site-blue/70"}`} />
                   </span>
-                  <div className="flex-1 space-y-1 rounded-xl border border-white/[0.07] bg-[#050A1A]/50 p-4">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#93A0BF]">{item.era}</div>
+                  <div className="flex-1 space-y-1 rounded-xl border border-hi/[0.07] bg-site-bg/50 p-4">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-site-mist">{item.era}</div>
                     <div className={`text-xs ${item.tone}`}>{item.text}</div>
                   </div>
                 </motion.div>
               ))}
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.08] pt-4 text-[10px] font-medium text-[#93A0BF]">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hi/[0.08] pt-4 text-[10px] font-medium text-site-mist">
               <div>Engineered in Bengaluru &bull; Deployed Globally</div>
               <div className="flex items-center gap-1.5">
-                <span className="size-1.5 rounded-full bg-[#7DA2FF]" /> Live Latency: 24ms
+                <span className="size-1.5 rounded-full bg-site-blue-light" /> Live Latency: 24ms
               </div>
             </div>
           </TiltCard>
@@ -151,22 +151,22 @@ export function AboutPage() {
               className="creo-glass group relative flex flex-col justify-center rounded-2xl px-5 py-4 transition-shadow duration-500 hover:shadow-[0_20px_50px_-24px_rgba(59,107,255,0.8)]"
             >
               <span className="absolute right-4 top-4 flex size-1.5 items-center justify-center">
-                <span className="absolute inset-0 animate-ping rounded-full bg-[#4F7BFF] opacity-40" />
-                <span className="relative size-1.5 rounded-full bg-[#7DA2FF]" />
+                <span className="absolute inset-0 animate-ping rounded-full bg-site-blue opacity-40" />
+                <span className="relative size-1.5 rounded-full bg-site-blue-light" />
               </span>
               {stat.count ? (
-                <CountUp value={stat.value} className="mb-1.5 block text-2xl font-black leading-none tracking-tight text-[#F4F7FF]" />
+                <CountUp value={stat.value} className="mb-1.5 block text-2xl font-black leading-none tracking-tight text-site-ink" />
               ) : (
-                <div className="mb-1.5 text-2xl font-black leading-none tracking-tight text-[#F4F7FF]">{stat.value}</div>
+                <div className="mb-1.5 text-2xl font-black leading-none tracking-tight text-site-ink">{stat.value}</div>
               )}
-              <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#93A0BF]">{stat.label}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-site-mist">{stat.label}</div>
             </StaggerItem>
           ))}
         </Stagger>
       </PageHero>
 
       {/* ── Why CREO exists ── */}
-      <ScrollMask inset={5} radius={48} background="bg-gradient-to-b from-[#081130] to-[#060C24]">
+      <ScrollMask inset={5} radius={48} background="bg-gradient-to-b from-site-deep to-site-deep">
         <section className="relative py-20 sm:py-28">
           <div aria-hidden="true" className="creo-grid-bg absolute inset-0 opacity-70 [mask-image:radial-gradient(60%_50%_at_50%_0%,#000,transparent)]" />
           <div className="relative mx-auto max-w-[1240px] px-6 sm:px-8 lg:px-12">
@@ -181,9 +181,9 @@ export function AboutPage() {
             <div className="relative grid grid-cols-1 items-center gap-8 lg:grid-cols-[1fr_auto_1fr]">
               {/* Glowing connector behind the shift node */}
               <div aria-hidden="true" className="pointer-events-none absolute inset-x-[10%] top-1/2 hidden h-px -translate-y-1/2 lg:block">
-                <div className="h-full w-full bg-gradient-to-r from-[#7DD3FC]/0 via-[#4F7BFF]/50 to-[#4F7BFF]/0" />
+                <div className="h-full w-full bg-gradient-to-r from-site-sky/0 via-site-blue/50 to-site-blue/0" />
                 <motion.div
-                  className="absolute top-1/2 h-[3px] w-24 -translate-y-1/2 rounded-full bg-gradient-to-r from-transparent via-[#DCE8FF] to-transparent"
+                  className="absolute top-1/2 h-[3px] w-24 -translate-y-1/2 rounded-full bg-gradient-to-r from-transparent via-site-ice to-transparent"
                   animate={reduce ? undefined : { left: ["0%", "100%"] }}
                   transition={{ duration: 3.2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
                 />
@@ -199,12 +199,12 @@ export function AboutPage() {
                   onMouseLeave={() => setHoverSection(null)}
                 >
                   <div className="mb-2 flex items-center gap-3">
-                    <AlertCircle className="size-5 text-[#7DD3FC]" />
-                    <h3 className="text-base font-bold text-[#F4F7FF]">
-                      The Past / <span className="text-[#7DD3FC]">Chaos</span>
+                    <AlertCircle className="size-5 text-site-sky" />
+                    <h3 className="text-base font-bold text-site-ink">
+                      The Past / <span className="text-site-sky">Chaos</span>
                     </h3>
                   </div>
-                  <p className="mb-8 border-b border-white/[0.08] pb-4 text-sm leading-relaxed text-[#93A0BF]">
+                  <p className="mb-8 border-b border-hi/[0.08] pb-4 text-sm leading-relaxed text-site-mist">
                     Disconnected tools. Lost time. Real money.
                   </p>
 
@@ -215,10 +215,10 @@ export function AboutPage() {
                         key={i}
                         animate={reduce ? undefined : { y: [0, -4, 0], rotate: [0, i % 2 ? 3 : -3, 0] }}
                         transition={{ duration: 2.6 + i * 0.4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-                        className="relative flex size-12 items-center justify-center rounded-xl border border-white/[0.08] bg-[#050A1A]/60 text-[#93A0BF]"
+                        className="relative flex size-12 items-center justify-center rounded-xl border border-hi/[0.08] bg-site-bg/60 text-site-mist"
                       >
                         {Icon ? <Icon className="size-6" /> : <span className="font-serif text-lg font-bold">N</span>}
-                        <span className="absolute -right-1.5 -top-1.5 flex size-4 items-center justify-center rounded-full border border-[#7DD3FC]/30 bg-[#7DD3FC]/15 text-[10px] font-bold text-[#7DD3FC]">
+                        <span className="absolute -right-1.5 -top-1.5 flex size-4 items-center justify-center rounded-full border border-site-sky/30 bg-site-sky/15 text-[10px] font-bold text-site-sky">
                           !
                         </span>
                       </motion.div>
@@ -228,12 +228,12 @@ export function AboutPage() {
                   <Stagger className="space-y-4" gap={0.08}>
                     {PAST_PAINS.map((pain) => (
                       <StaggerItem key={pain.title} className="flex items-center gap-3">
-                        <div className="flex size-5 shrink-0 items-center justify-center rounded-full border border-[#7DD3FC]/30 bg-[#7DD3FC]/10 text-xs font-bold text-[#7DD3FC]">
+                        <div className="flex size-5 shrink-0 items-center justify-center rounded-full border border-site-sky/30 bg-site-sky/10 text-xs font-bold text-site-sky">
                           !
                         </div>
                         <div>
-                          <div className="text-sm font-bold text-[#F4F7FF]">{pain.title}</div>
-                          <div className="text-xs text-[#93A0BF]">{pain.detail}</div>
+                          <div className="text-sm font-bold text-site-ink">{pain.title}</div>
+                          <div className="text-xs text-site-mist">{pain.detail}</div>
                         </div>
                       </StaggerItem>
                     ))}
@@ -246,11 +246,11 @@ export function AboutPage() {
                 <div
                   className={`relative flex size-16 items-center justify-center rounded-full text-center text-[9px] font-bold leading-tight tracking-[0.08em] transition-all duration-500 ${
                     hoverSection
-                      ? "bg-[#4F7BFF]/20 text-white shadow-[0_0_0_1px_rgba(125,162,255,0.8),0_0_40px_6px_rgba(79,123,255,0.45)]"
-                      : "bg-[#0D1530] text-[#B4BFDA] shadow-[0_0_0_1px_rgba(79,123,255,0.35)]"
+                      ? "bg-site-blue/20 text-hi shadow-[0_0_0_1px_rgba(125,162,255,0.8),0_0_40px_6px_rgba(79,123,255,0.45)]"
+                      : "bg-site-deep text-site-mist-2 shadow-[0_0_0_1px_rgba(79,123,255,0.35)]"
                   }`}
                 >
-                  {!reduce && <span className="absolute inset-0 animate-ping rounded-full border border-[#4F7BFF]/40" />}
+                  {!reduce && <span className="absolute inset-0 animate-ping rounded-full border border-site-blue/40" />}
                   THE
                   <br />
                   CREO
@@ -269,12 +269,12 @@ export function AboutPage() {
                   onMouseLeave={() => setHoverSection(null)}
                 >
                   <div className="mb-2 flex items-center gap-3">
-                    <BarChart3 className="size-5 text-[#7DA2FF]" />
-                    <h3 className="text-base font-bold text-[#F4F7FF]">
+                    <BarChart3 className="size-5 text-site-blue-light" />
+                    <h3 className="text-base font-bold text-site-ink">
                       The CREO Advantage / <span className="creo-text-gradient">Precision</span>
                     </h3>
                   </div>
-                  <p className="mb-8 border-b border-white/[0.08] pb-4 text-sm leading-relaxed text-[#93A0BF]">
+                  <p className="mb-8 border-b border-hi/[0.08] pb-4 text-sm leading-relaxed text-site-mist">
                     One unified workflow. Total visibility.
                   </p>
 
@@ -283,27 +283,27 @@ export function AboutPage() {
                       <div key={win.title} className="flex items-start gap-3">
                         <DrawnCheck delay={i * 0.15} />
                         <div>
-                          <div className="text-sm font-bold text-[#F4F7FF]">{win.title}</div>
-                          <div className="text-xs text-[#93A0BF]">{win.detail}</div>
+                          <div className="text-sm font-bold text-site-ink">{win.title}</div>
+                          <div className="text-xs text-site-mist">{win.detail}</div>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/[0.07] bg-[#050A1A]/50 p-4">
+                  <div className="flex items-center justify-between gap-4 rounded-2xl border border-hi/[0.07] bg-site-bg/50 p-4">
                     <div>
-                      <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[#93A0BF]">Astra Living — Retainer Margin</div>
+                      <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-site-mist">Astra Living — Retainer Margin</div>
                       <DonutRing value={41.25} size={56}>
-                        <span className="text-[10px] font-black text-[#F4F7FF]">41.25%</span>
+                        <span className="text-[10px] font-black text-site-ink">41.25%</span>
                       </DonutRing>
                     </div>
                     <div className="relative flex h-14 w-36 flex-col items-end justify-end">
-                      <span className="absolute top-0 text-[9px] text-[#93A0BF]">Verified Margin</span>
+                      <span className="absolute top-0 text-[9px] text-site-mist">Verified Margin</span>
                       <svg className="h-10 w-full overflow-visible" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
                         <motion.path
                           d="M0,35 L10,32 L20,34 L30,28 L40,30 L50,22 L60,25 L70,18 L80,20 L90,10 L100,5"
                           fill="none"
-                          stroke="#7DA2FF"
+                          stroke="var(--site-blue-light)"
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -331,12 +331,12 @@ export function AboutPage() {
           {/* People */}
           <StaggerItem className="h-full">
             <TiltCard max={6} glow="rgba(125,162,255,0.14)" className="creo-glass flex h-full flex-col rounded-3xl p-5 sm:p-7 lg:p-8">
-              <span className="mb-6 w-fit rounded-full border border-[#4F7BFF]/30 bg-[#4F7BFF]/10 px-3 py-1 text-[10px] font-bold tracking-[0.16em] text-[#9DB8FF]">PEOPLE</span>
-              <h3 className="mb-2 text-lg font-bold tracking-[-0.01em] text-[#F4F7FF]">Utilization Without Burnout</h3>
-              <p className="mb-8 flex-1 text-sm leading-relaxed text-[#93A0BF]">
+              <span className="mb-6 w-fit rounded-full border border-site-blue/30 bg-site-blue/10 px-3 py-1 text-[10px] font-bold tracking-[0.16em] text-site-peri">PEOPLE</span>
+              <h3 className="mb-2 text-lg font-bold tracking-[-0.01em] text-site-ink">Utilization Without Burnout</h3>
+              <p className="mb-8 flex-1 text-sm leading-relaxed text-site-mist">
                 Real-time capacity planning that balances creative energy with business goals — no more spreadsheet guesswork.
               </p>
-              <div className="flex items-center gap-4 rounded-2xl border border-white/[0.07] bg-[#050A1A]/50 p-4">
+              <div className="flex items-center gap-4 rounded-2xl border border-hi/[0.07] bg-site-bg/50 p-4">
                 <button
                   type="button"
                   aria-label="Billable 82%, non-billable 18%"
@@ -347,7 +347,7 @@ export function AboutPage() {
                   onBlur={() => setShowDonutTooltip(false)}
                 >
                   <DonutRing value={82} size={64}>
-                    <span className="text-sm font-black text-[#F4F7FF]">82%</span>
+                    <span className="text-sm font-black text-site-ink">82%</span>
                   </DonutRing>
                   {showDonutTooltip && (
                     <motion.div
@@ -355,10 +355,10 @@ export function AboutPage() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       className="creo-glass-strong absolute -top-14 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-xl px-3 py-1.5 text-left text-[10px]"
                     >
-                      <div className="mb-0.5 text-[#F4F7FF]">
-                        Billable: <span className="font-bold text-[#9DB8FF]">82%</span>
+                      <div className="mb-0.5 text-site-ink">
+                        Billable: <span className="font-bold text-site-peri">82%</span>
                       </div>
-                      <div className="text-[#93A0BF]">
+                      <div className="text-site-mist">
                         Non-billable: <span className="font-bold">18%</span>
                       </div>
                     </motion.div>
@@ -366,10 +366,10 @@ export function AboutPage() {
                 </button>
                 <div className="flex flex-1 justify-end">
                   <div className="flex -space-x-2">
-                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80" alt="" className="size-8 rounded-full border-2 border-[#0D1530] object-cover" />
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80" alt="" className="size-8 rounded-full border-2 border-[#0D1530] object-cover" />
-                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80" alt="" className="size-8 rounded-full border-2 border-[#0D1530] object-cover" />
-                    <div className="flex size-8 items-center justify-center rounded-full border-2 border-[#0D1530] bg-[#4F7BFF]/25 text-[10px] font-bold text-[#F4F7FF]">+12</div>
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80" alt="" className="size-8 rounded-full border-2 border-site-deep object-cover" />
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80" alt="" className="size-8 rounded-full border-2 border-site-deep object-cover" />
+                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80" alt="" className="size-8 rounded-full border-2 border-site-deep object-cover" />
+                    <div className="flex size-8 items-center justify-center rounded-full border-2 border-site-deep bg-site-blue/25 text-[10px] font-bold text-site-ink">+12</div>
                   </div>
                 </div>
               </div>
@@ -379,18 +379,18 @@ export function AboutPage() {
           {/* Process */}
           <StaggerItem className="h-full">
             <TiltCard max={6} glow="rgba(125,162,255,0.14)" className="creo-glass flex h-full flex-col rounded-3xl p-5 sm:p-7 lg:p-8">
-              <span className="mb-6 w-fit rounded-full border border-[#4F7BFF]/30 bg-[#4F7BFF]/10 px-3 py-1 text-[10px] font-bold tracking-[0.16em] text-[#9DB8FF]">PROCESS</span>
-              <h3 className="mb-2 text-lg font-bold tracking-[-0.01em] text-[#F4F7FF]">Six Milestones. Zero Handoff Friction.</h3>
-              <p className="mb-8 flex-1 text-sm leading-relaxed text-[#93A0BF]">
+              <span className="mb-6 w-fit rounded-full border border-site-blue/30 bg-site-blue/10 px-3 py-1 text-[10px] font-bold tracking-[0.16em] text-site-peri">PROCESS</span>
+              <h3 className="mb-2 text-lg font-bold tracking-[-0.01em] text-site-ink">Six Milestones. Zero Handoff Friction.</h3>
+              <p className="mb-8 flex-1 text-sm leading-relaxed text-site-mist">
                 Linear end-to-end workflows from brief to 1-click client sign-off with automated SLA timers.
               </p>
-              <div className="rounded-2xl border border-white/[0.07] bg-[#050A1A]/50 p-5">
+              <div className="rounded-2xl border border-hi/[0.07] bg-site-bg/50 p-5">
                 <div className="relative grid grid-cols-3 gap-x-2 gap-y-5 xl:flex xl:justify-between">
                   {/* Track + fill up to the selected milestone */}
-                  <div aria-hidden="true" className="absolute left-4 right-4 top-3.5 hidden h-px bg-white/10 xl:block" />
+                  <div aria-hidden="true" className="absolute left-4 right-4 top-3.5 hidden h-px bg-hi/10 xl:block" />
                   <motion.div
                     aria-hidden="true"
-                    className="absolute left-4 top-3.5 hidden h-px origin-left bg-gradient-to-r from-[#3B6BFF] to-[#7DD3FC] xl:block"
+                    className="absolute left-4 top-3.5 hidden h-px origin-left bg-gradient-to-r from-site-blue-deep to-site-sky xl:block"
                     style={{ right: "1rem" }}
                     animate={{ scaleX: activeIndex / (MILESTONES.length - 1) }}
                     transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
@@ -411,23 +411,23 @@ export function AboutPage() {
                           {isActive && (
                             <motion.span
                               layoutId="about-milestone"
-                              className="absolute inset-0 rounded-full bg-gradient-to-br from-[#5A85FF] to-[#3B6BFF] shadow-[0_0_14px_2px_rgba(79,123,255,0.6)]"
+                              className="absolute inset-0 rounded-full bg-gradient-to-br from-site-blue to-site-blue-deep shadow-[0_0_14px_2px_rgba(79,123,255,0.6)]"
                               transition={{ type: "spring", stiffness: 420, damping: 32 }}
                             />
                           )}
                           <span
                             className={`relative flex size-7 items-center justify-center rounded-full border transition-colors duration-300 ${
                               isActive
-                                ? "border-transparent text-white"
+                                ? "border-transparent text-hi"
                                 : isDone
-                                  ? "border-[#4F7BFF]/60 bg-[#050A1A] text-[#9DB8FF]"
-                                  : "border-white/15 bg-[#050A1A] text-[#93A0BF]"
+                                  ? "border-site-blue/60 bg-site-bg text-site-peri"
+                                  : "border-hi/15 bg-site-bg text-site-mist"
                             }`}
                           >
                             {step}
                           </span>
                         </span>
-                        <span className={`whitespace-nowrap text-center text-[10px] font-medium sm:text-[11px] ${isActive ? "text-[#F4F7FF]" : "text-[#93A0BF]"}`}>
+                        <span className={`whitespace-nowrap text-center text-[10px] font-medium sm:text-[11px] ${isActive ? "text-site-ink" : "text-site-mist"}`}>
                           {label}
                         </span>
                       </button>
@@ -435,7 +435,7 @@ export function AboutPage() {
                   })}
                 </div>
               </div>
-              <span className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-[#4F7BFF]/30 bg-[#4F7BFF]/10 px-3 py-1 text-xs font-semibold text-[#9DB8FF]">
+              <span className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-site-blue/30 bg-site-blue/10 px-3 py-1 text-xs font-semibold text-site-peri">
                 ⚡ SLA 2.4h avg
               </span>
             </TiltCard>
@@ -444,20 +444,20 @@ export function AboutPage() {
           {/* Performance */}
           <StaggerItem className="h-full">
             <TiltCard max={6} glow="rgba(125,162,255,0.14)" className="creo-glass flex h-full flex-col rounded-3xl p-5 sm:p-7 lg:p-8">
-              <span className="mb-6 w-fit rounded-full border border-[#4F7BFF]/30 bg-[#4F7BFF]/10 px-3 py-1 text-[10px] font-bold tracking-[0.16em] text-[#9DB8FF]">PERFORMANCE</span>
-              <h3 className="mb-2 text-lg font-bold tracking-[-0.01em] text-[#F4F7FF]">Profitability as a Creative Input.</h3>
-              <p className="mb-8 flex-1 text-sm leading-relaxed text-[#93A0BF]">
+              <span className="mb-6 w-fit rounded-full border border-site-blue/30 bg-site-blue/10 px-3 py-1 text-[10px] font-bold tracking-[0.16em] text-site-peri">PERFORMANCE</span>
+              <h3 className="mb-2 text-lg font-bold tracking-[-0.01em] text-site-ink">Profitability as a Creative Input.</h3>
+              <p className="mb-8 flex-1 text-sm leading-relaxed text-site-mist">
                 Real-time contribution margins on every retainer before month-end panic.
               </p>
-              <div className="space-y-4 rounded-2xl border border-white/[0.07] bg-[#050A1A]/50 p-4">
+              <div className="space-y-4 rounded-2xl border border-hi/[0.07] bg-site-bg/50 p-4">
                 {MARGINS.map((row, i) => (
                   <div key={row.name}>
-                    <div className="mb-1.5 flex justify-between text-[11px] font-bold text-[#F4F7FF]">
+                    <div className="mb-1.5 flex justify-between text-[11px] font-bold text-site-ink">
                       <span>{row.name}</span>
-                      <span className="text-[#9DB8FF]">{row.label}</span>
+                      <span className="text-site-peri">{row.label}</span>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                      <GrowBar value={row.value} delay={i * 0.12} className="bg-gradient-to-r from-[#3B6BFF] to-[#7DA2FF]" />
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-hi/[0.06]">
+                      <GrowBar value={row.value} delay={i * 0.12} className="bg-gradient-to-r from-site-blue-deep to-site-blue-light" />
                     </div>
                   </div>
                 ))}
@@ -480,17 +480,17 @@ export function AboutPage() {
                 className="creo-glass group flex h-full flex-col rounded-3xl p-6 transition-shadow duration-500 hover:shadow-[0_30px_70px_-30px_rgba(59,107,255,0.6)]"
               >
                 <div className="mb-5 flex items-center gap-4">
-                  <div className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#5A85FF] to-[#2F5CF0] text-base font-black text-white shadow-[0_10px_24px_-8px_rgba(59,107,255,0.9)] transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-105">
+                  <div className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-site-blue to-site-blue-deep text-base font-black text-white shadow-[0_10px_24px_-8px_rgba(59,107,255,0.9)] transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-105">
                     {pod.initials}
                   </div>
                   <div>
-                    <div className="text-base font-bold text-[#F4F7FF]">{pod.name}</div>
-                    <div className="mt-0.5 text-xs text-[#93A0BF]">{pod.role}</div>
+                    <div className="text-base font-bold text-site-ink">{pod.name}</div>
+                    <div className="mt-0.5 text-xs text-site-mist">{pod.role}</div>
                   </div>
                 </div>
-                <p className="mb-5 flex-1 text-sm leading-relaxed text-[#93A0BF]">{pod.text}</p>
+                <p className="mb-5 flex-1 text-sm leading-relaxed text-site-mist">{pod.text}</p>
                 <div className="flex justify-end">
-                  <span className="flex size-9 items-center justify-center rounded-full border border-white/10 text-[#7DA2FF] transition-all duration-300 group-hover:border-[#4F7BFF]/60 group-hover:bg-[#4F7BFF]/15">
+                  <span className="flex size-9 items-center justify-center rounded-full border border-hi/10 text-site-blue-light transition-all duration-300 group-hover:border-site-blue/60 group-hover:bg-site-blue/15">
                     <ChevronRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
                   </span>
                 </div>

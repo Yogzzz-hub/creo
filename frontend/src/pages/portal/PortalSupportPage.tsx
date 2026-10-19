@@ -155,8 +155,8 @@ export function PortalSupportPage() {
               <ShieldAlert className="size-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">Retainer Subscription Inactive or Expired</h4>
-              <p className="text-xs text-[#97A0B3] mt-0.5">
+              <h4 className="text-sm font-bold text-hi">Retainer Subscription Inactive or Expired</h4>
+              <p className="text-xs text-app-mist mt-0.5">
                 Deliverable pipelines and asset reviews are currently paused. Our support desk is 100% active to assist you with renewal, custom quota arrangements, or billing questions.
               </p>
             </div>
@@ -165,14 +165,14 @@ export function PortalSupportPage() {
             <button
               type="button"
               onClick={() => setBargainModalOpen(true)}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] text-xs font-bold cursor-pointer transition-colors enabled:hover:bg-[#293D58] enabled:hover:border-[#9CB8E5] enabled:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161F2D]"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-app-base border border-app-line text-app-accent text-xs font-bold cursor-pointer transition-colors enabled:hover:bg-app-line-soft enabled:hover:border-app-accent enabled:hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
             >
               <PhoneCall className="size-3.5" />
               <span>Call & Bargain</span>
             </button>
             <Link
               to="/portal/payments"
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-xs font-bold transition-colors shadow-xs cursor-pointer"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-app-accent-soft hover:bg-hi text-app-base text-xs font-bold transition-colors shadow-xs cursor-pointer"
             >
               <span>Renew Retainer</span>
               <ArrowRight className="size-3.5" />
@@ -184,13 +184,13 @@ export function PortalSupportPage() {
       {/* ── Main Help Section ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
         {/* ── Left Column: Ask your pod (Form) ── */}
-        <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] min-w-0">
-          <h3 className="text-base font-semibold text-white mb-5">Ask your pod</h3>
+        <div className="bg-app-surface rounded-2xl p-6 border border-app-line min-w-0">
+          <h3 className="text-base font-semibold text-hi mb-5">Ask your pod</h3>
 
           <form onSubmit={handleFormSubmit} className="space-y-5 min-w-0">
             {/* Category Pills */}
             <div>
-              <label className="block text-sm text-[#97A0B3] mb-2">What is it about?</label>
+              <label className="block text-sm text-app-mist mb-2">What is it about?</label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((cat) => (
                   <button
@@ -200,8 +200,8 @@ export function PortalSupportPage() {
                     aria-pressed={selectedCategory === cat}
                     className={`min-h-11 px-4 py-2 rounded-full text-[13px] font-medium cursor-pointer transition-colors ${
                       selectedCategory === cat
-                        ? "bg-[#BCCCE6] text-[#0B111C] hover:bg-[#D2DDF0]"
-                        : "bg-transparent border border-[#2A3446] text-[#BCCCE6] hover:bg-[#222D3E] hover:border-[#7FA0D6] hover:text-white"
+                        ? "bg-app-accent-soft text-app-base hover:bg-app-ink-3"
+                        : "bg-transparent border border-app-line text-app-accent-soft hover:bg-app-line-soft hover:border-app-accent hover:text-white"
                     }`}
                   >
                     {cat}
@@ -212,27 +212,27 @@ export function PortalSupportPage() {
 
             {/* Subject Input */}
             <div>
-              <label htmlFor="support-subject" className="block text-sm text-[#97A0B3] mb-2">Subject</label>
+              <label htmlFor="support-subject" className="block text-sm text-app-mist mb-2">Subject</label>
               <input
                 id="support-subject"
                 type="text"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Briefly summarize your request..."
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 text-sm text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-2 focus:ring-[#7FA0D6]/20 transition-colors"
+                className="w-full bg-app-base border border-app-line rounded-xl p-3 text-sm text-hi placeholder-app-mist focus:outline-none focus:border-app-accent focus:ring-2 focus:ring-app-accent/20 transition-colors"
               />
             </div>
 
             {/* Message */}
             <div>
-              <label htmlFor="support-message" className="block text-sm text-[#97A0B3] mb-2">Message</label>
+              <label htmlFor="support-message" className="block text-sm text-app-mist mb-2">Message</label>
               <textarea
                 id="support-message"
                 rows={5}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe your issue or request..."
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 text-sm text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-2 focus:ring-[#7FA0D6]/20 resize-none transition-colors"
+                className="w-full bg-app-base border border-app-line rounded-xl p-3 text-sm text-hi placeholder-app-mist focus:outline-none focus:border-app-accent focus:ring-2 focus:ring-app-accent/20 resize-none transition-colors"
               />
             </div>
 
@@ -241,7 +241,7 @@ export function PortalSupportPage() {
               <button
                 type="submit"
                 disabled={createTicketMutation.isPending || !subject.trim() || !description.trim()}
-                className="min-h-11 px-5 gap-2 rounded-xl bg-[#BCCCE6] text-[#0B111C] text-sm font-semibold flex items-center justify-center enabled:hover:bg-[#D2DDF0] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="min-h-11 px-5 gap-2 rounded-xl bg-app-accent-soft text-app-base text-sm font-semibold flex items-center justify-center enabled:hover:bg-app-ink-3 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {createTicketMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -257,31 +257,31 @@ export function PortalSupportPage() {
         {/* ── Right Column: Your requests + Common questions ── */}
         <div className="space-y-6 min-w-0">
           {/* Your Requests */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] min-w-0">
-            <h3 className="text-base font-semibold text-white mb-4">Your requests</h3>
+          <div className="bg-app-surface rounded-2xl p-6 border border-app-line min-w-0">
+            <h3 className="text-base font-semibold text-hi mb-4">Your requests</h3>
 
             {ticketsList.length === 0 ? (
-              <p className="text-sm text-[#97A0B3] py-6 text-center">No tickets yet. Need help? Raise a Ticket</p>
+              <p className="text-sm text-app-mist py-6 text-center">No tickets yet. Need help? Raise a Ticket</p>
             ) : (
               <div className="space-y-3">
                 {ticketsList.slice(0, 5).map((t) => (
-                  <Link key={t.id} to={`/portal/support/${t.rawId}`} className="block p-4 bg-[#0B111C] rounded-xl border border-white/[0.04] hover:border-[#7FA0D6]/30 transition-colors">
+                  <Link key={t.id} to={`/portal/support/${t.rawId}`} className="block p-4 bg-app-base rounded-xl border border-hi/[0.04] hover:border-app-accent/30 transition-colors">
                     {/* Top row */}
                     <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-xs font-mono text-[#97A0B3]">{t.id}</span>
-                      <span className="text-xs text-[#97A0B3]">· {t.category}</span>
-                      <span className="text-xs text-[#97A0B3] ml-auto">{t.timeAgo}</span>
+                      <span className="text-xs font-mono text-app-mist">{t.id}</span>
+                      <span className="text-xs text-app-mist">· {t.category}</span>
+                      <span className="text-xs text-app-mist ml-auto">{t.timeAgo}</span>
                     </div>
                     {/* Title */}
-                    <p className="text-sm font-medium text-white mb-2">{t.title}</p>
+                    <p className="text-sm font-medium text-hi mb-2">{t.title}</p>
                     {/* Status */}
                     <span
                       className={`inline-flex px-2.5 py-0.5 rounded text-xs font-medium ${
                         t.status === "resolved"
-                          ? "bg-[#7FA0D6]/10 text-[#7FA0D6]"
+                          ? "bg-app-accent/10 text-app-accent"
                           : t.status === "in_progress"
-                          ? "bg-[#D8BF9B]/10 text-[#D8BF9B]"
-                          : "bg-white/[0.05] text-[#97A0B3]"
+                          ? "bg-app-warm/10 text-app-warm"
+                          : "bg-hi/[0.05] text-app-mist"
                       }`}
                     >
                       {t.status === "resolved"
@@ -297,10 +297,10 @@ export function PortalSupportPage() {
           </div>
 
           {/* Common Questions (Accordion) */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] min-w-0">
-            <h3 className="text-base font-semibold text-white mb-4">Common questions</h3>
+          <div className="bg-app-surface rounded-2xl p-6 border border-app-line min-w-0">
+            <h3 className="text-base font-semibold text-hi mb-4">Common questions</h3>
 
-            <div className="divide-y divide-white/[0.05]">
+            <div className="divide-y divide-hi/[0.05]">
               {FAQ_ITEMS.map((item, i) => (
                 <div key={i} className="flex flex-col">
                   <button
@@ -308,17 +308,17 @@ export function PortalSupportPage() {
                     onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
                     aria-expanded={expandedFaq === i}
                     aria-controls={`support-faq-${i}`}
-                    className="w-full flex items-center justify-between rounded-xl px-3 py-4 text-left group cursor-pointer transition-colors hover:bg-[#222D3E]"
+                    className="w-full flex items-center justify-between rounded-xl px-3 py-4 text-left group cursor-pointer transition-colors hover:bg-app-line-soft"
                   >
-                    <span className="text-sm text-[#97A0B3] group-hover:text-white transition-colors pr-4">{item.q}</span>
+                    <span className="text-sm text-app-mist group-hover:text-hi transition-colors pr-4">{item.q}</span>
                     <Plus
-                      className={`w-4 h-4 text-[#97A0B3] shrink-0 transition-transform duration-200 ${
+                      className={`w-4 h-4 text-app-mist shrink-0 transition-transform duration-200 ${
                         expandedFaq === i ? "rotate-45" : ""
                       }`}
                     />
                   </button>
                   {expandedFaq === i && (
-                    <div id={`support-faq-${i}`} className="px-3 pb-4 text-sm leading-6 text-[#97A0B3] animate-in fade-in slide-in-from-top-2">
+                    <div id={`support-faq-${i}`} className="px-3 pb-4 text-sm leading-6 text-app-mist animate-in fade-in slide-in-from-top-2">
                       {item.a}
                     </div>
                   )}
@@ -331,10 +331,10 @@ export function PortalSupportPage() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 max-w-[calc(100vw-2rem)] z-50 bg-[#161F2D] text-white px-5 py-3 rounded-xl shadow-2xl border border-white/[0.1] text-sm font-medium flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#BCCCE6]" />
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 max-w-[calc(100vw-2rem)] z-50 bg-app-surface text-hi px-5 py-3 rounded-xl shadow-2xl border border-hi/[0.1] text-sm font-medium flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-app-accent-soft" />
           {toastMessage}
-          <button type="button" onClick={() => setToastMessage(null)} className="ml-2 text-[#97A0B3] hover:text-white cursor-pointer">
+          <button type="button" onClick={() => setToastMessage(null)} className="ml-2 text-app-mist hover:text-hi cursor-pointer">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>

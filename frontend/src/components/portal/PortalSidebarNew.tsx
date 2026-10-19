@@ -19,6 +19,7 @@ import {
 import { useAuth } from "../../lib/auth-context";
 import { useConfirm } from "../ui/ConfirmDialog";
 import { useAdminSidebar } from "../admin/AdminSidebarContext";
+import { ThemeToggle } from "../ui/ThemeToggle";
 
 interface NavItem {
   label: string;
@@ -144,30 +145,34 @@ export function PortalSidebarNew() {
         <button
           aria-label="Close navigation overlay"
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-[9998] bg-[#050810]/75 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-[9998] bg-app-void/75 backdrop-blur-sm lg:hidden"
         />
       )}
 
       <aside
         aria-label="Client navigation sidebar"
-        className={`fixed inset-y-0 left-0 z-[9999] lg:z-40 flex w-[280px] max-w-[85vw] flex-col bg-[#161F2D] border-r border-[#2A3446] shadow-2xl transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-[9999] lg:z-40 flex w-[280px] max-w-[85vw] flex-col bg-app-surface border-r border-app-line shadow-2xl transition-transform duration-300 lg:translate-x-0 ${
           mobileOpen ? "translate-x-0 visible" : "-translate-x-full invisible lg:visible"
         }`}
       >
         {/* Brand Header */}
-        <div className="p-4 sm:p-5 border-b border-[#2A3446] flex items-center justify-between bg-[#0B111C]/60 shrink-0">
+        <div className="p-4 sm:p-5 border-b border-app-line flex items-center justify-between bg-app-base/60 shrink-0">
           <div className="flex items-center gap-2.5">
-            <Link to="/portal" className="text-xl font-black text-white tracking-tighter">
-              creo<span className="text-[#7FA0D6] text-2xl leading-none">.</span>
+            <Link to="/portal" className="text-xl font-black text-hi tracking-tighter">
+              creo<span className="text-app-accent text-2xl leading-none">.</span>
             </Link>
-            <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+            <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-app-accent/15 text-app-accent border border-app-accent/30">
               Client Portal
             </span>
+          </div>
+          {/* Phones get the toggle in the top header instead */}
+          <div className="hidden lg:block">
+            <ThemeToggle className="size-8" />
           </div>
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="lg:hidden size-8 rounded-xl flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] border border-transparent hover:border-[#2A3446] transition-colors cursor-pointer"
+            className="lg:hidden size-8 rounded-xl flex items-center justify-center text-app-mist hover:text-hi hover:bg-app-surface border border-transparent hover:border-app-line transition-colors cursor-pointer"
             aria-label="Close navigation sidebar"
           >
             <X className="w-5 h-5" />
@@ -175,10 +180,10 @@ export function PortalSidebarNew() {
         </div>
 
         {/* Scrollable Navigation */}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 space-y-5 text-left [scrollbar-width:thin] [scrollbar-color:#2A3446_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#2A3446] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#7FA0D6]/50">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 space-y-5 text-left [scrollbar-width:thin] [scrollbar-color:#2A3446_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-app-line [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-app-accent/50">
           {sections.map((section) => (
             <div key={section.label} className="space-y-1.5">
-              <div className="px-3 pb-1 text-xs font-black uppercase tracking-wider text-[#7FA0D6]">
+              <div className="px-3 pb-1 text-xs font-black uppercase tracking-wider text-app-accent">
                 {section.label}
               </div>
               <div className="space-y-1">
@@ -192,18 +197,18 @@ export function PortalSidebarNew() {
                       onClick={() => setMobileOpen(false)}
                       className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-bold transition-all ${
                         active
-                          ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm font-black"
-                          : "text-[#97A0B3] hover:text-white hover:bg-[#0B111C]/50"
+                          ? "bg-app-accent-soft text-app-base shadow-sm font-black"
+                          : "text-app-mist hover:text-white hover:bg-app-base/50"
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <Icon className={`w-[18px] h-[18px] shrink-0 ${active ? "text-[#0B111C]" : "text-[#7FA0D6]"}`} />
+                        <Icon className={`w-[18px] h-[18px] shrink-0 ${active ? "text-app-base" : "text-app-accent"}`} />
                         <span className="truncate">{item.label}</span>
                       </div>
                       {item.badge && (
                         <span
                           className={`text-[11px] px-2 py-0.5 rounded-md font-black shrink-0 ${
-                            active ? "bg-[#0B111C]/20 text-[#0B111C]" : "bg-[#7FA0D6]/20 text-[#7FA0D6]"
+                            active ? "bg-app-base/20 text-app-base" : "bg-app-accent/20 text-app-accent"
                           }`}
                         >
                           {item.badge}
@@ -219,10 +224,10 @@ export function PortalSidebarNew() {
                     type="button"
                     onClick={handleLogout}
                     disabled={loggingOut}
-                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-bold text-[#97A0B3] hover:text-white hover:bg-[#0B111C]/50 transition-all cursor-pointer"
+                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-bold text-app-mist hover:text-hi hover:bg-app-base/50 transition-all cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <LogOut className="w-[18px] h-[18px] shrink-0 text-[#7FA0D6]" />
+                      <LogOut className="w-[18px] h-[18px] shrink-0 text-app-accent" />
                       <span className="truncate">{loggingOut ? "Signing out..." : "Log out"}</span>
                     </div>
                   </button>
@@ -233,14 +238,14 @@ export function PortalSidebarNew() {
         </div>
 
         {/* Footer: User Profile Card & Direct Sign Out */}
-        <div className="p-3.5 border-t border-[#2A3446] bg-[#0B111C]/80 shrink-0 space-y-2 text-left">
-          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-[#161F2D] border border-[#2A3446]">
-            <div className="size-8 rounded-full bg-[#BCCCE6] text-[#0B111C] font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+        <div className="p-3.5 border-t border-app-line bg-app-base/80 shrink-0 space-y-2 text-left">
+          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-app-surface border border-app-line">
+            <div className="size-8 rounded-full bg-app-accent-soft text-app-base font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <h4 className="text-xs font-bold text-white truncate">{companyName}</h4>
-              <p className="text-[10px] text-[#97A0B3] font-medium truncate">
+              <h4 className="text-xs font-bold text-hi truncate">{companyName}</h4>
+              <p className="text-[10px] text-app-mist font-medium truncate">
                 {dashboardData?.active_plan?.tier
                   ? dashboardData.active_plan.tier.charAt(0).toUpperCase() +
                     dashboardData.active_plan.tier.slice(1) +
@@ -253,7 +258,7 @@ export function PortalSidebarNew() {
               type="button"
               onClick={handleLogout}
               disabled={loggingOut}
-              className="p-1.5 rounded-lg text-[#97A0B3] hover:text-[#D8BF9B] hover:bg-[#D8BF9B]/10 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-app-mist hover:text-app-warm hover:bg-app-warm/10 transition-colors cursor-pointer"
               title="Sign Out / Log Out"
               aria-label="Sign Out"
             >
@@ -265,7 +270,7 @@ export function PortalSidebarNew() {
           {(user?.role === "admin" || user?.role === "super_admin") && (
             <Link
               to="/admin"
-              className="w-full flex items-center justify-between text-xs font-bold text-[#7FA0D6] hover:text-white px-3 py-2 rounded-xl bg-[#0B111C] border border-[#7FA0D6]/30 hover:border-[#7FA0D6]/60 transition-colors shadow-xs"
+              className="w-full flex items-center justify-between text-xs font-bold text-app-accent hover:text-hi px-3 py-2 rounded-xl bg-app-base border border-app-accent/30 hover:border-app-accent/60 transition-colors shadow-xs"
             >
               <span>Admin Dashboard</span>
               <LayoutDashboard className="w-3.5 h-3.5" />

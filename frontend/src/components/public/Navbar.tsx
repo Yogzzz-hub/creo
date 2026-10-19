@@ -6,6 +6,7 @@ import { useAuth } from "../../lib/auth-context";
 import { useConfirm } from "../ui/ConfirmDialog";
 import { getRoleHome } from "../auth/ProtectedRoute";
 import { RollText } from "../motion";
+import { ThemeToggle } from "../ui/ThemeToggle";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -22,10 +23,10 @@ function Wordmark() {
     <Link
       to="/"
       aria-label="Creo home"
-      className="group relative flex items-baseline text-[1.6rem] font-black tracking-[-0.04em] text-[#F4F7FF]"
+      className="group relative flex items-baseline text-[1.6rem] font-black tracking-[-0.04em] text-site-ink"
     >
       creo
-      <span className="relative ml-[1px] inline-block size-[0.36em] translate-y-[-0.02em] rounded-full bg-gradient-to-br from-[#7DA2FF] to-[#3B6BFF] shadow-[0_0_14px_2px_rgba(79,123,255,0.65)] transition-transform duration-500 group-hover:-translate-y-1.5 group-hover:scale-125" />
+      <span className="relative ml-[1px] inline-block size-[0.36em] translate-y-[-0.02em] rounded-full bg-gradient-to-br from-site-blue-light to-site-blue-deep shadow-[0_0_14px_2px_rgba(79,123,255,0.65)] transition-transform duration-500 group-hover:-translate-y-1.5 group-hover:scale-125" />
     </Link>
   );
 }
@@ -119,7 +120,7 @@ export function Navbar() {
           {/* Top-edge sheen that gives the glass its thickness */}
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"
+            className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-hi/40 to-transparent"
           />
 
           <Wordmark />
@@ -137,13 +138,13 @@ export function Navbar() {
                     aria-current={isActive ? "page" : undefined}
                     onMouseEnter={() => setHovered(link.href)}
                     className={`group relative z-10 block rounded-full px-4 py-2 text-[13.5px] tracking-[-0.01em] transition-colors duration-300 ${
-                      isActive ? "font-semibold text-white" : "font-medium text-[#B4BFDA] hover:text-white"
+                      isActive ? "font-semibold text-hi" : "font-medium text-site-mist-2 hover:text-hi"
                     }`}
                   >
                     {hovered === link.href && (
                       <motion.span
                         layoutId="nav-hover-pill"
-                        className="absolute inset-0 -z-10 rounded-full bg-white/[0.07] ring-1 ring-inset ring-white/10"
+                        className="absolute inset-0 -z-10 rounded-full bg-hi/[0.07] ring-1 ring-inset ring-hi/10"
                         transition={{ type: "spring", stiffness: 420, damping: 34 }}
                       />
                     )}
@@ -151,7 +152,7 @@ export function Navbar() {
                     {isActive && (
                       <motion.span
                         layoutId="nav-active-dot"
-                        className="absolute -bottom-0.5 left-1/2 size-1 -translate-x-1/2 rounded-full bg-[#7DA2FF] shadow-[0_0_10px_2px_rgba(79,123,255,0.8)]"
+                        className="absolute -bottom-0.5 left-1/2 size-1 -translate-x-1/2 rounded-full bg-site-blue-light shadow-[0_0_10px_2px_rgba(79,123,255,0.8)]"
                         transition={{ type: "spring", stiffness: 420, damping: 34 }}
                       />
                     )}
@@ -162,13 +163,14 @@ export function Navbar() {
           </ul>
 
           <div className="hidden items-center gap-2 lg:flex">
+            <ThemeToggle variant="site" />
             {user ? (
               <>
                 <button
                   type="button"
                   onClick={handleLogout}
                   disabled={loggingOut}
-                  className="flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-[13.5px] font-medium text-[#B4BFDA] transition-colors hover:text-white disabled:opacity-60"
+                  className="flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-[13.5px] font-medium text-site-mist-2 transition-colors hover:text-hi disabled:opacity-60"
                 >
                   <LogOut className="size-4" />
                   {loggingOut ? "Logging out..." : "Log out"}
@@ -185,7 +187,7 @@ export function Navbar() {
               <>
                 <Link
                   to="/login"
-                  className="group rounded-full px-4 py-2 text-[13.5px] font-medium text-[#B4BFDA] transition-colors hover:text-white"
+                  className="group rounded-full px-4 py-2 text-[13.5px] font-medium text-site-mist-2 transition-colors hover:text-hi"
                 >
                   <RollText>Log in</RollText>
                 </Link>
@@ -200,6 +202,8 @@ export function Navbar() {
             )}
           </div>
 
+          <div className="flex items-center gap-2 lg:hidden">
+          <ThemeToggle variant="site" className="size-11" />
           {/* Mobile menu trigger: two bars that fold into an X */}
           <button
             type="button"
@@ -208,21 +212,22 @@ export function Navbar() {
             aria-expanded={sheetOpen}
             aria-controls="public-mobile-menu"
             aria-label={sheetOpen ? "Close menu" : "Open menu"}
-            className="relative flex size-11 cursor-pointer items-center justify-center rounded-full bg-white/[0.06] ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/10 lg:hidden"
+            className="relative flex size-11 cursor-pointer items-center justify-center rounded-full bg-hi/[0.06] ring-1 ring-inset ring-hi/10 transition-colors hover:bg-hi/10 lg:hidden"
           >
             <span className="relative block h-3 w-[18px]">
               <motion.span
-                className="absolute left-0 top-0 block h-[1.5px] w-full rounded-full bg-[#F4F7FF]"
+                className="absolute left-0 top-0 block h-[1.5px] w-full rounded-full bg-site-ink"
                 animate={sheetOpen ? { rotate: 45, y: 5.25 } : { rotate: 0, y: 0 }}
                 transition={{ duration: 0.4, ease: EASE }}
               />
               <motion.span
-                className="absolute bottom-0 left-0 block h-[1.5px] w-full rounded-full bg-[#F4F7FF]"
+                className="absolute bottom-0 left-0 block h-[1.5px] w-full rounded-full bg-site-ink"
                 animate={sheetOpen ? { rotate: -45, y: -5.25 } : { rotate: 0, y: 0 }}
                 transition={{ duration: 0.4, ease: EASE }}
               />
             </span>
           </button>
+          </div>
         </nav>
 
         {/* Mobile drawer */}
@@ -259,11 +264,11 @@ export function Navbar() {
                         aria-current={isActive ? "page" : undefined}
                         onClick={() => setSheetOpen(false)}
                         className={`group flex items-center justify-between rounded-2xl px-4 py-3.5 transition-colors ${
-                          isActive ? "bg-white/[0.07] text-white" : "text-[#B4BFDA] hover:bg-white/[0.05] hover:text-white"
+                          isActive ? "bg-hi/[0.07] text-hi" : "text-site-mist-2 hover:bg-hi/[0.05] hover:text-hi"
                         }`}
                       >
                         <span className="flex items-baseline gap-3">
-                          <span className="font-mono text-[11px] text-[#4F7BFF]">0{i + 1}</span>
+                          <span className="font-mono text-[11px] text-site-blue">0{i + 1}</span>
                           <span className="text-xl font-semibold tracking-[-0.02em]">{link.label}</span>
                         </span>
                         <ArrowUpRight className="size-4 opacity-40 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100" />
@@ -273,7 +278,7 @@ export function Navbar() {
                 })}
               </motion.nav>
 
-              <div className="mt-1 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
+              <div className="mt-1 grid grid-cols-2 gap-2 border-t border-hi/10 pt-3">
                 {user ? (
                   <>
                     <button

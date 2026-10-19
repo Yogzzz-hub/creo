@@ -18,8 +18,8 @@ export function AdminSLAPerformancePage() {
     {
       pod: "Pod A",
       lead: "Vikram Malhotra",
-      bg: "bg-[#161F2D]",
-      text: "text-[#7FA0D6]",
+      bg: "bg-app-surface",
+      text: "text-app-accent",
       slaMet: "99.4%",
       avgResponse: "6.2m",
       resolved: "42 tickets",
@@ -29,8 +29,8 @@ export function AdminSLAPerformancePage() {
     {
       pod: "Pod B",
       lead: "Sarah Connor",
-      bg: "bg-[#161F2D]",
-      text: "text-[#7FA0D6]",
+      bg: "bg-app-surface",
+      text: "text-app-accent",
       slaMet: "98.8%",
       avgResponse: "7.8m",
       resolved: "38 tickets",
@@ -40,8 +40,8 @@ export function AdminSLAPerformancePage() {
     {
       pod: "Pod C",
       lead: "Rohan Mehta",
-      bg: "bg-[#161F2D]",
-      text: "text-[#D8BF9B]",
+      bg: "bg-app-surface",
+      text: "text-app-warm",
       slaMet: "97.5%",
       avgResponse: "9.1m",
       resolved: "35 tickets",
@@ -51,7 +51,7 @@ export function AdminSLAPerformancePage() {
   ];
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col justify-between">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-app-base flex flex-col justify-between">
       <div>
         <AdminTopHeader activeTab="Support" />
 
@@ -64,39 +64,39 @@ export function AdminSLAPerformancePage() {
           {/* Top 2 KPI Metric Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             {/* Metric Card 1: Overall Compliance */}
-            <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-5 shadow-2xs flex items-center justify-between hover-card-innovative">
+            <div className="bg-app-surface border border-app-line/90 rounded-2xl p-4 sm:p-5 shadow-2xs flex items-center justify-between hover-card-innovative">
               <div className="space-y-1">
-                <span className="text-xs font-black uppercase tracking-wider text-[#97A0B3]">
+                <span className="text-xs font-black uppercase tracking-wider text-app-mist">
                   OVERALL COMPLIANCE
                 </span>
                 <div className="flex items-baseline gap-2.5">
-                  <span className="text-2xl sm:text-3xl font-black text-white">98.4%</span>
+                  <span className="text-2xl sm:text-3xl font-black text-hi">98.4%</span>
                   <span className="text-xs sm:text-sm font-bold text-emerald-400 flex items-center gap-1">
                     <TrendingUp className="size-4" /> +0.6% MoM
                   </span>
                 </div>
                 <div className="flex items-center gap-2 pt-1 text-xs font-bold">
-                  <span className="text-[#97A0B3]">Target: <strong className="text-white">98.0%</strong></span>
+                  <span className="text-app-mist">Target: <strong className="text-hi">98.0%</strong></span>
                   <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-extrabold border border-emerald-500/30">
                     OPTIMAL
                   </span>
                 </div>
               </div>
 
-              <div className="size-10 sm:size-12 rounded-2xl bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 flex items-center justify-center text-[#7FA0D6] shrink-0">
+              <div className="size-10 sm:size-12 rounded-2xl bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent shrink-0">
                 <Shield className="size-5 sm:size-6" />
               </div>
             </div>
 
             {/* Metric Card 2: Active SLA Watchlist */}
-            <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-5 shadow-2xs flex items-center justify-between hover-card-innovative">
+            <div className="bg-app-surface border border-app-line/90 rounded-2xl p-4 sm:p-5 shadow-2xs flex items-center justify-between hover-card-innovative">
               <div className="space-y-1">
-                <span className="text-xs font-black uppercase tracking-wider text-[#97A0B3]">
+                <span className="text-xs font-black uppercase tracking-wider text-app-mist">
                   ACTIVE SLA WATCHLIST
                 </span>
                 <div className="flex items-baseline gap-2.5">
-                  <span className="text-2xl sm:text-3xl font-black text-white">2</span>
-                  <span className="text-xs sm:text-sm font-bold text-[#F1F5F9]">Active</span>
+                  <span className="text-2xl sm:text-3xl font-black text-hi">2</span>
+                  <span className="text-xs sm:text-sm font-bold text-app-ink-2">Active</span>
                 </div>
                 <div className="flex items-center gap-2 pt-1 text-xs font-bold">
                   <span className="px-2.5 py-0.5 rounded-md bg-rose-500/15 text-rose-400 text-xs font-bold border border-rose-500/30">
@@ -117,16 +117,16 @@ export function AdminSLAPerformancePage() {
           {/* Row 1: Chart & Compliance by Priority */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Chart Card (2 Cols) */}
-            <div className="lg:col-span-2 bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 hover-card-innovative">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2A3446] pb-4">
+            <div className="lg:col-span-2 bg-app-surface border border-app-line/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 hover-card-innovative">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-app-line pb-4">
                 <div>
-                  <h3 className="text-base font-black text-white">Response & Resolution Trend</h3>
-                  <p className="text-xs sm:text-sm text-[#97A0B3] font-medium mt-0.5">
+                  <h3 className="text-base font-black text-hi">Response & Resolution Trend</h3>
+                  <p className="text-xs sm:text-sm text-app-mist font-medium mt-0.5">
                     Daily compliance velocity trajectory (May 10 — June 10, 2025)
                   </p>
                 </div>
                 <div className="flex items-center gap-4 text-xs sm:text-sm font-bold">
-                  <span className="flex items-center gap-1.5 text-[#7FA0D6]">
+                  <span className="flex items-center gap-1.5 text-app-accent">
                     <span className="size-2.5 rounded-full bg-blue-500" />
                     Response (99.1%)
                   </span>
@@ -150,12 +150,12 @@ export function AdminSLAPerformancePage() {
                   <svg className="w-full h-full" viewBox="0 0 500 110" preserveAspectRatio="none">
                     <defs>
                       <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#7FA0D6" stopOpacity="0.35" />
-                        <stop offset="100%" stopColor="#7FA0D6" stopOpacity="0.02" />
+                        <stop offset="0%" stopColor="var(--app-accent)" stopOpacity="0.35" />
+                        <stop offset="100%" stopColor="var(--app-accent)" stopOpacity="0.02" />
                       </linearGradient>
                       <linearGradient id="indigoGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#7FA0D6" stopOpacity="0.25" />
-                        <stop offset="100%" stopColor="#7FA0D6" stopOpacity="0.0" />
+                        <stop offset="0%" stopColor="var(--app-accent)" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="var(--app-accent)" stopOpacity="0.0" />
                       </linearGradient>
                     </defs>
                     {/* Area Fill */}
@@ -167,7 +167,7 @@ export function AdminSLAPerformancePage() {
                     <path
                       d="M 0 68 C 60 40, 120 72, 180 44 C 240 20, 300 58, 360 32 C 420 14, 470 48, 500 24"
                       fill="none"
-                      stroke="#7FA0D6"
+                      stroke="var(--app-accent)"
                       strokeWidth="3.5"
                       strokeLinecap="round"
                     />
@@ -175,7 +175,7 @@ export function AdminSLAPerformancePage() {
                     <path
                       d="M 0 82 C 60 55, 120 68, 180 54 C 240 34, 300 50, 360 40 C 420 24, 470 38, 500 34"
                       fill="none"
-                      stroke="#BCCCE6"
+                      stroke="var(--app-accent-soft)"
                       strokeWidth="2.5"
                       strokeDasharray="5 3"
                       strokeLinecap="round"
@@ -184,25 +184,25 @@ export function AdminSLAPerformancePage() {
                 </div>
 
                 {/* X Axis Labels */}
-                <div className="flex justify-between text-xs sm:text-sm font-bold text-[#97A0B3] pt-2 border-t border-[#2A3446]">
+                <div className="flex justify-between text-xs sm:text-sm font-bold text-app-mist pt-2 border-t border-app-line">
                   <span>May 10</span>
                   <span>May 16</span>
                   <span>May 22</span>
                   <span>May 28</span>
                   <span>Jun 03</span>
-                  <span className="font-extrabold text-[#7FA0D6]">Jun 10 (Today)</span>
+                  <span className="font-extrabold text-app-accent">Jun 10 (Today)</span>
                 </div>
               </div>
             </div>
 
             {/* Compliance by Priority Card (1 Col) */}
-            <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-5 hover-card-innovative">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-app-surface border border-app-line/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-5 hover-card-innovative">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
                 <div>
-                  <h3 className="text-base font-black text-white">Compliance by Priority</h3>
-                  <p className="text-xs sm:text-sm text-[#97A0B3] font-medium mt-0.5">Strict contract adherence by urgency level</p>
+                  <h3 className="text-base font-black text-hi">Compliance by Priority</h3>
+                  <p className="text-xs sm:text-sm text-app-mist font-medium mt-0.5">Strict contract adherence by urgency level</p>
                 </div>
-                <Sliders className="size-4.5 text-[#7FA0D6]" />
+                <Sliders className="size-4.5 text-app-accent" />
               </div>
 
               {/* Progress Bars Stack */}
@@ -210,13 +210,13 @@ export function AdminSLAPerformancePage() {
                 {/* Item 1: Urgent */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs sm:text-sm font-bold">
-                    <span className="flex items-center gap-1.5 text-white">
+                    <span className="flex items-center gap-1.5 text-hi">
                       <span className="size-2.5 rounded-full bg-rose-500" />
                       Urgent (1h SLA)
                     </span>
-                    <span className="text-white">96.8% <span className="text-[#97A0B3] font-normal">(5/5 Compliant)</span></span>
+                    <span className="text-hi">96.8% <span className="text-app-mist font-normal">(5/5 Compliant)</span></span>
                   </div>
-                  <div className="h-2.5 w-full rounded-full bg-[#0B111C] overflow-hidden border border-[#2A3446]">
+                  <div className="h-2.5 w-full rounded-full bg-app-base overflow-hidden border border-app-line">
                     <div className="h-full bg-rose-500 rounded-full" style={{ width: "96.8%" }} />
                   </div>
                 </div>
@@ -224,13 +224,13 @@ export function AdminSLAPerformancePage() {
                 {/* Item 2: High Priority */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs sm:text-sm font-bold">
-                    <span className="flex items-center gap-1.5 text-white">
+                    <span className="flex items-center gap-1.5 text-hi">
                       <span className="size-2.5 rounded-full bg-blue-500" />
                       High Priority (2h SLA)
                     </span>
-                    <span className="text-white">98.2% <span className="text-[#97A0B3] font-normal">(8/8 Compliant)</span></span>
+                    <span className="text-hi">98.2% <span className="text-app-mist font-normal">(8/8 Compliant)</span></span>
                   </div>
-                  <div className="h-2.5 w-full rounded-full bg-[#0B111C] overflow-hidden border border-[#2A3446]">
+                  <div className="h-2.5 w-full rounded-full bg-app-base overflow-hidden border border-app-line">
                     <div className="h-full bg-blue-500 rounded-full" style={{ width: "98.2%" }} />
                   </div>
                 </div>
@@ -238,13 +238,13 @@ export function AdminSLAPerformancePage() {
                 {/* Item 3: Medium Priority */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs sm:text-sm font-bold">
-                    <span className="flex items-center gap-1.5 text-white">
+                    <span className="flex items-center gap-1.5 text-hi">
                       <span className="size-2.5 rounded-full bg-cyan-400" />
                       Medium Priority (4h SLA)
                     </span>
-                    <span className="text-white">99.4% <span className="text-[#97A0B3] font-normal">(19/19 Compliant)</span></span>
+                    <span className="text-hi">99.4% <span className="text-app-mist font-normal">(19/19 Compliant)</span></span>
                   </div>
-                  <div className="h-2.5 w-full rounded-full bg-[#0B111C] overflow-hidden border border-[#2A3446]">
+                  <div className="h-2.5 w-full rounded-full bg-app-base overflow-hidden border border-app-line">
                     <div className="h-full bg-cyan-400 rounded-full" style={{ width: "99.4%" }} />
                   </div>
                 </div>
@@ -252,13 +252,13 @@ export function AdminSLAPerformancePage() {
                 {/* Item 4: Normal Priority */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs sm:text-sm font-bold">
-                    <span className="flex items-center gap-1.5 text-white">
+                    <span className="flex items-center gap-1.5 text-hi">
                       <span className="size-2.5 rounded-full bg-emerald-400" />
                       Normal Priority (12h SLA)
                     </span>
-                    <span className="text-white">100.0% <span className="text-[#97A0B3] font-normal">(44/44 Compliant)</span></span>
+                    <span className="text-hi">100.0% <span className="text-app-mist font-normal">(44/44 Compliant)</span></span>
                   </div>
-                  <div className="h-2.5 w-full rounded-full bg-[#0B111C] overflow-hidden border border-[#2A3446]">
+                  <div className="h-2.5 w-full rounded-full bg-app-base overflow-hidden border border-app-line">
                     <div className="h-full bg-emerald-400 rounded-full" style={{ width: "100%" }} />
                   </div>
                 </div>
@@ -269,20 +269,20 @@ export function AdminSLAPerformancePage() {
           {/* Row 2: Pod Efficiency Leaderboard & Active Breach Warnings */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Leaderboard (2 Cols) */}
-            <div className="lg:col-span-2 bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 hover-card-innovative">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="lg:col-span-2 bg-app-surface border border-app-line/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 hover-card-innovative">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
                 <div>
-                  <h3 className="text-sm font-bold text-white">Pod Efficiency Leaderboard</h3>
-                  <p className="text-xs text-[#97A0B3]">Operational velocity across client dedicated pods</p>
+                  <h3 className="text-sm font-bold text-hi">Pod Efficiency Leaderboard</h3>
+                  <p className="text-xs text-app-mist">Operational velocity across client dedicated pods</p>
                 </div>
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-app-mist">
                   5 ACTIVE PODS
                 </span>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
+                  <thead className="bg-app-base border-b border-app-line text-[11px] font-extrabold uppercase tracking-wider text-app-mist">
                     <tr>
                       <th className="px-4 py-3">POD / LEAD</th>
                       <th className="px-4 py-3">SLA MET</th>
@@ -291,9 +291,9 @@ export function AdminSLAPerformancePage() {
                       <th className="px-4 py-3 text-right">STATUS</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#2A3446] font-medium">
+                  <tbody className="divide-y divide-app-line font-medium">
                     {podLeaderboard.map((item) => (
-                      <tr key={item.pod} className="hover:bg-[#0B111C] transition-colors">
+                      <tr key={item.pod} className="hover:bg-app-base transition-colors">
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-3">
                             <div
@@ -302,14 +302,14 @@ export function AdminSLAPerformancePage() {
                               {item.pod.replace("Pod ", "")}
                             </div>
                             <div>
-                              <div className="font-bold text-white">{item.pod}</div>
-                              <div className="text-[11px] text-[#97A0B3]">{item.lead}</div>
+                              <div className="font-bold text-hi">{item.pod}</div>
+                              <div className="text-[11px] text-app-mist">{item.lead}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3.5 font-bold text-white">{item.slaMet}</td>
-                        <td className="px-4 py-3.5 text-[#F1F5F9] font-mono">{item.avgResponse}</td>
-                        <td className="px-4 py-3.5 text-[#F1F5F9]">{item.resolved}</td>
+                        <td className="px-4 py-3.5 font-bold text-hi">{item.slaMet}</td>
+                        <td className="px-4 py-3.5 text-app-ink-2 font-mono">{item.avgResponse}</td>
+                        <td className="px-4 py-3.5 text-app-ink-2">{item.resolved}</td>
                         <td className="px-4 py-3.5 text-right">
                           <span
                             className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${item.statusBg}`}
@@ -325,10 +325,10 @@ export function AdminSLAPerformancePage() {
             </div>
 
             {/* Active Breach Warnings (1 Col) */}
-            <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 hover-card-innovative">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <h3 className="text-sm font-bold text-white">Active Breach Warnings</h3>
-                <span className="text-[11px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2.5 py-0.5 rounded-full border border-[#7FA0D6]/30">
+            <div className="bg-app-surface border border-app-line/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 hover-card-innovative">
+              <div className="flex items-center justify-between border-b border-app-line pb-3">
+                <h3 className="text-sm font-bold text-hi">Active Breach Warnings</h3>
+                <span className="text-[11px] font-bold text-app-accent bg-app-accent/15 px-2.5 py-0.5 rounded-full border border-app-accent/30">
                   Live Dispatch
                 </span>
               </div>
@@ -355,7 +355,7 @@ export function AdminSLAPerformancePage() {
                     <button
                       type="button"
                       onClick={() => navigate("/admin/support/tickets/1042")}
-                      className="px-3 py-1 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-white font-bold text-[11px] shadow-2xs transition-colors cursor-pointer"
+                      className="px-3 py-1 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-hi font-bold text-[11px] shadow-2xs transition-colors cursor-pointer"
                     >
                       Intervene
                     </button>
@@ -380,7 +380,7 @@ export function AdminSLAPerformancePage() {
                     <span className="text-xs font-semibold text-emerald-400">
                       SLA Intact (1.2h elapsed)
                     </span>
-                    <span className="text-[11px] font-medium text-[#97A0B3]">Archived</span>
+                    <span className="text-[11px] font-medium text-app-mist">Archived</span>
                   </div>
                 </div>
 
@@ -402,7 +402,7 @@ export function AdminSLAPerformancePage() {
                     <span className="text-xs font-semibold text-amber-400">Auto-load balancing recommended</span>
                     <button
                       type="button"
-                      className="px-3 py-1 rounded-lg bg-[#0B111C] border border-amber-500/30 text-amber-300 font-bold text-[11px] hover:bg-amber-950/50 transition-colors cursor-pointer"
+                      className="px-3 py-1 rounded-lg bg-app-base border border-amber-500/30 text-amber-300 font-bold text-[11px] hover:bg-amber-950/50 transition-colors cursor-pointer"
                     >
                       Monitor
                     </button>

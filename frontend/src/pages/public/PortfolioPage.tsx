@@ -29,10 +29,10 @@ const HERO_STATS = [
 ];
 
 const ACTIVITY = [
-  { text: "Client approval Reel-04", time: "2h ago", tone: "bg-[#7DA2FF]" },
-  { text: "New revision requested", time: "4h ago", tone: "bg-[#7DD3FC]" },
-  { text: "Invoice paid (TechCorp Series B)", time: "6h ago", tone: "bg-[#7DA2FF]" },
-  { text: "New project assigned", time: "8h ago", tone: "bg-[#7DA2FF]" },
+  { text: "Client approval Reel-04", time: "2h ago", tone: "bg-site-blue-light" },
+  { text: "New revision requested", time: "4h ago", tone: "bg-site-sky" },
+  { text: "Invoice paid (TechCorp Series B)", time: "6h ago", tone: "bg-site-blue-light" },
+  { text: "New project assigned", time: "8h ago", tone: "bg-site-blue-light" },
 ];
 
 const SCOPE = [
@@ -70,10 +70,10 @@ const LEDGER = [
 ];
 
 const BREAKDOWN = [
-  { label: "Creative", value: 60, tone: "from-[#3B6BFF] to-[#7DA2FF]" },
-  { label: "Production", value: 20, tone: "from-[#3B6BFF]/80 to-[#7DA2FF]/80" },
-  { label: "Tools", value: 12, tone: "from-[#3B6BFF]/60 to-[#7DA2FF]/60" },
-  { label: "Overhead", value: 8, tone: "from-[#3B6BFF]/40 to-[#7DA2FF]/40" },
+  { label: "Creative", value: 60, tone: "from-site-blue-deep to-site-blue-light" },
+  { label: "Production", value: 20, tone: "from-site-blue-deep/80 to-site-blue-light/80" },
+  { label: "Tools", value: 12, tone: "from-site-blue-deep/60 to-site-blue-light/60" },
+  { label: "Overhead", value: 8, tone: "from-site-blue-deep/40 to-site-blue-light/40" },
 ];
 
 /** Big outlined chapter number + eyebrow + masked headline for each module */
@@ -108,10 +108,10 @@ function ModuleHeader({
           as="h2"
           text={title}
           accent={accent}
-          className="mt-5 block text-3xl font-black leading-[1.05] tracking-[-0.035em] text-[#F4F7FF] sm:text-4xl lg:text-5xl"
+          className="mt-5 block text-3xl font-black leading-[1.05] tracking-[-0.035em] text-site-ink sm:text-4xl lg:text-5xl"
         />
         <Reveal delay={0.15}>
-          <p className="mt-4 max-w-2xl text-base text-[#93A0BF] sm:text-lg">{lead}</p>
+          <p className="mt-4 max-w-2xl text-base text-site-mist sm:text-lg">{lead}</p>
         </Reveal>
       </div>
     </div>
@@ -119,7 +119,7 @@ function ModuleHeader({
 }
 
 const PANEL = "creo-glass rounded-3xl p-5 sm:p-7 lg:p-8";
-const WELL = "rounded-2xl border border-white/[0.07] bg-[#050A1A]/50";
+const WELL = "rounded-2xl border border-hi/[0.07] bg-site-bg/50";
 
 export function PortfolioPage() {
   const reduce = useReducedMotion();
@@ -134,7 +134,7 @@ export function PortfolioPage() {
   ];
 
   return (
-    <div className="min-h-screen w-full pb-16 font-sans text-[#F4F7FF] lg:pb-20">
+    <div className="min-h-screen w-full pb-16 font-sans text-site-ink lg:pb-20">
       {/* ── Hero ── */}
       <PageHero
         eyebrow="The operating system in motion"
@@ -156,7 +156,7 @@ export function PortfolioPage() {
               rel="noopener noreferrer"
               className="creo-btn-ghost group inline-flex items-center justify-center gap-2 rounded-full px-7 py-4 text-sm font-semibold"
             >
-              <MessageCircle className="size-4 text-[#7DD3FC]" />
+              <MessageCircle className="size-4 text-site-sky" />
               <RollText>Schedule Live Demo</RollText>
             </a>
           </>
@@ -164,35 +164,35 @@ export function PortfolioPage() {
         aside={
           <TiltCard max={5} glow="rgba(125,162,255,0.14)" className="creo-glass creo-beam overflow-hidden rounded-3xl p-5 sm:p-6">
             {/* Console header */}
-            <div className="mb-6 flex items-center justify-between border-b border-white/[0.08] pb-4">
+            <div className="mb-6 flex items-center justify-between border-b border-hi/[0.08] pb-4">
               <div className="flex items-center gap-3">
-                <div className="text-lg font-black tracking-tight text-[#F4F7FF]">
-                  creo<span className="text-[#7DA2FF]">.</span>
+                <div className="text-lg font-black tracking-tight text-site-ink">
+                  creo<span className="text-site-blue-light">.</span>
                 </div>
-                <div className="text-xs font-medium text-[#93A0BF]">Agency Operating</div>
+                <div className="text-xs font-medium text-site-mist">Agency Operating</div>
               </div>
               <div className="flex items-center gap-3">
-                <Search className="size-4 text-[#93A0BF]" />
+                <Search className="size-4 text-site-mist" />
                 <span className="relative">
-                  <Bell className="size-4 text-[#93A0BF]" />
-                  <span className="absolute -right-0.5 -top-0.5 size-1.5 rounded-full bg-[#7DA2FF] shadow-[0_0_6px_1px_rgba(79,123,255,0.9)]" />
+                  <Bell className="size-4 text-site-mist" />
+                  <span className="absolute -right-0.5 -top-0.5 size-1.5 rounded-full bg-site-blue-light shadow-[0_0_6px_1px_rgba(79,123,255,0.9)]" />
                 </span>
                 <img
                   src="https://ui-avatars.com/api/?name=Admin&background=0B111C&color=F8FAFC"
                   alt="Avatar"
-                  className="size-6 rounded-full border border-white/10"
+                  className="size-6 rounded-full border border-hi/10"
                 />
               </div>
             </div>
 
             <Stagger className="mb-5 grid grid-cols-1 gap-3 min-[400px]:grid-cols-2" delay={0.6} gap={0.08}>
               <StaggerItem className={`${WELL} p-3.5`}>
-                <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#93A0BF]">ARR</div>
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-site-mist">ARR</div>
                 <div className="mb-1 flex flex-wrap items-center gap-2">
-                  <CountUp value="₹1,24,82,200" className="text-xl font-black text-[#F4F7FF] sm:text-2xl" />
-                  <span className="rounded border border-[#4F7BFF]/30 bg-[#4F7BFF]/10 px-1.5 py-0.5 text-[10px] font-bold text-[#9DB8FF]">+14.2%</span>
+                  <CountUp value="₹1,24,82,200" className="text-xl font-black text-site-ink sm:text-2xl" />
+                  <span className="rounded border border-site-blue/30 bg-site-blue/10 px-1.5 py-0.5 text-[10px] font-bold text-site-peri">+14.2%</span>
                 </div>
-                <svg className="mt-1 h-4 w-16 overflow-visible text-[#7DA2FF]" viewBox="0 0 50 15" fill="none" aria-hidden="true">
+                <svg className="mt-1 h-4 w-16 overflow-visible text-site-blue-light" viewBox="0 0 50 15" fill="none" aria-hidden="true">
                   <motion.path
                     d="M1 12.5C5 12.5 8 2.5 13 2.5C18 2.5 21 11.5 25 11.5C29 11.5 32 4.5 36 4.5C41 4.5 45 9.5 49 9.5"
                     stroke="currentColor"
@@ -212,12 +212,12 @@ export function PortfolioPage() {
               ].map((stat) => (
                 <StaggerItem key={stat.label} className={`${WELL} flex flex-col justify-between gap-2 p-3.5`}>
                   <div className="flex items-start justify-between">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#93A0BF]">{stat.label}</div>
-                    <span className="flex size-5 shrink-0 items-center justify-center rounded bg-[#050A1A] ring-1 ring-inset ring-white/10">
-                      <stat.icon className="size-3 text-[#93A0BF]" />
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-site-mist">{stat.label}</div>
+                    <span className="flex size-5 shrink-0 items-center justify-center rounded bg-site-bg ring-1 ring-inset ring-hi/10">
+                      <stat.icon className="size-3 text-site-mist" />
                     </span>
                   </div>
-                  <CountUp value={stat.value} className="text-xl font-black text-[#F4F7FF] sm:text-2xl" />
+                  <CountUp value={stat.value} className="text-xl font-black text-site-ink sm:text-2xl" />
                 </StaggerItem>
               ))}
             </Stagger>
@@ -225,30 +225,30 @@ export function PortfolioPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className={`${WELL} flex flex-col items-center justify-center p-5`}>
                 <DonutRing value={82} size={104} stroke={3.5} className="mb-4">
-                  <span className="text-lg font-black text-[#F4F7FF]">82%</span>
+                  <span className="text-lg font-black text-site-ink">82%</span>
                 </DonutRing>
-                <div className="mb-2 text-xs font-bold text-[#F4F7FF]">Team Balance</div>
+                <div className="mb-2 text-xs font-bold text-site-ink">Team Balance</div>
                 <div className="w-full space-y-2 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-[#93A0BF]">
-                      <span className="size-2 rounded-full bg-[#7DA2FF]" /> Billable
+                    <span className="flex items-center gap-1.5 text-site-mist">
+                      <span className="size-2 rounded-full bg-site-blue-light" /> Billable
                     </span>
-                    <span className="font-bold text-[#F4F7FF]">82%</span>
+                    <span className="font-bold text-site-ink">82%</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-[#93A0BF]">
-                      <span className="size-2 rounded-full bg-white/20" /> Non-billable
+                    <span className="flex items-center gap-1.5 text-site-mist">
+                      <span className="size-2 rounded-full bg-hi/20" /> Non-billable
                     </span>
-                    <span className="font-bold text-[#F4F7FF]">18%</span>
+                    <span className="font-bold text-site-ink">18%</span>
                   </div>
                 </div>
               </div>
 
               <div className={`${WELL} p-4`}>
                 <div className="mb-4 flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#93A0BF]">Recent Activity</span>
-                  <span className="flex items-center gap-1.5 text-[10px] font-bold text-[#9DB8FF]">
-                    <span className="size-1.5 animate-pulse rounded-full bg-[#7DA2FF]" /> Live
+                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-site-mist">Recent Activity</span>
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold text-site-peri">
+                    <span className="size-1.5 animate-pulse rounded-full bg-site-blue-light" /> Live
                   </span>
                 </div>
                 <Stagger className="space-y-1" delay={0.9} gap={0.1}>
@@ -256,9 +256,9 @@ export function PortfolioPage() {
                     <StaggerItem key={item.text} className="flex items-center justify-between gap-2 py-1.5">
                       <div className="flex min-w-0 items-center gap-2">
                         <span className={`size-1.5 shrink-0 rounded-full ${item.tone}`} />
-                        <span className="truncate text-xs text-[#F4F7FF]">{item.text}</span>
+                        <span className="truncate text-xs text-site-ink">{item.text}</span>
                       </div>
-                      <span className="shrink-0 text-[11px] text-[#93A0BF]">{item.time}</span>
+                      <span className="shrink-0 text-[11px] text-site-mist">{item.time}</span>
                     </StaggerItem>
                   ))}
                 </Stagger>
@@ -273,9 +273,9 @@ export function PortfolioPage() {
               key={stat.label}
               className="creo-glass flex flex-col justify-center rounded-2xl p-4 transition-shadow duration-500 hover:shadow-[0_20px_50px_-24px_rgba(59,107,255,0.8)]"
             >
-              <stat.icon className="mb-2 size-5 text-[#7DA2FF]" />
-              <CountUp value={stat.value} className="mb-1 text-lg font-black leading-none text-[#F4F7FF]" />
-              <div className="text-[10px] font-medium leading-tight text-[#93A0BF]">{stat.label}</div>
+              <stat.icon className="mb-2 size-5 text-site-blue-light" />
+              <CountUp value={stat.value} className="mb-1 text-lg font-black leading-none text-site-ink" />
+              <div className="text-[10px] font-medium leading-tight text-site-mist">{stat.label}</div>
             </StaggerItem>
           ))}
         </Stagger>
@@ -296,21 +296,21 @@ export function PortfolioPage() {
           <StaggerItem className={PANEL}>
             <div className="mb-8 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-[#5A85FF] to-[#3B6BFF] text-sm font-bold text-white shadow-[0_8px_20px_-6px_rgba(59,107,255,0.9)]">
+                <div className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-site-blue to-site-blue-deep text-sm font-bold text-white shadow-[0_8px_20px_-6px_rgba(59,107,255,0.9)]">
                   AL
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-[#F4F7FF]">TechCorp Series B Retainer Setup</div>
-                  <div className="text-xs text-[#93A0BF]">Lifestyle &amp; Home Decor</div>
+                  <div className="text-sm font-semibold text-site-ink">TechCorp Series B Retainer Setup</div>
+                  <div className="text-xs text-site-mist">Lifestyle &amp; Home Decor</div>
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#4F7BFF]/30 bg-[#4F7BFF]/10 px-2.5 py-1">
-                <span className="size-1.5 rounded-full bg-[#7DA2FF]" />
-                <span className="text-[10px] font-bold text-[#9DB8FF]">Verified Client</span>
+              <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-site-blue/30 bg-site-blue/10 px-2.5 py-1">
+                <span className="size-1.5 rounded-full bg-site-blue-light" />
+                <span className="text-[10px] font-bold text-site-peri">Verified Client</span>
               </div>
             </div>
 
-            <div className="mb-6 flex gap-1 border-b border-white/[0.08] pb-3" role="tablist" aria-label="Dossier view">
+            <div className="mb-6 flex gap-1 border-b border-hi/[0.08] pb-3" role="tablist" aria-label="Dossier view">
               {(["scope", "metrics"] as const).map((tab) => (
                 <button
                   key={tab}
@@ -319,13 +319,13 @@ export function PortfolioPage() {
                   aria-selected={dossierTab === tab}
                   onClick={() => setDossierTab(tab)}
                   className={`relative cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold capitalize transition-colors ${
-                    dossierTab === tab ? "text-white" : "text-[#93A0BF] hover:text-[#F4F7FF]"
+                    dossierTab === tab ? "text-hi" : "text-site-mist hover:text-site-ink"
                   }`}
                 >
                   {dossierTab === tab && (
                     <motion.span
                       layoutId="dossier-tab"
-                      className="absolute inset-0 -z-10 rounded-full bg-[#4F7BFF]/20 ring-1 ring-inset ring-[#4F7BFF]/50"
+                      className="absolute inset-0 -z-10 rounded-full bg-site-blue/20 ring-1 ring-inset ring-site-blue/50"
                       transition={{ type: "spring", stiffness: 420, damping: 34 }}
                     />
                   )}
@@ -341,9 +341,9 @@ export function PortfolioPage() {
                 { label: "Contract Milestones", value: "5/8" },
               ].map((item) => (
                 <div key={item.label} className={`${WELL} flex flex-col justify-center p-4`}>
-                  <div className="mb-1 text-[11px] font-bold text-[#93A0BF]">{item.label}</div>
-                  <div className="text-xl font-black text-[#F4F7FF] sm:text-2xl">
-                    {item.value} {item.unit && <span className="text-[10px] font-normal text-[#93A0BF]">{item.unit}</span>}
+                  <div className="mb-1 text-[11px] font-bold text-site-mist">{item.label}</div>
+                  <div className="text-xl font-black text-site-ink sm:text-2xl">
+                    {item.value} {item.unit && <span className="text-[10px] font-normal text-site-mist">{item.unit}</span>}
                   </div>
                 </div>
               ))}
@@ -361,10 +361,10 @@ export function PortfolioPage() {
                 {dossierTab === "scope" ? (
                   <ul className="space-y-2.5">
                     {SCOPE.map((item) => (
-                      <li key={item.label} className={`${WELL} flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium text-[#F4F7FF]`}>
-                        <CheckCircle2 className="size-5 shrink-0 text-[#7DA2FF]" />
+                      <li key={item.label} className={`${WELL} flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium text-site-ink`}>
+                        <CheckCircle2 className="size-5 shrink-0 text-site-blue-light" />
                         <span>
-                          {item.label} <span className="text-xs font-normal text-[#93A0BF]">{item.note}</span>
+                          {item.label} <span className="text-xs font-normal text-site-mist">{item.note}</span>
                         </span>
                       </li>
                     ))}
@@ -376,9 +376,9 @@ export function PortfolioPage() {
                       { icon: CheckCircle2, label: "First-pass approval", value: "88%" },
                       { icon: Folder, label: "Total assets delivered", value: "32" },
                     ].map((row) => (
-                      <div key={row.label} className={`${WELL} flex items-center justify-between px-3.5 py-3 text-sm font-medium text-[#F4F7FF]`}>
+                      <div key={row.label} className={`${WELL} flex items-center justify-between px-3.5 py-3 text-sm font-medium text-site-ink`}>
                         <div className="flex items-center gap-3">
-                          <row.icon className="size-5 shrink-0 text-[#7DA2FF]" /> {row.label}
+                          <row.icon className="size-5 shrink-0 text-site-blue-light" /> {row.label}
                         </div>
                         <div className="font-bold">{row.value}</div>
                       </div>
@@ -393,7 +393,7 @@ export function PortfolioPage() {
               className="creo-btn-ghost group flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-bold"
             >
               <RollText>View Full Client Dossier</RollText>
-              <ArrowUpRight className="size-3.5 text-[#7DA2FF] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+              <ArrowUpRight className="size-3.5 text-site-blue-light transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </Link>
           </StaggerItem>
 
@@ -401,34 +401,34 @@ export function PortfolioPage() {
           <StaggerItem className={`${PANEL} flex flex-col justify-between`}>
             <div>
               <div className="mb-8 flex items-center justify-between">
-                <div className="text-sm font-semibold text-[#F4F7FF]">Live Team Utilization</div>
-                <div className="flex items-center gap-1.5 rounded-full border border-[#4F7BFF]/30 bg-[#4F7BFF]/10 px-2.5 py-1">
-                  <span className="size-1.5 animate-pulse rounded-full bg-[#7DA2FF]" />
-                  <span className="text-[10px] font-bold text-[#9DB8FF]">Live</span>
+                <div className="text-sm font-semibold text-site-ink">Live Team Utilization</div>
+                <div className="flex items-center gap-1.5 rounded-full border border-site-blue/30 bg-site-blue/10 px-2.5 py-1">
+                  <span className="size-1.5 animate-pulse rounded-full bg-site-blue-light" />
+                  <span className="text-[10px] font-bold text-site-peri">Live</span>
                 </div>
               </div>
 
               <div className="space-y-6">
                 {TEAM.map((member, i) => (
                   <div key={member.role} className="flex items-center gap-4">
-                    <img src={member.img} alt={member.role} className="size-9 rounded-full border border-white/10 object-cover" />
+                    <img src={member.img} alt={member.role} className="size-9 rounded-full border border-hi/10 object-cover" />
                     <div className="flex-1">
                       <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[#F4F7FF]">{member.role}</span>
+                          <span className="text-site-ink">{member.role}</span>
                           {member.risk && (
-                            <span className="flex items-center gap-1 rounded border border-[#7DD3FC]/30 bg-[#7DD3FC]/10 px-1.5 py-0.5 text-[9px] text-[#7DD3FC]">
+                            <span className="flex items-center gap-1 rounded border border-site-sky/30 bg-site-sky/10 px-1.5 py-0.5 text-[9px] text-site-sky">
                               <AlertCircle className="size-2.5" /> Bottleneck Risk - 2 items queued
                             </span>
                           )}
                         </div>
-                        <span className="text-[#F4F7FF]">{member.value}%</span>
+                        <span className="text-site-ink">{member.value}%</span>
                       </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-hi/[0.06]">
                         <GrowBar
                           value={member.value}
                           delay={i * 0.1}
-                          className={member.risk ? "bg-gradient-to-r from-[#38BDF8] to-[#7DD3FC]" : "bg-gradient-to-r from-[#3B6BFF] to-[#7DA2FF]"}
+                          className={member.risk ? "bg-gradient-to-r from-[#38BDF8] to-site-sky" : "bg-gradient-to-r from-site-blue-deep to-site-blue-light"}
                         />
                       </div>
                     </div>
@@ -437,15 +437,15 @@ export function PortfolioPage() {
               </div>
             </div>
 
-            <div className={`${WELL} mt-8 flex items-center gap-2 p-3 text-[11px] font-medium text-[#93A0BF]`}>
-              <span className="size-1.5 rounded-full bg-[#7DA2FF]" /> Live Resource Telemetry - Zero spreadsheet guesswork.
+            <div className={`${WELL} mt-8 flex items-center gap-2 p-3 text-[11px] font-medium text-site-mist`}>
+              <span className="size-1.5 rounded-full bg-site-blue-light" /> Live Resource Telemetry - Zero spreadsheet guesswork.
             </div>
           </StaggerItem>
         </Stagger>
       </section>
 
       {/* ── Module 02 — on an opening band ── */}
-      <ScrollMask inset={5} radius={48} background="bg-gradient-to-b from-[#081130] to-[#060C24]">
+      <ScrollMask inset={5} radius={48} background="bg-gradient-to-b from-site-deep to-site-deep">
         <section className="relative py-20 sm:py-28">
           <div aria-hidden="true" className="creo-grid-bg absolute inset-0 opacity-70 [mask-image:radial-gradient(60%_50%_at_50%_0%,#000,transparent)]" />
           <div className="relative mx-auto max-w-[1240px] px-6 sm:px-8 lg:px-12">
@@ -460,7 +460,7 @@ export function PortfolioPage() {
             <Stagger className="grid grid-cols-1 gap-5 lg:grid-cols-2" gap={0.12}>
               {/* Production cadence */}
               <StaggerItem className={PANEL}>
-                <div className="mb-6 text-sm font-semibold text-[#F4F7FF]">Production Cadence &amp; Editorial Calendar</div>
+                <div className="mb-6 text-sm font-semibold text-site-ink">Production Cadence &amp; Editorial Calendar</div>
 
                 <div
                   className="public-scroll-region mb-8 w-full overflow-x-auto"
@@ -470,7 +470,7 @@ export function PortfolioPage() {
                 >
                   <table className="w-full min-w-[500px] border-separate border-spacing-y-2 text-left">
                     <thead>
-                      <tr className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#93A0BF]">
+                      <tr className="text-[10px] font-bold uppercase tracking-[0.12em] text-site-mist">
                         <th className="w-[35%] px-3 pb-1">Deliverable</th>
                         <th className="w-[25%] px-2 pb-1">Status</th>
                         <th className="w-[25%] px-2 pb-1">Owner</th>
@@ -480,22 +480,22 @@ export function PortfolioPage() {
                     <tbody className="text-xs">
                       {QUEUE.map((row) => (
                         <tr key={row.name} className="group">
-                          <td className="rounded-l-xl border-y border-l border-white/[0.07] bg-[#050A1A]/50 px-3 py-4 font-semibold text-[#F4F7FF] transition-colors group-hover:bg-white/[0.04]">
+                          <td className="rounded-l-xl border-y border-l border-hi/[0.07] bg-site-bg/50 px-3 py-4 font-semibold text-site-ink transition-colors group-hover:bg-hi/[0.04]">
                             {row.name}
                           </td>
-                          <td className="border-y border-white/[0.07] bg-[#050A1A]/50 px-2 py-4 transition-colors group-hover:bg-white/[0.04]">
+                          <td className="border-y border-hi/[0.07] bg-site-bg/50 px-2 py-4 transition-colors group-hover:bg-hi/[0.04]">
                             <span
                               className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold ${
-                                row.warm ? "border-[#7DD3FC]/25 bg-[#7DD3FC]/10 text-[#7DD3FC]" : "border-[#4F7BFF]/25 bg-[#4F7BFF]/12 text-[#9DB8FF]"
+                                row.warm ? "border-site-sky/25 bg-site-sky/10 text-site-sky" : "border-site-blue/25 bg-site-blue/12 text-site-peri"
                               }`}
                             >
-                              <span className={`size-1.5 rounded-full ${row.warm ? "bg-[#7DD3FC]" : "bg-[#7DA2FF]"}`} /> {row.status}
+                              <span className={`size-1.5 rounded-full ${row.warm ? "bg-site-sky" : "bg-site-blue-light"}`} /> {row.status}
                             </span>
                           </td>
-                          <td className="border-y border-white/[0.07] bg-[#050A1A]/50 px-2 py-4 text-[#93A0BF] transition-colors group-hover:bg-white/[0.04]">
+                          <td className="border-y border-hi/[0.07] bg-site-bg/50 px-2 py-4 text-site-mist transition-colors group-hover:bg-hi/[0.04]">
                             {row.owner}
                           </td>
-                          <td className="rounded-r-xl border-y border-r border-white/[0.07] bg-[#050A1A]/50 px-3 py-4 font-medium text-[#93A0BF] transition-colors group-hover:bg-white/[0.04]">
+                          <td className="rounded-r-xl border-y border-r border-hi/[0.07] bg-site-bg/50 px-3 py-4 font-medium text-site-mist transition-colors group-hover:bg-hi/[0.04]">
                             {row.due}
                           </td>
                         </tr>
@@ -505,13 +505,13 @@ export function PortfolioPage() {
                 </div>
 
                 <div className={`${WELL} p-5`}>
-                  <div className="mb-4 text-xs font-semibold text-[#F4F7FF]">Bottleneck Radar</div>
+                  <div className="mb-4 text-xs font-semibold text-site-ink">Bottleneck Radar</div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     {RADAR.map((item) => (
-                      <div key={item.area} className="rounded-xl border border-white/[0.07] bg-[#050A1A]/60 p-3">
-                        <div className="mb-1 text-[10px] text-[#93A0BF]">{item.area}</div>
-                        <div className="flex items-center gap-1.5 text-xs font-semibold text-[#F4F7FF]">
-                          <span className={`size-1.5 rounded-full ${item.warm ? "animate-pulse bg-[#7DD3FC]" : "bg-[#7DA2FF]"}`} /> {item.load}
+                      <div key={item.area} className="rounded-xl border border-hi/[0.07] bg-site-bg/60 p-3">
+                        <div className="mb-1 text-[10px] text-site-mist">{item.area}</div>
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-site-ink">
+                          <span className={`size-1.5 rounded-full ${item.warm ? "animate-pulse bg-site-sky" : "bg-site-blue-light"}`} /> {item.load}
                         </div>
                       </div>
                     ))}
@@ -521,10 +521,10 @@ export function PortfolioPage() {
 
               {/* Client portal */}
               <StaggerItem className={`${PANEL} creo-beam flex flex-col`}>
-                <div className="mb-1 text-sm font-semibold text-[#F4F7FF]">Velox Studio Client Portal</div>
-                <div className="mb-6 text-xs font-medium text-[#93A0BF]">Summer DTC Campaign Reel #04</div>
+                <div className="mb-1 text-sm font-semibold text-site-ink">Velox Studio Client Portal</div>
+                <div className="mb-6 text-xs font-medium text-site-mist">Summer DTC Campaign Reel #04</div>
 
-                <div data-cursor="View" className="relative mb-6 aspect-video w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-[#050A1A]">
+                <div data-cursor="View" className="relative mb-6 aspect-video w-full overflow-hidden rounded-2xl border border-hi/[0.08] bg-site-bg">
                   <DistortImage
                     src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=800&q=80"
                     alt="Cinematic Video Mockup"
@@ -533,18 +533,18 @@ export function PortfolioPage() {
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <span className="relative flex size-14 items-center justify-center rounded-full border border-white/40 bg-white/10 text-white backdrop-blur-md">
-                      {!reduce && <span className="absolute inset-0 animate-ping rounded-full border border-white/30" />}
-                      <Play className="ml-0.5 size-5 fill-white" />
+                    <span className="relative flex size-14 items-center justify-center rounded-full border border-hi/40 bg-hi/10 text-hi backdrop-blur-md">
+                      {!reduce && <span className="absolute inset-0 animate-ping rounded-full border border-hi/30" />}
+                      <Play className="ml-0.5 size-5 fill-hi" />
                     </span>
                   </div>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center gap-3 px-4 pb-3 pt-6">
-                    <div className="shrink-0 text-[10px] font-bold text-[#F4F7FF]">0:00 / 2:34</div>
-                    <div className="relative h-1 flex-1 overflow-hidden rounded-full bg-white/20">
-                      <GrowBar value={33} className="bg-gradient-to-r from-[#3B6BFF] to-[#7DD3FC]" />
+                    <div className="shrink-0 text-[10px] font-bold text-site-ink">0:00 / 2:34</div>
+                    <div className="relative h-1 flex-1 overflow-hidden rounded-full bg-hi/20">
+                      <GrowBar value={33} className="bg-gradient-to-r from-site-blue-deep to-site-sky" />
                     </div>
-                    <Volume2 className="size-3.5 shrink-0 text-[#F4F7FF]" />
-                    <Maximize className="size-3.5 shrink-0 text-[#F4F7FF]" />
+                    <Volume2 className="size-3.5 shrink-0 text-site-ink" />
+                    <Maximize className="size-3.5 shrink-0 text-site-ink" />
                   </div>
                 </div>
 
@@ -560,15 +560,15 @@ export function PortfolioPage() {
                     >
                       {approvalStatus === "pending" && (
                         <>
-                          <span className="size-2 animate-pulse rounded-full bg-[#7DD3FC]" />
-                          <span className="text-xs font-bold text-[#7DD3FC]">Awaiting Client Approval</span>
+                          <span className="size-2 animate-pulse rounded-full bg-site-sky" />
+                          <span className="text-xs font-bold text-site-sky">Awaiting Client Approval</span>
                         </>
                       )}
                       {approvalStatus === "approved" && (
-                        <span className="text-xs font-bold text-[#9DB8FF]">✓ Approved (Queued for Delivery)</span>
+                        <span className="text-xs font-bold text-site-peri">✓ Approved (Queued for Delivery)</span>
                       )}
                       {approvalStatus === "revision" && (
-                        <span className="text-xs font-bold text-[#9DB8FF]">Revision Ticket Created (#231)</span>
+                        <span className="text-xs font-bold text-site-peri">Revision Ticket Created (#231)</span>
                       )}
                     </motion.div>
                   </AnimatePresence>
@@ -576,7 +576,7 @@ export function PortfolioPage() {
                     <button
                       type="button"
                       onClick={() => setApprovalStatus("pending")}
-                      className="cursor-pointer text-[10px] text-[#93A0BF] underline underline-offset-2 hover:text-[#F4F7FF]"
+                      className="cursor-pointer text-[10px] text-site-mist underline underline-offset-2 hover:text-site-ink"
                     >
                       Reset
                     </button>
@@ -614,8 +614,8 @@ export function PortfolioPage() {
                 </AnimatePresence>
 
                 <div className={`${WELL} mt-auto flex items-start gap-3 p-3`}>
-                  <AlertCircle className="mt-0.5 size-4 shrink-0 text-[#93A0BF]" />
-                  <p className="text-[11px] leading-relaxed text-[#93A0BF]">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0 text-site-mist" />
+                  <p className="text-[11px] leading-relaxed text-site-mist">
                     Revision trigger automatically creates Ticket #108 and alerts Motion Lead without WhatsApp chasing.
                   </p>
                 </div>
@@ -638,41 +638,41 @@ export function PortfolioPage() {
         <Stagger className="grid grid-cols-1 gap-5 lg:grid-cols-2" gap={0.12}>
           {/* Retainer P&L */}
           <StaggerItem className={PANEL}>
-            <div className="mb-1 text-sm font-semibold text-[#F4F7FF]">TechCorp Series B &bull; Monthly Creative Retainer</div>
-            <div className="mb-8 text-xs text-[#93A0BF]">Balance Sheet &amp; Contribution</div>
+            <div className="mb-1 text-sm font-semibold text-site-ink">TechCorp Series B &bull; Monthly Creative Retainer</div>
+            <div className="mb-8 text-xs text-site-mist">Balance Sheet &amp; Contribution</div>
 
             <div className="mb-8 grid grid-cols-1 gap-8 sm:grid-cols-2">
               <Stagger className="space-y-4" gap={0.08}>
                 {LEDGER.map((row) => (
-                  <StaggerItem key={row.label} className="flex items-center justify-between border-b border-white/[0.07] pb-3 text-xs">
-                    <span className="font-medium text-[#93A0BF]">{row.label}</span>
-                    <span className={`font-semibold ${row.positive ? "text-[#9DB8FF]" : "text-[#7DD3FC]"}`}>{row.value}</span>
+                  <StaggerItem key={row.label} className="flex items-center justify-between border-b border-hi/[0.07] pb-3 text-xs">
+                    <span className="font-medium text-site-mist">{row.label}</span>
+                    <span className={`font-semibold ${row.positive ? "text-site-peri" : "text-site-sky"}`}>{row.value}</span>
                   </StaggerItem>
                 ))}
               </Stagger>
 
               <div className={`${WELL} flex flex-col justify-between p-4`}>
-                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#93A0BF]">Revenue Breakdown</div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-site-mist">Revenue Breakdown</div>
                 <div className="mt-4 flex h-36 items-end justify-between px-1 sm:px-2">
                   {BREAKDOWN.map((bar, i) => (
                     <div key={bar.label} className="flex h-full w-12 flex-col items-center justify-end gap-2 sm:w-14">
-                      <span className="text-[11px] font-bold text-[#F4F7FF]">{bar.value}%</span>
+                      <span className="text-[11px] font-bold text-site-ink">{bar.value}%</span>
                       <div className="flex h-[70%] w-6 items-end sm:w-8">
                         <GrowBar vertical value={bar.value / 0.6} delay={i * 0.1} className={`rounded-t-md bg-gradient-to-t ${bar.tone}`} />
                       </div>
-                      <span className="w-full text-center text-[10px] text-[#93A0BF] sm:text-[11px]">{bar.label}</span>
+                      <span className="w-full text-center text-[10px] text-site-mist sm:text-[11px]">{bar.label}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            <div className="creo-beam flex items-center justify-between rounded-2xl border border-[#4F7BFF]/40 bg-[#4F7BFF]/[0.08] p-5 shadow-[0_20px_50px_-30px_rgba(59,107,255,0.9)]">
+            <div className="creo-beam flex items-center justify-between rounded-2xl border border-site-blue/40 bg-site-blue/[0.08] p-5 shadow-[0_20px_50px_-30px_rgba(59,107,255,0.9)]">
               <div>
-                <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#9DB8FF]">Project Contribution Margin</div>
-                <div className="text-2xl font-black text-[#F4F7FF]">
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-site-peri">Project Contribution Margin</div>
+                <div className="text-2xl font-black text-site-ink">
                   <CountUp value="₹33,000" />{" "}
-                  <span className="text-sm font-bold text-[#9DB8FF]">(41.25%)</span>
+                  <span className="text-sm font-bold text-site-peri">(41.25%)</span>
                 </div>
               </div>
               <DonutRing value={41.25} size={48} />
@@ -681,23 +681,23 @@ export function PortfolioPage() {
 
           {/* Cash flow */}
           <StaggerItem className={`${PANEL} flex flex-col`}>
-            <div className="mb-6 text-sm font-semibold text-[#F4F7FF]">Cash Flow Engine &amp; Auto-Chase</div>
+            <div className="mb-6 text-sm font-semibold text-site-ink">Cash Flow Engine &amp; Auto-Chase</div>
 
             <div className="mb-8 space-y-3">
               {invoices.map((invoice) => (
                 <div key={invoice.id} className={`${WELL} flex flex-col justify-between gap-4 p-4 sm:flex-row sm:items-center`}>
                   <div className="flex gap-6">
                     <div>
-                      <div className="mb-1 text-[10px] uppercase tracking-[0.1em] text-[#93A0BF]">Invoice</div>
-                      <div className="text-sm font-semibold text-[#F4F7FF]">{invoice.id}</div>
+                      <div className="mb-1 text-[10px] uppercase tracking-[0.1em] text-site-mist">Invoice</div>
+                      <div className="text-sm font-semibold text-site-ink">{invoice.id}</div>
                     </div>
                     <div>
-                      <div className="mb-1 text-[10px] uppercase tracking-[0.1em] text-[#93A0BF]">Client</div>
-                      <div className="text-sm font-semibold text-[#F4F7FF]">{invoice.client}</div>
+                      <div className="mb-1 text-[10px] uppercase tracking-[0.1em] text-site-mist">Client</div>
+                      <div className="text-sm font-semibold text-site-ink">{invoice.client}</div>
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-3 sm:w-[60%] sm:justify-end">
-                    <div className="whitespace-nowrap text-sm font-semibold text-[#F4F7FF]">{invoice.amount}</div>
+                    <div className="whitespace-nowrap text-sm font-semibold text-site-ink">{invoice.amount}</div>
                     <AnimatePresence mode="wait" initial={false}>
                       {invoice.state === "Paid ✓" ? (
                         <motion.span
@@ -706,7 +706,7 @@ export function PortfolioPage() {
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.85 }}
                           transition={{ type: "spring", stiffness: 400, damping: 22 }}
-                          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#4F7BFF]/30 bg-[#4F7BFF]/15 px-2.5 py-1 text-[10px] font-bold text-[#9DB8FF]"
+                          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-site-blue/30 bg-site-blue/15 px-2.5 py-1 text-[10px] font-bold text-site-peri"
                         >
                           {invoice.state}
                         </motion.span>
@@ -718,11 +718,11 @@ export function PortfolioPage() {
                           exit={{ opacity: 0, y: -6 }}
                           className="flex flex-wrap items-center gap-2"
                         >
-                          <span className="shrink-0 text-[10px] font-bold text-[#7DD3FC]">{invoice.state}</span>
+                          <span className="shrink-0 text-[10px] font-bold text-site-sky">{invoice.state}</span>
                           <button
                             type="button"
                             onClick={() => invoice.set("Paid ✓")}
-                            className="shrink-0 cursor-pointer rounded-full bg-[#DCE8FF] px-3 py-1 text-[10px] font-semibold text-[#050A1A] transition-all hover:bg-white hover:shadow-[0_0_20px_rgba(220,232,255,0.3)]"
+                            className="shrink-0 cursor-pointer rounded-full bg-site-ice px-3 py-1 text-[10px] font-semibold text-site-bg transition-all hover:bg-hi hover:shadow-[0_0_20px_rgba(220,232,255,0.3)]"
                           >
                             Resolve
                           </button>
@@ -742,14 +742,14 @@ export function PortfolioPage() {
             </div>
 
             <div className={`${WELL} mt-auto flex items-center gap-4 p-5`}>
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#4F7BFF]/15 ring-1 ring-inset ring-[#4F7BFF]/40">
-                <TrendingUp className="size-5 text-[#7DA2FF]" />
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-site-blue/15 ring-1 ring-inset ring-site-blue/40">
+                <TrendingUp className="size-5 text-site-blue-light" />
               </div>
               <div>
-                <div className="text-lg font-black text-[#F4F7FF]">
-                  <CountUp value="₹2.1L" /> <span className="text-xs font-medium text-[#93A0BF]">In Collections Pipeline</span>
+                <div className="text-lg font-black text-site-ink">
+                  <CountUp value="₹2.1L" /> <span className="text-xs font-medium text-site-mist">In Collections Pipeline</span>
                 </div>
-                <div className="mt-1 text-[11px] text-[#93A0BF]">Automated payment follow-ups.</div>
+                <div className="mt-1 text-[11px] text-site-mist">Automated payment follow-ups.</div>
               </div>
             </div>
           </StaggerItem>

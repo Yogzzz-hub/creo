@@ -38,9 +38,9 @@ interface Details {
   account?: string;
 }
 const input =
-  "w-full min-h-11 rounded-xl border border-[#2A3446] bg-[#0B111C] p-3 text-sm text-white";
+  "w-full min-h-11 rounded-xl border border-app-line bg-app-base p-3 text-sm text-hi";
 const button =
-  "min-h-11 rounded-xl border border-[#2A3446] px-3 py-2 text-sm text-white hover:bg-[#2A3446] disabled:opacity-50";
+  "min-h-11 rounded-xl border border-app-line px-3 py-2 text-sm text-hi hover:bg-app-line disabled:opacity-50";
 export const publishingLabel = (status: string) =>
   ({
     pending_approval: "Awaiting client approval",
@@ -166,7 +166,7 @@ export function PublishingPanel({
     }
   }
   if (query.isPending)
-    return <output className="text-xs text-[#97A0B3]">Loading Instagram publishing…</output>;
+    return <output className="text-xs text-app-mist">Loading Instagram publishing…</output>;
   if (query.isError)
     return (
       <p role="alert" className="text-sm text-amber-300">
@@ -180,7 +180,7 @@ export function PublishingPanel({
   const admin = ["admin", "super_admin"].includes(user?.role || "");
   const frozen = job && ["processing", "uncertain", "published"].includes(job.status);
   return (
-    <section className="border border-[#2A3446] rounded-2xl p-4 space-y-3 bg-[#0B111C]/50 text-white min-w-0">
+    <section className="border border-app-line rounded-2xl p-4 space-y-3 bg-app-base/50 text-hi min-w-0">
       <h3 className="font-semibold text-sm">Instagram publishing</h3>
       <p className="text-sm">
         {job
@@ -189,7 +189,7 @@ export function PublishingPanel({
             ? "Approved — awaiting schedule"
             : "Content requires client approval"}
       </p>
-      <p className="text-xs text-[#97A0B3]">
+      <p className="text-xs text-app-mist">
         Account: {data?.account ? `@${data.account}` : "Not connected"} ·{" "}
         {data?.connection_status.replaceAll("_", " ")}
       </p>
@@ -205,7 +205,7 @@ export function PublishingPanel({
       )}
       {job && (
         <div className="text-sm">
-          <p className="text-xs text-[#97A0B3]">Caption for client approval</p>
+          <p className="text-xs text-app-mist">Caption for client approval</p>
           <p className="whitespace-pre-wrap break-words">{job.caption || "No caption"}</p>
         </div>
       )}
@@ -236,23 +236,23 @@ export function PublishingPanel({
           </button>
         )}
       {user?.role === "client" && (
-        <div className="p-3.5 rounded-xl bg-[#0B111C]/60 border border-[#2A3446] space-y-2.5 mt-2">
-          <p className="text-[11px] text-[#97A0B3] leading-relaxed">
+        <div className="p-3.5 rounded-xl bg-app-base/60 border border-app-line space-y-2.5 mt-2">
+          <p className="text-[11px] text-app-mist leading-relaxed">
             Approval locks the caption and media. Content will automatically dispatch at its scheduled time.
           </p>
           <div className="flex flex-col sm:flex-row gap-2 pt-0.5">
             <Link
               to="/portal/support"
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#161F2D] hover:bg-[#202B3D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs font-semibold text-[#BCCCE6] hover:text-white transition-all shadow-xs text-center cursor-pointer"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-app-surface hover:bg-app-line-soft border border-app-line hover:border-app-accent/40 text-xs font-semibold text-app-accent-soft hover:text-hi transition-all shadow-xs text-center cursor-pointer"
             >
-              <LifeBuoy className="w-3.5 h-3.5 text-[#7FA0D6]" />
+              <LifeBuoy className="w-3.5 h-3.5 text-app-accent" />
               <span>Schedule Support</span>
             </Link>
             <Link
               to="/portal/account/instagram"
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#161F2D] hover:bg-[#202B3D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs font-semibold text-[#BCCCE6] hover:text-white transition-all shadow-xs text-center cursor-pointer"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-app-surface hover:bg-app-line-soft border border-app-line hover:border-app-accent/40 text-xs font-semibold text-app-accent-soft hover:text-hi transition-all shadow-xs text-center cursor-pointer"
             >
-              <Instagram className="w-3.5 h-3.5 text-[#7FA0D6]" />
+              <Instagram className="w-3.5 h-3.5 text-app-accent" />
               <span>Manage Instagram</span>
             </Link>
           </div>
@@ -319,13 +319,13 @@ export function PublishingPanel({
       )}
       {editing && manage && (
         <form
-          className="space-y-3 border-t border-[#2A3446] pt-3"
+          className="space-y-3 border-t border-app-line pt-3"
           onSubmit={(e) => {
             e.preventDefault();
             void perform("save");
           }}
         >
-          <p className="text-xs text-[#97A0B3]">
+          <p className="text-xs text-app-mist">
             Plan ahead of approval. Changes to the caption or media require the client to approve
             publishing details again.
           </p>
@@ -411,10 +411,10 @@ export function PublishingPanel({
         <>
           <button
             type="button"
-            className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/30 text-xs font-semibold text-[#97A0B3] hover:text-white transition-all cursor-pointer shadow-xs mt-1"
+            className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-app-base hover:bg-app-surface border border-app-line hover:border-app-accent/30 text-xs font-semibold text-app-mist hover:text-hi transition-all cursor-pointer shadow-xs mt-1"
             onClick={() => setShowHistory(!showHistory)}
           >
-            <History className="w-3.5 h-3.5 text-[#7FA0D6]" />
+            <History className="w-3.5 h-3.5 text-app-accent" />
             <span>{showHistory ? "Hide publishing history" : "View publishing history"}</span>
           </button>
           {showHistory && (
@@ -441,7 +441,7 @@ export function PublishingControl({ deliverableId }: { deliverableId: string }) 
     <div className="mt-2">
       <button
         type="button"
-        className="min-h-11 text-xs text-[#BCCCE6] underline"
+        className="min-h-11 text-xs text-app-accent-soft underline"
         onClick={() => setOpen(!open)}
       >
         {open ? "Hide" : "Instagram schedule & status"}
@@ -481,7 +481,7 @@ export function PublishingQueue({
     (j) => !client || (j.client_name || j.client_id).toLowerCase().includes(client.toLowerCase()),
   );
   return (
-    <section className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-5 space-y-3 text-white min-w-0">
+    <section className="rounded-2xl border border-app-line bg-app-surface p-4 sm:p-5 space-y-3 text-hi min-w-0">
       <h2 className="font-bold">Instagram publishing queue</h2>
       {connection.data && (
         <p className="text-sm">
@@ -499,7 +499,7 @@ export function PublishingQueue({
           {connection.error.message}
         </p>
       )}
-      <p className="text-xs text-[#97A0B3]">
+      <p className="text-xs text-app-mist">
         Publishing times are separate from editorial dates. Only client-approved versions and
         captions can publish.
       </p>
@@ -554,12 +554,12 @@ export function PublishingQueue({
         </p>
       )}
       {!query.isPending && !query.isError && !rows.length && (
-        <p className="text-sm text-[#97A0B3]">
+        <p className="text-sm text-app-mist">
           No publishing jobs match. The team can plan publication from an uploaded deliverable.
         </p>
       )}
       {rows.map((j) => (
-        <div key={j.id} className="border-t border-[#2A3446] pt-3 space-y-2">
+        <div key={j.id} className="border-t border-app-line pt-3 space-y-2">
           <button
             type="button"
             className="text-left min-h-11 w-full text-sm"
@@ -570,7 +570,7 @@ export function PublishingQueue({
               {publishingLabel(j.status)}
             </span>
             <br />
-            <span className="text-xs text-[#97A0B3]">
+            <span className="text-xs text-app-mist">
               {j.scheduled_at
                 ? `${new Date(j.scheduled_at).toLocaleString(undefined, { timeZone: j.timezone })} (${j.timezone})`
                 : "Awaiting future schedule"}

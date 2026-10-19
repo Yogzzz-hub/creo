@@ -111,7 +111,7 @@ export function DeliverableFrame({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#050810",
+          backgroundColor: "var(--app-void)",
         }}
       >
         {isPlaying && isVideo ? (

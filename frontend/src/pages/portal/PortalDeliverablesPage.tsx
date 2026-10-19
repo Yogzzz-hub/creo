@@ -41,10 +41,10 @@ function isTall(item: DeliverableItem): boolean {
 function StatusBadge({ item }: { item: DeliverableItem }) {
   const tone =
     item.status === "pending_approval"
-      ? "bg-[#D8BF9B]/15 text-[#D8BF9B]"
+      ? "bg-app-warm/15 text-app-warm"
       : item.status === "revision_requested"
-        ? "bg-white/[0.06] text-[#F1F5F9]"
-        : "bg-[#7FA0D6]/15 text-[#BCCCE6]";
+        ? "bg-hi/[0.06] text-app-ink-2"
+        : "bg-app-accent/15 text-app-accent-soft";
   const label = item.status === "pending_approval" ? "Needs you" : item.status_label;
   return <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-bold ${tone}`}>{label}</span>;
 }
@@ -74,7 +74,7 @@ function useStableSrc(id: string, url: string | null) {
 function Thumbnail({ item }: { item: DeliverableItem }) {
   const { src, failed, onError } = useStableSrc(item.id, item.file_url);
   if (!src || failed) {
-    return item.is_video ? <Film className="w-5 h-5 text-[#97A0B3]" /> : <ImageIcon className="w-5 h-5 text-[#97A0B3]" />;
+    return item.is_video ? <Film className="w-5 h-5 text-app-mist" /> : <ImageIcon className="w-5 h-5 text-app-mist" />;
   }
   if (item.is_video) {
     return <video src={`${src}#t=0.5`} muted playsInline preload="metadata" onError={onError} className="w-full h-full object-cover" />;
@@ -92,17 +92,17 @@ function MediaPreview({ item, onRefresh }: { item: DeliverableItem; onRefresh: (
   const frame = isTall(item) ? "aspect-[9/16] max-w-[300px]" : "aspect-[4/5] max-w-[380px]";
 
   return (
-    <div className={`relative w-full ${frame} bg-black rounded-[28px] overflow-hidden shadow-2xl border-4 border-[#161F2D] flex items-center justify-center`}>
+    <div className={`relative w-full ${frame} bg-black rounded-[28px] overflow-hidden shadow-2xl border-4 border-app-surface flex items-center justify-center`}>
       {!ready && src && !failed && (
-        <div className="absolute inset-0 animate-pulse bg-white/[0.04]" aria-hidden="true" />
+        <div className="absolute inset-0 animate-pulse bg-hi/[0.04]" aria-hidden="true" />
       )}
       {!src || failed ? (
         <div className="text-center p-6 space-y-3">
-          <p className="text-white text-sm font-semibold">Preview unavailable</p>
-          <p className="text-xs text-[#97A0B3]">The secure preview link may have expired.</p>
+          <p className="text-hi text-sm font-semibold">Preview unavailable</p>
+          <p className="text-xs text-app-mist">The secure preview link may have expired.</p>
           <button
             onClick={onRefresh}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#2A3446] text-xs font-bold text-white hover:bg-white/[0.04]"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-app-line text-xs font-bold text-hi hover:bg-hi/[0.04]"
           >
             <RefreshCw className="w-3.5 h-3.5" /> Reload preview
           </button>
@@ -143,7 +143,7 @@ function errorMessage(error: unknown, fallback: string): string {
 }
 
 function DeliverablesLoading() {
-  return <section role="status" aria-live="polite" className="space-y-5 animate-page-in"><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{[0, 1, 2].map(i => <div key={i} className="rounded-2xl p-5 bg-[#161F2D] border border-[#2A3446] space-y-4 motion-safe:animate-pulse"><div className="aspect-video rounded-xl bg-[#2A3446]" /><div className="h-4 w-2/3 rounded bg-[#2A3446]" /><div className="h-3 w-1/2 rounded bg-[#2A3446]" /></div>)}</div></section>;
+  return <section role="status" aria-live="polite" className="space-y-5 animate-page-in"><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{[0, 1, 2].map(i => <div key={i} className="rounded-2xl p-5 bg-app-surface border border-app-line space-y-4 motion-safe:animate-pulse"><div className="aspect-video rounded-xl bg-app-line" /><div className="h-4 w-2/3 rounded bg-app-line" /><div className="h-3 w-1/2 rounded bg-app-line" /></div>)}</div></section>;
 }
 
 export function PortalDeliverablesPage() {
@@ -285,7 +285,7 @@ export function PortalDeliverablesPage() {
 
   if (listQuery.isError) {
     return (
-      <div role="alert" className="p-6 text-white">
+      <div role="alert" className="p-6 text-hi">
         {listQuery.error.message || "Could not load deliverables."}{" "}
         <button className="underline" onClick={() => listQuery.refetch()}>Retry</button>
       </div>
@@ -317,11 +317,11 @@ export function PortalDeliverablesPage() {
           <button
             onClick={handleApproveAll}
             disabled={!!bulkProgress}
-            className="text-xs sm:text-[13px] text-[#97A0B3] hover:text-white transition-colors text-left sm:text-right disabled:opacity-60"
+            className="text-xs sm:text-[13px] text-app-mist hover:text-hi transition-colors text-left sm:text-right disabled:opacity-60"
           >
             {bulkProgress ?? (
               <>
-                Approve everything in one tap: <span className="font-bold text-white hover:underline">Approve all {pendingItems.length}</span>
+                Approve everything in one tap: <span className="font-bold text-hi hover:underline">Approve all {pendingItems.length}</span>
               </>
             )}
           </button>
@@ -329,20 +329,20 @@ export function PortalDeliverablesPage() {
       )}
 
       {deliverables.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-10">
-          <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-[#2A3446] flex items-center justify-center mb-4">
-            <Film className="w-5 h-5 text-[#97A0B3]" />
+        <div className="flex-1 flex flex-col items-center justify-center text-center bg-app-surface rounded-[24px] border border-app-line p-10">
+          <div className="w-12 h-12 rounded-2xl bg-hi/[0.03] border border-app-line flex items-center justify-center mb-4">
+            <Film className="w-5 h-5 text-app-mist" />
           </div>
-          <h3 className="text-base font-semibold text-white mb-1">No content yet — your team is working on your first batch.</h3>
-          <p className="text-sm text-[#97A0B3] max-w-md">
+          <h3 className="text-base font-semibold text-hi mb-1">No content yet — your team is working on your first batch.</h3>
+          <p className="text-sm text-app-mist max-w-md">
             Each piece appears here after your pod lead's quality check. We'll notify you in the portal and by email when something is ready for your review.
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0 pb-6">
           {/* Left Column: Batch List */}
-          <div className="col-span-1 lg:col-span-3 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-4 flex flex-col overflow-hidden max-h-[420px] lg:max-h-none">
-            <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#0B111C]/80 rounded-xl border border-[#2A3446] mb-3" role="tablist" aria-label="Filter deliverables">
+          <div className="col-span-1 lg:col-span-3 bg-app-surface rounded-[24px] border border-app-line p-4 flex flex-col overflow-hidden max-h-[420px] lg:max-h-none">
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-app-base/80 rounded-xl border border-app-line mb-3" role="tablist" aria-label="Filter deliverables">
               {FILTERS.map((f) => {
                 const isActive = filter === f.key;
                 return (
@@ -353,8 +353,8 @@ export function PortalDeliverablesPage() {
                     onClick={() => setFilter(f.key)}
                     className={`w-full py-1.5 px-2.5 rounded-lg text-[11px] font-semibold transition-all text-center flex items-center justify-center cursor-pointer ${
                       isActive
-                        ? "bg-[#161F2D] text-white border border-[#2A3446] shadow-xs font-bold"
-                        : "text-[#97A0B3] hover:text-white hover:bg-white/[0.03]"
+                        ? "bg-app-surface text-hi border border-app-line shadow-xs font-bold"
+                        : "text-app-mist hover:text-hi hover:bg-hi/[0.03]"
                     }`}
                   >
                     {f.label}
@@ -364,9 +364,9 @@ export function PortalDeliverablesPage() {
             </div>
             <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-hide">
               {visible.length === 0 ? (
-                <div className="p-4 text-center text-sm text-[#97A0B3]">
+                <div className="p-4 text-center text-sm text-app-mist">
                   No {FILTERS.find((f) => f.key === filter)?.label.toLowerCase()} deliverables match your filter.{" "}
-                  <button className="underline text-white" onClick={() => setFilter("all")}>Clear filter</button>
+                  <button className="underline text-hi" onClick={() => setFilter("all")}>Clear filter</button>
                 </div>
               ) : (
                 visible.map((d) => {
@@ -376,15 +376,15 @@ export function PortalDeliverablesPage() {
                       key={d.id}
                       onClick={() => select(d.id)}
                       className={`w-full flex items-center gap-4 p-3 rounded-2xl border text-left transition-all ${
-                        isSelected ? "bg-[#0B111C]/40 border-white/[0.1] shadow-lg" : "border-transparent hover:bg-white/[0.02]"
+                        isSelected ? "bg-app-base/40 border-hi/[0.1] shadow-lg" : "border-transparent hover:bg-hi/[0.02]"
                       }`}
                     >
-                      <div className="w-14 h-14 rounded-xl bg-black overflow-hidden shrink-0 border border-[#2A3446] flex items-center justify-center">
+                      <div className="w-14 h-14 rounded-xl bg-black overflow-hidden shrink-0 border border-app-line flex items-center justify-center">
                         <Thumbnail item={d} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-[13px] font-bold truncate text-white">{d.title}</h4>
-                        <p className="text-xs text-[#97A0B3] truncate mb-2">{d.type_label} · v{d.version}</p>
+                        <h4 className="text-[13px] font-bold truncate text-hi">{d.title}</h4>
+                        <p className="text-xs text-app-mist truncate mb-2">{d.type_label} · v{d.version}</p>
                         <StatusBadge item={d} />
                       </div>
                     </button>
@@ -395,9 +395,9 @@ export function PortalDeliverablesPage() {
           </div>
 
           {/* Middle Column: Player */}
-          <div className="col-span-1 lg:col-span-5 bg-[#161F2D] rounded-[24px] border border-[#2A3446] flex flex-col relative overflow-hidden min-h-[420px] sm:min-h-[500px]">
+          <div className="col-span-1 lg:col-span-5 bg-app-surface rounded-[24px] border border-app-line flex flex-col relative overflow-hidden min-h-[420px] sm:min-h-[500px]">
             {versions.length > 1 && selectedItem && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex p-1 bg-[#0B111C]/80 backdrop-blur-md rounded-full border border-[#2A3446]">
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex p-1 bg-app-base/80 backdrop-blur-md rounded-full border border-app-line">
                 {[...versions].reverse().map((v) => {
                   const active = shownItem?.id === v.id;
                   return (
@@ -405,7 +405,7 @@ export function PortalDeliverablesPage() {
                       key={v.id}
                       onClick={() => setViewVersionId(v.id === selectedItem.id ? null : v.id)}
                       className={`px-3 sm:px-4 py-1.5 rounded-full text-[12px] sm:text-[13px] font-bold transition-colors ${
-                        active ? "bg-[#161F2D] text-white shadow-sm border border-[#2A3446]" : "text-[#97A0B3] hover:text-white"
+                        active ? "bg-app-surface text-hi shadow-sm border border-app-line" : "text-app-mist hover:text-hi"
                       }`}
                     >
                       v{v.version}{v.id === selectedItem.id ? " · latest" : ""}
@@ -415,34 +415,34 @@ export function PortalDeliverablesPage() {
               </div>
             )}
 
-            <div className="flex-1 flex items-center justify-center p-6 pt-16 bg-[#0B111C]/30">
+            <div className="flex-1 flex items-center justify-center p-6 pt-16 bg-app-base/30">
               {shownItem ? (
                 <MediaPreview item={shownItem} onRefresh={refresh} />
               ) : deliverableId && detailQuery.isLoading ? (
-                <Loader2 className="w-6 h-6 animate-spin text-[#97A0B3]" />
+                <Loader2 className="w-6 h-6 animate-spin text-app-mist" />
               ) : (
-                <div className="text-sm text-[#97A0B3] text-center px-6">
+                <div className="text-sm text-app-mist text-center px-6">
                   {deliverableId ? "This deliverable isn't available. It may still be in production." : "Select an asset to view"}
                 </div>
               )}
             </div>
 
-            <div className="h-[64px] shrink-0 border-t border-[#2A3446] px-6 flex items-center justify-between bg-[#0B111C]/30 gap-3">
-              <span className="text-[13px] text-[#97A0B3] truncate">
+            <div className="h-[64px] shrink-0 border-t border-app-line px-6 flex items-center justify-between bg-app-base/30 gap-3">
+              <span className="text-[13px] text-app-mist truncate">
                 {shownItem ? `${shownItem.type_label} · v${shownItem.version}${viewingOlder ? " · earlier version" : ""}` : "No asset selected"}
               </span>
-              <span className="text-xs font-medium text-[#97A0B3] tabular-nums shrink-0">
+              <span className="text-xs font-medium text-app-mist tabular-nums shrink-0">
                 {shownItem?.created_at ? `Delivered ${new Date(shownItem.created_at).toLocaleDateString()}` : ""}
               </span>
             </div>
           </div>
 
           {/* Right Column: Details & Actions */}
-          <div className="col-span-1 lg:col-span-4 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-5 sm:p-6 flex flex-col overflow-hidden">
+          <div className="col-span-1 lg:col-span-4 bg-app-surface rounded-[24px] border border-app-line p-5 sm:p-6 flex flex-col overflow-hidden">
             {shownItem ? (
               <div className="flex-1 overflow-y-auto pr-1 scrollbar-hide space-y-6">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#97A0B3] mb-2">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-app-mist mb-2">
                     {shownItem.type_label} ·{" "}
                     {shownItem.scheduled_at
                       ? `Publishes ${new Date(shownItem.scheduled_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`
@@ -450,27 +450,27 @@ export function PortalDeliverablesPage() {
                         ? `Planned for ${new Date(shownItem.due_date).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`
                         : "In your content calendar"}
                   </p>
-                  <h2 className="text-2xl font-normal text-white break-words">{shownItem.title}</h2>
+                  <h2 className="text-2xl font-normal text-hi break-words">{shownItem.title}</h2>
                   <PublishingPanel key={shownItem.id} deliverableId={shownItem.id} onReview={setPublishingReview} />
                   <div className="mt-2"><StatusBadge item={shownItem} /></div>
                 </div>
 
                 {viewingOlder && (
-                  <div className="bg-[#0B111C]/50 rounded-xl p-4 border border-[#2A3446] text-[13px] text-[#97A0B3]">
+                  <div className="bg-app-base/50 rounded-xl p-4 border border-app-line text-[13px] text-app-mist">
                     You're viewing an earlier version.{" "}
-                    <button className="underline text-white" onClick={() => setViewVersionId(null)}>Back to latest</button>
+                    <button className="underline text-hi" onClick={() => setViewVersionId(null)}>Back to latest</button>
                   </div>
                 )}
 
                 {allowed !== null && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[13px] font-bold text-white">Revision rounds</span>
-                      <span className="text-xs text-[#97A0B3]">{Math.min(used, allowed)} of {allowed} used</span>
+                      <span className="text-[13px] font-bold text-hi">Revision rounds</span>
+                      <span className="text-xs text-app-mist">{Math.min(used, allowed)} of {allowed} used</span>
                     </div>
                     <div className="h-1.5 w-full rounded-full flex gap-1">
                       {Array.from({ length: Math.max(allowed, 1) }).map((_, i) => (
-                        <div key={i} className={`h-full flex-1 rounded-full ${used > i ? "bg-[#7FA0D6]" : "bg-white/[0.08]"}`} />
+                        <div key={i} className={`h-full flex-1 rounded-full ${used > i ? "bg-app-accent" : "bg-hi/[0.08]"}`} />
                       ))}
                     </div>
                   </div>
@@ -478,15 +478,15 @@ export function PortalDeliverablesPage() {
 
                 {shownItem.rejection_comment && (
                   <div>
-                    <h4 className="text-[13px] font-bold text-white mb-2">Your requested changes</h4>
-                    <p className="text-[13px] text-[#97A0B3] leading-relaxed bg-[#0B111C]/50 rounded-xl p-4 border border-[#2A3446] whitespace-pre-wrap">
+                    <h4 className="text-[13px] font-bold text-hi mb-2">Your requested changes</h4>
+                    <p className="text-[13px] text-app-mist leading-relaxed bg-app-base/50 rounded-xl p-4 border border-app-line whitespace-pre-wrap">
                       {shownItem.rejection_comment}
                     </p>
                   </div>
                 )}
 
                 {actionError && (
-                  <div role="alert" className="flex gap-2 text-[13px] text-[#F1C9A5] bg-[#D8BF9B]/10 border border-[#D8BF9B]/30 rounded-xl p-3">
+                  <div role="alert" className="flex gap-2 text-[13px] text-app-warm bg-app-warm/10 border border-app-warm/30 rounded-xl p-3">
                     <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                     <span>{actionError}</span>
                   </div>
@@ -494,9 +494,9 @@ export function PortalDeliverablesPage() {
 
                 {canDecide && (
                   <div className="pt-1">
-                    <h4 className="text-[13px] font-bold text-white mb-3">Asking for a change?</h4>
+                    <h4 className="text-[13px] font-bold text-hi mb-3">Asking for a change?</h4>
                     {lastRoundUsed ? (
-                      <p className="text-[13px] text-[#97A0B3] mb-4">
+                      <p className="text-[13px] text-app-mist mb-4">
                         All revision rounds included in your plan have been used for this piece.
                       </p>
                     ) : (
@@ -506,7 +506,7 @@ export function PortalDeliverablesPage() {
                             <button
                               key={tag}
                               onClick={() => setCommentText((prev) => (prev ? `${prev} · ${tag}` : tag))}
-                              className="px-3 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-[#2A3446] text-xs font-bold text-[#97A0B3] transition-colors"
+                              className="px-3 py-1.5 rounded-lg bg-hi/[0.03] hover:bg-hi/[0.08] border border-app-line text-xs font-bold text-app-mist transition-colors"
                             >
                               {tag}
                             </button>
@@ -518,7 +518,7 @@ export function PortalDeliverablesPage() {
                           value={commentText}
                           onChange={(e) => setCommentText(e.target.value)}
                           placeholder="Tell your creative pod what to change (required)…"
-                          className="w-full bg-[#0B111C]/50 border border-[#2A3446] rounded-xl p-4 text-[13px] text-white placeholder:text-[#97A0B3] resize-none focus:outline-none focus:border-white/[0.2] transition-colors h-24 mb-4"
+                          className="w-full bg-app-base/50 border border-app-line rounded-xl p-4 text-[13px] text-hi placeholder:text-app-mist resize-none focus:outline-none focus:border-hi/[0.2] transition-colors h-24 mb-4"
                         />
                       </>
                     )}
@@ -527,7 +527,7 @@ export function PortalDeliverablesPage() {
                         <button
                           onClick={() => requestChangesMutation.mutate({ id: shownItem.id, comment: commentText.trim() })}
                           disabled={requestChangesMutation.isPending || !commentText.trim()}
-                          className="flex-1 px-4 py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#0B111C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 px-4 py-3 rounded-full border border-app-line text-[13px] font-bold text-hi hover:bg-app-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {requestChangesMutation.isPending ? "Sending..." : "Request change"}
                         </button>
@@ -535,7 +535,7 @@ export function PortalDeliverablesPage() {
                       <button
                         onClick={() => approveMutation.mutate(shownItem.id)}
                         disabled={approveMutation.isPending}
-                        className="flex-1 px-4 py-3 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-3 rounded-full bg-app-accent-soft text-app-base text-[13px] font-bold hover:bg-hi transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Check className="w-4 h-4" />
                         {approveMutation.isPending ? "Approving..." : "Approve"}
@@ -545,9 +545,9 @@ export function PortalDeliverablesPage() {
                 )}
 
                 {!viewingOlder && shownItem.status === "revision_requested" && (
-                  <div className="flex gap-3 bg-[#0B111C]/50 rounded-xl p-4 border border-[#2A3446]">
-                    <Clock className="w-4 h-4 text-[#97A0B3] shrink-0 mt-0.5" />
-                    <p className="text-[13px] text-[#97A0B3] leading-relaxed">
+                  <div className="flex gap-3 bg-app-base/50 rounded-xl p-4 border border-app-line">
+                    <Clock className="w-4 h-4 text-app-mist shrink-0 mt-0.5" />
+                    <p className="text-[13px] text-app-mist leading-relaxed">
                       Your pod is working on the revision. The new version will appear here after a quality check, and we'll notify you.
                     </p>
                   </div>
@@ -555,7 +555,7 @@ export function PortalDeliverablesPage() {
 
                 {APPROVED_STATUSES.has(shownItem.status) && (
                   <div className="space-y-3">
-                    <p className="text-[13px] text-[#97A0B3]">
+                    <p className="text-[13px] text-app-mist">
                       Approved{shownItem.approved_at ? ` on ${new Date(shownItem.approved_at).toLocaleDateString()}` : ""}. The final file is ready to download.
                     </p>
                     {shownItem.download_url ? (
@@ -564,12 +564,12 @@ export function PortalDeliverablesPage() {
                         download
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full px-4 py-3 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors flex items-center justify-center gap-2"
+                        className="w-full px-4 py-3 rounded-full bg-app-accent-soft text-app-base text-[13px] font-bold hover:bg-hi transition-colors flex items-center justify-center gap-2"
                       >
                         <Download className="w-4 h-4" /> Download
                       </a>
                     ) : (
-                      <button onClick={refresh} className="w-full px-4 py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white">
+                      <button onClick={refresh} className="w-full px-4 py-3 rounded-full border border-app-line text-[13px] font-bold text-hi">
                         Refresh download link
                       </button>
                     )}
@@ -577,8 +577,8 @@ export function PortalDeliverablesPage() {
                 )}
               </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-[#97A0B3]">
-                <h3 className="text-sm font-semibold text-white mb-1">No deliverable selected</h3>
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-app-mist">
+                <h3 className="text-sm font-semibold text-hi mb-1">No deliverable selected</h3>
                 <p className="text-xs max-w-xs leading-relaxed">Select a piece to preview it, compare versions, and approve or request changes.</p>
               </div>
             )}
@@ -587,8 +587,8 @@ export function PortalDeliverablesPage() {
       )}
 
       {toastMessage && (
-        <div role="status" className="fixed bottom-6 right-6 z-50 bg-[#161F2D] text-white px-5 py-3 rounded-xl shadow-2xl border border-white/[0.1] text-sm font-medium flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#BCCCE6]" />
+        <div role="status" className="fixed bottom-6 right-6 z-50 bg-app-surface text-hi px-5 py-3 rounded-xl shadow-2xl border border-hi/[0.1] text-sm font-medium flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-app-accent-soft" />
           {toastMessage}
         </div>
       )}

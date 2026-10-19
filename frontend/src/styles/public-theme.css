@@ -14,16 +14,16 @@
 ───────────────────────────────────────────────────────────────────────────── */
 
 .public-site {
-  --creo-bg: #050a1a;
-  --creo-abyss: #030714;
-  --creo-surface: #0f1a3a;
-  --creo-line: #223058;
-  --creo-mist: #93a0bf;
-  --creo-ink: #f4f7ff;
-  --creo-blue: #4f7bff;
-  --creo-blue-deep: #3b6bff;
-  --creo-ice: #dce8ff;
-  --creo-sky: #7dd3fc;
+  --creo-bg: var(--site-bg);
+  --creo-abyss: var(--site-abyss);
+  --creo-surface: var(--site-surface);
+  --creo-line: var(--site-line);
+  --creo-mist: var(--site-mist);
+  --creo-ink: var(--site-ink);
+  --creo-blue: var(--site-blue);
+  --creo-blue-deep: var(--site-blue-deep);
+  --creo-ice: var(--site-ice);
+  --creo-sky: var(--site-sky);
   --creo-ease: cubic-bezier(0.16, 1, 0.3, 1);
 
   position: relative;
@@ -96,7 +96,7 @@
 /* ── Type ─────────────────────────────────────────────────────────────── */
 
 .creo-text-gradient {
-  background: linear-gradient(100deg, #7da2ff 0%, #dce8ff 45%, #7dd3fc 100%);
+  background: linear-gradient(100deg, var(--site-blue-light) 0%, var(--site-ice) 45%, var(--site-sky) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -105,11 +105,11 @@
 .creo-text-shine {
   background: linear-gradient(
     110deg,
-    #f4f7ff 0%,
-    #f4f7ff 40%,
-    #9db8ff 50%,
-    #f4f7ff 60%,
-    #f4f7ff 100%
+    var(--site-ink) 0%,
+    var(--site-ink) 40%,
+    var(--site-peri) 50%,
+    var(--site-ink) 60%,
+    var(--site-ink) 100%
   );
   background-size: 250% 100%;
   -webkit-background-clip: text;
@@ -159,7 +159,7 @@
   isolation: isolate;
   overflow: hidden;
   color: #fff;
-  background: linear-gradient(180deg, #5a85ff 0%, #3b6bff 55%, #2f5cf0 100%);
+  background: linear-gradient(180deg, var(--site-blue) 0%, var(--site-blue-deep) 55%, var(--site-blue-deep) 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.28),
     0 0 0 1px rgba(79, 123, 255, 0.55),
@@ -267,7 +267,7 @@
 .creo-featured-border {
   background:
     linear-gradient(180deg, #101e4c, #0a1334) padding-box,
-    conic-gradient(from var(--creo-angle), #4f7bff, #dce8ff 18%, #223058 38%, #7dd3fc 58%, #3b6bff 78%, #4f7bff) border-box;
+    conic-gradient(from var(--creo-angle), var(--site-blue), var(--site-ice) 18%, var(--site-line) 38%, var(--site-sky) 58%, var(--site-blue-deep) 78%, var(--site-blue)) border-box;
   border: 1.5px solid transparent;
   animation: creoSpinAngle 6s linear infinite;
 }
@@ -311,7 +311,7 @@
     transparent 270deg,
     rgba(79, 123, 255, 0.35) 310deg,
     rgba(79, 123, 255, 0.95) 340deg,
-    #f4f7ff 355deg,
+    var(--site-ink) 355deg,
     transparent 360deg
   );
   /* Keep only the 1.5px ring: content box punched out of the border box */
@@ -451,4 +451,129 @@ html.creo-cursor-on .public-site :is(input, textarea, select, [contenteditable="
     transition: none;
     transform: none !important;
   }
+}
+
+/* ── Light theme ("Morning Blue") ──────────────────────────────────────────
+   The palette variables flip in tokens.css; these rules re-tune the effects
+   that were drawn with raw rgba for a dark canvas: glass, glows, grids. */
+
+:root[data-theme="light"] .public-site::before {
+  background:
+    radial-gradient(60rem 40rem at 85% -10%, rgba(43, 87, 230, 0.13), transparent 60%),
+    radial-gradient(50rem 36rem at -10% 30%, rgba(10, 114, 168, 0.08), transparent 60%),
+    radial-gradient(70rem 50rem at 50% 120%, rgba(43, 87, 230, 0.08), transparent 60%);
+}
+
+:root[data-theme="light"] .public-site ::selection {
+  background: rgba(43, 87, 230, 0.22);
+  color: var(--site-ink);
+}
+
+:root[data-theme="light"] .creo-glass {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(244, 247, 255, 0.86)) padding-box,
+    linear-gradient(180deg, rgba(43, 87, 230, 0.2), rgba(43, 87, 230, 0.06) 45%, rgba(43, 87, 230, 0.12)) border-box;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 18px 48px -24px rgba(36, 62, 120, 0.28);
+}
+
+:root[data-theme="light"] .creo-glass-strong {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(243, 246, 253, 0.72)) padding-box,
+    linear-gradient(180deg, rgba(43, 87, 230, 0.22), rgba(43, 87, 230, 0.08) 45%, rgba(43, 87, 230, 0.14)) border-box;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 24px 60px -28px rgba(36, 62, 120, 0.35),
+    0 0 0 1px rgba(43, 87, 230, 0.04);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root[data-theme="light"] .creo-glass,
+  :root[data-theme="light"] .creo-glass-strong {
+    background-color: rgba(255, 255, 255, 0.97);
+  }
+}
+
+:root[data-theme="light"] .creo-eyebrow {
+  background: rgba(43, 87, 230, 0.07);
+  border-color: rgba(43, 87, 230, 0.22);
+}
+
+:root[data-theme="light"] .creo-eyebrow::before {
+  box-shadow: 0 0 10px 1px rgba(43, 87, 230, 0.45);
+}
+
+:root[data-theme="light"] .creo-btn-primary {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 0 1px rgba(35, 80, 218, 0.5),
+    0 12px 28px -12px rgba(35, 80, 218, 0.55);
+}
+
+:root[data-theme="light"] .creo-btn-primary:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 0 0 1px rgba(35, 80, 218, 0.7),
+    0 18px 40px -12px rgba(35, 80, 218, 0.6);
+}
+
+:root[data-theme="light"] .creo-btn-ghost {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(11, 21, 51, 0.12);
+}
+
+:root[data-theme="light"] .creo-btn-ghost:hover {
+  background: #ffffff;
+  border-color: rgba(43, 87, 230, 0.45);
+}
+
+:root[data-theme="light"] .creo-grid-bg {
+  background-image:
+    linear-gradient(rgba(43, 87, 230, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(43, 87, 230, 0.07) 1px, transparent 1px);
+}
+
+:root[data-theme="light"] .creo-spotlight {
+  background-image:
+    radial-gradient(closest-side, rgba(43, 87, 230, 0.1), transparent),
+    linear-gradient(rgba(43, 87, 230, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(43, 87, 230, 0.16) 1px, transparent 1px);
+}
+
+:root[data-theme="light"] .public-site .creo-grain::after {
+  opacity: 0.02;
+}
+
+:root[data-theme="light"] .creo-seam {
+  background: linear-gradient(90deg, transparent, rgba(43, 87, 230, 0.35), rgba(10, 114, 168, 0.25), rgba(43, 87, 230, 0.35), transparent);
+}
+
+:root[data-theme="light"] .creo-glow-ring {
+  box-shadow:
+    0 0 0 1px rgba(43, 87, 230, 0.25),
+    0 30px 70px -34px rgba(43, 87, 230, 0.4);
+}
+
+:root[data-theme="light"] .creo-featured-border {
+  background:
+    linear-gradient(180deg, #ffffff, #f1f5ff) padding-box,
+    conic-gradient(from var(--creo-angle), var(--site-blue), #a9c2ff 18%, var(--site-line) 38%, var(--site-sky) 58%, var(--site-blue-deep) 78%, var(--site-blue)) border-box;
+}
+
+:root[data-theme="light"] .creo-beam::before {
+  background: conic-gradient(
+    from var(--creo-beam-angle),
+    transparent 0deg,
+    transparent 270deg,
+    rgba(43, 87, 230, 0.25) 310deg,
+    rgba(43, 87, 230, 0.85) 340deg,
+    var(--site-blue-deep) 355deg,
+    transparent 360deg
+  );
+}
+
+:root[data-theme="light"] .public-site,
+:root[data-theme="light"] .public-site * {
+  scrollbar-color: #b9c8ea transparent;
 }

@@ -33,29 +33,29 @@ export function PricingCards({
         <output aria-label="Loading plans" className="grid lg:grid-cols-3 gap-6 lg:gap-8">
           {[0, 1, 2].map((i) => (
             <div key={i} className="creo-glass rounded-3xl p-8 sm:p-9 space-y-6 motion-safe:animate-pulse">
-              <div className="h-6 w-1/2 rounded-full bg-white/[0.07]" />
-              <div className="h-12 w-2/3 rounded-full bg-white/[0.07]" />
-              <div className="h-20 rounded-2xl bg-white/[0.05]" />
+              <div className="h-6 w-1/2 rounded-full bg-hi/[0.07]" />
+              <div className="h-12 w-2/3 rounded-full bg-hi/[0.07]" />
+              <div className="h-20 rounded-2xl bg-hi/[0.05]" />
               <div className="space-y-3">
-                <div className="h-3 w-5/6 rounded-full bg-white/[0.05]" />
-                <div className="h-3 w-4/6 rounded-full bg-white/[0.05]" />
-                <div className="h-3 w-3/6 rounded-full bg-white/[0.05]" />
+                <div className="h-3 w-5/6 rounded-full bg-hi/[0.05]" />
+                <div className="h-3 w-4/6 rounded-full bg-hi/[0.05]" />
+                <div className="h-3 w-3/6 rounded-full bg-hi/[0.05]" />
               </div>
-              <div className="h-12 rounded-full bg-white/[0.07]" />
+              <div className="h-12 rounded-full bg-hi/[0.07]" />
             </div>
           ))}
         </output>
       )}
       {query.isError && (
-        <p role="alert" className="text-center text-[#FBBF77]">
+        <p role="alert" className="text-center text-site-amber">
           Plans could not be loaded.{" "}
-          <button type="button" className="underline underline-offset-4 cursor-pointer hover:text-white" onClick={() => void query.refetch()}>
+          <button type="button" className="underline underline-offset-4 cursor-pointer hover:text-hi" onClick={() => void query.refetch()}>
             Retry
           </button>
         </p>
       )}
       {query.isSuccess && query.data.length === 0 && (
-        <p className="text-center text-[#93A0BF]">No subscription plans available.</p>
+        <p className="text-center text-site-mist">No subscription plans available.</p>
       )}
       <section className="grid lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
         {query.data?.map((plan, index) => {
@@ -71,7 +71,7 @@ export function PricingCards({
               // Stagger the edge light so the cards don't flash in unison
               style={{ "--creo-beam-delay": `-${index * 2.1}s` } as CSSProperties}
               whileHover={reduce ? undefined : { y: -6 }}
-              className={`group relative rounded-[28px] p-8 sm:p-9 flex flex-col gap-6 text-white transition-shadow duration-500 ${
+              className={`group relative rounded-[28px] p-8 sm:p-9 flex flex-col gap-6 text-hi transition-shadow duration-500 ${
                 featured
                   ? "creo-featured-border shadow-[0_30px_80px_-30px_rgba(59,107,255,0.8)] lg:-my-3 lg:py-12"
                   : "creo-glass creo-beam hover:shadow-[0_30px_70px_-30px_rgba(59,107,255,0.45)]"
@@ -82,9 +82,9 @@ export function PricingCards({
               )}
 
               <div className="relative flex items-center justify-between gap-2">
-                <h2 className="text-2xl font-black tracking-[-0.02em] text-white">{plan.display_name}</h2>
+                <h2 className="text-2xl font-black tracking-[-0.02em] text-hi">{plan.display_name}</h2>
                 {featured && (
-                  <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] px-3 py-1.5 rounded-full bg-gradient-to-r from-[#5A85FF] to-[#3B6BFF] text-white shadow-[0_6px_20px_-6px_rgba(59,107,255,0.9)]">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] px-3 py-1.5 rounded-full bg-gradient-to-r from-site-blue to-site-blue-deep text-white shadow-[0_6px_20px_-6px_rgba(59,107,255,0.9)]">
                     <Sparkles className="size-3" />
                     Recommended
                   </span>
@@ -92,42 +92,42 @@ export function PricingCards({
               </div>
 
               <div className="relative">
-                <p className="text-4xl sm:text-5xl font-black text-white tracking-[-0.04em]">
+                <p className="text-4xl sm:text-5xl font-black text-hi tracking-[-0.04em]">
                   {new Intl.NumberFormat("en-IN", {
                     style: "currency",
                     currency: plan.currency,
                     maximumFractionDigits: 0,
                   }).format(plan.price_minor / 100)}
-                  <span className="text-base font-medium tracking-normal text-[#93A0BF]"> / month</span>
+                  <span className="text-base font-medium tracking-normal text-site-mist"> / month</span>
                 </p>
-                <p className="text-xs text-[#93A0BF] mt-2 font-medium">Billed monthly &bull; Cancel or pause anytime</p>
+                <p className="text-xs text-site-mist mt-2 font-medium">Billed monthly &bull; Cancel or pause anytime</p>
               </div>
 
-              <div className="relative grid grid-cols-3 rounded-2xl border border-white/[0.08] bg-[#050A1A]/50 text-center">
+              <div className="relative grid grid-cols-3 rounded-2xl border border-hi/[0.08] bg-site-bg/50 text-center">
                 <div className="p-3.5">
-                  <span className="block text-xl font-black text-white">{plan.reel_quota}</span>
-                  <span className="text-[10px] font-bold tracking-[0.14em] text-[#93A0BF] uppercase">Reels</span>
+                  <span className="block text-xl font-black text-hi">{plan.reel_quota}</span>
+                  <span className="text-[10px] font-bold tracking-[0.14em] text-site-mist uppercase">Reels</span>
                 </div>
-                <div className="p-3.5 border-x border-white/[0.08]">
-                  <span className="block text-xl font-black text-white">{plan.poster_quota}</span>
-                  <span className="text-[10px] font-bold tracking-[0.14em] text-[#93A0BF] uppercase">Posts</span>
+                <div className="p-3.5 border-x border-hi/[0.08]">
+                  <span className="block text-xl font-black text-hi">{plan.poster_quota}</span>
+                  <span className="text-[10px] font-bold tracking-[0.14em] text-site-mist uppercase">Posts</span>
                 </div>
                 <div className="p-3.5">
-                  <span className="block text-xl font-black text-white">{plan.story_quota}</span>
-                  <span className="text-[10px] font-bold tracking-[0.14em] text-[#93A0BF] uppercase">Stories</span>
+                  <span className="block text-xl font-black text-hi">{plan.story_quota}</span>
+                  <span className="text-[10px] font-bold tracking-[0.14em] text-site-mist uppercase">Stories</span>
                 </div>
               </div>
 
-              <div className="relative flex items-center gap-2 text-sm font-semibold text-[#9DB8FF]">
-                <Check className="size-4 text-[#7DA2FF]" />
+              <div className="relative flex items-center gap-2 text-sm font-semibold text-site-peri">
+                <Check className="size-4 text-site-blue-light" />
                 {plan.revision_rounds} included revision rounds
               </div>
 
               {!!plan.highlights?.length && (
-                <ul className="relative space-y-3 text-sm text-[#B4BFDA] pt-5 border-t border-white/[0.08]">
+                <ul className="relative space-y-3 text-sm text-site-mist-2 pt-5 border-t border-hi/[0.08]">
                   {plan.highlights.map((h, i) => (
                     <li key={i} className="flex items-start gap-2.5">
-                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#4F7BFF] shadow-[0_0_8px_1px_rgba(79,123,255,0.8)]" />
+                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-site-blue shadow-[0_0_8px_1px_rgba(79,123,255,0.8)]" />
                       <span>{h}</span>
                     </li>
                   ))}

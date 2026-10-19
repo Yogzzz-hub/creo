@@ -367,7 +367,7 @@ export function ScrollProgressBar() {
   return (
     <motion.div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-gradient-to-r from-[#4F7BFF] via-[#DCE8FF] to-[#7DD3FC]"
+      className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-gradient-to-r from-site-blue via-site-ice to-site-sky"
       style={{ scaleX }}
     />
   );
@@ -492,8 +492,8 @@ export function DonutRing({
       <svg viewBox="0 0 36 36" className="size-full -rotate-90" aria-hidden="true">
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#7DA2FF" />
-            <stop offset="100%" stopColor="#3B6BFF" />
+            <stop offset="0%" stopColor="var(--site-blue-light)" />
+            <stop offset="100%" stopColor="var(--site-blue-deep)" />
           </linearGradient>
         </defs>
         <circle cx="18" cy="18" r="15.9155" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
@@ -574,10 +574,10 @@ export function MediaInText({
           ))
         )}
         {/* Push the footage toward the brand blues */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#3B6BFF]/45 via-transparent to-[#7DD3FC]/35 mix-blend-screen" />
+        <div className="absolute inset-0 bg-gradient-to-br from-site-blue-deep/45 via-transparent to-site-sky/35 mix-blend-screen" />
       </div>
 
-      <h2 className="relative bg-black py-14 text-center sm:py-20 font-black uppercase leading-[0.84] tracking-[-0.05em] text-white mix-blend-multiply">
+      <h2 className="relative bg-black py-14 text-center sm:py-20 font-black uppercase leading-[0.84] tracking-[-0.05em] text-white mix-blend-multiply light:bg-white light:text-black light:mix-blend-screen">
         {lines.map((line, i) => (
           <motion.span
             key={line}
@@ -589,7 +589,7 @@ export function MediaInText({
         ))}
       </h2>
 
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[#050A1A] mix-blend-lighten" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-site-bg mix-blend-lighten light:mix-blend-darken" />
     </div>
   );
 }
@@ -1015,7 +1015,7 @@ export function HighlightSweep({
     <span className={`relative isolate inline-block ${className}`}>
       <motion.span
         aria-hidden="true"
-        className="absolute -inset-x-[0.04em] bottom-[0.01em] -z-10 h-[0.09em] origin-left rounded-full bg-gradient-to-r from-[#3B6BFF] via-[#7DA2FF] to-[#7DD3FC]"
+        className="absolute -inset-x-[0.04em] bottom-[0.01em] -z-10 h-[0.09em] origin-left rounded-full bg-gradient-to-r from-site-blue-deep via-site-blue-light to-site-sky"
         initial={reduce ? false : { scaleX: 0 }}
         animate={{ scaleX: 1 }}
         transition={{ duration: 1.1, delay, ease: EASE_IN_OUT_QUART }}
@@ -1078,7 +1078,7 @@ export function MaskedTextZoom({
     return (
       <section ref={ref} className="relative isolate overflow-hidden">
         <img src={image} alt={imageAlt} className="absolute inset-0 -z-20 size-full object-cover" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#050A1A] via-[#050A1A]/70 to-[#050A1A]/40" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-site-bg via-site-bg/70 to-site-bg/40" />
         <div className="mx-auto flex min-h-[80svh] max-w-[1440px] items-end px-6 py-24 sm:px-8 lg:px-12">
           {children}
         </div>
@@ -1101,10 +1101,10 @@ export function MaskedTextZoom({
           className="absolute inset-0 size-full object-cover"
         />
         {/* Cool blue grade so the photo sits inside the palette */}
-        <div className="absolute inset-0 bg-[#0B1E5C]/35 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-site-panel/35 mix-blend-multiply" />
         <motion.div
           style={{ opacity: shade }}
-          className="absolute inset-0 bg-gradient-to-t from-[#050A1A] via-[#050A1A]/55 to-[#050A1A]/10"
+          className="absolute inset-0 bg-gradient-to-t from-site-bg via-site-bg/55 to-site-bg/10"
         />
 
         {/* The stencil */}
@@ -1134,17 +1134,17 @@ export function MaskedTextZoom({
               </motion.text>
             </mask>
           </defs>
-          <rect width={box.w} height={box.h} fill="#050A1A" mask={`url(#${maskId})`} />
+          <rect width={box.w} height={box.h} fill="var(--site-bg)" mask={`url(#${maskId})`} />
         </motion.svg>
 
         {eyebrow && (
           <motion.div
             style={{ opacity: hint }}
-            className="absolute inset-x-0 bottom-10 flex flex-col items-center gap-3 text-[11px] font-bold uppercase tracking-[0.3em] text-[#93A0BF]"
+            className="absolute inset-x-0 bottom-10 flex flex-col items-center gap-3 text-[11px] font-bold uppercase tracking-[0.3em] text-site-mist"
           >
             {eyebrow}
-            <span className="relative h-10 w-px overflow-hidden bg-[#223058]">
-              <span className="absolute inset-x-0 top-0 h-1/2 animate-[creoScrollCue_1.8s_ease-in-out_infinite] bg-[#4F7BFF]" />
+            <span className="relative h-10 w-px overflow-hidden bg-site-line">
+              <span className="absolute inset-x-0 top-0 h-1/2 animate-[creoScrollCue_1.8s_ease-in-out_infinite] bg-site-blue" />
             </span>
           </motion.div>
         )}

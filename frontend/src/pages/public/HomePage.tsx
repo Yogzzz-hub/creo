@@ -101,16 +101,16 @@ function CollageTile({
 }) {
   return (
     <div data-cursor="View">
-    <TiltCard max={9} lift={30} glow="rgba(125,162,255,0.18)" className={`relative ${aspect} rounded-2xl border border-white/10 overflow-hidden bg-[#0D1530] shadow-[0_24px_50px_-20px_rgba(1,4,16,0.9)]`}>
+    <TiltCard max={9} lift={30} glow="rgba(125,162,255,0.18)" className={`relative ${aspect} rounded-2xl border border-hi/10 overflow-hidden bg-site-deep shadow-[0_24px_50px_-20px_rgb(var(--shadow-rgb)/calc(0.9*var(--shadow-k)))]`}>
       <DistortImage
         src={src}
         alt={alt}
         className="size-full"
         imgClassName="w-full h-full object-cover block"
       />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#050A1A]/70 via-[#050A1A]/5 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-site-bg/70 via-site-bg/5 to-transparent" />
       {label && (
-        <div className="creo-glass backdrop-blur-md pointer-events-none absolute bottom-2 left-2 sm:bottom-3 sm:left-3 z-[2] px-2.5 py-1 rounded-full text-[11px] font-semibold text-white [transform:translateZ(30px)]">
+        <div className="creo-glass backdrop-blur-md pointer-events-none absolute bottom-2 left-2 sm:bottom-3 sm:left-3 z-[2] px-2.5 py-1 rounded-full text-[11px] font-semibold text-hi [transform:translateZ(30px)]">
           {label}
         </div>
       )}
@@ -127,8 +127,8 @@ const faqs = [
     icon: Layers,
     answer: "CREO connects content briefs directly to creative leads and client sign-offs. Your briefs trigger automated SLA revision tickets and real-time deliverables tracking—eliminating delays and fragmented communication.",
     extra: (
-      <div className="text-[#DCE8FF] bg-[#4F7BFF]/10 border border-[#4F7BFF]/30 rounded-full px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 mt-4">
-        <Zap className="size-3.5 fill-current text-[#7DA2FF]" />
+      <div className="text-site-ice bg-site-blue/10 border border-site-blue/30 rounded-full px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 mt-4">
+        <Zap className="size-3.5 fill-current text-site-blue-light" />
         Typical D2C brand onboarding completed in under 48 hours.
       </div>
     ),
@@ -235,14 +235,14 @@ export function HomePage() {
   };
 
   return (
-    <div className="w-full text-[#F4F7FF] min-h-screen font-sans">
+    <div className="w-full text-site-ink min-h-screen font-sans">
 
       {/* 1. Hero — masked headline, collage unveiled tile by tile */}
       <section className="relative isolate overflow-hidden creo-grain -mt-[76px] sm:-mt-[84px] pt-[76px] sm:pt-[84px]">
         <div aria-hidden="true" className="absolute inset-0 -z-20 creo-grid-bg [mask-image:radial-gradient(80%_70%_at_70%_20%,#000_10%,transparent_75%)] opacity-60" />
         <CursorSpotlight className="-z-10" />
-        <div aria-hidden="true" className="absolute -top-40 right-[-10%] -z-10 size-[640px] rounded-full bg-[#3B6BFF]/20 blur-[140px]" />
-        <div aria-hidden="true" className="absolute top-1/3 -left-40 -z-10 size-[420px] rounded-full bg-[#7DD3FC]/[0.07] blur-[120px]" />
+        <div aria-hidden="true" className="absolute -top-40 right-[-10%] -z-10 size-[640px] rounded-full bg-site-blue-deep/20 blur-[140px]" />
+        <div aria-hidden="true" className="absolute top-1/3 -left-40 -z-10 size-[420px] rounded-full bg-site-sky/[0.07] blur-[120px]" />
         {/* Animated particle wave behind the hero */}
         {showScene && (
         <Suspense fallback={null}>
@@ -264,14 +264,14 @@ export function HomePage() {
                 <span className="creo-eyebrow"><ScrambleText text="A creative pod for D2C brands" duration={1.1} /></span>
               </motion.div>
 
-              <h1 className="text-[2.6rem] sm:text-6xl md:text-7xl lg:text-[4.75rem] xl:text-[5.6rem] font-black tracking-[-0.045em] leading-[0.98] text-[#F4F7FF]">
+              <h1 className="text-[2.6rem] sm:text-6xl md:text-7xl lg:text-[4.75rem] xl:text-[5.6rem] font-black tracking-[-0.045em] leading-[0.98] text-site-ink">
                 <SplitText text="Content that" animateOnMount delay={0.1} className="block" />
                 <SplitText text="ships every week." animateOnMount delay={0.22} className="block" />
                 <SplitText
                   text="Proof you can"
                   animateOnMount
                   delay={0.34}
-                  className="block italic font-serif font-normal tracking-[-0.02em] text-[#DCE8FF] pr-2"
+                  className="block italic font-serif font-normal tracking-[-0.02em] text-site-ice pr-2"
                 />
                 <HighlightSweep delay={1.05}>
                   <SplitText text="check." animateOnMount delay={0.46} className="block" wordClassName="creo-text-gradient pr-1" />
@@ -279,7 +279,7 @@ export function HomePage() {
               </h1>
 
               <Reveal delay={0.55} blur>
-                <p className="text-base sm:text-lg lg:text-xl text-[#93A0BF] leading-relaxed max-w-xl mt-8 mb-10 font-normal">
+                <p className="text-base sm:text-lg lg:text-xl text-site-mist leading-relaxed max-w-xl mt-8 mb-10 font-normal">
                   A dedicated lead, editor and designer learn your brand, then deliver reels, carousels and stories to a portal where you approve them in one click.
                 </p>
               </Reveal>
@@ -300,17 +300,17 @@ export function HomePage() {
                     className="creo-btn-ghost group font-semibold text-base px-8 py-4 rounded-full w-full sm:w-auto text-center inline-flex items-center justify-center gap-2"
                   >
                     <RollText>Explore the portal first</RollText>
-                    <ArrowUpRight className="size-4 text-[#7DA2FF] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                    <ArrowUpRight className="size-4 text-site-blue-light transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                   </Link>
                 </div>
               </Reveal>
 
               <Reveal delay={0.75}>
-                <div className="text-sm font-medium text-[#93A0BF] mt-12 pt-6 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-white/[0.07]">
+                <div className="text-sm font-medium text-site-mist mt-12 pt-6 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-hi/[0.07]">
                   {["Month-to-month", "First batch in 7 days", "Late batch? Next cycle credited"].map((item) => (
                     <span key={item} className="flex items-center gap-2">
-                      <span className="flex size-5 items-center justify-center rounded-full bg-[#4F7BFF]/15 ring-1 ring-inset ring-[#4F7BFF]/40">
-                        <Check className="size-3 text-[#7DA2FF]" />
+                      <span className="flex size-5 items-center justify-center rounded-full bg-site-blue/15 ring-1 ring-inset ring-site-blue/40">
+                        <Check className="size-3 text-site-blue-light" />
                       </span>
                       {item}
                     </span>
@@ -362,12 +362,12 @@ export function HomePage() {
                   transition={{ duration: 5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
                   className="creo-glass-strong flex items-center gap-3 rounded-2xl py-3 pl-3 pr-5"
                 >
-                  <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#5A85FF] to-[#3B6BFF] shadow-[0_8px_20px_-6px_rgba(59,107,255,0.9)]">
-                    <CheckCircle2 className="size-4.5 text-white" />
+                  <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-site-blue to-site-blue-deep shadow-[0_8px_20px_-6px_rgba(59,107,255,0.9)]">
+                    <CheckCircle2 className="size-4.5 text-hi" />
                   </span>
                   <span className="flex flex-col">
-                    <span className="text-sm font-semibold text-[#F4F7FF]">Batch 04 approved</span>
-                    <span className="text-xs text-[#93A0BF]">Delivered 2 days early</span>
+                    <span className="text-sm font-semibold text-site-ink">Batch 04 approved</span>
+                    <span className="text-xs text-site-mist">Delivered 2 days early</span>
                   </span>
                 </motion.div>
               </motion.div>
@@ -387,32 +387,32 @@ export function HomePage() {
 
         <div aria-hidden="true" className="grid grid-cols-[100%] place-items-center">
           {/* Back ribbon — electric blue, drifts right; lifted so the two cross off-centre */}
-          <div className="col-start-1 row-start-1 w-[120vw] -translate-y-14 rotate-[4deg] sm:-translate-y-20 border-y border-white/20 bg-gradient-to-r from-[#2F5CF0] via-[#4F7BFF] to-[#3B6BFF] py-3 shadow-[0_24px_60px_-24px_rgba(59,107,255,0.9)] sm:py-4">
+          <div className="col-start-1 row-start-1 w-[120vw] -translate-y-14 rotate-[4deg] sm:-translate-y-20 border-y border-hi/20 bg-gradient-to-r from-site-blue-deep via-site-blue to-site-blue-deep py-3 shadow-[0_24px_60px_-24px_rgba(59,107,255,0.9)] sm:py-4">
             <VelocityMarquee baseVelocity={2.4}>
               {NICHE_ITEMS.map((item) => (
-                <span key={item} className="flex items-center gap-6 px-6 text-lg font-bold uppercase tracking-[0.1em] text-white/90 sm:gap-10 sm:px-10 sm:text-2xl">
+                <span key={item} className="flex items-center gap-6 px-6 text-lg font-bold uppercase tracking-[0.1em] text-hi/90 sm:gap-10 sm:px-10 sm:text-2xl">
                   {item}
-                  <RibbonSparkle className="size-3 text-[#DCE8FF] sm:size-4" />
+                  <RibbonSparkle className="size-3 text-site-ice sm:size-4" />
                 </span>
               ))}
             </VelocityMarquee>
           </div>
 
           {/* Front ribbon — ice, drifts left */}
-          <div className="col-start-1 row-start-1 w-[120vw] -rotate-[3deg] border-y border-[#050A1A]/10 bg-[#DCE8FF] py-4 shadow-[0_30px_70px_-25px_rgba(1,4,16,0.95)] sm:py-6">
+          <div className="col-start-1 row-start-1 w-[120vw] -rotate-[3deg] border-y border-site-bg/10 bg-site-ice py-4 shadow-[0_30px_70px_-25px_rgb(var(--shadow-rgb)/calc(0.95*var(--shadow-k)))] sm:py-6">
             <VelocityMarquee baseVelocity={-3}>
               {FORMAT_ITEMS.map((item, i) => (
                 <span key={item} className="flex items-center gap-6 px-6 sm:gap-10 sm:px-10">
                   <span
                     className={`text-3xl leading-none sm:text-6xl ${
                       i % 2
-                        ? "font-serif italic tracking-[-0.02em] text-[#3B6BFF]"
-                        : "font-black tracking-[-0.045em] text-[#050A1A]"
+                        ? "font-serif italic tracking-[-0.02em] text-site-blue-deep"
+                        : "font-black tracking-[-0.045em] text-site-bg"
                     }`}
                   >
                     {item}
                   </span>
-                  <RibbonSparkle className="size-5 text-[#3B6BFF] sm:size-8" />
+                  <RibbonSparkle className="size-5 text-site-blue-deep sm:size-8" />
                 </span>
               ))}
             </VelocityMarquee>
@@ -429,11 +429,11 @@ export function HomePage() {
       >
         <div className="max-w-3xl">
           <span className="creo-eyebrow"><ScrambleText text="Inside the pod" /></span>
-          <h2 className="mt-6 text-4xl sm:text-6xl lg:text-7xl font-black tracking-[-0.04em] leading-[1.0] text-white">
+          <h2 className="mt-6 text-4xl sm:text-6xl lg:text-7xl font-black tracking-[-0.04em] leading-[1.0] text-hi">
             One pod. One portal.{" "}
-            <span className="italic font-serif font-normal tracking-[-0.02em] text-[#DCE8FF]">Every week.</span>
+            <span className="italic font-serif font-normal tracking-[-0.02em] text-site-ice">Every week.</span>
           </h2>
-          <p className="mt-6 max-w-xl text-base sm:text-lg leading-relaxed text-[#C9D3EA]">
+          <p className="mt-6 max-w-xl text-base sm:text-lg leading-relaxed text-app-ink-3">
             Your lead, editor and designer work from your Brand DNA, so every reel, carousel and story ships on-brand and on schedule.
           </p>
           <Link
@@ -441,7 +441,7 @@ export function HomePage() {
             className="creo-btn-ghost group mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold"
           >
             <RollText>See the work</RollText>
-            <ArrowUpRight className="size-4 text-[#7DA2FF] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            <ArrowUpRight className="size-4 text-site-blue-light transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </Link>
         </div>
       </MaskedTextZoom>
@@ -452,7 +452,7 @@ export function HomePage() {
         <ScrollLitText
           text="No cluttered email threads. No lost files. No guessing when content lands. Just one pod that learns your brand, ships every week, and shows you the clock."
           accent={["one", "pod", "every", "week", "clock"]}
-          className="mt-8 text-[1.9rem] font-black leading-[1.12] tracking-[-0.035em] text-[#F4F7FF] sm:text-5xl lg:text-[4rem]"
+          className="mt-8 text-[1.9rem] font-black leading-[1.12] tracking-[-0.035em] text-site-ink sm:text-5xl lg:text-[4rem]"
         />
       </section>
 
@@ -469,7 +469,7 @@ export function HomePage() {
       </section>
 
       {/* 2. The Studio Ledger — band opens out of a rounded mask as it arrives */}
-      <ScrollMask inset={5} radius={48} background="bg-gradient-to-b from-[#081130] to-[#060C24]">
+      <ScrollMask inset={5} radius={48} background="bg-gradient-to-b from-site-deep to-site-deep">
         <section className="relative py-20 sm:py-28">
           <div aria-hidden="true" className="absolute inset-0 creo-grid-bg [mask-image:radial-gradient(60%_50%_at_50%_0%,#000,transparent)] opacity-70" />
           <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12">
@@ -479,23 +479,23 @@ export function HomePage() {
 
             <MaskReveal from="bottom" zoom={1.04} className="max-w-5xl mx-auto">
               <div className="creo-glass creo-beam rounded-3xl overflow-hidden">
-                <div className="grid grid-cols-4 bg-white/[0.03] border-b border-white/[0.08] p-5 sm:p-6 items-center">
-                  <div className="text-[11px] sm:text-xs font-bold text-[#B4BFDA] uppercase tracking-[0.16em]">Asset / Batch</div>
-                  <div className="text-[11px] sm:text-xs font-bold text-[#B4BFDA] uppercase tracking-[0.16em]">Milestone</div>
-                  <div className="text-[11px] sm:text-xs font-bold text-[#B4BFDA] uppercase tracking-[0.16em]">SLA Time</div>
-                  <div className="text-[11px] sm:text-xs font-bold text-[#B4BFDA] uppercase tracking-[0.16em] text-right">Status</div>
+                <div className="grid grid-cols-4 bg-hi/[0.03] border-b border-hi/[0.08] p-5 sm:p-6 items-center">
+                  <div className="text-[11px] sm:text-xs font-bold text-site-mist-2 uppercase tracking-[0.16em]">Asset / Batch</div>
+                  <div className="text-[11px] sm:text-xs font-bold text-site-mist-2 uppercase tracking-[0.16em]">Milestone</div>
+                  <div className="text-[11px] sm:text-xs font-bold text-site-mist-2 uppercase tracking-[0.16em]">SLA Time</div>
+                  <div className="text-[11px] sm:text-xs font-bold text-site-mist-2 uppercase tracking-[0.16em] text-right">Status</div>
                 </div>
 
                 {ledgerData?.has_enough ? (
-                  <Stagger className="divide-y divide-white/[0.06]" gap={0.07}>
+                  <Stagger className="divide-y divide-hi/[0.06]" gap={0.07}>
                     {(ledgerData.items || []).map((row: any, i: number) => (
-                      <StaggerItem key={row.id || i} className="grid grid-cols-4 items-center p-5 sm:p-6 hover:bg-white/[0.03] transition-colors">
-                        <div className="text-base font-bold text-[#F4F7FF]">{row.file_type || "Content Batch"}</div>
-                        <div className="text-sm sm:text-base text-[#93A0BF]">Batch {i + 1}</div>
-                        <div className="text-sm sm:text-base font-mono text-[#F4F7FF]">SLA Verified</div>
+                      <StaggerItem key={row.id || i} className="grid grid-cols-4 items-center p-5 sm:p-6 hover:bg-hi/[0.03] transition-colors">
+                        <div className="text-base font-bold text-site-ink">{row.file_type || "Content Batch"}</div>
+                        <div className="text-sm sm:text-base text-site-mist">Batch {i + 1}</div>
+                        <div className="text-sm sm:text-base font-mono text-site-ink">SLA Verified</div>
                         <div className="text-right">
-                          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#4F7BFF]/10 border border-[#4F7BFF]/40 text-[#9DB8FF]">
-                            <span className="size-1.5 rounded-full bg-[#7DA2FF] shadow-[0_0_8px_1px_rgba(79,123,255,0.9)]" />
+                          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-site-blue/10 border border-site-blue/40 text-site-peri">
+                            <span className="size-1.5 rounded-full bg-site-blue-light shadow-[0_0_8px_1px_rgba(79,123,255,0.9)]" />
                             {row.status}
                           </span>
                         </div>
@@ -503,7 +503,7 @@ export function HomePage() {
                     ))}
                   </Stagger>
                 ) : (
-                  <div className="p-12 text-center font-mono text-2xl text-[#93A0BF]">
+                  <div className="p-12 text-center font-mono text-2xl text-site-mist">
                     —
                   </div>
                 )}
@@ -520,19 +520,19 @@ export function HomePage() {
         </SectionHeading>
 
         <div ref={processRef} className="relative py-10">
-          <div className="absolute left-5 right-5 top-[3.75rem] hidden md:block h-px bg-white/[0.08]" />
+          <div className="absolute left-5 right-5 top-[3.75rem] hidden md:block h-px bg-hi/[0.08]" />
           <ScrollDrawLine
             progress={processProgress}
-            className="absolute left-5 right-5 top-[3.75rem] hidden md:block h-px bg-gradient-to-r from-[#3B6BFF] via-[#DCE8FF] to-[#7DD3FC] shadow-[0_0_12px_1px_rgba(79,123,255,0.6)]"
+            className="absolute left-5 right-5 top-[3.75rem] hidden md:block h-px bg-gradient-to-r from-site-blue-deep via-site-ice to-site-sky shadow-[0_0_12px_1px_rgba(79,123,255,0.6)]"
           />
           <Stagger className="relative grid grid-cols-1 md:grid-cols-5 gap-8" gap={0.12}>
             {PROCESS_STEPS.map((item) => (
               <StaggerItem key={item.step} className="flex flex-col group">
-                <div className="relative w-10 h-10 rounded-full border border-[#4F7BFF]/40 bg-[#050A1A] text-[#9DB8FF] flex items-center justify-center text-sm font-black mb-5 transition-all duration-500 group-hover:border-[#7DA2FF] group-hover:scale-110 group-hover:shadow-[0_0_24px_2px_rgba(79,123,255,0.55)]">
+                <div className="relative w-10 h-10 rounded-full border border-site-blue/40 bg-site-bg text-site-peri flex items-center justify-center text-sm font-black mb-5 transition-all duration-500 group-hover:border-site-blue-light group-hover:scale-110 group-hover:shadow-[0_0_24px_2px_rgba(79,123,255,0.55)]">
                   {item.step}
                 </div>
-                <h4 className="text-base sm:text-lg font-bold tracking-[-0.01em] text-[#F4F7FF] mb-2">{item.time}</h4>
-                <p className="text-sm sm:text-base text-[#93A0BF] leading-relaxed">{item.desc}</p>
+                <h4 className="text-base sm:text-lg font-bold tracking-[-0.01em] text-site-ink mb-2">{item.time}</h4>
+                <p className="text-sm sm:text-base text-site-mist leading-relaxed">{item.desc}</p>
               </StaggerItem>
             ))}
           </Stagger>
@@ -546,30 +546,30 @@ export function HomePage() {
         </SectionHeading>
 
         <div className="relative max-w-5xl mx-auto">
-          <div aria-hidden="true" className="absolute inset-x-10 -top-10 -bottom-10 -z-10 rounded-[48px] bg-[#3B6BFF]/[0.12] blur-[90px]" />
+          <div aria-hidden="true" className="absolute inset-x-10 -top-10 -bottom-10 -z-10 rounded-[48px] bg-site-blue-deep/[0.12] blur-[90px]" />
           <Reveal delay={0.2} className="absolute -top-4 left-8 z-10">
-            <div className="creo-glass-strong text-[#DCE8FF] text-[11px] font-bold px-4 py-1.5 rounded-full tracking-[0.14em]">
+            <div className="creo-glass-strong text-site-ice text-[11px] font-bold px-4 py-1.5 rounded-full tracking-[0.14em]">
               TRY IT — THIS PANEL WORKS
             </div>
           </Reveal>
 
           <MaskReveal from="center" zoom={1.06} duration={1.3}>
           <div className="creo-glass creo-beam rounded-3xl p-6 sm:p-10 relative overflow-hidden" style={{ "--creo-beam-delay": "-2s" } as React.CSSProperties}>
-            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-white/[0.08]">
-              <div className="font-black tracking-[-0.02em] text-[#F4F7FF] text-xl sm:text-2xl">Batch 04 · Active Review</div>
-              <div className="text-sm font-semibold text-[#93A0BF] flex items-center gap-4">
-                <span className="hidden sm:block w-32 h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-hi/[0.08]">
+              <div className="font-black tracking-[-0.02em] text-site-ink text-xl sm:text-2xl">Batch 04 · Active Review</div>
+              <div className="text-sm font-semibold text-site-mist flex items-center gap-4">
+                <span className="hidden sm:block w-32 h-1.5 rounded-full bg-hi/[0.08] overflow-hidden">
                   <motion.span
-                    className="block h-full rounded-full bg-gradient-to-r from-[#3B6BFF] to-[#7DD3FC]"
+                    className="block h-full rounded-full bg-gradient-to-r from-site-blue-deep to-site-sky"
                     animate={{ width: `${(approvedCount / 3) * 100}%` }}
                     transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
                   />
                 </span>
                 <span>
-                  <motion.span key={approvedCount} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="inline-block text-[#F4F7FF] font-black">
+                  <motion.span key={approvedCount} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="inline-block text-site-ink font-black">
                     {approvedCount}
                   </motion.span>{" "}
-                  of 3 approved &bull; <span className="text-[#9DB8FF]">On track: 2 days early</span>
+                  of 3 approved &bull; <span className="text-site-peri">On track: 2 days early</span>
                 </span>
               </div>
             </div>
@@ -581,12 +581,12 @@ export function HomePage() {
                   layout
                   whileHover={{ y: -4 }}
                   transition={{ type: "spring", stiffness: 300, damping: 24 }}
-                  className={`group bg-[#081028]/80 border rounded-2xl overflow-hidden flex flex-col transition-[border-color,box-shadow] duration-500 ${
+                  className={`group bg-site-deep/80 border rounded-2xl overflow-hidden flex flex-col transition-[border-color,box-shadow] duration-500 ${
                     asset.status === "approved"
-                      ? "border-[#4F7BFF]/70 shadow-[0_18px_40px_-18px_rgba(59,107,255,0.7)]"
+                      ? "border-site-blue/70 shadow-[0_18px_40px_-18px_rgba(59,107,255,0.7)]"
                       : asset.status === "revision"
-                        ? "border-[#FBBF77]/50"
-                        : "border-white/[0.08]"
+                        ? "border-site-amber/50"
+                        : "border-hi/[0.08]"
                   }`}
                 >
                   {/* Thumbnail */}
@@ -597,14 +597,14 @@ export function HomePage() {
                       className="h-52 sm:h-60 w-full"
                       imgClassName="size-full object-cover"
                     />
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#081028] via-transparent to-transparent" />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-site-deep via-transparent to-transparent" />
                   </div>
 
                   <div className="p-5 flex-1 flex flex-col">
-                    <div className="text-[11px] font-bold text-[#93A0BF] uppercase tracking-[0.14em] mb-1.5">
+                    <div className="text-[11px] font-bold text-site-mist uppercase tracking-[0.14em] mb-1.5">
                       {asset.type.replace(' ', ' • ')}
                     </div>
-                    <div className="text-base font-bold text-[#F4F7FF] mb-5 flex-1">{asset.name}</div>
+                    <div className="text-base font-bold text-site-ink mb-5 flex-1">{asset.name}</div>
 
                     <div className="flex items-center justify-between mt-auto min-h-[40px]">
                       <AnimatePresence mode="wait" initial={false}>
@@ -637,8 +637,8 @@ export function HomePage() {
 
                       {asset.status === "approved" && (
                         <div className="flex items-center justify-between w-full">
-                          <div className="inline-flex items-center gap-1.5 text-[#9DB8FF] text-xs font-bold">
-                            <CheckCircle2 className="size-4 text-[#7DA2FF]" /> Approved (queued)
+                          <div className="inline-flex items-center gap-1.5 text-site-peri text-xs font-bold">
+                            <CheckCircle2 className="size-4 text-site-blue-light" /> Approved (queued)
                           </div>
                           <button
                             type="button"
@@ -652,7 +652,7 @@ export function HomePage() {
 
                       {asset.status === "revision" && (
                         <div className="flex items-center justify-between w-full">
-                          <div className="inline-flex items-center gap-1.5 text-[#FBBF77] text-xs font-bold">
+                          <div className="inline-flex items-center gap-1.5 text-site-amber text-xs font-bold">
                             <AlertCircle className="size-4" /> Revision requested
                           </div>
                           <button
@@ -682,9 +682,9 @@ export function HomePage() {
       </section>
 
       {/* 5. Pricing Cards (Synchronized with Pricing Page) */}
-      <ScrollMask inset={5} radius={48} background="bg-gradient-to-b from-[#060C24] via-[#081130] to-[#050A1A]">
+      <ScrollMask inset={5} radius={48} background="bg-gradient-to-b from-site-deep via-site-deep to-site-bg">
         <section className="relative py-20 sm:py-28">
-          <div aria-hidden="true" className="absolute left-1/2 top-0 h-[420px] w-[min(900px,100vw)] -translate-x-1/2 rounded-full bg-[#3B6BFF]/[0.12] blur-[120px]" />
+          <div aria-hidden="true" className="absolute left-1/2 top-0 h-[420px] w-[min(900px,100vw)] -translate-x-1/2 rounded-full bg-site-blue-deep/[0.12] blur-[120px]" />
           <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12">
             <SectionHeading
               eyebrow="Predictable agency infrastructure"
@@ -711,7 +711,7 @@ export function HomePage() {
             return (
               <StaggerItem
                 key={idx}
-                className={`rounded-2xl p-5 sm:p-7 transition-[box-shadow,background-color] duration-500 ${isOpen ? "creo-glass creo-glow-ring creo-beam" : "creo-glass hover:bg-white/[0.03]"}`}
+                className={`rounded-2xl p-5 sm:p-7 transition-[box-shadow,background-color] duration-500 ${isOpen ? "creo-glass creo-glow-ring creo-beam" : "creo-glass hover:bg-hi/[0.03]"}`}
               >
                 <button
                   type="button"
@@ -720,21 +720,21 @@ export function HomePage() {
                   onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
                 >
                   <div className="flex items-center gap-4 pr-4">
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-500 ${isOpen ? "bg-gradient-to-br from-[#5A85FF] to-[#3B6BFF] text-white shadow-[0_8px_20px_-6px_rgba(59,107,255,0.9)]" : "bg-white/[0.04] ring-1 ring-inset ring-white/10 text-[#7DA2FF]"}`}>
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-500 ${isOpen ? "bg-gradient-to-br from-site-blue to-site-blue-deep text-white shadow-[0_8px_20px_-6px_rgba(59,107,255,0.9)]" : "bg-hi/[0.04] ring-1 ring-inset ring-hi/10 text-site-blue-light"}`}>
                       <Icon className="size-5" />
                     </div>
-                    <span className="text-base sm:text-lg font-semibold tracking-[-0.01em] text-[#F4F7FF] leading-snug">
+                    <span className="text-base sm:text-lg font-semibold tracking-[-0.01em] text-site-ink leading-snug">
                       {faq.question}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="hidden sm:inline-flex border border-white/10 text-[#9DB8FF] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-[0.14em]">
+                    <span className="hidden sm:inline-flex border border-hi/10 text-site-peri text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-[0.14em]">
                       {faq.tag}
                     </span>
                     <motion.div
                       animate={{ rotate: isOpen ? 180 : 0 }}
                       transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
-                      className={`w-9 h-9 rounded-full border flex items-center justify-center shrink-0 transition-colors ${isOpen ? "border-[#4F7BFF]/60 bg-[#4F7BFF]/15 text-[#F4F7FF]" : "border-white/10 text-[#93A0BF]"}`}
+                      className={`w-9 h-9 rounded-full border flex items-center justify-center shrink-0 transition-colors ${isOpen ? "border-site-blue/60 bg-site-blue/15 text-site-ink" : "border-hi/10 text-site-mist"}`}
                     >
                       <ChevronDown className="size-4" />
                     </motion.div>
@@ -752,7 +752,7 @@ export function HomePage() {
                       className="overflow-hidden"
                     >
                       <div className="pl-0 sm:pl-15 pt-5">
-                        <p className="text-base text-[#93A0BF] leading-relaxed">
+                        <p className="text-base text-site-mist leading-relaxed">
                           {faq.answer}
                         </p>
                         {faq.extra && faq.extra}
@@ -767,20 +767,20 @@ export function HomePage() {
       </section>
 
       {/* 6. "Try Us Before You Pay Us" Lead Capture Section */}
-      <ScrollMask inset={6} radius={56} background="bg-gradient-to-br from-[#0F2063] via-[#0A1642] to-[#060C26]">
+      <ScrollMask inset={6} radius={56} background="bg-gradient-to-br from-site-panel via-site-panel-2 to-site-deep">
         <section className="relative isolate overflow-hidden py-24 sm:py-32 creo-grain">
           <div aria-hidden="true" className="absolute inset-0 -z-10 creo-grid-bg [mask-image:radial-gradient(60%_60%_at_50%_40%,#000,transparent)]" />
-          <div aria-hidden="true" className="absolute -top-32 left-1/2 -z-10 size-[620px] -translate-x-1/2 rounded-full bg-[#4F7BFF]/25 blur-[130px]" />
+          <div aria-hidden="true" className="absolute -top-32 left-1/2 -z-10 size-[620px] -translate-x-1/2 rounded-full bg-site-blue/25 blur-[130px]" />
           <Reveal className="max-w-4xl mx-auto px-6 sm:px-8 text-center">
             <span className="creo-eyebrow"><ScrambleText text="Free sample batch" /></span>
             <SplitText
               as="h2"
               text="Try us before you pay us."
               accent={["pay"]}
-              accentClassName="italic font-serif font-normal text-[#DCE8FF]"
-              className="block mt-6 text-4xl sm:text-6xl lg:text-7xl font-black tracking-[-0.04em] text-[#F4F7FF] mb-6"
+              accentClassName="italic font-serif font-normal text-site-ice"
+              className="block mt-6 text-4xl sm:text-6xl lg:text-7xl font-black tracking-[-0.04em] text-site-ink mb-6"
             />
-            <p className="text-base sm:text-lg text-[#B4BFDA] leading-relaxed mb-12 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-site-mist-2 leading-relaxed mb-12 max-w-2xl mx-auto">
               Drop your Instagram handle and email below. We'll send you a custom sample batch of reels and carousels for your brand, completely free. No credit card required.
             </p>
 
@@ -791,11 +791,11 @@ export function HomePage() {
                 transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
                 className="creo-glass-strong p-6 sm:p-8 rounded-3xl text-center max-w-lg mx-auto"
               >
-                <div className="size-14 rounded-full bg-gradient-to-br from-[#5A85FF] to-[#3B6BFF] text-white flex items-center justify-center mx-auto mb-4 shadow-[0_12px_30px_-8px_rgba(59,107,255,0.9)]">
+                <div className="size-14 rounded-full bg-gradient-to-br from-site-blue to-site-blue-deep text-white flex items-center justify-center mx-auto mb-4 shadow-[0_12px_30px_-8px_rgba(59,107,255,0.9)]">
                   <Check className="size-7 stroke-[3]" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">Sample Batch Requested!</h3>
-                <p className="text-sm text-[#B4BFDA] leading-relaxed">
+                <h3 className="text-xl font-bold text-hi mb-2">Sample Batch Requested!</h3>
+                <p className="text-sm text-site-mist-2 leading-relaxed">
                   We received your Instagram handle ({sampleHandle}) and email ({sampleEmail}). Our creative team will prepare your custom sample batch within 48 hours.
                 </p>
               </motion.div>
@@ -805,7 +805,7 @@ export function HomePage() {
                 className="creo-glass-strong creo-beam flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-3xl mx-auto p-3 rounded-[28px]"
               >
                 <div className="relative flex-1">
-                  <Instagram className="absolute left-4 top-1/2 -translate-y-1/2 size-4.5 text-[#7DA2FF]" />
+                  <Instagram className="absolute left-4 top-1/2 -translate-y-1/2 size-4.5 text-site-blue-light" />
                   <input
                     type="text"
                     value={sampleHandle}
@@ -813,11 +813,11 @@ export function HomePage() {
                     placeholder="@yourbrand"
                     aria-label="Instagram handle"
                     required
-                    className="bg-[#050A1A]/60 border border-white/10 text-[#F4F7FF] placeholder:text-[#6F7C9C] rounded-2xl pl-11 pr-4 py-3.5 text-base focus:border-[#4F7BFF] focus:ring-4 focus:ring-[#4F7BFF]/15 focus:outline-none w-full transition-[border-color,box-shadow] font-medium"
+                    className="bg-site-bg/60 border border-hi/10 text-site-ink placeholder:text-site-mist rounded-2xl pl-11 pr-4 py-3.5 text-base focus:border-site-blue focus:ring-4 focus:ring-site-blue/15 focus:outline-none w-full transition-[border-color,box-shadow] font-medium"
                   />
                 </div>
                 <div className="relative flex-1">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 size-4.5 text-[#7DA2FF]" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 size-4.5 text-site-blue-light" />
                   <input
                     type="email"
                     value={sampleEmail}
@@ -825,7 +825,7 @@ export function HomePage() {
                     placeholder="name@brand.com"
                     aria-label="Work email"
                     required
-                    className="bg-[#050A1A]/60 border border-white/10 text-[#F4F7FF] placeholder:text-[#6F7C9C] rounded-2xl pl-11 pr-4 py-3.5 text-base focus:border-[#4F7BFF] focus:ring-4 focus:ring-[#4F7BFF]/15 focus:outline-none w-full transition-[border-color,box-shadow] font-medium"
+                    className="bg-site-bg/60 border border-hi/10 text-site-ink placeholder:text-site-mist rounded-2xl pl-11 pr-4 py-3.5 text-base focus:border-site-blue focus:ring-4 focus:ring-site-blue/15 focus:outline-none w-full transition-[border-color,box-shadow] font-medium"
                   />
                 </div>
                 <button
@@ -840,10 +840,10 @@ export function HomePage() {
             )}
 
             {sampleError && (
-              <p role="alert" className="text-sm text-[#FDA4AF] font-semibold mt-4">{sampleError}</p>
+              <p role="alert" className="text-sm text-site-rose font-semibold mt-4">{sampleError}</p>
             )}
 
-            <div className="text-sm font-medium text-[#93A0BF] mt-8">
+            <div className="text-sm font-medium text-site-mist mt-8">
               No commitment required. 48-hour sample turnaround for qualified D2C brands.
             </div>
           </Reveal>

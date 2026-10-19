@@ -65,13 +65,13 @@ export function IntroLoader({ onLift, onDone }: { onLift: () => void; onDone: ()
   return (
     <motion.div
       aria-hidden="true"
-      className="fixed inset-0 z-[80] overflow-hidden bg-[#050A1A] text-[#F4F7FF]"
+      className="fixed inset-0 z-[80] overflow-hidden bg-site-bg text-site-ink"
       initial={{ clipPath: "inset(0% 0% 0% 0%)" }}
       animate={{ clipPath: lifting ? "inset(0% 0% 100% 0%)" : "inset(0% 0% 0% 0%)" }}
       transition={{ duration: 1.05, ease: EASE_IN_OUT_QUART }}
     >
       <div className="creo-grid-bg absolute inset-0 opacity-50 [mask-image:radial-gradient(60%_60%_at_50%_50%,#000,transparent)]" />
-      <div className="absolute left-1/2 top-1/2 size-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#3B6BFF]/20 blur-[120px]" />
+      <div className="absolute left-1/2 top-1/2 size-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-site-blue-deep/20 blur-[120px]" />
 
       <motion.div
         className="absolute inset-0 flex items-center justify-center"
@@ -92,7 +92,7 @@ export function IntroLoader({ onLift, onDone }: { onLift: () => void; onDone: ()
             </span>
           ))}
           <motion.span
-            className="ml-[0.03em] inline-block size-[0.2em] rounded-full bg-gradient-to-br from-[#7DA2FF] to-[#3B6BFF] shadow-[0_0_40px_8px_rgba(79,123,255,0.55)]"
+            className="ml-[0.03em] inline-block size-[0.2em] rounded-full bg-gradient-to-br from-site-blue-light to-site-blue-deep shadow-[0_0_40px_8px_rgba(79,123,255,0.55)]"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 13, delay: 0.65 }}
@@ -107,16 +107,16 @@ export function IntroLoader({ onLift, onDone }: { onLift: () => void; onDone: ()
         transition={{ duration: 0.5, delay: lifting ? 0 : 0.3 }}
       >
         <div className="flex items-end justify-between gap-6">
-          <span className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#93A0BF]">
+          <span className="text-[11px] font-bold uppercase tracking-[0.28em] text-site-mist">
             Creative pods for D2C brands
           </span>
-          <span ref={counterRef} className="shrink-0 whitespace-nowrap font-mono text-4xl font-light tabular-nums text-[#DCE8FF] sm:text-6xl">
+          <span ref={counterRef} className="shrink-0 whitespace-nowrap font-mono text-4xl font-light tabular-nums text-site-ice sm:text-6xl">
             000
           </span>
         </div>
-        <div className="mt-5 h-px w-full bg-white/10">
+        <div className="mt-5 h-px w-full bg-hi/10">
           <motion.div
-            className="h-full origin-left bg-gradient-to-r from-[#3B6BFF] via-[#DCE8FF] to-[#7DD3FC]"
+            className="h-full origin-left bg-gradient-to-r from-site-blue-deep via-site-ice to-site-sky"
             style={{ scaleX: progress }}
           />
         </div>

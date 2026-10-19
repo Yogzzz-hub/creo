@@ -70,7 +70,7 @@ function FooterWordmark() {
         whileInView={{ y: "0%", opacity: 1 }}
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
-        className="bg-gradient-to-b from-[#3A56B8] via-[#1B2C6E] to-[#030714] bg-clip-text text-center text-[27vw] font-black leading-[0.78] tracking-[-0.07em] text-transparent lg:text-[22rem]"
+        className="bg-gradient-to-b from-[#3A56B8] via-[#1B2C6E] to-site-abyss bg-clip-text text-center text-[27vw] font-black leading-[0.78] tracking-[-0.07em] text-transparent lg:text-[22rem]"
       >
         creo.
       </motion.div>
@@ -82,12 +82,12 @@ function FooterLink({ href, children }: { href: string; children: string }) {
   return (
     <Link
       to={href}
-      className="group inline-flex items-center gap-1.5 text-sm text-[#93A0BF] transition-colors duration-300 hover:text-[#F4F7FF]"
+      className="group inline-flex items-center gap-1.5 text-sm text-site-mist transition-colors duration-300 hover:text-site-ink"
     >
       <span className="bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-left-bottom bg-no-repeat pb-0.5 transition-[background-size] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:bg-[length:100%_1px]">
         {children}
       </span>
-      <ArrowUpRight className="size-3 -translate-x-1 text-[#4F7BFF] opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
+      <ArrowUpRight className="size-3 -translate-x-1 text-site-blue opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
     </Link>
   );
 }
@@ -96,28 +96,28 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer data-footer className="relative isolate overflow-hidden bg-[#030714] text-[#F4F7FF]">
+    <footer data-footer className="relative isolate overflow-hidden bg-site-abyss text-site-ink">
       <div aria-hidden="true" className="creo-seam absolute inset-x-0 top-0" />
       <div
         aria-hidden="true"
-        className="absolute left-1/2 top-[-180px] -z-10 h-[460px] w-[min(1000px,120vw)] -translate-x-1/2 rounded-full bg-[#3B6BFF]/[0.14] blur-[120px]"
+        className="absolute left-1/2 top-[-180px] -z-10 h-[460px] w-[min(1000px,120vw)] -translate-x-1/2 rounded-full bg-site-blue-deep/[0.14] blur-[120px]"
       />
 
       <div className="mx-auto max-w-[1440px] px-6 pt-16 sm:px-8 sm:pt-24 lg:px-12">
         {/* 1. Closing call to action */}
         <MaskReveal from="bottom" zoom={1.04} duration={1.1} className="rounded-[32px]">
-          <div className="creo-beam relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-[#10205A] via-[#0A1640] to-[#060C26] px-6 py-12 sm:px-12 sm:py-16 lg:px-16 lg:py-20">
+          <div className="creo-beam relative overflow-hidden rounded-[32px] border border-hi/10 bg-gradient-to-br from-site-panel via-site-panel-2 to-site-deep px-6 py-12 sm:px-12 sm:py-16 lg:px-16 lg:py-20">
             <div
               aria-hidden="true"
               className="creo-grid-bg absolute inset-0 [mask-image:radial-gradient(70%_80%_at_85%_10%,#000,transparent)]"
             />
             <div
               aria-hidden="true"
-              className="absolute -right-24 -top-24 size-[420px] rounded-full bg-[#4F7BFF]/30 blur-[100px]"
+              className="absolute -right-24 -top-24 size-[420px] rounded-full bg-site-blue/30 blur-[100px]"
             />
             <div
               aria-hidden="true"
-              className="absolute -bottom-32 left-10 size-[360px] rounded-full bg-[#7DD3FC]/10 blur-[100px]"
+              className="absolute -bottom-32 left-10 size-[360px] rounded-full bg-site-sky/10 blur-[100px]"
             />
 
             <div className="relative grid grid-cols-1 items-end gap-10 lg:grid-cols-12">
@@ -127,9 +127,9 @@ export function Footer() {
                   as="h2"
                   text="Stop managing the chaos. Start operating the momentum."
                   accent={["operating", "momentum."]}
-                  className="mt-6 block text-3xl font-black leading-[1.05] tracking-[-0.035em] text-[#F4F7FF] sm:text-5xl lg:text-[3.6rem]"
+                  className="mt-6 block text-3xl font-black leading-[1.05] tracking-[-0.035em] text-site-ink sm:text-5xl lg:text-[3.6rem]"
                 />
-                <p className="mt-5 max-w-xl text-sm leading-relaxed text-[#B4BFDA] sm:text-base">
+                <p className="mt-5 max-w-xl text-sm leading-relaxed text-site-mist-2 sm:text-base">
                   Join 50+ modern creative agencies running content production, client sign-offs, and
                   unit economics on CREO OS.
                 </p>
@@ -150,14 +150,14 @@ export function Footer() {
                     rel="noopener noreferrer"
                     className="creo-btn-ghost group inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 text-sm font-semibold"
                   >
-                    <MessageCircle className="size-4 text-[#7DD3FC]" />
+                    <MessageCircle className="size-4 text-site-sky" />
                     <RollText>Schedule a live demo</RollText>
                   </a>
                 </div>
-                <ul className="flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-[#93A0BF] lg:justify-end">
+                <ul className="flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-site-mist lg:justify-end">
                   {["Month-to-month", "First batch in 7 days", "Pause or cancel anytime"].map((item) => (
                     <li key={item} className="flex items-center gap-1.5">
-                      <Check className="size-3.5 text-[#7DA2FF]" />
+                      <Check className="size-3.5 text-site-blue-light" />
                       {item}
                     </li>
                   ))}
@@ -172,9 +172,9 @@ export function Footer() {
           <div className="col-span-2 sm:col-span-3 lg:col-span-4">
             <Link to="/" aria-label="Creo home" className="inline-flex items-baseline text-3xl font-black tracking-[-0.04em]">
               creo
-              <span className="ml-[1px] inline-block size-[0.34em] rounded-full bg-gradient-to-br from-[#7DA2FF] to-[#3B6BFF] shadow-[0_0_14px_2px_rgba(79,123,255,0.6)]" />
+              <span className="ml-[1px] inline-block size-[0.34em] rounded-full bg-gradient-to-br from-site-blue-light to-site-blue-deep shadow-[0_0_14px_2px_rgba(79,123,255,0.6)]" />
             </Link>
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-[#93A0BF]">
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-site-mist">
               Your creative growth engine. High-converting reels, studio carousels, and content
               operations delivered on autopilot.
             </p>
@@ -184,43 +184,43 @@ export function Footer() {
                 href={WHATSAPP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 transition-colors duration-300 hover:border-[#4F7BFF]/50 hover:bg-white/[0.05]"
+                className="group flex items-center gap-3 rounded-2xl border border-hi/[0.08] bg-hi/[0.03] px-4 py-3 transition-colors duration-300 hover:border-site-blue/50 hover:bg-hi/[0.05]"
               >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-[#4F7BFF]/15 text-[#7DA2FF] ring-1 ring-inset ring-[#4F7BFF]/30">
+                <span className="flex size-9 items-center justify-center rounded-xl bg-site-blue/15 text-site-blue-light ring-1 ring-inset ring-site-blue/30">
                   <MessageCircle className="size-4" />
                 </span>
                 <span className="flex flex-col">
-                  <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#93A0BF]">WhatsApp</span>
-                  <span className="text-sm font-semibold text-[#F4F7FF]">Chat with us</span>
+                  <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-site-mist">WhatsApp</span>
+                  <span className="text-sm font-semibold text-site-ink">Chat with us</span>
                 </span>
               </a>
               <a
                 href="tel:+919941999415"
-                className="group flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 transition-colors duration-300 hover:border-[#4F7BFF]/50 hover:bg-white/[0.05]"
+                className="group flex items-center gap-3 rounded-2xl border border-hi/[0.08] bg-hi/[0.03] px-4 py-3 transition-colors duration-300 hover:border-site-blue/50 hover:bg-hi/[0.05]"
               >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-[#4F7BFF]/15 text-[#7DA2FF] ring-1 ring-inset ring-[#4F7BFF]/30">
+                <span className="flex size-9 items-center justify-center rounded-xl bg-site-blue/15 text-site-blue-light ring-1 ring-inset ring-site-blue/30">
                   <Phone className="size-4" />
                 </span>
                 <span className="flex flex-col">
-                  <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#93A0BF]">Call</span>
-                  <span className="text-sm font-semibold text-[#F4F7FF]">+91 99419 99415</span>
+                  <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-site-mist">Call</span>
+                  <span className="text-sm font-semibold text-site-ink">+91 99419 99415</span>
                 </span>
               </a>
             </div>
 
-            <div className="mt-6 flex flex-col gap-2 text-xs text-[#93A0BF]">
+            <div className="mt-6 flex flex-col gap-2 text-xs text-site-mist">
               <span className="flex items-center gap-2">
-                <MapPin className="size-3.5 shrink-0 text-[#4F7BFF]" /> Bangalore, India
+                <MapPin className="size-3.5 shrink-0 text-site-blue" /> Bangalore, India
               </span>
               <span className="flex items-center gap-2">
-                <Clock className="size-3.5 shrink-0 text-[#4F7BFF]" /> Mon – Sat · 9:30 AM – 7:00 PM IST
+                <Clock className="size-3.5 shrink-0 text-site-blue" /> Mon – Sat · 9:30 AM – 7:00 PM IST
               </span>
             </div>
           </div>
 
           {LINK_GROUPS.map((group) => (
             <nav key={group.title} aria-label={group.title} className="lg:col-span-2">
-              <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#F4F7FF]">{group.title}</h3>
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-site-ink">{group.title}</h3>
               <ul className="mt-5 flex flex-col gap-3">
                 {group.links.map((link) => (
                   <li key={link.href}>
@@ -232,7 +232,7 @@ export function Footer() {
           ))}
 
           <div className="col-span-2 sm:col-span-3 lg:col-span-2">
-            <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#F4F7FF]">Follow</h3>
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-site-ink">Follow</h3>
             <ul className="mt-5 flex flex-wrap gap-2.5">
               {SOCIALS.map((social) => (
                 <li key={social.label}>
@@ -241,7 +241,7 @@ export function Footer() {
                     target="_blank"
                     rel="noopener noreferrer"
                     title={social.label}
-                    className="flex size-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[#B4BFDA] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#4F7BFF]/60 hover:bg-[#4F7BFF]/15 hover:text-white hover:shadow-[0_8px_24px_-8px_rgba(79,123,255,0.7)]"
+                    className="flex size-11 items-center justify-center rounded-full border border-hi/10 bg-hi/[0.03] text-site-mist-2 transition-all duration-300 hover:-translate-y-0.5 hover:border-site-blue/60 hover:bg-site-blue/15 hover:text-hi hover:shadow-[0_8px_24px_-8px_rgba(79,123,255,0.7)]"
                   >
                     <svg className="size-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path d={social.path} />
@@ -261,24 +261,24 @@ export function Footer() {
       </div>
 
       {/* 4. Legal bar */}
-      <div className="border-t border-white/[0.07]">
-        <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-4 px-6 py-6 text-xs text-[#93A0BF] sm:flex-row sm:justify-between sm:px-8 lg:px-12">
+      <div className="border-t border-hi/[0.07]">
+        <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-4 px-6 py-6 text-xs text-site-mist sm:flex-row sm:justify-between sm:px-8 lg:px-12">
           <p>© {year} Creo. All rights reserved.</p>
           <ul className="flex items-center gap-6">
             <li>
-              <Link to="/privacy" className="transition-colors hover:text-[#F4F7FF]">Privacy</Link>
+              <Link to="/privacy" className="transition-colors hover:text-site-ink">Privacy</Link>
             </li>
             <li>
-              <Link to="/terms" className="transition-colors hover:text-[#F4F7FF]">Terms</Link>
+              <Link to="/terms" className="transition-colors hover:text-site-ink">Terms</Link>
             </li>
             <li>
               <button
                 type="button"
                 onClick={() => smoothScrollTo(0)}
-                className="group inline-flex cursor-pointer items-center gap-2 transition-colors hover:text-[#F4F7FF]"
+                className="group inline-flex cursor-pointer items-center gap-2 transition-colors hover:text-site-ink"
               >
                 Back to top
-                <span className="flex size-7 items-center justify-center rounded-full border border-white/10 transition-colors group-hover:border-[#4F7BFF]/60 group-hover:bg-[#4F7BFF]/15">
+                <span className="flex size-7 items-center justify-center rounded-full border border-hi/10 transition-colors group-hover:border-site-blue/60 group-hover:bg-site-blue/15">
                   <ArrowUp className="size-3.5 transition-transform duration-300 group-hover:-translate-y-0.5" />
                 </span>
               </button>

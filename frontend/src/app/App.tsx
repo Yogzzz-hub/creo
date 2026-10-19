@@ -150,13 +150,13 @@ class OnboardingErrorBoundary extends Component<
   override render() {
     if (this.state.hasError) {
       return (
-        <div className="w-full max-w-md mx-auto p-8 rounded-2xl bg-white border border-[#2A3446] shadow-sm text-center my-12">
+        <div className="w-full max-w-md mx-auto p-8 rounded-2xl bg-hi border border-app-line shadow-sm text-center my-12">
           <p className="text-sm text-rose-600 font-semibold mb-2">Something interrupted onboarding display.</p>
-          <p className="text-xs text-[#97A0B3] mb-5">{this.state.error?.message || "Please reload to continue."}</p>
+          <p className="text-xs text-app-mist mb-5">{this.state.error?.message || "Please reload to continue."}</p>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="px-5 py-2.5 rounded-xl bg-[#7FA0D6] text-white font-semibold text-xs hover:bg-[#7FA0D6] transition-colors"
+            className="px-5 py-2.5 rounded-xl bg-app-accent text-white font-semibold text-xs hover:bg-app-accent transition-colors"
           >
             Reload Onboarding
           </button>
@@ -176,24 +176,24 @@ function OnboardingPageWrapper() {
   useEffect(() => whenIdle(() => preloadPortalPages()), []);
 
   return (
-    <div data-surface="review" className="bento-theme min-h-[100dvh] bg-[#0B111C] text-[#F8FAFC] flex flex-col overflow-x-hidden">
+    <div data-surface="review" className="bento-theme min-h-[100dvh] bg-app-base text-app-ink flex flex-col overflow-x-hidden">
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-30 border-b border-[#2A3446]/80 bg-[#0B111C]/95 backdrop-blur-md shrink-0">
+      <header className="sticky top-0 z-30 border-b border-app-line/80 bg-app-base/95 backdrop-blur-md shrink-0">
         <div className="max-w-6xl mx-auto flex min-h-16 items-center justify-between gap-4 px-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 sm:gap-5">
-            <Link to="/" aria-label="Creo home" className="rounded-lg px-1 py-2 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]">
-              <span className="text-2xl font-bold font-display tracking-tight text-white group-hover:text-[#BCCCE6] transition-colors">
-                creo<span className="text-[#7FA0D6]">.</span>
+            <Link to="/" aria-label="Creo home" className="rounded-lg px-1 py-2 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent">
+              <span className="text-2xl font-bold font-display tracking-tight text-hi group-hover:text-app-accent-soft transition-colors">
+                creo<span className="text-app-accent">.</span>
               </span>
             </Link>
-            <span className="h-6 w-px bg-[#2A3446]" aria-hidden="true" />
-            <span className="text-xs sm:text-sm font-medium text-[#A7B4C8]">Client onboarding</span>
+            <span className="h-6 w-px bg-app-line" aria-hidden="true" />
+            <span className="text-xs sm:text-sm font-medium text-app-mist">Client onboarding</span>
           </div>
           <Link
             to="/portal"
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#161F2D] hover:bg-[#202B3D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs sm:text-sm font-semibold text-[#BCCCE6] hover:text-white transition-all shadow-xs cursor-pointer"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-app-surface hover:bg-app-line-soft border border-app-line hover:border-app-accent/40 text-xs sm:text-sm font-semibold text-app-accent-soft hover:text-hi transition-all shadow-xs cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4 text-[#7FA0D6]" />
+            <ArrowLeft className="w-4 h-4 text-app-accent" />
             <span>Back to Portal</span>
           </Link>
         </div>
@@ -220,34 +220,34 @@ function HealthPage() {
   });
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-[#BCCCE6] text-[#0B111C] p-6 sm:p-8">
-      <div className="w-full max-w-md rounded-2xl border border-[#2A3446] bg-white p-8 shadow-lg space-y-6">
-        <div className="flex items-center gap-3 border-b border-[#2A3446] pb-4">
-          <div className="size-10 rounded-xl bg-[#BCCCE6] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] font-bold">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-app-accent-soft text-app-base p-6 sm:p-8">
+      <div className="w-full max-w-md rounded-2xl border border-app-line bg-hi p-8 shadow-lg space-y-6">
+        <div className="flex items-center gap-3 border-b border-app-line pb-4">
+          <div className="size-10 rounded-xl bg-app-accent-soft border border-app-line flex items-center justify-center text-app-accent font-bold">
             ⚡
           </div>
           <div>
-            <h1 className="text-lg font-bold text-[#0B111C]">Creo System Status</h1>
-            <p className="text-xs text-[#97A0B3] mt-0.5">
+            <h1 className="text-lg font-bold text-app-base">Creo System Status</h1>
+            <p className="text-xs text-app-mist mt-0.5">
               Real-time backend API & Database health
             </p>
           </div>
         </div>
 
         <div className="space-y-3 text-xs">
-          <div className="flex justify-between items-center border-b border-[#161F2D] py-2">
-            <span className="text-[#97A0B3] font-medium">API Service</span>
+          <div className="flex justify-between items-center border-b border-app-surface py-2">
+            <span className="text-app-mist font-medium">API Service</span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
               {data?.status || (isLoading ? "Checking..." : "Error")}
             </span>
           </div>
-          <div className="flex justify-between items-center border-b border-[#161F2D] py-2">
-            <span className="text-[#97A0B3] font-medium">Platform Version</span>
-            <span className="font-mono text-[#0B111C] font-semibold">{data?.version || "0.1.0"}</span>
+          <div className="flex justify-between items-center border-b border-app-surface py-2">
+            <span className="text-app-mist font-medium">Platform Version</span>
+            <span className="font-mono text-app-base font-semibold">{data?.version || "0.1.0"}</span>
           </div>
-          <div className="flex justify-between items-center border-b border-[#161F2D] py-2">
-            <span className="text-[#97A0B3] font-medium">Database Engine</span>
+          <div className="flex justify-between items-center border-b border-app-surface py-2">
+            <span className="text-app-mist font-medium">Database Engine</span>
             <span className="font-mono text-emerald-700 font-semibold">PostgreSQL (Connected)</span>
           </div>
         </div>
@@ -255,13 +255,13 @@ function HealthPage() {
         <div className="flex gap-3 pt-2">
           <Link
             to="/"
-            className="flex-1 text-center rounded-xl bg-[#7FA0D6] py-2.5 text-xs font-bold text-white hover:bg-[#7FA0D6] transition-colors shadow-xs"
+            className="flex-1 text-center rounded-xl bg-app-accent py-2.5 text-xs font-bold text-white hover:bg-app-accent transition-colors shadow-xs"
           >
             Landing Page
           </Link>
           <Link
             to="/portal"
-            className="flex-1 text-center rounded-xl bg-[#BCCCE6] border border-[#2A3446] py-2.5 text-xs font-bold text-[#7FA0D6] hover:bg-[#161F2D] transition-colors"
+            className="flex-1 text-center rounded-xl bg-app-accent-soft border border-app-line py-2.5 text-xs font-bold text-app-accent hover:bg-app-surface transition-colors"
           >
             Client Portal
           </Link>

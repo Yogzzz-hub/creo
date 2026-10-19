@@ -49,7 +49,7 @@ function ReelCard({
         transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
       }}
     >
-      <div className="relative size-full overflow-hidden rounded-[22px] border border-white/10 bg-[#0D1530] shadow-[0_30px_60px_-25px_rgba(1,4,16,0.95)]">
+      <div className="relative size-full overflow-hidden rounded-[22px] border border-hi/10 bg-site-deep shadow-[0_30px_60px_-25px_rgb(var(--shadow-rgb)/calc(0.95*var(--shadow-k)))]">
         <img
           src={reel.src}
           alt={reel.title}
@@ -57,14 +57,14 @@ function ReelCard({
           draggable={false}
           className="size-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050A1A]/85 via-[#050A1A]/10 to-transparent" />
-        <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-[#050A1A]/50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-md">
+        <div className="absolute inset-0 bg-gradient-to-t from-site-bg/85 via-site-bg/10 to-transparent" />
+        <div className="absolute left-3 top-3 rounded-full border border-hi/15 bg-site-bg/50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-hi backdrop-blur-md">
           {reel.format}
         </div>
-        <div className="absolute inset-x-3 bottom-3 text-sm font-semibold leading-snug text-white sm:text-base">
+        <div className="absolute inset-x-3 bottom-3 text-sm font-semibold leading-snug text-hi sm:text-base">
           {reel.title}
         </div>
-        <motion.div aria-hidden="true" className="absolute inset-0 bg-[#050A1A]" style={{ opacity: shade }} />
+        <motion.div aria-hidden="true" className="absolute inset-0 bg-site-bg" style={{ opacity: shade }} />
       </div>
     </div>
   );
@@ -151,7 +151,7 @@ export function ReelCarousel({ reels, className = "" }: { reels: Reel[]; classNa
       {/* Floor glow under the ring */}
       <div
         aria-hidden="true"
-        className="absolute bottom-6 left-1/2 h-24 w-[70%] -translate-x-1/2 rounded-[50%] bg-[#3B6BFF]/25 blur-[60px]"
+        className="absolute bottom-6 left-1/2 h-24 w-[70%] -translate-x-1/2 rounded-[50%] bg-site-blue-deep/25 blur-[60px]"
       />
       <motion.div
         className="absolute left-1/2 top-1/2 [transform-style:preserve-3d]"

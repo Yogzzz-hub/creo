@@ -75,11 +75,11 @@ export function CreoLoader({
         className={`${fullScreen ? "mt-6" : "mt-7"} flex items-center justify-center text-[11.5px] sm:text-[12px] font-semibold tracking-[0.3em] uppercase leading-none`}
       >
         <span className="creo-ld-shine">{label}</span>
-        {highlightWord && <span className="ml-2 text-[#7DA2FF]">{highlightWord}</span>}
+        {highlightWord && <span className="ml-2 text-site-blue-light">{highlightWord}</span>}
         <span className="inline-flex items-center gap-[5px] ml-3" aria-hidden="true">
-          <span className="size-[3px] rounded-full bg-[#4F7BFF] creo-dot-1" />
-          <span className="size-[3px] rounded-full bg-[#4F7BFF] creo-dot-2" />
-          <span className="size-[3px] rounded-full bg-[#4F7BFF] creo-dot-3" />
+          <span className="size-[3px] rounded-full bg-site-blue creo-dot-1" />
+          <span className="size-[3px] rounded-full bg-site-blue creo-dot-2" />
+          <span className="size-[3px] rounded-full bg-site-blue creo-dot-3" />
         </span>
       </div>
 
@@ -93,7 +93,7 @@ export function CreoLoader({
 
       {/* 5. Secondary text */}
       {showSecondaryText && secondaryText && (
-        <div className="mt-[14px] text-[10px] font-medium uppercase tracking-[0.34em] text-[#93A0BF] opacity-75 leading-none">
+        <div className="mt-[14px] text-[10px] font-medium uppercase tracking-[0.34em] text-site-mist opacity-75 leading-none">
           {secondaryText}
         </div>
       )}
@@ -123,7 +123,7 @@ export function CreoLoader({
         .creo-ld-comet { inset: 0; animation: creoLdSpin 1.15s cubic-bezier(0.45, 0.1, 0.5, 0.9) infinite; filter: drop-shadow(0 0 6px rgba(79,123,255,0.9)); }
         .creo-ld-comet i {
           position: absolute; inset: 0; border-radius: 9999px;
-          background: conic-gradient(from 0deg, transparent 0 52%, rgba(79,123,255,0.15) 62%, #4F7BFF 88%, #DCE8FF 100%);
+          background: conic-gradient(from 0deg, transparent 0 52%, rgba(79,123,255,0.15) 62%, var(--site-blue) 88%, var(--site-ice) 100%);
           -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
           mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
         }
@@ -136,7 +136,7 @@ export function CreoLoader({
         .creo-ld-sat { inset: 17%; animation: creoLdSpin 3.2s linear infinite; }
         .creo-ld-sat i {
           position: absolute; top: -2.5px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px;
-          border-radius: 9999px; background: #DCE8FF; box-shadow: 0 0 8px 2px rgba(220,232,255,0.7);
+          border-radius: 9999px; background: var(--site-ice); box-shadow: 0 0 8px 2px rgba(220,232,255,0.7);
         }
 
         /* Pulse rings and breathing core */
@@ -148,7 +148,7 @@ export function CreoLoader({
         .creo-ld-ping--late { animation-delay: 1.1s; }
         .creo-ld-core {
           left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px;
-          background: radial-gradient(circle at 35% 30%, #A9C2FF, #4F7BFF 55%, #2F5CF0);
+          background: radial-gradient(circle at 35% 30%, var(--site-peri), var(--site-blue) 55%, var(--site-blue-deep));
           box-shadow: 0 0 22px 6px rgba(79,123,255,0.6), 0 0 60px 10px rgba(59,107,255,0.25);
           animation: creoLdBreathe 2.2s ease-in-out infinite;
         }
@@ -157,17 +157,17 @@ export function CreoLoader({
         /* ── Wordmark ── */
         .creo-ld-word {
           margin-top: 30px; display: flex; align-items: baseline;
-          font-size: 30px; font-weight: 900; letter-spacing: -0.05em; line-height: 1; color: #F4F7FF;
+          font-size: 30px; font-weight: 900; letter-spacing: -0.05em; line-height: 1; color: var(--site-ink);
         }
         .creo-ld-letter { display: inline-block; animation: creoLdWave 1.8s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
         .creo-ld-dot {
           width: 0.3em; height: 0.3em; margin-left: 0.04em; border-radius: 9999px;
-          background: linear-gradient(135deg, #7DA2FF, #3B6BFF); box-shadow: 0 0 12px 2px rgba(79,123,255,0.7);
+          background: linear-gradient(135deg, var(--site-blue-light), var(--site-blue-deep)); box-shadow: 0 0 12px 2px rgba(79,123,255,0.7);
         }
 
         /* ── Text shimmer ── */
         .creo-ld-shine {
-          background: linear-gradient(100deg, #93A0BF 0%, #93A0BF 35%, #F4F7FF 50%, #93A0BF 65%, #93A0BF 100%);
+          background: linear-gradient(100deg, var(--site-mist) 0%, var(--site-mist) 35%, var(--site-ink) 50%, var(--site-mist) 65%, var(--site-mist) 100%);
           background-size: 220% 100%;
           -webkit-background-clip: text; background-clip: text; color: transparent;
           animation: creoLdShine 2.4s linear infinite;
@@ -180,7 +180,7 @@ export function CreoLoader({
         }
         .creo-ld-progress span {
           position: absolute; top: 0; bottom: 0; width: 38%; border-radius: 9999px;
-          background: linear-gradient(90deg, transparent, #4F7BFF 30%, #DCE8FF 55%, #7DD3FC 75%, transparent);
+          background: linear-gradient(90deg, transparent, var(--site-blue) 30%, var(--site-ice) 55%, var(--site-sky) 75%, transparent);
           animation: creoLdBar 1.7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
         }
         .creo-ld-progress .creo-ld-progress--late { width: 18%; opacity: 0.6; animation-delay: 0.55s; }
@@ -239,9 +239,9 @@ export function CreoLoader({
       <main
         className="min-h-screen w-full flex items-center justify-center overflow-hidden relative"
         style={{
-          backgroundColor: "#050A1A",
+          backgroundColor: "var(--site-bg)",
           backgroundImage:
-            "radial-gradient(ellipse at 50% 42%, rgba(59,107,255,0.12) 0%, transparent 55%), radial-gradient(ellipse at 50% 40%, #0A1430 0%, #050A1A 70%)",
+            "radial-gradient(ellipse at 50% 42%, rgba(59,107,255,0.12) 0%, transparent 55%), radial-gradient(ellipse at 50% 40%, var(--site-deep) 0%, var(--site-bg) 70%)",
         }}
       >
         {/* Faint blueprint grid fading out from the centre */}

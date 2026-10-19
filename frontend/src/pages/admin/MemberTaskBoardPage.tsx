@@ -275,14 +275,14 @@ export function MemberTaskBoardPage() {
   const review = byColumn("review");
 
   const columnClass = (column: Column) =>
-    `${mobileKanbanTab === "all" || mobileKanbanTab === column ? "flex" : "hidden md:flex"} flex-col h-full bg-[#161F2D]/60 rounded-2xl p-3 border border-[#2A3446]/70 space-y-2.5 min-h-0`;
+    `${mobileKanbanTab === "all" || mobileKanbanTab === column ? "flex" : "hidden md:flex"} flex-col h-full bg-app-surface/60 rounded-2xl p-3 border border-app-line/70 space-y-2.5 min-h-0`;
 
   const clientBadge = (task: PodTask) => (
-    <span className="text-[#7FA0D6]">{task.client_name.toUpperCase()}</span>
+    <span className="text-app-accent">{task.client_name.toUpperCase()}</span>
   );
 
   const emptyColumn = (text: string) => (
-    <div className="text-center py-4 text-xs text-[#97A0B3] font-medium bg-[#161F2D]/50 rounded-xl border border-dashed border-[#2A3446]">
+    <div className="text-center py-4 text-xs text-app-mist font-medium bg-app-surface/50 rounded-xl border border-dashed border-app-line">
       {text}
     </div>
   );
@@ -292,7 +292,7 @@ export function MemberTaskBoardPage() {
   const pickedMime = file ? uploadMimeType(file) : null;
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
+    <div data-surface="ops" className="min-h-screen bg-app-base text-hi font-sans flex flex-col">
       <AdminTopHeader activeTab="My Tasks" />
 
       <motion.main
@@ -328,26 +328,26 @@ export function MemberTaskBoardPage() {
         )}
 
         {isAdmin && (
-          <div className="p-3 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs text-[#97A0B3]">
-            Admins review and assign work from the <Link to="/admin/deliverables" className="text-white underline">Deliverables</Link> and pod dashboards.
+          <div className="p-3 rounded-xl border border-app-line bg-app-surface text-xs text-app-mist">
+            Admins review and assign work from the <Link to="/admin/deliverables" className="text-hi underline">Deliverables</Link> and pod dashboards.
           </div>
         )}
 
         {/* Filter & action bar */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 bg-[#161F2D] sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none border sm:border-0 border-[#2A3446]">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 bg-app-surface sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none border sm:border-0 border-app-line">
           <div className="relative w-full xl:max-w-xl">
-            <Search className="size-3.5 text-[#97A0B3] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="size-3.5 text-app-mist absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter tasks by client, format or title..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446]/80 text-xs font-medium placeholder:text-[#97A0B3] focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-app-surface border border-app-line/80 text-xs font-medium placeholder:text-app-mist focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <div className="flex items-center gap-1 bg-[#161F2D] p-0.5 rounded-xl border border-[#2A3446]/80 text-xs font-bold overflow-x-auto no-scrollbar py-0.5">
+            <div className="flex items-center gap-1 bg-app-surface p-0.5 rounded-xl border border-app-line/80 text-xs font-bold overflow-x-auto no-scrollbar py-0.5">
               {[
                 { label: "All Clients", count: tasks.length },
                 ...clients.map((c) => ({ label: c.name, count: tasks.filter((t) => t.task.client_name === c.name).length })),
@@ -356,7 +356,7 @@ export function MemberTaskBoardPage() {
                   key={c.label}
                   onClick={() => setSelectedClient(c.label)}
                   className={`px-2.5 py-1 rounded-lg transition-all shrink-0 text-xs ${
-                    selectedClient === c.label ? "bg-blue-600 text-white font-bold" : "text-[#F1F5F9] hover:text-white"
+                    selectedClient === c.label ? "bg-blue-600 text-white font-bold" : "text-app-ink-2 hover:text-white"
                   }`}
                 >
                   {c.label} ({c.count})
@@ -381,7 +381,7 @@ export function MemberTaskBoardPage() {
                     setCreateOpen(true);
                   }}
                   disabled={clients.length === 0}
-                  className="px-3 py-1.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="size-3.5" />
                   <span>Add Task</span>
@@ -390,9 +390,9 @@ export function MemberTaskBoardPage() {
               <button
                 type="button"
                 onClick={() => setStoryApprovalModalOpen(true)}
-                className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] hover:border-[#7FA0D6]/50 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shadow-2xs"
+                className="px-3 py-1.5 rounded-xl border border-app-line bg-app-surface hover:bg-app-line hover:border-app-accent/50 text-hi text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shadow-2xs"
               >
-                <Sparkles className="size-3.5 text-[#7FA0D6]" />
+                <Sparkles className="size-3.5 text-app-accent" />
                 <span>Story & Approval Request</span>
               </button>
             </div>
@@ -400,7 +400,7 @@ export function MemberTaskBoardPage() {
         </div>
 
         {/* Mobile column tabs */}
-        <div className="flex md:hidden items-center bg-[#161F2D] p-1 rounded-xl border border-[#2A3446] text-xs font-bold overflow-x-auto no-scrollbar gap-1">
+        <div className="flex md:hidden items-center bg-app-surface p-1 rounded-xl border border-app-line text-xs font-bold overflow-x-auto no-scrollbar gap-1">
           {([
             ["all", `All (${filtered.length})`],
             ["assigned", `Queued (${assigned.length})`],
@@ -411,7 +411,7 @@ export function MemberTaskBoardPage() {
             <button
               key={key}
               onClick={() => setMobileKanbanTab(key)}
-              className={`px-2.5 py-1 rounded-lg transition-all shrink-0 ${mobileKanbanTab === key ? "bg-blue-600 text-white font-bold" : "text-[#F1F5F9]"}`}
+              className={`px-2.5 py-1 rounded-lg transition-all shrink-0 ${mobileKanbanTab === key ? "bg-blue-600 text-white font-bold" : "text-app-ink-2"}`}
             >
               {label}
             </button>
@@ -419,7 +419,7 @@ export function MemberTaskBoardPage() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-24 text-[#97A0B3]">
+          <div className="flex items-center justify-center py-24 text-app-mist">
             <Loader2 className="size-6 animate-spin" />
           </div>
         ) : (
@@ -431,19 +431,19 @@ export function MemberTaskBoardPage() {
                 {assigned.map((task) => {
                   const due = dueText(task);
                   return (
-                    <div key={task.id} className="bg-[#161F2D] rounded-xl p-3 border border-[#2A3446]/80 space-y-2">
+                    <div key={task.id} className="bg-app-surface rounded-xl p-3 border border-app-line/80 space-y-2">
                       <div className="flex items-center justify-between text-[10px] font-bold">
                         {clientBadge(task)}
-                        <span className="px-1.5 rounded bg-[#7FA0D6]/15 text-[#7FA0D6]">{formatLabel(task.deliverable_type)}</span>
+                        <span className="px-1.5 rounded bg-app-accent/15 text-app-accent">{formatLabel(task.deliverable_type)}</span>
                       </div>
-                      <h4 className="text-xs font-black text-white leading-snug">{taskTitle(task)}</h4>
-                      {task.blueprint?.brief && <p className="text-[11px] text-[#97A0B3] line-clamp-2">{task.blueprint.brief}</p>}
-                      <div className="flex items-center justify-between pt-1.5 border-t border-[#2A3446] text-[10px]">
-                        <span className={due.urgent ? "text-rose-400 font-bold" : "text-[#97A0B3] font-medium"}>{due.text}</span>
+                      <h4 className="text-xs font-black text-hi leading-snug">{taskTitle(task)}</h4>
+                      {task.blueprint?.brief && <p className="text-[11px] text-app-mist line-clamp-2">{task.blueprint.brief}</p>}
+                      <div className="flex items-center justify-between pt-1.5 border-t border-app-line text-[10px]">
+                        <span className={due.urgent ? "text-rose-400 font-bold" : "text-app-mist font-medium"}>{due.text}</span>
                         <button
                           onClick={() => startMutation.mutate(task.id)}
                           disabled={startMutation.isPending}
-                          className="px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-[#7FA0D6] font-bold text-[10px] flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
+                          className="px-2 py-0.5 rounded-md bg-app-accent/15 hover:bg-app-accent/25 text-app-accent font-bold text-[10px] flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
                         >
                           <span>Start</span>
                           <ArrowRight className="size-2.5" />
@@ -466,23 +466,23 @@ export function MemberTaskBoardPage() {
                   return (
                     <div
                       key={task.id}
-                      className={`bg-[#161F2D] rounded-xl p-3 border space-y-2 ${feedback ? "border-amber-400/50" : "border-[#2A3446]/80"}`}
+                      className={`bg-app-surface rounded-xl p-3 border space-y-2 ${feedback ? "border-amber-400/50" : "border-app-line/80"}`}
                     >
                       <div className="flex items-center justify-between text-[10px] font-bold">
                         {clientBadge(task)}
-                        <span className={`px-1.5 rounded text-[9px] font-black ${due.urgent ? "bg-rose-500/15 text-rose-400 border border-rose-500/30" : "text-[#97A0B3]"}`}>
+                        <span className={`px-1.5 rounded text-[9px] font-black ${due.urgent ? "bg-rose-500/15 text-rose-400 border border-rose-500/30" : "text-app-mist"}`}>
                           {due.text}
                         </span>
                       </div>
-                      <h4 className="text-xs font-black text-white leading-snug">{taskTitle(task)}</h4>
-                      <p className="text-[11px] text-[#97A0B3]">{formatLabel(task.deliverable_type)}{task.deliverable ? ` · last upload v${task.deliverable.version}` : ""}</p>
+                      <h4 className="text-xs font-black text-hi leading-snug">{taskTitle(task)}</h4>
+                      <p className="text-[11px] text-app-mist">{formatLabel(task.deliverable_type)}{task.deliverable ? ` · last upload v${task.deliverable.version}` : ""}</p>
                       {feedback && (
-                        <div className="p-2 rounded-lg bg-[#0B111C] border border-[#D8BF9B]/50 text-xs space-y-0.5">
-                          <div className="font-bold text-[#D8BF9B] text-[10px]">{feedback.source} requested changes</div>
-                          <p className="text-[11px] text-[#F1F5F9] leading-snug line-clamp-3">"{feedback.text}"</p>
+                        <div className="p-2 rounded-lg bg-app-base border border-app-warm/50 text-xs space-y-0.5">
+                          <div className="font-bold text-app-warm text-[10px]">{feedback.source} requested changes</div>
+                          <p className="text-[11px] text-app-ink-2 leading-snug line-clamp-3">"{feedback.text}"</p>
                         </div>
                       )}
-                      <div className="pt-1.5 border-t border-[#2A3446]">
+                      <div className="pt-1.5 border-t border-app-line">
                         <button
                           onClick={() => openUpload(task)}
                           className="w-full py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95"
@@ -503,14 +503,14 @@ export function MemberTaskBoardPage() {
               <ColumnHeader dot="bg-amber-500" title="Submitted for QA" count={qa.length} />
               <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar min-h-0">
                 {qa.map((task) => (
-                  <div key={task.id} className="bg-[#161F2D] rounded-xl p-3 border border-[#2A3446]/80 space-y-2">
+                  <div key={task.id} className="bg-app-surface rounded-xl p-3 border border-app-line/80 space-y-2">
                     <div className="flex items-center justify-between text-[10px] font-bold">
                       {clientBadge(task)}
-                      <span className="px-1.5 rounded bg-[#7FA0D6]/15 text-[#7FA0D6] text-[9px]">With {leadName}</span>
+                      <span className="px-1.5 rounded bg-app-accent/15 text-app-accent text-[9px]">With {leadName}</span>
                     </div>
-                    <h4 className="text-xs font-black text-white leading-snug">{taskTitle(task)}</h4>
+                    <h4 className="text-xs font-black text-hi leading-snug">{taskTitle(task)}</h4>
                     {task.deliverable && (
-                      <div className="h-28 rounded-lg overflow-hidden border border-[#2A3446] bg-black">
+                      <div className="h-28 rounded-lg overflow-hidden border border-app-line bg-black">
                         <DeliverableMedia
                           url={task.deliverable.file_url}
                           isVideo={task.deliverable.is_video}
@@ -520,10 +520,10 @@ export function MemberTaskBoardPage() {
                         />
                       </div>
                     )}
-                    <div className="flex items-center justify-between text-[10px] text-[#97A0B3]">
+                    <div className="flex items-center justify-between text-[10px] text-app-mist">
                       <span>v{task.deliverable?.version ?? 1} · awaiting lead sign-off</span>
                       {data?.is_lead_view && (
-                        <Link to="/lead/deliverables" className="font-bold text-[#7FA0D6] flex items-center gap-0.5">
+                        <Link to="/lead/deliverables" className="font-bold text-app-accent flex items-center gap-0.5">
                           <Eye className="size-3" /> Review
                         </Link>
                       )}
@@ -541,7 +541,7 @@ export function MemberTaskBoardPage() {
                 {review.map((task) => {
                   const approved = task.status === "ready_to_publish" || task.status === "completed";
                   return (
-                    <div key={task.id} className="bg-[#161F2D] rounded-xl p-3 border border-[#2A3446]/80 space-y-2">
+                    <div key={task.id} className="bg-app-surface rounded-xl p-3 border border-app-line/80 space-y-2">
                       <div className="flex items-center justify-between text-[10px] font-bold">
                         {clientBadge(task)}
                         {approved ? (
@@ -549,13 +549,13 @@ export function MemberTaskBoardPage() {
                             <Check className="size-2.5" /> Client approved
                           </span>
                         ) : (
-                          <span className="px-1.5 rounded bg-[#D8BF9B]/15 text-[#D8BF9B] text-[9px] flex items-center gap-0.5">
+                          <span className="px-1.5 rounded bg-app-warm/15 text-app-warm text-[9px] flex items-center gap-0.5">
                             <Clock className="size-2.5" /> With client
                           </span>
                         )}
                       </div>
-                      <h4 className="text-xs font-black text-white leading-snug">{taskTitle(task)}</h4>
-                      <p className="text-[11px] text-[#97A0B3]">
+                      <h4 className="text-xs font-black text-hi leading-snug">{taskTitle(task)}</h4>
+                      <p className="text-[11px] text-app-mist">
                         {formatLabel(task.deliverable_type)} · v{task.deliverable?.version ?? 1}
                       </p>
                       {task.deliverable?.id && <PublishingControl deliverableId={task.deliverable.id} />}
@@ -580,20 +580,20 @@ export function MemberTaskBoardPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="upload-title"
-            className="w-full max-w-2xl bg-[#161F2D] rounded-3xl p-5 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 max-h-[92vh] overflow-y-auto"
+            className="w-full max-w-2xl bg-app-surface rounded-3xl p-5 sm:p-7 shadow-2xl border border-app-line space-y-4 max-h-[92vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between border-b border-[#2A3446] pb-3 gap-2">
+            <div className="flex items-start justify-between border-b border-app-line pb-3 gap-2">
               <div className="flex items-start gap-3">
-                <div className="size-10 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shrink-0 mt-0.5">
+                <div className="size-10 rounded-2xl bg-app-accent/15 text-app-accent flex items-center justify-center shrink-0 mt-0.5">
                   <ShieldCheck className="size-5" />
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-2 mb-1 text-[10px] font-black uppercase">
-                    <span className="px-2 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6]">{uploadTask.client_name}</span>
-                    <span className="px-2 py-0.5 rounded-full bg-[#0B111C] text-[#F1F5F9]">{formatLabel(uploadTask.deliverable_type)}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-app-accent/15 text-app-accent">{uploadTask.client_name}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-app-base text-app-ink-2">{formatLabel(uploadTask.deliverable_type)}</span>
                   </div>
-                  <h3 id="upload-title" className="text-base sm:text-lg font-black text-white leading-snug">{taskTitle(uploadTask)}</h3>
+                  <h3 id="upload-title" className="text-base sm:text-lg font-black text-hi leading-snug">{taskTitle(uploadTask)}</h3>
                 </div>
               </div>
               <button
@@ -601,44 +601,44 @@ export function MemberTaskBoardPage() {
                 onClick={() => setUploadTask(null)}
                 disabled={uploadMutation.isPending}
                 aria-label="Close"
-                className="size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] flex items-center justify-center cursor-pointer shrink-0"
+                className="size-8 rounded-full bg-app-base hover:bg-app-line border border-app-line text-app-mist flex items-center justify-center cursor-pointer shrink-0"
               >
                 <X className="size-4" />
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-2 text-xs">
+            <div className="p-4 rounded-2xl bg-app-base border border-app-line space-y-2 text-xs">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-black text-[#7FA0D6] uppercase tracking-wider flex items-center gap-1.5">
+                <span className="font-black text-app-accent uppercase tracking-wider flex items-center gap-1.5">
                   <Sparkles className="size-3.5" /> Brief & spec
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#161F2D] text-[#BCCCE6] border border-[#2A3446]">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-app-surface text-app-accent-soft border border-app-line">
                   {FORMAT_SPECS[uploadTask.deliverable_type] || "Match the planned format"}
                 </span>
               </div>
-              <p className="text-[#F1F5F9] leading-relaxed">
+              <p className="text-app-ink-2 leading-relaxed">
                 {uploadTask.blueprint?.brief || uploadTask.blueprint?.hook || uploadTask.blueprint?.objective ||
                   "Follow the client's Brand DNA and content plan for this slot."}
               </p>
             </div>
 
             {modalFeedback && (
-              <div className="p-3 rounded-2xl bg-[#0B111C] border border-[#D8BF9B]/50 space-y-1 text-xs">
-                <div className="font-bold text-[#D8BF9B]">{modalFeedback.source} requested changes on v{uploadTask.deliverable?.version}</div>
-                <p className="text-[#F1F5F9] leading-relaxed whitespace-pre-wrap">{modalFeedback.text}</p>
+              <div className="p-3 rounded-2xl bg-app-base border border-app-warm/50 space-y-1 text-xs">
+                <div className="font-bold text-app-warm">{modalFeedback.source} requested changes on v{uploadTask.deliverable?.version}</div>
+                <p className="text-app-ink-2 leading-relaxed whitespace-pre-wrap">{modalFeedback.text}</p>
               </div>
             )}
 
             {/* File picker */}
-            <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-3 text-xs">
+            <div className="p-4 rounded-2xl bg-app-base border border-app-line space-y-3 text-xs">
               <div className="flex items-center justify-between">
-                <label htmlFor="deliverable-file" className="font-black text-white flex items-center gap-1.5 uppercase text-[11px] tracking-wider">
-                  <Upload className="size-3.5 text-[#7FA0D6]" /> Final file
+                <label htmlFor="deliverable-file" className="font-black text-hi flex items-center gap-1.5 uppercase text-[11px] tracking-wider">
+                  <Upload className="size-3.5 text-app-accent" /> Final file
                 </label>
-                <span className="text-[10px] font-bold text-[#97A0B3]">Images ≤ 10 MB · Videos ≤ 500 MB</span>
+                <span className="text-[10px] font-bold text-app-mist">Images ≤ 10 MB · Videos ≤ 500 MB</span>
               </div>
               <label
-                className="relative block border-2 border-dashed border-[#2A3446] hover:border-[#7FA0D6] bg-[#161F2D]/60 rounded-2xl p-4 text-center transition-all cursor-pointer"
+                className="relative block border-2 border-dashed border-app-line hover:border-app-accent bg-app-surface/60 rounded-2xl p-4 text-center transition-all cursor-pointer"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
@@ -658,15 +658,15 @@ export function MemberTaskBoardPage() {
                     <div className="h-48 rounded-xl overflow-hidden bg-black">
                       <DeliverableMedia url={previewUrl} isVideo={!!pickedMime?.startsWith("video/")} title={file.name} className="w-full h-full" />
                     </div>
-                    <p className="font-bold text-white truncate">{file.name} · {(file.size / MB).toFixed(1)} MB</p>
-                    <p className="text-[10px] text-[#97A0B3]">Click or drop to replace</p>
+                    <p className="font-bold text-hi truncate">{file.name} · {(file.size / MB).toFixed(1)} MB</p>
+                    <p className="text-[10px] text-app-mist">Click or drop to replace</p>
                   </div>
                 ) : (
                   <div className="space-y-1.5 py-2">
-                    <div className="size-10 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center mx-auto">
+                    <div className="size-10 rounded-2xl bg-app-accent/15 text-app-accent flex items-center justify-center mx-auto">
                       <Upload className="size-5" />
                     </div>
-                    <div className="font-bold text-white">Drop the final MP4/MOV or PNG/JPG here, or click to browse</div>
+                    <div className="font-bold text-hi">Drop the final MP4/MOV or PNG/JPG here, or click to browse</div>
                   </div>
                 )}
               </label>
@@ -674,57 +674,57 @@ export function MemberTaskBoardPage() {
             </div>
 
             {/* Self-check */}
-            <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446]/80 space-y-2.5">
+            <div className="p-4 rounded-2xl bg-app-base border border-app-line/80 space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="font-black text-xs text-white uppercase tracking-wider">Self-check before QA</span>
-                <span className="text-xs font-bold text-[#7FA0D6]">{rubricPassed}/{RUBRIC.length}</span>
+                <span className="font-black text-xs text-hi uppercase tracking-wider">Self-check before QA</span>
+                <span className="text-xs font-bold text-app-accent">{rubricPassed}/{RUBRIC.length}</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 {RUBRIC.map((item) => (
-                  <label key={item.key} className="flex items-center gap-2.5 p-2 rounded-xl bg-[#161F2D] border border-[#2A3446]/80 cursor-pointer">
+                  <label key={item.key} className="flex items-center gap-2.5 p-2 rounded-xl bg-app-surface border border-app-line/80 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={!!rubric[item.key]}
                       onChange={(e) => setRubric((prev) => ({ ...prev, [item.key]: e.target.checked }))}
                       className="size-4 rounded cursor-pointer"
                     />
-                    <span className="font-semibold text-[#F1F5F9]">{item.label}</span>
+                    <span className="font-semibold text-app-ink-2">{item.label}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             <div className="space-y-1.5 text-xs">
-              <label htmlFor="specialist-notes" className="block font-bold text-[#F1F5F9]">Notes for {leadName}</label>
+              <label htmlFor="specialist-notes" className="block font-bold text-app-ink-2">Notes for {leadName}</label>
               <textarea
                 id="specialist-notes"
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder={modalFeedback ? "What did you change in this version?" : "Anything the lead should know before reviewing"}
-                className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="w-full px-3.5 py-2 rounded-xl border border-app-line bg-app-base text-xs font-medium resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
 
             {progress !== null && (
               <div className="space-y-1" aria-live="polite">
-                <div className="flex justify-between text-[10px] font-bold text-[#97A0B3]">
+                <div className="flex justify-between text-[10px] font-bold text-app-mist">
                   <span>Uploading…</span>
                   <span>{Math.round(progress * 100)}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-[#0B111C] rounded-full overflow-hidden">
+                <div className="w-full h-1.5 bg-app-base rounded-full overflow-hidden">
                   <div className="h-full bg-blue-600 rounded-full transition-all" style={{ width: `${Math.round(progress * 100)}%` }} />
                 </div>
               </div>
             )}
             {submitError && <p role="alert" className="text-xs font-bold text-rose-300">{submitError}</p>}
 
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446] text-xs">
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-3 border-t border-app-line text-xs">
               <button
                 type="button"
                 onClick={() => setUploadTask(null)}
                 disabled={uploadMutation.isPending}
-                className="w-full sm:w-auto px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2 rounded-xl border border-app-line font-bold text-app-ink-2 hover:bg-app-base cursor-pointer"
               >
                 Cancel
               </button>
@@ -732,7 +732,7 @@ export function MemberTaskBoardPage() {
                 type="button"
                 onClick={() => uploadMutation.mutate()}
                 disabled={!file || uploadMutation.isPending}
-                className="w-full sm:w-auto px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {uploadMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
                 <span>{uploadMutation.isPending ? "Uploading…" : "Submit to Pod Lead QA"}</span>
@@ -756,38 +756,38 @@ export function MemberTaskBoardPage() {
               e.preventDefault();
               if (newTitle.trim()) createMutation.mutate();
             }}
-            className="w-full max-w-xl bg-[#161F2D] rounded-3xl p-5 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 max-h-[90vh] overflow-y-auto text-xs"
+            className="w-full max-w-xl bg-app-surface rounded-3xl p-5 sm:p-7 shadow-2xl border border-app-line space-y-4 max-h-[90vh] overflow-y-auto text-xs"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 id="create-title" className="text-base font-black text-white">Add a production task</h3>
-              <button type="button" onClick={() => setCreateOpen(false)} aria-label="Close" className="size-8 rounded-full bg-[#0B111C] border border-[#2A3446] text-[#97A0B3] flex items-center justify-center">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
+              <h3 id="create-title" className="text-base font-black text-hi">Add a production task</h3>
+              <button type="button" onClick={() => setCreateOpen(false)} aria-label="Close" className="size-8 rounded-full bg-app-base border border-app-line text-app-mist flex items-center justify-center">
                 <X className="size-4" />
               </button>
             </div>
             <div>
-              <label htmlFor="task-title" className="block font-bold text-[#F1F5F9] mb-1">Title <span className="text-rose-500">*</span></label>
+              <label htmlFor="task-title" className="block font-bold text-app-ink-2 mb-1">Title <span className="text-rose-500">*</span></label>
               <input
                 id="task-title"
                 required
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="e.g. Diwali offer reel"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-semibold"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-app-line bg-app-base font-semibold"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label htmlFor="task-client" className="block font-bold text-[#F1F5F9] mb-1">Client</label>
-                <NativeSelect id="task-client" value={newClientId} onChange={(e) => setNewClientId(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C]">
+                <label htmlFor="task-client" className="block font-bold text-app-ink-2 mb-1">Client</label>
+                <NativeSelect id="task-client" value={newClientId} onChange={(e) => setNewClientId(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-app-line font-bold bg-app-base">
                   {clients.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </NativeSelect>
               </div>
               <div>
-                <label htmlFor="task-format" className="block font-bold text-[#F1F5F9] mb-1">Format</label>
-                <NativeSelect id="task-format" value={newType} onChange={(e) => setNewType(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C]">
+                <label htmlFor="task-format" className="block font-bold text-app-ink-2 mb-1">Format</label>
+                <NativeSelect id="task-format" value={newType} onChange={(e) => setNewType(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-app-line font-bold bg-app-base">
                   {availableFormats.map((fmt: string) => (
                     <option key={fmt} value={fmt}>
                       {formatLabel(fmt)}
@@ -796,24 +796,24 @@ export function MemberTaskBoardPage() {
                 </NativeSelect>
               </div>
               <div>
-                <label htmlFor="task-due" className="block font-bold text-[#F1F5F9] mb-1">Due date</label>
-                <input id="task-due" type="date" value={newDue} onChange={(e) => setNewDue(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] font-bold" />
+                <label htmlFor="task-due" className="block font-bold text-app-ink-2 mb-1">Due date</label>
+                <input id="task-due" type="date" value={newDue} onChange={(e) => setNewDue(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-base font-bold" />
               </div>
             </div>
             <div>
-              <label htmlFor="task-brief" className="block font-bold text-[#F1F5F9] mb-1">Brief</label>
-              <textarea id="task-brief" rows={3} value={newBrief} onChange={(e) => setNewBrief(e.target.value)} placeholder="Hook, key message, references…" className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium resize-none" />
+              <label htmlFor="task-brief" className="block font-bold text-app-ink-2 mb-1">Brief</label>
+              <textarea id="task-brief" rows={3} value={newBrief} onChange={(e) => setNewBrief(e.target.value)} placeholder="Hook, key message, references…" className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-base font-medium resize-none" />
             </div>
-            <label className="flex items-center gap-2 font-bold text-[#F1F5F9]">
+            <label className="flex items-center gap-2 font-bold text-app-ink-2">
               <input type="checkbox" checked={startNow} onChange={(e) => setStartNow(e.target.checked)} className="size-4" />
               Start production now
             </label>
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
-              <button type="button" onClick={() => setCreateOpen(false)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9]">Cancel</button>
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-app-line">
+              <button type="button" onClick={() => setCreateOpen(false)} className="px-4 py-2 rounded-xl border border-app-line font-bold text-app-ink-2">Cancel</button>
               <button
                 type="submit"
                 disabled={!newTitle.trim() || createMutation.isPending}
-                className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold flex items-center gap-1.5 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold flex items-center gap-1.5 disabled:opacity-50"
               >
                 {createMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
                 Create task
@@ -839,9 +839,9 @@ function ColumnHeader({ dot, title, count }: { dot: string; title: string; count
     <div className="flex items-center justify-between px-1 pt-0.5 shrink-0">
       <div className="flex items-center gap-1.5">
         <span className={`size-2 rounded-full ${dot}`} />
-        <h3 className="text-xs font-black uppercase tracking-wider text-[#F1F5F9]">{title}</h3>
+        <h3 className="text-xs font-black uppercase tracking-wider text-app-ink-2">{title}</h3>
       </div>
-      <span className="px-1.5 rounded-full text-[9px] font-black bg-[#161F2D] text-[#F1F5F9] border border-[#2A3446]">{count}</span>
+      <span className="px-1.5 rounded-full text-[9px] font-black bg-app-surface text-app-ink-2 border border-app-line">{count}</span>
     </div>
   );
 }

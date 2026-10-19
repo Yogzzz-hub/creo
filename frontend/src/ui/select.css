@@ -4,21 +4,21 @@
 }
 .creo-select-trigger {
   min-height: 44px; min-width: 0; max-width: 100%; gap: 12px;
-  border: 1px solid #2A3446; border-radius: 12px; background: #0B111C;
-  padding: 10px 14px; color: #F8FAFC; font-size: 14px; font-weight: 500;
+  border: 1px solid var(--app-line); border-radius: 12px; background: var(--app-base);
+  padding: 10px 14px; color: var(--app-ink); font-size: 14px; font-weight: 500;
   text-align: left; transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 .creo-select-trigger > span:first-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.creo-select-trigger > span:last-child { flex-shrink: 0; color: #97A0B3; }
-.creo-select-trigger:hover:not(:disabled) { border-color: #7FA0D6; }
-.creo-select-trigger:focus-visible, .creo-select-trigger[data-state="open"] { outline: none; border-color: #7FA0D6; box-shadow: 0 0 0 3px #7FA0D625; }
-.creo-select-trigger[aria-invalid="true"] { border-color: #D8BF9B; }
+.creo-select-trigger > span:last-child { flex-shrink: 0; color: var(--app-mist); }
+.creo-select-trigger:hover:not(:disabled) { border-color: var(--app-accent); }
+.creo-select-trigger:focus-visible, .creo-select-trigger[data-state="open"] { outline: none; border-color: var(--app-accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--app-accent) 14.5%, transparent); }
+.creo-select-trigger[aria-invalid="true"] { border-color: var(--app-warm); }
 .creo-select-trigger:disabled { opacity: .5; cursor: not-allowed; }
 .creo-select-menu {
   z-index: 10050; width: var(--radix-select-trigger-width);
   max-width: calc(100vw - 24px); max-height: min(320px, var(--radix-select-content-available-height));
-  border: 1px solid #2A3446; border-radius: 14px; background: #161F2D;
-  color: #F8FAFC; box-shadow: 0 16px 48px #05081099; overflow: hidden;
+  border: 1px solid var(--app-line); border-radius: 14px; background: var(--app-surface);
+  color: var(--app-ink); box-shadow: 0 16px 48px rgb(var(--shadow-rgb) / calc(0.6 * var(--shadow-k))); overflow: hidden;
 }
 .creo-select-menu[data-state="open"] { animation: creo-select-enter 140ms ease-out; }
 .creo-select-viewport { padding: 6px; max-width: 100%; }
@@ -27,10 +27,10 @@
   font-size: 14px; font-weight: 500; line-height: 1.45; overflow-wrap: anywhere;
   cursor: pointer; outline: none;
 }
-.creo-select-item[data-highlighted] { background: #2A3446; color: #F8FAFC; }
-.creo-select-item[data-state="checked"] { background: #BCCCE61A; color: #BCCCE6; }
+.creo-select-item[data-highlighted] { background: var(--app-line); color: var(--app-ink); }
+.creo-select-item[data-state="checked"] { background: color-mix(in oklab, var(--app-accent-soft) 10.2%, transparent); color: var(--app-accent-soft); }
 .creo-select-item[data-disabled] { opacity: .4; cursor: not-allowed; }
-.creo-select-item svg { color: #BCCCE6; }
+.creo-select-item svg { color: var(--app-accent-soft); }
 @keyframes creo-select-enter { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   .creo-select-menu, .creo-select-trigger { animation: none !important; transition: none !important; }

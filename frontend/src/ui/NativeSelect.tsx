@@ -54,6 +54,6 @@ export function NativeSelect({ children, className, value, defaultValue, onChang
       </SelectTrigger>
       <SelectContent>{options.map(option => <SelectItem key={option.value} value={option.value || emptyValue} disabled={option.disabled}>{option.label}</SelectItem>)}</SelectContent>
     </Select>
-    {invalid && <span id={`${generatedId}-error`} role="alert" className="text-xs text-[#D8BF9B]">Please select an option.</span>}
+    {invalid && <span id={`${generatedId}-error`} role="alert" className="text-xs text-app-warm">Please select an option.</span>}
   </>;
 }

@@ -118,7 +118,7 @@ export function PodDeliverablesReviewPage() {
   const deliverable = current?.deliverable;
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
+    <div data-surface="ops" className="min-h-screen bg-app-base text-hi font-sans flex flex-col">
       <AdminTopHeader title="Content Engine" activeTab="Content Engine" />
 
       <main className="flex-1 max-w-[1440px] w-full mx-auto px-3 sm:px-5 lg:px-6 py-3.5 pb-20 sm:pb-6 space-y-3.5 sm:space-y-4">
@@ -134,23 +134,23 @@ export function PodDeliverablesReviewPage() {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#161F2D] p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-[#2A3446]/80">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-app-surface p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-app-line/80">
           <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-[#7FA0D6] animate-pulse" />
-            <span className="text-xs font-bold text-[#F1F5F9]">{podName} · Lead QA before anything reaches the client</span>
+            <span className="size-2 rounded-full bg-app-accent animate-pulse" />
+            <span className="text-xs font-bold text-app-ink-2">{podName} · Lead QA before anything reaches the client</span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => refetch()}
-              className="px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-xl bg-app-surface border border-app-line hover:bg-app-base text-app-ink-2 text-xs font-bold flex items-center gap-1.5"
             >
-              <RefreshCw className={`size-3.5 text-[#97A0B3] ${isFetching ? "animate-spin" : ""}`} /> Refresh
+              <RefreshCw className={`size-3.5 text-app-mist ${isFetching ? "animate-spin" : ""}`} /> Refresh
             </button>
             <button
               onClick={handleExportReviewLedger}
-              className="px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-xl bg-app-surface border border-app-line hover:bg-app-base text-app-ink-2 text-xs font-bold flex items-center gap-1.5"
             >
-              <FileText className="size-3.5 text-[#97A0B3]" /> Export ledger
+              <FileText className="size-3.5 text-app-mist" /> Export ledger
             </button>
           </div>
         </div>
@@ -166,14 +166,14 @@ export function PodDeliverablesReviewPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.05 * (i + 1) }}
-              className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-3 border border-[#2A3446]/80"
+              className="bg-app-surface rounded-xl sm:rounded-2xl p-3 border border-app-line/80"
             >
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">{card.label}</span>
-                <card.icon className="size-3.5 text-[#7FA0D6]" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-app-mist">{card.label}</span>
+                <card.icon className="size-3.5 text-app-accent" />
               </div>
-              <div className="text-xl font-black text-white">{card.value}</div>
-              <div className="text-[11px] text-[#97A0B3] mt-1">{card.note}</div>
+              <div className="text-xl font-black text-hi">{card.value}</div>
+              <div className="text-[11px] text-app-mist mt-1">{card.note}</div>
             </motion.div>
           ))}
         </div>
@@ -186,33 +186,33 @@ export function PodDeliverablesReviewPage() {
         )}
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-20 text-[#97A0B3]">
+          <div className="flex items-center justify-center py-20 text-app-mist">
             <Loader2 className="size-6 animate-spin" />
           </div>
         ) : !current || !deliverable ? (
-          <div className="bg-[#161F2D] rounded-2xl border border-dashed border-[#2A3446] p-12 text-center space-y-3">
+          <div className="bg-app-surface rounded-2xl border border-dashed border-app-line p-12 text-center space-y-3">
             <div className="size-12 rounded-2xl bg-emerald-500/10 text-emerald-400 mx-auto flex items-center justify-center border border-emerald-500/20">
               <Check className="size-6" />
             </div>
-            <h3 className="text-base font-black text-white">Nothing waiting for QA</h3>
-            <p className="text-xs text-[#97A0B3] max-w-md mx-auto">
+            <h3 className="text-base font-black text-hi">Nothing waiting for QA</h3>
+            <p className="text-xs text-app-mist max-w-md mx-auto">
               When a creative uploads a finished file it appears here. Approving sends it to the client's review queue; requesting a revision sends your notes back to the creative.
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
             {/* Queue */}
-            <div className="lg:col-span-3 bg-[#161F2D] rounded-2xl border border-[#2A3446]/80 p-3 space-y-2 max-h-[360px] lg:max-h-[calc(100vh-300px)] overflow-y-auto">
-              <h2 className="text-[11px] font-black uppercase tracking-wider text-[#97A0B3] px-1">Queue · {queue.length}</h2>
+            <div className="lg:col-span-3 bg-app-surface rounded-2xl border border-app-line/80 p-3 space-y-2 max-h-[360px] lg:max-h-[calc(100vh-300px)] overflow-y-auto">
+              <h2 className="text-[11px] font-black uppercase tracking-wider text-app-mist px-1">Queue · {queue.length}</h2>
               {queue.map((task) => (
                 <button
                   key={task.id}
                   onClick={() => setSelectedId(task.id)}
                   className={`w-full flex items-center gap-3 p-2 rounded-xl border text-left transition-colors ${
-                    task.id === current.id ? "border-[#7FA0D6]/50 bg-[#0B111C]" : "border-transparent hover:bg-white/[0.03]"
+                    task.id === current.id ? "border-app-accent/50 bg-app-base" : "border-transparent hover:bg-hi/[0.03]"
                   }`}
                 >
-                  <div className="size-12 rounded-lg overflow-hidden bg-black shrink-0 border border-[#2A3446]">
+                  <div className="size-12 rounded-lg overflow-hidden bg-black shrink-0 border border-app-line">
                     <DeliverableMedia
                       url={task.deliverable?.file_url}
                       isVideo={!!task.deliverable?.is_video}
@@ -222,8 +222,8 @@ export function PodDeliverablesReviewPage() {
                     />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-white truncate">{titleOf(task)}</div>
-                    <div className="text-[10px] text-[#97A0B3] truncate">
+                    <div className="text-xs font-bold text-hi truncate">{titleOf(task)}</div>
+                    <div className="text-[10px] text-app-mist truncate">
                       {task.client_name} · v{task.deliverable?.version ?? 1}
                       {task.is_revision ? " · revision" : ""}
                     </div>
@@ -233,15 +233,15 @@ export function PodDeliverablesReviewPage() {
             </div>
 
             {/* Review panel */}
-            <div className="lg:col-span-9 bg-[#161F2D] rounded-2xl border border-[#2A3446]/80 p-4 sm:p-5 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#2A3446] gap-2">
+            <div className="lg:col-span-9 bg-app-surface rounded-2xl border border-app-line/80 p-4 sm:p-5 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-app-line gap-2">
                 <div>
-                  <div className="text-xs font-bold text-[#97A0B3] mb-0.5">
-                    <span className="text-[#7FA0D6] font-black">{current.client_name}</span> · {FORMAT_LABELS[current.deliverable_type] || current.deliverable_type} · v{deliverable.version}
+                  <div className="text-xs font-bold text-app-mist mb-0.5">
+                    <span className="text-app-accent font-black">{current.client_name}</span> · {FORMAT_LABELS[current.deliverable_type] || current.deliverable_type} · v{deliverable.version}
                   </div>
-                  <h3 className="text-base font-black text-white">{titleOf(current)}</h3>
-                  <p className="text-[11px] text-[#97A0B3] mt-0.5">
-                    Creative: <span className="font-bold text-white">{current.assignee_name}</span>
+                  <h3 className="text-base font-black text-hi">{titleOf(current)}</h3>
+                  <p className="text-[11px] text-app-mist mt-0.5">
+                    Creative: <span className="font-bold text-hi">{current.assignee_name}</span>
                   </p>
                 </div>
                 <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1 self-start sm:self-auto">
@@ -264,7 +264,7 @@ export function PodDeliverablesReviewPage() {
                       href={deliverable.file_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-[#7FA0D6] hover:text-white"
+                      className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-app-accent hover:text-hi"
                     >
                       <Download className="size-3.5" /> Open original file
                     </a>
@@ -273,21 +273,21 @@ export function PodDeliverablesReviewPage() {
 
                 <div className="lg:col-span-7 space-y-4">
                   {current.blueprint?.brief && (
-                    <div className="bg-[#0B111C] rounded-2xl p-3.5 border border-[#2A3446] text-xs text-[#F1F5F9]">
-                      <span className="block text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1">Brief</span>
+                    <div className="bg-app-base rounded-2xl p-3.5 border border-app-line text-xs text-app-ink-2">
+                      <span className="block text-[10px] font-bold uppercase tracking-wider text-app-mist mb-1">Brief</span>
                       {current.blueprint.brief}
                     </div>
                   )}
 
                   <fieldset className="space-y-2">
-                    <legend className="text-[11px] font-black uppercase tracking-wider text-[#97A0B3] mb-2 flex items-center gap-1.5">
+                    <legend className="text-[11px] font-black uppercase tracking-wider text-app-mist mb-2 flex items-center gap-1.5">
                       <ShieldCheck className="size-3.5" /> Lead QA checklist
                     </legend>
                     {RUBRIC.map((label, i) => (
                       <label
                         key={label}
                         className={`flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition-all ${
-                          checks[i] ? "bg-[#161F2D] border-[#7FA0D6]/50 text-white" : "bg-[#0B111C] border-[#2A3446] text-[#97A0B3]"
+                          checks[i] ? "bg-app-surface border-app-accent/50 text-hi" : "bg-app-base border-app-line text-app-mist"
                         }`}
                       >
                         <input
@@ -309,7 +309,7 @@ export function PodDeliverablesReviewPage() {
                       value={feedbackNote}
                       onChange={(e) => setFeedbackNote(e.target.value)}
                       placeholder={`Revision notes for ${current.assignee_name} (required to send back)`}
-                      className="w-full text-xs p-3.5 rounded-2xl border border-[#2A3446] bg-[#0B111C]/50 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-white"
+                      className="w-full text-xs p-3.5 rounded-2xl border border-app-line bg-app-base/50 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-hi"
                     />
                   </div>
 
@@ -317,7 +317,7 @@ export function PodDeliverablesReviewPage() {
                     <button
                       onClick={() => qaMutation.mutate({ deliverableId: deliverable.id, approve: false, notes: feedbackNote.trim() })}
                       disabled={qaMutation.isPending || !feedbackNote.trim()}
-                      className="px-5 py-2.5 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-5 py-2.5 rounded-xl bg-app-surface border border-app-line hover:bg-app-base text-app-ink-2 text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Request revision
                     </button>
@@ -325,7 +325,7 @@ export function PodDeliverablesReviewPage() {
                       onClick={() => qaMutation.mutate({ deliverableId: deliverable.id, approve: true, notes: feedbackNote.trim() })}
                       disabled={qaMutation.isPending || !allChecked}
                       title={allChecked ? undefined : "Complete the checklist to approve"}
-                      className="px-6 py-2.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-6 py-2.5 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {qaMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
                       Approve & send to client

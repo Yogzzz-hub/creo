@@ -33,20 +33,20 @@ function RouteCurtain() {
     <motion.div
       key={run}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center bg-[#050A1A]"
+      className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center bg-site-bg"
       initial={{ clipPath: "inset(0% 0% 0% 0%)" }}
       animate={{ clipPath: "inset(0% 0% 100% 0%)" }}
       transition={{ duration: 0.85, delay: 0.15, ease: EASE_IN_OUT_QUART }}
     >
-      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#4F7BFF] to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-site-blue to-transparent" />
       <motion.span
-        className="flex items-baseline text-5xl font-black tracking-[-0.05em] text-[#F4F7FF]"
+        className="flex items-baseline text-5xl font-black tracking-[-0.05em] text-site-ink"
         initial={{ opacity: 1, y: 0 }}
         animate={{ opacity: 0, y: -24 }}
         transition={{ duration: 0.5, delay: 0.1, ease: EASE_IN_OUT_QUART }}
       >
         creo
-        <span className="ml-0.5 inline-block size-[0.34em] rounded-full bg-[#4F7BFF]" />
+        <span className="ml-0.5 inline-block size-[0.34em] rounded-full bg-site-blue" />
       </motion.span>
     </motion.div>
   );
@@ -102,7 +102,7 @@ export function PublicLayout() {
   );
 
   return (
-    <div className="public-site flex min-h-[100svh] flex-col text-[#F4F7FF]">
+    <div className="public-site flex min-h-[100svh] flex-col text-site-ink">
       <a href="#main-content" className="public-skip-link">Skip to content</a>
       <SmoothScroll />
       <CustomCursor />

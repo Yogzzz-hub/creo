@@ -67,41 +67,41 @@ function PlanCard({
       onClick={() => !disabled && onSelect()}
       className={`relative rounded-2xl p-5 sm:p-6 cursor-pointer transition-all duration-200 flex flex-col justify-between h-full select-none ${
         selected
-          ? "border-2 border-[#7FA0D6] bg-[#161F2D] shadow-xl shadow-[#7FA0D6]/10 ring-2 ring-[#7FA0D6]/20 -translate-y-1"
-          : "border border-[#2A3446] bg-[#161F2D]/90 hover:border-[#7FA0D6]/50 hover:bg-[#161F2D] hover:-translate-y-0.5"
+          ? "border-2 border-app-accent bg-app-surface shadow-xl shadow-app-accent/10 ring-2 ring-app-accent/20 -translate-y-1"
+          : "border border-app-line bg-app-surface/90 hover:border-app-accent/50 hover:bg-app-surface hover:-translate-y-0.5"
       } ${disabled ? "pointer-events-none opacity-80" : ""}`}
     >
       {/* Top Tag Slot (fixed height to ensure exact vertical alignment across all 3 cards) */}
       <div className="h-7 mb-2 flex items-center">
         {plan.is_recommended ? (
-          <span className="inline-flex items-center gap-1.5 bg-[#7FA0D6] text-[#0B111C] text-[11px] font-black tracking-wider uppercase px-3 py-1 rounded-full shadow-sm">
-            <Zap className="size-3 fill-[#0B111C]" /> Most Popular
+          <span className="inline-flex items-center gap-1.5 bg-app-accent text-app-base text-[11px] font-black tracking-wider uppercase px-3 py-1 rounded-full shadow-sm">
+            <Zap className="size-3 fill-app-base" /> Most Popular
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 bg-[#0B111C] border border-[#2A3446] text-[#97A0B3] text-[11px] font-bold tracking-wider uppercase px-3 py-1 rounded-full">
+          <span className="inline-flex items-center gap-1.5 bg-app-base border border-app-line text-app-mist text-[11px] font-bold tracking-wider uppercase px-3 py-1 rounded-full">
             Monthly Retainer
           </span>
         )}
       </div>
 
       <div className="flex-1 flex flex-col">
-        <p className="text-[11px] font-bold tracking-wider text-[#7FA0D6] uppercase mb-1">
+        <p className="text-[11px] font-bold tracking-wider text-app-accent uppercase mb-1">
           {plan.name}
         </p>
-        <h3 className="text-lg sm:text-xl font-bold font-display text-white mb-2">
+        <h3 className="text-lg sm:text-xl font-bold font-display text-hi mb-2">
           {plan.display_name === "Scale" ? "Scale Enterprise" : plan.display_name}
         </h3>
 
-        <div className="my-2.5 pb-3.5 border-b border-[#2A3446] flex items-baseline gap-1.5">
-          <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+        <div className="my-2.5 pb-3.5 border-b border-app-line flex items-baseline gap-1.5">
+          <span className="text-3xl sm:text-4xl font-extrabold text-hi tracking-tight">
             {formatINR(plan.price_minor)}
           </span>
-          <span className="text-xs text-[#97A0B3] font-medium">/month</span>
+          <span className="text-xs text-app-mist font-medium">/month</span>
         </div>
 
         <ul className="space-y-2.5 my-3.5 flex-1">
           {plan.highlights.map((h) => (
-            <li key={h} className="text-xs text-[#BCCCE6] flex items-start gap-2.5 leading-relaxed font-medium">
+            <li key={h} className="text-xs text-app-accent-soft flex items-start gap-2.5 leading-relaxed font-medium">
               <div className="size-4 rounded-full bg-emerald-950/60 border border-emerald-800/60 flex items-center justify-center shrink-0 mt-0.5">
                 <Check className="w-2.5 h-2.5 text-emerald-400 stroke-[3]" />
               </div>
@@ -114,8 +114,8 @@ function PlanCard({
       <div
         className={`w-full mt-5 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-center transition-all flex items-center justify-center gap-1.5 ${
           selected
-            ? "bg-[#BCCCE6] text-[#0B111C] shadow-md shadow-[#BCCCE6]/20 font-extrabold"
-            : "bg-[#0B111C] text-[#97A0B3] border border-[#2A3446] hover:text-white hover:border-[#7FA0D6]"
+            ? "bg-app-accent-soft text-app-base shadow-md shadow-app-accent-soft/20 font-extrabold"
+            : "bg-app-base text-app-mist border border-app-line hover:text-white hover:border-app-accent"
         }`}
       >
         {selected ? (
@@ -264,7 +264,7 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-xl mx-auto rounded-2xl border border-[#2A3446] bg-[#161F2D] p-6 sm:p-8 shadow-xl text-center"
+        className="max-w-xl mx-auto rounded-2xl border border-app-line bg-app-surface p-6 sm:p-8 shadow-xl text-center"
       >
         <div className="size-14 rounded-2xl bg-emerald-950/40 border border-emerald-800/60 text-emerald-400 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
           <ShieldCheck className="size-8" />
@@ -272,16 +272,16 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 text-xs font-semibold uppercase tracking-wider mb-2">
           Step 3 Bypassed & Verified
         </div>
-        <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">
+        <h2 className="text-xl sm:text-2xl font-bold font-display text-hi tracking-tight">
           Retainer Subscription Active
         </h2>
-        <p className="text-sm text-[#97A0B3] mt-2 mb-6 max-w-md mx-auto leading-relaxed">
+        <p className="text-sm text-app-mist mt-2 mb-6 max-w-md mx-auto leading-relaxed">
           Your offline payment has been approved and verified by agency admin. Step 3 (Payment) is complete! You can now proceed directly to Brand Discovery.
         </p>
         <button
           type="button"
           onClick={onPaymentComplete}
-          className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-sm hover:bg-white shadow-sm transition-all cursor-pointer"
+          className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-app-accent-soft text-app-base font-bold text-sm hover:bg-hi shadow-sm transition-all cursor-pointer"
         >
           <span>Continue to Brand Discovery (Step 4)</span>
           <ArrowRight className="size-4" />
@@ -296,7 +296,7 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-xl mx-auto rounded-2xl border border-[#2A3446] bg-[#161F2D] p-6 sm:p-8 shadow-xl text-center"
+        className="max-w-xl mx-auto rounded-2xl border border-app-line bg-app-surface p-6 sm:p-8 shadow-xl text-center"
       >
         <div className="size-14 rounded-2xl bg-amber-950/40 border border-amber-800/60 text-amber-400 flex items-center justify-center mx-auto mb-4">
           <Clock className="size-8 animate-pulse" />
@@ -304,17 +304,17 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/40 border border-amber-800/60 text-amber-300 text-xs font-semibold uppercase tracking-wider mb-2">
           Approval Pending
         </div>
-        <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">
+        <h2 className="text-xl sm:text-2xl font-bold font-display text-hi tracking-tight">
           Offline Payment Verification Pending
         </h2>
-        <p className="text-sm text-[#97A0B3] mt-2 max-w-md mx-auto leading-relaxed">
-          You requested offline payment verification for the <strong className="text-white">{manualRequest.plan_display_name || "selected"}</strong> retainer via <strong className="text-white uppercase">{manualRequest.payment_method.replace('_', ' ')}</strong> (₹{manualRequest.amount?.toLocaleString('en-IN')}).
+        <p className="text-sm text-app-mist mt-2 max-w-md mx-auto leading-relaxed">
+          You requested offline payment verification for the <strong className="text-hi">{manualRequest.plan_display_name || "selected"}</strong> retainer via <strong className="text-hi uppercase">{manualRequest.payment_method.replace('_', ' ')}</strong> (₹{manualRequest.amount?.toLocaleString('en-IN')}).
         </p>
 
         {manualRequest.reference_note && (
-          <div className="my-4 p-3 bg-[#0B111C] rounded-xl border border-[#2A3446] text-left text-xs">
-            <span className="text-[#97A0B3] block font-medium mb-0.5">Your Reference Note:</span>
-            <span className="text-[#F8FAFC]">{manualRequest.reference_note}</span>
+          <div className="my-4 p-3 bg-app-base rounded-xl border border-app-line text-left text-xs">
+            <span className="text-app-mist block font-medium mb-0.5">Your Reference Note:</span>
+            <span className="text-app-ink">{manualRequest.reference_note}</span>
           </div>
         )}
 
@@ -326,7 +326,7 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
           <button
             type="button"
             onClick={() => void refetchManualRequest()}
-            className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6] text-xs font-bold text-white transition-colors cursor-pointer inline-flex items-center justify-center gap-2"
+            className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-app-base border border-app-line hover:border-app-accent text-xs font-bold text-hi transition-colors cursor-pointer inline-flex items-center justify-center gap-2"
           >
             <RefreshCw className="size-3.5" />
             <span>Check Status</span>
@@ -428,20 +428,20 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="p-5 sm:p-6 rounded-2xl bg-[#0B111C] border border-[#7FA0D6]/50 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4"
+            className="p-5 sm:p-6 rounded-2xl bg-app-base border border-app-accent/50 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4"
           >
             <div className="flex items-center gap-3.5">
-              <div className="size-11 rounded-xl bg-[#161F2D] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] shrink-0">
-                <Loader2 className="size-5 animate-spin text-[#7FA0D6]" />
+              <div className="size-11 rounded-xl bg-app-surface border border-app-line flex items-center justify-center text-app-accent shrink-0">
+                <Loader2 className="size-5 animate-spin text-app-accent" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white">Confirming your payment...</h4>
-                <p className="text-xs text-[#97A0B3] mt-0.5">
+                <h4 className="text-sm font-bold text-hi">Confirming your payment...</h4>
+                <p className="text-xs text-app-mist mt-0.5">
                   Verifying transaction with payment gateway for {selectedPlan?.display_name || "selected plan"}. Please don't close this window.
                 </p>
               </div>
             </div>
-            <div className="text-xs font-mono font-bold text-[#BCCCE6] bg-[#161F2D] border border-[#2A3446] px-3.5 py-1.5 rounded-lg shrink-0">
+            <div className="text-xs font-mono font-bold text-app-accent-soft bg-app-surface border border-app-line px-3.5 py-1.5 rounded-lg shrink-0">
               Securing Retainer...
             </div>
           </motion.div>
@@ -455,11 +455,11 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
             className="p-5 sm:p-6 rounded-2xl bg-emerald-950/50 border border-emerald-800/80 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 text-emerald-200"
           >
             <div className="flex items-center gap-3.5">
-              <div className="size-11 rounded-xl bg-emerald-500 text-[#0B111C] flex items-center justify-center font-black shrink-0">
+              <div className="size-11 rounded-xl bg-emerald-500 text-app-base flex items-center justify-center font-black shrink-0">
                 <Check className="size-6 stroke-[3]" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white">Payment Confirmed!</h4>
+                <h4 className="text-sm font-bold text-hi">Payment Confirmed!</h4>
                 <p className="text-xs text-emerald-300/80 mt-0.5">
                   Your {selectedPlan?.display_name || "CREO"} retainer is active. Moving directly to Brand Discovery...
                 </p>
@@ -483,8 +483,8 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
 
       {/* Plan Cards Grid: Dedicated single-card layout for custom negotiated plans, or 3-column grid for standard tiers */}
       {plansLoading ? (
-        <div role="status" className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-12 text-center text-[#97A0B3]">
-          <Loader2 aria-hidden="true" className="size-7 animate-spin text-[#7FA0D6] mx-auto mb-3 motion-reduce:animate-none" />
+        <div role="status" className="rounded-2xl border border-app-line bg-app-surface p-12 text-center text-app-mist">
+          <Loader2 aria-hidden="true" className="size-7 animate-spin text-app-accent mx-auto mb-3 motion-reduce:animate-none" />
           <p className="text-xs font-medium">Loading pricing plans…</p>
         </div>
       ) : plans && plans.length === 1 && plans[0] ? (
@@ -522,15 +522,15 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
       )}
 
       {/* Footer Actions */}
-      <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="rounded-2xl border border-app-line bg-app-surface p-4 sm:p-5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
         {onBack ? (
           <button
             type="button"
             onClick={onBack}
             disabled={phase === "processing" || phase === "polling"}
-            className="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm font-bold text-[#97A0B3] hover:text-white hover:border-[#7FA0D6] shadow-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-app-base border border-app-line text-sm font-bold text-app-mist hover:text-hi hover:border-app-accent shadow-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ArrowLeft className="w-4 h-4 text-[#7FA0D6]" />
+            <ArrowLeft className="w-4 h-4 text-app-accent" />
             <span>Back to Agreement</span>
           </button>
         ) : <div />}
@@ -542,18 +542,18 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
           disabled={!selectedPlanId || phase === "processing" || phase === "polling" || phase === "confirmed"}
           className={`w-full sm:w-auto min-w-[280px] py-3 px-8 rounded-xl font-bold text-sm transition-all shadow-md inline-flex items-center justify-center gap-2 ${
             selectedPlanId && phase === "select"
-              ? "bg-[#BCCCE6] text-[#0B111C] cursor-pointer hover:bg-white shadow-[#BCCCE6]/20"
-              : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446] cursor-not-allowed shadow-none"
+              ? "bg-app-accent-soft text-app-base cursor-pointer hover:bg-hi shadow-app-accent-soft/20"
+              : "bg-app-surface text-app-mist border border-app-line cursor-not-allowed shadow-none"
           }`}
         >
           {phase === "processing" ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin text-[#0B111C]" />
+              <Loader2 className="w-4 h-4 animate-spin text-app-base" />
               <span>Opening Secure Checkout…</span>
             </>
           ) : phase === "polling" ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin text-[#0B111C]" />
+              <Loader2 className="w-4 h-4 animate-spin text-app-base" />
               <span>Verifying Payment…</span>
             </>
           ) : (
@@ -566,14 +566,14 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
       </div>
 
       {/* Offline Payment / Cash / Direct Transfer Bypass Trigger */}
-      <div className="mt-4 p-4 rounded-2xl border border-[#2A3446] bg-[#161F2D]/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2.5 text-[#97A0B3]">
+      <div className="mt-4 p-4 rounded-2xl border border-app-line bg-app-surface/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2.5 text-app-mist">
           <div className="size-8 rounded-lg bg-emerald-950/40 border border-emerald-800/60 flex items-center justify-center text-emerald-400 shrink-0">
             <Banknote className="size-4" />
           </div>
           <div>
-            <p className="font-semibold text-white">Paid already via Cash, Bank Transfer, or Existing Contract?</p>
-            <p className="text-[11px] text-[#97A0B3]">Submit an offline payment claim to bypass Step 3 upon admin approval.</p>
+            <p className="font-semibold text-hi">Paid already via Cash, Bank Transfer, or Existing Contract?</p>
+            <p className="text-[11px] text-app-mist">Submit an offline payment claim to bypass Step 3 upon admin approval.</p>
           </div>
         </div>
         <button
@@ -582,7 +582,7 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
             if (selectedPlanId) setManualPlanId(selectedPlanId);
             setShowManualModal(true);
           }}
-          className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6] text-xs font-bold text-[#BCCCE6] hover:text-white transition-colors cursor-pointer shrink-0"
+          className="w-full sm:w-auto px-4 py-2 rounded-xl bg-app-base border border-app-line hover:border-app-accent text-xs font-bold text-app-accent-soft hover:text-hi transition-colors cursor-pointer shrink-0"
         >
           Request Offline Payment Bypass
         </button>
@@ -591,21 +591,21 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
       {/* Offline Payment Request Modal */}
       {showManualModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-lg rounded-2xl border border-[#2A3446] bg-[#161F2D] p-6 shadow-2xl text-left space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="w-full max-w-lg rounded-2xl border border-app-line bg-app-surface p-6 shadow-2xl text-left space-y-4">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="size-8 rounded-lg bg-[#7FA0D6]/20 border border-[#7FA0D6]/40 flex items-center justify-center text-[#7FA0D6]">
+                <div className="size-8 rounded-lg bg-app-accent/20 border border-app-accent/40 flex items-center justify-center text-app-accent">
                   <Banknote className="size-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white">Offline Payment Verification</h3>
-                  <p className="text-[11px] text-[#97A0B3]">Request Step 3 payment bypass for offline retainers</p>
+                  <h3 className="text-sm font-bold text-hi">Offline Payment Verification</h3>
+                  <p className="text-[11px] text-app-mist">Request Step 3 payment bypass for offline retainers</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowManualModal(false)}
-                className="p-1.5 rounded-lg text-[#97A0B3] hover:text-white hover:bg-[#0B111C] cursor-pointer"
+                className="p-1.5 rounded-lg text-app-mist hover:text-hi hover:bg-app-base cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -623,11 +623,11 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
 
             <form onSubmit={handleSubmitManualRequest} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-white mb-1.5">Selected Retainer Plan</label>
+                <label className="block font-bold text-hi mb-1.5">Selected Retainer Plan</label>
                 <select
                   value={manualPlanId || selectedPlanId || ""}
                   onChange={(e) => setManualPlanId(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-app-line bg-app-base text-hi focus:outline-none focus:border-app-accent"
                   required
                 >
                   {(plans || []).map((p) => (
@@ -639,11 +639,11 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
               </div>
 
               <div>
-                <label className="block font-bold text-white mb-1.5">Offline Payment Method</label>
+                <label className="block font-bold text-hi mb-1.5">Offline Payment Method</label>
                 <select
                   value={manualMethod}
                   onChange={(e) => setManualMethod(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-app-line bg-app-base text-hi focus:outline-none focus:border-app-accent"
                 >
                   <option value="cash">Cash (Direct in Office / Handed Over)</option>
                   <option value="bank_transfer">Direct Bank Transfer (NEFT / RTGS / IMPS)</option>
@@ -655,13 +655,13 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
               </div>
 
               <div>
-                <label className="block font-bold text-white mb-1.5">Payment Reference Notes / Transaction ID</label>
+                <label className="block font-bold text-hi mb-1.5">Payment Reference Notes / Transaction ID</label>
                 <textarea
                   value={manualNotes}
                   onChange={(e) => setManualNotes(e.target.value)}
                   placeholder="e.g. Paid cash directly to agency management, or Bank UTR number 9812401..."
                   rows={3}
-                  className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-app-line bg-app-base text-hi focus:outline-none focus:border-app-accent"
                 />
               </div>
 
@@ -673,14 +673,14 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
                 <button
                   type="button"
                   onClick={() => setShowManualModal(false)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-bold text-[#97A0B3] hover:text-white cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-app-line bg-app-base text-xs font-bold text-app-mist hover:text-hi cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={manualSubmitting}
-                  className="px-5 py-2 rounded-xl bg-[#BCCCE6] text-[#0B111C] text-xs font-bold hover:bg-white transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-app-accent-soft text-app-base text-xs font-bold hover:bg-hi transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   {manualSubmitting ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}
                   <span>Submit Verification Request</span>
