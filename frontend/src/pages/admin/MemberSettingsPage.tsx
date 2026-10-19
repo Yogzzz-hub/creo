@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { fetchPodDashboard, type PodDashboardData } from "../../lib/ops-api";
+import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import {
   UserRound,
   UsersRound,
@@ -129,6 +130,7 @@ export function MemberSettingsPage() {
 
   return (
     <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
+      <AdminTopHeader activeTab="Preferences" hideTitle />
       <main className="flex-1 max-w-[1200px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20 sm:pb-8 space-y-6">
         {/* Role Badge */}
         <div className="flex items-center justify-end gap-2 pb-2">

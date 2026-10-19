@@ -9,9 +9,11 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
+  Menu,
 } from "lucide-react";
 import type { UseMutationResult } from "@tanstack/react-query";
 import type { PodTask } from "../../lib/ops-api";
+import { useAdminSidebar } from "../admin/AdminSidebarContext";
 import { DeliverableMedia } from "../ops/DeliverableMedia";
 import { PublishingControl } from "../ops/PublishingPanel";
 import { VoicePlayer } from "../portal/VoicePlayer";
@@ -92,12 +94,23 @@ export function MemberMobileTaskBoard({
   dueText,
   feedbackFor,
 }: MemberMobileTaskBoardProps) {
+  const { toggleMobile } = useAdminSidebar();
+
   return (
-    <div className="md:hidden w-full max-w-[430px] mx-auto min-h-screen bg-[#0B0F17] flex flex-col relative pb-28 text-slate-100 shadow-2xl">
+    <div className="md:hidden w-full max-w-[430px] mx-auto min-h-screen bg-[#0B0F17] flex flex-col relative pb-12 text-slate-100 shadow-2xl">
       {/* BEGIN: MobileTopBar */}
       <header className="sticky top-0 z-40 bg-[#0B0F17]/90 backdrop-blur-md px-4 py-3 border-b border-[#2A3446]/40 flex items-center justify-between">
         {/* App Brand & Role Pill */}
         <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={toggleMobile}
+            className="size-8 rounded-xl bg-[#131C2B] border border-[#2A3446] flex items-center justify-center text-slate-300 hover:text-white transition cursor-pointer shrink-0"
+            aria-label="Open navigation sidebar"
+            title="Open navigation menu"
+          >
+            <Menu className="size-4" />
+          </button>
           <div className="flex items-center">
             <span className="text-lg font-black tracking-tight text-white">Creo</span>
             <span className="text-lg font-black text-sky-400">.</span>
