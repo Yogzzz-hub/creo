@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router";
-import { ArrowRight, Check, Play, Pause, Volume2, VolumeX, CheckCircle2, Clock, X, Calendar } from "lucide-react";
+import { ArrowRight, Check, Play, Pause, Volume2, VolumeX, Clock, X, Calendar } from "lucide-react";
 import { MobileNavBar } from "./MobileNavBar";
 import { MobileFooter } from "./MobileFooter";
 
@@ -58,7 +58,6 @@ const SPRINT_BATCHES: SprintBatch[] = [
 
 export function MobileWorkPage() {
   const [activeConsoleTab, setActiveConsoleTab] = useState<"throughput" | "financial" | "pods">("throughput");
-  const [impactDrawerOpen, setImpactDrawerOpen] = useState<boolean>(false);
   const [activeBatch, setActiveBatch] = useState<number>(1);
   const [batchApproval] = useState<Record<number, boolean>>({ 1: true });
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -413,86 +412,7 @@ export function MobileWorkPage() {
           </div>
         </section>
 
-        {/* 5. Client Case Spotlight Dossier */}
-        <section className="flex flex-col gap-2.5" data-purpose="client-case-dossier">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[10px] font-space-grotesk uppercase tracking-widest text-[#97A0B3] font-bold">
-              Direct Founder Radar
-            </span>
-            <span className="text-[9px] font-space-grotesk text-[#7FA0D6]">VERIFIED CLIENT RECORD</span>
-          </div>
-
-          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] backdrop-blur-xl p-3.5 shadow-lg flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#D8BF9B] text-[#050810] font-black text-sm flex items-center justify-center font-sans shadow-md">
-                  YB
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-[#F8FAFC] flex items-center gap-1">
-                    Yellow Box Fitness Studio
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#7FA0D6]" />
-                  </div>
-                  <div className="text-[10px] font-space-grotesk text-[#97A0B3]">Scale Retainer • Active 14 mos</div>
-                </div>
-              </div>
-              <span className="px-2 py-0.5 rounded text-[9px] font-space-grotesk bg-[#0B111C] text-[#7FA0D6] border border-[#2A3446] font-semibold">
-                1 Pod Active
-              </span>
-            </div>
-
-            <p className="text-xs italic text-[#F8FAFC] leading-relaxed pl-2 border-l-2 border-[#7FA0D6]">
-              "CREO replaced 3 separate freelancer contracts and cut our turnaround from 5 days to under 24 hours without sacrificing a single pixel."
-            </p>
-
-            <div className="grid grid-cols-3 gap-1.5 pt-1">
-              <div className="p-1.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-center">
-                <div className="text-xs font-bold text-[#F8FAFC] font-space-grotesk">1 Pod</div>
-                <div className="text-[8px] uppercase tracking-wider text-[#97A0B3]">Dedicated</div>
-              </div>
-              <div className="p-1.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-center">
-                <div className="text-xs font-bold text-[#7FA0D6] font-space-grotesk">12 Reels</div>
-                <div className="text-[8px] uppercase tracking-wider text-[#97A0B3]">Weekly Cadence</div>
-              </div>
-              <div className="p-1.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-center">
-                <div className="text-xs font-bold text-[#BCCCE6] font-space-grotesk">2.1h</div>
-                <div className="text-[8px] uppercase tracking-wider text-[#97A0B3]">Review SLA</div>
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="button"
-                onClick={() => setImpactDrawerOpen(!impactDrawerOpen)}
-                className="w-full py-1.5 px-2.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[10px] font-space-grotesk font-medium text-[#97A0B3] hover:text-[#F8FAFC] flex items-center justify-between transition cursor-pointer"
-              >
-                <span className="flex items-center gap-1.5">
-                  <span className="text-[#7FA0D6]">{impactDrawerOpen ? "▴" : "▾"}</span> View Operational Impact Delta
-                </span>
-                <span className="text-[9px] text-[#97A0B3]">{impactDrawerOpen ? "Tap to collapse" : "Tap to expand"}</span>
-              </button>
-
-              {impactDrawerOpen && (
-                <div className="mt-2 pt-2 border-t border-[#2A3446] flex flex-col gap-1.5 text-[11px] animate-in fade-in duration-200">
-                  <div className="flex justify-between items-center text-[#F8FAFC]">
-                    <span className="text-[#97A0B3]">Freelancer Burn:</span>
-                    <span className="line-through text-[#D8BF9B] font-space-grotesk">₹1,90,000/mo</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[#F8FAFC]">
-                    <span className="text-[#97A0B3]">CREO Consolidated:</span>
-                    <span className="text-[#7FA0D6] font-space-grotesk font-bold">₹1,15,000/mo</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[#F8FAFC]">
-                    <span className="text-[#97A0B3]">Net Annual Saved:</span>
-                    <span className="text-[#BCCCE6] font-space-grotesk font-bold">₹9,00,000+</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* 6. Sprint & 1-Click Approval Studio with Live Video Engine */}
+        {/* 5. Sprint & 1-Click Approval Studio with Live Video Engine */}
         <section className="flex flex-col gap-2.5" id="approval-studio">
           <div className="flex items-center justify-between px-1">
             <span className="text-[10px] font-space-grotesk uppercase tracking-widest text-[#97A0B3] font-bold flex items-center gap-1.5">
@@ -739,7 +659,7 @@ export function MobileWorkPage() {
           </div>
         </section>
 
-        {/* 7. High-Impact Finale Capsule & CTA */}
+        {/* 6. High-Impact Finale Capsule & CTA */}
         <section
           id="cta-footer"
           className="mt-2 rounded-3xl border border-[#2A3446] bg-gradient-to-b from-[#161F2D] to-[#050810] p-5 shadow-2xl relative overflow-hidden text-center flex flex-col items-center gap-3"
@@ -782,7 +702,7 @@ export function MobileWorkPage() {
         </section>
       </main>
 
-      {/* 8. Unified Super Mobile Footer */}
+      {/* 7. Unified Super Mobile Footer */}
       <MobileFooter />
     </div>
   );
