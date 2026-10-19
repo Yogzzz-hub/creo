@@ -137,9 +137,18 @@ export function AdminTopHeader({
       ? "System Settings"
       : activeTab);
 
-  // For workstation / member role, completely remove/hide the floating capsule navbar
-  // matching the Client Portal shell where notification & profile live in the sidebar.
-  if (isMemberRole) {
+  // For workstation / member role, hide only on routes that have dedicated mobile headers
+  const isDedicatedMobileView =
+    location.pathname === "/workstation" ||
+    location.pathname === "/workstation/" ||
+    location.pathname === "/workstation/overview" ||
+    location.pathname === "/member" ||
+    location.pathname === "/member/" ||
+    location.pathname === "/member/overview" ||
+    location.pathname.startsWith("/workstation/tasks") ||
+    location.pathname.startsWith("/member/tasks");
+
+  if (isMemberRole && isDedicatedMobileView) {
     return null;
   }
 
@@ -152,7 +161,7 @@ export function AdminTopHeader({
           <button
             type="button"
             onClick={toggleMobile}
-            className={`${location.pathname.startsWith("/portal") ? "lg:hidden" : "md:hidden"} size-8 rounded-full flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] transition-all cursor-pointer border border-transparent hover:border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] shrink-0`}
+            className={`${location.pathname.startsWith("/portal") || isMemberRole ? "lg:hidden" : "md:hidden"} size-8 rounded-full flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] transition-all cursor-pointer border border-transparent hover:border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] shrink-0`}
             aria-expanded={mobileOpen}
             aria-label="Open navigation sidebar"
             title="Open navigation menu"

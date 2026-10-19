@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { CreoInlineLoader } from "../ui/CreoLoader";
 import { Outlet, useLocation } from "react-router";
-import { AdminBottomNav } from "./AdminBottomNav";
 import { useRouteMemory } from "../../lib/useRouteMemory";
 import { PortalWrapper } from "../common/AntigravityCanvas";
 import { AdminSidebarProvider } from "../admin/AdminSidebarContext";
@@ -23,12 +22,11 @@ export function OpsLayout() {
           <AdminSidebar />
 
           <div className={isSlack ? "flex-1 min-w-0 lg:pl-[280px] flex flex-col h-screen max-h-screen overflow-hidden" : "flex-1 min-w-0 lg:pl-[280px] flex flex-col min-h-screen"}>
-            <div className={isSlack ? "flex-1 min-h-0 flex flex-col overflow-hidden p-2 sm:p-3 pb-20 md:pb-0" : "flex-1 pb-20 md:pb-0"}>
+            <div className={isSlack ? "flex-1 min-h-0 flex flex-col overflow-hidden p-2 sm:p-3" : "flex-1"}>
               <SimpleErrorBoundary name="Admin Operations">
                 <Suspense fallback={<CreoInlineLoader label="Loading workspace" />}><Outlet /></Suspense>
               </SimpleErrorBoundary>
             </div>
-            <AdminBottomNav />
           </div>
         </div>
       </AdminSidebarProvider>

@@ -82,8 +82,11 @@ export function AdminSidebar() {
 
   // Handle escape key on mobile
   useEffect(() => {
-    if (!mobileOpen) return;
-    const old = document.body.style.overflow;
+    if (isMemberRole) return;
+    if (!mobileOpen) {
+      document.body.style.overflow = "";
+      return;
+    }
     document.body.style.overflow = "hidden";
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -92,10 +95,10 @@ export function AdminSidebar() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = old;
+      document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [mobileOpen, setMobileOpen]);
+  }, [mobileOpen, setMobileOpen, isMemberRole]);
 
   // Live query for Pod Lead deliverables needing review
   const { data: podData } = useQuery<PodDashboardData>({

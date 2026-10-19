@@ -16,8 +16,10 @@ import {
   Video,
   Send,
   Eye,
+  Menu,
 } from "lucide-react";
 import type { PodTask } from "../../lib/ops-api";
+import { useAdminSidebar } from "../admin/AdminSidebarContext";
 
 export interface LeadNoteItem {
   id: string;
@@ -95,12 +97,22 @@ export function MemberMobileDashboard({
   showToast,
 }: MemberMobileDashboardProps) {
   const [mobileSecondaryTab, setMobileSecondaryTab] = useState<"feedback" | "team">("feedback");
+  const { toggleMobile } = useAdminSidebar();
 
   return (
     <div className="md:hidden pb-12 space-y-3 max-w-[430px] mx-auto text-slate-100">
       {/* Sticky Top Header */}
       <header className="sticky top-0 z-40 w-[calc(100%+1.75rem)] -mx-3.5 bg-[#0B0F17]/90 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={toggleMobile}
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-300 hover:text-white bg-[#131B26] border border-white/10 hover:border-white/20 transition-colors cursor-pointer shrink-0"
+            aria-label="Open navigation sidebar"
+            title="Open navigation menu"
+          >
+            <Menu className="w-4.5 h-4.5" />
+          </button>
           <div className="flex items-center tracking-tight font-bold text-lg text-white">
             Creo<span className="text-sky-400">.</span>
           </div>
