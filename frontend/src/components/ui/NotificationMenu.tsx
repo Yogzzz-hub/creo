@@ -25,6 +25,12 @@ export function NotificationMenu({ placement = "header" }: { placement?: "header
   const queryClient = useQueryClient();
   const isSalesRole = user?.role === "sales" || location.pathname.startsWith("/bde");
   const isFreelancerRole = user?.role === "freelancer" || location.pathname.startsWith("/freelancer");
+  const isMemberRole =
+    user?.role === "editor" ||
+    user?.role === "designer" ||
+    user?.role === "member" ||
+    location.pathname.startsWith("/workstation") ||
+    location.pathname.startsWith("/member");
 
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
@@ -74,6 +80,9 @@ export function NotificationMenu({ placement = "header" }: { placement?: "header
         if (n.type === "revenue") return false;
         if (n.message.includes("Pod B") || n.message.includes("Pod C") || n.message.includes("Pod D") || n.message.includes("Pod E")) return false;
       }
+      if (isMemberRole) {
+        if (n.type === "revenue") return false;
+      }
       return true;
     })
     .map((n) => {
@@ -95,6 +104,23 @@ export function NotificationMenu({ placement = "header" }: { placement?: "header
         if (n.link?.includes("/admin/team")) {
           return { ...n, is_read: isRead, link: "/admin/pod-dashboard" };
         }
+      }
+      if (isMemberRole) {
+        let memberLink = n.link || "/workstation";
+        if (memberLink.includes("/tasks") || memberLink.includes("/deliverables") || memberLink.includes("/task-queue")) {
+          memberLink = "/workstation/tasks";
+        } else if (memberLink.includes("/leave") || memberLink.includes("/leaves") || memberLink.includes("/schedule") || memberLink.includes("/calendar")) {
+          memberLink = "/workstation/schedule";
+        } else if (memberLink.includes("/slack") || memberLink.includes("/chat")) {
+          memberLink = "/workstation/slack";
+        } else if (memberLink.includes("/publishing")) {
+          memberLink = "/admin/publishing";
+        } else if (memberLink.includes("/settings") || memberLink.includes("/account")) {
+          memberLink = "/workstation/settings";
+        } else if (memberLink.startsWith("/admin") || memberLink.startsWith("/lead")) {
+          memberLink = "/workstation";
+        }
+        return { ...n, is_read: isRead, link: memberLink };
       }
       return { ...n, is_read: isRead };
     });
@@ -213,7 +239,7 @@ export function NotificationMenu({ placement = "header" }: { placement?: "header
               className={`size-8 sm:size-8.5 rounded-full flex items-center justify-center transition-all relative cursor-pointer ${
                 notificationOpen
                   ? "bg-[#0B111C] text-white shadow-sm border border-[#7FA0D6]/60"
-                  : placement === "header"
+                  : placement === "header" || placement === "sidebar"
                   ? "text-[#97A0B3] hover:text-white bg-[#0B111C]/50 hover:bg-[#0B111C] border border-[#2A3446]/80 hover:border-[#7FA0D6]/40 shadow-2xs"
                   : "text-[#97A0B3] hover:text-white hover:bg-white/[0.06]"
               }`}
