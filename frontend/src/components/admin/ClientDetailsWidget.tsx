@@ -71,7 +71,7 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
     const t = tier.toLowerCase();
     if (t.includes("starter")) return 25000;
     if (t.includes("growth") || t.includes("accelerator")) return 50000;
-    if (t.includes("enterprise") || t.includes("domination") || t.includes("pro")) return 95000;
+    if (t.includes("scale") || t.includes("enterprise") || t.includes("domination") || t.includes("pro")) return 100000;
     return 45000;
   };
 

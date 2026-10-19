@@ -105,3 +105,74 @@ async def test_approval_pauses_provider_only_and_preserves_paid_period(provider_
             await billing_renewal.review(db, actor, row.id, True)
             assert row.status == "approved" and sub.gateway_data["mandate_status"] == "paused"
         assert sub.status == "active" and sub.current_period_end == end
+
+
+@pytest.mark.asyncio
+async def test_razorpay_credentials_are_sanitized_from_quotes_and_whitespace():
+    import httpx
+    captured_auth = None
+    original = httpx.AsyncClient
+
+    def mock_transport(request):
+        nonlocal captured_auth
+        captured_auth = request.headers.get("authorization")
+        return httpx.Response(200, json={"id": "sub_clean"})
+
+    transport = httpx.MockTransport(mock_transport)
+    with patch.object(settings, "RAZORPAY_KEY_ID", " 'rzp_test_clean123' "), \
+         patch.object(settings, "RAZORPAY_KEY_SECRET", ' "secret_clean456" '), \
+         patch.object(gateway.httpx, "AsyncClient", side_effect=lambda **kwargs: original(transport=transport, **kwargs)):
+        res = await gateway.call("GET", "subscriptions/sub_clean")
+        assert res["id"] == "sub_clean"
+        import base64
+        expected_token = base64.b64encode(b"rzp_test_clean123:secret_clean456").decode("ascii")
+        assert captured_auth == f"Basic {expected_token}"
+
+
+@pytest.mark.asyncio
+async def test_create_subscription_uses_configured_plan_id_without_creating_new_plan():
+    client_id = uuid.uuid4()
+    plan = SimpleNamespace(name="starter", display_name="Starter", price_minor=2500000, currency="INR")
+    with patch.object(settings, "RAZORPAY_PLAN_STARTER", "plan_preset123"), \
+         patch.object(gateway, "call", AsyncMock(return_value={"id": "sub_preset123"})) as call:
+        sub_id = await gateway.create(plan, client_id)
+        assert sub_id == "sub_preset123"
+        # Only 1 call made (create_subscription), NO create_plan call
+        assert call.await_count == 1
+        assert call.await_args.args[0] == "POST"
+        assert call.await_args.args[1] == "subscriptions"
+        assert call.await_args.args[2]["plan_id"] == "plan_preset123"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("event_type,expected_status", [
+    ("subscription.cancelled", "canceled"),
+    ("subscription.halted", "past_due"),
+])
+async def test_webhook_lifecycle_updates_subscription_status(event_type, expected_status):
+    from app.models.billing import Subscription
+    from app.models.enums import PaymentProvider, SubscriptionStatus
+    sub = SimpleNamespace(
+        id=uuid.uuid4(),
+        gateway_subscription_id="sub_test_hook",
+        status=SubscriptionStatus.ACTIVE,
+        gateway_data={"mandate_status": "active"},
+        plan_id=uuid.uuid4(),
+    )
+    event = SimpleNamespace(
+        id=uuid.uuid4(),
+        provider=PaymentProvider.RAZORPAY,
+        payload={"event": event_type, "payload": {"subscription": {"entity": {"id": "sub_test_hook", "status": expected_status}}}},
+        event_type=event_type,
+        processed_at=None,
+    )
+    db = SimpleNamespace(
+        execute=AsyncMock(side_effect=[
+            SimpleNamespace(scalar_one_or_none=lambda: event),
+            SimpleNamespace(scalar_one_or_none=lambda: sub),
+        ]),
+        commit=AsyncMock(),
+    )
+    with patch.object(gateway, "fetch", AsyncMock(return_value={"id": "sub_test_hook", "status": expected_status})):
+        await payment_service.process_event(db, event.id)
+        assert sub.status == expected_status

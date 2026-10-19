@@ -44,14 +44,18 @@ def identifier(value: str, prefix: str) -> str:
     return value
 
 
-async def call(method: str, path: str, payload: dict | None = None) -> dict[str, Any]:
+async def call(method: str, path: str, payload: dict | None = None, *, key_id: str | None = None, key_secret: str | None = None) -> dict[str, Any]:
     operation = "create_plan" if method == "POST" and path == "plans" else "create_subscription" if method == "POST" and path == "subscriptions" else "pause_subscription" if path.endswith("/pause") else "resume_subscription" if path.endswith("/resume") else "fetch_subscription" if path.startswith("subscriptions/") else "fetch_plan"
-    if not settings.RAZORPAY_KEY_ID or not settings.RAZORPAY_KEY_SECRET:
+    active_key_id = str(key_id or settings.RAZORPAY_KEY_ID or "").strip().strip("'").strip('"')
+    active_key_secret = str(key_secret or settings.RAZORPAY_KEY_SECRET or "").strip().strip("'").strip('"')
+    if not active_key_id or not active_key_secret:
         raise AppError("Razorpay recurring billing is unavailable. Contact your agency.", code="PAYMENT_GATEWAY_UNAVAILABLE", status_code=503)
+    if not (active_key_id.startswith("rzp_test_") or active_key_id.startswith("rzp_live_")):
+        logger.warning("razorpay_key_format_unrecognized", key_prefix=active_key_id[:8])
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             response = await client.request(method, "https://api.razorpay.com/v1/" + path,
-                auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET), json=payload)
+                auth=(active_key_id, active_key_secret), json=payload)
             try:
                 data = response.json()
             except ValueError:
@@ -71,12 +75,28 @@ async def call(method: str, path: str, payload: dict | None = None) -> dict[str,
         raise AppError("Razorpay returned an invalid billing response. Please retry shortly.", code="RAZORPAY_INVALID_RESPONSE", status_code=503) from None
 
 
-async def create(plan, client_id) -> str:
-    remote_plan = await call("POST", "plans", {"period": "monthly", "interval": 1,
-        "item": {"name": plan.display_name, "amount": plan.price_minor, "currency": plan.currency}})
-    plan_id = identifier(str(remote_plan.get("id", "")), "plan")
+async def create(plan, client_id, *, key_id: str | None = None, key_secret: str | None = None) -> str:
+    # Use pre-configured Razorpay plan ID if configured in agency settings
+    plan_name = str(getattr(plan, "name", "")).lower()
+    configured_plan_id: str | None = None
+    if plan_name == "starter" and getattr(settings, "RAZORPAY_PLAN_STARTER", None):
+        configured_plan_id = settings.RAZORPAY_PLAN_STARTER.strip().strip("'").strip('"')
+    elif plan_name == "growth" and getattr(settings, "RAZORPAY_PLAN_GROWTH", None):
+        configured_plan_id = settings.RAZORPAY_PLAN_GROWTH.strip().strip("'").strip('"')
+    elif plan_name in ("scale", "pro") and getattr(settings, "RAZORPAY_PLAN_SCALE", None):
+        configured_plan_id = settings.RAZORPAY_PLAN_SCALE.strip().strip("'").strip('"')
+
+    if configured_plan_id:
+        plan_id = identifier(configured_plan_id, "plan")
+    else:
+        remote_plan = await call("POST", "plans", {"period": "monthly", "interval": 1,
+            "item": {"name": plan.display_name, "amount": plan.price_minor, "currency": plan.currency}},
+            key_id=key_id, key_secret=key_secret)
+        plan_id = identifier(str(remote_plan.get("id", "")), "plan")
+
     subscription = await call("POST", "subscriptions", {"plan_id": plan_id, "total_count": 120,
-        "customer_notify": True, "quantity": 1, "notes": {"creo_client_id": str(client_id)}})
+        "customer_notify": 1, "quantity": 1, "notes": {"creo_client_id": str(client_id)}},
+        key_id=key_id, key_secret=key_secret)
     return identifier(str(subscription.get("id", "")), "sub")
 
 

@@ -83,6 +83,8 @@ async def create_order(
     client_id: uuid.UUID,
     plan_id: uuid.UUID,
     gateway: PaymentProvider = PaymentProvider.RAZORPAY,
+    key_id: str | None = None,
+    key_secret: str | None = None,
 ) -> CreateOrderResponse:
     """Generate checkout order and insert subscription in 'incomplete' status."""
     plan_stmt = select(Plan).where(Plan.id == plan_id, Plan.is_active.is_(True))
@@ -146,11 +148,12 @@ async def create_order(
 
     sub_id = uuid.uuid4()
 
-    key_id = (
-        getattr(settings, "RAZORPAY_KEY_ID", "rzp_test_TO2r0YMjDZSpuC")
+    active_key_id = (
+        (key_id or getattr(settings, "RAZORPAY_KEY_ID", "rzp_test_TO2r0YMjDZSpuC")).strip().strip("'").strip('"')
         if gateway == PaymentProvider.RAZORPAY
         else getattr(settings, "STRIPE_PUBLISHABLE_KEY", "pk_test_creo_demo")
     )
+    active_key_secret = (key_secret or getattr(settings, "RAZORPAY_KEY_SECRET", "")).strip().strip("'").strip('"')
 
     if gateway == PaymentProvider.RAZORPAY:
         from app.services import razorpay_subscriptions
@@ -164,14 +167,18 @@ async def create_order(
             Subscription.gateway_subscription_id.like("sub_%")
         ).order_by(Subscription.created_at.desc()).limit(1))).scalar_one_or_none()
         if pending:
-            remote = await razorpay_subscriptions.fetch(pending.gateway_subscription_id)
-            if remote.get("status") in ("created", "authenticated", "active"):
-                if pending.plan_id != plan.id or int((pending.gateway_data or {}).get("price_minor", -1)) != plan.price_minor:
-                    raise Conflict("A recurring checkout is already open for another plan. Ask your agency to cancel it before choosing a new plan.")
-                return CreateOrderResponse(subscription_id=pending.id, gateway=gateway,
-                    order_id=pending.gateway_subscription_id, razorpay_subscription_id=pending.gateway_subscription_id,
-                    amount_minor=plan.price_minor, currency=plan.currency, key_id=key_id, recurring=True)
-        order_id = await razorpay_subscriptions.create(plan, client_id)
+            try:
+                remote = await razorpay_subscriptions.fetch(pending.gateway_subscription_id)
+                if remote.get("status") in ("created", "authenticated", "active"):
+                    if pending.plan_id != plan.id or int((pending.gateway_data or {}).get("price_minor", -1)) != plan.price_minor:
+                        raise Conflict("A recurring checkout is already open for another plan. Ask your agency to cancel it before choosing a new plan.")
+                    return CreateOrderResponse(subscription_id=pending.id, gateway=gateway,
+                        order_id=pending.gateway_subscription_id, razorpay_subscription_id=pending.gateway_subscription_id,
+                        amount_minor=plan.price_minor, currency=plan.currency, key_id=active_key_id, recurring=True)
+            except AppError:
+                pass
+        order_id = await razorpay_subscriptions.create(plan, client_id, key_id=active_key_id, key_secret=active_key_secret)
+
     else:
         from app.core.errors import AppError
         raise AppError("This payment gateway is unavailable.",
@@ -487,6 +494,21 @@ async def process_event(db: AsyncSession, event_id: uuid.UUID) -> None:
         remote = await razorpay_subscriptions.fetch(subscription.gateway_subscription_id)
         if event.event_type == "subscription.charged":
             await apply_recurring_payment(db, subscription, remote, commit=False)
+        elif event.event_type in ("subscription.cancelled", "subscription.completed"):
+            subscription.status = SubscriptionStatus.CANCELED
+            subscription.gateway_data = {**(subscription.gateway_data or {}), "mandate_status": remote.get("status", "cancelled")}
+        elif event.event_type == "subscription.halted":
+            subscription.status = SubscriptionStatus.PAST_DUE
+            subscription.gateway_data = {**(subscription.gateway_data or {}), "mandate_status": "halted"}
+        elif event.event_type in ("subscription.activated", "subscription.authenticated"):
+            if remote.get("paid_count", 0) > 0:
+                await apply_recurring_payment(db, subscription, remote, commit=False)
+            else:
+                subscription.gateway_data = {**(subscription.gateway_data or {}), "mandate_status": remote.get("status")}
+        elif event.event_type == "subscription.paused":
+            subscription.gateway_data = {**(subscription.gateway_data or {}), "mandate_status": "paused"}
+        elif event.event_type == "subscription.resumed":
+            subscription.gateway_data = {**(subscription.gateway_data or {}), "mandate_status": "active"}
         else:
             subscription.gateway_data = {**(subscription.gateway_data or {}), "mandate_status": remote.get("status")}
     elif subscription and event.event_type in SUCCESS_EVENT_TYPES:

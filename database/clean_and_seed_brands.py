@@ -109,7 +109,7 @@ for b in brands:
     """, (b["id"], b["company_name"], b["instagram_username"], b["brand_summary"]))
 
     plan_id = plan_map.get(b["plan_name"])
-    plan_amounts = {"starter": 25000.00, "growth": 50000.00, "scale": 95000.00}
+    plan_amounts = {"starter": 25000.00, "growth": 50000.00, "scale": 100000.00}
     amt = plan_amounts.get(b["plan_name"], 50000.00)
     if plan_id:
         cur.execute("""

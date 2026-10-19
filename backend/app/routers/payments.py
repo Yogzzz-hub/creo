@@ -193,17 +193,22 @@ async def list_plans(
 @router.post("/orders", response_model=CreateOrderResponse)
 @router.post("/create-order", response_model=CreateOrderResponse)
 async def create_order(
+    request: Request,
     body: CreateOrderRequest,
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> CreateOrderResponse:
     """Initialize payment checkout session and create incomplete subscription."""
     client_id = actor.client_id or actor.user_id
+    hdr_key_id = request.headers.get("x-razorpay-key-id")
+    hdr_key_secret = request.headers.get("x-razorpay-key-secret")
     return await payment_service.create_order(
         db=db,
         client_id=client_id,
         plan_id=body.plan_id,
         gateway=body.gateway,
+        key_id=hdr_key_id,
+        key_secret=hdr_key_secret,
     )
 
 

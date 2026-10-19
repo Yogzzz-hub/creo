@@ -1,4 +1,8 @@
-type Environment = Pick<Env, "ASSETS" | "API_ORIGIN" | "PUBLISHING_DISPATCH_SECRET">;
+type Environment = Pick<Env, "ASSETS" | "API_ORIGIN" | "PUBLISHING_DISPATCH_SECRET"> & {
+  RAZORPAY_KEY_ID?: string;
+  RAZORPAY_KEY_SECRET?: string;
+  RAZORPAY_WEBHOOK_SECRET?: string;
+};
 type WorkerContext = { waitUntil(work: Promise<unknown>): void };
 type EdgeCache = { match(request: Request): Promise<Response | undefined>; put(request: Request, response: Response): Promise<void> };
 
@@ -42,6 +46,13 @@ async function proxyApi(request: Request, env: Environment, context: WorkerConte
       upstream.headers.delete("Authorization");
       upstream.headers.delete("Cookie");
     }
+    // Prevent client spoofing of internal gateway credentials
+    upstream.headers.delete("X-Razorpay-Key-Id");
+    upstream.headers.delete("X-Razorpay-Key-Secret");
+    upstream.headers.delete("X-Razorpay-Webhook-Secret");
+    if (env.RAZORPAY_KEY_ID) upstream.headers.set("X-Razorpay-Key-Id", env.RAZORPAY_KEY_ID);
+    if (env.RAZORPAY_KEY_SECRET) upstream.headers.set("X-Razorpay-Key-Secret", env.RAZORPAY_KEY_SECRET);
+    if (env.RAZORPAY_WEBHOOK_SECRET) upstream.headers.set("X-Razorpay-Webhook-Secret", env.RAZORPAY_WEBHOOK_SECRET);
     const response = await fetch(upstream, { redirect: "manual" });
     if (response.status === 101) return response;
     if (isPublic && cache && response.status === 200

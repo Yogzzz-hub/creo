@@ -114,6 +114,8 @@ import {
   KeyRound,
   EyeOff,
   Volume2,
+  Maximize2,
+  Columns2,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CustomSelect } from "../../components/ui/CustomSelect";
@@ -471,7 +473,7 @@ export function AdminClientsPage() {
       : basePod;
 
     const monthlyFee = isPaid
-      ? (sc.monthly_price || (tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000))
+      ? (sc.monthly_price || (tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 100000))
       : 0;
     
     const normalizeKind = (k?: string) => (k || "").toLowerCase().trim();
@@ -9885,6 +9887,7 @@ export function AdminRevenuePage() {
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState<string | null>(null);
+  const [revenueLayout, setRevenueLayout] = useState<"enlarged" | "split">("enlarged");
 
   // Modals
   const [selectedReceipt, setSelectedReceipt] = useState<TransactionItem | null>(null);
@@ -10148,7 +10151,7 @@ export function AdminRevenuePage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             MAIN SECTION: REVENUE GROWTH GRAPH & TRANSACTION HISTORY
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="space-y-6">
+        <div className={revenueLayout === "split" ? "grid grid-cols-1 xl:grid-cols-2 gap-6 items-start" : "space-y-6"}>
           {/* Revenue Growth & Trajectory Card */}
           <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-xl flex flex-col justify-between p-6 lg:p-8 space-y-6">
             <div>
@@ -10680,7 +10683,7 @@ export function AdminPlansPage() {
   const [newPropClient, setNewPropClient] = useState("");
   const [newPropCurrentPlan, setNewPropCurrentPlan] = useState("Starter (₹25,000/mo)");
   const [newPropTargetPlan, setNewPropTargetPlan] = useState("Scale Custom Scope");
-  const [newPropStandardRate, setNewPropStandardRate] = useState("95000");
+  const [newPropStandardRate, setNewPropStandardRate] = useState("100000");
   const [newPropProposedRate, setNewPropProposedRate] = useState("85000");
   const [newPropNotes, setNewPropNotes] = useState("");
 
