@@ -70,7 +70,7 @@ function FooterWordmark() {
         whileInView={{ y: "0%", opacity: 1 }}
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
-        className="bg-gradient-to-b from-[#3A56B8] via-[#1B2C6E] to-site-abyss bg-clip-text text-center text-[27vw] font-black leading-[0.78] tracking-[-0.07em] text-transparent lg:text-[22rem]"
+        className="bg-gradient-to-b from-[#3A56B8] via-[#1B2C6E] to-site-abyss light:from-[#90997F] light:via-[#5E6A4C] bg-clip-text text-center text-[27vw] font-black leading-[0.78] tracking-[-0.07em] text-transparent lg:text-[22rem]"
       >
         creo.
       </motion.div>

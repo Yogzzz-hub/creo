@@ -134,12 +134,12 @@ export default function HeroWaveScene({ className = "" }: { className?: string }
       depthWrite: false,
       blending: AdditiveBlending,
     });
-    // Glowing additive dots on the dark canvas; inked, normally blended dots on light paper
+    // Glowing additive dots on the dark canvas; sage/charcoal dots, normally blended, on stone paper
     const applyPalette = () => {
       const light = document.documentElement.dataset.theme === "light";
-      uniforms.uBlue.value.set(light ? "#2B57E6" : "#4F7BFF");
-      uniforms.uMist.value.set(light ? "#1A3480" : "#DCE8FF");
-      uniforms.uGold.value.set(light ? "#0A72A8" : "#7DD3FC");
+      uniforms.uBlue.value.set(light ? "#6E7A5B" : "#4F7BFF");
+      uniforms.uMist.value.set(light ? "#394931" : "#DCE8FF");
+      uniforms.uGold.value.set(light ? "#C99AA9" : "#7DD3FC");
       material.blending = light ? NormalBlending : AdditiveBlending;
       material.needsUpdate = true;
     };

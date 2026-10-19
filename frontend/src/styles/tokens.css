@@ -8,8 +8,8 @@
    <html data-theme> re-skins the whole product.
 
    Dark  = the original Executive Bento (app) + Midnight Navy (public site).
-   Light = "Morning Blue": airy blue-tinted paper, white cards, cobalt accents.
-           Tonal pairs, not inversions; all text pairs pass WCAG AA (≥4.5:1).
+   Light = "Sage & Stone": warm stone paper, sage accents, charcoal slate
+           text, blush highlights. All text pairs pass WCAG AA (≥4.5:1).
 
    `hi` is the high-contrast foreground that replaced text-white / bg-white/x:
    white in dark, deep navy in light, so translucent overlays keep working.
@@ -98,44 +98,51 @@
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --hi: #0b1630;
-  --shadow-rgb: 36 62 120;
-  --shadow-k: 0.32;
+  --hi: #394931;
+  --shadow-rgb: 57 73 49;
+  --shadow-k: 0.3;
 
-  --app-void: #e9eff8;
-  --app-nested: #eef3fa;
-  --app-base: #f4f7fc;
-  --app-bento: #ffffff;
-  --app-surface: #ffffff;
-  --app-line: #d3ddec;
-  --app-line-soft: #e2e9f4;
-  --app-mist: #56647f;
-  --app-ink: #0b1630;
-  --app-ink-2: #1b2742;
-  --app-ink-3: #334262;
-  --app-accent: #2c5fd0;
-  --app-accent-soft: #1e449c;
-  --app-warm: #8a5a12;
+  /* Sage & Stone: Warm Stone backdrop, warm-paper cards, Light Sage Gray
+     lines, Charcoal Slate text. Muted Sage is too light for text (2.7:1),
+     so accent text uses a deepened sage; sage itself drives fills & glows. */
+  --app-void: #d4d0b9;
+  --app-nested: #e2dfcd;
+  --app-base: #eceadf;
+  --app-bento: #f7f6f0;
+  --app-surface: #f7f6f0;
+  --app-line: #afb59d;
+  --app-line-soft: #c9ccb8;
+  --app-mist: #56604c;
+  --app-ink: #394931;
+  --app-ink-2: #33422c;
+  --app-ink-3: #4a5841;
+  --app-accent: #5e6a4c;
+  --app-accent-soft: #394931;
+  --app-warm: #8e4a5e;
 
-  --site-bg: #f3f6fd;
-  --site-abyss: #e7edfa;
-  --site-deep: #ecf1fb;
-  --site-surface: #ffffff;
-  --site-surface-2: #eef2fc;
-  --site-line: #d3ddf2;
-  --site-mist: #4f5c7a;
-  --site-mist-2: #3a4766;
-  --site-ink: #0b1533;
-  --site-blue: #2b57e6;
-  --site-blue-deep: #2350da;
-  --site-blue-light: #2f5de0;
-  --site-peri: #3d62d0;
-  --site-ice: #1a3480;
-  --site-sky: #0a72a8;
-  --site-panel: #dde7ff;
-  --site-panel-2: #edf2ff;
-  --site-amber: #a35a00;
-  --site-rose: #be123c;
+  --site-bg: #eceadf;
+  --site-abyss: #d4d0b9;
+  --site-deep: #e4e1d2;
+  --site-surface: #f7f6f0;
+  --site-surface-2: #efede3;
+  --site-line: #afb59d;
+  --site-mist: #56604c;
+  --site-mist-2: #45503c;
+  --site-ink: #394931;
+  --site-blue: #6e7a5b;
+  --site-blue-deep: #4d5a3e;
+  --site-blue-light: #5e6a4c;
+  --site-peri: #6e7a5b;
+  --site-ice: #8e4a5e;
+  --site-sky: #90997f;
+  --site-panel: #dde1cf;
+  --site-panel-2: #f3e6ea;
+  --site-amber: #8a5a12;
+  --site-rose: #8e4a5e;
+
+  /* Palette swatches for one-off effects */
+  --sage: #90997f;
+  --blush: #f6e2e9;
 }
 
 /* ── Theme switch motion ───────────────────────────────────────────────────

@@ -4,7 +4,7 @@ import { flushSync } from "react-dom";
 export type Theme = "dark" | "light";
 
 const STORAGE_KEY = "creo-theme";
-const THEME_COLORS: Record<Theme, string> = { dark: "#050810", light: "#f4f7fc" };
+const THEME_COLORS: Record<Theme, string> = { dark: "#050810", light: "#eceadf" };
 const REVEAL_MS = 680;
 const FADE_MS = 420;
 

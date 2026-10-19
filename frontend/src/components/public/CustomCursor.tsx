@@ -101,7 +101,7 @@ export function CustomCursor() {
   const showRing = visible && mode !== "text";
   const size = RING_SIZE[mode];
   const isLabel = mode === "label";
-  const ink = theme === "light" ? "11,22,48" : "255,255,255";
+  const ink = theme === "light" ? "57,73,49" : "255,255,255";
 
   return (
     <>
@@ -123,7 +123,7 @@ export function CustomCursor() {
               : mode === "link"
                 ? `rgba(${ink},0.12)`
                 : `rgba(${ink},0)`,
-            borderColor: isLabel ? (theme === "light" ? "rgba(43,87,230,0.85)" : "rgba(220,232,255,0.85)") : `rgba(${ink},0.7)`,
+            borderColor: isLabel ? (theme === "light" ? "rgba(110,122,91,0.85)" : "rgba(220,232,255,0.85)") : `rgba(${ink},0.7)`,
           }}
           transition={{ type: "spring", stiffness: 320, damping: 26, mass: 0.6 }}
         >
