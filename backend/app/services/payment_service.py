@@ -22,7 +22,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.core.errors import Conflict, Forbidden, NotFound
+from app.core.errors import AppError, Conflict, Forbidden, NotFound
 from app.core.logging import get_logger
 from app.models.billing import PaymentEvent, Plan, Subscription, UsageCounter
 from app.models.enums import AccountStatus, DeliverableType, PaymentProvider, SubscriptionStatus, UserRole
@@ -180,7 +180,6 @@ async def create_order(
         order_id = await razorpay_subscriptions.create(plan, client_id, key_id=active_key_id, key_secret=active_key_secret)
 
     else:
-        from app.core.errors import AppError
         raise AppError("This payment gateway is unavailable.",
                        code="PAYMENT_GATEWAY_UNAVAILABLE", status_code=503)
 

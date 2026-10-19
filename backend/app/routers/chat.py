@@ -410,7 +410,7 @@ async def create_chat_group(
         "desc": payload.desc.strip() or f"Created by {creator_name} • {len(member_ids_clean)} members",
         "created_by": str(current_user_id),
         "creator_name": creator_name,
-        "creator_role": user_role,
+        "creator_role": role_val,
         "member_ids": member_ids_clean,
         "is_pod_channel": payload.is_pod_channel,
         "is_custom_group": True,
