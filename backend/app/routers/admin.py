@@ -5940,6 +5940,11 @@ class CreateNegotiationPayload(BaseModel):
     notes: str | None = None
     client_email: str | None = None
     client_id: uuid.UUID | None = None
+    standard_rate: float | int | None = None
+    proposed_rate: float | int | None = None
+    current_plan: str | None = None
+    target_plan: str | None = None
+    send_email: bool = True
 
 
 @router.post("/negotiations", response_model=dict[str, Any])
@@ -5948,35 +5953,98 @@ async def create_plan_negotiation_by_admin(
     actor: Actor = AdminActor,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Admin initiates a custom proposal/negotiation record."""
+    """Admin initiates a custom proposal/negotiation record and shares it via email."""
     client = await db.get(User, payload.client_id) if payload.client_id else None
     if not client and payload.client_email:
         client = (await db.execute(select(User).where(func.lower(User.email) == payload.client_email.strip().lower()))).scalar_one_or_none()
-    if not client or client.role != UserRole.CLIENT:
-        raise HTTPException(status_code=422, detail="Select a registered client for this proposal")
-    if actor.agency_id and client.agency_id != actor.agency_id:
+
+    if client and actor.agency_id and client.agency_id and client.agency_id != actor.agency_id:
         raise HTTPException(status_code=403, detail="Client belongs to another agency")
+
+    client_name = (client.full_name or client.email) if client else payload.client_name.strip()
+    client_email = client.email if client else (payload.client_email.strip() if payload.client_email else "")
+    client_id = client.id if client else None
+    agency_id = getattr(actor, "agency_id", None) or (client.agency_id if client else None)
+
+    rate_val = None
+    if payload.proposed_rate is not None:
+        try:
+            rate_val = int(float(payload.proposed_rate))
+        except Exception:
+            pass
+
+    prop_offer = payload.proposed_offer
+    if not prop_offer and rate_val:
+        prop_offer = f"₹{rate_val:,}/mo"
+
     neg = PlanNegotiation(
-        agency_id=getattr(actor, "agency_id", None),
-        client_id=client.id,
-        client_name=client.full_name or client.email,
-        client_email=client.email,
+        agency_id=agency_id,
+        client_id=client_id,
+        client_name=client_name or (client_email.split("@")[0] if client_email else "Client"),
+        client_email=client_email,
         target_topic=payload.target_topic,
-        proposed_offer=payload.proposed_offer,
+        proposed_offer=prop_offer,
         phone_number=payload.phone_number,
         preferred_time=payload.preferred_time,
         notes=payload.notes,
-        status="Pending Review",
+        status="Proposal Sent",
+        counter_price=rate_val,
+        agreed_amount=rate_val,
     )
     db.add(neg)
     await db.commit()
     await db.refresh(neg)
 
+    email_sent = False
+    if payload.send_email and client_email and "@" in client_email:
+        from app.services.email_service import send_custom_proposal_email
+        try:
+            email_sent = await send_custom_proposal_email(
+                to_email=client_email,
+                client_name=client_name,
+                target_plan=payload.target_plan or payload.target_topic,
+                current_plan=payload.current_plan,
+                standard_rate=payload.standard_rate,
+                proposed_rate=payload.proposed_rate or rate_val,
+                notes=payload.notes,
+            )
+        except Exception as e:
+            logger.error(f"proposal_email_dispatch_failed: {e}")
+
     return {
         "status": "success",
         "id": str(neg.id),
         "negotiation_id": str(neg.id),
-        "message": f"Custom proposal initiated for {neg.client_name}.",
+        "message": f"Custom proposal sent to {client_email}." if email_sent else f"Custom proposal initiated for {neg.client_name}.",
+        "email_sent": email_sent,
+    }
+
+
+@router.post("/negotiations/{neg_id}/resend-email", response_model=dict[str, Any])
+async def resend_proposal_email(
+    neg_id: uuid.UUID,
+    actor: Actor = AdminActor,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Resend proposal email to the client email address."""
+    neg = await db.get(PlanNegotiation, neg_id)
+    if not neg:
+        raise HTTPException(status_code=404, detail="Negotiation proposal not found")
+    if not neg.client_email or "@" not in neg.client_email:
+        raise HTTPException(status_code=400, detail="Proposal does not have a valid recipient email address")
+
+    from app.services.email_service import send_custom_proposal_email
+    email_sent = await send_custom_proposal_email(
+        to_email=neg.client_email,
+        client_name=neg.client_name,
+        target_plan=neg.target_topic,
+        proposed_rate=neg.counter_price or neg.agreed_amount,
+        notes=neg.notes or neg.counter_note,
+    )
+    return {
+        "status": "success" if email_sent else "error",
+        "message": f"Proposal email resent to {neg.client_email}" if email_sent else f"Could not send email to {neg.client_email}. Please check SMTP/Brevo config.",
+        "email_sent": email_sent,
     }
 
 

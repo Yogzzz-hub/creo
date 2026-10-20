@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Home,
+  LayoutDashboard,
   FileCheck,
   CalendarDays,
   FolderOpen,
@@ -21,6 +21,7 @@ import {
   Send,
   Building2,
   LifeBuoy,
+  ShieldCheck,
   ExternalLink,
   CheckSquare,
   CalendarCheck,
@@ -52,13 +53,7 @@ export function AdminSidebar() {
   const [loggingOut, setLoggingOut] = useState(false);
 
   const isAdminOrSuper = user?.role === "admin" || user?.role === "super_admin";
-  const isTeamLead =
-    user?.role === "team_lead" ||
-    user?.role === "lead" ||
-    location.pathname.startsWith("/lead") ||
-    location.pathname.startsWith("/team-lead") ||
-    location.pathname === "/admin/pod-dashboard" ||
-    location.pathname === "/admin/pod";
+  const isTeamLead = user?.role === "team_lead";
   const isSpecialist =
     user?.role === "team_member" ||
     user?.role === "editor" ||
@@ -87,7 +82,7 @@ export function AdminSidebar() {
 
   // Handle escape key on mobile
   useEffect(() => {
-    if (isMemberRole || isTeamLead) return;
+    if (isMemberRole) return;
     if (!mobileOpen) {
       document.body.style.overflow = "";
       return;
@@ -222,16 +217,11 @@ export function AdminSidebar() {
         location.pathname.startsWith("/admin/support/tickets")
       );
     }
-    if (href === "/admin/calendar") {
+    if (href === "/admin/sla" || href === "/admin/support/sla") {
       return (
-        location.pathname === "/admin/calendar" ||
-        location.pathname.startsWith("/admin/calendar/")
-      );
-    }
-    if (href === "/workstation/settings") {
-      return (
-        location.pathname === "/workstation/settings" ||
-        location.pathname === "/admin/settings"
+        location.pathname === "/admin/sla" ||
+        location.pathname === "/admin/support/sla" ||
+        location.pathname.startsWith("/admin/support/sla")
       );
     }
     if (location.pathname === href) return true;
@@ -242,7 +232,7 @@ export function AdminSidebar() {
     {
       label: "OVERVIEW",
       items: [
-        { label: "Home", href: "/admin", icon: Home },
+        { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
         { label: "Review", href: "/admin/deliverables", icon: FileCheck },
         { label: "Calendar", href: "/admin/calendar", icon: CalendarDays },
         { label: "Task Queue", href: "/admin/tasks", icon: ListTodo },
@@ -260,16 +250,17 @@ export function AdminSidebar() {
       label: "TEAM & CLIENTS",
       items: [
         { label: "Team Management", href: "/admin/team", icon: Users },
-        { label: "Productivity & KPIs", href: "/admin/productivity", icon: TrendingUp, badge: "KPIs" },
+        { label: "Productivity", href: "/admin/productivity", icon: TrendingUp },
         { label: "Leave Approvals", href: "/admin/leaves", icon: CalendarCheck },
         { label: "Client Directory", href: "/admin/clients", icon: Building2 },
         { label: "Instagram Publishing", href: "/admin/publishing", icon: Send },
       ],
     },
     {
-      label: "OPERATIONS",
+      label: "OPERATIONS & SLA",
       items: [
         { label: "Slack Chat", href: "/slack", icon: MessageSquare, badge: "Chat" },
+        { label: "SLA Performance", href: "/admin/support/sla", icon: ShieldCheck },
         { label: "Support Desk", href: "/admin/support", icon: LifeBuoy },
       ],
     },
@@ -281,9 +272,9 @@ export function AdminSidebar() {
 
   const leadNavSections: NavSection[] = [
     {
-      label: "",
+      label: "OVERVIEW",
       items: [
-        { label: "Home", href: "/admin/pod-dashboard", icon: Home },
+        { label: "Dashboard", href: "/admin/pod-dashboard", icon: LayoutDashboard },
         {
           label: "Review",
           href: "/lead/deliverables",
@@ -303,9 +294,10 @@ export function AdminSidebar() {
       ],
     },
     {
-      label: "OPERATIONS",
+      label: "OPERATIONS & SLA",
       items: [
         { label: "Slack Chat", href: "/slack", icon: MessageSquare, badge: "Chat" },
+        { label: "SLA Performance", href: "/admin/sla", icon: ShieldCheck },
         { label: "Support Desk", href: "/admin/support", icon: LifeBuoy },
       ],
     },
@@ -359,7 +351,7 @@ export function AdminSidebar() {
     {
       label: "OVERVIEW",
       items: [
-        { label: "Home", href: "/portal", icon: Home },
+        { label: "Dashboard", href: "/portal", icon: LayoutDashboard },
         { label: "Review", href: "/portal/deliverables", icon: FileCheck },
         { label: "Calendar", href: "/portal/calendar", icon: CalendarDays },
         { label: "Library", href: "/portal/library", icon: FolderOpen },
@@ -385,7 +377,7 @@ export function AdminSidebar() {
   const portalPreviewSection: NavSection = {
     label: "CLIENT PORTAL (PREVIEW)",
     items: [
-      { label: "Client Dashboard", href: "/portal", icon: Home },
+      { label: "Client Dashboard", href: "/portal", icon: LayoutDashboard },
       { label: "Content Deliverables", href: "/portal/deliverables", icon: FileCheck },
       { label: "Content Calendar", href: "/portal/calendar", icon: CalendarDays },
       { label: "Plans & Billing", href: "/portal/payments", icon: CreditCard },
@@ -399,7 +391,7 @@ export function AdminSidebar() {
     ? freelancerNavSections
     : isBDERole
     ? bdeNavSections
-    : isTeamLead
+    : user?.role === "team_lead"
     ? (location.pathname.startsWith("/portal") ? [portalPreviewSection, ...leadNavSections] : leadNavSections)
     : (isAdminOrSuper && location.pathname.startsWith("/portal"))
     ? [portalPreviewSection, ...adminNavSections]

@@ -18,7 +18,7 @@ export function TeamDetailsWidget({ queue: _queue }: TeamDetailsWidgetProps) {
   });
 
   const pendingLeavesCount = leavesData ? leavesData.filter((l) => l.status === "pending").length : 0;
-  const activeMembersCount = _queue?.staff?.length ?? 18;
+  const activeMembersCount = _queue?.staff?.length ?? 15;
   const activePodsCount = 3;
 
   return (
@@ -40,8 +40,8 @@ export function TeamDetailsWidget({ queue: _queue }: TeamDetailsWidgetProps) {
         </span>
       </div>
 
-      {/* 4 Squares (2x2 Grid Layout) - Clean 2-column grid on mobile and desktop */}
-      <div className="flex-1 grid grid-cols-2 gap-2 sm:gap-3 my-2.5">
+      {/* 4 Subboxes in 2x2 Grid */}
+      <div className="flex-1 grid grid-cols-2 gap-2 sm:gap-3 my-1 sm:my-2">
         {/* Box 1: Active Pods */}
         <Link
           to="/admin/team"
@@ -50,7 +50,7 @@ export function TeamDetailsWidget({ queue: _queue }: TeamDetailsWidgetProps) {
         >
           <div className="flex items-center justify-between gap-1 w-full">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-blue-600/20 text-[#7FA0D6] flex items-center justify-center font-bold group-hover/box:scale-110 transition-transform shrink-0">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-[#7FA0D6]/20 text-[#7FA0D6] flex items-center justify-center font-bold group-hover/box:scale-110 transition-transform shrink-0">
                 <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
               <h3 className="text-[11px] sm:text-xs font-extrabold text-white group-hover/box:text-[#7FA0D6] transition-colors truncate">
@@ -59,18 +59,18 @@ export function TeamDetailsWidget({ queue: _queue }: TeamDetailsWidgetProps) {
             </div>
           </div>
 
-          <div className="my-1 sm:my-1.5 flex flex-wrap items-center gap-1 sm:gap-2">
+          <div className="my-1 sm:my-1.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
             <span className="text-xl sm:text-2xl font-black text-white tracking-tight">{activePodsCount}</span>
-            <span className="text-[9.5px] sm:text-[11px] font-extrabold text-[#BCCCE6] bg-[#7FA0D6]/15 px-2 sm:px-2.5 py-0.5 rounded-full border border-[#7FA0D6]/30">
+            <span className="text-[9.5px] sm:text-[10.5px] font-extrabold text-[#BCCCE6] bg-[#7FA0D6]/15 px-2 py-0.5 rounded-full border border-[#7FA0D6]/30">
               Pods Allocated
             </span>
           </div>
 
-          <p className="hidden sm:block text-[11px] text-[#97A0B3] font-medium leading-tight">
+          <p className="text-[10px] sm:text-[11px] text-[#97A0B3] font-medium leading-relaxed my-1">
             Allocated team pods managing client accounts & deliverables.
           </p>
 
-          <div className="pt-1.5 sm:pt-2 mt-1 border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
+          <div className="pt-1.5 sm:pt-2 mt-auto border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
             <span>Pod Structure</span>
             <span>Pods →</span>
           </div>
@@ -93,18 +93,18 @@ export function TeamDetailsWidget({ queue: _queue }: TeamDetailsWidgetProps) {
             </div>
           </div>
 
-          <div className="my-1 sm:my-1.5 flex flex-wrap items-center gap-1 sm:gap-2">
+          <div className="my-1 sm:my-1.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
             <span className="text-xl sm:text-2xl font-black text-white tracking-tight">{activeMembersCount}</span>
-            <span className="text-[9.5px] sm:text-[11px] font-extrabold text-[#BCCCE6] bg-[#7FA0D6]/15 px-2 sm:px-2.5 py-0.5 rounded-full border border-[#7FA0D6]/30">
+            <span className="text-[9.5px] sm:text-[10.5px] font-extrabold text-[#BCCCE6] bg-[#7FA0D6]/15 px-2 py-0.5 rounded-full border border-[#7FA0D6]/30">
               Active Staff
             </span>
           </div>
 
-          <p className="hidden sm:block text-[11px] text-[#97A0B3] font-medium leading-tight">
+          <p className="text-[10px] sm:text-[11px] text-[#97A0B3] font-medium leading-relaxed my-1">
             Motion designers, editors & pod leads actively staffed.
           </p>
 
-          <div className="pt-1.5 sm:pt-2 mt-1 border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
+          <div className="pt-1.5 sm:pt-2 mt-auto border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
             <span>Active Roster</span>
             <span>Roster →</span>
           </div>
@@ -118,7 +118,7 @@ export function TeamDetailsWidget({ queue: _queue }: TeamDetailsWidgetProps) {
         >
           <div className="flex items-center justify-between gap-1 w-full">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-[#7FA0D6]/20 text-[#BCCCE6] flex items-center justify-center font-bold group-hover/box:scale-110 transition-transform shrink-0">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-[#7FA0D6]/20 text-[#7FA0D6] flex items-center justify-center font-bold group-hover/box:scale-110 transition-transform shrink-0">
                 <CalendarCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
               <h3 className="text-[11px] sm:text-xs font-extrabold text-white group-hover/box:text-[#7FA0D6] transition-colors truncate">
@@ -129,16 +129,16 @@ export function TeamDetailsWidget({ queue: _queue }: TeamDetailsWidgetProps) {
 
           <div className="my-1 sm:my-1.5 flex flex-wrap items-center gap-1 sm:gap-2">
             <span className="text-xl sm:text-2xl font-black text-white tracking-tight">{pendingLeavesCount}</span>
-            <span className="text-[9.5px] sm:text-[11px] font-extrabold text-[#BCCCE6] bg-[#7FA0D6]/15 px-2 sm:px-2.5 py-0.5 rounded-full border border-[#7FA0D6]/30">
+            <span className="text-[9.5px] sm:text-[10.5px] font-extrabold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 sm:px-2.5 py-0.5 rounded-full border border-[#7FA0D6]/30">
               {pendingLeavesCount > 0 ? "Review Required" : "Up To Date"}
             </span>
           </div>
 
-          <p className="hidden sm:block text-[11px] text-[#97A0B3] font-medium leading-tight">
+          <p className="text-[10px] sm:text-[11px] text-[#97A0B3] font-medium leading-relaxed my-1">
             Pending PTO leave requests & schedule management.
           </p>
 
-          <div className="pt-1.5 sm:pt-2 mt-1 border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
+          <div className="pt-1.5 sm:pt-2 mt-auto border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
             <span>Awaiting PTO</span>
             <span>Review →</span>
           </div>
@@ -163,16 +163,16 @@ export function TeamDetailsWidget({ queue: _queue }: TeamDetailsWidgetProps) {
 
           <div className="my-1 sm:my-1.5 flex flex-wrap items-center gap-1 sm:gap-2">
             <span className="text-xl sm:text-2xl font-black text-white tracking-tight">{activeMembersCount}</span>
-            <span className="text-[9.5px] sm:text-[11px] font-extrabold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 sm:px-2.5 py-0.5 rounded-full border border-[#7FA0D6]/30">
+            <span className="text-[9.5px] sm:text-[10.5px] font-extrabold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 sm:px-2.5 py-0.5 rounded-full border border-[#7FA0D6]/30">
               On-Site Active
             </span>
           </div>
 
-          <p className="hidden sm:block text-[11px] text-[#97A0B3] font-medium leading-tight">
+          <p className="text-[10px] sm:text-[11px] text-[#97A0B3] font-medium leading-relaxed my-1">
             Real-time physical office attendance & status sync.
           </p>
 
-          <div className="pt-1.5 sm:pt-2 mt-1 border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
+          <div className="pt-1.5 sm:pt-2 mt-auto border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
             <span>Presence Status</span>
             <span>Synced →</span>
           </div>
@@ -181,11 +181,11 @@ export function TeamDetailsWidget({ queue: _queue }: TeamDetailsWidgetProps) {
 
       {/* Footer Navigation */}
       <div className="pt-2.5 mt-2 border-t border-[#2A3446] flex items-center justify-between text-xs text-[#97A0B3] font-medium shrink-0" onClick={(e) => e.stopPropagation()}>
-        <span className="text-xs">Capacity & roster synchronized</span>
+        <span className="text-[10.5px]">Capacity & roster synchronized</span>
         <Link
           to="/admin/team"
           onClick={(e) => e.stopPropagation()}
-          className="text-xs font-bold text-[#7FA0D6] hover:text-blue-300 hover:translate-x-0.5 transition-all flex items-center gap-0.5 cursor-pointer"
+          className="text-[11px] font-bold text-[#7FA0D6] hover:text-blue-300 hover:translate-x-0.5 transition-all flex items-center gap-0.5 cursor-pointer"
         >
           View Full Roster &rarr;
         </Link>
@@ -193,5 +193,3 @@ export function TeamDetailsWidget({ queue: _queue }: TeamDetailsWidgetProps) {
     </div>
   );
 }
-
-

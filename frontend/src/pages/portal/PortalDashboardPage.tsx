@@ -7,7 +7,8 @@ import { useAuth } from "../../lib/auth-context";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
 import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
-import { Instagram, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import { Instagram } from "../../ui/brand-icons";
 
 /* ── Types ── */
 export interface TeamHandler {

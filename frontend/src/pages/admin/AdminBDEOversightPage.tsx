@@ -26,6 +26,7 @@ import {
   BDEPerformanceResponse,
 } from "../../lib/bde-api";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
+import { CustomSelect } from "../../components/ui/CustomSelect";
 
 export function AdminBDEOversightPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,7 +49,6 @@ export function AdminBDEOversightPage() {
   const overview = perf?.overview;
   const reps = perf?.bde_reps || [];
   const recentActivities = perf?.recent_activities || [];
-  const stages = perf?.stages || [];
   const leads = perf?.leads || [];
 
   // Filtered Leads
@@ -173,44 +173,6 @@ export function AdminBDEOversightPage() {
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="BDE Outreach" hideTitle />
       <main className="flex-1 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6 text-[#F8FAFC]">
-        {/* ── MOBILE: COMPACT HORIZONTAL STATS RIBBON (Replaces giant stacked cards on phone) ── */}
-        <div className="sm:hidden flex items-center gap-2.5 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar snap-x overscroll-x-contain -mx-1 px-1">
-          <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
-            <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-              <span>Clients Reached</span>
-              <Target className="w-3.5 h-3.5 text-blue-400" />
-            </div>
-            <div className="text-xl font-black text-white">{overview?.total_clients_reached ?? 0}</div>
-            <p className="text-[10px] text-[#7FA0D6] font-bold truncate">{overview?.reach_rate ?? 0}% reach rate</p>
-          </div>
-
-          <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
-            <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-              <span>Touchpoints</span>
-              <PhoneCall className="w-3.5 h-3.5 text-emerald-400" />
-            </div>
-            <div className="text-xl font-black text-white">{overview?.total_outreach_activities ?? 0}</div>
-            <p className="text-[10px] text-emerald-400 font-bold truncate">Interactions logged</p>
-          </div>
-
-          <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
-            <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-              <span>Active Pipeline</span>
-              <IndianRupee className="w-3.5 h-3.5 text-amber-400" />
-            </div>
-            <div className="text-xl font-black text-amber-400 truncate">{formatINR(overview?.active_pipeline_value ?? 0)}</div>
-            <p className="text-[10px] text-amber-400/80 font-bold truncate">In proposal / nego</p>
-          </div>
-
-          <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
-            <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-              <span>Won Revenue</span>
-              <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
-            </div>
-            <div className="text-xl font-black text-emerald-400 truncate">{formatINR(overview?.closed_revenue ?? 0)}</div>
-            <p className="text-[10px] text-emerald-400 font-bold truncate">{overview?.conversion_rate ?? 0}% win rate</p>
-          </div>
-        </div>
 
         {/* ── DESKTOP/TABLET: Metric Cards (Hidden on phone) ── */}
         <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -544,46 +506,20 @@ export function AdminBDEOversightPage() {
         </div>
       </div>
 
-      {/* ── Conversion Funnel Breakdown (Full Width 7-Stage Pipeline) ── */}
-      <div className="w-full p-4 sm:p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm">
-            <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
-              Stage Progression Funnel
-            </h3>
-            <div className="flex sm:grid sm:grid-cols-4 lg:grid-cols-7 overflow-x-auto gap-2 pb-1.5 no-scrollbar snap-x overscroll-x-contain">
-              {stages.map((stg) => {
-                const stageLabel = stg.stage.replace("_", " ").toUpperCase();
-                return (
-                  <div
-                    key={stg.stage}
-                    className="min-w-[105px] sm:min-w-0 flex-1 shrink-0 p-2.5 sm:p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-center snap-start"
-                  >
-                    <p className="text-[9px] sm:text-[10px] uppercase font-bold text-[#97A0B3] truncate">
-                      {stageLabel}
-                    </p>
-                    <p className="text-base sm:text-lg font-black text-white mt-0.5 sm:mt-1">{stg.count}</p>
-                    <p className="text-[9px] sm:text-[10px] text-amber-400 font-semibold truncate mt-0.5">
-                      {formatINR(stg.value)}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
 
           {/* ── High-Priority Deals in Flight (Fills the space & highlights active pipeline) ── */}
           <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm space-y-3.5">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="min-w-0">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-amber-400" />
-                  Active Deals in Flight & Proposals Under Negotiation
+                  <Flame className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>Active Deals in Flight & Proposals Under Negotiation</span>
                 </h3>
                 <p className="text-[11px] text-[#97A0B3] mt-0.5">
                   High-priority commercial opportunities actively progressing through pitch, proposal, and negotiation.
                 </p>
               </div>
-              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0 whitespace-nowrap self-start sm:self-auto">
                 {inFlightDeals.length} Deals In Flight
               </span>
             </div>
@@ -638,17 +574,17 @@ export function AdminBDEOversightPage() {
 
           {/* ── Outreach Channels & Touchpoints Efficiency ── */}
           <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm space-y-3.5">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="min-w-0">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-blue-400" />
-                  Outreach Channels & Touchpoint Engagement Breakdown
+                  <Activity className="w-4 h-4 text-blue-400 shrink-0" />
+                  <span>Outreach Channels & Touchpoint Engagement Breakdown</span>
                 </h3>
                 <p className="text-[11px] text-[#97A0B3] mt-0.5">
                   Aggregate distribution of client interaction channels logged across active sales reps.
                 </p>
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30">
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30 shrink-0 whitespace-nowrap self-start sm:self-auto">
                 Multi-Channel Mix
               </span>
             </div>
@@ -737,82 +673,87 @@ export function AdminBDEOversightPage() {
             </p>
           </div>
 
-          {/* Filters Bar */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          {/* Filters Bar: Responsive Search + 3 Dropdown Columns */}
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-2.5 w-full md:w-auto">
             {/* Search */}
-            <div className="relative">
+            <div className="relative w-full sm:w-auto sm:min-w-[190px]">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#97A0B3]" />
               <input
                 type="text"
                 placeholder="Search company or lead..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-3 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full pl-8 pr-3 py-1.5 h-8 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6]"
               />
             </div>
 
-            {/* Rep Filter */}
-            <select
-              value={selectedRep}
-              onChange={(e) => setSelectedRep(e.target.value)}
-              className="px-3 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-[#BCCCE6] focus:outline-none focus:border-[#7FA0D6]"
-            >
-              <option value="all">All BDE Agents</option>
-              {reps.map((r) => (
-                <option key={r.bde_id} value={r.bde_id}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
+            {/* Dropdowns Group: 3-column aligned grid on mobile, inline on desktop */}
+            <div className="grid grid-cols-3 sm:flex sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
+              <CustomSelect
+                size="sm"
+                value={selectedRep}
+                onChange={setSelectedRep}
+                ariaLabel="Filter by BDE Agent"
+                className="w-full !text-xs !h-8"
+                options={[
+                  { value: "all", label: "All Agents" },
+                  ...reps.map((r) => ({ value: r.bde_id, label: r.name })),
+                ]}
+              />
 
-            {/* Stage Filter */}
-            <select
-              value={selectedStage}
-              onChange={(e) => setSelectedStage(e.target.value)}
-              className="px-3 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-[#BCCCE6] focus:outline-none focus:border-[#7FA0D6]"
-            >
-              <option value="all">All Stages</option>
-              <option value="new">New Lead</option>
-              <option value="contacted">Contacted</option>
-              <option value="meeting_scheduled">Meeting Scheduled</option>
-              <option value="proposal_sent">Proposal Sent</option>
-              <option value="negotiation">Negotiation</option>
-              <option value="converted">Won / Converted</option>
-              <option value="lost">Lost</option>
-            </select>
+              <CustomSelect
+                size="sm"
+                value={selectedStage}
+                onChange={setSelectedStage}
+                ariaLabel="Filter by Lead Stage"
+                className="w-full !text-xs !h-8"
+                options={[
+                  { value: "all", label: "All Stages" },
+                  { value: "new", label: "New Lead" },
+                  { value: "contacted", label: "Contacted" },
+                  { value: "meeting_scheduled", label: "Meeting Scheduled" },
+                  { value: "proposal_sent", label: "Proposal Sent" },
+                  { value: "negotiation", label: "Negotiation" },
+                  { value: "converted", label: "Won / Converted" },
+                  { value: "lost", label: "Lost" },
+                ]}
+              />
 
-            {/* Priority Filter */}
-            <select
-              value={selectedPriority}
-              onChange={(e) => setSelectedPriority(e.target.value)}
-              className="px-3 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-[#BCCCE6] focus:outline-none focus:border-[#7FA0D6]"
-            >
-              <option value="all">All Priorities</option>
-              <option value="hot">Hot</option>
-              <option value="warm">Warm</option>
-              <option value="cold">Cold</option>
-            </select>
+              <CustomSelect
+                size="sm"
+                value={selectedPriority}
+                onChange={setSelectedPriority}
+                ariaLabel="Filter by Priority"
+                className="w-full !text-xs !h-8"
+                options={[
+                  { value: "all", label: "All Priorities" },
+                  { value: "hot", label: "Hot" },
+                  { value: "warm", label: "Warm" },
+                  { value: "cold", label: "Cold" },
+                ]}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Directory Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        {/* Directory Table with min-width and proper column spacing */}
+        <div className="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
+          <table className="w-full min-w-[760px] text-left text-xs">
             <thead>
               <tr className="border-b border-[#2A3446] text-[#97A0B3] text-[11px] uppercase tracking-wider font-semibold">
-                <th className="pb-3 pl-2">Prospect & Company</th>
-                <th className="pb-3">Assigned BDE</th>
-                <th className="pb-3 text-center">Priority</th>
-                <th className="pb-3 text-center">Stage</th>
-                <th className="pb-3 text-right">Estimated Value</th>
-                <th className="pb-3 text-center">Touchpoints</th>
-                <th className="pb-3 text-right pr-2">Last Contacted</th>
+                <th className="pb-3 pl-2 whitespace-nowrap min-w-[190px]">Prospect & Company</th>
+                <th className="pb-3 whitespace-nowrap min-w-[120px]">Assigned BDE</th>
+                <th className="pb-3 text-center whitespace-nowrap min-w-[85px]">Priority</th>
+                <th className="pb-3 text-center whitespace-nowrap min-w-[110px]">Stage</th>
+                <th className="pb-3 text-right whitespace-nowrap min-w-[110px]">Estimated Value</th>
+                <th className="pb-3 text-center whitespace-nowrap min-w-[100px]">Touchpoints</th>
+                <th className="pb-3 text-right pr-2 whitespace-nowrap min-w-[100px]">Last Contacted</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#2A3446]/60">
               {filteredLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-[#97A0B3]">
+                  <td colSpan={7} className="py-10 text-center text-[#97A0B3]">
                     No prospects matching filters found.
                   </td>
                 </tr>

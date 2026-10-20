@@ -1,4 +1,4 @@
-import { BillingPauseRequests } from "../../components/admin/BillingPauseRequests";
+import { PaymentReceiptModal } from "../../components/admin/PaymentReceiptModal";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useAuth } from "../../lib/auth-context";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -14,6 +14,7 @@ import {
   fetchPlanNegotiations,
   updatePlanNegotiation,
   createPlanNegotiation,
+  resendProposalEmail,
   fetchLeaveRequests,
   submitLeaveRequest,
   approveLeaveRequest,
@@ -75,7 +76,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Download,
-  Printer,
   SlidersHorizontal,
   ArrowUpRight,
   Play,
@@ -114,8 +114,6 @@ import {
   KeyRound,
   EyeOff,
   Volume2,
-  Maximize2,
-  Columns2,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CustomSelect } from "../../components/ui/CustomSelect";
@@ -247,6 +245,7 @@ export function AdminClientsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [deliverableSearch, setDeliverableSearch] = useState("");
   const [deliverableStatus, setDeliverableStatus] = useState<"all" | "review" | "production" | "approved">("all");
+  const [clientDetailTab, setClientDetailTab] = useState<"overview" | "deliverables" | "brand_pod">("overview");
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -473,7 +472,7 @@ export function AdminClientsPage() {
       : basePod;
 
     const monthlyFee = isPaid
-      ? (sc.monthly_price || (tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 100000))
+      ? (sc.monthly_price || (tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000))
       : 0;
     
     const normalizeKind = (k?: string) => (k || "").toLowerCase().trim();
@@ -1128,188 +1127,167 @@ export function AdminClientsPage() {
                 <p className="text-sm text-[#97A0B3]">{clientList.length ? "Try another search or change the status filter." : "Onboard your first client to get started."}</p>
               </div>
             ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6">
-              {filteredClientList.map((client) => {
-                const isNotPaidNotOnboarded = client.lifecycleStatus === "not_paid_not_onboarded";
-                const isPaidNotOnboarded = client.lifecycleStatus === "paid_not_onboarded";
-                const isOnboarded = client.lifecycleStatus === "onboarded";
+            <div className="max-h-[calc(100vh-270px)] lg:max-h-none lg:min-h-[700px] overflow-y-auto lg:overflow-visible overscroll-contain pr-1 sm:pr-2.5 lg:pr-0 scrollbar-thin scrollbar-thumb-[#2A3446] hover:scrollbar-thumb-[#7FA0D6]/40 scrollbar-track-transparent">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-5 pb-6 lg:pb-12">
+                {filteredClientList.map((client) => {
+                  const isNotPaidNotOnboarded = client.lifecycleStatus === "not_paid_not_onboarded";
+                  const isPaidNotOnboarded = client.lifecycleStatus === "paid_not_onboarded";
+                  const isOnboarded = client.lifecycleStatus === "onboarded";
 
-                return (
-                  <div
-                    key={client.id}
-                    onClick={() => setSelectedClientId(client.id)}
-                    className="bg-[#161F2D]/80 backdrop-blur-xl rounded-3xl p-5 border border-[#2A3446]/80 shadow-xl hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between gap-4"
-                  >
-                    <div className="space-y-3.5">
-                      {/* Top Header: Avatar + Title + Status Chip */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#121A26] to-[#0B111C] border border-[#2A3446] text-white font-black text-base flex items-center justify-center shadow-md group-hover:scale-105 group-hover:border-[#7FA0D6]/40 transition-all shrink-0">
+                  return (
+                    <div
+                      key={client.id}
+                      onClick={() => setSelectedClientId(client.id)}
+                      className="bg-[#161F2D]/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-2.5 sm:p-5 border border-[#2A3446]/80 shadow-md hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between gap-2 sm:gap-4"
+                    >
+                      <div className="space-y-2 sm:space-y-3.5">
+                        {/* Top Header: Avatar + Title */}
+                        <div className="flex items-start gap-1.5 sm:gap-2.5 min-w-0">
+                          <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#121A26] to-[#0B111C] border border-[#2A3446] text-white font-black text-xs sm:text-base flex items-center justify-center shadow-xs shrink-0 mt-0.5">
                             {client.initials}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <h3 className="font-bold text-base text-white group-hover:text-[#7FA0D6] transition-colors truncate" title={client.name}>
+                            <div className="flex items-center gap-1 flex-wrap min-w-0">
+                              <h3 className="font-bold text-[11px] sm:text-base text-white group-hover:text-[#7FA0D6] transition-colors break-words [overflow-wrap:anywhere] leading-snug" title={client.name}>
                                 {client.name}
                               </h3>
                               {isOnboarded && (
-                                <CheckCircle2 className="w-4 h-4 text-[#7FA0D6] fill-blue-600 text-white shrink-0" />
+                                <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-[#7FA0D6] fill-blue-600 text-white shrink-0" />
                               )}
                             </div>
-                            <span className="text-[11px] text-[#97A0B3] font-medium block truncate" title={client.industry}>
+                            <span className="text-[9px] sm:text-[11px] text-[#97A0B3] font-medium block break-words [overflow-wrap:anywhere] leading-tight" title={client.industry}>
                               {client.industry || "Digital Growth"}
                             </span>
                           </div>
                         </div>
 
-                        {/* Status Badge */}
-                        {isNotPaidNotOnboarded ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                            Unpaid
-                          </span>
-                        ) : isPaidNotOnboarded ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/30 shrink-0">
-                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
-                            Paid • Pending Onboarding
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shrink-0">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                            {client.status.replace(" RETAINER", "") || "ACTIVE"}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Bento Metric Tiles */}
-                      <div className="grid grid-cols-2 gap-2 p-2.5 bg-[#0B111C]/70 rounded-2xl border border-[#2A3446]/70 text-xs">
-                        <div className="col-span-1 bg-[#161F2D]/50 rounded-xl p-2.5 border border-[#2A3446]/40">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-0.5">Retainer</span>
-                          <span className="font-extrabold text-sm text-white block">
-                            {isNotPaidNotOnboarded ? "₹0 (Unpaid)" : `₹${(client.monthlyFee ?? 0).toLocaleString()}`}
-                            {!isNotPaidNotOnboarded && <span className="text-[10px] text-[#97A0B3] font-normal">/mo</span>}
-                          </span>
-                        </div>
-                        <div className="col-span-1 bg-[#161F2D]/50 rounded-xl p-2.5 border border-[#2A3446]/40">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-0.5">Assigned Pod</span>
-                          <span className={`font-bold text-xs truncate block ${isOnboarded ? "text-[#7FA0D6]" : "text-[#97A0B3]"}`} title={client.pod?.name || (isPaidNotOnboarded ? "Awaiting Onboarding" : "Not Assigned")}>
-                            {client.pod?.name || (isPaidNotOnboarded ? "Awaiting Onboarding" : "Not Assigned")}
-                          </span>
-                        </div>
-                        <div className="col-span-2 bg-[#161F2D]/50 rounded-xl px-2.5 py-2 border border-[#2A3446]/40 flex items-center justify-between">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Primary Contact</span>
-                          <span className="font-semibold text-xs text-white truncate max-w-[190px]" title={client.contact?.name || client.name}>
-                            {client.contact?.name || client.name}
-                          </span>
-                        </div>
-                      </div>
-
-                      {(() => {
-                        const cardNeg = (negotiationsQuery.data || []).find(
-                          (n) =>
-                            n.status === "Pending Review" &&
-                            ((n.clientId && n.clientId.toLowerCase() === client.id.toLowerCase()) ||
-                             (n.clientEmail && client.contact?.email && n.clientEmail.toLowerCase() === client.contact.email.toLowerCase()) ||
-                             (n.clientName && client.name && n.clientName.toLowerCase() === client.name.toLowerCase()))
-                        );
-                        if (!cardNeg) return null;
-                        return (
-                          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[11px] font-bold">
-                            <span className="flex items-center gap-1.5 truncate">
-                              <Zap className="size-3 text-purple-400 animate-pulse shrink-0" />
-                              <span className="truncate">Negotiation: {cardNeg.proposedOffer || "Pending"}</span>
+                        {/* Clean Readable Metrics Block (Zero Truncation) */}
+                        <div className="p-2 sm:p-2.5 bg-[#0B111C]/80 rounded-xl sm:rounded-2xl border border-[#2A3446]/60 text-xs space-y-1.5">
+                          <div className="flex items-center justify-between text-[10.5px] sm:text-xs">
+                            <span className="text-[10px] font-semibold text-[#97A0B3]">Retainer</span>
+                            <span className="font-black text-[11px] sm:text-xs text-white">
+                              {isNotPaidNotOnboarded ? "₹0" : `₹${(client.monthlyFee ?? 0).toLocaleString()}`}
+                              {!isNotPaidNotOnboarded && <span className="text-[9px] text-[#97A0B3] font-normal">/mo</span>}
                             </span>
-                            <Link
-                              to={`/admin/plans?negId=${cardNeg.id}&clientId=${client.id}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-purple-300 hover:text-white underline text-[10px] font-black shrink-0 ml-1"
-                            >
-                              Review &rarr;
-                            </Link>
                           </div>
-                        );
-                      })()}
-                    </div>
+                          <div className="flex items-center justify-between gap-1 text-[10.5px] sm:text-xs">
+                            <span className="text-[10px] font-semibold text-[#97A0B3] shrink-0">Pod</span>
+                            <span className={`font-bold text-[10px] sm:text-[11px] break-words [overflow-wrap:anywhere] text-right leading-tight ${isOnboarded ? "text-[#7FA0D6]" : "text-[#97A0B3]"}`} title={client.pod?.name || (isPaidNotOnboarded ? "Pending Intake" : "None")}>
+                              {client.pod?.name || (isPaidNotOnboarded ? "Pending Intake" : "None")}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-1 text-[10.5px] sm:text-xs pt-1 border-t border-[#2A3446]/40">
+                            <span className="text-[9.5px] font-semibold text-[#97A0B3] shrink-0">Contact</span>
+                            <span className="font-medium text-[10px] sm:text-[11px] text-[#F1F5F9] break-words [overflow-wrap:anywhere] text-right leading-tight" title={client.contact?.name || client.name}>
+                              {client.contact?.name || client.name}
+                            </span>
+                          </div>
+                        </div>
 
-                    {/* Bento Card Footer */}
-                    <div className="pt-3 border-t border-[#2A3446]/70 space-y-2.5">
-                      {/* Status line & Details link */}
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-[#97A0B3] font-medium flex items-center gap-1.5 text-[11px] truncate mr-2">
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isOnboarded ? "bg-emerald-400" : isPaidNotOnboarded ? "bg-sky-400" : "bg-amber-400"}`} />
-                          <span className="truncate">
-                            {isOnboarded
-                              ? `${(client.deliverables || []).length} Deliverables Active`
-                              : isPaidNotOnboarded
-                              ? "Awaiting Onboarding Form"
-                              : "Account Not Onboarded"}
+                        {(() => {
+                          const cardNeg = (negotiationsQuery.data || []).find(
+                            (n) =>
+                              n.status === "Pending Review" &&
+                              ((n.clientId && n.clientId.toLowerCase() === client.id.toLowerCase()) ||
+                               (n.clientEmail && client.contact?.email && n.clientEmail.toLowerCase() === client.contact.email.toLowerCase()) ||
+                               (n.clientName && client.name && n.clientName.toLowerCase() === client.name.toLowerCase()))
+                          );
+                          if (!cardNeg) return null;
+                          return (
+                            <div className="flex items-center justify-between px-2 py-1 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[9.5px] sm:text-[11px] font-bold">
+                              <span className="flex items-center gap-1 truncate">
+                                <Zap className="size-2.5 sm:size-3 text-purple-400 animate-pulse shrink-0" />
+                                <span className="truncate">{cardNeg.proposedOffer || "Negotiation"}</span>
+                              </span>
+                              <Link
+                                to={`/admin/plans?negId=${cardNeg.id}&clientId=${client.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-purple-300 hover:text-white underline text-[9px] sm:text-[10px] font-black shrink-0 ml-1"
+                              >
+                                Review &rarr;
+                              </Link>
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      {/* Bento Card Footer */}
+                      <div className="pt-1.5 sm:pt-2.5 border-t border-[#2A3446]/60 space-y-1.5 sm:space-y-2">
+                        {/* Status line & Details link */}
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-[#97A0B3] font-medium flex items-center gap-1 text-[9.5px] sm:text-[11px] min-w-0 mr-1">
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isOnboarded ? "bg-emerald-400" : isPaidNotOnboarded ? "bg-sky-400" : "bg-amber-400"}`} />
+                            <span className="break-words [overflow-wrap:anywhere] leading-tight">
+                              {isOnboarded
+                                ? `${(client.deliverables || []).length} Deliverables`
+                                : isPaidNotOnboarded
+                                ? "Intake Pending"
+                                : "Not Onboarded"}
+                            </span>
                           </span>
-                        </span>
-                        <span className="text-[#7FA0D6] group-hover:text-blue-400 font-bold text-[11px] group-hover:translate-x-0.5 transition-all shrink-0 flex items-center gap-1">
-                          Details &rarr;
-                        </span>
-                      </div>
+                          <span className="text-[#7FA0D6] group-hover:text-blue-400 font-bold text-[9.5px] sm:text-[11px] group-hover:translate-x-0.5 transition-all shrink-0 flex items-center gap-0.5">
+                            Details &rarr;
+                          </span>
+                        </div>
 
-                      {/* Action buttons row */}
-                      <div className="flex items-center gap-2 pt-1 border-t border-[#2A3446]/40">
-                        {isNotPaidNotOnboarded ? (
+                        {/* Action buttons row */}
+                        <div className="flex items-center gap-1 pt-1 border-t border-[#2A3446]/40">
+                          {isNotPaidNotOnboarded ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDirectBypassTargetClient({
+                                  id: client.id,
+                                  name: client.name,
+                                  email: client.contact?.email || "",
+                                });
+                                setDirectBypassPlanId(plansQuery.data?.[0]?.id || "");
+                                setIsDirectBypassModalOpen(true);
+                              }}
+                              className="flex-1 py-1 px-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-[9.5px] sm:text-[11px] font-bold text-center truncate cursor-pointer transition-all active:scale-95"
+                              title="Bypass payment for client who paid offline"
+                            >
+                              Bypass
+                            </button>
+                          ) : isPaidNotOnboarded ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRevokeBypass({
+                                  id: client.id,
+                                  name: client.name,
+                                });
+                              }}
+                              className="flex-1 py-1 px-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-[9.5px] sm:text-[11px] font-bold text-center truncate cursor-pointer transition-all active:scale-95"
+                              title="Revoke payment bypass and return client to Step 3"
+                            >
+                              Revoke
+                            </button>
+                          ) : null}
+
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setDirectBypassTargetClient({
-                                id: client.id,
-                                name: client.name,
-                                email: client.contact?.email || "",
-                              });
-                              setDirectBypassPlanId(plansQuery.data?.[0]?.id || "");
-                              setIsDirectBypassModalOpen(true);
-                            }}
-                            className="flex-1 py-1.5 px-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm truncate"
-                            title="Bypass payment for client who paid offline"
-                          >
-                            <Banknote className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                            <span className="truncate">Bypass Payment</span>
-                          </button>
-                        ) : isPaidNotOnboarded ? (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRevokeBypass({
+                              setSplitPaymentClient({
                                 id: client.id,
                                 name: client.name,
                               });
+                              setIsSplitModalOpen(true);
                             }}
-                            className="flex-1 py-1.5 px-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm truncate"
-                            title="Revoke payment bypass and return client to Step 3"
+                            className="flex-1 py-1 px-1 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-300 text-[9.5px] sm:text-[11px] font-bold text-center truncate cursor-pointer transition-all active:scale-95"
+                            title="Configure split payment instalments & reminders"
                           >
-                            <RotateCcw className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                            <span className="truncate">Revoke Bypass</span>
+                            Split
                           </button>
-                        ) : null}
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSplitPaymentClient({
-                              id: client.id,
-                              name: client.name,
-                            });
-                            setIsSplitModalOpen(true);
-                          }}
-                          className="flex-1 py-1.5 px-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm truncate"
-                          title="Configure split payment instalments & reminders"
-                        >
-                          <CreditCard className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                          <span className="truncate">Split Payment</span>
-                        </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
             )}
           </div>
@@ -1365,22 +1343,32 @@ export function AdminClientsPage() {
             return (
           <div className="space-y-4 sm:space-y-6 animate-fade-in">
             {/* Top Breadcrumb & Live Status */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-bold text-[#97A0B3] flex-wrap">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
+              <div className="flex items-center justify-between sm:justify-start gap-1.5 sm:gap-2 text-xs font-bold text-[#97A0B3]">
                 <button
                   type="button"
                   onClick={() => setSelectedClientId(null)}
-                  className="hover:text-[#7FA0D6] flex items-center gap-1 transition-colors cursor-pointer text-[#F1F5F9]"
+                  className="hover:text-[#7FA0D6] flex items-center gap-1.5 transition-colors cursor-pointer text-[#F1F5F9] font-bold py-1 px-1.5 -ml-1.5 rounded-lg active:bg-white/5"
                 >
-                  <ArrowLeft className="w-4 h-4" /> Back to Client Roster
+                  <ArrowLeft className="w-4 h-4 text-[#7FA0D6]" />
+                  <span className="sm:inline hidden">Back to Client Roster</span>
+                  <span className="sm:hidden inline">Roster</span>
                 </button>
-                <span>/</span>
-                <span className="text-[#97A0B3]">Client Details</span>
-                <span>/</span>
-                <span className="text-white font-black">{displayName}</span>
+                <div className="hidden sm:flex items-center gap-1.5 text-[#97A0B3]">
+                  <span>/</span>
+                  <span>Client Details</span>
+                  <span>/</span>
+                  <span className="text-white font-black truncate max-w-[200px]">{displayName}</span>
+                </div>
+                {/* Mobile version of Live Client badge */}
+                <span className="sm:hidden px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#161F2D] text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  Live Client • v2.4
+                </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => {
@@ -1393,10 +1381,10 @@ export function AdminClientsPage() {
                     setDirectBypassPlanId(plansQuery.data?.[0]?.id || "");
                     setIsDirectBypassModalOpen(true);
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
+                  className="flex-1 sm:flex-initial justify-center px-3 py-1.5 sm:py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all whitespace-nowrap active:scale-95"
                 >
-                  <Banknote className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Bypass Step 3 Payment</span>
+                  <Banknote className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>Bypass Payment</span>
                 </button>
                 <button
                   type="button"
@@ -1408,13 +1396,13 @@ export function AdminClientsPage() {
                     });
                     setIsSplitModalOpen(true);
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
+                  className="flex-1 sm:flex-initial justify-center px-3 py-1.5 sm:py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all whitespace-nowrap active:scale-95"
                 >
-                  <CreditCard className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Split Payment Schedule</span>
+                  <CreditCard className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <span>Split Payment</span>
                 </button>
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#161F2D] text-white border border-[#2A3446] flex items-center gap-1.5 shadow-2xs">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="hidden sm:flex justify-center px-3 py-2 rounded-full text-xs font-bold bg-[#161F2D] text-white border border-[#2A3446] items-center gap-1.5 shadow-2xs whitespace-nowrap">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                   Live Client • v2.4
                 </span>
               </div>
@@ -1422,17 +1410,17 @@ export function AdminClientsPage() {
 
             {/* Lifecycle Notification Banner */}
             {activeClientPendingNeg && (
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-[#161F2D] to-blue-950/40 border-2 border-purple-500/50 text-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg animate-fade-in">
-                <div className="flex items-start gap-3.5">
-                  <div className="size-9 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0 mt-0.5">
-                    <Zap className="size-5 text-purple-400 animate-pulse" />
+              <div className="p-3.5 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-[#161F2D] to-blue-950/40 border-2 border-purple-500/50 text-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shadow-lg animate-fade-in">
+                <div className="flex items-start gap-3">
+                  <div className="size-8 sm:size-9 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0 mt-0.5">
+                    <Zap className="size-4 sm:size-5 text-purple-400 animate-pulse" />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-black uppercase tracking-wider text-purple-300">
+                      <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-purple-300 truncate">
                         Client Plan Negotiation Action Required
                       </h3>
-                      <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-black">
+                      <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-black shrink-0">
                         Offer: {activeClientPendingNeg.proposedOffer || "Custom Offer"}
                       </span>
                     </div>
@@ -1448,23 +1436,33 @@ export function AdminClientsPage() {
                 </div>
                 <Link
                   to={`/admin/plans?negId=${activeClientPendingNeg.id}&clientId=${activeClient?.id}`}
-                  className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shrink-0 shadow-md transition-all hover:scale-105 active:scale-95"
+                  className="w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shrink-0 shadow-md transition-all active:scale-95"
                 >
-                  Review & Accept Retainer <ArrowUpRight className="w-4 h-4" />
+                  Review &amp; Accept Retainer <ArrowUpRight className="w-4 h-4" />
                 </Link>
               </div>
             )}
 
             {isNotPaidNotOnboarded && (
-              <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-sm">
-                <div className="flex items-start gap-3.5 min-w-0">
-                  <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                  <div className="space-y-1 min-w-0">
-                    <h3 className="text-sm font-black uppercase tracking-wider text-amber-400">
-                      user not paid and not onboarded yet
-                    </h3>
-                    <p className="text-xs text-[#F1F5F9] leading-relaxed">
+              <div className="p-3.5 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-start sm:items-center gap-3 min-w-0">
+                  <div className="size-8 sm:size-9 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+                    <AlertTriangle className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-400">
+                        Account Unpaid &amp; Intake Pending
+                      </h3>
+                      <span className="sm:hidden px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-black shrink-0">
+                        ₹0 Fee
+                      </span>
+                    </div>
+                    <p className="hidden sm:block text-xs text-[#F1F5F9] leading-relaxed mt-1">
                       This client account has logged in but has not subscribed or paid for any retainer plan and has not completed the onboarding intake. Mock data has been disabled: retainer fee is ₹0, and no creative pod or design assets are assigned.
+                    </p>
+                    <p className="sm:hidden text-[11px] text-[#97A0B3] mt-0.5">
+                      No active subscription or creative pod assigned.
                     </p>
                   </div>
                 </div>
@@ -1487,7 +1485,7 @@ export function AdminClientsPage() {
                     }
                   }}
                   disabled={isSendingDetailReminder}
-                  className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0 self-start sm:self-center disabled:opacity-60"
+                  className="w-full sm:w-auto justify-center px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0 disabled:opacity-60 active:scale-95"
                   title="Send payment reminder notification to client"
                 >
                   {isSendingDetailReminder ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bell className="w-3.5 h-3.5" />}
@@ -1497,15 +1495,25 @@ export function AdminClientsPage() {
             )}
 
             {isPaidNotOnboarded && (
-              <div className="p-4 sm:p-5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-sm">
-                <div className="flex items-start gap-3.5 min-w-0">
-                  <Sparkles className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
-                  <div className="space-y-1 min-w-0">
-                    <h3 className="text-sm font-black uppercase tracking-wider text-sky-400">
-                      user paid but not onboarded
-                    </h3>
-                    <p className="text-xs text-[#F1F5F9] leading-relaxed">
+              <div className="p-3.5 sm:p-5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-start sm:items-center gap-3 min-w-0">
+                  <div className="size-8 sm:size-9 rounded-xl bg-sky-500/20 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 text-sky-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-sky-400">
+                        Paid · Onboarding Intake Pending
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[10px] font-black shrink-0">
+                        Stage {liveBrandProfile?.onboarding_stage || 1} of 4
+                      </span>
+                    </div>
+                    <p className="hidden sm:block text-xs text-[#F1F5F9] leading-relaxed mt-1">
                       Subscription payment is verified and active ({activeClient?.tier || "Paid Plan"}). However, the client has not finalized their brand onboarding questionnaire yet (Stage {liveBrandProfile?.onboarding_stage || 1} of 4). Creative Pod and Brand DNA will be generated once intake is completed.
+                    </p>
+                    <p className="sm:hidden text-[11px] text-[#97A0B3] mt-0.5">
+                      Payment verified. Pod generation starts after intake questionnaire is completed.
                     </p>
                   </div>
                 </div>
@@ -1528,7 +1536,7 @@ export function AdminClientsPage() {
                     }
                   }}
                   disabled={isSendingDetailReminder}
-                  className="px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0 self-start sm:self-center disabled:opacity-60"
+                  className="w-full sm:w-auto justify-center px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0 disabled:opacity-60 active:scale-95"
                   title="Send onboarding reminder notification to client"
                 >
                   {isSendingDetailReminder ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bell className="w-3.5 h-3.5" />}
@@ -1538,44 +1546,44 @@ export function AdminClientsPage() {
             )}
 
             {/* Client Header Card matching Screenshot */}
-            <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-4">
-              <div className="flex flex-col gap-6">
-                <div className="flex items-start gap-4 min-w-0">
-                  <div className="w-16 h-16 rounded-2xl bg-[#0B111C] text-white font-black text-2xl flex items-center justify-center shadow-lg shrink-0">
+            <div className="bg-[#161F2D] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-3.5 sm:space-y-4">
+              <div className="flex flex-col gap-4 sm:gap-6">
+                <div className="flex items-start sm:items-center gap-3.5 sm:gap-4 min-w-0">
+                  <div className="size-12 sm:size-16 rounded-xl sm:rounded-2xl bg-[#0B111C] text-white font-black text-lg sm:text-2xl flex items-center justify-center shadow-lg shrink-0 border border-[#2A3446]">
                     {displayInitials}
                   </div>
-                  <div className="space-y-1.5 min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <h1 className="text-2xl font-black text-white tracking-tight break-words">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5">
+                      <h1 className="text-lg sm:text-2xl font-black text-white tracking-tight truncate max-w-[200px] sm:max-w-none">
                         {displayName}
                       </h1>
                       {isNotPaidNotOnboarded ? (
                         <>
-                          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider">
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider">
                             UNPAID
                           </span>
-                          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black tracking-wider flex items-center gap-1">
+                          <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black tracking-wider items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                             user not paid and not onboarded yet
                           </span>
                         </>
                       ) : isPaidNotOnboarded ? (
                         <>
-                          <span className="px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 text-[10px] font-black uppercase tracking-wider">
+                          <span className="px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 text-[10px] font-black uppercase tracking-wider">
                             {activeClient?.tierBadge || "PAID PLAN"}
                           </span>
-                          <span className="px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 text-[10px] font-black tracking-wider flex items-center gap-1">
+                          <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 text-[10px] font-black tracking-wider items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
                             user paid but not onboarded
                           </span>
                         </>
                       ) : (
                         <>
-                          <CheckCircle2 className="w-5 h-5 text-[#7FA0D6] fill-blue-600 text-white" />
-                          <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-[10px] font-black uppercase tracking-wider">
+                          <CheckCircle2 className="w-4 h-4 text-[#7FA0D6] fill-blue-600 text-white shrink-0" />
+                          <span className="px-2 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-[10px] font-black uppercase tracking-wider">
                             {activeClient?.tierBadge || "ACTIVE"}
                           </span>
-                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                          <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                             {activeClient?.status || "ACTIVE"}
                           </span>
@@ -1583,58 +1591,115 @@ export function AdminClientsPage() {
                       )}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-[#97A0B3] font-medium">
-                      <span className="flex items-center gap-1">
-                        <Folder className="w-3.5 h-3.5 text-[#97A0B3]" />
-                        {displayIndustry}
+                    <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-5 gap-y-1 text-[11px] sm:text-xs text-[#97A0B3] font-medium">
+                      <span className="flex items-center gap-1 truncate max-w-[150px] sm:max-w-none">
+                        <Folder className="w-3.5 h-3.5 text-[#97A0B3] shrink-0" />
+                        <span className="truncate">{displayIndustry}</span>
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-[#97A0B3]" />
-                        {displayTimezone}
+                        <Clock className="w-3.5 h-3.5 text-[#97A0B3] shrink-0" />
+                        <span>{displayTimezone}</span>
                       </span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-[#97A0B3]" />
-                        {activeClient?.activeSince || "Active Retainer"}
+                      <span className="hidden sm:inline">•</span>
+                      <span className="hidden sm:flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-[#97A0B3] shrink-0" />
+                        <span>{activeClient?.activeSince || "Active Retainer"}</span>
                       </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Header Action Buttons */}
-                <div className="flex flex-wrap items-center gap-2.5 w-full border-t border-[#2A3446] pt-4">
+                <div className="flex items-center gap-2 w-full border-t border-[#2A3446] pt-3 overflow-x-auto no-scrollbar">
                   <Link
                     to={`/admin/clients/${liveBrandProfile?.client_id || activeClient?.id || ""}/brand`}
-                    className="px-4 py-2.5 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-xs font-bold text-[#7FA0D6] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                    className="flex-1 sm:flex-initial justify-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-xs font-bold text-[#7FA0D6] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all whitespace-nowrap active:scale-95"
                   >
-                    <ExternalLink className="w-3.5 h-3.5 text-[#7FA0D6]" /> Brand Brief & Profile
+                    <ExternalLink className="w-3.5 h-3.5 text-[#7FA0D6] shrink-0" />
+                    <span>Brand Brief</span>
                   </Link>
                   <button
                     type="button"
                     onClick={() => setIsInvoiceModalOpen(true)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                    className="flex-1 sm:flex-initial justify-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all whitespace-nowrap active:scale-95"
                   >
-                    <FileText className="w-3.5 h-3.5 text-[#97A0B3]" /> Monthly Invoice
+                    <FileText className="w-3.5 h-3.5 text-[#97A0B3] shrink-0" />
+                    <span>Monthly Invoice</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => { setRemoveError(null); setIsCancelClientModalOpen(true); }}
-                    className="px-4 py-2.5 rounded-xl border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-xs font-bold text-rose-400 flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                    className="flex-1 sm:flex-initial justify-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-xs font-bold text-rose-400 flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all whitespace-nowrap active:scale-95"
                   >
-                    <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Remove Client & Cancel Plan
+                    <Trash2 className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                    <span className="sm:inline hidden">Remove Client &amp; Cancel Plan</span>
+                    <span className="sm:hidden inline">Remove Client</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* 4 Main Grid Cards matching Screenshot (2x2) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-6">
+            {/* Mobile View Tab Switcher (lg:hidden) */}
+            <div className="lg:hidden flex items-center p-1 bg-[#161F2D] rounded-2xl border border-[#2A3446] shadow-sm">
+              <button
+                type="button"
+                onClick={() => setClientDetailTab("overview")}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  clientDetailTab === "overview"
+                    ? "bg-[#7FA0D6] text-white shadow-sm"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Overview</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setClientDetailTab("deliverables")}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer relative ${
+                  clientDetailTab === "deliverables"
+                    ? "bg-[#7FA0D6] text-white shadow-sm"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Deliverables</span>
+                {filteredDeliverables.length > 0 && (
+                  <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${
+                    clientDetailTab === "deliverables"
+                      ? "bg-white/20 text-white"
+                      : "bg-[#7FA0D6]/20 text-[#7FA0D6]"
+                  }`}>
+                    {filteredDeliverables.length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setClientDetailTab("brand_pod")}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  clientDetailTab === "brand_pod"
+                    ? "bg-[#7FA0D6] text-white shadow-sm"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+              >
+                <Palette className="w-3.5 h-3.5" />
+                <span>Brand &amp; Pod</span>
+              </button>
+            </div>
+
+            {/* 4 Main Grid Cards matching Screenshot (2x2 on Desktop, Tabbed on Mobile) */}
+            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-6 ${
+              clientDetailTab === "deliverables" ? "hidden lg:grid" : ""
+            }`}>
               {/* CARD 1: PRIMARY CONTACT & CLIENT TEAM */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                    <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+              <div className={`bg-[#161F2D] rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-4 sm:space-y-5 flex flex-col justify-between ${
+                clientDetailTab === "brand_pod" ? "hidden lg:flex" : ""
+              }`}>
+                <div className="space-y-3.5 sm:space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-2.5 sm:pb-3 gap-2">
+                    <span className="text-[10px] sm:text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider truncate">
                       PRIMARY CONTACT &amp; CLIENT TEAM
                     </span>
                     <button
@@ -1650,39 +1715,39 @@ export function AdminClientsPage() {
                         });
                         setIsOnboardClientMemberModalOpen(true);
                       }}
-                      className="px-2.5 py-1 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-all"
+                      className="px-2.5 py-1 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-[10px] sm:text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-all whitespace-nowrap shrink-0"
                     >
-                      <Plus className="w-3.5 h-3.5" /> Onboard Team Member
+                      <Plus className="w-3.5 h-3.5" /> <span className="sm:inline hidden">Onboard</span> Team Member
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-base flex items-center justify-center shadow-md">
+                  <div className="flex items-center gap-3 sm:gap-3.5">
+                    <div className="size-10 sm:size-12 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-sm sm:text-base flex items-center justify-center shadow-md shrink-0">
                       {displayInitials[0] || "C"}
                     </div>
-                    <div>
-                      <h3 className="text-base font-bold text-white">{displaySignerName}</h3>
-                      <p className="text-xs text-[#97A0B3] font-medium">{activeClient?.contact?.title || "Account Owner & Authorized Contact"}</p>
+                    <div className="min-w-0">
+                      <h3 className="text-sm sm:text-base font-bold text-white truncate">{displaySignerName}</h3>
+                      <p className="text-[11px] sm:text-xs text-[#97A0B3] font-medium truncate">{activeClient?.contact?.title || "Account Owner & Authorized Contact"}</p>
                     </div>
                   </div>
 
-                  <div className="space-y-2 pt-2">
-                    <div className="p-3 bg-[#0B111C]/80 rounded-2xl flex items-center justify-between border border-[#2A3446] text-xs">
-                      <div className="flex items-center gap-2 text-[#97A0B3] font-medium">
-                        <Mail className="w-4 h-4 text-[#97A0B3]" />
+                  <div className="space-y-2 pt-1 sm:pt-2">
+                    <div className="p-2.5 sm:p-3 bg-[#0B111C]/80 rounded-xl sm:rounded-2xl flex items-center justify-between border border-[#2A3446] text-xs gap-2">
+                      <div className="flex items-center gap-2 text-[#97A0B3] font-medium shrink-0">
+                        <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#97A0B3]" />
                         <span>Email</span>
                       </div>
-                      <a href={`mailto:${displaySignerEmail}`} className="text-[#7FA0D6] font-bold hover:underline">
+                      <a href={`mailto:${displaySignerEmail}`} className="text-[#7FA0D6] font-bold hover:underline truncate max-w-[170px] sm:max-w-none text-right">
                         {displaySignerEmail || "N/A"}
                       </a>
                     </div>
 
-                    <div className="p-3 bg-[#0B111C]/80 rounded-2xl flex items-center justify-between border border-[#2A3446] text-xs">
-                      <div className="flex items-center gap-2 text-[#97A0B3] font-medium">
-                        <Phone className="w-4 h-4 text-[#97A0B3]" />
+                    <div className="p-2.5 sm:p-3 bg-[#0B111C]/80 rounded-xl sm:rounded-2xl flex items-center justify-between border border-[#2A3446] text-xs gap-2">
+                      <div className="flex items-center gap-2 text-[#97A0B3] font-medium shrink-0">
+                        <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#97A0B3]" />
                         <span>Direct Phone</span>
                       </div>
-                      <span className="font-bold text-white font-mono">
+                      <span className="font-bold text-white font-mono truncate text-right">
                         {liveBrandProfile?.phone ||
                           (liveBrandProfile?.brand_dna as any)?.phone ||
                           (activeClient?.contact?.phone && activeClient.contact.phone !== "+91 98401 23890" && activeClient.contact.phone !== "Not provided yet"
@@ -1704,16 +1769,16 @@ export function AdminClientsPage() {
                     </div>
 
                     {clientTeamMembersQuery.data && clientTeamMembersQuery.data.length > 0 ? (
-                      <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                      <div className="space-y-1.5 max-h-40 sm:max-h-48 overflow-y-auto pr-1">
                         {clientTeamMembersQuery.data.map((m: any) => (
                           <div
                             key={m.id}
-                            className="p-2.5 bg-[#0B111C]/90 rounded-xl border border-[#2A3446] flex items-center justify-between gap-2"
+                            className="p-2 sm:p-2.5 bg-[#0B111C]/90 rounded-xl border border-[#2A3446] flex items-center justify-between gap-2"
                           >
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5">
                                 <span className="font-bold text-xs text-white truncate">{m.full_name}</span>
-                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-500/15 text-blue-300 border border-blue-500/30 shrink-0">
                                   {m.role_title}
                                 </span>
                               </div>
@@ -1726,28 +1791,30 @@ export function AdminClientsPage() {
                         ))}
                       </div>
                     ) : (
-                      <div className="p-3 bg-[#0B111C]/40 rounded-xl border border-[#2A3446] text-center text-[11px] text-[#97A0B3]">
+                      <div className="p-2.5 sm:p-3 bg-[#0B111C]/40 rounded-xl border border-[#2A3446] text-center text-[10px] sm:text-[11px] text-[#97A0B3]">
                         No additional client team members added yet. Click &quot;Onboard Team Member&quot; to invite colleagues with credentials.
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
-                  <span className="flex items-center gap-1 text-emerald-400 font-semibold">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    Contract: {isNotPaidNotOnboarded ? "Pending Subscription" : isPaidNotOnboarded ? "Payment Confirmed" : (activeClient?.contact?.renewedDate || "Current Sprint")}
+                <div className="flex items-center justify-between text-[11px] sm:text-xs text-[#97A0B3] pt-2.5 sm:pt-3 border-t border-[#2A3446] font-medium">
+                  <span className="flex items-center gap-1 text-emerald-400 font-semibold truncate max-w-[200px] sm:max-w-none">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    Contract: {isNotPaidNotOnboarded ? "Pending" : isPaidNotOnboarded ? "Confirmed" : (activeClient?.contact?.renewedDate || "Current Sprint")}
                   </span>
                   <span>Term: {isNotPaidNotOnboarded ? "—" : `${activeClient?.contact?.termMonths ?? 12} Mo`}</span>
                 </div>
               </div>
 
               {/* CARD 2: TIER TERMS & SCOPE */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                    <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
-                      TIER TERMS & SCOPE
+              <div className={`bg-[#161F2D] rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-4 sm:space-y-5 flex flex-col justify-between ${
+                clientDetailTab === "brand_pod" ? "hidden lg:flex" : ""
+              }`}>
+                <div className="space-y-3.5 sm:space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-2.5 sm:pb-3">
+                    <span className="text-[10px] sm:text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                      TIER TERMS &amp; SCOPE
                     </span>
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${isNotPaidNotOnboarded ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : isPaidNotOnboarded ? "bg-sky-500/15 text-sky-400 border-sky-500/30" : "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30"}`}>
                       {isNotPaidNotOnboarded ? "Unpaid" : isPaidNotOnboarded ? "Payment Verified" : "Active Cycle"}
@@ -1756,22 +1823,22 @@ export function AdminClientsPage() {
 
                   <div className="flex items-baseline justify-between">
                     <div>
-                      <span className="text-3xl font-black text-white">
+                      <span className="text-2xl sm:text-3xl font-black text-white">
                         {isNotPaidNotOnboarded ? "₹0" : `₹${(activeClient?.monthlyFee ?? 0).toLocaleString()}`}
                       </span>
                       <span className="text-xs font-bold text-[#97A0B3]">
-                        {isNotPaidNotOnboarded ? " /mo (Unpaid Account)" : " /mo"}
+                        {isNotPaidNotOnboarded ? " /mo (Unpaid)" : " /mo"}
                       </span>
                     </div>
                     {activeClient?.addon && isClientOnboarded && (
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 flex items-center gap-1">
                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                         {activeClient.addon}
                       </span>
                     )}
                   </div>
 
-                  <p className="text-xs text-[#97A0B3]">
+                  <p className="text-[11px] sm:text-xs text-[#97A0B3]">
                     {isNotPaidNotOnboarded
                       ? "No active subscription billing scheduled. Client has not subscribed to any plan."
                       : isPaidNotOnboarded
@@ -1781,25 +1848,25 @@ export function AdminClientsPage() {
 
                   {/* Monthly Output Burn bar */}
                   {!isClientOnboarded ? (
-                    <div className="p-3 bg-[#0B111C]/60 rounded-2xl border border-[#2A3446] text-xs text-[#97A0B3]">
+                    <div className="p-2.5 sm:p-3 bg-[#0B111C]/60 rounded-xl sm:rounded-2xl border border-[#2A3446] text-xs text-[#97A0B3]">
                       <span className="font-bold text-white block mb-0.5">Production Queue Inactive</span>
                       {isPaidNotOnboarded
                         ? "Asset deliveries and quota burn will activate as soon as onboarding intake is complete."
                         : "Asset production and quota burn are inactive because user is not paid and not onboarded yet."}
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5 sm:space-y-2">
                       <div className="flex items-center justify-between text-xs font-bold">
                         <span className="text-[#F1F5F9]">Monthly Output Burn</span>
                         <span className="text-[#7FA0D6]">
                           {activeClient?.totalAssetsDelivered ?? 0} / {activeClient?.totalAssetsQuota ?? 0} Assets Delivered (
                           {Math.round((((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100))}%)
                           {isClientOnboarded && (
-                            <span className="text-white ml-1.5 font-extrabold">• {Math.max(0, (activeClient?.totalAssetsQuota ?? 0) - (activeClient?.totalAssetsDelivered ?? 0))} Remaining</span>
+                            <span className="text-white ml-1 font-extrabold">• {Math.max(0, (activeClient?.totalAssetsQuota ?? 0) - (activeClient?.totalAssetsDelivered ?? 0))} Left</span>
                           )}
                         </span>
                       </div>
-                      <div className="w-full bg-[#161F2D] rounded-full h-2.5 overflow-hidden">
+                      <div className="w-full bg-[#161F2D] rounded-full h-2 sm:h-2.5 overflow-hidden">
                         <div
                           className="bg-[#7FA0D6] h-full rounded-full transition-all"
                           style={{
@@ -1814,36 +1881,36 @@ export function AdminClientsPage() {
                   )}
 
                   {/* 3 Metric Counters */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 pt-1">
-                    <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
-                      <span className="text-sm font-black text-white">
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+                    <div className="p-2 sm:p-3 bg-[#0B111C] rounded-xl sm:rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
+                      <span className="text-xs sm:text-sm font-black text-white">
                         {isClientOnboarded ? `${activeClient?.postsDelivered ?? 0}/${activeClient?.postsQuota ?? 0}` : "0/0"}
                       </span>
-                      <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">POSTS</span>
+                      <span className="text-[9px] sm:text-[10px] font-bold text-[#97A0B3] block uppercase">POSTS</span>
                       {isClientOnboarded && (
-                        <span className="text-[10px] font-bold text-emerald-400 block">
+                        <span className="text-[9px] sm:text-[10px] font-bold text-emerald-400 block truncate">
                           {Math.max(0, (activeClient?.postsQuota ?? 0) - (activeClient?.postsDelivered ?? 0))} left
                         </span>
                       )}
                     </div>
-                    <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
-                      <span className="text-sm font-black text-white">
+                    <div className="p-2 sm:p-3 bg-[#0B111C] rounded-xl sm:rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
+                      <span className="text-xs sm:text-sm font-black text-white">
                         {isClientOnboarded ? `${activeClient?.reelsDelivered ?? 0}/${activeClient?.reelsQuota ?? 0}` : "0/0"}
                       </span>
-                      <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">REELS</span>
+                      <span className="text-[9px] sm:text-[10px] font-bold text-[#97A0B3] block uppercase">REELS</span>
                       {isClientOnboarded && (
-                        <span className="text-[10px] font-bold text-emerald-400 block">
+                        <span className="text-[9px] sm:text-[10px] font-bold text-emerald-400 block truncate">
                           {Math.max(0, (activeClient?.reelsQuota ?? 0) - (activeClient?.reelsDelivered ?? 0))} left
                         </span>
                       )}
                     </div>
-                    <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
-                      <span className="text-sm font-black text-white">
+                    <div className="p-2 sm:p-3 bg-[#0B111C] rounded-xl sm:rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
+                      <span className="text-xs sm:text-sm font-black text-white">
                         {isClientOnboarded ? `${activeClient?.storiesDelivered ?? 0}/${activeClient?.storiesQuota ?? 0}` : "0/0"}
                       </span>
-                      <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">STORIES</span>
+                      <span className="text-[9px] sm:text-[10px] font-bold text-[#97A0B3] block uppercase">STORIES</span>
                       {isClientOnboarded && (
-                        <span className="text-[10px] font-bold text-emerald-400 block">
+                        <span className="text-[9px] sm:text-[10px] font-bold text-emerald-400 block truncate">
                           {Math.max(0, (activeClient?.storiesQuota ?? 0) - (activeClient?.storiesDelivered ?? 0))} left
                         </span>
                       )}
@@ -1851,18 +1918,18 @@ export function AdminClientsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
-                  <span>
+                <div className="flex items-center justify-between text-[11px] sm:text-xs text-[#97A0B3] pt-2.5 sm:pt-3 border-t border-[#2A3446] font-medium">
+                  <span className="truncate max-w-[200px] sm:max-w-none">
                     {isClientOnboarded
-                      ? `Sprint ${activeClient?.sprintNumber ?? 1}: ${activeClient?.daysRemainingInSprint ?? 14} days remaining`
-                      : "Sprint: Awaiting Onboarding"}
+                      ? `Sprint ${activeClient?.sprintNumber ?? 1}: ${activeClient?.daysRemainingInSprint ?? 14} days left`
+                      : "Sprint: Awaiting Intake"}
                   </span>
                   <button
                     type="button"
                     onClick={() => showToast(isClientOnboarded ? "Opening Client Quota Ledger..." : "Quota ledger unavailable for un-onboarded client.")}
-                    className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
+                    className="text-[#7FA0D6] font-bold hover:underline cursor-pointer shrink-0"
                   >
-                    View Quota Log
+                    Quota Log
                   </button>
                 </div>
               </div>
@@ -2461,53 +2528,27 @@ export function AdminClientsPage() {
 
 
 
-        {/* 2. Monthly Invoice Modal */}
-        {isInvoiceModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <h3 className="text-base font-black text-white">Current Retainer Invoice</h3>
-                <button type="button" onClick={() => setIsInvoiceModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="p-4 bg-[#0B111C] rounded-2xl space-y-2 text-xs text-[#F1F5F9] border border-[#2A3446]">
-                <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Invoice ID:</span>
-                  <span className="font-mono font-bold text-white">INV-2024-NL-11</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Client:</span>
-                  <span className="font-bold text-white">{activeClient?.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Billing Cycle:</span>
-                  <span className="font-medium text-white">Nov 1 – Nov 30, 2024</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Payment Status:</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">
-                    PAID (ACH)
-                  </span>
-                </div>
-                <div className="flex justify-between pt-2 border-t border-[#2A3446] font-black text-sm">
-                  <span>Total Amount:</span>
-                  <span className="text-[#7FA0D6]">₹{(activeClient?.monthlyFee ?? 0).toLocaleString()}.00</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  showToast("Invoice PDF downloaded.");
-                  setIsInvoiceModalOpen(false);
-                }}
-                className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
-              >
-                Download Receipt PDF
-              </button>
-            </div>
-          </div>
-        )}
+        {/* 2. Monthly Invoice / Receipt Modal */}
+        <PaymentReceiptModal
+          receipt={
+            isInvoiceModalOpen && activeClient
+              ? {
+                  id: "INV-2024-NL-11",
+                  client: activeClient.name,
+                  clientEmail: activeClient.contact?.email,
+                  clientId: activeClient.id,
+                  amount: activeClient.monthlyFee || 25000,
+                  scope: activeClient.tier || "Starter Growth Subscription",
+                  method: activeClient.billingMethod || "Cards / Razorpay",
+                  status: "Paid",
+                  date: activeClient.contact?.renewedDate || "Oct 19, 2026",
+                  term: "1 Month",
+                  quantity: "1 Retainer",
+                }
+              : null
+          }
+          onClose={() => setIsInvoiceModalOpen(false)}
+        />
 
 
 
@@ -3617,72 +3658,80 @@ export function AdminDeliverablesPage() {
           </div>
         )}
 
-        {/* 4 KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-3.5 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+        {/* 4 KPI Cards - Compact on mobile, spacious on desktop */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+          <div className="kpi-card bg-[#161F2D] rounded-xl sm:rounded-3xl p-2.5 sm:p-5 border border-[#2A3446] hover:border-[#7FA0D6]/40 transition-all shadow-xs space-y-1 sm:space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
-                MOVED TO PRODUCTION
+              <span className="text-[9px] sm:text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
+                PRODUCTION
               </span>
-              <div className="w-7 h-7 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold shrink-0">
-                <Zap className="w-3.5 h-3.5" />
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold shrink-0">
+                <Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">{movedToProductionCount}</div>
-            <div className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-              {movedToProductionCount === 0 ? "0 active" : `${movedToProductionCount} active`}
+            <div className="flex items-baseline justify-between sm:block">
+              <div className="text-lg sm:text-3xl font-black text-white tracking-tight leading-none">{movedToProductionCount}</div>
+              <div className="text-[10px] sm:text-xs font-bold text-emerald-400 mt-0.5 sm:mt-1">
+                {movedToProductionCount === 0 ? "0 active" : `${movedToProductionCount} active`}
+              </div>
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-3.5 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-[#161F2D] rounded-xl sm:rounded-3xl p-2.5 sm:p-5 border border-[#2A3446] hover:border-amber-500/40 transition-all shadow-xs space-y-1 sm:space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
+              <span className="text-[9px] sm:text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
                 PENDING REVIEW
               </span>
-              <div className="w-7 h-7 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-bold shrink-0">
-                <Clock className="w-3.5 h-3.5" />
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-bold shrink-0">
+                <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">{pendingReviewCount}</div>
-            <div className="text-xs font-bold text-amber-400 flex items-center gap-1">
-              {pendingReviewCount === 0 ? "0 review" : `${pendingReviewCount} in review`}
+            <div className="flex items-baseline justify-between sm:block">
+              <div className="text-lg sm:text-3xl font-black text-white tracking-tight leading-none">{pendingReviewCount}</div>
+              <div className="text-[10px] sm:text-xs font-bold text-amber-400 mt-0.5 sm:mt-1">
+                {pendingReviewCount === 0 ? "0 review" : `${pendingReviewCount} in review`}
+              </div>
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-3.5 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-[#161F2D] rounded-xl sm:rounded-3xl p-2.5 sm:p-5 border border-[#2A3446] hover:border-emerald-500/40 transition-all shadow-xs space-y-1 sm:space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
+              <span className="text-[9px] sm:text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
                 APPROVED TODAY
               </span>
-              <div className="w-7 h-7 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold shrink-0">
-                <CheckCircle2 className="w-3.5 h-3.5" />
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold shrink-0">
+                <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">{approvedTodayCount}</div>
-            <div className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-              {approvedTodayCount === 0 ? "0 approved" : `${approvedTodayCount} approved`}
+            <div className="flex items-baseline justify-between sm:block">
+              <div className="text-lg sm:text-3xl font-black text-white tracking-tight leading-none">{approvedTodayCount}</div>
+              <div className="text-[10px] sm:text-xs font-bold text-emerald-400 mt-0.5 sm:mt-1">
+                {approvedTodayCount === 0 ? "0 approved" : `${approvedTodayCount} approved`}
+              </div>
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-3.5 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-[#161F2D] rounded-xl sm:rounded-3xl p-2.5 sm:p-5 border border-[#2A3446] hover:border-rose-500/40 transition-all shadow-xs space-y-1 sm:space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
-                DECLINED / REVISE
+              <span className="text-[9px] sm:text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
+                REVISIONS
               </span>
-              <div className="w-7 h-7 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center font-bold shrink-0">
-                <AlertTriangle className="w-3.5 h-3.5" />
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center font-bold shrink-0">
+                <AlertTriangle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">{declinedCount}</div>
-            <div className="text-xs font-bold text-rose-400 flex items-center gap-1">
-              {declinedCount === 0 ? "0 revisions" : `${declinedCount} revisions`}
+            <div className="flex items-baseline justify-between sm:block">
+              <div className="text-lg sm:text-3xl font-black text-white tracking-tight leading-none">{declinedCount}</div>
+              <div className="text-[10px] sm:text-xs font-bold text-rose-400 mt-0.5 sm:mt-1">
+                {declinedCount === 0 ? "0 revisions" : `${declinedCount} revisions`}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-[#161F2D] rounded-2xl p-3.5 sm:p-4 border border-[#2A3446] shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex flex-wrap items-center gap-3">
+        <div className="bg-[#161F2D] rounded-2xl p-3 sm:p-4 border border-[#2A3446] shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 flex-1">
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
               <input
@@ -3694,26 +3743,34 @@ export function AdminDeliverablesPage() {
               />
             </div>
 
-            <CustomSelect
-              value={selectedClient}
-              onChange={setSelectedClient}
-              ariaLabel="Filter Deliverable Client"
-              options={[{ value: "all", label: "All Clients" }, ...Array.from(new Set(deliverablesList.map(d => d.client))).map(client => ({ value: client, label: client }))]}
-            />
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 w-full sm:w-auto sm:flex sm:items-center">
+              <CustomSelect
+                size="sm"
+                className="w-full !px-2 sm:!px-3 !text-[11px] sm:!text-xs"
+                value={selectedClient}
+                onChange={setSelectedClient}
+                ariaLabel="Filter Deliverable Client"
+                options={[{ value: "all", label: "All Clients" }, ...Array.from(new Set(deliverablesList.map(d => d.client))).map(client => ({ value: client, label: client }))]}
+              />
 
-            <CustomSelect
-              value={statusFilter}
-              onChange={setStatusFilter}
-              ariaLabel="Filter Deliverable Status"
-              options={[{ value: "all", label: "All Statuses" }, ...Array.from(new Set(deliverablesList.map(d => d.status))).map(status => ({ value: status, label: status.replaceAll("_", " ") }))]}
-            />
+              <CustomSelect
+                size="sm"
+                className="w-full !px-2 sm:!px-3 !text-[11px] sm:!text-xs"
+                value={statusFilter}
+                onChange={setStatusFilter}
+                ariaLabel="Filter Deliverable Status"
+                options={[{ value: "all", label: "All Statuses" }, ...Array.from(new Set(deliverablesList.map(d => d.status))).map(status => ({ value: status, label: status.replaceAll("_", " ") }))]}
+              />
 
-            <CustomSelect
-              value={selectedFormat}
-              onChange={setSelectedFormat}
-              ariaLabel="Filter Deliverable Format Type"
-              options={[{ value: "all", label: "All Formats" }, ...Array.from(new Map(deliverablesList.map(d => [d.formatType, d.formatLabel])).entries()).map(([value, label]) => ({ value, label }))]}
-            />
+              <CustomSelect
+                size="sm"
+                className="w-full !px-2 sm:!px-3 !text-[11px] sm:!text-xs"
+                value={selectedFormat}
+                onChange={setSelectedFormat}
+                ariaLabel="Filter Deliverable Format Type"
+                options={[{ value: "all", label: "All Formats" }, ...Array.from(new Map(deliverablesList.map(d => [d.formatType, d.formatLabel])).entries()).map(([value, label]) => ({ value, label }))]}
+              />
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -3740,7 +3797,7 @@ export function AdminDeliverablesPage() {
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog.Root>
-        {/* 3-Column Deliverables Grid or Empty State */}
+        {/* 2-Column on Mobile, 3-Column on Desktop in a Fixed-Height Scrollable Container */}
         {!deliverablesQuery.isPending && !deliverablesQuery.isError && filteredDeliverables.length === 0 ? (
           <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] p-12 text-center text-[#97A0B3] space-y-3">
             <Layers className="w-10 h-10 text-[#2A3446] mx-auto" />
@@ -3750,110 +3807,113 @@ export function AdminDeliverablesPage() {
             </p>
           </div>
         ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6">
+        <div className="sm:max-h-[calc(100vh-270px)] lg:max-h-none lg:min-h-[700px] sm:overflow-y-auto lg:overflow-visible sm:overscroll-contain pr-1 sm:pr-2.5 lg:pr-0 scrollbar-thin scrollbar-thumb-[#2A3446] hover:scrollbar-thumb-[#7FA0D6]/40 scrollbar-track-transparent">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 sm:gap-4 lg:gap-5 pb-6 lg:pb-12">
           {filteredDeliverables.map((item) => (
             <div
               key={item.id}
-              className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all overflow-hidden flex flex-col justify-between"
+              className="bg-[#161F2D] rounded-2xl sm:rounded-3xl border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all overflow-hidden flex flex-col justify-between"
             >
               {/* Card Header */}
-              <div className="p-5 pb-3">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2.5">
+              <div className="p-3.5 sm:p-5 pb-2.5 sm:pb-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                     <div
-                      className={`w-7 h-7 rounded-xl ${item.clientBg} text-white font-black text-xs flex items-center justify-center shadow-xs`}
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl ${item.clientBg} text-white font-black text-xs flex items-center justify-center shadow-xs shrink-0`}
                     >
                       {item.clientInitial}
                     </div>
-                    <div>
-                      <div className="text-xs font-black text-white leading-tight">
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm font-black text-white leading-tight truncate">
                         {item.client}
                       </div>
-                      <div className="text-[10px] font-bold text-[#97A0B3]">
+                      <div className="text-[10px] sm:text-xs font-semibold text-[#97A0B3] truncate">
                         {item.assetCode}
                       </div>
                     </div>
                   </div>
                   <span
-                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${item.statusBadge}`}
+                    className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider border shrink-0 ${item.statusBadge}`}
                   >
                     {item.statusLabel}
                   </span>
                 </div>
 
                 {/* Deliverable Title & Format */}
-                <h3 className="text-sm font-black text-white line-clamp-2 mb-1.5">
+                <h3 className="text-xs sm:text-sm font-black text-white line-clamp-1 sm:line-clamp-2 leading-snug">
                   {item.title}
                 </h3>
-                <PublishingControl deliverableId={item.id} />
+                <div className="hidden sm:block">
+                  <PublishingControl deliverableId={item.id} />
+                </div>
                 <p className="text-[11px] font-semibold text-[#97A0B3] flex items-center gap-1.5">
                   <Tag className="w-3 h-3 text-[#97A0B3]" />
-                  {item.format}
+                  <span className="truncate">{item.format}</span>
                 </p>
               </div>
 
               {/* Media Thumbnail with Preview Overlay */}
               <div
-                className="relative h-44 bg-gray-900 group cursor-pointer overflow-hidden mx-5 rounded-2xl"
+                className="relative h-40 sm:h-44 bg-gray-900 group cursor-pointer overflow-hidden mx-3 sm:mx-5 rounded-xl sm:rounded-2xl"
                 onClick={() => setPreviewItem(item)}
               >
                 <DeliverableMedia url={item.previewUrl} isVideo={!!item.is_video} title={item.title} controls={false} className="w-full h-full" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="px-4 py-2 bg-[#161F2D]/90 backdrop-blur-md rounded-xl text-xs font-black text-white shadow-xl flex items-center gap-1.5">
+                  <span className="px-3 py-1.5 sm:px-4 sm:py-2 bg-[#161F2D]/90 backdrop-blur-md rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-black text-white shadow-xl flex items-center gap-1.5">
                     <Eye className="w-3.5 h-3.5 text-[#7FA0D6]" /> Quick Preview
                   </span>
                 </div>
               </div>
 
               {/* Card Meta & Actions */}
-              <div className="p-5 pt-4 space-y-3.5">
+              <div className="p-3.5 sm:p-5 pt-2.5 sm:pt-4 space-y-2.5 sm:space-y-3.5">
                 {/* Pod & Retainer Info */}
-                <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-50">
-                  <div className="flex items-center gap-1.5">
+                <div className="flex items-center justify-between text-xs pt-1.5 border-t border-[#2A3446]/40">
+                  <div className="flex items-center gap-1.5 truncate mr-1">
                     <span className="font-bold text-[#97A0B3] text-[10px] uppercase">
                       Pod:
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] text-[11px] font-black">
-                      {item.pod} {item.podLead ? `(${item.podLead})` : ""}
+                    <span className="px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] text-xs font-bold truncate">
+                      {item.pod}
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold text-[#97A0B3]">
+                  <span className="text-xs font-bold text-[#97A0B3] shrink-0">
                     {item.retainer}
                   </span>
                 </div>
 
                 {/* SLA Target / Status */}
-                <div className="flex items-center justify-between text-xs bg-[#0B111C]/80 p-2.5 rounded-xl border border-[#2A3446]">
-                  <span className={`text-[11px] ${item.slaColor}`}>
+                <div className="flex items-center justify-between text-xs bg-[#0B111C]/80 p-2 sm:p-2.5 rounded-xl border border-[#2A3446]">
+                  <span className={`text-xs font-bold truncate mr-1 ${item.slaColor}`}>
                     {item.slaText}
                   </span>
                   <button
                     type="button"
                     onClick={() => setCommentModalItem(item)}
-                    className="text-[#97A0B3] hover:text-[#7FA0D6] text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                    className="text-[#97A0B3] hover:text-[#7FA0D6] text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0"
                   >
                     {item.voice_note_url ? (
                       <span className="flex items-center gap-1 text-indigo-400 font-bold bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/30">
-                        <Volume2 className="w-3.5 h-3.5" /> Voice note
+                        <Volume2 className="w-3.5 h-3.5" /> Audio
                       </span>
                     ) : (
                       <>
                         <MessageSquare className="w-3.5 h-3.5" />
-                        Review notes
+                        Notes
                       </>
                     )}
                   </button>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-2 pt-1">
+                <div className="flex items-center gap-2 pt-0.5">
                   {item.status === "pending_qa" ? (
                     <>
                       <button
                         type="button"
                         disabled={reviewBusy || !item.previewUrl}
                         onClick={() => void handleApprove(item.id, item.title)}
-                        className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="flex-1 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" /> Approve
                       </button>
@@ -3861,9 +3921,9 @@ export function AdminDeliverablesPage() {
                         type="button"
                         disabled={reviewBusy || !item.previewUrl}
                         onClick={() => handleDecline(item.id, item.title)}
-                        className="flex-1 py-2.5 bg-[#161F2D] hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="flex-1 py-2 sm:py-2.5 bg-[#0B111C] hover:bg-rose-500/15 border border-[#2A3446] hover:border-rose-500/40 text-[#F1F5F9] hover:text-rose-400 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        <X className="w-3.5 h-3.5 stroke-[2.5]" /> Request Edit
+                        <X className="w-3.5 h-3.5 stroke-[2.5]" /> Edit
                       </button>
                     </>
                   ) : (
@@ -3874,13 +3934,13 @@ export function AdminDeliverablesPage() {
                       className="flex-1 py-2 bg-[#161F2D] hover:bg-rose-500/10 border border-rose-500/30 hover:border-rose-500 text-rose-400 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40"
                       title="Withdraw deliverable with minor issues even after approval"
                     >
-                      <Archive className="w-3.5 h-3.5" /> Withdraw / Delete
+                      <Archive className="w-3.5 h-3.5" /> Withdraw
                     </button>
                   )}
                   <button
                     type="button"
                     onClick={() => setHistoryModalItem({ id: item.id, title: item.title })}
-                    className="p-2.5 bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] rounded-xl text-[#7FA0D6] hover:text-white transition-colors cursor-pointer shrink-0"
+                    className="p-2 sm:p-2.5 bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] rounded-xl text-[#7FA0D6] hover:text-white transition-colors cursor-pointer shrink-0"
                     title="View Activity & Version History"
                   >
                     <History className="w-3.5 h-3.5" />
@@ -3889,6 +3949,7 @@ export function AdminDeliverablesPage() {
               </div>
             </div>
           ))}
+          </div>
         </div>
         )}
 
@@ -4088,8 +4149,8 @@ export function AdminTasksPage() {
   const [priorityFilter, _setPriorityFilter] = useState<"all" | "urgent" | "high">("all"); void _setPriorityFilter;
   const [assigneeTypeFilter, setAssigneeTypeFilter] = useState<"all" | "freelancers" | "in_house">("all");
   const [selectedFreelancer, setSelectedFreelancer] = useState("all");
-  const [viewMode, setViewMode] = useState<"kanban" | "freelancer_roster">("kanban");
-  const [mobileKanbanCol, setMobileKanbanCol] = useState<"all" | "todo" | "in_progress" | "under_review" | "approved">("all");
+  const [viewMode, setViewMode] = useState<"kanban" | "freelancer_roster">("kanban"); void setViewMode;
+  const [mobileKanbanCol, setMobileKanbanCol] = useState<"todo" | "in_progress" | "under_review" | "approved">("in_progress");
   const [toast, setToast] = useState<string | null>(null);
   const [previewTask, setPreviewTask] = useState<any | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -4133,7 +4194,6 @@ export function AdminTasksPage() {
   // Queries
   const {
     data: kanbanData,
-    isFetching: isTasksFetching,
     refetch: refetchTasks,
   } = useQuery({
     queryKey: ["admin-kanban-tasks"],
@@ -4143,7 +4203,6 @@ export function AdminTasksPage() {
 
   const {
     data: freelancersList = [],
-    refetch: refetchFreelancers,
   } = useQuery({
     queryKey: ["admin-freelancers-queue"],
     queryFn: () => fetchFreelancers(),
@@ -4397,7 +4456,6 @@ export function AdminTasksPage() {
 
   // Calculations for KPI strip
   const freelancerTasks = useMemo(() => tasks.filter((t) => t.isFreelancer), [tasks]);
-  const inHouseTasks = useMemo(() => tasks.filter((t) => !t.isFreelancer), [tasks]);
 
   const inProductionFreelancersCount = freelancerTasks.filter(
     (t) => t.column === "in_progress" || t.rawStatus === "in_production"
@@ -4489,72 +4547,10 @@ export function AdminTasksPage() {
       )}
 
       <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1550px] w-full mx-auto space-y-5 sm:space-y-6">
-        
-        {/* Global Controls & View Switcher */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Top row: Live Sync badge on desktop; on mobile includes compact View Switcher & Refresh */}
-          <div className="flex items-center justify-between w-full sm:w-auto gap-2">
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
-              <span className={`w-2 h-2 rounded-full bg-[#7FA0D6] ${isTasksFetching ? "animate-spin" : "animate-pulse"}`} />
-              Live Sync
-            </span>
-
-            {/* Mobile View Switcher & Refresh Controls (paired with Live Sync) */}
-            <div className="flex items-center gap-2 sm:hidden">
-              <div className="p-1 bg-[#161F2D] rounded-2xl border border-[#2A3446] flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("kanban")}
-                  className="px-2.5 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1 bg-[#7FA0D6] text-white shadow-xs"
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" /> Board
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  refetchTasks();
-                  refetchFreelancers();
-                  setToast("Tasks synchronized with server.");
-                }}
-                className="p-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#97A0B3] hover:text-white transition-colors"
-                title="Refresh Task Queue"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isTasksFetching ? "animate-spin text-purple-400" : ""}`} />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
-            {/* Desktop View Switcher & Refresh Controls */}
-            <div className="hidden sm:flex items-center gap-2.5">
-              <div className="p-1 bg-[#161F2D] rounded-2xl border border-[#2A3446] flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("kanban")}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-[#7FA0D6] text-white shadow-sm"
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" /> Pipeline Board
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  refetchTasks();
-                  refetchFreelancers();
-                  setToast("Tasks synchronized with server.");
-                }}
-                className="p-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#97A0B3] hover:text-white transition-colors"
-                title="Refresh Task Queue"
-              >
-                <RefreshCw className={`w-4 h-4 ${isTasksFetching ? "animate-spin text-purple-400" : ""}`} />
-              </button>
-            </div>
-
-            {/* Action Buttons: 2-column grid on mobile for perfect alignment, inline on desktop */}
-            <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center sm:gap-2.5">
+        {/* Global Controls & Action Buttons */}
+        <div className="flex items-center justify-end gap-2.5 w-full">
+          {/* Action Buttons: 2-column grid on mobile for perfect alignment, inline on desktop */}
+          <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center sm:gap-2.5">
               {/* Assign Freelancer Task CTA */}
               <button
                 type="button"
@@ -4576,141 +4572,105 @@ export function AdminTasksPage() {
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Filter Bar with Assignee Category Segmented Tabs */}
-        <div className="bg-[#161F2D]/60 p-3 sm:p-3.5 rounded-2xl border border-[#2A3446]/80 backdrop-blur-md space-y-3">
-          {/* Top Row: Assignee Category Segmented Tabs & Active Results Counter */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-              <button
-                type="button"
-                onClick={() => {
-                  setAssigneeTypeFilter("all");
-                  setSelectedFreelancer("all");
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
-                  assigneeTypeFilter === "all"
-                    ? "bg-white/10 text-white border border-white/20 shadow-sm"
-                    : "text-[#97A0B3] hover:text-white"
-                }`}
-              >
-                <span>All Workload</span>
-                <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-[#0B111C] text-[#97A0B3]">
-                  {tasks.length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setAssigneeTypeFilter("freelancers")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
-                  assigneeTypeFilter === "freelancers"
-                    ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
-                    : "text-purple-300 hover:text-white hover:bg-purple-500/10"
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                <span>Outsourced Freelancers</span>
-                <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-purple-950 text-purple-200 border border-purple-500/40">
-                  {freelancerTasks.length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setAssigneeTypeFilter("in_house")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
-                  assigneeTypeFilter === "in_house"
-                    ? "bg-[#7FA0D6] text-white shadow-sm"
-                    : "text-[#97A0B3] hover:text-white"
-                }`}
-              >
-                <Users className="w-3.5 h-3.5" />
-                <span>In-House Team</span>
-                <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-[#0B111C] text-[#97A0B3]">
-                  {inHouseTasks.length}
-                </span>
-              </button>
-            </div>
-
-            {/* Quick Status / Reset Filters */}
-            <div className="flex items-center gap-2 text-xs">
-              {(searchQuery || selectedFreelancer !== "all" || selectedPod !== "all" || selectedClient !== "all") ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setSelectedFreelancer("all");
-                    setSelectedPod("all");
-                    setSelectedClient("all");
-                  }}
-                  className="px-2.5 py-1 rounded-lg text-xs font-semibold text-[#7FA0D6] hover:text-white hover:bg-[#7FA0D6]/10 transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  <span>Reset Filters</span>
-                  <span className="text-[10px] text-[#97A0B3]">({filteredTasks.length} of {tasks.length})</span>
-                </button>
-              ) : (
-                <span className="text-xs font-semibold text-[#97A0B3]">
-                  Showing <span className="text-white font-bold">{filteredTasks.length}</span> {filteredTasks.length === 1 ? "task" : "tasks"}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Bottom Row: Search & Dropdowns in a unified, aligned row */}
-          <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2.5 pt-2.5 border-t border-[#2A3446]/60">
+        {/* Unified Minimal Filter Bar */}
+        <div className="bg-[#161F2D]/60 p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]/80 backdrop-blur-md space-y-2.5">
+          {/* Main Controls Row: Search + Minimal Dropdowns */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5">
             {/* Search Input */}
-            <div className="relative w-full sm:flex-1 sm:min-w-[220px]">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
               <input
                 type="text"
                 placeholder="Search tasks, specialists, clients..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3 h-[42px] w-full rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs sm:text-sm font-medium text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-2 focus:ring-[#7FA0D6]/20 transition-all"
+                className="pl-9 pr-8 h-9 w-full rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs sm:text-sm font-medium text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-2 focus:ring-[#7FA0D6]/20 transition-all"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
-            {/* Client Filter */}
-            <div className="w-full sm:w-auto shrink-0 min-w-[150px]">
-              <CustomSelect
-                value={selectedClient}
-                onChange={setSelectedClient}
-                ariaLabel="Filter Client Brand"
-                options={clientOptions}
-                className="!min-h-[42px] !h-[42px] !text-xs sm:!text-sm w-full"
-              />
-            </div>
-
-            {/* Pod Filter */}
-            <div className="w-full sm:w-auto shrink-0 min-w-[160px]">
-              <CustomSelect
-                value={selectedPod}
-                onChange={setSelectedPod}
-                ariaLabel="Filter Task Pod"
-                options={[
-                  { value: "all", label: "All Pods (A, B, C)" },
-                  { value: "Pod A", label: "Pod A (Brand Strategy)" },
-                  { value: "Pod B", label: "Pod B (Performance Video)" },
-                  { value: "Pod C", label: "Pod C (3D Motion)" },
-                ]}
-                className="!min-h-[42px] !h-[42px] !text-xs sm:!text-sm w-full"
-              />
-            </div>
-
-            {/* If viewing freelancers or all, show Freelancer specialist filter */}
-            {(assigneeTypeFilter === "freelancers" || assigneeTypeFilter === "all") && (
-              <div className="w-full sm:w-auto shrink-0 min-w-[200px]">
+            {/* Dropdowns Group: Minimal 2-column on phone, inline on desktop */}
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 shrink-0">
+              {/* 1. Client Filter ("Client-wise to choose client") */}
+              <div className="w-full sm:w-[170px]">
                 <CustomSelect
-                  value={selectedFreelancer}
-                  onChange={setSelectedFreelancer}
-                  ariaLabel="Filter Freelancer Specialist"
-                  options={freelancerFilterOptions}
-                  className="!min-h-[42px] !h-[42px] !text-xs sm:!text-sm w-full"
+                  value={selectedClient}
+                  onChange={setSelectedClient}
+                  ariaLabel="Filter Client Brand"
+                  size="sm"
+                  icon={<Briefcase className="w-3.5 h-3.5 text-[#7FA0D6]" />}
+                  options={clientOptions}
+                  className="!min-h-[36px] !h-9 !text-xs w-full"
                 />
               </div>
+
+              {/* 2. Workload / Category Filter ("All the options as dropdown and make it minimal") */}
+              <div className="w-full sm:w-[190px]">
+                <CustomSelect
+                  value={assigneeTypeFilter}
+                  onChange={(val) => {
+                    setAssigneeTypeFilter(val as any);
+                    if (val !== "freelancers") setSelectedFreelancer("all");
+                  }}
+                  ariaLabel="Filter Workload Category"
+                  size="sm"
+                  icon={<Sparkles className="w-3.5 h-3.5 text-purple-400" />}
+                  options={[
+                    { value: "all", label: "All Workload" },
+                    { value: "freelancers", label: "Freelancers" },
+                    { value: "in_house", label: "In-House" },
+                  ]}
+                  className="!min-h-[36px] !h-9 !text-xs w-full"
+                />
+              </div>
+
+              {/* 3. Specialist Filter (Shown when Freelancers active) */}
+              {assigneeTypeFilter === "freelancers" && (
+                <div className="col-span-2 sm:w-[180px]">
+                  <CustomSelect
+                    value={selectedFreelancer}
+                    onChange={setSelectedFreelancer}
+                    ariaLabel="Filter Specialist"
+                    size="sm"
+                    icon={<UserCheck className="w-3.5 h-3.5 text-purple-400" />}
+                    options={freelancerFilterOptions}
+                    className="!min-h-[36px] !h-9 !text-xs w-full"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Status & Reset Row */}
+          <div className="flex items-center justify-between text-xs pt-1 px-1 border-t border-[#2A3446]/40">
+            <span className="text-xs font-semibold text-[#97A0B3]">
+              Showing <span className="text-white font-bold">{filteredTasks.length}</span> {filteredTasks.length === 1 ? "task" : "tasks"}
+            </span>
+
+            {(searchQuery || selectedFreelancer !== "all" || selectedPod !== "all" || selectedClient !== "all" || assigneeTypeFilter !== "all") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedFreelancer("all");
+                  setSelectedPod("all");
+                  setSelectedClient("all");
+                  setAssigneeTypeFilter("all");
+                }}
+                className="px-2 py-0.5 rounded-lg text-xs font-semibold text-[#7FA0D6] hover:text-white hover:bg-[#7FA0D6]/10 transition-all flex items-center gap-1 cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+                <span>Reset Filters</span>
+              </button>
             )}
           </div>
         </div>
@@ -4771,30 +4731,24 @@ export function AdminTasksPage() {
         {viewMode === "kanban" && (
           <div className="space-y-4">
             {/* Mobile Column Switcher */}
-            <div className="sm:hidden flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <div className="sm:hidden grid grid-cols-4 gap-1.5 w-full pb-1">
               {[
-                { id: "all", label: "All Columns", count: filteredTasks.length },
-                { id: "todo", label: "To Do", count: todoTasks.length },
-                { id: "in_progress", label: "In Process", count: inProgressTasks.length },
-                { id: "under_review", label: "Review", count: underReviewTasks.length },
-                { id: "approved", label: "Done", count: approvedTasks.length },
+                { id: "todo", label: "To Do" },
+                { id: "in_progress", label: "In Process" },
+                { id: "under_review", label: "Review" },
+                { id: "approved", label: "Done" },
               ].map((col) => (
                 <button
                   key={col.id}
                   type="button"
                   onClick={() => setMobileKanbanCol(col.id as any)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                  className={`w-full py-2 px-1 rounded-xl text-[11px] min-[380px]:text-xs font-bold text-center justify-center transition-all cursor-pointer flex items-center truncate ${
                     mobileKanbanCol === col.id
-                      ? "bg-[#7FA0D6] text-white shadow-sm"
-                      : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446]"
+                      ? "bg-[#7FA0D6] text-white shadow-sm font-extrabold"
+                      : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446] hover:text-white"
                   }`}
                 >
-                  <span>{col.label}</span>
-                  <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
-                    mobileKanbanCol === col.id ? "bg-white/20 text-white" : "bg-[#0B111C] text-[#97A0B3]"
-                  }`}>
-                    {col.count}
-                  </span>
+                  <span className="truncate w-full text-center">{col.label}</span>
                 </button>
               ))}
             </div>
@@ -4804,7 +4758,7 @@ export function AdminTasksPage() {
               
               {/* Column 1: TO DO (Backlog / Assigned) */}
               <div className={`bg-[#161F2D]/60 rounded-3xl border border-[#2A3446]/80 shadow-xl overflow-hidden flex flex-col h-[calc(100vh-270px)] min-h-[560px] max-h-[820px] ${
-                mobileKanbanCol !== "all" && mobileKanbanCol !== "todo" ? "hidden sm:flex" : "flex"
+                mobileKanbanCol !== "todo" ? "hidden sm:flex" : "flex"
               }`}>
                 <div className="p-4 bg-[#161F2D]/95 backdrop-blur-md border-b border-[#2A3446]/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
@@ -4855,7 +4809,7 @@ export function AdminTasksPage() {
 
               {/* Column 2: IN PRODUCTION (Active WIP / In Process) */}
               <div className={`bg-[#161F2D]/60 rounded-3xl border border-[#2A3446]/80 shadow-xl overflow-hidden flex flex-col h-[calc(100vh-270px)] min-h-[560px] max-h-[820px] ${
-                mobileKanbanCol !== "all" && mobileKanbanCol !== "in_progress" ? "hidden sm:flex" : "flex"
+                mobileKanbanCol !== "in_progress" ? "hidden sm:flex" : "flex"
               }`}>
                 <div className="p-4 bg-[#161F2D]/95 backdrop-blur-md border-b border-[#2A3446]/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
@@ -4906,7 +4860,7 @@ export function AdminTasksPage() {
 
               {/* Column 3: UNDER REVIEW (Internal QA & Client Review) */}
               <div className={`bg-[#161F2D]/60 rounded-3xl border border-[#2A3446]/80 shadow-xl overflow-hidden flex flex-col h-[calc(100vh-270px)] min-h-[560px] max-h-[820px] ${
-                mobileKanbanCol !== "all" && mobileKanbanCol !== "under_review" ? "hidden sm:flex" : "flex"
+                mobileKanbanCol !== "under_review" ? "hidden sm:flex" : "flex"
               }`}>
                 <div className="p-4 bg-[#161F2D]/95 backdrop-blur-md border-b border-[#2A3446]/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
@@ -4957,7 +4911,7 @@ export function AdminTasksPage() {
 
               {/* Column 4: APPROVED / DONE */}
               <div className={`bg-[#161F2D]/60 rounded-3xl border border-[#2A3446]/80 shadow-xl overflow-hidden flex flex-col h-[calc(100vh-270px)] min-h-[560px] max-h-[820px] ${
-                mobileKanbanCol !== "all" && mobileKanbanCol !== "approved" ? "hidden sm:flex" : "flex"
+                mobileKanbanCol !== "approved" ? "hidden sm:flex" : "flex"
               }`}>
                 <div className="p-4 bg-[#161F2D]/95 backdrop-blur-md border-b border-[#2A3446]/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
@@ -5499,63 +5453,55 @@ function TaskCard({ task, onSelect }: { task: any; onSelect: () => void }) {
   return (
     <div
       onClick={onSelect}
-      className={`rounded-2xl p-4 border transition-all cursor-pointer space-y-2.5 shadow-sm hover:shadow-xl hover:-translate-y-0.5 ${
+      className={`rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 border transition-all cursor-pointer shadow-xs hover:shadow-xl hover:-translate-y-0.5 flex flex-col justify-between gap-2 ${
         task.isFreelancer
           ? "bg-gradient-to-br from-[#181C2E] to-[#161F2D] border-purple-500/40 hover:border-purple-400"
           : "bg-[#161F2D] border-[#2A3446]/70 hover:border-[#7FA0D6]/60"
       }`}
     >
-      <div className="flex items-center justify-between">
-        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
-          {task.client}
-        </span>
-        <div className="flex items-center gap-1.5">
-          {task.isFreelancer && task.milestoneFee && (
-            <span className="px-1.5 py-0.2 rounded-md text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              ₹{task.milestoneFee.toLocaleString()}
-            </span>
-          )}
-          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.priorityPill}`}>
-            {task.priority}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between gap-1">
+          <span className={`px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-bold truncate max-w-[85px] sm:max-w-[120px] ${task.clientPill}`}>
+            {task.client}
           </span>
+          <div className="flex items-center gap-1 shrink-0">
+            {task.isFreelancer && task.milestoneFee && (
+              <span className="px-1.5 py-0.2 rounded text-[8.5px] sm:text-[9.5px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                ₹{task.milestoneFee >= 1000 ? `${Math.round(task.milestoneFee / 1000)}k` : task.milestoneFee}
+              </span>
+            )}
+            <span className={`px-1.5 py-0.5 rounded-md text-[8.5px] sm:text-[10px] font-bold ${task.priorityPill}`}>
+              {task.priority}
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-[11px] sm:text-xs font-bold text-white line-clamp-2 leading-snug">{task.title}</h4>
+          {task.isFreelancer && (
+            <div className="flex items-center gap-1 mt-0.5 text-[9px] sm:text-[10px] text-purple-300 font-medium">
+              <Sparkles className="w-2.5 h-2.5 text-purple-400 shrink-0" />
+              <span className="truncate">{task.freelancerSpecialty || "Outsourced"}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      <div>
-        <h4 className="text-xs font-bold text-white line-clamp-2 leading-snug">{task.title}</h4>
-        {task.isFreelancer && (
-          <div className="flex items-center gap-1.5 mt-1 text-[10px] text-purple-300 font-medium">
-            <Sparkles className="w-3 h-3 text-purple-400 shrink-0" />
-            <span className="truncate">{task.freelancerSpecialty || "Outsourced"}</span>
-            <span className="text-purple-400 font-bold">•</span>
-            <span className="text-white/80 font-mono">
-              {task.rawStatus === "in_production"
-                ? "⚡ In Process"
-                : task.rawStatus === "internal_qa"
-                ? "🔍 In Review"
-                : task.rawStatus === "ready_to_publish"
-                ? "✅ Approved"
-                : "Queued"}
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
-        <div className="flex items-center gap-1.5">
-          <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center shrink-0`}>
+      <div className="flex items-center justify-between pt-1.5 border-t border-[#2A3446]/60 text-[10px] sm:text-[11px] text-[#97A0B3] mt-auto">
+        <div className="flex items-center gap-1 min-w-0">
+          <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full ${task.avatarBg} text-white font-bold text-[8px] sm:text-[9px] flex items-center justify-center shrink-0`}>
             {task.avatar}
           </div>
-          <span className="font-medium text-[#F1F5F9] truncate max-w-[110px]">
+          <span className="font-medium text-[#F1F5F9] truncate max-w-[65px] sm:max-w-[110px]">
             {task.assigneeName}
           </span>
           {task.isFreelancer && (
-            <span className="px-1 py-0.2 rounded text-[8px] font-black uppercase bg-purple-500/25 text-purple-300 border border-purple-500/30">
+            <span className="px-1 py-0.2 rounded text-[7.5px] sm:text-[8px] font-black uppercase bg-purple-500/25 text-purple-300 border border-purple-500/30 shrink-0 hidden xs:inline">
               Ext
             </span>
           )}
         </div>
-        <span className="font-mono text-[10px] font-bold text-[#7FA0D6]">{task.due}</span>
+        <span className="font-mono text-[9px] sm:text-[10px] font-bold text-[#7FA0D6] shrink-0 ml-1">{task.due}</span>
       </div>
     </div>
   );
@@ -5597,10 +5543,8 @@ export function AdminTeamManagementPage() {
   const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [activePodId, setActivePodId] = useState<string | null>(null);
-  const [attendanceFilter, setAttendanceFilter] = useState<"all" | "present" | "leave">("all");
   const [roleCategoryFilter, setRoleCategoryFilter] = useState<string>("all");
   const [memberSort, setMemberSort] = useState<"default" | "workload" | "name">("default");
-  const [mobileSubView, setMobileSubView] = useState<"all" | "pods" | "specialists">("all");
   const [memberSearchQuery, _setMemberSearchQuery] = useState(""); void _setMemberSearchQuery;
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -6066,10 +6010,6 @@ export function AdminTeamManagementPage() {
   const filteredMembers = membersList.filter((m) => {
     const matchesPod = !activePodId || m.podId === activePodId;
 
-    let matchesAttendance = true;
-    if (attendanceFilter === "present") matchesAttendance = m.status !== "On Leave";
-    else if (attendanceFilter === "leave") matchesAttendance = m.status === "On Leave";
-
     let matchesCategory = true;
     if (roleCategoryFilter === "designer") matchesCategory = m.category === "designer";
     else if (roleCategoryFilter === "editor") matchesCategory = m.category === "editor";
@@ -6099,7 +6039,7 @@ export function AdminTeamManagementPage() {
         squadName.includes(q);
     }
 
-    return matchesPod && matchesAttendance && matchesCategory && matchesSearch;
+    return matchesPod && matchesCategory && matchesSearch;
   });
 
   const getRoleIcon = (cat: string) => {
@@ -6490,19 +6430,21 @@ export function AdminTeamManagementPage() {
         )}
 
         {/* Network & Role Switcher */}
-        <div className="flex items-center gap-2 border-b border-[#2A3446] pb-3 overflow-x-auto no-scrollbar scroll-smooth -mx-3 px-3 sm:mx-0 sm:px-0 flex-nowrap">
+        <div className="w-full grid grid-cols-3 sm:flex sm:w-auto items-center gap-1 sm:gap-2 border-b border-[#2A3446] pb-3">
           <button
             type="button"
             onClick={() => setTeamTab("internal")}
-            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap shrink-0 ${
+            className={`w-full sm:w-auto px-1.5 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 text-center truncate ${
               teamTab === "internal"
                 ? "bg-[#7FA0D6] text-white shadow-md"
                 : "text-[#97A0B3] hover:text-white hover:bg-[#161F2D]"
             }`}
           >
-            <Users className="w-4 h-4 shrink-0" />
-            <span className="sm:hidden">Internal Pods</span>
-            <span className="hidden sm:inline">Internal Sprint Pods</span>
+            <Users className="w-3.5 h-3.5 shrink-0 hidden min-[360px]:block" />
+            <span className="truncate">
+              <span className="hidden sm:inline">Internal Sprint Pods</span>
+              <span className="sm:hidden">Internal</span>
+            </span>
           </button>
           <button
             type="button"
@@ -6510,20 +6452,17 @@ export function AdminTeamManagementPage() {
               setTeamTab("bde");
               bdeTeamQuery.refetch();
             }}
-            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap shrink-0 ${
+            className={`w-full sm:w-auto px-1.5 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 text-center truncate ${
               teamTab === "bde"
                 ? "bg-amber-600 text-white shadow-md shadow-amber-600/25"
                 : "text-[#97A0B3] hover:text-white hover:bg-[#161F2D]"
             }`}
           >
-            <Briefcase className="w-4 h-4 shrink-0" />
-            <span className="sm:hidden">BDE Sales</span>
-            <span className="hidden sm:inline">BDE Sales Team & Onboarding</span>
-            {bdeTeamQuery.data && bdeTeamQuery.data.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-amber-950 text-amber-200 text-[10px] font-black">
-                {bdeTeamQuery.data.length}
-              </span>
-            )}
+            <Briefcase className="w-3.5 h-3.5 shrink-0 hidden min-[360px]:block" />
+            <span className="truncate">
+              <span className="hidden sm:inline">BDE Sales Team & Onboarding</span>
+              <span className="sm:hidden">BDE Sales</span>
+            </span>
           </button>
           <button
             type="button"
@@ -6531,20 +6470,17 @@ export function AdminTeamManagementPage() {
               setTeamTab("freelancers");
               freelancersQuery.refetch();
             }}
-            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap shrink-0 ${
+            className={`w-full sm:w-auto px-1.5 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 text-center truncate ${
               teamTab === "freelancers"
                 ? "bg-purple-600 text-white shadow-md"
                 : "text-[#97A0B3] hover:text-white hover:bg-[#161F2D]"
             }`}
           >
-            <Sparkles className="w-4 h-4 shrink-0" />
-            <span className="sm:hidden">Freelancer Network</span>
-            <span className="hidden sm:inline">Freelancer Network & Role Access</span>
-            {freelancersQuery.data && freelancersQuery.data.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-purple-950 text-purple-200 text-[10px] font-black">
-                {freelancersQuery.data.length}
-              </span>
-            )}
+            <Sparkles className="w-3.5 h-3.5 shrink-0 hidden min-[360px]:block" />
+            <span className="truncate">
+              <span className="hidden sm:inline">Freelancer Network & Role Access</span>
+              <span className="sm:hidden">Freelance</span>
+            </span>
           </button>
         </div>
 
@@ -7042,20 +6978,22 @@ export function AdminTeamManagementPage() {
 
                     <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">
-                        <select
+                        <CustomSelect
+                          size="sm"
                           value={freelancer.status}
-                          onChange={(e) =>
+                          onChange={(val) =>
                             handleToggleFreelancerStatus(
                               freelancer.id,
-                              e.target.value as "ACTIVE" | "INACTIVE" | "REVOKED"
+                              val as "ACTIVE" | "INACTIVE" | "REVOKED"
                             )
                           }
-                          className="px-2 py-1 rounded-lg bg-[#0B111C] border border-[#2A3446] text-[11px] font-bold text-white focus:outline-none"
-                        >
-                          <option value="ACTIVE">Active</option>
-                          <option value="INACTIVE">Deactivate</option>
-                          <option value="REVOKED">Revoke Access</option>
-                        </select>
+                          ariaLabel="Freelancer status"
+                          options={[
+                            { value: "ACTIVE", label: "Active" },
+                            { value: "INACTIVE", label: "Deactivate" },
+                            { value: "REVOKED", label: "Revoke Access" },
+                          ]}
+                        />
                       </div>
 
                       <button
@@ -7095,99 +7033,7 @@ export function AdminTeamManagementPage() {
               </button>
             </div>
 
-            {/* Attendance & Presence Status Filter Bar */}
-            {(() => {
-              const totalStaff = membersList.length;
-              const leaveStaff = membersList.filter((m) => m.status === "On Leave");
-              const presentStaff = membersList.filter((m) => m.status !== "On Leave");
 
-              return (
-                <div className="space-y-3">
-                  <div className="p-3 sm:p-4 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth -mx-1 px-1 sm:mx-0 sm:px-0 flex-nowrap w-full sm:w-auto">
-                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] mr-1 flex items-center gap-1.5 whitespace-nowrap shrink-0">
-                        <Clock className="w-3.5 h-3.5 text-[#7FA0D6]" /> Attendance:
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setAttendanceFilter("all")}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                          attendanceFilter === "all"
-                            ? "bg-[#7FA0D6] text-[#0B111C] shadow-sm font-black"
-                            : "bg-[#0B111C] text-[#97A0B3] hover:text-white border border-[#2A3446]"
-                        }`}
-                      >
-                        <span>All</span>
-                        <span className="px-1.5 py-0.2 rounded-full bg-black/20 text-[10px] font-black">{totalStaff}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setAttendanceFilter("present")}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                          attendanceFilter === "present"
-                            ? "bg-emerald-600 text-white shadow-sm font-black"
-                            : "bg-[#0B111C] text-emerald-400 hover:text-emerald-300 border border-emerald-500/30"
-                        }`}
-                      >
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>Present</span>
-                        <span className="px-1.5 py-0.2 rounded-full bg-emerald-950 text-emerald-200 text-[10px] font-black">
-                          {presentStaff.length}
-                        </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setAttendanceFilter("leave")}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                          attendanceFilter === "leave"
-                            ? "bg-amber-600 text-white shadow-sm font-black"
-                            : "bg-[#0B111C] text-amber-400 hover:text-amber-300 border border-amber-500/30"
-                        }`}
-                      >
-                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                        <span>On Leave</span>
-                        <span className="px-1.5 py-0.2 rounded-full bg-amber-950 text-amber-200 text-[10px] font-black">
-                          {leaveStaff.length}
-                        </span>
-                      </button>
-                    </div>
-
-                    <Link
-                      to="/admin/leaves"
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7FA0D6] hover:text-blue-300 hover:underline transition-colors sm:ml-auto self-end sm:self-auto shrink-0"
-                    >
-                      <Plane className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span>{leaveStaff.length} on leave &rarr;</span>
-                    </Link>
-                  </div>
-
-                  {/* Active On-Leave Notification Banner */}
-                  {leaveStaff.length > 0 && (
-                    <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-md">
-                      <div className="flex items-center gap-2.5">
-                        <Plane className="w-4 h-4 text-amber-400 shrink-0" />
-                        <div>
-                          <strong className="text-white">Away on Approved Leave Today ({leaveStaff.length}):</strong>{" "}
-                          <span className="text-amber-300">
-                            {leaveStaff
-                              .map((m) => `${m.name} (${m.role} • ${m.podId === "pod-b" ? "Pod Beta" : m.podId === "pod-bde" ? "Sales & BDE" : m.podId === "pod-a" ? "Pod Alpha" : "Pod Gamma"})`)
-                              .join(" & ")}
-                          </span>
-                        </div>
-                      </div>
-                      <Link
-                        to="/admin/leaves"
-                        className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-bold transition-all cursor-pointer shrink-0"
-                      >
-                        Review Leave Approvals
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
 
             {/* 3 KPI Summary Cards matching Screenshot 1 */}
             {(() => {
@@ -7267,87 +7113,49 @@ export function AdminTeamManagementPage() {
               );
             })()}
 
-            {/* Mobile Sub-Section Switcher: Toggle between Pods and Specialists to eliminate endless scrolling */}
-            <div className="flex md:hidden items-center p-1 bg-[#161F2D] border border-[#2A3446] rounded-xl gap-1">
-              <button
-                type="button"
-                onClick={() => setMobileSubView("all")}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  mobileSubView === "all"
-                    ? "bg-[#7FA0D6] text-white shadow-xs"
-                    : "text-[#97A0B3] hover:text-white"
-                }`}
-              >
-                All
-              </button>
-              <button
-                type="button"
-                onClick={() => setMobileSubView("pods")}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  mobileSubView === "pods"
-                    ? "bg-[#7FA0D6] text-white shadow-xs"
-                    : "text-[#97A0B3] hover:text-white"
-                }`}
-              >
-                Pods ({pods.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setMobileSubView("specialists")}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  mobileSubView === "specialists"
-                    ? "bg-[#7FA0D6] text-white shadow-xs"
-                    : "text-[#97A0B3] hover:text-white"
-                }`}
-              >
-                Specialists ({filteredMembers.length})
-              </button>
-            </div>
-
-            {/* Team Pods Section (Collapsible/Hideable on mobile when Specialists sub-view selected) */}
-            <div className={mobileSubView === "specialists" ? "hidden md:block space-y-4" : "space-y-4"}>
+            {/* Team Pods Section */}
+            <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2">
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">Team Pods & Operational Squads</h3>
-                  <p className="text-xs text-[#97A0B3]">Real-time capacity distribution, attendance status, and pod velocity</p>
                 </div>
                 <span className="self-start sm:self-auto px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Sprint Cycle 08 • 4 Days Remaining
                 </span>
               </div>
 
-              {/* Pod Cards Grid: Horizontal swipe carousel on mobile (< md), 2-column grid on desktop */}
-              <div className="flex md:grid overflow-x-auto snap-x snap-mandatory gap-3.5 pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 md:grid-cols-2 md:gap-6 no-scrollbar">
+              {/* Pod Cards Grid: Responsive 1-column on mobile, 2-column on desktop - perfect alignment with zero clipping */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6 w-full">
                 {pods.map((pod) => (
                   <div
                     key={pod.id}
                     onClick={() => setActivePodId(pod.id)}
-                    className="min-w-[85vw] sm:min-w-[320px] md:min-w-0 snap-center shrink-0 md:shrink bg-[#161F2D] rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.04)] space-y-4 sm:space-y-5 hover:shadow-xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group relative overflow-hidden"
+                    className="w-full min-w-0 bg-[#161F2D] rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.04)] space-y-3.5 sm:space-y-5 hover:shadow-xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group relative overflow-hidden"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                         <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${pod.color} text-white font-black text-base sm:text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0`}>
                           {pod.letter}
                         </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                             <h4 className="font-bold text-sm sm:text-base text-white truncate">{pod.name}</h4>
-                            <span className="px-2 py-0.5 rounded-full bg-[#0B111C] text-[#F1F5F9] border border-[#2A3446] text-[10px] font-bold shrink-0 hidden xs:inline">
+                            <span className="px-2 py-0.5 rounded-full bg-[#0B111C] text-[#F1F5F9] border border-[#2A3446] text-[9.5px] sm:text-[10px] font-bold shrink-0">
                               {pod.id === "pod-bde" ? "Outreach Squad" : "Creative Pod"}
                             </span>
                           </div>
-                          <p className="text-xs text-[#97A0B3] truncate">{pod.description.slice(0, 52)}...</p>
+                          <p className="text-[11px] sm:text-xs text-[#97A0B3] truncate">{pod.description}</p>
                         </div>
                       </div>
 
                       {/* Live Presence / On Leave Badge */}
                       {pod.onLeaveCount > 0 ? (
-                        <span className="px-2 sm:px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 shadow-xs shrink-0">
+                        <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9.5px] sm:text-[10px] font-extrabold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1 shadow-xs shrink-0">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                          <span>{pod.onLeaveCount} On Leave</span>
+                          <span>{pod.onLeaveCount} Leave</span>
                         </span>
                       ) : (
-                        <span className="px-2 sm:px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 shrink-0">
+                        <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9.5px] sm:text-[10px] font-extrabold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 shadow-xs shrink-0">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                           <span>{pod.membersCount} Present</span>
                         </span>
@@ -7355,45 +7163,45 @@ export function AdminTeamManagementPage() {
                     </div>
 
                     {/* Lead Info & Member Stack */}
-                    <div className="p-3 sm:p-3.5 bg-[#0B111C]/70 rounded-2xl flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 border border-[#2A3446]">
-                      <div className="flex items-center gap-2.5">
+                    <div className="p-2.5 sm:p-3.5 bg-[#0B111C]/70 rounded-xl sm:rounded-2xl flex items-center justify-between gap-2 border border-[#2A3446]">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
                         <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${pod.color} text-white font-bold text-xs flex items-center justify-center shrink-0`}>
                           {pod.lead[0]}
                         </div>
-                        <div>
-                          <div className="text-xs font-bold text-white">{pod.lead}</div>
-                          <div className="text-[10px] text-[#97A0B3] font-medium">{pod.leadRole}</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-bold text-white truncate">{pod.lead}</div>
+                          <div className="text-[10px] text-[#97A0B3] font-medium truncate">{pod.leadRole}</div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 text-xs font-bold text-[#F1F5F9]">
-                        <span>{pod.presentCount}/{pod.membersCount} Present</span>
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#F1F5F9] shrink-0">
+                        <span className="text-[11px] sm:text-xs">{pod.presentCount}/{pod.membersCount} Active</span>
                         {pod.onLeaveCount > 0 && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
-                            {pod.onLeaveMembers.map((m: any) => m.name.split(" ")[0]).join(", ")} away
+                          <span className="text-[9.5px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold shrink-0">
+                            {pod.onLeaveCount} away
                           </span>
                         )}
                       </div>
                     </div>
 
                     {/* Velocity Bar */}
-                    <div className="space-y-2 text-xs">
-                      <div className="flex justify-between items-center text-[#F1F5F9] font-semibold">
+                    <div className="space-y-1.5 sm:space-y-2 text-xs">
+                      <div className="flex justify-between items-center text-[#F1F5F9] font-semibold text-[11px] sm:text-xs">
                         <span>Sprint Velocity</span>
                         <span className="font-bold text-white">{pod.velocityPct}% on track</span>
                       </div>
-                      <div className="w-full bg-[#0B111C] rounded-full h-2.5 overflow-hidden border border-[#2A3446]">
+                      <div className="w-full bg-[#0B111C] rounded-full h-2 sm:h-2.5 overflow-hidden border border-[#2A3446]">
                         <div className={`h-full rounded-full ${pod.color}`} style={{ width: `${pod.velocityPct}%` }} />
                       </div>
-                      <div className="flex justify-between text-[11px] text-[#97A0B3] font-medium pt-0.5">
+                      <div className="flex justify-between text-[10.5px] sm:text-[11px] text-[#97A0B3] font-medium pt-0.5">
                         <span>{pod.tasksClosed} tasks closed</span>
                         <span className="text-[#7FA0D6] font-bold">{pod.pendingReview} pending review</span>
                       </div>
                     </div>
 
                     {/* Card Footer Action */}
-                    <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs gap-2">
-                      <span className="text-[#97A0B3] font-medium text-[11px]">
+                    <div className="pt-2.5 sm:pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs gap-2">
+                      <span className="text-[#97A0B3] font-medium text-[10.5px] sm:text-[11px] truncate">
                         Allocated: <strong className="text-white">{pod.allocatedHours}h / {pod.totalHours}h</strong>
                       </span>
                       <button
@@ -7402,21 +7210,16 @@ export function AdminTeamManagementPage() {
                           e.stopPropagation();
                           setActivePodId(pod.id);
                         }}
-                        className="px-3 py-1.5 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 border border-[#7FA0D6]/35 text-[#BCCCE6] hover:text-white text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 group/btn"
+                        className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 border border-[#7FA0D6]/35 text-[#BCCCE6] hover:text-white text-xs font-bold transition-all inline-flex items-center gap-1 sm:gap-1.5 cursor-pointer shadow-xs active:scale-95 group/btn shrink-0"
                       >
                         <Users className="w-3.5 h-3.5 text-[#7FA0D6]" />
-                        <span>View Pod Members ({pod.membersCount})</span>
+                        <span className="hidden xs:inline">View Pod Members ({pod.membersCount})</span>
+                        <span className="xs:hidden">Members ({pod.membersCount})</span>
                         <ArrowRight className="w-3.5 h-3.5 text-[#7FA0D6] group-hover/btn:translate-x-0.5 transition-transform" />
                       </button>
                     </div>
                   </div>
                 ))}
-              </div>
-
-              {/* Mobile Pod Carousel Swipe Hint */}
-              <div className="flex md:hidden items-center justify-between text-[11px] text-[#97A0B3] px-1 pt-0.5">
-                <span className="flex items-center gap-1 font-medium">Swipe sideways to browse pods</span>
-                <span className="font-bold text-[#7FA0D6]">{pods.length} Pods &rarr;</span>
               </div>
             </div>
           </div>
@@ -7460,64 +7263,70 @@ export function AdminTeamManagementPage() {
               </div>
             </div>
 
-            {/* Pod Summary Banner Card matching Screenshot 2 */}
-            <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="space-y-3 max-w-3xl">
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full bg-blue-600 text-white font-black text-xs uppercase tracking-wider">
+            {/* Pod Summary Banner Card */}
+            <div className="bg-[#161F2D] rounded-3xl p-5 sm:p-6 lg:p-8 border border-[#2A3446] shadow-xl space-y-5 sm:space-y-6">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
+                <div className="space-y-3.5 max-w-3xl flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-3 py-1 rounded-full bg-[#7FA0D6] text-[#0B111C] font-black text-xs uppercase tracking-wider shadow-xs">
                       {activePod?.name}
                     </span>
-                    <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs">
+                    <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold text-xs flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       High Velocity
                     </span>
                   </div>
-                  <p className="text-xs text-[#F1F5F9] leading-relaxed font-medium">
+
+                  <p className="text-xs text-[#BCCCE6] leading-relaxed font-medium">
                     {activePod?.description}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-6 pt-2 text-xs font-bold text-[#F1F5F9]">
-                    <div>
-                      <span className="text-[10px] uppercase text-[#97A0B3] block font-extrabold tracking-wider">POD LEAD</span>
-                      <span className="text-white font-black">{activePod?.lead}</span>
+                  {/* Clean 3-column stats with responsive card pills on mobile & vertical dividers on desktop */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 pt-3 border-t border-[#2A3446]/60">
+                    <div className="p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-[#0B111C]/60 sm:bg-transparent border border-[#2A3446]/40 sm:border-0 flex flex-col justify-center">
+                      <span className="text-[10px] uppercase text-[#97A0B3] font-extrabold tracking-wider">POD LEAD</span>
+                      <span className="text-white font-bold text-xs sm:text-sm truncate">{activePod?.lead}</span>
                     </div>
-                    <div className="h-6 w-px bg-gray-200" />
-                    <div>
-                      <span className="text-[10px] uppercase text-[#97A0B3] block font-extrabold tracking-wider">MEMBERS</span>
-                      <span className="text-white font-black">
-                        {filteredMembers.length} Members ({activePod?.presentCount ?? filteredMembers.filter(m => m.status !== "On Leave").length} Present
-                        {activePod?.onLeaveCount ? `, ${activePod.onLeaveCount} on leave` : ""})
+
+                    <div className="p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-[#0B111C]/60 sm:bg-transparent border border-[#2A3446]/40 sm:border-0 sm:border-l sm:border-[#2A3446] sm:pl-4 flex flex-col justify-center">
+                      <span className="text-[10px] uppercase text-[#97A0B3] font-extrabold tracking-wider">MEMBERS</span>
+                      <span className="text-white font-bold text-xs sm:text-sm">
+                        {filteredMembers.length} Members ({activePod?.presentCount ?? filteredMembers.filter(m => m.status !== "On Leave").length} Present{activePod?.onLeaveCount ? `, ${activePod.onLeaveCount} away` : ""})
                       </span>
                     </div>
-                    <div className="h-6 w-px bg-gray-200" />
-                    <div>
-                      <span className="text-[10px] uppercase text-[#97A0B3] block font-extrabold tracking-wider">VELOCITY</span>
-                      <span className="text-emerald-600 font-black">{activePod?.velocityPct}% Sprint Delivery</span>
+
+                    <div className="p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-[#0B111C]/60 sm:bg-transparent border border-[#2A3446]/40 sm:border-0 sm:border-l sm:border-[#2A3446] sm:pl-4 flex flex-col justify-center">
+                      <span className="text-[10px] uppercase text-[#97A0B3] font-extrabold tracking-wider">VELOCITY</span>
+                      <span className="text-emerald-400 font-bold text-xs sm:text-sm">{activePod?.velocityPct}% Sprint Delivery</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Right Side Stats */}
-                <div className="flex gap-4 border-t lg:border-t-0 lg:border-l border-[#2A3446] pt-4 lg:pt-0 lg:pl-8">
-                  <div className="bg-[#0B111C] p-4 rounded-2xl border border-[#2A3446] min-w-[130px] space-y-1">
-                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase">AVG SQUAD LOAD</span>
-                    <div className="text-2xl font-black text-white">{activePod?.squadLoad}%</div>
-                    <span className="text-[10px] text-emerald-600 font-bold">↓ Optimal</span>
+                {/* Right Side Stats: 2 balanced equal-width cards */}
+                <div className="grid grid-cols-2 gap-2.5 sm:gap-4 w-full lg:w-auto border-t lg:border-t-0 lg:border-l border-[#2A3446] pt-4 lg:pt-0 lg:pl-6 shrink-0">
+                  <div className="bg-[#0B111C] p-3 sm:p-4 rounded-2xl border border-[#2A3446] w-full min-w-0 flex flex-col justify-between space-y-1.5 shadow-xs">
+                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider block truncate">AVG SQUAD LOAD</span>
+                    <div className="text-xl sm:text-2xl font-black text-white">{activePod?.squadLoad}%</div>
+                    <span className="text-[10px] text-emerald-400 font-bold block truncate">↓ Optimal</span>
                   </div>
-                  <div className="bg-[#0B111C] p-4 rounded-2xl border border-[#2A3446] min-w-[130px] space-y-1">
-                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase">ACTIVE ENGAGEMENTS</span>
-                    <div className="text-2xl font-black text-white">{activePod?.activeEngagements} projects</div>
-                    <span className="text-[10px] text-[#7FA0D6] font-bold">{activePod?.readyReview} ready for review</span>
+
+                  <div className="bg-[#0B111C] p-3 sm:p-4 rounded-2xl border border-[#2A3446] w-full min-w-0 flex flex-col justify-between space-y-1.5 shadow-xs">
+                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider block truncate">ACTIVE SPRINT</span>
+                    <div className="flex items-baseline gap-1.5 text-white">
+                      <span className="text-xl sm:text-2xl font-black">{activePod?.activeEngagements}</span>
+                      <span className="text-xs font-bold text-[#97A0B3]">projects</span>
+                    </div>
+                    <span className="text-[10px] text-[#7FA0D6] font-bold block truncate">{activePod?.readyReview} in review</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Role Category & Attendance Filter Tabs */}
-            <div className="bg-[#161F2D] rounded-2xl border border-[#2A3446] p-4 shadow-sm space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                {/* Filter Pills */}
-                <div className="flex flex-wrap items-center gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs font-bold">
+            <div className="bg-[#161F2D] rounded-2xl border border-[#2A3446] p-3 sm:p-4 shadow-sm space-y-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                {/* Filter Pills with horizontal scroll on mobile */}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 -mx-1 px-1 sm:mx-0 sm:px-0 flex-nowrap sm:flex-wrap">
                   {[
                     { key: "all", label: `All Members (${membersList.filter((m) => !activePodId || m.podId === activePodId).length})` },
                     { key: "present", label: `Present Today (${membersList.filter((m) => (!activePodId || m.podId === activePodId) && m.status !== "On Leave").length})` },
@@ -7531,10 +7340,10 @@ export function AdminTeamManagementPage() {
                       key={tab.key}
                       type="button"
                       onClick={() => setRoleCategoryFilter(tab.key)}
-                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                         roleCategoryFilter === tab.key
                           ? "bg-[#7FA0D6] text-[#0B111C] font-extrabold shadow-xs"
-                          : "text-[#F1F5F9] hover:text-white hover:bg-[#0B111C]"
+                          : "text-[#BCCCE6] hover:text-white bg-[#0B111C] border border-[#2A3446] hover:bg-[#1E293B]"
                       }`}
                     >
                       {tab.label}
@@ -7545,7 +7354,7 @@ export function AdminTeamManagementPage() {
                 <button
                   type="button"
                   onClick={() => setIsAddMemberOpen(true)}
-                  className="w-full sm:w-auto justify-center px-3.5 py-2.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
+                  className="w-full sm:w-auto justify-center px-3.5 py-2.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95 shrink-0"
                 >
                   <Plus className="w-4 h-4 shrink-0" /> Add Member to {activePod?.name}
                 </button>
@@ -8083,29 +7892,29 @@ export function AdminTeamManagementPage() {
               {/* Header */}
               <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black text-sm">
-                    <Users className="size-4.5" />
+                  <div className="size-9 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black text-sm shrink-0">
+                    <Users className="size-4" />
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-white tracking-tight">
-                      Add Team Specialist to {activePod?.name || "Sprint Pod"}
+                    <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                      Add Team Specialist {activePod?.name ? `• ${activePod.name}` : ""}
                     </h3>
-                    <p className="text-[11px] text-[#97A0B3] font-medium">
-                      Provision login credentials (Email & Password), role track & permissions
+                    <p className="text-[11px] text-[#97A0B3]">
+                      Set credentials & pod assignment
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsAddMemberOpen(false)}
-                  className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                  className="size-8 rounded-full bg-[#161F2D] hover:bg-[#2A3446] text-[#97A0B3] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <X className="size-4" />
                 </button>
               </div>
 
               {/* Add Member Form */}
-              <form onSubmit={handleCreateTeamMember} className="space-y-3.5">
+              <form onSubmit={handleCreateTeamMember} className="space-y-3 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Full Name *</label>
@@ -8125,7 +7934,7 @@ export function AdminTeamManagementPage() {
                         });
                       }}
                       placeholder="e.g. Jordan Miller"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                      className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs text-white bg-[#0B111C] focus:outline-none focus:border-blue-500 font-medium"
                     />
                   </div>
 
@@ -8137,47 +7946,42 @@ export function AdminTeamManagementPage() {
                       value={newMemberForm.email}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, email: e.target.value })}
                       placeholder="e.g. jordan.m@creo.agency"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                      className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs text-white bg-[#0B111C] focus:outline-none focus:border-blue-500 font-medium"
                     />
                   </div>
                 </div>
 
-                {/* Dispatch / Personal Email Field */}
-                <div className="bg-[#0B111C]/80 p-3 rounded-2xl border border-blue-500/25 space-y-2">
+                {/* Dispatch / Personal Email Field - Minimalist */}
+                <div className="bg-[#0B111C]/60 p-2.5 sm:p-3 rounded-xl border border-[#2A3446] space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5">
+                    <label className="text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5">
                       <Mail className="size-3.5 text-[#7FA0D6]" />
-                      <span>Send Credentials To (Worker Personal Email)</span>
+                      <span>Personal Email</span>
+                      <span className="text-[10px] text-[#97A0B3] font-normal">(Optional dispatch)</span>
                     </label>
-                    <span className="text-[10px] text-[#7FA0D6] font-semibold px-2 py-0.5 rounded-full bg-[#7FA0D6]/10 border border-[#7FA0D6]/20">
-                      Optional
-                    </span>
-                  </div>
-                  <input
-                    type="email"
-                    value={newMemberForm.dispatch_email}
-                    onChange={(e) => setNewMemberForm({ ...newMemberForm, dispatch_email: e.target.value })}
-                    placeholder="e.g. jordan.personal@gmail.com (leaves Login Email intact)"
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs text-white bg-[#161F2D] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
-                  />
-                  <div className="flex items-center justify-between text-[11px] text-[#97A0B3] pt-0.5">
-                    <span>Account login stays under Login Email ID; credentials will be delivered to this address.</span>
-                    <label className="flex items-center gap-1.5 cursor-pointer text-[#7FA0D6] font-medium select-none">
+                    <label className="flex items-center gap-1.5 cursor-pointer text-[#7FA0D6] text-[11px] font-medium select-none">
                       <input
                         type="checkbox"
                         checked={newMemberForm.send_email}
                         onChange={(e) => setNewMemberForm({ ...newMemberForm, send_email: e.target.checked })}
                         className="size-3.5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
                       />
-                      <span>Send email</span>
+                      <span>Send credentials</span>
                     </label>
                   </div>
+                  <input
+                    type="email"
+                    value={newMemberForm.dispatch_email}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, dispatch_email: e.target.value })}
+                    placeholder="e.g. jordan.personal@gmail.com"
+                    className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs text-white bg-[#161F2D] focus:outline-none focus:border-blue-500 font-medium"
+                  />
                 </div>
 
-                {/* Account Password Field */}
-                <div className="bg-[#0B111C]/80 p-3.5 rounded-2xl border border-[#2A3446] space-y-2">
+                {/* Account Password Field - Minimalist */}
+                <div className="bg-[#0B111C]/60 p-2.5 sm:p-3 rounded-xl border border-[#2A3446] space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5">
+                    <label className="text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5">
                       <KeyRound className="size-3.5 text-[#7FA0D6]" />
                       <span>Account Password *</span>
                     </label>
@@ -8211,20 +8015,17 @@ export function AdminTeamManagementPage() {
                       minLength={6}
                       value={newMemberForm.password}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, password: e.target.value })}
-                      placeholder="Enter custom password (min 6 chars)"
-                      className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono font-medium"
+                      placeholder="Min 6 characters"
+                      className="w-full pl-3 pr-10 py-2 rounded-lg border border-[#2A3446] text-xs text-white bg-[#161F2D] focus:outline-none focus:border-blue-500 font-mono font-medium"
                     />
                     <button
                       type="button"
                       onClick={() => setShowNewMemberPassword(!showNewMemberPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white cursor-pointer"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white cursor-pointer"
                     >
-                      {showNewMemberPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      {showNewMemberPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
                     </button>
                   </div>
-                  <p className="text-[10px] text-[#97A0B3]">
-                    The specialist will log in using this Email ID and Password. You can review and copy credentials right after creation.
-                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
@@ -8242,7 +8043,7 @@ export function AdminTeamManagementPage() {
                         else if (cat === "lead") defaultRole = "Sprint Pod Lead";
                         setNewMemberForm({ ...newMemberForm, category: cat, role: defaultRole });
                       }}
-                      className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
+                      className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C]"
                     >
                       <option value="designer">🎨 Designer (UI, 3D, Brand)</option>
                       <option value="editor">✂️ Video & Motion Editor</option>
@@ -8261,7 +8062,7 @@ export function AdminTeamManagementPage() {
                       value={newMemberForm.role}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, role: e.target.value })}
                       placeholder="e.g. Senior Visual Designer"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                      className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs text-white bg-[#0B111C] focus:outline-none focus:border-blue-500 font-medium"
                     />
                   </div>
                 </div>
@@ -8274,7 +8075,7 @@ export function AdminTeamManagementPage() {
                       value={newMemberForm.handle}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, handle: e.target.value })}
                       placeholder="e.g. @jmiller"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                      className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs text-white bg-[#0B111C] focus:outline-none focus:border-blue-500 font-medium"
                     />
                   </div>
 
@@ -8283,7 +8084,7 @@ export function AdminTeamManagementPage() {
                     <NativeSelect
                       value={newMemberForm.podId}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, podId: e.target.value })}
-                      className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
+                      className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C]"
                     >
                       <option value="pod-a">Pod A • Enterprise Brand & Design</option>
                       <option value="pod-b">Pod B • Performance & Video</option>
@@ -8299,25 +8100,25 @@ export function AdminTeamManagementPage() {
                     value={newMemberForm.capabilities}
                     onChange={(e) => setNewMemberForm({ ...newMemberForm, capabilities: e.target.value })}
                     placeholder="e.g. Figma Tokens, Cinema 4D, Color Grading, Kinetic Typography"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs text-white bg-[#0B111C] focus:outline-none focus:border-blue-500 font-medium"
                   />
                 </div>
 
                 {/* Submit Row */}
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2A3446]">
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
                   <button
                     type="button"
                     onClick={() => setIsAddMemberOpen(false)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
+                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isCreatingMember}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                   >
-                    {isCreatingMember ? "Creating & Provisioning..." : "Create & Provision Specialist"}
+                    {isCreatingMember ? "Adding..." : "Add Specialist"}
                   </button>
                 </div>
               </form>
@@ -8674,27 +8475,27 @@ export function AdminTeamManagementPage() {
             >
               <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-10 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-black">
-                    <Briefcase className="size-5" />
+                  <div className="size-9 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-black shrink-0">
+                    <Briefcase className="size-4" />
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-white tracking-tight">Onboard New BDE Sales Specialist</h3>
-                    <p className="text-[11px] text-[#97A0B3] font-medium">
-                      Set revenue target quota, commission rate, and provision login password & email dispatch
+                    <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">Onboard BDE Specialist</h3>
+                    <p className="text-[11px] text-[#97A0B3]">
+                      Set quota, commission & credentials
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsOnboardBdeOpen(false)}
-                  className="size-8 rounded-full bg-[#0B111C] hover:bg-slate-700 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                  className="size-8 rounded-full bg-[#161F2D] hover:bg-[#2A3446] text-[#97A0B3] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <X className="size-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleOnboardBdeSubmit} className="space-y-3.5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <form onSubmit={handleOnboardBdeSubmit} className="space-y-3 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Full Name *</label>
                     <input
@@ -8703,7 +8504,7 @@ export function AdminTeamManagementPage() {
                       value={bdeForm.full_name}
                       onChange={(e) => setBdeForm({ ...bdeForm, full_name: e.target.value })}
                       placeholder="e.g. Rahul Sharma"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                      className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:border-amber-500"
                     />
                   </div>
                   <div>
@@ -8714,35 +8515,40 @@ export function AdminTeamManagementPage() {
                       value={bdeForm.email}
                       onChange={(e) => setBdeForm({ ...bdeForm, email: e.target.value })}
                       placeholder="e.g. rahul.sharma@creo.agency"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                      className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:border-amber-500"
                     />
                   </div>
                 </div>
 
-                {/* Dispatch / Notification Email Field */}
-                <div className="p-3 bg-[#0B111C] rounded-2xl border border-amber-500/25 space-y-1.5">
+                {/* Dispatch / Notification Email Field - Minimalist */}
+                <div className="bg-[#0B111C]/60 p-2.5 sm:p-3 rounded-xl border border-[#2A3446] space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5">
+                    <label className="text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5">
                       <Mail className="size-3.5 text-amber-400" />
-                      <span>Send Credentials To (Worker Personal Email)</span>
+                      <span>Personal Email</span>
+                      <span className="text-[10px] text-[#97A0B3] font-normal">(Optional dispatch)</span>
                     </label>
-                    <span className="text-[10px] text-amber-400 font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
-                      Optional
-                    </span>
+                    <label className="flex items-center gap-1.5 cursor-pointer text-amber-300 text-[11px] font-medium select-none">
+                      <input
+                        type="checkbox"
+                        id="send_bde_email"
+                        checked={bdeForm.send_credentials_email}
+                        onChange={(e) => setBdeForm({ ...bdeForm, send_credentials_email: e.target.checked })}
+                        className="size-3.5 rounded text-amber-500 focus:ring-amber-400 cursor-pointer"
+                      />
+                      <span>Send credentials</span>
+                    </label>
                   </div>
                   <input
                     type="email"
                     value={bdeForm.dispatch_email}
                     onChange={(e) => setBdeForm({ ...bdeForm, dispatch_email: e.target.value })}
-                    placeholder="e.g. rahul.personal@gmail.com (leaves CRM Login Email unchanged)"
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    placeholder="e.g. rahul.personal@gmail.com"
+                    className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D] focus:outline-none focus:border-amber-500"
                   />
-                  <p className="text-[10px] text-[#97A0B3]">
-                    The BDE will log in using their CRM Email ID. Credentials will be delivered to this personal contact address.
-                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Phone Number (Optional)</label>
                     <input
@@ -8750,7 +8556,7 @@ export function AdminTeamManagementPage() {
                       value={bdeForm.phone}
                       onChange={(e) => setBdeForm({ ...bdeForm, phone: e.target.value })}
                       placeholder="e.g. +91 98765 43210"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                      className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:border-amber-500"
                     />
                   </div>
                   <div>
@@ -8760,12 +8566,12 @@ export function AdminTeamManagementPage() {
                       value={bdeForm.designation}
                       onChange={(e) => setBdeForm({ ...bdeForm, designation: e.target.value })}
                       placeholder="e.g. Senior BDE - Enterprise Accounts"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                      className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:border-amber-500"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Monthly Quota (₹)</label>
                     <input
@@ -8775,10 +8581,10 @@ export function AdminTeamManagementPage() {
                       value={bdeForm.monthly_quota}
                       onChange={(e) => setBdeForm({ ...bdeForm, monthly_quota: Number(e.target.value) })}
                       placeholder="2500000"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                      className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:border-amber-500"
                     />
-                    <span className="text-[10px] text-amber-400 mt-1 block font-semibold">
-                      ₹{(bdeForm.monthly_quota / 100000).toFixed(1)} Lakhs target
+                    <span className="text-[10px] text-amber-400 mt-0.5 block font-semibold">
+                      ₹{(bdeForm.monthly_quota / 100000).toFixed(1)}L target
                     </span>
                   </div>
                   <div>
@@ -8791,10 +8597,10 @@ export function AdminTeamManagementPage() {
                       value={bdeForm.commission_rate}
                       onChange={(e) => setBdeForm({ ...bdeForm, commission_rate: Number(e.target.value) })}
                       placeholder="5.0"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                      className="w-full px-3 py-2 rounded-lg border border-[#2A3446] text-xs font-medium text-white bg-[#0B111C] focus:outline-none focus:border-amber-500"
                     />
-                    <span className="text-[10px] text-purple-300 mt-1 block font-semibold">
-                      {bdeForm.commission_rate}% payout on closed deals
+                    <span className="text-[10px] text-purple-300 mt-0.5 block font-semibold">
+                      {bdeForm.commission_rate}% deal payout
                     </span>
                   </div>
                 </div>
@@ -8807,7 +8613,8 @@ export function AdminTeamManagementPage() {
                       onClick={() => setBdeForm({ ...bdeForm, password: `Creo@${Math.floor(1000 + Math.random() * 9000)}!` })}
                       className="text-[11px] font-bold text-amber-400 hover:text-amber-300 cursor-pointer flex items-center gap-1"
                     >
-                      <span>🎲 Auto-Generate</span>
+                      <Sparkles className="size-3" />
+                      <span>Auto-Generate</span>
                     </button>
                   </div>
                   <div className="relative">
@@ -8816,51 +8623,33 @@ export function AdminTeamManagementPage() {
                       required
                       value={bdeForm.password}
                       onChange={(e) => setBdeForm({ ...bdeForm, password: e.target.value })}
-                      className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-[#2A3446] text-xs font-mono font-bold text-white bg-[#0B111C] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                      placeholder="Enter or generate strong password"
+                      className="w-full pl-3 pr-10 py-2 rounded-lg border border-[#2A3446] text-xs font-mono font-bold text-white bg-[#0B111C] focus:outline-none focus:border-amber-500"
+                      placeholder="Min 6 characters"
                     />
                     <button
                       type="button"
                       onClick={() => setShowOnboardPassword(!showOnboardPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white"
                     >
-                      {showOnboardPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      {showOnboardPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
                     </button>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-[#0B111C] border border-amber-500/40 shadow-sm shadow-amber-500/10 flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    id="send_bde_email"
-                    checked={bdeForm.send_credentials_email}
-                    onChange={(e) => setBdeForm({ ...bdeForm, send_credentials_email: e.target.checked })}
-                    className="mt-1 size-4 rounded border-[#2A3446] bg-[#161F2D] text-amber-500 focus:ring-amber-400 cursor-pointer shrink-0"
-                  />
-                  <label htmlFor="send_bde_email" className="text-xs cursor-pointer select-none">
-                    <span className="font-bold text-amber-300 block mb-0.5 text-xs">
-                      Send Credentials Email via Brevo/SMTP:
-                    </span>
-                    <span className="text-[#F1F5F9] text-xs leading-relaxed block font-medium">
-                      Instantly dispatch a branded transactional welcome email to the BDE containing their email, temporary password, login portal URL, and getting started instructions.
-                    </span>
-                  </label>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2A3446]">
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
                   <button
                     type="button"
                     onClick={() => setIsOnboardBdeOpen(false)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
+                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isOnboardingBde}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                   >
-                    {isOnboardingBde ? "Provisioning BDE..." : "Provision BDE & Send Email"}
+                    {isOnboardingBde ? "Onboarding..." : "Onboard BDE"}
                   </button>
                 </div>
               </form>
@@ -9171,7 +8960,7 @@ export function AdminLeaveApprovalsPage() {
   }
 
   const [toast, setToast] = useState<string | null>(null);
-  const [filterTab, setFilterTab] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [filterTab, setFilterTab] = useState<"pending" | "approved" | "rejected">("pending");
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [applyStartDate, setApplyStartDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [applyEndDate, setApplyEndDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -9236,7 +9025,7 @@ export function AdminLeaveApprovalsPage() {
   };
 
   const filteredRequests = leaveRequests.filter(
-    (lr) => filterTab === "all" || lr.status === filterTab
+    (lr) => lr.status === filterTab
   );
 
   // Dynamic Attendance Calculation
@@ -9304,7 +9093,7 @@ export function AdminLeaveApprovalsPage() {
 
     const bracketMatch = raw.match(/^\[(.*?)\]\s*(.*)$/s);
     if (bracketMatch && bracketMatch[1]) {
-      const category = bracketMatch[1].trim();
+      let category = bracketMatch[1].trim();
       let notes = (bracketMatch[2] || "").trim();
       notes = notes.replace(/^[,;:\-\s]+/, "").trim();
 
@@ -9312,12 +9101,16 @@ export function AdminLeaveApprovalsPage() {
       let tagType: "casual" | "sick" | "blackout" | "vacation" | "general" = "general";
       if (catLower.includes("sick") || catLower.includes("medical") || catLower.includes("health")) {
         tagType = "sick";
+        if (category.length > 20) category = "Sick Leave";
       } else if (catLower.includes("blackout") || catLower.includes("freelancer") || catLower.includes("studio")) {
         tagType = "blackout";
+        if (category.length > 20) category = "Studio Blackout";
       } else if (catLower.includes("casual") || catLower.includes("personal")) {
         tagType = "casual";
+        if (category.length > 20) category = "Casual Leave";
       } else if (catLower.includes("vacation") || catLower.includes("annual") || catLower.includes("holiday")) {
         tagType = "vacation";
+        if (category.length > 20) category = "Vacation";
       }
 
       return { category, notes, tagType };
@@ -9402,97 +9195,89 @@ export function AdminLeaveApprovalsPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 xs:grid-cols-2 sm:flex sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3 w-full pb-2">
+        <div className="grid grid-cols-2 sm:flex sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3 w-full pb-2">
           <Link
             to="/admin/team"
-            className="w-full sm:w-auto justify-center px-3.5 py-2.5 sm:py-2 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 truncate"
+            className="w-full sm:w-auto justify-center px-2.5 sm:px-3.5 py-2.5 sm:py-2 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 truncate text-center"
           >
             <UserCog className="w-4 h-4 text-[#7FA0D6] shrink-0" />
-            <span className="truncate">Team Roster & Pods</span>
+            <span className="truncate">Team Roster &amp; Pods</span>
           </Link>
           <button
             type="button"
             onClick={() => setIsApplyModalOpen(true)}
-            className="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all active:scale-95 truncate"
+            className="w-full sm:w-auto justify-center px-2.5 sm:px-4 py-2.5 sm:py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all active:scale-95 truncate text-center"
           >
             <Plus className="w-4 h-4 shrink-0" />
             <span className="truncate">Apply for Time Off</span>
           </button>
         </div>
 
-        {/* 2 Top KPI Summary Cards - Compact & Clean */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        {/* 2 Top KPI Summary Cards - Ultra Compact 2-Column Grid */}
+        <div className="grid grid-cols-2 gap-2 sm:gap-4">
           {/* Card 1: PEOPLE WORKING TODAY */}
-          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] shadow-md flex flex-col justify-between">
+          <div className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-[#2A3446] shadow-sm flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
-                  PEOPLE WORKING TODAY
+              <div className="flex items-center justify-between gap-1 mb-1">
+                <span className="text-[9px] sm:text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider truncate">
+                  WORKING TODAY
                 </span>
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold">
-                  <Users className="w-3.5 h-3.5" />
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-md sm:rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold shrink-0">
+                  <Users className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 </div>
               </div>
-              <div className="flex items-baseline gap-2 mt-0.5">
-                <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">{inOfficeCount}</span>
-                <span className="text-xs font-bold text-emerald-400">Present & Active</span>
-                <span className="text-xs font-semibold text-[#97A0B3]">/ {totalMembersCount} Total Staff</span>
+              <div className="flex items-baseline gap-1 sm:gap-1.5 mt-0.5">
+                <span className="text-lg sm:text-2xl font-black text-white tracking-tight">{inOfficeCount}</span>
+                <span className="text-[10px] sm:text-xs font-bold text-emerald-400 truncate">Present</span>
+                <span className="text-[9px] sm:text-xs font-medium text-[#97A0B3] hidden xs:inline">/ {totalMembersCount}</span>
               </div>
             </div>
 
-            <div className="mt-3 pt-2.5 border-t border-[#2A3446] flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
-              <span className="flex items-center gap-1.5 text-emerald-400 text-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                Pod Alpha, Beta, Gamma & Sales Active
+            <div className="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-[#2A3446] flex items-center justify-between gap-1 text-[9px] sm:text-xs font-semibold">
+              <span className="flex items-center gap-1 text-emerald-400 truncate">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="truncate">{inOfficePct}% In-Office</span>
               </span>
-              <span className="text-white font-extrabold px-2 py-0.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-xs">
-                {inOfficePct}% In-Office
+              <span className="text-[#97A0B3] text-[9px] sm:text-[10px] font-medium shrink-0 hidden xs:inline">
+                {totalMembersCount} Total
               </span>
             </div>
           </div>
 
           {/* Card 2: ON LEAVE TODAY */}
-          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] shadow-md flex flex-col justify-between">
+          <div className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-[#2A3446] shadow-sm flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+              <div className="flex items-center justify-between gap-1 mb-1">
+                <span className="text-[9px] sm:text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider truncate">
                   ON LEAVE TODAY
                 </span>
-                <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">
-                  <Plane className="w-3.5 h-3.5" />
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-md sm:rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold shrink-0">
+                  <Plane className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 </div>
               </div>
-              <div className="flex items-baseline gap-2 mt-0.5">
-                <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">{actualOnLeaveToday.length}</span>
-                <span className="text-xs font-bold text-amber-400">Specialists Away</span>
-                <span className="text-xs font-semibold text-[#97A0B3]">({totalMembersCount - actualOnLeaveToday.length} in office)</span>
+              <div className="flex items-baseline gap-1 sm:gap-1.5 mt-0.5">
+                <span className="text-lg sm:text-2xl font-black text-white tracking-tight">{actualOnLeaveToday.length}</span>
+                <span className="text-[10px] sm:text-xs font-bold text-amber-400 truncate">Away</span>
+                <span className="text-[9px] sm:text-xs font-medium text-[#97A0B3] hidden xs:inline">({totalMembersCount - actualOnLeaveToday.length} in)</span>
               </div>
             </div>
 
-            <div className="mt-3 pt-2.5 border-t border-[#2A3446]">
+            <div className="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-[#2A3446]">
               {actualOnLeaveToday.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-wide mr-1">Away Now:</span>
-                  {actualOnLeaveToday.map((m) => (
-                    <span
-                      key={m.id}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-bold"
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                      <span>{m.employee_name || m.user_name || "Specialist"}</span>
-                      <span className="text-amber-400/80 text-[9px]">
-                        ({m.role_display || m.role || getPodBadge(m)})
-                      </span>
-                    </span>
-                  ))}
+                <div className="flex items-center justify-between gap-1 text-[9px] sm:text-xs">
+                  <span className="flex items-center gap-1 text-amber-300 font-bold truncate">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                    <span className="truncate">{actualOnLeaveToday.map((m) => m.employee_name || m.user_name || "Specialist").join(", ")}</span>
+                  </span>
+                  <span className="text-amber-400 text-[9px] sm:text-[10px] font-bold shrink-0">{actualOnLeaveToday.length} away</span>
                 </div>
               ) : (
-                <div className="flex items-center justify-between text-xs font-semibold text-emerald-400">
-                  <span className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    All creative pods & sales teams are at full capacity
+                <div className="flex items-center justify-between gap-1 text-[9px] sm:text-xs font-semibold text-emerald-400">
+                  <span className="flex items-center gap-1 truncate">
+                    <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-400 shrink-0" />
+                    <span className="truncate">Full Capacity</span>
                   </span>
-                  <span className="text-[#97A0B3] text-[11px]">0 on leave</span>
+                  <span className="text-[#97A0B3] text-[9px] sm:text-[10px] font-medium shrink-0">0 away</span>
                 </div>
               )}
             </div>
@@ -9502,17 +9287,17 @@ export function AdminLeaveApprovalsPage() {
         {/* Requests Table */}
         <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-xl overflow-hidden">
           <div className="p-4 border-b border-[#2A3446] flex flex-wrap items-center justify-between gap-3 bg-[#0B111C]/60">
-            <div className="flex items-center gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs border border-[#2A3446] max-w-full overflow-x-auto scrollbar-none flex-nowrap">
-              {(["all", "pending", "approved", "rejected"] as const).map((tab) => (
+            <div className="grid grid-cols-3 w-full sm:w-auto sm:flex items-center gap-1 sm:gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs border border-[#2A3446]">
+              {(["pending", "approved", "rejected"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setFilterTab(tab)}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg capitalize font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap text-[11px] sm:text-xs ${
+                  className={`w-full sm:w-auto px-2 sm:px-3 py-1.5 rounded-lg capitalize font-bold transition-all cursor-pointer text-center justify-center truncate text-[11px] sm:text-xs ${
                     filterTab === tab ? "bg-[#7FA0D6] text-[#0B111C] shadow-sm font-extrabold" : "text-[#97A0B3] hover:text-white"
                   }`}
                 >
-                  {tab === "all" ? `All Requests (${leaveRequests.length})` : `${tab} (${leaveRequests.filter(l => l.status === tab).length})`}
+                  {`${tab} (${leaveRequests.filter((l) => l.status === tab).length})`}
                 </button>
               ))}
             </div>
@@ -9522,21 +9307,190 @@ export function AdminLeaveApprovalsPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile View: Compact, Neat Record Cards (Zero horizontal scroll, 60% less height) */}
+          <div className="block md:hidden divide-y divide-[#2A3446]/60">
+            {filteredRequests.length === 0 ? (
+              <div className="p-8 text-center text-[#97A0B3] text-xs">
+                No leave applications found for this filter tab.
+              </div>
+            ) : (
+              filteredRequests.map((lr) => {
+                const empName =
+                  lr.employee_name ||
+                  lr.user_name ||
+                  (lr as any).name ||
+                  (lr.employee_email ? (lr.employee_email.split("@")[0] || "").toUpperCase() : "Team Member");
+                const rawRole = (lr.role || (lr as any).role_raw || lr.user_role || "").toLowerCase();
+                const domain =
+                  lr.domain ||
+                  lr.department ||
+                  (rawRole === "sales"
+                    ? "BDE"
+                    : rawRole === "freelancer"
+                    ? "Freelancer"
+                    : rawRole === "team_lead"
+                    ? "Team Lead"
+                    : lr.role_display || "Specialist");
+                const isBDE = rawRole === "sales" || domain.toLowerCase().includes("bde");
+                const isFreelancer = rawRole === "freelancer" || domain.toLowerCase().includes("freelancer");
+                const roleLabel = isBDE
+                  ? "BDE"
+                  : isFreelancer
+                  ? "Freelancer"
+                  : (lr.role_display || (lr.role ? lr.role.replace("_", " ").toUpperCase() : "Specialist"));
+                const podName = getPodBadge(lr);
+                const isAwayToday = lr.status === "approved" && (lr.is_on_leave_today || (lr.start_date <= todayStr && lr.end_date >= todayStr));
+                const daysCount = calculateDays(lr.start_date, lr.end_date);
+                const { category, notes, tagType } = parseLeaveReason(lr.reason);
+
+                return (
+                  <div key={lr.id} className="p-3.5 space-y-2 hover:bg-[#0B111C]/40 transition-colors">
+                    {/* Header Row: Specialist + Status */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="relative shrink-0">
+                          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#1E293B] to-[#334155] border border-[#2A3446] text-white font-extrabold text-[11px] flex items-center justify-center shadow-xs">
+                            {empName.slice(0, 2).toUpperCase()}
+                          </div>
+                          <span
+                            className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-[#161F2D] ${
+                              isAwayToday ? "bg-amber-400" : "bg-emerald-400"
+                            }`}
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span className="font-bold text-xs text-white truncate">{empName}</span>
+                            {isAwayToday && (
+                              <span className="px-1.5 py-0.2 rounded-full text-[8.5px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                                Away
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 text-[10px] text-[#97A0B3] truncate">
+                            <span className="text-[#7FA0D6] font-semibold">{podName}</span>
+                            <span>•</span>
+                            <span className="truncate">{roleLabel}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Status Badge */}
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9.5px] font-extrabold uppercase tracking-wider border shrink-0 ${
+                          lr.status === "approved"
+                            ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                            : lr.status === "rejected"
+                            ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
+                            : "bg-amber-500/15 text-amber-300 border-amber-500/30 animate-pulse"
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            lr.status === "approved"
+                              ? "bg-emerald-400"
+                              : lr.status === "rejected"
+                              ? "bg-rose-400"
+                              : "bg-amber-400"
+                          }`}
+                        />
+                        {lr.status}
+                      </span>
+                    </div>
+
+                    {/* Dates & Reason Container: 2-line layout that NEVER breaks across hyphens */}
+                    <div className="bg-[#0B111C]/80 p-2.5 rounded-xl border border-[#2A3446]/60 space-y-2">
+                      {/* Line 1: Date Range & Duration */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 font-mono text-[11px] sm:text-xs text-white min-w-0">
+                          <Calendar className="w-3.5 h-3.5 text-[#7FA0D6] shrink-0" />
+                          <span className="whitespace-nowrap font-bold">
+                            {lr.start_date === lr.end_date ? (
+                              <span>{lr.start_date} <span className="font-sans font-normal text-[#97A0B3] text-[10px]">(1 day)</span></span>
+                            ) : (
+                              <span>{lr.start_date} &rarr; {lr.end_date}</span>
+                            )}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 py-0.5 rounded-full border border-[#7FA0D6]/30 whitespace-nowrap shrink-0">
+                          {daysCount} {daysCount === 1 ? "day" : "days"}
+                        </span>
+                      </div>
+
+                      {/* Line 2: Category Pill + Note (Cleanly aligned, never pushes out of container) */}
+                      <div className="flex items-center gap-2 pt-1.5 border-t border-[#2A3446]/50">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border shrink-0 ${
+                            tagType === "sick"
+                              ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
+                              : tagType === "blackout"
+                              ? "bg-purple-500/15 text-purple-300 border-purple-500/30"
+                              : tagType === "casual"
+                              ? "bg-indigo-500/15 text-indigo-300 border-indigo-500/30"
+                              : tagType === "vacation"
+                              ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                              : "bg-blue-500/15 text-[#7FA0D6] border-[#7FA0D6]/30"
+                          }`}
+                        >
+                          <span>{category}</span>
+                        </span>
+
+                        {notes && (
+                          <span className="text-[10.5px] text-[#BCCCE6] font-medium truncate flex-1 min-w-0" title={notes}>
+                            Note: "{notes}"
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions / Approver Details */}
+                    {lr.status === "pending" ? (
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => handleAction(lr.id, "approved")}
+                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                        >
+                          <Check className="w-3.5 h-3.5" /> Approve
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAction(lr.id, "rejected")}
+                          className="px-3 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                        >
+                          <X className="w-3.5 h-3.5" /> Reject
+                        </button>
+                      </div>
+                    ) : lr.approved_by_name ? (
+                      <div className="flex items-center justify-between text-[10px] text-[#97A0B3] pt-0.5">
+                        <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Signed off
+                        </span>
+                        <span>Authorized by {lr.approved_by_name}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop View: Streamlined Compact Table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-xs text-white">
               <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
                 <tr>
-                  <th className="px-4 sm:px-6 py-3.5">Specialist & Team</th>
-                  <th className="px-4 sm:px-6 py-3.5">Dates & Duration</th>
-                  <th className="px-4 sm:px-6 py-3.5">Reason / Notes</th>
-                  <th className="px-4 sm:px-6 py-3.5">Status</th>
-                  <th className="px-4 sm:px-6 py-3.5 text-right">Action / Approver</th>
+                  <th className="px-4 py-3">Specialist & Team</th>
+                  <th className="px-4 py-3">Dates & Duration</th>
+                  <th className="px-4 py-3">Reason / Notes</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Action / Approver</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#2A3446]/60 font-medium">
                 {filteredRequests.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-[#97A0B3] text-xs">
+                    <td colSpan={5} className="px-6 py-10 text-center text-[#97A0B3] text-xs">
                       No leave applications found for this filter tab.
                     </td>
                   </tr>
@@ -9573,14 +9527,14 @@ export function AdminLeaveApprovalsPage() {
                     return (
                       <tr key={lr.id} className="hover:bg-[#0B111C]/40 transition-colors">
                         {/* 1. Specialist & Team */}
-                        <td className="px-4 sm:px-6 py-4">
+                        <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <div className="relative shrink-0">
-                              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#1E293B] to-[#334155] border border-[#2A3446] text-white font-extrabold text-xs flex items-center justify-center shadow-sm">
+                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1E293B] to-[#334155] border border-[#2A3446] text-white font-extrabold text-xs flex items-center justify-center shadow-xs">
                                 {empName.slice(0, 2).toUpperCase()}
                               </div>
                               <span
-                                className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ring-2 ring-[#161F2D] ${
+                                className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-[#161F2D] ${
                                   isAwayToday ? "bg-amber-400" : "bg-emerald-400"
                                 }`}
                                 title={isAwayToday ? "On Leave Today" : "Active Member"}
@@ -9595,7 +9549,7 @@ export function AdminLeaveApprovalsPage() {
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                              <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                                 <span
                                   className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
                                     isBDE
@@ -9622,7 +9576,7 @@ export function AdminLeaveApprovalsPage() {
                         </td>
 
                         {/* 2. Dates & Duration */}
-                        <td className="px-4 sm:px-6 py-4">
+                        <td className="px-4 py-3">
                           <div className="space-y-1">
                             <div className="font-mono text-xs font-bold text-white flex items-center gap-1.5">
                               <Calendar className="w-3.5 h-3.5 text-[#7FA0D6]" />
@@ -9644,11 +9598,11 @@ export function AdminLeaveApprovalsPage() {
                         </td>
 
                         {/* 3. Reason / Notes */}
-                        <td className="px-4 sm:px-6 py-4 max-w-sm">
+                        <td className="px-4 py-3 max-w-sm">
                           {(() => {
                             const { category, notes, tagType } = parseLeaveReason(lr.reason);
                             return (
-                              <div className="flex flex-col gap-1.5 bg-[#0B111C]/60 p-2.5 rounded-xl border border-[#2A3446]/80 hover:border-[#7FA0D6]/40 transition-colors">
+                              <div className="flex flex-col gap-1.5 bg-[#0B111C]/60 p-2 rounded-xl border border-[#2A3446]/80 hover:border-[#7FA0D6]/40 transition-colors">
                                 <div className="flex items-center gap-1.5">
                                   <span
                                     className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
@@ -9686,9 +9640,9 @@ export function AdminLeaveApprovalsPage() {
                         </td>
 
                         {/* 4. Status */}
-                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <span
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
                               lr.status === "approved"
                                 ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
                                 : lr.status === "rejected"
@@ -9710,20 +9664,20 @@ export function AdminLeaveApprovalsPage() {
                         </td>
 
                         {/* 5. Actions / Approver */}
-                        <td className="px-4 sm:px-6 py-4 text-right whitespace-nowrap">
+                        <td className="px-4 py-3 text-right whitespace-nowrap">
                           {lr.status === "pending" ? (
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 type="button"
                                 onClick={() => handleAction(lr.id, "approved")}
-                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1"
                               >
                                 <Check className="w-3.5 h-3.5" /> Approve
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleAction(lr.id, "rejected")}
-                                className="px-3 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white font-bold text-xs shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                                className="px-3 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1"
                               >
                                 <X className="w-3.5 h-3.5" /> Reject
                               </button>
@@ -9873,7 +9827,7 @@ export interface PlanNegotiationItem {
   preferredTime: string;
   notes: string | null;
   requestedAt: string | null;
-  status: "Pending Review" | "Accepted" | "Declined" | "Counter Offered";
+  status: "Pending Review" | "Accepted" | "Declined" | "Counter Offered" | "Proposal Sent" | string;
   counterPrice?: number | null;
   agreedAmount?: number | null;
   counterNote?: string | null;
@@ -9887,7 +9841,6 @@ export function AdminRevenuePage() {
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState<string | null>(null);
-  const [revenueLayout, setRevenueLayout] = useState<"enlarged" | "split">("enlarged");
 
   // Modals
   const [selectedReceipt, setSelectedReceipt] = useState<TransactionItem | null>(null);
@@ -9944,8 +9897,6 @@ export function AdminRevenuePage() {
   });
 
   const totalMrr = kpis?.mrr_minor ? kpis.mrr_minor / 100 : 0;
-  const totalCollected = totalMrr;
-  const projectedArr = totalMrr * 12;
 
   const totalCards = transactions
     .filter((t) => (t.method || "").toLowerCase().includes("razorpay") || (t.method || "").toLowerCase().includes("card") || (t.method || "").toLowerCase().includes("stripe"))
@@ -10025,7 +9976,6 @@ export function AdminRevenuePage() {
       <AdminTopHeader activeTab="Revenue" hideTitle />
 
       <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-6 sm:pt-8 pb-16 max-w-[1500px] w-full mx-auto space-y-6 sm:space-y-8">
-          <BillingPauseRequests />
         {toast && (
           <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
@@ -10041,45 +9991,9 @@ export function AdminRevenuePage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             TOP CONTROLS & TIMEFRAME ACTIONS
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              Live Cash Flow & Retainers
-            </span>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
-            {/* View Mode Toggle: Full Width vs Split View */}
-            <div className="flex items-center justify-center p-1 bg-[#161F2D] border border-[#2A3446] rounded-xl text-xs font-bold w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={() => setRevenueLayout("enlarged")}
-                className={`flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-                  revenueLayout === "enlarged"
-                    ? "bg-[#7FA0D6] text-white shadow-xs font-black"
-                    : "text-[#97A0B3] hover:text-white"
-                }`}
-                title="Full-width view: spacious layout showing all row details with zero horizontal scrolling"
-              >
-                <Maximize2 className="w-3.5 h-3.5" /> Full Width
-              </button>
-              <button
-                type="button"
-                onClick={() => setRevenueLayout("split")}
-                className={`flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-                  revenueLayout === "split"
-                    ? "bg-[#7FA0D6] text-white shadow-xs font-black"
-                    : "text-[#97A0B3] hover:text-white"
-                }`}
-                title="Side-by-side: Compact split view"
-              >
-                <Columns2 className="w-3.5 h-3.5" /> Split View
-              </button>
-            </div>
-
-            {/* Action Buttons: 2-column grid on mobile for perfect alignment, inline on desktop */}
-            <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center sm:gap-2.5">
+        <div className="flex items-center justify-end gap-2.5 w-full">
+          {/* Action Buttons: 2-column grid on mobile for perfect alignment, inline on desktop */}
+          <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center sm:gap-2.5">
               <button
                 type="button"
                 onClick={handleExportCSV}
@@ -10099,87 +10013,40 @@ export function AdminRevenuePage() {
               </button>
             </div>
           </div>
-        </div>
 
-        {/* ─────────────────────────────────────────────────────────────────────────────
-            TOP METRIC CARDS
-        ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6">
-          {/* Metric 1: Total Revenue (MRR) */}
-          <div className="bg-[#161F2D] rounded-3xl p-5 sm:p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex flex-col justify-between gap-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
-                Total Revenue (MRR)
-              </span>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shrink-0 border border-[#7FA0D6]/30 font-black text-xl sm:text-2xl">
-                ₹
-              </div>
-            </div>
-            <div className="flex flex-wrap items-baseline gap-2.5">
-              <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">₹{totalMrr.toLocaleString('en-IN')}</span>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center gap-1">
-                Active Retainers
-              </span>
-            </div>
-            <div className="text-xs text-[#97A0B3] font-medium pt-0.5">
-              Projected ARR: <strong className="text-white font-bold">₹{projectedArr.toLocaleString('en-IN')}</strong>
-            </div>
-          </div>
-
-          {/* Metric 2: Collected this Month */}
-          <div className="bg-[#161F2D] rounded-3xl p-5 sm:p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex flex-col justify-between gap-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
-                Collected this Month
-              </span>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
-                <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" />
-              </div>
-            </div>
-            <div className="flex flex-wrap items-baseline gap-2.5">
-              <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">₹{totalCollected.toLocaleString('en-IN')}</span>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                100% Settled
-              </span>
-            </div>
-            <div className="text-xs text-[#97A0B3] font-medium pt-0.5">
-              Settlement Count: <strong className="text-white font-bold">{transactions.length} Verified {transactions.length === 1 ? "Payment" : "Payments"}</strong>
-            </div>
-          </div>
-        </div>
 
         {/* ─────────────────────────────────────────────────────────────────────────────
             MAIN SECTION: REVENUE GROWTH GRAPH & TRANSACTION HISTORY
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className={revenueLayout === "split" ? "grid grid-cols-1 xl:grid-cols-2 gap-6 items-start" : "space-y-6"}>
+        <div className="space-y-6">
           {/* Revenue Growth & Trajectory Card */}
-          <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-xl flex flex-col justify-between p-6 lg:p-8 space-y-6">
+          <div className="bg-[#161F2D] rounded-2xl sm:rounded-3xl border border-[#2A3446] shadow-xl flex flex-col justify-between p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
             <div>
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5 mb-3 sm:mb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-white tracking-tight">Revenue Growth & Trajectory</h3>
+                  <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">Revenue Growth & Trajectory</h3>
                   <p className="text-xs text-[#97A0B3]">Live cash flow across retainers & client billing</p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 text-xs font-bold">
-                  <span className="flex items-center gap-1.5 text-[#7FA0D6]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]" /> Actual Inflow
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-bold">
+                  <span className="flex items-center gap-1.5 text-[#7FA0D6] text-[11px] sm:text-xs">
+                    <span className="w-2 h-2 rounded-full bg-[#7FA0D6]" /> Actual Inflow
                   </span>
-                  <span className="flex items-center gap-1.5 text-[#97A0B3]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#2A3446]" /> Target Baseline
+                  <span className="flex items-center gap-1.5 text-[#97A0B3] text-[11px] sm:text-xs hidden sm:flex">
+                    <span className="w-2 h-2 rounded-full bg-[#2A3446]" /> Target Baseline
                   </span>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-[#7FA0D6] text-white shadow-md ml-1" title="Monthly Recurring Revenue">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black bg-[#7FA0D6] text-white shadow-md" title="Monthly Recurring Revenue">
                     ₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"} Current MRR
                   </span>
                 </div>
               </div>
 
-              {/* Recharts Bar Chart (Responsive Height & Width) */}
-              <div className="w-full bg-[#0B111C]/60 rounded-2xl p-4 border border-[#2A3446]/60 h-80 sm:h-88">
+              {/* Recharts Bar Chart (Minimal Height on Mobile & Responsive) */}
+              <div className="w-full bg-[#0B111C]/60 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-[#2A3446]/60 h-48 sm:h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData}
-                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                    margin={{ top: 8, right: 8, left: -10, bottom: 0 }}
                     barCategoryGap="20%"
                   >
                     <defs>
@@ -10197,16 +10064,16 @@ export function AdminRevenuePage() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A3446" opacity={0.35} />
                     <XAxis
                       dataKey="name"
-                      tick={{ fontSize: 11, fill: "#97A0B3", fontWeight: 600 }}
+                      tick={{ fontSize: 10, fill: "#97A0B3", fontWeight: 600 }}
                       axisLine={false}
                       tickLine={false}
                       dy={3}
                     />
                     <YAxis
-                      tick={{ fontSize: 10, fill: "#97A0B3" }}
+                      tick={{ fontSize: 9, fill: "#97A0B3" }}
                       axisLine={false}
                       tickLine={false}
-                      width={38}
+                      width={34}
                       tickFormatter={(v: number) => {
                         const val = v / 100;
                         return val >= 10000000
@@ -10225,7 +10092,7 @@ export function AdminRevenuePage() {
                       labelStyle={{ color: "#97A0B3", fontSize: "11px", fontWeight: "bold" }}
                       cursor={false}
                     />
-                    <Bar dataKey="revenue" radius={[8, 8, 3, 3]} maxBarSize={44}>
+                    <Bar dataKey="revenue" radius={[6, 6, 2, 2]} maxBarSize={36}>
                       {chartData.map((entry, index) => {
                         const maxVal = Math.max(...chartData.map((d) => d.revenue));
                         return (
@@ -10243,22 +10110,22 @@ export function AdminRevenuePage() {
             </div>
 
             {/* Bottom Metrics Bar */}
-            <div className="pt-4 border-t border-[#2A3446] grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-center">
-              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Invoiced</span>
-                <div className="text-sm font-black text-white">₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"}</div>
+            <div className="pt-3 border-t border-[#2A3446] grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+              <div className="bg-[#0B111C] p-2 sm:p-2.5 rounded-xl border border-[#2A3446]">
+                <span className="text-[9px] sm:text-[10px] font-bold text-[#97A0B3] uppercase">Invoiced</span>
+                <div className="text-xs sm:text-sm font-black text-white">₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Direct UPI / Wire</span>
-                <div className="text-sm font-black text-white">₹{totalWire > 0 ? totalWire.toLocaleString('en-IN') : "0"}</div>
+              <div className="bg-[#0B111C] p-2 sm:p-2.5 rounded-xl border border-[#2A3446]">
+                <span className="text-[9px] sm:text-[10px] font-bold text-[#97A0B3] uppercase">Direct UPI / Wire</span>
+                <div className="text-xs sm:text-sm font-black text-white">₹{totalWire > 0 ? totalWire.toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Cards / Razorpay</span>
-                <div className="text-sm font-black text-white">₹{totalCards > 0 ? totalCards.toLocaleString('en-IN') : "0"}</div>
+              <div className="bg-[#0B111C] p-2 sm:p-2.5 rounded-xl border border-[#2A3446]">
+                <span className="text-[9px] sm:text-[10px] font-bold text-[#97A0B3] uppercase">Cards / Razorpay</span>
+                <div className="text-xs sm:text-sm font-black text-white">₹{totalCards > 0 ? totalCards.toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Disputed / Refunded</span>
-                <div className="text-sm font-black text-emerald-400">₹0</div>
+              <div className="bg-[#0B111C] p-2 sm:p-2.5 rounded-xl border border-[#2A3446]">
+                <span className="text-[9px] sm:text-[10px] font-bold text-[#97A0B3] uppercase">Disputed / Refunded</span>
+                <div className="text-xs sm:text-sm font-black text-emerald-400">₹0</div>
               </div>
             </div>
           </div>
@@ -10491,85 +10358,28 @@ export function AdminRevenuePage() {
       )}
 
       {/* ─────────────────────────────────────────────────────────────────────────────
-          MODAL: RECEIPT VIEWER
+          MODAL: CREO RENEWAL RECEIPT VIEWER (MATCHING IMAGE 2 LAYOUT)
       ───────────────────────────────────────────────────────────────────────────── */}
-      {selectedReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 lg:p-8 shadow-2xl space-y-6 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
-              <div className="flex items-center gap-2">
-                <span className="font-black text-xl text-white tracking-tight">creo.</span>
-                <span className="text-xs font-bold text-[#97A0B3]">Payment Receipt</span>
-              </div>
-              <button type="button" onClick={() => setSelectedReceipt(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs">
-              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-bold text-emerald-700 uppercase block">Status</span>
-                  <span className="text-sm font-black text-emerald-900">Payment Settled (Paid)</span>
-                </div>
-                <CheckCircle2 className="w-7 h-7 text-emerald-600" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-[#F1F5F9] font-medium">
-                <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Client</span>
-                  <strong className="text-white text-sm">{selectedReceipt.client}</strong>
-                </div>
-                <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Invoice Number</span>
-                  <strong className="text-white text-sm font-mono">{selectedReceipt.id}</strong>
-                </div>
-                <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Payment Method</span>
-                  <span className="text-white font-bold">{selectedReceipt.method}</span>
-                </div>
-                <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Settlement Date</span>
-                  <span className="text-white font-bold">{selectedReceipt.date}</span>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-[#2A3446] space-y-2">
-                <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Scope Breakdown</span>
-                <div className="p-3 bg-[#0B111C] rounded-xl flex items-center justify-between font-bold text-white">
-                  <span>{selectedReceipt.scope}</span>
-                  <span>₹{selectedReceipt.amount.toLocaleString('en-IN')}</span>
-                </div>
-              </div>
-
-              <div className="pt-2 flex justify-between items-center text-sm font-black text-white border-t border-[#2A3446]">
-                <span>Total Settled</span>
-                <span className="text-base text-[#7FA0D6]">₹{selectedReceipt.amount.toLocaleString('en-IN')} INR</span>
-              </div>
-            </div>
-
-            <div className="flex gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="flex-1 py-2.5 rounded-xl border border-[#2A3446] font-bold text-xs text-[#F1F5F9] hover:bg-[#0B111C] flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Printer className="w-4 h-4" /> Print Receipt
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  window.print();
-                  setSelectedReceipt(null);
-                }}
-                className="flex-1 py-2.5 rounded-xl bg-[#7FA0D6] text-white font-bold text-xs hover:bg-blue-700 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Download className="w-4 h-4" /> Download PDF
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PaymentReceiptModal
+        receipt={
+          selectedReceipt
+            ? {
+                id: selectedReceipt.id,
+                client: selectedReceipt.client,
+                clientEmail: selectedReceipt.client_email,
+                clientId: selectedReceipt.client_id,
+                amount: selectedReceipt.amount,
+                scope: selectedReceipt.scope,
+                method: selectedReceipt.method,
+                status: selectedReceipt.status,
+                date: selectedReceipt.date,
+                term: "1 Month",
+                quantity: "1 Retainer",
+              }
+            : null
+        }
+        onClose={() => setSelectedReceipt(null)}
+      />
     </div>
   );
 }
@@ -10583,7 +10393,7 @@ export function AdminPlansPage() {
   const queryClientId = searchParams.get("clientId");
   const [toast, setToast] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [filterTab, setFilterTab] = useState<"all" | "pending" | "accepted" | "counter" | "declined">("all");
+  const [filterTab, setFilterTab] = useState<"all" | "sent" | "pending" | "accepted" | "counter" | "declined">("all");
 
   // Plans State
   const [plans, setPlans] = useState([
@@ -10681,11 +10491,14 @@ export function AdminPlansPage() {
   const [declineReasonInput, setDeclineReasonInput] = useState("");
 
   const [newPropClient, setNewPropClient] = useState("");
+  const [newPropEmail, setNewPropEmail] = useState("");
   const [newPropCurrentPlan, setNewPropCurrentPlan] = useState("Starter (₹25,000/mo)");
   const [newPropTargetPlan, setNewPropTargetPlan] = useState("Scale Custom Scope");
-  const [newPropStandardRate, setNewPropStandardRate] = useState("100000");
+  const [newPropStandardRate, setNewPropStandardRate] = useState("95000");
   const [newPropProposedRate, setNewPropProposedRate] = useState("85000");
   const [newPropNotes, setNewPropNotes] = useState("");
+  const [isSubmittingProposal, setIsSubmittingProposal] = useState(false);
+  const [resendingEmailId, setResendingEmailId] = useState<string | null>(null);
 
   const [negotiations, setNegotiations] = useState<PlanNegotiationItem[]>([]);
 
@@ -10817,21 +10630,6 @@ export function AdminPlansPage() {
     }
   };
 
-  // Active Sales & Retainer Pipeline Deals
-  const [deals, setDeals] = useState<
-    Array<{
-      id: string;
-      client: string;
-      clientLogo: string;
-      scope: string;
-      value: number;
-      stage: string;
-      stageBadge: string;
-      probability: string;
-      owner: string;
-      expectedClose: string;
-    }>
-  >([]);
 
   // Actions: DECLINE Client Plan Negotiation
   const handleConfirmDecline = async (e: React.FormEvent) => {
@@ -10916,111 +10714,88 @@ export function AdminPlansPage() {
   // Actions: Create New Proposal Submit
   const handleCreateProposalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPropClient || !newPropProposedRate) return;
+    if (!newPropClient.trim() || !newPropProposedRate) return;
+    if (!newPropEmail.trim()) {
+      setToast("Please provide a valid recipient email ID.");
+      setTimeout(() => setToast(null), 4000);
+      return;
+    }
 
     const prop = parseFloat(newPropProposedRate) || 85000;
+    const stdRate = parseFloat(newPropStandardRate) || undefined;
+    setIsSubmittingProposal(true);
 
     try {
       const res = await createPlanNegotiation({
-        client_name: newPropClient,
+        client_name: newPropClient.trim(),
+        client_email: newPropEmail.trim(),
         target_topic: `${newPropCurrentPlan} → ${newPropTargetPlan}`,
+        current_plan: newPropCurrentPlan,
+        target_plan: newPropTargetPlan,
+        standard_rate: stdRate,
+        proposed_rate: prop,
         proposed_offer: `₹${prop.toLocaleString('en-IN')}/mo`,
         notes: newPropNotes || "Custom enterprise proposal initiated by sales lead.",
+        send_email: true,
       });
 
       const newNeg: PlanNegotiationItem = {
         id: res.id || `neg-${Math.floor(100 + Math.random() * 900)}`,
-        clientName: newPropClient,
-        clientLogo: newPropClient.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2),
+        clientName: newPropClient.trim(),
+        clientEmail: newPropEmail.trim(),
+        clientLogo: newPropClient.trim().split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2),
         targetTopic: `${newPropCurrentPlan} → ${newPropTargetPlan}`,
         proposedOffer: `₹${prop.toLocaleString('en-IN')}/mo`,
         phoneNumber: "—",
         preferredTime: "—",
         notes: newPropNotes || "Custom enterprise proposal initiated by sales lead.",
         requestedAt: new Date().toISOString(),
-        status: "Pending Review",
+        status: "Proposal Sent",
+        counterPrice: prop,
+        agreedAmount: prop,
       };
 
       setNegotiations((prev) => [newNeg, ...prev]);
-      setToast(`Custom retainer proposal initiated for ${newPropClient} (₹${prop.toLocaleString('en-IN')}/mo)!`);
+      if (res.email_sent) {
+        setToast(`Custom proposal sent successfully via mail to ${newPropEmail.trim()} (₹${prop.toLocaleString('en-IN')}/mo)!`);
+      } else {
+        setToast(`Custom proposal initiated for ${newPropClient.trim()} (₹${prop.toLocaleString('en-IN')}/mo)!`);
+      }
+      setIsNewProposalOpen(false);
+      setNewPropClient("");
+      setNewPropEmail("");
+      setNewPropNotes("");
     } catch (err) {
       setToast(`Failed to create proposal: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      setIsSubmittingProposal(false);
+      setTimeout(() => setToast(null), 5000);
     }
-
-    setIsNewProposalOpen(false);
-    setNewPropClient("");
-    setNewPropNotes("");
-    setTimeout(() => setToast(null), 4000);
   };
 
-  // Manage Deal Modal State & Handlers
-  const [manageDealModal, setManageDealModal] = useState<(typeof deals)[0] | null>(null);
-  const [dealSuccessModal, setDealSuccessModal] = useState<{
-    title: string;
-    message: string;
-  } | null>(null);
-
-  // Manage Mode: normal edit, revoke confirm, or refund process
-  const [manageMode, setManageMode] = useState<"edit" | "revoke_confirm" | "refund">("edit");
-  const [refundAmountInput, setRefundAmountInput] = useState("");
-  const [refundReasonInput, setRefundReasonInput] = useState("Contract Cancellation / Retainer Revocation");
-  const [refundMethodInput, setRefundMethodInput] = useState("Original Payment Gateway (Stripe ACH / Card)");
-
-  const handleOpenManageDeal = (deal: (typeof deals)[0]) => {
-    setManageDealModal(deal);
-    setManageMode("edit");
-    setRefundAmountInput(String(Math.round(deal.value / 12)));
+  // Actions: Resend Proposal Email
+  const handleResendProposalEmail = async (item: PlanNegotiationItem) => {
+    if (!item.clientEmail) {
+      setToast("This proposal does not have an email address attached.");
+      setTimeout(() => setToast(null), 4000);
+      return;
+    }
+    setResendingEmailId(item.id);
+    try {
+      const res = await resendProposalEmail(item.id);
+      if (res.email_sent) {
+        setToast(`Proposal email resent successfully to ${item.clientEmail}!`);
+      } else {
+        setToast(res.message || `Proposal email dispatched to ${item.clientEmail}.`);
+      }
+    } catch (err) {
+      setToast(`Failed to resend proposal email: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      setResendingEmailId(null);
+      setTimeout(() => setToast(null), 5000);
+    }
   };
 
-  // Actions: Revoke Subscription
-  const handleConfirmRevokeSubscription = (deal: (typeof deals)[0]) => {
-    setDeals((prev) =>
-      prev.map((d) =>
-        d.id === deal.id
-          ? {
-              ...d,
-              stage: "Subscription Revoked",
-              stageBadge: "bg-rose-100 text-rose-800 border-rose-300 font-black",
-              probability: "0%",
-            }
-          : d
-      )
-    );
-    setManageDealModal(null);
-    setManageMode("edit");
-    setDealSuccessModal({
-      title: "⚠️ Subscription Revoked",
-      message: `The active subscription and retainer contract for ${deal.client} (${deal.scope}) has been revoked. Retainer access is deactivated and deliverables queue is paused.`,
-    });
-  };
-
-  // Actions: Process Refund
-  const handleConfirmProcessRefund = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!manageDealModal) return;
-
-    const amt = Number(refundAmountInput) || Math.round(manageDealModal.value / 12);
-    const clientName = manageDealModal.client;
-
-    setDeals((prev) =>
-      prev.map((d) =>
-        d.id === manageDealModal.id
-          ? {
-              ...d,
-              stage: "Refund Processed",
-              stageBadge: "bg-amber-100 text-amber-800 border-amber-300 font-bold",
-            }
-          : d
-      )
-    );
-
-    setManageDealModal(null);
-    setManageMode("edit");
-    setDealSuccessModal({
-      title: "💸 Refund Issued Successfully",
-      message: `A refund of ₹${amt.toLocaleString("en-IN")} has been dispatched to ${clientName} via ${refundMethodInput}. Reason: ${refundReasonInput}. Reference: #REF-${Math.floor(10000 + Math.random() * 90000)}.`,
-    });
-  };
 
   // Actions: Save Edit Tier Terms
   const handleSaveTierTerms = async (e: React.FormEvent) => {
@@ -11074,6 +10849,8 @@ export function AdminPlansPage() {
     const matchesTab =
       filterTab === "all"
         ? true
+        : filterTab === "sent"
+        ? (item.status === "Proposal Sent" || item.status?.toLowerCase().includes("proposal") || item.status?.toLowerCase().includes("sent"))
         : filterTab === "pending"
         ? item.status === "Pending Review"
         : filterTab === "accepted"
@@ -11086,6 +10863,9 @@ export function AdminPlansPage() {
   });
 
   const pendingCount = negotiations.filter((n) => n.status === "Pending Review").length;
+  const sentCount = negotiations.filter(
+    (n) => n.status === "Proposal Sent" || n.status?.toLowerCase().includes("proposal") || n.status?.toLowerCase().includes("sent")
+  ).length;
   const totalRetainerRevenue = plans.reduce((acc, p) => acc + p.price_monthly * p.subscribers, 0);
 
   return (
@@ -11104,105 +10884,34 @@ export function AdminPlansPage() {
           </div>
         )}
 
-        {/* ─────────────────────────────────────────────────────────────────────────────
-            MOBILE: COMPACT HORIZONTAL QUICK-STATS RIBBON (Replaces 4 giant stacked cards on phone)
-        ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="sm:hidden flex items-center gap-2.5 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar snap-x overscroll-x-contain -mx-1 px-1">
-          <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
-            <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-              <span>Active Retainers</span>
-              <Briefcase className="w-3.5 h-3.5 text-[#7FA0D6]" />
+        {/* Top 2 Commercial & Plan KPI Cards - Fit to Screen */}
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 w-full">
+          {/* Card 1: Active Retainers */}
+          <div className="p-3.5 sm:p-6 bg-[#161F2D] rounded-2xl sm:rounded-3xl border border-[#2A3446] hover:border-[#7FA0D6]/40 transition-all shadow-md space-y-1.5 sm:space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] sm:text-xs font-black text-[#97A0B3] uppercase tracking-wider">ACTIVE RETAINERS</span>
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+                <Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </div>
             </div>
-            <div className="text-xl font-black text-white">
+            <div className="text-lg sm:text-3xl font-black text-white">
               {plans.reduce((acc, p) => acc + p.subscribers, 0)} Active
             </div>
-            <p className="text-[10px] text-[#7FA0D6] font-bold truncate">MRR: ₹{totalRetainerRevenue.toLocaleString("en-IN")}</p>
+            <p className="text-[11px] sm:text-xs text-[#7FA0D6] font-bold truncate">MRR: ₹{totalRetainerRevenue.toLocaleString("en-IN")}</p>
           </div>
 
-          <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
-            <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-              <span>Pending</span>
-              <Zap className="w-3.5 h-3.5 text-amber-500" />
-            </div>
-            <div className="text-xl font-black text-white">{pendingCount} Actionable</div>
-            <p className="text-[10px] text-amber-500 font-bold truncate">Requires review</p>
-          </div>
-
-          <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
-            <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-              <span>Avg Value</span>
-              <span className="text-xs font-black text-emerald-400">₹</span>
-            </div>
-            <div className="text-xl font-black text-white">
-              ₹{(plans.reduce((acc, p) => acc + p.subscribers, 0) > 0 
-                ? Math.round(totalRetainerRevenue / plans.reduce((acc, p) => acc + p.subscribers, 0))
-                : 72500).toLocaleString("en-IN")}/mo
-            </div>
-            <p className="text-[10px] text-emerald-400 font-bold truncate">High LTV retention</p>
-          </div>
-
-          <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
-            <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-              <span>Win Rate</span>
-              <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
-            </div>
-            <div className="text-xl font-black text-white">68%</div>
-            <p className="text-[10px] text-purple-400 font-bold truncate">↗ Top velocity</p>
-          </div>
-        </div>
-
-        {/* ─────────────────────────────────────────────────────────────────────────────
-            DESKTOP/TABLET: TOP 4 COMMERCIAL & PLAN KPI CARDS (Hidden on phone)
-        ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          {/* Card 2: Pending Negotiations */}
+          <div className="p-3.5 sm:p-6 bg-[#161F2D] rounded-2xl sm:rounded-3xl border border-[#2A3446] hover:border-amber-500/40 transition-all shadow-md space-y-1.5 sm:space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">ACTIVE RETAINERS</span>
-              <div className="w-7 h-7 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
-                <Briefcase className="w-3.5 h-3.5" />
+              <span className="text-[10px] sm:text-xs font-black text-[#97A0B3] uppercase tracking-wider">PENDING REVIEW</span>
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-bold">
+                <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white">
-              {plans.reduce((acc, p) => acc + p.subscribers, 0)} Active
+            <div className="text-lg sm:text-3xl font-black text-white">
+              {pendingCount} Actionable
             </div>
-            <p className="text-xs text-[#7FA0D6] font-bold">MRR: ₹{totalRetainerRevenue.toLocaleString("en-IN")}</p>
-          </div>
-
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">PENDING NEGOTIATIONS</span>
-              <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-                <Zap className="w-3.5 h-3.5" />
-              </div>
-            </div>
-            <div className="text-3xl font-black text-white">{pendingCount} Actionable</div>
-            <p className="text-xs text-amber-600 font-bold">Requires executive review</p>
-          </div>
-
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">AVG RETAINER VALUE</span>
-              <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-sm">
-                ₹
-              </div>
-            </div>
-            <div className="text-3xl font-black text-white">
-              ₹{(plans.reduce((acc, p) => acc + p.subscribers, 0) > 0 
-                ? Math.round(totalRetainerRevenue / plans.reduce((acc, p) => acc + p.subscribers, 0))
-                : 72500).toLocaleString("en-IN")}/mo
-            </div>
-            <p className="text-xs text-emerald-600 font-bold">High LTV retention</p>
-          </div>
-
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">WIN / CLOSING RATE</span>
-              <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
-                <TrendingUp className="w-3.5 h-3.5" />
-              </div>
-            </div>
-            <div className="text-3xl font-black text-white">68%</div>
-            <p className="text-xs text-purple-600 font-bold">↗ Top quadrant velocity</p>
+            <p className="text-[11px] sm:text-xs text-amber-400 font-bold truncate">Requires executive review</p>
           </div>
         </div>
 
@@ -11270,8 +10979,8 @@ export function AdminPlansPage() {
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-bold text-white tracking-tight">Client Plan Negotiations</h3>
                 {pendingCount > 0 && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-black uppercase flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black uppercase flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
                     {pendingCount} Action Required
                   </span>
                 )}
@@ -11290,39 +10999,35 @@ export function AdminPlansPage() {
             </button>
           </div>
 
-          {/* Search and Tabs */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
-            <div className="flex items-center gap-1 bg-[#161F2D] p-1 rounded-xl text-xs font-bold text-[#F1F5F9] overflow-x-auto">
-              {[
-                { id: "all", label: "All Negotiations" },
-                { id: "pending", label: `Pending Review (${pendingCount})` },
-                { id: "accepted", label: "Accepted" },
-                { id: "counter", label: "Counter Offered" },
-                { id: "declined", label: "Declined" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setFilterTab(tab.id as any)}
-                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                    filterTab === tab.id
-                      ? "bg-[#161F2D] text-[#7FA0D6] shadow-xs font-black"
-                      : "hover:text-white"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+          {/* Search and Filter */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2A3446] pb-4">
+            <div className="w-full sm:w-[220px]">
+              <CustomSelect
+                value={filterTab}
+                onChange={(val) => setFilterTab(val as any)}
+                ariaLabel="Filter Negotiations"
+                size="sm"
+                icon={<Filter className="w-3.5 h-3.5 text-[#7FA0D6]" />}
+                options={[
+                  { value: "all", label: "All Negotiations" },
+                  { value: "sent", label: sentCount > 0 ? `Sent Proposals (${sentCount})` : "Sent Proposals" },
+                  { value: "pending", label: pendingCount > 0 ? `Pending Review (${pendingCount})` : "Pending Review" },
+                  { value: "accepted", label: "Accepted" },
+                  { value: "counter", label: "Counter Offered" },
+                  { value: "declined", label: "Declined" },
+                ]}
+                className="w-full !min-h-[38px] !h-[38px] !text-xs"
+              />
             </div>
 
-            <div className="relative min-w-[240px]">
+            <div className="relative w-full sm:w-auto min-w-[240px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search negotiations by client, scope..."
-                className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium text-white placeholder:text-[#97A0B3] focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs h-[38px]"
               />
             </div>
           </div>
@@ -11385,7 +11090,12 @@ export function AdminPlansPage() {
                             )}
                           </div>
                           <p className="text-xs text-[#F1F5F9] font-medium">{item.targetTopic}</p>
-                          {item.clientEmail && <p className="text-[10px] text-[#97A0B3]">{item.clientEmail}</p>}
+                          {item.clientEmail && (
+                            <p className="text-[10px] text-[#7FA0D6] flex items-center gap-1 mt-0.5 font-medium">
+                              <Mail className="w-3 h-3 shrink-0" />
+                              <span>{item.clientEmail}</span>
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -11441,14 +11151,17 @@ export function AdminPlansPage() {
                               ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
                               : item.status === "Counter Offered"
                               ? "bg-purple-500/15 text-purple-400 border border-purple-500/30"
+                              : item.status === "Proposal Sent"
+                              ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
                               : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
                           }`}
                         >
                           {item.status === "Pending Review" && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
+                          {item.status === "Proposal Sent" && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />}
                           {item.status}
                         </span>
 
-                        {/* Functional ACCEPT, DECLINE, and COUNTER buttons */}
+                        {/* Functional ACCEPT, DECLINE, COUNTER, and RESEND buttons */}
                         {item.status === "Pending Review" ? (
                           <div className="flex items-center gap-2">
                             <button
@@ -11472,6 +11185,28 @@ export function AdminPlansPage() {
                             >
                               <SlidersHorizontal className="w-3.5 h-3.5" /> Counter
                             </button>
+                          </div>
+                        ) : item.status === "Proposal Sent" ? (
+                          <div className="flex items-center gap-2">
+                            {item.clientEmail && (
+                              <button
+                                type="button"
+                                onClick={() => handleResendProposalEmail(item)}
+                                disabled={resendingEmailId === item.id}
+                                className="px-3.5 py-1.5 rounded-xl border border-blue-500/40 bg-blue-500/10 hover:bg-blue-500/20 text-xs font-bold text-blue-300 flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
+                                title="Resend proposal email"
+                              >
+                                {resendingEmailId === item.id ? (
+                                  <>
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Sending...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Send className="w-3.5 h-3.5" /> Resend Email
+                                  </>
+                                )}
+                              </button>
+                            )}
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
@@ -11499,77 +11234,6 @@ export function AdminPlansPage() {
           </div>
         </div>
 
-        {/* ─────────────────────────────────────────────────────────────────────────────
-            ACTIVE SALES & RETAINER PIPELINE TABLE
-        ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] p-6 lg:p-8 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xl font-black text-white tracking-tight">Active Sales & Retainer Pipeline</h3>
-              <p className="text-xs text-[#97A0B3] mt-0.5">High-touch commercial prospects, contract values, and closing probabilities</p>
-            </div>
-            <span className="px-3 py-1 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-xs font-bold">
-              {deals.length} Active Deals
-            </span>
-          </div>
-
-          <div className="overflow-x-auto -mx-1 sm:mx-0">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-[#2A3446] text-[10px] font-black uppercase text-[#97A0B3] tracking-wider">
-                  <th className="pb-3.5 pl-2">Client Brand</th>
-                  <th className="pb-3.5">Deal Scope</th>
-                  <th className="pb-3.5">Contract Value</th>
-                  <th className="pb-3.5">Stage</th>
-                  <th className="pb-3.5">Win Probability</th>
-                  <th className="pb-3.5">Lead Owner</th>
-                  <th className="pb-3.5 text-right pr-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {deals.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-10 text-center text-[#97A0B3]">
-                      <p className="text-xs font-bold text-[#F1F5F9]">No active pipeline deals</p>
-                      <p className="text-[11px] text-[#97A0B3] mt-0.5">Real sales prospect deals will appear here once initiated.</p>
-                    </td>
-                  </tr>
-                ) : (
-                  deals.map((d) => (
-                    <tr key={d.id} className="hover:bg-[#0B111C]/70 transition-colors">
-                      <td className="py-4 pl-2 font-bold text-white">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center">
-                            {d.clientLogo}
-                          </div>
-                          <span>{d.client}</span>
-                        </div>
-                      </td>
-                      <td className="py-4 text-[#F1F5F9] font-medium">{d.scope}</td>
-                      <td className="py-4 font-black text-white">₹{d.value.toLocaleString("en-IN")} / yr</td>
-                      <td className="py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${d.stageBadge}`}>
-                          {d.stage}
-                        </span>
-                      </td>
-                      <td className="py-4 font-bold text-emerald-600">{d.probability}</td>
-                      <td className="py-4 text-[#F1F5F9] font-medium">{d.owner}</td>
-                      <td className="py-4 text-right pr-2">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenManageDeal(d)}
-                          className="px-3.5 py-1.5 rounded-xl bg-[#161F2D] hover:bg-blue-600 hover:text-white text-white font-bold text-xs cursor-pointer shadow-2xs transition-all active:scale-95"
-                        >
-                          Manage
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
       </main>
 
       {/* ─────────────────────────────────────────────────────────────────────────────
@@ -11935,7 +11599,12 @@ export function AdminPlansPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
           <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
             <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 className="text-base font-bold text-white">Initiate Custom Retainer Proposal</h3>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                  <Mail className="w-3.5 h-3.5" />
+                </div>
+                <h3 className="text-base font-bold text-white">Initiate Custom Retainer Proposal</h3>
+              </div>
               <button type="button" onClick={() => setIsNewProposalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
                 <X className="w-4 h-4" />
               </button>
@@ -11943,15 +11612,34 @@ export function AdminPlansPage() {
 
             <form onSubmit={handleCreateProposalSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Client Brand Name</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">
+                  Client Brand Name <span className="text-blue-400">*</span>
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Apex Media or Stellar Corp"
                   value={newPropClient}
                   onChange={(e) => setNewPropClient(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                 />
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#F1F5F9] mb-1">
+                  Recipient Email ID <span className="text-blue-400">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. client@brand.com or founder@company.com"
+                  value={newPropEmail}
+                  onChange={(e) => setNewPropEmail(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                />
+                <span className="text-[10px] text-[#97A0B3] mt-0.5 block">
+                  Proposal terms &amp; activation link will be delivered via email to this address.
+                </span>
               </div>
 
               <div>
@@ -11960,18 +11648,18 @@ export function AdminPlansPage() {
                   type="text"
                   value={newPropCurrentPlan}
                   onChange={(e) => setNewPropCurrentPlan(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Target Plan & Custom Scope</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Target Plan &amp; Custom Scope</label>
                 <input
                   type="text"
                   required
                   value={newPropTargetPlan}
                   onChange={(e) => setNewPropTargetPlan(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                 />
               </div>
 
@@ -11982,38 +11670,57 @@ export function AdminPlansPage() {
                     type="number"
                     value={newPropStandardRate}
                     onChange={(e) => setNewPropStandardRate(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Proposed Rate (₹/mo)</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">
+                    Proposed Rate (₹/mo) <span className="text-blue-400">*</span>
+                  </label>
                   <input
                     type="number"
                     required
                     value={newPropProposedRate}
                     onChange={(e) => setNewPropProposedRate(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Negotiation Scope Notes & Commitments</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Negotiation Scope Notes &amp; Commitments</label>
                 <textarea
                   rows={3}
                   placeholder="e.g. 12-month contract lock-in with 2 dedicated creative pods."
                   value={newPropNotes}
                   onChange={(e) => setNewPropNotes(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                 />
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setIsNewProposalOpen(false)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => setIsNewProposalOpen(false)}
+                  disabled={isSubmittingProposal}
+                  className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                >
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer">
-                  Create Proposal
+                <button
+                  type="submit"
+                  disabled={isSubmittingProposal}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/25 cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                >
+                  {isSubmittingProposal ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Sending Proposal...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" /> Send Proposal
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -12021,256 +11728,6 @@ export function AdminPlansPage() {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────────────────────
-          MODAL: MANAGE COMMERCIAL DEAL & PIPELINE (WITH REVOKE & REFUND)
-      ───────────────────────────────────────────────────────────────────────────── */}
-      {manageDealModal && (
-        <div
-          className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
-          onClick={() => {
-            setManageDealModal(null);
-            setManageMode("edit");
-          }}
-        >
-          <div
-            className="relative w-full max-w-xl rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-[#2A3446] flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <div className="flex items-center gap-3">
-                <div className="size-11 rounded-2xl bg-slate-950 text-white font-black text-sm flex items-center justify-center shadow-xs">
-                  {manageDealModal.clientLogo}
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-white tracking-tight">
-                    Manage Deal • {manageDealModal.client}
-                  </h3>
-                  <p className="text-[11px] text-[#97A0B3] font-medium">
-                    Contract negotiation, deal stage progression & subscription controls
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setManageDealModal(null);
-                  setManageMode("edit");
-                }}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            {/* Quick Action Navigation Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 p-1.5 bg-[#161F2D]/80 rounded-2xl">
-              <button
-                type="button"
-                onClick={() => setManageMode("edit")}
-                className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
-                  manageMode === "edit"
-                    ? "bg-[#161F2D] text-white shadow-xs font-black"
-                    : "text-[#F1F5F9] hover:text-white"
-                }`}
-              >
-                📝 Edit Contract
-              </button>
-              <button
-                type="button"
-                onClick={() => setManageMode("refund")}
-                className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
-                  manageMode === "refund"
-                    ? "bg-amber-500 text-white shadow-xs font-black"
-                    : "text-amber-700 hover:bg-amber-100/60"
-                }`}
-              >
-                💸 Process Refund
-              </button>
-              <button
-                type="button"
-                onClick={() => setManageMode("revoke_confirm")}
-                className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
-                  manageMode === "revoke_confirm"
-                    ? "bg-rose-600 text-white shadow-xs font-black"
-                    : "text-rose-700 hover:bg-rose-100/60"
-                }`}
-              >
-                ⚠️ Revoke Retainer
-              </button>
-            </div>
-
-            {/* MODE 1: REVOKE CONFIRMATION */}
-            {manageMode === "revoke_confirm" && (
-              <div className="space-y-4 py-2 animate-fade-in">
-                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3.5">
-                  <div className="size-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-                    <X className="size-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-black text-rose-900">Revoke Active Subscription & Retainer?</h4>
-                    <p className="text-xs text-rose-700 leading-relaxed font-medium">
-                      This will immediately deactivate <strong>{manageDealModal.client}</strong>'s current retainer ({manageDealModal.scope}), halt all creative pod work queues, and update deal status to <strong>Subscription Revoked</strong>.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-xs space-y-2 text-[#F1F5F9]">
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-[#97A0B3]">Client:</span>
-                    <strong className="text-white">{manageDealModal.client}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-[#97A0B3]">Contract Value:</span>
-                    <strong className="text-white">₹{manageDealModal.value.toLocaleString("en-IN")} / yr</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-[#97A0B3]">Assigned Account Owner:</span>
-                    <strong className="text-white">{manageDealModal.owner}</strong>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
-                  <button
-                    type="button"
-                    onClick={() => setManageMode("edit")}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
-                  >
-                    Go Back
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleConfirmRevokeSubscription(manageDealModal)}
-                    className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/25 active:scale-95 transition-all cursor-pointer"
-                  >
-                    Confirm & Revoke Subscription
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* MODE 2: ISSUE REFUND */}
-            {manageMode === "refund" && (
-              <form onSubmit={handleConfirmProcessRefund} className="space-y-4 py-2 animate-fade-in">
-                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3.5">
-                  <div className="size-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm font-black text-sm">
-                    ₹
-                  </div>
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-black text-amber-900">Process Client Refund</h4>
-                    <p className="text-xs text-amber-700 leading-relaxed font-medium">
-                      Issue a full or prorated refund back to <strong>{manageDealModal.client}</strong>. A settlement receipt will be automatically logged.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Refund Amount (₹ INR)</label>
-                    <input
-                      type="number"
-                      required
-                      value={refundAmountInput}
-                      onChange={(e) => setRefundAmountInput(e.target.value)}
-                      placeholder="e.g. 45000"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Refund Method</label>
-                    <NativeSelect
-                      value={refundMethodInput}
-                      onChange={(e) => setRefundMethodInput(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
-                    >
-                      <option value="Original Payment Gateway (Stripe ACH / Card)">Original Payment Gateway (Stripe / ACH)</option>
-                      <option value="Direct Bank Wire / IMPS / RTGS">Direct Bank Transfer (IMPS / RTGS)</option>
-                      <option value="Internal Account Service Credit">Internal Account Service Credit</option>
-                    </NativeSelect>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Reason for Refund</label>
-                  <NativeSelect
-                    value={refundReasonInput}
-                    onChange={(e) => setRefundReasonInput(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
-                  >
-                    <option value="Contract Cancellation / Retainer Revocation">Contract Cancellation / Retainer Revocation</option>
-                    <option value="SLA Non-Compliance / Delivery Disruption">SLA Non-Compliance / Delivery Disruption</option>
-                    <option value="Duplicate or Overcharge Billing Adjustment">Duplicate or Overcharge Billing Adjustment</option>
-                    <option value="Executive Discretionary Credit">Executive Discretionary Credit</option>
-                  </NativeSelect>
-                </div>
-
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
-                  <button
-                    type="button"
-                    onClick={() => setManageMode("edit")}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
-                  >
-                    Go Back
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md shadow-amber-600/25 active:scale-95 transition-all cursor-pointer"
-                  >
-                    Confirm & Issue ₹{Number(refundAmountInput || 0).toLocaleString("en-IN")} Refund
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ─────────────────────────────────────────────────────────────────────────────
-          MODAL: DEAL SUCCESS POPUP
-      ───────────────────────────────────────────────────────────────────────────── */}
-      {dealSuccessModal && (
-        <div
-          className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
-          onClick={() => setDealSuccessModal(null)}
-        >
-          <div
-            className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-5 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-          >
-            <button
-              type="button"
-              onClick={() => setDealSuccessModal(null)}
-              className="absolute top-4 right-4 size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
-              aria-label="Close modal"
-            >
-              <X className="size-4" />
-            </button>
-
-            <div className="size-16 rounded-3xl bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60 flex items-center justify-center mb-4 shadow-inner">
-              <CheckCircle2 className="size-8" />
-            </div>
-
-            <h3 className="text-xl font-black text-white tracking-tight">{dealSuccessModal.title}</h3>
-            <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm">{dealSuccessModal.message}</p>
-
-            <div className="w-full mt-6">
-              <button
-                type="button"
-                onClick={() => setDealSuccessModal(null)}
-                autoFocus
-                className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

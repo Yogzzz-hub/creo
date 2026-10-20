@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarClock, Instagram } from "lucide-react";
+import { CalendarClock } from "lucide-react";
+import { Instagram } from "../../ui/brand-icons";
 import { request } from "../../lib/http";
 
 type Post = { id: string; deliverable_id: string; title: string; scheduled_at: string | null; status: string; stage: string; caption: string; last_error?: string };

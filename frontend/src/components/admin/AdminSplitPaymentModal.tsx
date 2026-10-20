@@ -11,6 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { request } from "../../lib/http";
+import { CustomSelect } from "../ui/CustomSelect";
 
 export interface AdminSplitPaymentModalProps {
   isOpen: boolean;
@@ -289,18 +290,20 @@ export function AdminSplitPaymentModal({
             {!initialClientId && (
               <div>
                 <label className="block text-xs font-semibold text-[#F1F5F9] mb-1">Select Client</label>
-                <select
+                <CustomSelect
                   value={selectedClientId}
-                  onChange={(e) => setSelectedClientId(e.target.value)}
-                  className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#7FA0D6]"
-                >
-                  <option value="">-- Choose Client --</option>
-                  {clients.map((c) => (
-                    <option key={c.client_id || c.id} value={c.client_id || c.id}>
-                      {c.company_name || c.full_name || c.email}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setSelectedClientId}
+                  ariaLabel="Select Client"
+                  className="w-full"
+                  placeholder="-- Choose Client --"
+                  options={[
+                    { value: "", label: "-- Choose Client --" },
+                    ...clients.map((c) => ({
+                      value: c.client_id || c.id,
+                      label: c.company_name || c.full_name || c.email,
+                    })),
+                  ]}
+                />
               </div>
             )}
 

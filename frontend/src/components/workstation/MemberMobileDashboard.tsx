@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router";
 import {
+  Bell,
   Clock,
   Zap,
   Calendar,
@@ -16,11 +17,9 @@ import {
   Send,
   Eye,
   Menu,
-  ChevronDown,
 } from "lucide-react";
 import type { PodTask } from "../../lib/ops-api";
 import { useAdminSidebar } from "../admin/AdminSidebarContext";
-import { NotificationMenu } from "../ui/NotificationMenu";
 
 export interface LeadNoteItem {
   id: string;
@@ -70,8 +69,8 @@ interface MemberMobileDashboardProps {
 export function MemberMobileDashboard({
   podName,
   leadName: _leadName,
-  user: _user,
-  userInitials: _userInitials,
+  user,
+  userInitials,
   metricActiveTasks,
   displayInProdTasks,
   displayQaTasks,
@@ -95,25 +94,13 @@ export function MemberMobileDashboard({
   setSelectedTaskId,
   setUploadModalOpen,
   openPreviewModal,
-  showToast: _showToast,
+  showToast,
 }: MemberMobileDashboardProps) {
   const [mobileSecondaryTab, setMobileSecondaryTab] = useState<"feedback" | "team">("feedback");
-  const [actionFilterOpen, setActionFilterOpen] = useState(false);
-  const actionFilterRef = useRef<HTMLDivElement>(null);
   const { toggleMobile } = useAdminSidebar();
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (actionFilterRef.current && !actionFilterRef.current.contains(event.target as Node)) {
-        setActionFilterOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   return (
-    <div className="md:hidden pb-2 space-y-3 max-w-[430px] mx-auto text-slate-100">
+    <div className="md:hidden pb-12 space-y-3 max-w-[430px] mx-auto text-slate-100">
       {/* Sticky Top Header */}
       <header className="sticky top-0 z-40 w-[calc(100%+1.75rem)] -mx-3.5 bg-[#0B0F17]/90 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -134,8 +121,30 @@ export function MemberMobileDashboard({
           </span>
         </div>
 
-        <div className="flex items-center">
-          <NotificationMenu placement="header" />
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => showToast("All pod notifications are up to date", "info")}
+            className="relative w-8 h-8 rounded-full flex items-center justify-center bg-[#131B26] border border-white/10 text-slate-300 hover:text-white hover:bg-[#172232] transition-colors cursor-pointer"
+            aria-label="Notifications"
+          >
+            <Bell className="w-4 h-4" />
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_6px_#38BDF8]"></span>
+          </button>
+
+          <Link
+            to="/workstation/settings"
+            className="flex items-center gap-1.5 pl-1"
+            aria-label="Profile Settings"
+            title={user?.full_name || "Profile Settings"}
+          >
+            <div className="relative">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-md">
+                {userInitials}
+              </div>
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#0B0F17]"></span>
+            </div>
+          </Link>
         </div>
       </header>
 
@@ -217,130 +226,43 @@ export function MemberMobileDashboard({
         </div>
       </div>
 
-      {/* 3. Quick Action Hub (Dropdown Filter) */}
-      <div className="relative" ref={actionFilterRef}>
+      {/* 3. Quick Action Hub (Horizontal Reel) */}
+      <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5 -mx-3.5 px-3.5">
+        <Link
+          to="/workstation/tasks"
+          className="shrink-0 flex items-center gap-1.5 bg-sky-400 text-slate-950 font-semibold text-xs px-3.5 py-2 rounded-xl shadow-[0_2px_10px_rgba(56,189,248,0.25)] hover:bg-sky-300 active:scale-95 transition-all"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Browse Tasks</span>
+        </Link>
+
         <button
           type="button"
-          onClick={() => setActionFilterOpen(!actionFilterOpen)}
-          className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#131B26]/90 border border-white/10 hover:border-white/20 text-white transition-all text-xs font-semibold cursor-pointer shadow-xs"
-          aria-expanded={actionFilterOpen}
-          aria-label="Quick Actions & Standup"
+          onClick={() => setZoomModalOpen(true)}
+          className="shrink-0 flex items-center gap-1.5 bg-[#131B26]/90 border border-sky-400/30 text-sky-400 text-xs font-medium px-3.5 py-2 rounded-xl hover:bg-[#172232] transition-all cursor-pointer"
         >
-          <div className="flex items-center gap-2.5">
-            <div className="size-6 rounded-lg bg-sky-400/15 text-sky-400 flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5" />
-            </div>
-            <span className="font-bold text-slate-200">Quick Actions & Shortcuts</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-400/15 text-sky-400 border border-sky-400/30">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-400"></span>
-              </span>
-              Standup: 25m
-            </span>
-            <ChevronDown
-              className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
-                actionFilterOpen ? "rotate-180 text-white" : ""
-              }`}
-            />
-          </div>
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-400"></span>
+          </span>
+          <span>Standup: In 25m</span>
         </button>
 
-        {/* Dropdown Menu */}
-        {actionFilterOpen && (
-          <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#131B26] border border-white/15 rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.6)] z-30 p-1.5 space-y-1 animate-scale-up backdrop-blur-xl">
-            {/* 1. Browse Tasks */}
-            <Link
-              to="/workstation/tasks"
-              onClick={() => setActionFilterOpen(false)}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 active:bg-white/10 transition text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="size-7 rounded-lg bg-sky-400 text-slate-950 flex items-center justify-center font-bold shadow-xs">
-                  <Plus className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-white group-hover:text-sky-300 transition">
-                    Browse Tasks
-                  </div>
-                  <div className="text-[10px] text-slate-400">Explore and assign task queue</div>
-                </div>
-              </div>
-              <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-white transition" />
-            </Link>
+        <Link
+          to="/slack"
+          className="shrink-0 flex items-center gap-1.5 bg-[#131B26]/80 border border-white/10 text-slate-300 text-xs font-medium px-3.5 py-2 rounded-xl hover:bg-[#172232] hover:text-white transition-all"
+        >
+          <Hash className="w-4 h-4 text-[#E01E5A]" />
+          <span>Slack Hub</span>
+        </Link>
 
-            {/* 2. Standup */}
-            <button
-              type="button"
-              onClick={() => {
-                setActionFilterOpen(false);
-                setZoomModalOpen(true);
-              }}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 active:bg-white/10 transition text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="size-7 rounded-lg bg-sky-400/15 border border-sky-400/30 text-sky-400 flex items-center justify-center shadow-xs">
-                  <Video className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-white group-hover:text-sky-300 transition flex items-center gap-1.5">
-                    <span>Daily Standup</span>
-                    <span className="size-1.5 rounded-full bg-sky-400 animate-ping" />
-                  </div>
-                  <div className="text-[10px] text-slate-400">Join Zoom Room • Next sync</div>
-                </div>
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-400/15 text-sky-400 border border-sky-400/30">
-                In 25m
-              </span>
-            </button>
-
-            {/* 3. Slack Hub */}
-            <Link
-              to="/slack"
-              onClick={() => setActionFilterOpen(false)}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 active:bg-white/10 transition text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="size-7 rounded-lg bg-[#E01E5A]/15 border border-[#E01E5A]/30 text-[#E01E5A] flex items-center justify-center shadow-xs">
-                  <Hash className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-white group-hover:text-pink-300 transition">
-                    Slack Hub
-                  </div>
-                  <div className="text-[10px] text-slate-400">Direct {podName} channel</div>
-                </div>
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-slate-300 border border-white/10">
-                Instant Sync
-              </span>
-            </Link>
-
-            {/* 4. Schedule */}
-            <Link
-              to="/workstation/schedule"
-              onClick={() => setActionFilterOpen(false)}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 active:bg-white/10 transition text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="size-7 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center shadow-xs">
-                  <Calendar className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-white group-hover:text-indigo-300 transition">
-                    Schedule & PTO
-                  </div>
-                  <div className="text-[10px] text-slate-400">Shifts, calendar & time off</div>
-                </div>
-              </div>
-              <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-white transition" />
-            </Link>
-          </div>
-        )}
+        <Link
+          to="/workstation/schedule"
+          className="shrink-0 flex items-center gap-1.5 bg-[#131B26]/80 border border-white/10 text-slate-300 text-xs font-medium px-3.5 py-2 rounded-xl hover:bg-[#172232] hover:text-white transition-all"
+        >
+          <Calendar className="w-4 h-4 text-sky-400" />
+          <span>Schedule</span>
+        </Link>
       </div>
 
       {/* 4. Assigned Sprint Deliverables (Primary Work Hub) */}

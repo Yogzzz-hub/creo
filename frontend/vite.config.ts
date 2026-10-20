@@ -7,7 +7,11 @@ import { defineConfig } from "vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      babel: {
+        compact: false,
+      },
+    }),
     tailwindcss(),
     visualizer({
       filename: "dist/stats.html",

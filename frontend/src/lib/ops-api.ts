@@ -663,12 +663,36 @@ export async function createPlanNegotiation(payload: {
   notes?: string;
   client_email?: string;
   client_id?: string;
-}): Promise<{ status: string; id: string; message: string }> {
-  return request<{ status: string; id: string; message: string }>(
-    `/api/v1/negotiations/submit`,
+  standard_rate?: number;
+  proposed_rate?: number;
+  current_plan?: string;
+  target_plan?: string;
+  send_email?: boolean;
+}): Promise<{ status: string; id: string; message: string; email_sent?: boolean }> {
+  try {
+    return await request<{ status: string; id: string; message: string; email_sent?: boolean }>(
+      `/api/v1/admin/negotiations`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+  } catch (err) {
+    return await request<{ status: string; id: string; message: string; email_sent?: boolean }>(
+      `/api/v1/negotiations/submit`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+  }
+}
+
+export async function resendProposalEmail(negId: string): Promise<{ status: string; message: string; email_sent?: boolean }> {
+  return request<{ status: string; message: string; email_sent?: boolean }>(
+    `/api/v1/admin/negotiations/${negId}/resend-email`,
     {
       method: "POST",
-      body: JSON.stringify(payload),
     }
   );
 }

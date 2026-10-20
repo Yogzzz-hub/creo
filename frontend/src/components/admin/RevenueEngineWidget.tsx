@@ -53,12 +53,16 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
   const [trendData, setTrendData] = useState<RevenueTrendData | null>(null);
   const [trendLoading, setTrendLoading] = useState(false);
 
-  const formatCurrency = (val: number) =>
-    new Intl.NumberFormat("en-IN", {
+  const formatCurrency = (val: number) => {
+    const num = val / 100;
+    const hasDecimals = num % 1 !== 0;
+    return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
-      minimumFractionDigits: 0,
-    }).format(val / 100);
+      minimumFractionDigits: hasDecimals ? 2 : 0,
+      maximumFractionDigits: 2,
+    }).format(num);
+  };
 
   const loadTrend = useCallback(async (tf: Timeframe) => {
     setTrendLoading(true);
@@ -97,22 +101,22 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
       className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-xl hover:border-[#7FA0D6]/60 hover:shadow-[0_0_25px_rgba(127,160,214,0.15)] transition-all duration-300 p-4 sm:p-5 flex flex-col justify-between w-full h-full font-sans cursor-pointer group hover-card-innovative overflow-hidden relative"
     >
       {/* Header Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 pb-2.5 border-b border-[#2A3446]/80 shrink-0 gap-3">
-        <div className="flex items-center gap-2.5">
+      <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-[#2A3446]/80 shrink-0 gap-2 sm:gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] group-hover:scale-110 group-hover:border-[#7FA0D6]/50 group-hover:bg-[#161F2D] transition-all shrink-0">
             <Wallet className="w-4.5 h-4.5" />
           </div>
-          <div>
-            <h2 className="text-sm sm:text-base font-black text-white group-hover:text-[#7FA0D6] transition-colors tracking-tight flex items-center gap-1.5">
+          <div className="min-w-0">
+            <h2 className="text-sm sm:text-base font-black text-white group-hover:text-[#7FA0D6] transition-colors tracking-tight flex items-center gap-1.5 truncate">
               Revenue Engine
-              <ArrowUpRight className="w-3.5 h-3.5 text-[#97A0B3] group-hover:text-[#7FA0D6] transition-colors" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-[#97A0B3] group-hover:text-[#7FA0D6] transition-colors shrink-0" />
             </h2>
-            <p className="text-[11px] text-[#97A0B3] font-medium">Monthly revenue & active retainers</p>
+            <p className="text-[11px] text-[#97A0B3] font-medium truncate">Monthly revenue & active retainers</p>
           </div>
         </div>
 
         {/* Timeframe Pills */}
-        <div className="flex bg-[#0B111C] p-1 rounded-xl text-xs font-semibold border border-[#2A3446] self-start sm:self-auto overflow-x-auto w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="inline-flex items-center bg-[#0B111C] p-1 rounded-xl text-xs font-semibold border border-[#2A3446] shrink-0" onClick={(e) => e.stopPropagation()}>
           {(Object.entries(TIMEFRAME_LABELS) as [Timeframe, string][]).map(([key, label]) => (
             <button
               key={key}
@@ -121,9 +125,9 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
                 e.stopPropagation();
                 setActiveTimeframe(key);
               }}
-              className={`px-3 py-0.5 rounded-lg text-[11px] font-bold cursor-pointer transition-all ${
+              className={`px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold cursor-pointer transition-all ${
                 activeTimeframe === key
-                  ? "bg-[#BCCCE6] text-[#0B111C] shadow-xs scale-105"
+                  ? "bg-[#BCCCE6] text-[#0B111C] shadow-xs font-extrabold"
                   : "text-[#97A0B3] hover:text-white"
               }`}
             >
@@ -236,7 +240,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
             <span className="text-xs sm:text-sm font-black text-white group-hover/pill:text-[#7FA0D6] transition-colors leading-none">{displayRevenue}</span>
             <span className="text-[9px] text-[#97A0B3] uppercase font-bold tracking-wider mt-1">Total MRR</span>
           </div>
-          <div className="bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 hover:border-[#7FA0D6]/60 hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-200 rounded-xl p-2.5 border border-[#7FA0D6]/30 flex flex-col items-center justify-center text-center cursor-pointer shadow-sm group/pill">
+          <div className="bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 hover:border-[#7FA0D6]/60 hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-200 rounded-xl p-2.5 border border-[#7FA0D6]/40 flex flex-col items-center justify-center text-center cursor-pointer shadow-sm group/pill">
             <span className="text-xs sm:text-sm font-black text-[#7FA0D6] leading-none">{displayClients}</span>
             <span className="text-[9px] text-[#7FA0D6] uppercase font-bold tracking-wider mt-1">Active Deals</span>
           </div>
@@ -248,20 +252,20 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
       </div>
 
       {/* Redirecting Buttons Directly Below Graph */}
-      <div className="pt-2.5 mt-2 border-t border-[#2A3446] flex flex-row gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+      <div className="pt-2.5 mt-2 border-t border-[#2A3446] grid grid-cols-2 gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
         <Link
           to="/admin/revenue"
           onClick={(e) => e.stopPropagation()}
-          className="flex-1 text-center py-2 bg-[#0B111C] hover:bg-[#161F2D] hover:border-[#7FA0D6]/60 hover:scale-[1.02] hover:text-[#7FA0D6] text-white rounded-xl text-[11px] font-bold border border-[#2A3446] transition-all duration-200 shadow-md"
+          className="min-w-0 min-h-[38px] py-2 px-2.5 bg-[#0B111C] hover:bg-[#161F2D] hover:border-[#7FA0D6]/60 hover:scale-[1.02] hover:text-[#7FA0D6] text-white rounded-xl text-[11px] font-bold border border-[#2A3446] transition-all duration-200 shadow-md flex items-center justify-center text-center leading-tight"
         >
-          Manage Revenues & Analytics
+          <span>Manage Revenues & Analytics</span>
         </Link>
         <Link
           to="/admin/plans"
           onClick={(e) => e.stopPropagation()}
-          className="flex-1 text-center py-2 bg-[#7FA0D6] hover:bg-blue-600 hover:border-blue-400 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] text-white rounded-xl text-[11px] font-bold border border-blue-500 transition-all duration-200 shadow-md"
+          className="min-w-0 min-h-[38px] py-2 px-2.5 bg-[#7FA0D6] hover:bg-[#97b7e8] hover:scale-[1.02] text-[#0B111C] rounded-xl text-[11px] font-extrabold border border-[#7FA0D6] transition-all duration-200 shadow-md flex items-center justify-center text-center leading-tight"
         >
-          Plans & Negotiations
+          <span>Plans & Negotiations</span>
         </Link>
       </div>
     </div>

@@ -19,6 +19,7 @@ import {
   FileText,
 } from "lucide-react";
 import { createFreelancer } from "../../lib/freelancer-api";
+import { CustomSelect } from "../ui/CustomSelect";
 
 interface AdminFreelancerModalProps {
   isOpen: boolean;
@@ -166,20 +167,20 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
         aria-modal="true"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#2A3446] pb-3.5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400">
-              <UserPlus className="w-5 h-5" />
+        <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
+              <UserPlus className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white">Onboard Freelancer Specialist</h3>
+                <h3 className="text-sm sm:text-base font-bold text-white">Onboard Freelancer</h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
                   Role Scoped
                 </span>
               </div>
               <p className="text-[11px] text-[#97A0B3]">
-                Provision individual access to task rosters, review workflows & asset submissions
+                Assign project access & task deliverables
               </p>
             </div>
           </div>
@@ -193,23 +194,21 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
         </div>
 
         {error && (
-          <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-xs text-rose-300 flex items-start gap-2">
+          <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-start gap-2">
             <span className="font-bold">Error:</span>
             <span>{error}</span>
           </div>
         )}
 
-        {/* Security Sandbox Banner */}
-        <div className="p-3 bg-[#0B111C] border border-purple-500/40 rounded-2xl flex items-start gap-2.5 text-xs text-[#F1F5F9] shadow-sm shadow-purple-500/10">
-          <ShieldCheck className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-          <div className="leading-relaxed text-[11px]">
-            <strong className="text-purple-300 font-bold">Role-Based Security Boundary:</strong> Freelancer accounts are strictly restricted. They will only have visibility over tasks and deliverables explicitly assigned to them. Agency billing, client lists, and internal squad financials remain invisible.
-          </div>
+        {/* Security Sandbox Banner - Minimalist 1-Line */}
+        <div className="px-3 py-2 bg-purple-500/10 border border-purple-500/25 rounded-xl flex items-center gap-2 text-xs text-purple-300">
+          <ShieldCheck className="w-4 h-4 text-purple-400 shrink-0" />
+          <span className="text-[11px]">Restricted to assigned tasks & deliverables only. Financials hidden.</span>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
           {/* Full Name & Email */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-bold text-[#F1F5F9] mb-1">Full Name *</label>
               <input
@@ -225,74 +224,66 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                   }
                 }}
                 placeholder="e.g. Alex Rivera"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs"
+                className="w-full px-3 py-2 rounded-lg border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs"
               />
             </div>
             <div>
               <label className="block font-bold text-[#F1F5F9] mb-1">Email Address *</label>
               <div className="relative">
-                <Mail className="w-3.5 h-3.5 text-[#97A0B3] absolute left-3 top-3" />
+                <Mail className="w-3.5 h-3.5 text-[#97A0B3] absolute left-3 top-2.5" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="alex.editor@creo.agency"
-                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs"
                 />
               </div>
             </div>
           </div>
 
-          {/* Dispatch / Personal Email Option */}
-          <div className="p-3 bg-[#0B111C]/90 rounded-2xl border border-purple-500/25 space-y-2">
+          {/* Dispatch / Personal Email Option - Minimalist */}
+          <div className="bg-[#0B111C]/60 p-2.5 sm:p-3 rounded-xl border border-[#2A3446] space-y-2">
             <div className="flex items-center justify-between">
-              <label className="font-bold text-[#F1F5F9] flex items-center gap-1.5 text-xs">
+              <label className="text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5">
                 <Mail className="w-3.5 h-3.5 text-purple-400" />
-                <span>Send Credentials To (Separate Worker Email)</span>
+                <span>Personal Email</span>
+                <span className="text-[10px] text-[#97A0B3] font-normal">(Optional dispatch)</span>
               </label>
-              <span className="text-[10px] text-purple-300 font-semibold px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20">
-                Optional
-              </span>
-            </div>
-            <input
-              type="email"
-              value={dispatchEmail}
-              onChange={(e) => setDispatchEmail(e.target.value)}
-              placeholder="e.g. alex.personal@gmail.com (leaves login email intact)"
-              className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white focus:outline-none focus:border-purple-400 text-xs"
-            />
-            <div className="flex items-center justify-between text-[11px] text-[#97A0B3] pt-0.5">
-              <span>Login email stays unchanged; access details will be delivered here.</span>
-              <label className="flex items-center gap-1.5 cursor-pointer text-purple-300 font-medium select-none">
+              <label className="flex items-center gap-1.5 cursor-pointer text-purple-300 text-[11px] font-medium select-none">
                 <input
                   type="checkbox"
                   checked={sendEmail}
                   onChange={(e) => setSendEmail(e.target.checked)}
                   className="size-3.5 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
                 />
-                <span>Send email</span>
+                <span>Send credentials</span>
               </label>
             </div>
+            <input
+              type="email"
+              value={dispatchEmail}
+              onChange={(e) => setDispatchEmail(e.target.value)}
+              placeholder="e.g. alex.personal@gmail.com"
+              className="w-full px-3 py-2 rounded-lg border border-[#2A3446] bg-[#161F2D] text-white focus:outline-none focus:border-purple-400 text-xs"
+            />
           </div>
 
           {/* Specialty Dropdown & Custom Option */}
           <div>
             <label className="block font-bold text-[#F1F5F9] mb-1">Specialty & Creative Track *</label>
-            <div className="relative">
-              <Briefcase className="w-3.5 h-3.5 text-[#97A0B3] absolute left-3 top-3" />
-              <select
-                value={selectedSpecialty}
-                onChange={(e) => setSelectedSpecialty(e.target.value)}
-                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs cursor-pointer font-medium"
-              >
-                {COMMON_SPECIALTIES.map((spec) => (
-                  <option key={spec} value={spec} className="bg-[#161F2D] text-white">
-                    {spec}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomSelect
+              value={selectedSpecialty || ""}
+              onChange={setSelectedSpecialty}
+              ariaLabel="Specialty & Creative Track"
+              className="w-full"
+              icon={<Briefcase className="w-3.5 h-3.5" />}
+              options={COMMON_SPECIALTIES.map((spec) => ({
+                value: spec,
+                label: spec,
+              }))}
+            />
             {selectedSpecialty === "Custom Specialty" && (
               <input
                 type="text"
@@ -474,24 +465,21 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                 </button>
               </div>
             </div>
-            <span className="text-[10px] text-[#97A0B3] mt-1 block">
-              Share these credentials with the freelancer. They can sign in at /login.
-            </span>
           </div>
 
           {/* Engagement Notes / Contract Details */}
           <div>
             <label className="block font-bold text-[#F1F5F9] mb-1">
-              Internal Engagement Notes & Contract Terms (Optional)
+              Internal Notes & Terms (Optional)
             </label>
             <div className="relative">
-              <FileText className="w-3.5 h-3.5 text-[#97A0B3] absolute left-3 top-3" />
+              <FileText className="w-3.5 h-3.5 text-[#97A0B3] absolute left-3 top-2.5" />
               <textarea
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="NDA signed, preferred working hours, turnaround SLA expectations, WhatsApp/Slack channel ID..."
-                className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs"
+                placeholder="NDA status, turnaround SLA, working hours..."
+                className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs"
               />
             </div>
           </div>
@@ -502,17 +490,17 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
               type="button"
               onClick={onClose}
               disabled={busy}
-              className="px-4 py-2.5 rounded-xl border border-[#2A3446] font-bold text-[#97A0B3] hover:text-white hover:bg-[#0B111C] transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#97A0B3] hover:text-white hover:bg-[#0B111C] transition-colors cursor-pointer text-xs"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={busy}
-              className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 font-bold text-white shadow-lg shadow-purple-600/25 flex items-center gap-2 disabled:opacity-50 transition-all cursor-pointer active:scale-95"
+              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 font-bold text-white shadow-lg shadow-purple-600/25 flex items-center gap-1.5 disabled:opacity-50 transition-all cursor-pointer active:scale-95 text-xs"
             >
-              <Sparkles className="w-4 h-4" />
-              {busy ? "Provisioning Specialist..." : "Onboard Freelancer Specialist"}
+              <Sparkles className="w-3.5 h-3.5" />
+              {busy ? "Onboarding..." : "Onboard Freelancer"}
             </button>
           </div>
         </form>

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import { AdminQueueData } from "@/types/ops";
-import { Layers, Calendar, ListTodo, MessageSquare, ArrowUpRight } from "lucide-react";
+import { Layers, Calendar, ListTodo, ArrowUpRight, MessageSquare } from "lucide-react";
 
 interface ContentEngineWidgetProps {
   queue?: AdminQueueData | null;
@@ -28,8 +28,8 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
         </span>
       </div>
 
-      {/* 4 Squares (2x2 Grid) - Clean 2-column grid on mobile and desktop */}
-      <div className="flex-1 grid grid-cols-2 gap-2 sm:gap-3 my-2.5">
+      {/* 4 Subboxes in 2x2 Grid */}
+      <div className="flex-1 grid grid-cols-2 gap-2 sm:gap-3 my-1 sm:my-2">
         {/* Box 1: Deliverables Review */}
         <Link
           to="/admin/deliverables"
@@ -38,7 +38,7 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
         >
           <div className="flex items-center justify-between gap-1 w-full">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-blue-600/20 text-[#7FA0D6] flex items-center justify-center font-bold group-hover/box:scale-110 transition-transform shrink-0">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-[#7FA0D6]/20 text-[#7FA0D6] flex items-center justify-center font-bold group-hover/box:scale-110 transition-transform shrink-0">
                 <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
               <h3 className="text-[11px] sm:text-xs font-extrabold text-white group-hover/box:text-[#7FA0D6] transition-colors truncate">
@@ -47,11 +47,11 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
             </div>
           </div>
 
-          <p className="hidden sm:block text-[11px] text-[#97A0B3] font-medium leading-relaxed my-1">
+          <p className="text-[10px] sm:text-[11px] text-[#97A0B3] font-medium leading-relaxed my-1">
             Review active client content deliverables, sign-offs & Rec.709 master files.
           </p>
 
-          <div className="pt-1.5 sm:pt-2 mt-1 border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
+          <div className="pt-1.5 sm:pt-2 mt-auto border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
             <span>Master Files</span>
             <span>View →</span>
           </div>
@@ -65,7 +65,7 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
         >
           <div className="flex items-center justify-between gap-1 w-full">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-[#7FA0D6]/20 text-[#BCCCE6] flex items-center justify-center font-bold group-hover/box:scale-110 transition-transform shrink-0">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-[#7FA0D6]/20 text-[#7FA0D6] flex items-center justify-center font-bold group-hover/box:scale-110 transition-transform shrink-0">
                 <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
               <h3 className="text-[11px] sm:text-xs font-extrabold text-white group-hover/box:text-[#7FA0D6] transition-colors truncate">
@@ -74,11 +74,11 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
             </div>
           </div>
 
-          <p className="hidden sm:block text-[11px] text-[#97A0B3] font-medium leading-relaxed my-1">
+          <p className="text-[10px] sm:text-[11px] text-[#97A0B3] font-medium leading-relaxed my-1">
             Scheduled posts, Reels & Stories timeline across all active client brand kits.
           </p>
 
-          <div className="pt-1.5 sm:pt-2 mt-1 border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
+          <div className="pt-1.5 sm:pt-2 mt-auto border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
             <span>Schedule</span>
             <span>Open →</span>
           </div>
@@ -92,7 +92,7 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
         >
           <div className="flex items-center justify-between gap-1 w-full">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-[#7FA0D6]/20 text-[#BCCCE6] flex items-center justify-center font-bold group-hover/box:scale-110 transition-transform shrink-0">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-[#7FA0D6]/20 text-[#7FA0D6] flex items-center justify-center font-bold group-hover/box:scale-110 transition-transform shrink-0">
                 <ListTodo className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
               <h3 className="text-[11px] sm:text-xs font-extrabold text-white group-hover/box:text-[#7FA0D6] transition-colors truncate">
@@ -101,11 +101,11 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
             </div>
           </div>
 
-          <p className="hidden sm:block text-[11px] text-[#97A0B3] font-medium leading-relaxed my-1">
+          <p className="text-[10px] sm:text-[11px] text-[#97A0B3] font-medium leading-relaxed my-1">
             Kanban task backlog, Sprint allocation & status tracking for motion specialists.
           </p>
 
-          <div className="pt-1.5 sm:pt-2 mt-1 border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
+          <div className="pt-1.5 sm:pt-2 mt-auto border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
             <span>Sprint Backlog</span>
             <span>Queue →</span>
           </div>
@@ -128,11 +128,11 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
             </div>
           </div>
 
-          <p className="hidden sm:block text-[11px] text-[#97A0B3] font-medium leading-relaxed my-1">
+          <p className="text-[10px] sm:text-[11px] text-[#97A0B3] font-medium leading-relaxed my-1">
             Assign creative tasks directly to pod members with interactive cards in Slack.
           </p>
 
-          <div className="pt-1.5 sm:pt-2 mt-1 border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
+          <div className="pt-1.5 sm:pt-2 mt-auto border-t border-[#2A3446]/60 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] group-hover/box:translate-x-0.5 transition-transform">
             <span>Slack</span>
             <span>Slack →</span>
           </div>

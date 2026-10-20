@@ -284,20 +284,20 @@ export function AdminSLAPerformancePage() {
                 </div>
 
                 {/* Compliance by Priority Card */}
-                <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col justify-between hover-card-innovative">
-                  <div className="space-y-4 sm:space-y-5">
-                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-3.5 sm:p-6 shadow-xs flex flex-col justify-between hover-card-innovative">
+                  <div className="space-y-3 sm:space-y-5">
+                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-2 sm:pb-3">
                       <div>
-                        <h3 className="text-base font-black text-white">Compliance by Priority</h3>
-                        <p className="text-xs sm:text-sm text-[#97A0B3] font-medium mt-0.5">
+                        <h3 className="text-sm sm:text-base font-black text-white">Compliance by Priority</h3>
+                        <p className="text-[11px] sm:text-sm text-[#97A0B3] font-medium mt-0.5">
                           Strict contract adherence by urgency level
                         </p>
                       </div>
-                      <Sliders className="size-4.5 text-[#7FA0D6]" />
+                      <Sliders className="size-4 sm:size-4.5 text-[#7FA0D6] shrink-0" />
                     </div>
 
                     {/* Progress Bars Stack */}
-                    <div className="space-y-3.5">
+                    <div className="space-y-2.5 sm:space-y-3.5">
                       {data?.priority_breakdown?.map((item) => {
                         const colorClass =
                           item.color === "rose"
@@ -308,21 +308,26 @@ export function AdminSLAPerformancePage() {
                             ? "bg-cyan-400"
                             : "bg-emerald-400";
 
+                        const shortLabel = item.label.includes("Urgent")
+                          ? "Urgent (Rush)"
+                          : item.label.replace(" Priority", "");
+
                         return (
-                          <div key={item.label} className="space-y-1.5">
-                            <div className="flex justify-between text-xs sm:text-sm font-bold">
-                              <span className="flex items-center gap-1.5 text-white">
-                                <span className={`size-2.5 rounded-full ${colorClass}`} />
-                                {item.label}
+                          <div key={item.label} className="space-y-1 sm:space-y-1.5">
+                            <div className="flex items-center justify-between text-xs sm:text-sm font-bold gap-2">
+                              <span className="flex items-center gap-1.5 text-white truncate min-w-0">
+                                <span className={`size-2 sm:size-2.5 rounded-full shrink-0 ${colorClass}`} />
+                                <span className="hidden sm:inline truncate">{item.label}</span>
+                                <span className="sm:hidden truncate">{shortLabel}</span>
                               </span>
-                              <span className="text-white">
+                              <span className="text-white shrink-0 text-right">
                                 {item.sla_met.toFixed(1)}%{" "}
-                                <span className="text-[#97A0B3] font-normal">
-                                  ({item.compliant_count}/{item.total_count} Compliant)
+                                <span className="text-[#97A0B3] font-normal text-[10px] sm:text-xs">
+                                  ({item.compliant_count}/{item.total_count}<span className="hidden sm:inline"> Compliant</span>)
                                 </span>
                               </span>
                             </div>
-                            <div className="h-2.5 w-full rounded-full bg-[#0B111C] overflow-hidden border border-[#2A3446]">
+                            <div className="h-1.5 sm:h-2.5 w-full rounded-full bg-[#0B111C] overflow-hidden border border-[#2A3446]">
                               <div
                                 className={`h-full ${colorClass} rounded-full transition-all duration-500`}
                                 style={{ width: `${Math.max(0, Math.min(100, item.sla_met))}%` }}
@@ -334,9 +339,12 @@ export function AdminSLAPerformancePage() {
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-[#2A3446]/80 flex items-center justify-between text-[11px] text-[#97A0B3] mt-3">
-                    <span>Priority SLA Policy: 24h Rush / 48h Standard</span>
-                    <span className="text-emerald-400 font-semibold">Contract Enforced</span>
+                  <div className="pt-2 sm:pt-3 border-t border-[#2A3446]/80 flex items-center justify-between text-[10px] sm:text-[11px] text-[#97A0B3] mt-2.5 sm:mt-3 gap-2">
+                    <span className="truncate">
+                      <span className="hidden sm:inline">Priority SLA Policy: 24h Rush / 48h Standard</span>
+                      <span className="sm:hidden">SLA: 24h Rush / 48h Std</span>
+                    </span>
+                    <span className="text-emerald-400 font-semibold shrink-0">Contract Enforced</span>
                   </div>
                 </div>
               </div>
@@ -344,28 +352,77 @@ export function AdminSLAPerformancePage() {
               {/* Row 2: Pod Efficiency Leaderboard & Active Breach Warnings (Equal 50/50 Split & Equal Height) */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {/* Leaderboard Card */}
-                <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col justify-between hover-card-innovative">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-3.5 sm:p-6 shadow-xs flex flex-col justify-between hover-card-innovative">
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#2A3446] pb-2.5 sm:pb-3 gap-2">
                       <div>
-                        <h3 className="text-sm font-bold text-white">Pod Efficiency Leaderboard</h3>
-                        <p className="text-xs text-[#97A0B3]">Operational velocity across dedicated creative pods</p>
+                        <h3 className="text-sm sm:text-base font-black text-white">Pod Efficiency Leaderboard</h3>
+                        <p className="text-[11px] sm:text-xs text-[#97A0B3]">Operational velocity across dedicated creative pods</p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
-                          {data?.pods?.length || 0} ACTIVE PODS
+                      <div className="flex items-center justify-between sm:justify-end gap-2.5 shrink-0">
+                        <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#7FA0D6] bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                          {data?.pods?.length || 0} Active Pods
                         </span>
                         <button
                           type="button"
                           onClick={() => navigate("/admin/teams")}
-                          className="text-xs font-bold text-[#7FA0D6] hover:text-white flex items-center gap-1 cursor-pointer"
+                          className="text-xs font-bold text-[#7FA0D6] hover:text-white flex items-center gap-1 cursor-pointer whitespace-nowrap"
                         >
                           Manage Teams <ArrowRight className="size-3" />
                         </button>
                       </div>
                     </div>
 
-                    <div className="overflow-x-auto">
+                    {/* Mobile Pod List (Clean, No Horizontal Scroll) */}
+                    <div className="sm:hidden space-y-2">
+                      {!data?.pods || data.pods.length === 0 ? (
+                        <div className="py-6 text-center text-xs text-[#97A0B3]">
+                          No active creative pods currently configured.
+                        </div>
+                      ) : (
+                        data.pods.map((item) => (
+                          <div
+                            key={item.pod}
+                            onClick={() => navigate("/admin/teams")}
+                            className="p-2.5 bg-[#0B111C]/60 hover:bg-[#0B111C] border border-[#2A3446] rounded-xl flex items-center justify-between gap-2.5 cursor-pointer transition-colors"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div
+                                className={`size-7 rounded-lg ${item.bg} ${item.text} font-black text-xs flex items-center justify-center shrink-0`}
+                              >
+                                {item.pod.replace("Pod ", "")}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-bold text-white text-xs truncate flex items-center gap-1.5">
+                                  <span>{item.pod}</span>
+                                  <span className="text-[10px] text-[#97A0B3] font-normal truncate">
+                                    • {item.lead}
+                                  </span>
+                                </div>
+                                <div className="text-[10px] text-[#97A0B3] flex items-center gap-1.5 mt-0.5">
+                                  <span>Resp: <strong className="text-[#F1F5F9] font-mono">{item.avg_response}</strong></span>
+                                  <span>•</span>
+                                  <span>{item.total_tasks} tasks</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end shrink-0 gap-1">
+                              <span className="font-black text-xs text-white">{item.sla_met}</span>
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold border ${item.status_bg} inline-flex items-center gap-1 whitespace-nowrap`}
+                              >
+                                <span className="size-1.5 rounded-full bg-current shrink-0" />
+                                {item.status}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden sm:block overflow-x-auto">
                       <table className="w-full text-left text-xs">
                         <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
                           <tr>
@@ -390,7 +447,7 @@ export function AdminSLAPerformancePage() {
                                 onClick={() => navigate("/admin/teams")}
                                 className="hover:bg-[#0B111C] transition-colors cursor-pointer"
                               >
-                                <td className="px-3.5 py-3">
+                                <td className="px-3.5 py-2.5">
                                   <div className="flex items-center gap-2.5">
                                     <div
                                       className={`size-7 rounded-lg ${item.bg} ${item.text} font-black text-xs flex items-center justify-center shrink-0`}
@@ -403,16 +460,17 @@ export function AdminSLAPerformancePage() {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-3.5 py-3 font-bold text-white">{item.sla_met}</td>
-                                <td className="px-3.5 py-3 text-[#F1F5F9] font-mono">{item.avg_response}</td>
-                                <td className="px-3.5 py-3 text-[#F1F5F9]">
+                                <td className="px-3.5 py-2.5 font-bold text-white whitespace-nowrap">{item.sla_met}</td>
+                                <td className="px-3.5 py-2.5 text-[#F1F5F9] font-mono whitespace-nowrap">{item.avg_response}</td>
+                                <td className="px-3.5 py-2.5 text-[#F1F5F9] whitespace-nowrap">
                                   {item.total_tasks} total
                                 </td>
-                                <td className="px-3.5 py-3 text-right">
+                                <td className="px-3.5 py-2.5 text-right whitespace-nowrap">
                                   <span
-                                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${item.status_bg}`}
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${item.status_bg} inline-flex items-center gap-1`}
                                   >
-                                    • {item.status}
+                                    <span className="size-1.5 rounded-full bg-current shrink-0" />
+                                    {item.status}
                                   </span>
                                 </td>
                               </tr>
@@ -423,12 +481,12 @@ export function AdminSLAPerformancePage() {
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-[#2A3446]/80 flex items-center justify-between text-[11px] text-[#97A0B3] mt-3">
+                  <div className="pt-2.5 sm:pt-3 border-t border-[#2A3446]/80 flex flex-col xs:flex-row items-start xs:items-center justify-between text-[10px] sm:text-[11px] text-[#97A0B3] mt-2.5 sm:mt-3 gap-1.5">
                     <span className="flex items-center gap-1.5 font-medium">
-                      <span className="size-2 rounded-full bg-emerald-400" />
+                      <span className="size-2 rounded-full bg-emerald-400 shrink-0" />
                       Target threshold: <strong className="text-white">98.0% SLA</strong>
                     </span>
-                    <span className="font-semibold text-emerald-400/90">
+                    <span className="font-semibold text-emerald-400/90 shrink-0">
                       All pods active & responsive
                     </span>
                   </div>
