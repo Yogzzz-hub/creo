@@ -53,12 +53,16 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
   const [trendData, setTrendData] = useState<RevenueTrendData | null>(null);
   const [trendLoading, setTrendLoading] = useState(false);
 
-  const formatCurrency = (val: number) =>
-    new Intl.NumberFormat("en-IN", {
+  const formatCurrency = (val: number) => {
+    const num = val / 100;
+    const hasDecimals = num % 1 !== 0;
+    return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
-      minimumFractionDigits: 0,
-    }).format(val / 100);
+      minimumFractionDigits: hasDecimals ? 2 : 0,
+      maximumFractionDigits: 2,
+    }).format(num);
+  };
 
   const loadTrend = useCallback(async (tf: Timeframe) => {
     setTrendLoading(true);
@@ -236,13 +240,13 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
             <span className="text-xs sm:text-sm font-black text-white group-hover/pill:text-[#7FA0D6] transition-colors leading-none">{displayRevenue}</span>
             <span className="text-[9px] text-[#97A0B3] uppercase font-bold tracking-wider mt-1">Total MRR</span>
           </div>
-          <div className="bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 hover:border-[#7FA0D6]/60 hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-200 rounded-xl p-2.5 border border-[#7FA0D6]/30 flex flex-col items-center justify-center text-center cursor-pointer shadow-sm group/pill">
+          <div className="bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 hover:border-[#7FA0D6]/60 hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-200 rounded-xl p-2.5 border border-[#7FA0D6]/40 flex flex-col items-center justify-center text-center cursor-pointer shadow-sm group/pill">
             <span className="text-xs sm:text-sm font-black text-[#7FA0D6] leading-none">{displayClients}</span>
             <span className="text-[9px] text-[#7FA0D6] uppercase font-bold tracking-wider mt-1">Active Deals</span>
           </div>
-          <div className="bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-500/60 hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-200 rounded-xl p-2.5 border border-amber-500/25 flex flex-col items-center justify-center text-center cursor-pointer shadow-sm group/pill">
-            <span className="text-xs sm:text-sm font-black text-amber-400 group-hover/pill:text-amber-300 transition-colors leading-none">{formatCurrency(avgTicket)}</span>
-            <span className="text-[9px] text-amber-400/80 uppercase font-bold tracking-wider mt-1">Avg Ticket</span>
+          <div className="bg-[#0B111C] hover:bg-[#161F2D] hover:border-[#7FA0D6]/60 hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-200 rounded-xl p-2.5 border border-[#2A3446] flex flex-col items-center justify-center text-center cursor-pointer shadow-sm group/pill">
+            <span className="text-xs sm:text-sm font-black text-white group-hover/pill:text-[#7FA0D6] transition-colors leading-none">{formatCurrency(avgTicket)}</span>
+            <span className="text-[9px] text-[#97A0B3] uppercase font-bold tracking-wider mt-1">Avg Ticket</span>
           </div>
         </div>
       </div>
@@ -259,7 +263,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
         <Link
           to="/admin/plans"
           onClick={(e) => e.stopPropagation()}
-          className="min-w-0 min-h-[38px] py-2 px-2.5 bg-[#0B111C] hover:bg-[#161F2D] hover:border-[#7FA0D6]/60 hover:scale-[1.02] hover:text-[#7FA0D6] text-white rounded-xl text-[11px] font-bold border border-[#2A3446] transition-all duration-200 shadow-md flex items-center justify-center text-center leading-tight"
+          className="min-w-0 min-h-[38px] py-2 px-2.5 bg-[#7FA0D6] hover:bg-[#97b7e8] hover:scale-[1.02] text-[#0B111C] rounded-xl text-[11px] font-extrabold border border-[#7FA0D6] transition-all duration-200 shadow-md flex items-center justify-center text-center leading-tight"
         >
           <span>Plans & Negotiations</span>
         </Link>

@@ -1127,8 +1127,8 @@ export function AdminClientsPage() {
                 <p className="text-sm text-[#97A0B3]">{clientList.length ? "Try another search or change the status filter." : "Onboard your first client to get started."}</p>
               </div>
             ) : (
-            <div className="max-h-[calc(100vh-270px)] min-h-[480px] overflow-y-auto overscroll-contain pr-1 sm:pr-2.5 scrollbar-thin scrollbar-thumb-[#2A3446] hover:scrollbar-thumb-[#7FA0D6]/40 scrollbar-track-transparent">
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-5 pb-4">
+            <div className="max-h-[calc(100vh-270px)] lg:max-h-none lg:min-h-[700px] overflow-y-auto lg:overflow-visible overscroll-contain pr-1 sm:pr-2.5 lg:pr-0 scrollbar-thin scrollbar-thumb-[#2A3446] hover:scrollbar-thumb-[#7FA0D6]/40 scrollbar-track-transparent">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-5 pb-6 lg:pb-12">
                 {filteredClientList.map((client) => {
                   const isNotPaidNotOnboarded = client.lifecycleStatus === "not_paid_not_onboarded";
                   const isPaidNotOnboarded = client.lifecycleStatus === "paid_not_onboarded";
@@ -3807,8 +3807,8 @@ export function AdminDeliverablesPage() {
             </p>
           </div>
         ) : (
-        <div className="sm:max-h-[calc(100vh-270px)] sm:min-h-[480px] sm:overflow-y-auto sm:overscroll-contain pr-1 sm:pr-2.5 scrollbar-thin scrollbar-thumb-[#2A3446] hover:scrollbar-thumb-[#7FA0D6]/40 scrollbar-track-transparent">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 sm:gap-4 lg:gap-5 pb-4">
+        <div className="sm:max-h-[calc(100vh-270px)] lg:max-h-none lg:min-h-[700px] sm:overflow-y-auto lg:overflow-visible sm:overscroll-contain pr-1 sm:pr-2.5 lg:pr-0 scrollbar-thin scrollbar-thumb-[#2A3446] hover:scrollbar-thumb-[#7FA0D6]/40 scrollbar-track-transparent">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 sm:gap-4 lg:gap-5 pb-6 lg:pb-12">
           {filteredDeliverables.map((item) => (
             <div
               key={item.id}
