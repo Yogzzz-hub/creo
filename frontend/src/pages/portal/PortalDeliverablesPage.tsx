@@ -1,9 +1,10 @@
+import { Instagram } from "../../ui/brand-icons";
 import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { PublishingPanel } from "../../components/ops/PublishingPanel";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Check, Clock, Download, Film, ImageIcon, RefreshCw, History, Loader2, Volume2, Instagram, ChevronDown, ChevronUp, LayoutList, PlayCircle, Filter as FilterIcon } from "lucide-react";
+import { AlertTriangle, Check, Clock, Download, Film, ImageIcon, RefreshCw, History, Loader2, Volume2, ChevronDown, ChevronUp, LayoutList, PlayCircle, Filter as FilterIcon } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import {
   approveDeliverable,

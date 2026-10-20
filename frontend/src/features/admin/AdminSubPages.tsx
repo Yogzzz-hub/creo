@@ -1,3 +1,4 @@
+import { Instagram } from "../../ui/brand-icons";
 import { PaymentReceiptModal } from "../../components/admin/PaymentReceiptModal";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useAuth } from "../../lib/auth-context";
@@ -88,7 +89,6 @@ import {
   Layers,
   Mail,
   Phone,
-  Instagram,
   ExternalLink,
   FileText,
   Edit3,
