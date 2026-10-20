@@ -18,6 +18,9 @@ import {
   Music,
   Loader2,
   CheckCheck,
+  Plus,
+  Users,
+  Check,
 } from "lucide-react";
 import { request } from "../../lib/http";
 import { useSearchParams, useLocation, Link } from "react-router";
@@ -113,6 +116,11 @@ interface WorkspaceChannel {
   desc: string;
   unreadCount?: number;
   isPodChannel?: boolean;
+  is_pod_channel?: boolean;
+  is_custom_group?: boolean;
+  created_by?: string;
+  creator_name?: string;
+  member_ids?: string[];
 }
 
 interface ChatMessage {
@@ -266,6 +274,7 @@ export function SlackChatPage() {
   const isAdmin = ["admin", "super_admin", "ops_admin"].includes(roleStr);
   const isBde = ["sales", "bde"].includes(roleStr);
   const isTeamMember = !isClient && !isFreelancer && !isTeamLead && !isAdmin && !isBde;
+  const canCreateGroup = isAdmin || isTeamLead;
 
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -306,7 +315,10 @@ export function SlackChatPage() {
   // - Team Members: Their own pod group ONLY with lead & admin, and agency channels
   const channelsList: WorkspaceChannel[] = useMemo(() => {
     if (serverChannels && serverChannels.length > 0) {
-      return serverChannels;
+      return serverChannels.map((ch) => ({
+        ...ch,
+        isPodChannel: ch.isPodChannel ?? ch.is_pod_channel,
+      }));
     }
 
     // 1. FREELANCER: NO CHANNELS
@@ -761,6 +773,91 @@ export function SlackChatPage() {
   const showToast = (text: string, type: "success" | "info" = "success") => {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // Create Group Modal State (Exclusively for Admins & Team Leads)
+  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupDesc, setNewGroupDesc] = useState("");
+  const [newGroupIsPod, setNewGroupIsPod] = useState(false);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const [memberSearchQuery, setMemberSearchQuery] = useState("");
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+  const [groupCreationError, setGroupCreationError] = useState<string | null>(null);
+
+  const openCreateGroupModal = () => {
+    setNewGroupName("");
+    setNewGroupDesc("");
+    setNewGroupIsPod(false);
+    setSelectedMemberIds([]);
+    setMemberSearchQuery("");
+    setGroupCreationError(null);
+    setIsCreateGroupOpen(true);
+  };
+
+  const eligibleGroupMembers = useMemo(() => {
+    const q = memberSearchQuery.toLowerCase().trim();
+    return contactsList.filter((c) => {
+      if (c.id === user?.id) return false;
+      if (!q) return true;
+      return (
+        c.name.toLowerCase().includes(q) ||
+        c.role.toLowerCase().includes(q) ||
+        (c.email && c.email.toLowerCase().includes(q))
+      );
+    });
+  }, [contactsList, user?.id, memberSearchQuery]);
+
+  const toggleMemberSelection = (id: string) => {
+    setSelectedMemberIds((prev) =>
+      prev.includes(id) ? prev.filter((mid) => mid !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllGroupMembers = () => {
+    setSelectedMemberIds(eligibleGroupMembers.map((m) => m.id));
+  };
+
+  const clearSelectedGroupMembers = () => {
+    setSelectedMemberIds([]);
+  };
+
+  const handleCreateGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanName = newGroupName.trim().replace(/^#+/, "");
+    if (cleanName.length < 2) {
+      setGroupCreationError("Group name must be at least 2 characters.");
+      return;
+    }
+
+    setIsCreatingGroup(true);
+    setGroupCreationError(null);
+
+    try {
+      const res = await request<WorkspaceChannel>("/api/v1/chat/groups", {
+        method: "POST",
+        body: JSON.stringify({
+          name: cleanName,
+          desc: newGroupDesc.trim(),
+          member_ids: selectedMemberIds,
+          is_pod_channel: newGroupIsPod,
+        }),
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["chat_channels"] });
+      showToast(`Group #${res.label || cleanName} created successfully!`, "success");
+      setIsCreateGroupOpen(false);
+
+      // Switch to newly created group channel
+      setActiveMode("channel");
+      setActiveChannelId(res.id);
+      setMobileView("chat");
+    } catch (err: any) {
+      const msg = err?.message || err?.detail || "Failed to create group. Please try again.";
+      setGroupCreationError(typeof msg === "string" ? msg : JSON.stringify(msg));
+    } finally {
+      setIsCreatingGroup(false);
+    }
   };
 
   // Local reactions store
@@ -1245,10 +1342,24 @@ export function SlackChatPage() {
               </div>
             </div>
 
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center gap-1">
-              <span className="size-1.5 rounded-full bg-[#7FA0D6] animate-pulse" />
-              Live
-            </span>
+            <div className="flex items-center gap-2">
+              {canCreateGroup && (
+                <button
+                  type="button"
+                  onClick={openCreateGroupModal}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#7FA0D6] hover:bg-[#688EC7] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer active:scale-95"
+                  title="Create Group (Team Leads & Admins only)"
+                >
+                  <Plus className="size-3.5 stroke-[2.5]" />
+                  <span className="hidden xs:inline">Create Group</span>
+                </button>
+              )}
+
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center gap-1">
+                <span className="size-1.5 rounded-full bg-[#7FA0D6] animate-pulse" />
+                Live
+              </span>
+            </div>
           </div>
 
           {/* Search Bar & Filter Tabs */}
@@ -1311,11 +1422,40 @@ export function SlackChatPage() {
               >
                 Direct Messages ({filteredContacts.length})
               </button>
+              {canCreateGroup && (
+                <button
+                  type="button"
+                  onClick={openCreateGroupModal}
+                  className="px-2.5 py-1 rounded-xl text-[11px] font-semibold text-[#7FA0D6] hover:text-white bg-[#7FA0D6]/10 hover:bg-[#7FA0D6]/25 border border-[#7FA0D6]/30 transition-colors cursor-pointer shrink-0 flex items-center gap-1"
+                  title="Create Group (Admin & Team Lead)"
+                >
+                  <Plus className="size-3 stroke-[2.5]" />
+                  <span>New Group</span>
+                </button>
+              )}
             </div>
           </div>
 
           {/* Scrollable Chats List */}
           <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-[#2A3446]/40">
+            {/* Quick banner for Admin & TL when in channel view */}
+            {canCreateGroup && chatFilter !== "dms" && (
+              <div className="px-3.5 py-2 bg-[#0B111C]/60 border-b border-[#2A3446]/60 flex items-center justify-between shrink-0">
+                <span className="text-[11px] font-semibold text-[#97A0B3] flex items-center gap-1.5">
+                  <Users className="size-3.5 text-[#7FA0D6]" />
+                  <span>Channels & Groups</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={openCreateGroupModal}
+                  className="text-[11px] text-[#7FA0D6] hover:text-white font-medium flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <Plus className="size-3 stroke-[2.5]" />
+                  <span>New Group</span>
+                </button>
+              </div>
+            )}
+
             {/* WORKSPACE & POD CHANNELS (GROUPS) */}
             {displayedChannels.map((channel) => {
               const isSelected = activeMode === "channel" && activeChannelId === channel.id;
@@ -1332,7 +1472,7 @@ export function SlackChatPage() {
                     <div className="size-11 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center text-white font-bold shadow-sm">
                       <Hash className="size-5" />
                     </div>
-                    {channel.isPodChannel && (
+                    {(channel.isPodChannel || channel.is_pod_channel) && (
                       <span className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full bg-[#7FA0D6] border-2 border-[#161F2D] flex items-center justify-center text-[8px] font-black text-white">
                         P
                       </span>
@@ -1344,14 +1484,14 @@ export function SlackChatPage() {
                         #{channel.label}
                       </span>
                       <span className="text-[10px] text-[#97A0B3] shrink-0 font-medium ml-2">
-                        Group
+                        {channel.is_custom_group ? "Custom" : "Group"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-1">
                       <p className="text-xs text-[#97A0B3] truncate leading-tight">
                         {channel.desc}
                       </p>
-                      {channel.isPodChannel && (
+                      {(channel.isPodChannel || channel.is_pod_channel) && (
                         <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold uppercase bg-blue-500/20 text-[#7FA0D6] border border-blue-500/30 shrink-0">
                           Pod
                         </span>
@@ -1891,6 +2031,251 @@ export function SlackChatPage() {
           </div>
         </section>
       </div>
+
+      {/* ========================================================================= */}
+      {/* 3. CREATE GROUP MODAL (ONLY FOR ADMIN & TEAM LEAD)                         */}
+      {/* ========================================================================= */}
+      {canCreateGroup && isCreateGroupOpen && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="px-5 py-4 border-b border-[#2A3446] flex items-center justify-between bg-[#111927]">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-xl bg-[#7FA0D6]/20 border border-[#7FA0D6]/40 flex items-center justify-center text-[#7FA0D6]">
+                  <Users className="size-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm sm:text-base font-bold text-white">Create New Chat Group</h3>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                      {isAdmin ? "Admin Access" : "Team Lead Access"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#97A0B3] mt-0.5">
+                    Start a dedicated channel for team members, clients, or specific project workflows.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCreateGroupOpen(false)}
+                className="p-1.5 rounded-lg text-[#97A0B3] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                aria-label="Close dialog"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleCreateGroup} className="flex-1 overflow-y-auto p-5 space-y-4">
+              {groupCreationError && (
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
+                  <span className="shrink-0 font-bold">⚠️</span>
+                  <span>{groupCreationError}</span>
+                </div>
+              )}
+
+              {/* Group Name */}
+              <div>
+                <label className="block text-xs font-semibold text-white mb-1.5">
+                  Group Name <span className="text-[#7FA0D6]">*</span>
+                </label>
+                <div className="relative flex items-center bg-[#0B111C] border border-[#2A3446] focus-within:border-[#7FA0D6] rounded-xl px-3 py-2 transition-colors">
+                  <Hash className="size-4 text-[#7FA0D6] mr-2 shrink-0" />
+                  <input
+                    type="text"
+                    required
+                    maxLength={50}
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                    placeholder="e.g. video-review-sprint or client-escalation"
+                    className="w-full bg-transparent text-xs sm:text-sm text-white placeholder-[#97A0B3] focus:outline-none"
+                    autoFocus
+                  />
+                </div>
+                <p className="text-[11px] text-[#97A0B3] mt-1">
+                  Channel handle: #{newGroupName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") || "new-group"}
+                </p>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-semibold text-white mb-1.5">
+                  Description <span className="text-[#97A0B3] font-normal">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  maxLength={160}
+                  value={newGroupDesc}
+                  onChange={(e) => setNewGroupDesc(e.target.value)}
+                  placeholder="What is this channel or group focused on?"
+                  className="w-full bg-[#0B111C] border border-[#2A3446] focus-within:border-[#7FA0D6] rounded-xl px-3 py-2 text-xs sm:text-sm text-white placeholder-[#97A0B3] focus:outline-none transition-colors"
+                />
+              </div>
+
+              {/* Pod Channel Toggle */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-[#0B111C] border border-[#2A3446]">
+                <div>
+                  <div className="text-xs font-semibold text-white">Pod Channel Identifier</div>
+                  <div className="text-[11px] text-[#97A0B3]">Display a prominent &quot;Pod&quot; tag on this channel</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setNewGroupIsPod(!newGroupIsPod)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    newGroupIsPod ? "bg-[#7FA0D6]" : "bg-[#2A3446]"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                      newGroupIsPod ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Member Selection */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-semibold text-white flex items-center gap-1.5">
+                    <span>Add Members</span>
+                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#7FA0D6]/20 text-[#7FA0D6]">
+                      {selectedMemberIds.length} selected
+                    </span>
+                  </label>
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={selectAllGroupMembers}
+                      className="text-[#7FA0D6] hover:text-white transition-colors cursor-pointer"
+                    >
+                      Select All
+                    </button>
+                    <span className="text-[#2A3446]">|</span>
+                    <button
+                      type="button"
+                      onClick={clearSelectedGroupMembers}
+                      className="text-[#97A0B3] hover:text-white transition-colors cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+
+                {/* Member Search */}
+                <div className="relative flex items-center bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-1.5 mb-2 focus-within:border-[#7FA0D6] transition-colors">
+                  <Search className="size-3.5 text-[#97A0B3] mr-2 shrink-0" />
+                  <input
+                    type="text"
+                    value={memberSearchQuery}
+                    onChange={(e) => setMemberSearchQuery(e.target.value)}
+                    placeholder="Search people to add..."
+                    className="w-full bg-transparent text-xs text-white placeholder-[#97A0B3] focus:outline-none"
+                  />
+                </div>
+
+                {/* Scrollable Members List */}
+                <div className="max-h-48 overflow-y-auto divide-y divide-[#2A3446]/50 rounded-xl border border-[#2A3446] bg-[#0B111C] no-scrollbar">
+                  {eligibleGroupMembers.length > 0 ? (
+                    eligibleGroupMembers.map((member) => {
+                      const isChecked = selectedMemberIds.includes(member.id);
+                      const isSA = member.is_super_admin;
+                      const initials = member.name
+                        .split(" ")
+                        .filter(Boolean)
+                        .map((w) => w[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2);
+
+                      return (
+                        <div
+                          key={member.id}
+                          onClick={() => toggleMemberSelection(member.id)}
+                          className={`px-3 py-2 flex items-center justify-between gap-2.5 cursor-pointer transition-colors ${
+                            isChecked ? "bg-[#7FA0D6]/15" : "hover:bg-white/5"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div
+                              className={`size-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                                isSA
+                                  ? "bg-gradient-to-br from-amber-400 to-orange-500 text-amber-950"
+                                  : "bg-[#7FA0D6]/30 text-[#7FA0D6] border border-[#7FA0D6]/40"
+                              }`}
+                            >
+                              {isSA ? <Crown className="size-4" /> : initials}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-xs font-semibold text-white truncate flex items-center gap-1.5">
+                                <span>{member.name}</span>
+                                {isSA && (
+                                  <span className="px-1 py-0.2 rounded text-[7px] font-extrabold uppercase bg-amber-400/20 text-amber-300">
+                                    Admin
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-[#97A0B3] truncate">
+                                {(member.role || "").replace(/Client Representative/gi, "Client")}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div
+                            className={`size-5 rounded-md border flex items-center justify-center transition-colors shrink-0 ${
+                              isChecked
+                                ? "bg-[#7FA0D6] border-[#7FA0D6] text-white"
+                                : "border-[#2A3446] bg-transparent text-transparent"
+                            }`}
+                          >
+                            <Check className="size-3.5 stroke-[3]" />
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="p-4 text-center text-xs text-[#97A0B3]">
+                      No matching members found
+                    </div>
+                  )}
+                </div>
+                <p className="text-[10px] text-[#97A0B3] mt-1.5">
+                  You ({isAdmin ? "Admin" : "Team Lead"}) are automatically included as the group creator.
+                </p>
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="pt-2 border-t border-[#2A3446] flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateGroupOpen(false)}
+                  disabled={isCreatingGroup}
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-[#97A0B3] hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingGroup || !newGroupName.trim()}
+                  className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-[#688EC7] disabled:opacity-50 text-white font-bold text-xs shadow-md shadow-blue-500/20 flex items-center gap-2 transition-transform active:scale-95 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {isCreatingGroup ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      <span>Creating Group...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="size-4 stroke-[2.5]" />
+                      <span>Create Group</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -34,10 +34,12 @@ async def razorpay_webhook(
     """Process incoming Razorpay webhook events with HMAC signature validation."""
     raw_body = await request.body()
 
+    hdr_secret = request.headers.get("x-razorpay-webhook-secret")
     if not x_razorpay_signature or not payment_service.verify_webhook_signature(
         raw_body=raw_body,
         signature=x_razorpay_signature,
         provider=PaymentProvider.RAZORPAY,
+        secret=hdr_secret,
     ):
         logger.warning("invalid_razorpay_webhook_signature")
         raise HTTPException(status_code=400, detail="Invalid webhook signature")

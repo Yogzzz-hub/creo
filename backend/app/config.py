@@ -99,6 +99,25 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_ID: str = Field(default="rzp_test_TO2r0YMjDZSpuC")
     RAZORPAY_KEY_SECRET: str = Field(default="")
     RAZORPAY_WEBHOOK_SECRET: str = Field(default="webhook_secret_creo-26")
+    # Optional pre-configured plan IDs on Razorpay (e.g. plan_xxx)
+    RAZORPAY_PLAN_STARTER: str = Field(default="")
+    RAZORPAY_PLAN_GROWTH: str = Field(default="")
+    RAZORPAY_PLAN_SCALE: str = Field(default="")
+
+    @field_validator(
+        "RAZORPAY_KEY_ID",
+        "RAZORPAY_KEY_SECRET",
+        "RAZORPAY_WEBHOOK_SECRET",
+        "RAZORPAY_PLAN_STARTER",
+        "RAZORPAY_PLAN_GROWTH",
+        "RAZORPAY_PLAN_SCALE",
+        mode="before",
+    )
+    @classmethod
+    def sanitize_razorpay_credentials(cls, v: Any) -> str:
+        if isinstance(v, str):
+            return v.strip().strip("'").strip('"')
+        return "" if v is None else str(v).strip()
 
     # AI Services — Gemini & OpenAI
     GEMINI_API_KEY: str = Field(default="")

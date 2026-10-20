@@ -23,7 +23,6 @@ import { ContentEngineWidget } from "../../components/admin/ContentEngineWidget"
 import { ClientDetailsWidget } from "../../components/admin/ClientDetailsWidget";
 import { SupportTicketsWidget } from "../../components/admin/SupportTicketsWidget";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
-import { SlaPerformanceWidget } from "../../components/admin/SlaPerformanceWidget";
 
 
 function LoadingPanel({ label }: { label: string }) {
@@ -162,9 +161,9 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
           </motion.div>
         )}
 
-        {/* Bottom Widgets Grid (2 Columns): Support & SLA */}
-        {(activeTab === "Dashboard" || activeTab === "SLA & Support") && (
-          <div className={`mt-3.5 sm:mt-4 grid grid-cols-1 ${activeTab === "Dashboard" ? "lg:grid-cols-2" : "lg:grid-cols-1 max-w-4xl mx-auto"} gap-3.5 sm:gap-4`}>
+        {/* Bottom Widget: Support Tickets */}
+        {(activeTab === "Dashboard" || activeTab === "Support" || activeTab === "Support Desk" || activeTab === "SLA & Support") && (
+          <div className="mt-3.5 sm:mt-4 grid grid-cols-1 gap-3.5 sm:gap-4">
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -172,14 +171,6 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
               className="hover-card-innovative rounded-2xl h-full"
             >
               {slaQuery.data ? <SupportTicketsWidget slas={slas} /> : <LoadingPanel label={slaQuery.isError ? "Support data unavailable" : "Loading support?"} />}
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.3, ease: "easeOut" }}
-              className="hover-card-innovative rounded-2xl h-full"
-            >
-              {slaQuery.data ? <SlaPerformanceWidget slas={slas} /> : <LoadingPanel label={slaQuery.isError ? "SLA data unavailable" : "Loading SLA?"} />}
             </motion.div>
           </div>
         )}

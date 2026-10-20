@@ -123,8 +123,6 @@ export function AdminTopHeader({
       ? "Production Task Queue"
       : location.pathname.includes("/admin/clients")
       ? "Client Details"
-      : location.pathname.includes("/admin/support/sla") || location.pathname.includes("/admin/sla")
-      ? "Performance Hub"
       : location.pathname.includes("/admin/support")
       ? "Support Tickets"
       : location.pathname.includes("/admin/announcements")
@@ -137,9 +135,20 @@ export function AdminTopHeader({
       ? "System Settings"
       : activeTab);
 
-  // For workstation / member role, completely remove/hide the floating capsule navbar
-  // matching the Client Portal shell where notification & profile live in the sidebar.
-  if (isMemberRole) {
+  // For workstation / member role and team lead, hide only on routes that have dedicated mobile headers
+  const isDedicatedMobileView =
+    location.pathname === "/workstation" ||
+    location.pathname === "/workstation/" ||
+    location.pathname === "/workstation/overview" ||
+    location.pathname === "/member" ||
+    location.pathname === "/member/" ||
+    location.pathname === "/member/overview" ||
+    location.pathname.startsWith("/workstation/tasks") ||
+    location.pathname.startsWith("/member/tasks") ||
+    location.pathname.startsWith("/lead/tasks") ||
+    location.pathname.startsWith("/team-lead/tasks");
+
+  if ((isMemberRole || isTeamLead) && isDedicatedMobileView) {
     return null;
   }
 
@@ -152,7 +161,7 @@ export function AdminTopHeader({
           <button
             type="button"
             onClick={toggleMobile}
-            className={`${location.pathname.startsWith("/portal") ? "lg:hidden" : "md:hidden"} size-8 rounded-full flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] transition-all cursor-pointer border border-transparent hover:border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] shrink-0`}
+            className={`${location.pathname.startsWith("/portal") || isMemberRole || isTeamLead ? "lg:hidden" : "md:hidden"} size-8 rounded-full flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] transition-all cursor-pointer border border-transparent hover:border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] shrink-0`}
             aria-expanded={mobileOpen}
             aria-label="Open navigation sidebar"
             title="Open navigation menu"
@@ -176,6 +185,11 @@ export function AdminTopHeader({
           >
             Creo<span className="text-[#7FA0D6] text-base sm:text-lg leading-none">.</span>
           </Link>
+
+          {/* Mobile Role Badge */}
+          <span className="md:hidden border border-sky-500/30 bg-sky-500/10 text-sky-300 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shrink-0">
+            {isTeamLead ? "LEAD" : isMemberRole ? "MEMBER" : isAdminOrSuper ? "ADMIN" : "CREO"}
+          </span>
 
           {/* Active Page Title with subtle breadcrumb separator */}
           {!hideTitle && resolvedTitle && (

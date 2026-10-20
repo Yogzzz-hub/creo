@@ -288,6 +288,8 @@ async def create_task(
         .order_by(Subscription.created_at.desc())
         .limit(1)
     )
+    plan_name = sub_res.scalar_one_or_none()
+
     # Verify monthly deliverable quota is not exhausted
     from app.models.billing import UsageCounter
     today_date = date.today()

@@ -4,6 +4,7 @@ import {
   BarChart2, Banknote, CreditCard, Users, Shield,
 } from "lucide-react";
 import { PricingCards } from "../../components/public/PricingCards";
+import { MobilePricingPage } from "../../components/public/MobilePricingPage";
 import { CountUp, EASE_OUT_EXPO, Reveal, SplitText, Stagger, StaggerItem } from "../../components/motion";
 
 const TIERS = [
@@ -23,7 +24,14 @@ const CAPABILITIES = [
 
 export function PricingPage() {
   return (
-    <div className="min-h-screen bg-[#050810] pt-8 sm:pt-12 lg:pt-14 pb-16 sm:pb-24">
+    <>
+      {/* Mobile-only view (< md) */}
+      <div className="block md:hidden">
+        <MobilePricingPage />
+      </div>
+
+      {/* Desktop & tablet view (>= md) */}
+      <div className="hidden md:block min-h-screen bg-[#050810] pt-8 sm:pt-12 lg:pt-14 pb-16 sm:pb-24">
 
       {/* Hero Header */}
       <div className="relative isolate max-w-4xl mx-auto px-4 sm:px-6 text-center mb-12 sm:mb-16">
@@ -158,6 +166,7 @@ export function PricingPage() {
           </div>
         </Reveal>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

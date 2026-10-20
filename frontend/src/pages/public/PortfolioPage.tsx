@@ -1,14 +1,49 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { Bell, Search, Clock, Users, BarChart3, CheckCircle2, Play, AlertCircle, TrendingUp, X, Folder, Volume2, Maximize } from "lucide-react";
+import { MobileWorkPage } from "../../components/public/MobileWorkPage";
+
+const DELIVERABLES = [
+  {
+    id: 1,
+    tag: "Hero Reel",
+    title: "Cinematic High-Performance Reels",
+    brand: "Nike Training // Kinetic Motion",
+    specs: "4K 60fps • Ready for Ads",
+    image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1000&q=80",
+  },
+  {
+    id: 2,
+    tag: "3D Motion",
+    title: "3D Product Animation & Motion",
+    brand: "Apple Studio // Lumina Pass",
+    specs: "ProRes 422 • Color Graded",
+    image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1000&q=80",
+  },
+  {
+    id: 3,
+    tag: "VFX Hook",
+    title: "VFX & Sound-Sync Hook Cut",
+    brand: "Gymshark // Viral Audio Lock",
+    specs: "1080x1920 • Dolby Audio",
+    image: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1000&q=80",
+  },
+];
 
 export function PortfolioPage() {
   const [dossierTab, setDossierTab] = useState<'scope' | 'metrics'>('scope');
-  const [approvalStatus, setApprovalStatus] = useState<'pending' | 'approved' | 'revision'>('pending');
+  const [activeDeliverable, setActiveDeliverable] = useState(1);
   const [inv1, setInv1] = useState('Paid ✓');
   const [inv2, setInv2] = useState('Due in 2 Days');
   return (
-    <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen pb-20 lg:pb-24 font-sans selection:bg-[#7FA0D6]/30">
+    <>
+      {/* Mobile-only view (< md) */}
+      <div className="block md:hidden">
+        <MobileWorkPage />
+      </div>
+
+      {/* Desktop & tablet view (>= md) */}
+      <div className="hidden md:block w-full bg-[#050810] text-[#F8FAFC] min-h-screen pb-20 lg:pb-24 font-sans selection:bg-[#7FA0D6]/30">
       
       {/* - Top Hero Section (2-Column Grid) - */}
       <section className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-6 pb-16 sm:pt-8 sm:pb-20 lg:pt-10 lg:pb-24 relative">
@@ -460,11 +495,40 @@ export function PortfolioPage() {
 
           {/* Right Card */}
           <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-4 sm:p-6 lg:p-8 flex flex-col">
-            <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] w-full text-left mb-2">Velox Studio Client Portal</div>
-            <div className="text-xs text-[#97A0B3] mb-6 font-medium">Summer DTC Campaign Reel #04</div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC]">Velox Studio Client Portal</div>
+                <div className="text-xs text-[#97A0B3] font-medium">{DELIVERABLES.find(d => d.id === activeDeliverable)?.title}</div>
+              </div>
+              <div className="flex items-center gap-1.5 bg-[#0B111C] border border-[#2A3446]/30 px-2.5 py-1 rounded-md shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6] animate-pulse" />
+                <span className="text-[10px] font-bold text-[#7FA0D6]">{DELIVERABLES.find(d => d.id === activeDeliverable)?.brand}</span>
+              </div>
+            </div>
+
+            {/* Deliverables Switcher Tabs */}
+            <div className="flex gap-2 mb-4">
+              {DELIVERABLES.map((d) => {
+                const isSelected = activeDeliverable === d.id;
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setActiveDeliverable(d.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-[#161F2D] text-[#7FA0D6] border border-[#7FA0D6] shadow-[0_0_12px_rgba(127,160,214,0.25)]"
+                        : "bg-[#0B111C] text-[#97A0B3] border border-[#2A3446] hover:text-[#F8FAFC]"
+                    }`}
+                  >
+                    {d.tag}
+                  </button>
+                );
+              })}
+            </div>
             
             <div className="w-full aspect-video bg-[#050810] rounded-xl border border-[#2A3446]/30 mb-6 flex flex-col justify-end relative overflow-hidden group">
-              <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=800&q=80" className="absolute inset-0 w-full h-full object-cover opacity-60" alt="Cinematic Video Mockup" />
+              <img src={DELIVERABLES.find(d => d.id === activeDeliverable)?.image} className="absolute inset-0 w-full h-full object-cover opacity-75 group-hover:scale-105 transition-transform duration-500" alt="Cinematic Video Mockup" />
               <div className="absolute inset-0 bg-black/40 z-10" />
               <div className="absolute inset-0 flex items-center justify-center z-20">
                 <div className="w-12 h-12 rounded-full bg-black/60 border border-white/50 flex items-center justify-center text-white shadow-lg cursor-pointer hover:scale-110 transition-transform">
@@ -473,46 +537,40 @@ export function PortfolioPage() {
               </div>
               <div className="w-full px-4 pb-3 pt-6 bg-gradient-to-t from-black/80 to-transparent z-20 flex items-center justify-between">
                 <div className="flex items-center gap-3 w-full">
-                  <div className="text-[10px] font-bold text-[#F8FAFC] shrink-0">0:00 / 2:34</div>
+                  <div className="text-[10px] font-bold text-[#F8FAFC] shrink-0">0:00 / 0:15</div>
                   <div className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden relative cursor-pointer">
                     <div className="absolute left-0 top-0 bottom-0 w-1/3 bg-[#7FA0D6] rounded-full" />
                   </div>
+                  <span className="text-[10px] text-[#7FA0D6] font-mono font-bold shrink-0">{DELIVERABLES.find(d => d.id === activeDeliverable)?.specs}</span>
                   <Volume2 className="size-3.5 text-[#F8FAFC] shrink-0 cursor-pointer" />
                   <Maximize className="size-3.5 text-[#F8FAFC] shrink-0 cursor-pointer" />
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                {approvalStatus === 'pending' && (
-                  <>
-                    <div className="size-2 rounded-full bg-[#D8BF9B] animate-pulse" />
-                    <span className="text-xs font-bold text-[#D8BF9B]">● Awaiting Client Approval</span>
-                  </>
-                )}
-                {approvalStatus === 'approved' && (
-                  <span className="text-xs font-bold text-[#7FA0D6]">✓ Approved (Queued for Delivery)</span>
-                )}
-                {approvalStatus === 'revision' && (
-                  <span className="text-xs font-bold text-[#7FA0D6]"> Revision Ticket Created (#231)</span>
-                )}
+                <div className="size-2 rounded-full bg-[#7FA0D6] animate-pulse" />
+                <span className="text-xs font-bold text-[#7FA0D6]">● Ready for Review &amp; Client Dispatch</span>
               </div>
-              {approvalStatus !== 'pending' && (
-                <button onClick={() => setApprovalStatus('pending')} className="text-[10px] text-[#97A0B3] hover:text-[#F8FAFC] underline underline-offset-2">Reset</button>
-              )}
+              <span className="text-[10px] text-[#97A0B3] font-mono font-semibold">1-Click Pipeline</span>
             </div>
             
-            {approvalStatus === 'pending' && (
-              <div className="flex flex-col sm:flex-row w-full gap-3 mb-5">
-                <button onClick={() => setApprovalStatus('approved')} className="flex-1 bg-[#BCCCE6] hover:bg-[#BCCCE6] text-[#050810] font-semibold transition-all shadow-sm hover:shadow-[0_0_20px_rgba(188,204,230,0.25)] text-xs px-4 py-2.5 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2">
-                  <CheckCircle2 className="size-4" /> Approve Asset
-                </button>
-                <button onClick={() => setApprovalStatus('revision')} className="flex-1 bg-[#0B111C] border border-[#2A3446]/30 text-[#F8FAFC] font-bold text-xs px-4 py-2.5 rounded-lg hover:bg-[#121926] transition-colors flex items-center justify-center gap-2">
-                  <X className="size-4" /> Request Revision
-                </button>
+            {/* Non-Clickable Action Dock */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 w-full gap-2.5 mb-5 select-none pointer-events-none">
+              <div className="bg-[#BCCCE6] text-[#050810] font-bold text-xs px-3 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2 cursor-default">
+                <CheckCircle2 className="size-4" />
+                <span>Click Approve Batch</span>
               </div>
-            )}
+              <div className="bg-[#0B111C] border border-[#2A3446] text-[#F8FAFC] font-semibold text-xs px-3 py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-default">
+                <Clock className="size-4 text-[#7FA0D6]" />
+                <span>Timecode Notes</span>
+              </div>
+              <div className="bg-[#0B111C] border border-[#2A3446] text-[#F8FAFC] font-semibold text-xs px-3 py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-default">
+                <X className="size-4 text-[#D8BF9B]" />
+                <span>Request Revision</span>
+              </div>
+            </div>
 
             <div className="p-3 bg-[#0B111C] border border-[#2A3446]/30 rounded-xl flex items-start gap-3">
               <AlertCircle className="size-4 text-[#97A0B3] shrink-0 mt-0.5" />
@@ -670,7 +728,8 @@ export function PortfolioPage() {
         </div>
       </section>
       
-    </div>
+      </div>
+    </>
   );
 }
 

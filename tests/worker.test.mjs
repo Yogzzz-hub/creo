@@ -162,3 +162,27 @@ test("obsolete asset paths cannot receive SPA HTML", async () => {
   assert.equal(response.status, 404);
   assert.equal(response.headers.get("Cache-Control"), "no-store");
 });
+
+test("razorpay credentials bound in worker env are forwarded to api origin and client overrides stripped", async () => {
+  const f = fixture();
+  f.env.RAZORPAY_KEY_ID = "rzp_test_bound_123";
+  f.env.RAZORPAY_KEY_SECRET = "secret_bound_456";
+  let intercepted = null;
+  globalThis.fetch = async (request) => {
+    intercepted = request;
+    return Response.json({ status: "ok" });
+  };
+  const req = new Request("https://site.example.com/api/v1/payments/create-order", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Razorpay-Key-Id": "fake_client_key",
+      "X-Razorpay-Key-Secret": "fake_client_secret",
+    },
+    body: JSON.stringify({ plan_id: "plan-1" }),
+  });
+  const res = await worker.fetch(req, f.env, f.context);
+  assert.equal(res.status, 200);
+  assert.equal(intercepted.headers.get("X-Razorpay-Key-Id"), "rzp_test_bound_123");
+  assert.equal(intercepted.headers.get("X-Razorpay-Key-Secret"), "secret_bound_456");
+});

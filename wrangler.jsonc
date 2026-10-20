@@ -10,7 +10,8 @@
   "triggers": { "crons": ["* * * * *"] },
   "secrets": { "required": ["PUBLISHING_DISPATCH_SECRET"] },
   "vars": {
-    "API_ORIGIN": "https://creo-api-singapore.onrender.com"
+    "API_ORIGIN": "https://creo-api-singapore.onrender.com",
+    "RAZORPAY_KEY_ID": "rzp_test_TO2r0YMjDZSpuC"
   },
   "assets": {
     "directory": "frontend/dist",
