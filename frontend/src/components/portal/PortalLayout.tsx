@@ -59,7 +59,7 @@ export function PortalLayout() {
             className={
               isSlack
                 ? "portal-main flex-1 w-full px-2 sm:px-4 lg:px-6 pt-3 sm:pt-4 pb-3 sm:pb-4 flex flex-col min-h-0 overflow-hidden"
-                : "portal-main flex-1 w-full px-3.5 sm:px-5 lg:px-6 pt-3.5 sm:pt-4.5 lg:pt-5 pb-6 sm:pb-8 min-w-0 overflow-x-hidden"
+                : "portal-main flex-1 w-full px-2.5 sm:px-5 lg:px-6 pt-2.5 sm:pt-4.5 lg:pt-5 pb-4 sm:pb-8 min-w-0 overflow-x-hidden"
             }
           >
             <div

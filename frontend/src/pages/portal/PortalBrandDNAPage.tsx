@@ -25,6 +25,8 @@ import {
   Trash2,
   Download,
   Loader2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { resolveAssetUrl } from "../../lib/media";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
@@ -89,6 +91,18 @@ export function PortalBrandDNAPage() {
   const [successModalText, setSuccessModalText] = useState("Changes saved successfully!");
   const [isUploading, setIsUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    voice: true,
+    audience: false,
+    pillars: false,
+    palette: false,
+    dodont: false,
+    hooks: false,
+  });
+
+  const toggleSection = (section: string) => {
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
 
   useEffect(() => {
     const isAnyModalOpen = isSuccessModalOpen || isEditModalOpen;
@@ -617,49 +631,61 @@ export function PortalBrandDNAPage() {
       )}
 
       {/* Bento Grid - Two independent columns to eliminate vertical gaps */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 items-start">
         {/* ── LEFT COLUMN: STRATEGY & POSITIONING (Cards 1, 3, 5) ── */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 md:gap-4">
           {/* ── CARD 1: BRAND VOICE & PERSONALITY ── */}
-          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#2A3446] bg-[#0B111C]/50">
-              <div className="flex items-center gap-2.5">
+          <div className="rounded-xl md:rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
+            <div 
+              onClick={() => toggleSection("voice")}
+              className="flex items-center justify-between px-3.5 md:px-4 py-2.5 md:py-3 border-b border-[#2A3446] bg-[#0B111C]/50 cursor-pointer lg:cursor-default select-none"
+            >
+              <div className="flex items-center gap-2 md:gap-2.5">
                 <div className="size-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
                   <Sparkles className="size-3.5" />
                 </div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-white">Brand Voice & Personality</h3>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsEditModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs font-bold hover:bg-white transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
-              >
-                <Edit3 className="size-3.5" />
-                <span>Suggest an edit</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditModalOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 md:px-3 py-1 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[11px] md:text-xs font-bold hover:bg-white transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
+                >
+                  <Edit3 className="size-3 md:size-3.5" />
+                  <span className="hidden sm:inline">Suggest an edit</span>
+                  <span className="sm:hidden">Edit</span>
+                </button>
+                <div className="lg:hidden text-[#7FA0D6] p-0.5">
+                  {openSections.voice ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                </div>
+              </div>
             </div>
 
-            <div className="p-4 sm:p-5 space-y-3.5">
+            <div className={`${openSections.voice ? "block" : "hidden lg:block"} p-3.5 md:p-5 space-y-3 md:space-y-3.5`}>
               {/* Summary Line Quote Box */}
-              <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] relative">
+              <div className="p-3 md:p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] relative">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
                   Core Brand Pitch / One-Liner
                 </span>
-                <p className="text-sm font-medium text-white leading-relaxed">
+                <p className="text-xs md:text-sm font-medium text-white leading-relaxed">
                   "{profile?.brand_dna?.summary_line || form.whatYouSell || "Strategic, engaging, and aligned with your target audience brand guidelines."}"
                 </p>
               </div>
 
               {/* Voice Words */}
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-2">
+                <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-2">
                   Key Voice Attributes
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {toneVoiceWords.map((word: string) => (
                     <span
                       key={word}
-                      className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#7FA0D6]/15 text-[#BCCCE6] border border-[#7FA0D6]/30 shadow-xs"
+                      className="inline-flex items-center px-2 md:px-2.5 py-0.5 md:py-1 rounded-lg text-[11px] md:text-xs font-semibold bg-[#7FA0D6]/15 text-[#BCCCE6] border border-[#7FA0D6]/30 shadow-xs"
                     >
                       {word}
                     </span>
@@ -668,14 +694,14 @@ export function PortalBrandDNAPage() {
               </div>
 
               {/* Tone Sliders / Metrics */}
-              <div className="pt-3 border-t border-[#2A3446]/80">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-2.5">
+              <div className="pt-2.5 md:pt-3 border-t border-[#2A3446]/80">
+                <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-2 md:mb-2.5">
                   Tone Dimensions & Gauges
                 </span>
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 gap-2.5 md:gap-4">
                   {toneMetrics.map((metric) => (
-                    <div key={metric.label} className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3">
-                      <div className="flex items-center justify-between text-xs mb-1.5">
+                    <div key={metric.label} className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-2.5 md:p-3">
+                      <div className="flex items-center justify-between text-[11px] md:text-xs mb-1.5">
                         <span className="text-white font-medium">{metric.label}</span>
                         <span className="font-mono text-[#7FA0D6] font-bold">{metric.value}/{metric.max}</span>
                       </div>
@@ -692,20 +718,28 @@ export function PortalBrandDNAPage() {
             </div>
           </div>
 
-          {/* ── CARD 3: TARGET AUDIENCE & POSITIONING ── */}
-          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#2A3446] bg-[#0B111C]/50">
-              <div className="flex items-center gap-2.5">
+          {/* ── CARD 2: TARGET AUDIENCE & POSITIONING ── */}
+          <div className="rounded-xl md:rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
+            <div 
+              onClick={() => toggleSection("audience")}
+              className="flex items-center justify-between px-3.5 md:px-4 py-2.5 md:py-3 border-b border-[#2A3446] bg-[#0B111C]/50 cursor-pointer lg:cursor-default select-none"
+            >
+              <div className="flex items-center gap-2 md:gap-2.5">
                 <div className="size-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
                   <Target className="size-3.5" />
                 </div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-white">Audience & Positioning</h3>
               </div>
-              <span className="text-[11px] font-medium text-[#7FA0D6]">Core Demographics</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-medium text-[#7FA0D6] hidden sm:inline">Core Demographics</span>
+                <div className="lg:hidden text-[#7FA0D6] p-0.5">
+                  {openSections.audience ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                </div>
+              </div>
             </div>
 
-            <div className="p-4 sm:p-5 space-y-3">
-              <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3.5">
+            <div className={`${openSections.audience ? "block" : "hidden lg:block"} p-3.5 md:p-5 space-y-2.5 md:space-y-3`}>
+              <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 md:p-3.5">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
                     Primary Target Demographic
@@ -714,22 +748,22 @@ export function PortalBrandDNAPage() {
                     Primary Adopters
                   </span>
                 </div>
-                <p className="text-sm font-medium text-white leading-relaxed">
+                <p className="text-xs md:text-sm font-medium text-white leading-relaxed">
                   {form.audience || dna.audience_segments?.[0]?.description || "Urban professionals, remote creatives, and high-standard coffee aficionados."}
                 </p>
               </div>
 
-              <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3.5">
+              <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 md:p-3.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1.5">
                   Core Pain Points & Care-Abouts
                 </span>
-                <p className="text-sm font-medium text-white leading-relaxed">
+                <p className="text-xs md:text-sm font-medium text-white leading-relaxed">
                   {form.painPoints || dna.audience_segments?.[0]?.core_pain_point || "Seeking reliable artisan quality, fast morning turnaround, and a warm community space."}
                 </p>
               </div>
 
               {dna.positioning && (
-                <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3.5">
+                <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 md:p-3.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1.5">
                     Strategic Positioning
                   </span>
@@ -741,23 +775,31 @@ export function PortalBrandDNAPage() {
             </div>
           </div>
 
-          {/* ── CARD 5: CONTENT PILLARS & FORMATS ── */}
-          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#2A3446] bg-[#0B111C]/50">
-              <div className="flex items-center gap-2.5">
+          {/* ── CARD 3: CONTENT PILLARS & FORMATS ── */}
+          <div className="rounded-xl md:rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
+            <div 
+              onClick={() => toggleSection("pillars")}
+              className="flex items-center justify-between px-3.5 md:px-4 py-2.5 md:py-3 border-b border-[#2A3446] bg-[#0B111C]/50 cursor-pointer lg:cursor-default select-none"
+            >
+              <div className="flex items-center gap-2 md:gap-2.5">
                 <div className="size-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
                   <Layers className="size-3.5" />
                 </div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-white">Content Pillars & Strategy</h3>
               </div>
-              <span className="text-[11px] font-medium text-[#7FA0D6]">3 Synthesized Pillars</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-medium text-[#7FA0D6] hidden sm:inline">3 Synthesized Pillars</span>
+                <div className="lg:hidden text-[#7FA0D6] p-0.5">
+                  {openSections.pillars ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                </div>
+              </div>
             </div>
 
-            <div className="p-4 sm:p-5 space-y-3">
+            <div className={`${openSections.pillars ? "block" : "hidden lg:block"} p-3.5 md:p-5 space-y-2.5 md:space-y-3`}>
               {pillars.map((pillar: any, idx: number) => (
-                <div key={idx} className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3.5 space-y-2">
+                <div key={idx} className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 md:p-3.5 space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <h4 className="text-sm font-bold text-white tracking-tight">{pillar.name}</h4>
+                    <h4 className="text-xs md:text-sm font-bold text-white tracking-tight">{pillar.name}</h4>
                     <span
                       className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                         pillar.funnel_stage === "conversion"
@@ -779,7 +821,7 @@ export function PortalBrandDNAPage() {
                         {pillar.best_formats.map((fmt: string) => (
                           <span
                             key={fmt}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[11px] text-white capitalize font-medium"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[10px] md:text-[11px] text-white capitalize font-medium"
                           >
                             {formatIcon(fmt)}
                             <span>{fmt}</span>
@@ -795,31 +837,39 @@ export function PortalBrandDNAPage() {
         </div>
 
         {/* ── RIGHT COLUMN: CREATIVE EXECUTION & ASSETS (Cards 2, 4, 6) ── */}
-        <div className="flex flex-col gap-4">
-          {/* ── CARD 2: BRAND COLOR PALETTE & TYPOGRAPHY ── */}
-          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#2A3446] bg-[#0B111C]/50">
-              <div className="flex items-center gap-2.5">
+        <div className="flex flex-col gap-3 md:gap-4">
+          {/* ── CARD 4: BRAND COLOR PALETTE & TYPOGRAPHY ── */}
+          <div className="rounded-xl md:rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
+            <div 
+              onClick={() => toggleSection("palette")}
+              className="flex items-center justify-between px-3.5 md:px-4 py-2.5 md:py-3 border-b border-[#2A3446] bg-[#0B111C]/50 cursor-pointer lg:cursor-default select-none"
+            >
+              <div className="flex items-center gap-2 md:gap-2.5">
                 <div className="size-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
                   <Palette className="size-3.5" />
                 </div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-white">Visual Palette & Tokens</h3>
               </div>
-              <span className="text-[11px] font-medium text-[#97A0B3]">Click swatch to copy hex</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-medium text-[#97A0B3] hidden sm:inline">Click swatch to copy hex</span>
+                <div className="lg:hidden text-[#7FA0D6] p-0.5">
+                  {openSections.palette ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                </div>
+              </div>
             </div>
 
-            <div className="p-4 sm:p-5 space-y-3.5">
+            <div className={`${openSections.palette ? "block" : "hidden lg:block"} p-3.5 md:p-5 space-y-3 md:space-y-3.5`}>
               {/* Color Swatches Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 md:gap-3">
                 {form.colors.map((hex, idx) => (
                   <div
                     key={idx}
                     onClick={() => handleCopyHex(hex, idx)}
-                    className="group relative bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/50 rounded-xl p-2.5 cursor-pointer transition-all hover:scale-[1.02] shadow-sm"
+                    className="group relative bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/50 rounded-xl p-2 md:p-2.5 cursor-pointer transition-all hover:scale-[1.02] shadow-sm"
                     title="Click to copy hex"
                   >
                     <div
-                      className="w-full aspect-[4/3] rounded-lg mb-2.5 border border-[#2A3446] shadow-inner relative flex items-center justify-center"
+                      className="w-full aspect-[4/3] rounded-lg mb-2 md:mb-2.5 border border-[#2A3446] shadow-inner relative flex items-center justify-center"
                       style={{ backgroundColor: hex }}
                     >
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 rounded-md px-2 py-1 flex items-center gap-1 text-[10px] text-white font-medium">
@@ -827,40 +877,40 @@ export function PortalBrandDNAPage() {
                         <span>{copiedIndex === idx ? "Copied" : "Copy"}</span>
                       </div>
                     </div>
-                    <p className="text-[11px] font-bold text-white truncate">{colorRoles[idx]}</p>
-                    <p className="font-mono text-[10px] text-[#97A0B3] uppercase tracking-wider mt-0.5">{hex}</p>
+                    <p className="text-[10px] md:text-[11px] font-bold text-white truncate">{colorRoles[idx]}</p>
+                    <p className="font-mono text-[9px] md:text-[10px] text-[#97A0B3] uppercase tracking-wider mt-0.5">{hex}</p>
                   </div>
                 ))}
               </div>
 
               {/* Typography Pairing */}
-              <div className="pt-4 border-t border-[#2A3446]/80 space-y-3">
+              <div className="pt-3 md:pt-4 border-t border-[#2A3446]/80 space-y-2.5 md:space-y-3">
                 <div className="flex items-center gap-2">
                   <Type className="size-3.5 text-[#7FA0D6]" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
+                  <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
                     Typography Pairing & System
                   </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-3">
+                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 md:p-3.5">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
                       Headlines / Display
                     </span>
-                    <p className="text-base font-bold text-white tracking-tight">
+                    <p className="text-sm md:text-base font-bold text-white tracking-tight">
                       {dna.typography?.headline || "Inter Display · 700 Bold"}
                     </p>
-                    <p className="text-xs text-[#97A0B3] mt-1 font-sans">
+                    <p className="text-[11px] md:text-xs text-[#97A0B3] mt-1 font-sans">
                       Bold, punchy titles optimized for feed stops.
                     </p>
                   </div>
-                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3.5">
+                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 md:p-3.5">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
                       Body Copy / Subtitles
                     </span>
-                    <p className="text-base font-normal text-white">
+                    <p className="text-sm md:text-base font-normal text-white">
                       {dna.typography?.body || "Inter Sans · 400 Regular"}
                     </p>
-                    <p className="text-xs text-[#97A0B3] mt-1 font-sans">
+                    <p className="text-[11px] md:text-xs text-[#97A0B3] mt-1 font-sans">
                       High legibility for reel captions and poster details.
                     </p>
                   </div>
@@ -869,11 +919,11 @@ export function PortalBrandDNAPage() {
 
               {/* Official Brand Logo Asset (Requirement 2.2) */}
               {(logoData?.brand_logo_url || profile?.brand_logo_url) && (
-                <div className="pt-4 border-t border-[#2A3446]/80 space-y-2.5">
+                <div className="pt-3 md:pt-4 border-t border-[#2A3446]/80 space-y-2 md:space-y-2.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <ImageIcon className="size-3.5 text-[#7FA0D6]" />
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
+                      <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
                         Official Brand Logo Asset
                       </span>
                     </div>
@@ -881,8 +931,8 @@ export function PortalBrandDNAPage() {
                       Production Asset
                     </span>
                   </div>
-                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 flex items-center gap-4">
-                    <div className="w-20 h-14 rounded-lg border border-[#2A3446] bg-[radial-gradient(#2A3446_1px,transparent_1px)] [background-size:8px_8px] bg-[#0E1524] flex items-center justify-center p-2 shrink-0">
+                  <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-2.5 md:p-3 flex items-center gap-3 md:gap-4">
+                    <div className="w-16 md:w-20 h-12 md:h-14 rounded-lg border border-[#2A3446] bg-[radial-gradient(#2A3446_1px,transparent_1px)] [background-size:8px_8px] bg-[#0E1524] flex items-center justify-center p-2 shrink-0">
                       <img
                         src={resolveAssetUrl(logoData?.brand_logo_url || profile?.brand_logo_url)}
                         alt="Brand Logo"
@@ -893,7 +943,7 @@ export function PortalBrandDNAPage() {
                       <p className="text-xs font-bold text-white truncate">
                         {(logoData?.brand_logo_url || profile?.brand_logo_url)?.split("/").pop()}
                       </p>
-                      <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                      <p className="text-[10px] md:text-[11px] text-[#97A0B3] mt-0.5">
                         Accessible to assigned pod designers, editors & creative leads.
                       </p>
                     </div>
@@ -912,26 +962,34 @@ export function PortalBrandDNAPage() {
             </div>
           </div>
 
-          {/* ── CARD 4: DO'S & DON'TS (CREATIVE GUARDRAILS) ── */}
-          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#2A3446] bg-[#0B111C]/50">
-              <div className="flex items-center gap-2.5">
+          {/* ── CARD 5: DO'S & DON'TS (CREATIVE GUARDRAILS) ── */}
+          <div className="rounded-xl md:rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
+            <div 
+              onClick={() => toggleSection("dodont")}
+              className="flex items-center justify-between px-3.5 md:px-4 py-2.5 md:py-3 border-b border-[#2A3446] bg-[#0B111C]/50 cursor-pointer lg:cursor-default select-none"
+            >
+              <div className="flex items-center gap-2 md:gap-2.5">
                 <div className="size-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
                   <Shield className="size-3.5" />
                 </div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-white">Creative Do's & Don'ts</h3>
               </div>
-              <span className="text-[11px] font-medium text-[#97A0B3]">Pod Production Rules</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-medium text-[#97A0B3] hidden sm:inline">Pod Production Rules</span>
+                <div className="lg:hidden text-[#7FA0D6] p-0.5">
+                  {openSections.dodont ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                </div>
+              </div>
             </div>
 
-            <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className={`${openSections.dodont ? "block" : "hidden lg:block"} p-3.5 md:p-5 grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-3.5`}>
               {/* Do Column */}
-              <div className="bg-[#0B111C] border border-emerald-500/20 rounded-xl p-3.5 space-y-2.5">
+              <div className="bg-[#0B111C] border border-emerald-500/20 rounded-xl p-3 md:p-3.5 space-y-2 md:space-y-2.5">
                 <div className="flex items-center gap-2 pb-2 border-b border-emerald-500/20">
                   <CheckCircle2 className="size-4 text-emerald-400" />
                   <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400">Approved (Do)</h4>
                 </div>
-                <ul className="space-y-2">
+                <ul className="space-y-1.5 md:space-y-2">
                   {doList.map((item: string, i: number) => (
                     <li key={i} className="flex items-start gap-2 text-xs text-white/90 leading-snug">
                       <span className="size-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
@@ -942,12 +1000,12 @@ export function PortalBrandDNAPage() {
               </div>
 
               {/* Don't Column */}
-              <div className="bg-[#0B111C] border border-rose-500/20 rounded-xl p-3.5 space-y-2.5">
+              <div className="bg-[#0B111C] border border-rose-500/20 rounded-xl p-3 md:p-3.5 space-y-2 md:space-y-2.5">
                 <div className="flex items-center gap-2 pb-2 border-b border-rose-500/20">
                   <AlertCircle className="size-4 text-rose-400" />
                   <h4 className="text-xs font-bold uppercase tracking-wider text-rose-400">Strictly Avoid (Don't)</h4>
                 </div>
-                <ul className="space-y-2">
+                <ul className="space-y-1.5 md:space-y-2">
                   {dontList.map((item: string, i: number) => (
                     <li key={i} className="flex items-start gap-2 text-xs text-white/90 leading-snug">
                       <span className="size-1.5 rounded-full bg-rose-400 mt-1.5 shrink-0" />
@@ -960,18 +1018,26 @@ export function PortalBrandDNAPage() {
           </div>
 
           {/* ── CARD 6: HIGH-PERFORMING HOOKS & ASSETS ── */}
-          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#2A3446] bg-[#0B111C]/50">
-              <div className="flex items-center gap-2.5">
+          <div className="rounded-xl md:rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
+            <div 
+              onClick={() => toggleSection("hooks")}
+              className="flex items-center justify-between px-3.5 md:px-4 py-2.5 md:py-3 border-b border-[#2A3446] bg-[#0B111C]/50 cursor-pointer lg:cursor-default select-none"
+            >
+              <div className="flex items-center gap-2 md:gap-2.5">
                 <div className="size-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
                   <Zap className="size-3.5" />
                 </div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-white">Campaign Hooks & Brand Files</h3>
               </div>
-              <span className="text-[11px] font-medium text-[#BCCCE6]">Sprint Bank</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-medium text-[#BCCCE6] hidden sm:inline">Sprint Bank</span>
+                <div className="lg:hidden text-[#7FA0D6] p-0.5">
+                  {openSections.hooks ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                </div>
+              </div>
             </div>
 
-            <div className="p-4 sm:p-5 space-y-3.5">
+            <div className={`${openSections.hooks ? "block" : "hidden lg:block"} p-3.5 md:p-5 space-y-3 md:space-y-3.5`}>
               {/* Hooks */}
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-2.5">

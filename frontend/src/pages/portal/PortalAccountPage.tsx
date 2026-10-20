@@ -268,12 +268,66 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
   return (
     <main className="text-white space-y-4 pb-4 w-full">
       {/* Tab Navigation & User Preview Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#2A3446]/60">
-        <nav aria-label="Account Settings Tabs" className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+      {/* Mobile Tab Bar (< md): 3-column static segmented bar */}
+      <nav aria-label="Account Settings Tabs Mobile" className="grid grid-cols-3 gap-1.5 p-1 bg-[#161F2D] rounded-xl border border-[#2A3446] md:hidden">
+        <button
+          type="button"
+          onClick={() => setParams({ tab: "account" })}
+          className={`flex items-center justify-center gap-1.5 py-2 rounded-lg font-bold text-xs transition-all cursor-pointer ${
+            activeTab === "account"
+              ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm"
+              : "text-[#97A0B3] hover:text-white"
+          }`}
+        >
+          <User className="size-3.5" />
+          <span>Profile</span>
+          {isLocked && <Lock className="size-3 text-[#97A0B3]" />}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setParams({ tab: "integrations" })}
+          className={`flex items-center justify-center gap-1.5 py-2 rounded-lg font-bold text-xs transition-all cursor-pointer relative ${
+            activeTab === "integrations"
+              ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm"
+              : "text-[#97A0B3] hover:text-white"
+          }`}
+        >
+          <Instagram className="size-3.5" />
+          <span>Integrations</span>
+          {isLocked ? (
+            <Lock className="size-3 text-[#97A0B3]" />
+          ) : isIgConnected ? (
+            <span
+              className={`size-1.5 rounded-full ${
+                activeTab === "integrations" ? "bg-emerald-600" : "bg-emerald-400 animate-pulse"
+              }`}
+            />
+          ) : null}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setParams({ tab: "security" })}
+          className={`flex items-center justify-center gap-1.5 py-2 rounded-lg font-bold text-xs transition-all cursor-pointer ${
+            activeTab === "security"
+              ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm"
+              : "text-[#97A0B3] hover:text-white"
+          }`}
+        >
+          <ShieldCheck className="size-3.5" />
+          <span>Security</span>
+          {isLocked && <Lock className="size-3 text-[#97A0B3]" />}
+        </button>
+      </nav>
+
+      {/* Desktop Tab Navigation (md:) */}
+      <div className="hidden md:flex items-center justify-between gap-3 pb-2 border-b border-[#2A3446]/60">
+        <nav aria-label="Account Settings Tabs" className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setParams({ tab: "account" })}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-sm transition-all cursor-pointer ${
               activeTab === "account"
                 ? "bg-[#BCCCE6] text-[#0B111C] shadow-lg shadow-[#BCCCE6]/10 scale-[1.02]"
                 : "bg-[#161F2D] text-[#97A0B3] hover:text-white hover:bg-[#1E293B] border border-[#2A3446]"
@@ -287,7 +341,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           <button
             type="button"
             onClick={() => setParams({ tab: "integrations" })}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer relative ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-sm transition-all cursor-pointer relative ${
               activeTab === "integrations"
                 ? "bg-[#BCCCE6] text-[#0B111C] shadow-lg shadow-[#BCCCE6]/10 scale-[1.02]"
                 : "bg-[#161F2D] text-[#97A0B3] hover:text-white hover:bg-[#1E293B] border border-[#2A3446]"
@@ -319,7 +373,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           <button
             type="button"
             onClick={() => setParams({ tab: "security" })}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-sm transition-all cursor-pointer ${
               activeTab === "security"
                 ? "bg-[#BCCCE6] text-[#0B111C] shadow-lg shadow-[#BCCCE6]/10 scale-[1.02]"
                 : "bg-[#161F2D] text-[#97A0B3] hover:text-white hover:bg-[#1E293B] border border-[#2A3446]"
@@ -331,7 +385,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           </button>
         </nav>
 
-        {/* User preview badge */}
+        {/* User preview badge (desktop only) */}
         {(query.data || user) && (
           <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] shrink-0">
             <div className="size-7 rounded-full bg-gradient-to-tr from-[#7FA0D6] to-[#BCCCE6] text-[#0B111C] font-black text-[11px] flex items-center justify-center uppercase shadow-sm">
@@ -513,116 +567,152 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {([
-                { provider: "instagram", title: "Instagram", subtitle: "Connect directly", description: "Connect your Business or Creator account. No Facebook Page needed.", label: "Connect Instagram", Icon: Instagram, badge: "Direct connection", color: "bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF]" },
-                { provider: "facebook", title: "Facebook", subtitle: "Connect a linked Instagram account", description: "Sign in with Facebook and choose the Page linked to your Instagram professional account.", label: "Connect with Facebook", Icon: Facebook, badge: "Via Facebook Page", color: "bg-[#1877F2]" },
-              ] as const).map(({ provider, title, subtitle, description, label, Icon, badge, color }) => (
-                <section key={provider} className="flex flex-col rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <span className={`inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-white ${color}`}><Icon className="size-5" aria-hidden="true" /></span>
-                    <span className="rounded-full border border-[#2A3446] px-2.5 py-0.5 text-[10px] font-semibold text-[#BCCCE6]">{badge}</span>
+            <>
+              {/* Mobile Slim Connect Rows (< md) */}
+              <div className="space-y-2 md:hidden">
+            {([
+              { provider: "instagram", title: "Instagram", subtitle: "Direct connection", label: "Connect", Icon: Instagram, color: "bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF]" },
+              { provider: "facebook", title: "Facebook", subtitle: "Via Facebook Page", label: "Connect", Icon: Facebook, color: "bg-[#1877F2]" },
+            ] as const).map(({ provider, title, subtitle, label, Icon, color }) => (
+              <div key={provider} className="flex items-center justify-between gap-3 p-3 rounded-xl border border-[#2A3446] bg-[#161F2D]">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className={`inline-flex size-9 shrink-0 items-center justify-center rounded-xl text-white ${color}`}>
+                    <Icon className="size-4" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="text-xs font-bold text-white leading-tight">{title}</h4>
+                      <span className="text-[10px] text-[#7FA0D6] font-medium truncate">· {subtitle}</span>
+                    </div>
+                    <p className="text-[11px] text-[#97A0B3] truncate">Auto-publish reels & posts</p>
                   </div>
-                  <h3 className="mt-3.5 text-base sm:text-lg font-bold text-white">{title}</h3>
-                  <p className="mt-0.5 text-xs font-semibold text-[#BCCCE6]">{subtitle}</p>
-                  <p className="mt-2 flex-1 text-xs leading-relaxed text-[#97A0B3]">{description}</p>
-                  <button type="button" disabled={isConnectingIg || igQuery.isPending} onClick={() => void handleConnectInstagram(provider)}
-                    className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#BCCCE6] px-4 py-2.5 text-xs sm:text-sm font-bold text-[#0B111C] hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer focus-visible:ring-2 focus-visible:ring-[#7FA0D6]">
-                    <Icon className={`size-3.5 ${isConnectingIg && connectingProvider === provider ? "animate-pulse motion-reduce:animate-none" : ""}`} aria-hidden="true" />
-                    {isConnectingIg && connectingProvider === provider ? "Opening authorization..." : label}
-                    {!(isConnectingIg && connectingProvider === provider) && <ArrowUpRight className="size-3.5" aria-hidden="true" />}
-                  </button>
-                </section>
-              ))}
-              <p className="md:col-span-2 flex items-center justify-center gap-2 text-[11px] text-[#97A0B3]"><ShieldCheck className="size-3.5 shrink-0" />Your password stays with Instagram or Facebook. You can disconnect anytime.</p>
-              {igNeedsReconnect && <p role="alert" className="md:col-span-2 text-xs text-amber-300">{ig?.error || "Choose a connection method to reconnect."}</p>}
-              {igQuery.isError && <p role="alert" className="md:col-span-2 text-xs text-rose-300">Could not check your connection. <button type="button" className="underline" onClick={() => void igQuery.refetch()}>Retry</button></p>}
-            </div>
-          )}
-        </section>
+                </div>
+                <button
+                  type="button"
+                  disabled={isConnectingIg || igQuery.isPending}
+                  onClick={() => void handleConnectInstagram(provider)}
+                  className="shrink-0 px-3.5 py-1.5 rounded-lg bg-[#BCCCE6] text-[#0B111C] font-bold text-xs hover:bg-white transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                >
+                  <Icon className={`size-3 ${isConnectingIg && connectingProvider === provider ? "animate-pulse" : ""}`} />
+                  <span>{isConnectingIg && connectingProvider === provider ? "Connecting..." : label}</span>
+                </button>
+              </div>
+            ))}
+            <p className="flex items-center justify-center gap-1.5 text-[11px] text-[#97A0B3] pt-1">
+              <ShieldCheck className="size-3.5 shrink-0" />
+              <span>Password stays with Meta. Disconnect anytime.</span>
+            </p>
+          </div>
+
+          {/* Desktop Grid (md:) */}
+          <div className="hidden md:grid md:grid-cols-2 gap-4">
+            {([
+              { provider: "instagram", title: "Instagram", subtitle: "Connect directly", description: "Connect your Business or Creator account. No Facebook Page needed.", label: "Connect Instagram", Icon: Instagram, badge: "Direct connection", color: "bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF]" },
+              { provider: "facebook", title: "Facebook", subtitle: "Connect a linked Instagram account", description: "Sign in with Facebook and choose the Page linked to your Instagram professional account.", label: "Connect with Facebook", Icon: Facebook, badge: "Via Facebook Page", color: "bg-[#1877F2]" },
+            ] as const).map(({ provider, title, subtitle, description, label, Icon, badge, color }) => (
+              <section key={provider} className="flex flex-col rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <span className={`inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-white ${color}`}><Icon className="size-5" aria-hidden="true" /></span>
+                  <span className="rounded-full border border-[#2A3446] px-2.5 py-0.5 text-[10px] font-semibold text-[#BCCCE6]">{badge}</span>
+                </div>
+                <h3 className="mt-3.5 text-base sm:text-lg font-bold text-white">{title}</h3>
+                <p className="mt-0.5 text-xs font-semibold text-[#BCCCE6]">{subtitle}</p>
+                <p className="mt-2 flex-1 text-xs leading-relaxed text-[#97A0B3]">{description}</p>
+                <button type="button" disabled={isConnectingIg || igQuery.isPending} onClick={() => void handleConnectInstagram(provider)}
+                  className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#BCCCE6] px-4 py-2.5 text-xs sm:text-sm font-bold text-[#0B111C] hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer focus-visible:ring-2 focus-visible:ring-[#7FA0D6]">
+                  <Icon className={`size-3.5 ${isConnectingIg && connectingProvider === provider ? "animate-pulse motion-reduce:animate-none" : ""}`} aria-hidden="true" />
+                  {isConnectingIg && connectingProvider === provider ? "Opening authorization..." : label}
+                  {!(isConnectingIg && connectingProvider === provider) && <ArrowUpRight className="size-3.5" aria-hidden="true" />}
+                </button>
+              </section>
+            ))}
+            <p className="md:col-span-2 flex items-center justify-center gap-2 text-[11px] text-[#97A0B3]"><ShieldCheck className="size-3.5 shrink-0" />Your password stays with Instagram or Facebook. You can disconnect anytime.</p>
+            {igNeedsReconnect && <p role="alert" className="md:col-span-2 text-xs text-amber-300">{ig?.error || "Choose a connection method to reconnect."}</p>}
+            {igQuery.isError && <p role="alert" className="md:col-span-2 text-xs text-rose-300">Could not check your connection. <button type="button" className="underline" onClick={() => void igQuery.refetch()}>Retry</button></p>}
+          </div>
+        </>
+      )}
+    </section>
       )}
 
       {/* TAB 2: PROFILE & COMPANY SETTINGS */}
       {query.data && activeTab === "account" && (
         <section className="space-y-4 animate-in fade-in duration-300">
-          <form onSubmit={save} className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
+          <form onSubmit={save} className="bg-[#161F2D] border border-[#2A3446] rounded-xl md:rounded-2xl p-3.5 sm:p-5 space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between pb-2.5 sm:pb-3 border-b border-[#2A3446]">
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">Personal & Company Information</h2>
-                <p className="text-xs text-[#97A0B3] mt-0.5">
+                <h2 className="text-sm sm:text-base md:text-lg font-bold text-white tracking-tight">Personal & Company Information</h2>
+                <p className="text-[11px] sm:text-xs text-[#97A0B3] mt-0.5">
                   Update the primary contact info and company name associated with your Creo workspace.
                 </p>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#0B111C] border border-[#2A3446] text-[#BCCCE6]">
+              <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-[#0B111C] border border-[#2A3446] text-[#BCCCE6] shrink-0 ml-2">
                 Client Profile
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="space-y-1.5">
-                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-1.5">
-                  <User className="size-3.5 text-[#7FA0D6]" />
-                  Full Name
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-2.5 md:gap-4">
+              <label className="col-span-1 space-y-1 sm:space-y-1.5">
+                <span className="text-[11px] sm:text-xs font-bold text-[#BCCCE6] flex items-center gap-1.5 truncate">
+                  <User className="size-3 sm:size-3.5 text-[#7FA0D6] shrink-0" />
+                  <span className="truncate">Full Name</span>
                 </span>
                 <input
                   aria-label="Name"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="Your full name"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-xs sm:text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
+                  className="w-full px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-xs sm:text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
                 />
               </label>
 
-              <label className="space-y-1.5">
-                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-1.5">
-                  <Building2 className="size-3.5 text-[#7FA0D6]" />
-                  Company / Organization
+              <label className="col-span-1 space-y-1 sm:space-y-1.5">
+                <span className="text-[11px] sm:text-xs font-bold text-[#BCCCE6] flex items-center gap-1.5 truncate">
+                  <Building2 className="size-3 sm:size-3.5 text-[#7FA0D6] shrink-0" />
+                  <span className="truncate">Company</span>
                 </span>
                 <input
                   aria-label="Company"
                   value={form.company}
                   onChange={(e) => setForm({ ...form, company: e.target.value })}
                   placeholder="e.g. Acme Studio"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-xs sm:text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
+                  className="w-full px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-xs sm:text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
                 />
               </label>
 
-              <label className="space-y-1.5">
-                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-1.5">
-                  <Phone className="size-3.5 text-[#7FA0D6]" />
-                  Phone Number
+              <label className="col-span-1 space-y-1 sm:space-y-1.5">
+                <span className="text-[11px] sm:text-xs font-bold text-[#BCCCE6] flex items-center gap-1.5 truncate">
+                  <Phone className="size-3 sm:size-3.5 text-[#7FA0D6] shrink-0" />
+                  <span className="truncate">Phone</span>
                 </span>
                 <input
                   aria-label="Phone"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="+1 (555) 000-0000"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-xs sm:text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
+                  className="w-full px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-xs sm:text-sm focus:border-[#7FA0D6] focus:outline-none transition-colors"
                 />
               </label>
 
-              <div className="space-y-1.5">
-                <span className="text-xs font-bold text-[#BCCCE6] flex items-center gap-1.5">
-                  <Mail className="size-3.5 text-[#7FA0D6]" />
-                  Email Address
+              <div className="col-span-1 space-y-1 sm:space-y-1.5">
+                <span className="text-[11px] sm:text-xs font-bold text-[#BCCCE6] flex items-center gap-1.5 truncate">
+                  <Mail className="size-3 sm:size-3.5 text-[#7FA0D6] shrink-0" />
+                  <span className="truncate">Email</span>
                 </span>
-                <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#0B111C]/80 border border-[#2A3446] text-[#97A0B3] text-xs sm:text-sm">
-                  <span className="truncate">{query.data.email || user?.email || "Not provided"}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 ml-2">
-                    Verified
-                  </span>
+                <div className="flex items-center justify-between px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 rounded-xl bg-[#0B111C]/80 border border-[#2A3446] text-[#97A0B3] text-xs sm:text-sm min-h-[34px] sm:min-h-[42px]">
+                  <span className="truncate text-xs">{query.data.email || user?.email || "—"}</span>
                 </div>
               </div>
             </div>
 
-            <div className="pt-3.5 border-t border-[#2A3446] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <p className="text-xs text-[#97A0B3]">
+            <div className="pt-3 border-t border-[#2A3446] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <p className="text-[11px] sm:text-xs text-[#97A0B3]">
                 Changes apply immediately to your team communications and invoice records.
               </p>
               <button
                 type="submit"
                 disabled={busy}
-                className="px-5 py-2 rounded-full bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-xs transition-all disabled:opacity-50 cursor-pointer shadow-sm self-end sm:self-auto"
+                className="w-full sm:w-auto px-5 py-2.5 sm:py-2 rounded-full bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-xs transition-all disabled:opacity-50 cursor-pointer shadow-sm self-end sm:self-auto"
               >
                 {busy ? "Saving Changes…" : "Save Changes"}
               </button>

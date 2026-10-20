@@ -9,6 +9,8 @@ import {
   ShieldAlert,
   ArrowRight,
   PhoneCall,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
@@ -80,6 +82,9 @@ export function PortalSupportPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [bargainModalOpen, setBargainModalOpen] = useState(false);
+  const [mobileRequestsOpen, setMobileRequestsOpen] = useState(true);
+  const [mobileFaqOpen, setMobileFaqOpen] = useState(true);
+  const [mobileTab, setMobileTab] = useState<"new_request" | "history_faq">("new_request");
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -181,16 +186,51 @@ export function PortalSupportPage() {
         </div>
       )}
 
-      {/* ── Main Help Section ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0">
-        {/* ── Left Column: Ask your pod (Form) ── */}
-        <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] min-w-0">
-          <h3 className="text-base font-semibold text-white mb-3.5">Ask your pod</h3>
+      {/* ── Mobile 2-Tab Segmented Switcher (< md) ── */}
+      <div className="grid grid-cols-2 p-1 bg-[#161F2D] rounded-xl border border-[#2A3446] md:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileTab("new_request")}
+          className={`py-2 text-xs font-bold rounded-lg transition-all text-center cursor-pointer ${
+            mobileTab === "new_request"
+              ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm"
+              : "text-[#97A0B3] hover:text-white"
+          }`}
+        >
+          New Request
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab("history_faq")}
+          className={`py-2 text-xs font-bold rounded-lg transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
+            mobileTab === "history_faq"
+              ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm"
+              : "text-[#97A0B3] hover:text-white"
+          }`}
+        >
+          <span>History & FAQ</span>
+          {ticketsList.length > 0 && (
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+              mobileTab === "history_faq" ? "bg-[#0B111C] text-[#BCCCE6]" : "bg-[#2A3446] text-[#BCCCE6]"
+            }`}>
+              {ticketsList.length}
+            </span>
+          )}
+        </button>
+      </div>
 
-          <form onSubmit={handleFormSubmit} className="space-y-3.5 min-w-0">
+      {/* ── Main Help Section ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 min-w-0">
+        {/* ── Left Column: Ask your pod (Form) ── */}
+        <div className={`bg-[#161F2D] rounded-xl md:rounded-2xl p-3.5 sm:p-5 border border-[#2A3446] min-w-0 ${
+          mobileTab === "new_request" ? "block" : "hidden md:block"
+        }`}>
+          <h3 className="text-sm sm:text-base font-semibold text-white mb-2.5 sm:mb-3.5">Ask your pod</h3>
+
+          <form onSubmit={handleFormSubmit} className="space-y-3 sm:space-y-3.5 min-w-0">
             {/* Category Pills */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#97A0B3] mb-1.5">What is it about?</label>
+              <label className="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#97A0B3] mb-1.5">What is it about?</label>
               <div className="flex flex-wrap gap-1.5">
                 {CATEGORIES.map((cat) => (
                   <button
@@ -198,7 +238,7 @@ export function PortalSupportPage() {
                     type="button"
                     onClick={() => setSelectedCategory(cat)}
                     aria-pressed={selectedCategory === cat}
-                    className={`min-h-9 px-3.5 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${
+                    className={`min-h-7 md:min-h-9 px-2.5 md:px-3.5 py-1 md:py-1.5 rounded-full text-[11px] md:text-xs font-medium cursor-pointer transition-colors ${
                       selectedCategory === cat
                         ? "bg-[#BCCCE6] text-[#0B111C] font-bold hover:bg-[#D2DDF0]"
                         : "bg-transparent border border-[#2A3446] text-[#BCCCE6] hover:bg-[#222D3E] hover:border-[#7FA0D6] hover:text-white"
@@ -212,27 +252,27 @@ export function PortalSupportPage() {
 
             {/* Subject Input */}
             <div>
-              <label htmlFor="support-subject" className="block text-xs font-bold uppercase tracking-wider text-[#97A0B3] mb-1.5">Subject</label>
+              <label htmlFor="support-subject" className="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#97A0B3] mb-1">Subject</label>
               <input
                 id="support-subject"
                 type="text"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Briefly summarize your request..."
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3.5 py-2 text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/20 transition-colors"
+                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 sm:px-3.5 py-2 text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/20 transition-colors"
               />
             </div>
 
             {/* Message */}
             <div>
-              <label htmlFor="support-message" className="block text-xs font-bold uppercase tracking-wider text-[#97A0B3] mb-1.5">Message</label>
+              <label htmlFor="support-message" className="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#97A0B3] mb-1">Message</label>
               <textarea
                 id="support-message"
-                rows={4}
+                rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe your issue or request..."
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/20 resize-none transition-colors"
+                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl p-2.5 sm:p-3 text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/20 resize-none transition-colors"
               />
             </div>
 
@@ -241,12 +281,12 @@ export function PortalSupportPage() {
               <button
                 type="submit"
                 disabled={createTicketMutation.isPending || !subject.trim() || !description.trim()}
-                className="min-h-10 px-4 py-2 gap-2 rounded-xl bg-[#BCCCE6] text-[#0B111C] text-xs font-bold flex items-center justify-center enabled:hover:bg-[#D2DDF0] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="min-h-8 sm:min-h-10 px-4 py-2 gap-2 rounded-xl bg-[#BCCCE6] text-[#0B111C] text-xs font-bold flex items-center justify-center enabled:hover:bg-[#D2DDF0] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {createTicketMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
                 ) : (
-                  <Send className="w-4 h-4" />
+                  <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 )}
                 {createTicketMutation.isPending ? "Sending..." : "Send request"}
               </button>
@@ -255,75 +295,97 @@ export function PortalSupportPage() {
         </div>
 
         {/* ── Right Column: Your requests + Common questions ── */}
-        <div className="space-y-4 min-w-0">
+        <div className={`space-y-3 md:space-y-4 min-w-0 ${
+          mobileTab === "history_faq" ? "block" : "hidden md:block"
+        }`}>
           {/* Your Requests */}
-          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] min-w-0">
-            <h3 className="text-base font-semibold text-white mb-3">Your requests</h3>
-
-            {ticketsList.length === 0 ? (
-              <p className="text-sm text-[#97A0B3] py-4 text-center">No tickets yet. Need help? Raise a Ticket</p>
-            ) : (
-              <div className="space-y-2.5">
-                {ticketsList.slice(0, 5).map((t) => (
-                  <Link key={t.id} to={`/portal/support/${t.rawId}`} className="block p-3 sm:p-3.5 bg-[#0B111C] rounded-xl border border-white/[0.04] hover:border-[#7FA0D6]/30 transition-colors">
-                    {/* Top row */}
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono text-[#97A0B3]">{t.id}</span>
-                      <span className="text-xs text-[#97A0B3]">· {t.category}</span>
-                      <span className="text-xs text-[#97A0B3] ml-auto">{t.timeAgo}</span>
-                    </div>
-                    {/* Title */}
-                    <p className="text-sm font-medium text-white mb-1.5">{t.title}</p>
-                    {/* Status */}
-                    <span
-                      className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
-                        t.status === "resolved"
-                          ? "bg-[#7FA0D6]/10 text-[#7FA0D6]"
-                          : t.status === "in_progress"
-                          ? "bg-[#D8BF9B]/10 text-[#D8BF9B]"
-                          : "bg-white/[0.05] text-[#97A0B3]"
-                      }`}
-                    >
-                      {t.status === "resolved"
-                        ? "✓ Fixed in v2"
-                        : t.status === "in_progress"
-                        ? "In progress"
-                        : "Waiting on you"}
-                    </span>
-                  </Link>
-                ))}
+          <div className="bg-[#161F2D] rounded-xl md:rounded-2xl p-3.5 sm:p-5 border border-[#2A3446] min-w-0">
+            <div 
+              onClick={() => setMobileRequestsOpen(prev => !prev)}
+              className="flex items-center justify-between cursor-pointer lg:cursor-default mb-0 lg:mb-3 select-none"
+            >
+              <h3 className="text-sm sm:text-base font-semibold text-white">Your requests ({ticketsList.length})</h3>
+              <div className="lg:hidden text-[#7FA0D6] p-0.5">
+                {mobileRequestsOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
               </div>
-            )}
+            </div>
+
+            <div className={`${mobileRequestsOpen ? "block mt-3" : "hidden lg:block"}`}>
+              {ticketsList.length === 0 ? (
+                <p className="text-xs sm:text-sm text-[#97A0B3] py-3 text-center">No tickets yet. Need help? Raise a Ticket</p>
+              ) : (
+                <div className="space-y-2 sm:space-y-2.5">
+                  {ticketsList.slice(0, 5).map((t) => (
+                    <Link key={t.id} to={`/portal/support/${t.rawId}`} className="block p-3 sm:p-3.5 bg-[#0B111C] rounded-xl border border-white/[0.04] hover:border-[#7FA0D6]/30 transition-colors">
+                      {/* Top row */}
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[11px] sm:text-xs font-mono text-[#97A0B3]">{t.id}</span>
+                        <span className="text-[11px] sm:text-xs text-[#97A0B3]">· {t.category}</span>
+                        <span className="text-[11px] sm:text-xs text-[#97A0B3] ml-auto">{t.timeAgo}</span>
+                      </div>
+                      {/* Title */}
+                      <p className="text-xs sm:text-sm font-medium text-white mb-1.5">{t.title}</p>
+                      {/* Status */}
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded text-[11px] sm:text-xs font-medium ${
+                          t.status === "resolved"
+                            ? "bg-[#7FA0D6]/10 text-[#7FA0D6]"
+                            : t.status === "in_progress"
+                            ? "bg-[#D8BF9B]/10 text-[#D8BF9B]"
+                            : "bg-white/[0.05] text-[#97A0B3]"
+                        }`}
+                      >
+                        {t.status === "resolved"
+                          ? "✓ Fixed in v2"
+                          : t.status === "in_progress"
+                          ? "In progress"
+                          : "Waiting on you"}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Common Questions (Accordion) */}
-          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] min-w-0">
-            <h3 className="text-base font-semibold text-white mb-3">Common questions</h3>
+          <div className="bg-[#161F2D] rounded-xl md:rounded-2xl p-3.5 sm:p-5 border border-[#2A3446] min-w-0">
+            <div 
+              onClick={() => setMobileFaqOpen(prev => !prev)}
+              className="flex items-center justify-between cursor-pointer lg:cursor-default mb-0 lg:mb-3 select-none"
+            >
+              <h3 className="text-sm sm:text-base font-semibold text-white">Common questions ({FAQ_ITEMS.length})</h3>
+              <div className="lg:hidden text-[#7FA0D6] p-0.5">
+                {mobileFaqOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+              </div>
+            </div>
 
-            <div className="divide-y divide-white/[0.05]">
-              {FAQ_ITEMS.map((item, i) => (
-                <div key={i} className="flex flex-col">
-                  <button
-                    type="button"
-                    onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
-                    aria-expanded={expandedFaq === i}
-                    aria-controls={`support-faq-${i}`}
-                    className="w-full flex items-center justify-between rounded-xl px-2.5 py-2.5 sm:py-3 text-left group cursor-pointer transition-colors hover:bg-[#222D3E]"
-                  >
-                    <span className="text-xs sm:text-sm text-[#97A0B3] group-hover:text-white transition-colors pr-4">{item.q}</span>
-                    <Plus
-                      className={`w-3.5 h-3.5 text-[#97A0B3] shrink-0 transition-transform duration-200 ${
-                        expandedFaq === i ? "rotate-45" : ""
-                      }`}
-                    />
-                  </button>
-                  {expandedFaq === i && (
-                    <div id={`support-faq-${i}`} className="px-2.5 pb-3 text-xs sm:text-sm leading-relaxed text-[#97A0B3] animate-in fade-in slide-in-from-top-2">
-                      {item.a}
-                    </div>
-                  )}
-                </div>
-              ))}
+            <div className={`${mobileFaqOpen ? "block mt-2.5" : "hidden lg:block"}`}>
+              <div className="divide-y divide-white/[0.05]">
+                {FAQ_ITEMS.map((item, i) => (
+                  <div key={i} className="flex flex-col">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
+                      aria-expanded={expandedFaq === i}
+                      aria-controls={`support-faq-${i}`}
+                      className="w-full flex items-center justify-between rounded-xl px-2 sm:px-2.5 py-2 sm:py-3 text-left group cursor-pointer transition-colors hover:bg-[#222D3E]"
+                    >
+                      <span className="text-xs sm:text-sm text-[#97A0B3] group-hover:text-white transition-colors pr-3 sm:pr-4">{item.q}</span>
+                      <Plus
+                        className={`w-3.5 h-3.5 text-[#97A0B3] shrink-0 transition-transform duration-200 ${
+                          expandedFaq === i ? "rotate-45" : ""
+                        }`}
+                      />
+                    </button>
+                    {expandedFaq === i && (
+                      <div id={`support-faq-${i}`} className="px-2 sm:px-2.5 pb-2.5 sm:pb-3 text-xs sm:text-sm leading-relaxed text-[#97A0B3] animate-in fade-in slide-in-from-top-2">
+                        {item.a}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
