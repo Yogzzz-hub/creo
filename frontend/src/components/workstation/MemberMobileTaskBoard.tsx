@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import {
+  Bell,
   Search,
   Plus,
   ChevronDown,
@@ -13,7 +14,6 @@ import {
 import type { UseMutationResult } from "@tanstack/react-query";
 import type { PodTask } from "../../lib/ops-api";
 import { useAdminSidebar } from "../admin/AdminSidebarContext";
-import { NotificationMenu } from "../ui/NotificationMenu";
 import { DeliverableMedia } from "../ops/DeliverableMedia";
 import { PublishingControl } from "../ops/PublishingPanel";
 import { VoicePlayer } from "../portal/VoicePlayer";
@@ -63,7 +63,7 @@ interface MemberMobileTaskBoardProps {
 
 export function MemberMobileTaskBoard({
   user,
-  userInitials: _userInitials,
+  userInitials,
   leadName,
   searchQuery,
   setSearchQuery,
@@ -83,9 +83,9 @@ export function MemberMobileTaskBoard({
   targetedTaskId,
   toastMessage,
   setToastMessage,
-  showToast: _showToast,
+  showToast,
   startMutation,
-  onQaApprove,
+  onQaApprove: _onQaApprove,
   openUpload,
   setCreateOpen,
   setNewClientId,
@@ -118,13 +118,33 @@ export function MemberMobileTaskBoard({
             <span className="text-lg font-black text-sky-400">.</span>
           </div>
           <span className="border border-sky-500/30 bg-sky-500/10 text-sky-300 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-            {user?.role === "team_lead" || user?.role === "lead" ? "LEAD" : "MEMBER"}
+            MEMBER
           </span>
         </div>
 
-        {/* Right Header Actions (Notifications) */}
-        <div className="flex items-center">
-          <NotificationMenu placement="header" />
+        {/* Right Header Actions (Notifications & User Avatar) */}
+        <div className="flex items-center gap-2.5">
+          <button
+            aria-label="Notifications"
+            type="button"
+            onClick={() => showToast("All task notifications are up to date")}
+            className="size-8 rounded-full bg-[#131C2B] border border-[#2A3446] flex items-center justify-center text-slate-300 hover:text-white transition cursor-pointer"
+          >
+            <Bell className="size-4" />
+          </button>
+
+          {/* User Avatar with Online Status Indicator */}
+          <Link
+            to="/workstation/settings"
+            className="relative cursor-pointer"
+            aria-label="Profile Settings"
+            title={user?.full_name || "Profile Settings"}
+          >
+            <div className="size-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-semibold text-slate-200">
+              {userInitials}
+            </div>
+            <span className="absolute bottom-0 right-0 size-2.5 bg-emerald-500 border-2 border-[#0B0F17] rounded-full"></span>
+          </Link>
         </div>
       </header>
       {/* END: MobileTopBar */}
@@ -433,28 +453,9 @@ export function MemberMobileTaskBoard({
                       )}
 
                       {mobileKanbanTab === "qa" && (
-                        (user?.role === "team_lead" || user?.role === "lead") && onQaApprove ? (
-                          <div className="flex items-center gap-1.5">
-                            <Link
-                              to="/lead/deliverables"
-                              className="border border-slate-700 bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-slate-200 text-xs font-medium px-2.5 py-1 rounded-lg flex items-center gap-1 transition"
-                            >
-                              <span>Inspect</span>
-                            </Link>
-                            <button
-                              type="button"
-                              onClick={() => onQaApprove(task.id)}
-                              className="bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1 transition shadow-xs cursor-pointer"
-                            >
-                              <Check className="size-3" />
-                              <span>Sign-off</span>
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="border border-slate-700/60 bg-slate-800/60 text-slate-300 text-[10px] font-medium px-2 py-0.5 rounded-md">
-                            Awaiting QA
-                          </span>
-                        )
+                        <span className="border border-slate-700/60 bg-slate-800/60 text-slate-300 text-[10px] font-medium px-2 py-0.5 rounded-md">
+                          Awaiting QA
+                        </span>
                       )}
 
                       {mobileKanbanTab === "review" && (
