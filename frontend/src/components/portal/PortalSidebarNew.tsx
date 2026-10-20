@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { request } from "../../lib/http";
 import {
-  Home,
   FileCheck,
   CalendarDays,
   FolderOpen,
@@ -97,7 +96,7 @@ export function PortalSidebarNew() {
     {
       label: "Overview",
       items: [
-        { label: "Home", href: "/portal", icon: Home, id: "home" },
+        { label: "Dashboard", href: "/portal", icon: LayoutDashboard, id: "dashboard" },
         {
           label: "Review",
           href: "/portal/deliverables",

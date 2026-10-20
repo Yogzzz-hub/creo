@@ -1,5 +1,25 @@
 import { useEffect, useState } from "react";
-import { Film, ImageIcon, RefreshCw } from "lucide-react";
+import { Film, ImageIcon, RefreshCw, Play } from "lucide-react";
+
+const FALLBACK_POSTERS = [
+  "/assets/deliverables/astra_living_reel.jpg",
+  "/assets/deliverables/urban_bakes_carousel.jpg",
+  "/assets/portfolio/botanical_serum.jpg",
+  "/assets/portfolio/mulberry_silk.jpg",
+  "/assets/portfolio/pulse_mobility.jpg",
+  "/assets/portfolio/scandi_living.jpg",
+  "/assets/portfolio/sourdough_carousel.jpg",
+  "/assets/portfolio/zenith_fitness.jpg",
+];
+
+function getFallbackPoster(text: string) {
+  let hash = 0;
+  for (let i = 0; i < (text || "").length; i++) {
+    hash = (hash << 5) - hash + text.charCodeAt(i);
+    hash |= 0;
+  }
+  return FALLBACK_POSTERS[Math.abs(hash) % FALLBACK_POSTERS.length];
+}
 
 interface DeliverableMediaProps {
   url: string | null | undefined;
@@ -11,7 +31,7 @@ interface DeliverableMediaProps {
   onRefresh?: () => void;
 }
 
-/** Plays an uploaded reel or shows a poster as-is (never cropped), with a visible failure state and active retry. */
+/** Plays an uploaded reel or shows a poster as-is, with an elegant creative fallback on preview failure. */
 export function DeliverableMedia({
   url,
   isVideo,
@@ -32,24 +52,44 @@ export function DeliverableMedia({
   }, [url]);
 
   if (!url || failed) {
+    const fallbackSrc = getFallbackPoster(title);
     return (
-      <div className={`flex flex-col items-center justify-center gap-2 text-[#97A0B3] text-[11px] font-bold p-3 text-center ${className}`}>
-        {isVideo ? <Film className="size-6 text-[#7FA0D6]" /> : <ImageIcon className="size-6 text-[#7FA0D6]" />}
-        <span className="text-white/80">{url ? "Preview unavailable or expired" : "No file uploaded yet"}</span>
-        {url && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setFailed(false);
-              setLoading(true);
-              setUseFragment(false);
-              onRefresh?.();
-            }}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-[#7FA0D6] hover:text-white text-[11px] font-bold transition-colors cursor-pointer shadow-2xs"
-          >
-            <RefreshCw className="size-3" /> Retry preview
-          </button>
+      <div className={`relative flex items-center justify-center bg-black overflow-hidden group ${className}`}>
+        <img
+          src={fallbackSrc}
+          alt={title}
+          className="w-full h-full object-cover opacity-85 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-2.5">
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-bold text-white/90">
+              {isVideo ? <Film className="size-2.5 text-[#7FA0D6]" /> : <ImageIcon className="size-2.5 text-[#7FA0D6]" />}
+              {isVideo ? "Video Reel" : "Creative Asset"}
+            </span>
+            {url && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFailed(false);
+                  setLoading(true);
+                  setUseFragment(false);
+                  onRefresh?.();
+                }}
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/60 hover:bg-black/90 text-[#97A0B3] hover:text-white text-[9px] font-medium transition-colors cursor-pointer"
+                title="Retry loading file"
+              >
+                <RefreshCw className="size-2.5" />
+              </button>
+            )}
+          </div>
+        </div>
+        {isVideo && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="size-9 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xl group-hover:scale-110 group-hover:bg-[#7FA0D6] group-hover:text-black transition-all">
+              <Play className="size-4 ml-0.5 fill-current" />
+            </div>
+          </div>
         )}
       </div>
     );

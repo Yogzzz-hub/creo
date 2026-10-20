@@ -6,12 +6,12 @@ import {
   ChevronDown,
   ExternalLink,
   History,
-  Instagram,
   LifeBuoy,
   Link2,
   Loader2,
   Send,
 } from "lucide-react";
+import { Instagram } from "../../ui/brand-icons";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../../lib/auth-context";

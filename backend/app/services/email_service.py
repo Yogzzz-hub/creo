@@ -734,3 +734,224 @@ Please log in and update your password in Settings if required.
     return await send_email(to_email, subject, html_content, text_content)
 
 
+async def send_custom_proposal_email(
+    to_email: str,
+    client_name: str,
+    target_plan: str,
+    current_plan: str | None = None,
+    standard_rate: float | int | str | None = None,
+    proposed_rate: float | int | str | None = None,
+    notes: str | None = None,
+    portal_url: str | None = None,
+) -> bool:
+    """Send a custom retainer proposal email to a client or prospective brand."""
+    from html import escape
+
+    clean_to = to_email.strip()
+    if not clean_to or "@" not in clean_to:
+        logger.error("invalid_recipient_email_for_proposal", to_email=to_email)
+        return False
+
+    base_url = (portal_url or settings.FRONTEND_URL or "http://localhost:5173").rstrip("/")
+    action_url = f"{base_url}/auth"
+
+    subject = f"Executive Retainer Proposal for {client_name} - Creo Creative Studio"
+
+    # Formatting amounts
+    std_val = ""
+    std_num = None
+    if standard_rate:
+        try:
+            std_num = int(float(standard_rate))
+            std_val = f"₹{std_num:,}"
+        except Exception:
+            std_val = str(standard_rate)
+
+    prop_val = ""
+    prop_num = None
+    if proposed_rate:
+        try:
+            prop_num = int(float(proposed_rate))
+            prop_val = f"₹{prop_num:,}"
+            if standard_rate:
+                try:
+                    s_num = int(float(standard_rate))
+                    if s_num > prop_num:
+                        diff = s_num - prop_num
+                        pct = round((diff / s_num) * 100)
+                        savings_badge = f"Save ₹{diff:,}/mo ({pct}% Executive Privilege Discount)"
+                except Exception:
+                    pass
+        except Exception:
+            prop_val = str(proposed_rate)
+
+    savings_badge = ""
+    savings_badge_html = ""
+    if std_num and prop_num and std_num > prop_num:
+        diff = std_num - prop_num
+        pct = round((diff / std_num) * 100)
+        savings_badge = f"Save ₹{diff:,}/mo ({pct}% Executive Privilege Discount)"
+        savings_badge_html = f"""
+        <div style="display: inline-block; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 9999px; padding: 4px 12px; margin-top: 8px;">
+          <span style="font-size: 11px; font-weight: 800; color: #10B981; letter-spacing: 0.05em; text-transform: uppercase;">
+            &#10003; Save &#8377;{diff:,}/mo ({pct}% VIP Discount)
+          </span>
+        </div>
+        """
+
+    notes_clean = (notes or "Dedicated creative delivery pod, agile revision turnarounds, and executive account oversight.").strip()
+
+    text_content = f"""Dear {client_name},
+
+We are pleased to share your tailored Custom Retainer Proposal from Creo Creative Studio.
+
+PROPOSAL BREAKDOWN:
+- Client Brand: {client_name}
+- Retainer Scope: {target_plan}
+{f'- Current Plan: {current_plan}' if current_plan else ''}
+{f'- Standard Rate: {std_val}/month' if std_val else ''}
+{f'- Proposed Rate: {prop_val}/month' if prop_val else ''}
+{f'- Exclusive Privilege: {savings_badge}' if savings_badge else ''}
+
+SCOPE & COMMITMENTS:
+{notes_clean}
+
+KEY PARTNERSHIP HIGHLIGHTS:
+- Dedicated Pod Lead & high-velocity output
+- Guaranteed turnaround SLA & priority queue
+- Full commercial IP rights & raw asset storage
+- Predictable monthly retainers without surprise overages
+
+To review and activate your custom retainer, visit:
+{action_url}
+
+If you would like any adjustments to the deliverables quota or terms, feel free to reply directly to this email.
+
+Warm regards,
+The Commercial Team
+Creo Creative Studio
+"""
+
+    current_plan_row = f"""
+                  <tr>
+                    <td style="padding: 10px 0; color: #94A3B8; font-size: 13px; border-bottom: 1px solid #2A3446;">Current Plan</td>
+                    <td style="padding: 10px 0; color: #F1F5F9; font-size: 13px; font-weight: 600; text-align: right; border-bottom: 1px solid #2A3446;">{escape(current_plan)}</td>
+                  </tr>
+    """ if current_plan else ""
+
+    standard_rate_row = f"""
+                  <tr>
+                    <td style="padding: 10px 0; color: #94A3B8; font-size: 13px; border-bottom: 1px solid #2A3446;">Standard Tier Rate</td>
+                    <td style="padding: 10px 0; color: #94A3B8; font-size: 13px; text-decoration: line-through; text-align: right; border-bottom: 1px solid #2A3446;">&#8377;{escape(std_val)}/mo</td>
+                  </tr>
+    """ if std_val else ""
+
+    html_content = f"""<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin: 0; padding: 0; background-color: #0B111C; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0B111C; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width: 580px; background-color: #161F2D; border-radius: 24px; overflow: hidden; border: 1px solid #2A3446; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); padding: 36px 32px 28px; border-bottom: 1px solid #2A3446; text-align: center;">
+              <div style="display: inline-block; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 9999px; padding: 6px 16px; margin-bottom: 14px;">
+                <span style="font-size: 11px; font-weight: 800; color: #60A5FA; letter-spacing: 0.12em; text-transform: uppercase;">EXECUTIVE COMMERCIAL PROPOSAL</span>
+              </div>
+              <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.02em;">Custom Retainer Proposal</h1>
+              <p style="margin: 8px 0 0 0; font-size: 13px; color: #94A3B8;">Prepared exclusively for <strong>{escape(client_name)}</strong></p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 32px 32px 28px;">
+              <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #E2E8F0;">
+                Hi <strong>{escape(client_name)}</strong>,
+              </p>
+              <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.6; color: #94A3B8;">
+                Our creative strategy and commercial team have tailored a bespoke retainer scope designed to accelerate your brand's digital presence, content velocity, and production quality.
+              </p>
+
+              <!-- Proposal Pricing Card -->
+              <div style="background-color: #0B111C; border: 1px solid #2A3446; border-radius: 18px; padding: 22px; margin-bottom: 24px;">
+                <div style="text-align: center; padding-bottom: 18px; border-bottom: 1px solid #2A3446;">
+                  <span style="font-size: 11px; font-weight: 700; color: #7FA0D6; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">PROPOSED MONTHLY RETAINER</span>
+                  <div style="font-size: 32px; font-weight: 900; color: #10B981; letter-spacing: -0.03em;">
+                    &#8377;{escape(prop_val)} <span style="font-size: 14px; font-weight: 600; color: #94A3B8;">/ month</span>
+                  </div>
+                  {savings_badge_html}
+                </div>
+
+                <table width="100%" cellspacing="0" cellpadding="0" style="margin-top: 16px;">
+                  <tr>
+                    <td style="padding: 10px 0; color: #94A3B8; font-size: 13px; border-bottom: 1px solid #2A3446;">Target Plan &amp; Scope</td>
+                    <td style="padding: 10px 0; color: #60A5FA; font-size: 13px; font-weight: 700; text-align: right; border-bottom: 1px solid #2A3446;">{escape(target_plan)}</td>
+                  </tr>
+                  {current_plan_row}
+                  {standard_rate_row}
+                  <tr>
+                    <td style="padding: 10px 0; color: #94A3B8; font-size: 13px;">Billing Cycle</td>
+                    <td style="padding: 10px 0; color: #F1F5F9; font-size: 13px; font-weight: 600; text-align: right;">Monthly Recurring</td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Scope & Commitments -->
+              <div style="background-color: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 16px; padding: 18px; margin-bottom: 26px;">
+                <span style="display: block; font-size: 11px; font-weight: 800; color: #60A5FA; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">
+                  SCOPE NOTES &amp; COMMITMENTS
+                </span>
+                <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #E2E8F0; white-space: pre-wrap;">
+                  "{escape(notes_clean)}"
+                </p>
+              </div>
+
+              <!-- Features checklist -->
+              <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td style="padding: 6px 0; color: #10B981; font-size: 14px; width: 24px; vertical-align: top;">&#10003;</td>
+                  <td style="padding: 6px 0; color: #94A3B8; font-size: 13px;">Dedicated pod lead &amp; streamlined Slack / portal workspace</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; color: #10B981; font-size: 14px; width: 24px; vertical-align: top;">&#10003;</td>
+                  <td style="padding: 6px 0; color: #94A3B8; font-size: 13px;">Priority SLA turnarounds with iterative revision guarantees</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; color: #10B981; font-size: 14px; width: 24px; vertical-align: top;">&#10003;</td>
+                  <td style="padding: 6px 0; color: #94A3B8; font-size: 13px;">100% intellectual property ownership &amp; cloud raw asset storage</td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <div style="text-align: center; margin-bottom: 24px;">
+                <a href="{action_url}" style="display: inline-block; background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%); color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none; padding: 14px 40px; border-radius: 12px; box-shadow: 0 4px 16px rgba(37,99,235,0.4);">
+                  Review &amp; Accept Proposal &rarr;
+                </a>
+              </div>
+
+              <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #64748B; text-align: center;">
+                Need custom scope modifications or have questions? Simply reply to this email to connect with your Creo creative director.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #0F172A; padding: 20px 32px; text-align: center; border-top: 1px solid #2A3446;">
+              <p style="margin: 0; font-size: 11px; color: #64748B;">&copy; 2026 Creo Creative Studio. All rights reserved. Confidential commercial proposal.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    return await send_email(clean_to, subject, html_content, text_content)
+
+
+

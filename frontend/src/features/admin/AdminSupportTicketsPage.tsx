@@ -278,8 +278,8 @@ export function AdminSupportTicketsPage() {
         transition={{ duration: 0.35 }}
         className="flex-1 px-3 sm:px-6 lg:px-8 py-3.5 sm:py-6 pb-24 sm:pb-8 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6"
       >
-        {/* Top 4 Summary Cards Row (Symmetrical 2x2 on mobile, 4 on desktop) */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        {/* Top 4 Summary Cards Row (Hidden on mobile, 2x2 on tablet, 4 on desktop) */}
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           {/* Card 1: Open Tickets */}
           <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-3 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover-card-innovative">
             <div className="flex items-center justify-between">
@@ -293,12 +293,6 @@ export function AdminSupportTicketsPage() {
             <div className="flex items-baseline gap-1.5 sm:gap-2">
               <span className="text-xl sm:text-3xl font-black text-white">{openCount}</span>
               <span className="text-[11px] sm:text-xs font-bold text-[#7FA0D6] truncate">in triage</span>
-            </div>
-            <div className="pt-0.5">
-              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#BCCCE6] text-[10px] sm:text-[11px] font-bold border border-[#7FA0D6]/30 truncate">
-                <span className="size-1.5 rounded-full bg-[#BCCCE6] animate-pulse shrink-0" />
-                Live SLA Track
-              </span>
             </div>
           </div>
 
@@ -316,12 +310,6 @@ export function AdminSupportTicketsPage() {
               <span className="text-xl sm:text-3xl font-black text-white">{resolvedCount + 37}</span>
               <span className="text-[11px] sm:text-xs font-semibold text-[#97A0B3] truncate">closed</span>
             </div>
-            <div className="pt-0.5">
-              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] sm:text-[11px] font-bold border border-emerald-500/30 truncate">
-                <span className="size-1.5 rounded-full bg-emerald-400 shrink-0" />
-                100% SLA Met
-              </span>
-            </div>
           </div>
 
           {/* Card 3: Response Speed */}
@@ -337,12 +325,6 @@ export function AdminSupportTicketsPage() {
             <div className="flex items-baseline gap-1.5 sm:gap-2">
               <span className="text-xl sm:text-3xl font-black text-white">8.2m</span>
               <span className="text-[11px] sm:text-xs font-bold text-emerald-400 truncate">fast</span>
-            </div>
-            <div className="pt-0.5">
-              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] sm:text-[11px] font-bold border border-emerald-500/30 truncate">
-                <span className="size-1.5 rounded-full bg-emerald-400 shrink-0" />
-                Target &lt;15m
-              </span>
             </div>
           </div>
 
@@ -360,23 +342,17 @@ export function AdminSupportTicketsPage() {
               <span className="text-xl sm:text-3xl font-black text-white">{urgentCount}</span>
               <span className="text-[11px] sm:text-xs font-semibold text-[#97A0B3] truncate">high prio</span>
             </div>
-            <div className="pt-0.5">
-              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400 text-[10px] sm:text-[11px] font-bold border border-rose-500/30 truncate">
-                <span className="size-1.5 rounded-full bg-rose-400 animate-pulse shrink-0" />
-                Direct Triage
-              </span>
-            </div>
           </div>
         </div>
 
         {/* 21st.dev Responsive Filter Rail */}
         <div className="bg-[#161F2D] rounded-2xl p-3 sm:p-4 border border-[#2A3446] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Status Tabs (Touch-friendly horizontal scroll) */}
-          <div className="flex items-center gap-1 bg-[#0B111C] p-1 rounded-xl border border-[#2A3446] overflow-x-auto no-scrollbar shrink-0">
+          {/* Status Tabs: 2-column grid on mobile for perfect fit without clipping, flex on tablet/desktop */}
+          <div className="grid grid-cols-2 w-full sm:w-auto sm:flex items-center gap-1 bg-[#0B111C] p-1 rounded-xl border border-[#2A3446]">
             <button
               type="button"
               onClick={() => setStatusFilter("active")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+              className={`w-full justify-center px-3 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer text-center truncate ${
                 statusFilter === "active"
                   ? "bg-[#BCCCE6] text-[#0B111C] shadow-xs font-black"
                   : "text-[#97A0B3] hover:text-white"
@@ -387,7 +363,7 @@ export function AdminSupportTicketsPage() {
             <button
               type="button"
               onClick={() => setStatusFilter("closed")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+              className={`w-full justify-center px-3 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer text-center truncate ${
                 statusFilter === "closed"
                   ? "bg-[#BCCCE6] text-[#0B111C] shadow-xs font-black"
                   : "text-[#97A0B3] hover:text-white"

@@ -1,6 +1,5 @@
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { PublishingQueue } from "../../components/ops/PublishingPanel";
-import { InstagramTestPost } from "../../components/ops/InstagramTestPost";
 import { useAuth } from "../../lib/auth-context";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -37,7 +36,6 @@ export function PublishingPage() {
             {result && <p role="status" className="text-xs text-[#BCCCE6]">{result}</p>}
           </section>
         )}
-        {["admin", "super_admin", "team_lead"].includes(user?.role || "") && <InstagramTestPost />}
         <details open className="rounded-2xl border border-[#2A3446] p-4"><summary className="cursor-pointer font-semibold">Scheduled publishing queue</summary><div className="mt-4"><PublishingQueue /></div></details>
       </main>
     </div>

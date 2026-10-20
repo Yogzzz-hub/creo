@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, ArrowUpRight, CheckCircle2, Facebook, Instagram, Loader2, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowUpRight, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { Facebook, Instagram } from "../../ui/brand-icons";
 import { useState } from "react";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
 import {

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { fetchProductivityMetrics } from "../../lib/productivity-api";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
+import { CustomSelect } from "../../components/ui/CustomSelect";
 
 export function AdminProductivityDashboardPage() {
   const [period, setPeriod] = useState<string>("monthly");
@@ -22,7 +23,7 @@ export function AdminProductivityDashboardPage() {
   const [taskType, setTaskType] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["admin-productivity", period, department, taskType],
     queryFn: () => fetchProductivityMetrics({ period, department, task_type: taskType }),
   });
@@ -47,7 +48,7 @@ export function AdminProductivityDashboardPage() {
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Team Productivity & Efficiency" hideTitle />
       <main className="flex-1 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6 animate-in fade-in duration-300">
-        {/* Top Controls: Scope & Refresh */}
+        {/* Top Controls: Scope */}
         <div className="flex items-center justify-between gap-2.5 w-full flex-wrap">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-bold text-[#97A0B3] uppercase tracking-wider hidden sm:inline">Scope:</span>
@@ -69,17 +70,6 @@ export function AdminProductivityDashboardPage() {
               ))}
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={() => refetch()}
-            disabled={isLoading || isRefetching}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs font-bold text-[#BCCCE6] hover:bg-[#1E293B] hover:text-white transition-colors cursor-pointer active:scale-95 ml-auto shrink-0"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? "animate-spin text-[#7FA0D6]" : ""}`} />
-            <span className="hidden xs:inline">{isRefetching ? "Refreshing..." : "Refresh Metrics"}</span>
-            <span className="xs:hidden">{isRefetching ? "..." : "Refresh"}</span>
-          </button>
         </div>
 
       {/* ── MOBILE: COMPACT HORIZONTAL STATS RIBBON (Replaces giant stacked cards on phone) ── */}
@@ -213,42 +203,50 @@ export function AdminProductivityDashboardPage() {
         </div>
       </div>
 
-      {/* Workload Imbalance & Capacity Alert */}
+      {/* Workload Imbalance & Capacity Alert (Minimal & Easy to Understand) */}
       {hasImbalance && (
-        <div className="bg-[#161F2D]/90 border border-amber-500/30 rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
+        <div className="bg-[#161F2D]/90 border border-amber-500/30 rounded-2xl p-3.5 sm:p-5 shadow-xl relative overflow-hidden space-y-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-[#2A3446]/60 pb-2.5">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
                 <Scale className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white">Workload Distribution & Imbalance Warning</h3>
-                <p className="text-xs text-[#97A0B3]">
-                  Identified specialists nearing burnout alongside team members with open capacity.
+                <h3 className="text-sm font-bold text-white">Workload Balance Alert</h3>
+                <p className="text-[11px] sm:text-xs text-[#97A0B3]">
+                  {overloadedList.length} overloaded &bull; {underutilizedList.length} ready for task reallocation
                 </p>
               </div>
             </div>
-            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-              Actionable Optimization
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 self-start sm:self-auto">
+              Action Recommended
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-            {/* Overloaded */}
-            <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3.5 space-y-2">
-              <span className="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                Overloaded Specialists (&ge; 85% Capacity)
-              </span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Overloaded Column */}
+            <div className="bg-[#0B111C]/80 border border-[#2A3446] rounded-xl p-3 space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-rose-400">
+                <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] sm:text-[11px]">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                  Overloaded Specialists (&ge; 85%)
+                </span>
+                <span className="text-[10px] font-bold text-rose-300 bg-rose-500/15 px-2 py-0.5 rounded-full border border-rose-500/30">
+                  {overloadedList.length}
+                </span>
+              </div>
               {overloadedList.length === 0 ? (
-                <p className="text-xs text-[#97A0B3]">No specialists currently at capacity risk.</p>
+                <p className="text-xs text-[#97A0B3] py-1">No specialists currently at capacity risk.</p>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {overloadedList.map((spec) => (
-                    <div key={spec.id} className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-white">{spec.name}</span>
-                      <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30">
-                        {spec.allocated_workload_pct ?? spec.load_pct ?? 85}% load ({spec.tasks_pending ?? 0} WIP)
+                    <div
+                      key={spec.id}
+                      className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-lg bg-[#161F2D]/60 border border-[#2A3446]/40"
+                    >
+                      <span className="font-semibold text-white truncate max-w-[140px] sm:max-w-none">{spec.name}</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30 shrink-0">
+                        {spec.tasks_pending ?? 0} active WIP
                       </span>
                     </div>
                   ))}
@@ -256,23 +254,30 @@ export function AdminProductivityDashboardPage() {
               )}
             </div>
 
-            {/* Available */}
-            <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3.5 space-y-2">
-              <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                Available Capacity for Reallocation (&le; 50% Load)
-              </span>
+            {/* Available Capacity Column (Compact Pill Cloud) */}
+            <div className="bg-[#0B111C]/80 border border-[#2A3446] rounded-xl p-3 space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-emerald-400">
+                <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] sm:text-[11px]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  Available for Reallocation (&le; 50%)
+                </span>
+                <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  {underutilizedList.length}
+                </span>
+              </div>
               {underutilizedList.length === 0 ? (
-                <p className="text-xs text-[#97A0B3]">All specialists have balanced assignments.</p>
+                <p className="text-xs text-[#97A0B3] py-1">All specialists have balanced assignments.</p>
               ) : (
-                <div className="space-y-2">
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
                   {underutilizedList.map((spec) => (
-                    <div key={spec.id} className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-white">{spec.name}</span>
-                      <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                        {spec.allocated_workload_pct ?? spec.load_pct ?? 30}% load ({spec.tasks_pending ?? 0} WIP)
-                      </span>
-                    </div>
+                    <span
+                      key={spec.id}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-[#161F2D]/80 border border-[#2A3446] text-[#BCCCE6] hover:text-white transition-colors"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                      <span className="truncate max-w-[130px] font-semibold">{spec.name}</span>
+                      <span className="text-[10px] text-[#97A0B3] font-mono">({spec.tasks_pending ?? 0} WIP)</span>
+                    </span>
                   ))}
                 </div>
               )}
@@ -291,7 +296,6 @@ export function AdminProductivityDashboardPage() {
                 Comparative Craft Benchmarks
               </h3>
             </div>
-            <span className="text-xs text-[#97A0B3]">Side-by-side performance in similar creative scopes</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -357,38 +361,42 @@ export function AdminProductivityDashboardPage() {
             />
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-3 flex-nowrap shrink-0 overflow-x-auto no-scrollbar">
             {/* Department Filter */}
-            <div className="flex items-center gap-1.5 text-xs text-[#97A0B3]">
-              <Filter className="w-3.5 h-3.5" />
-              <span>Dept:</span>
-              <select
+            <div className="flex items-center gap-1.5 text-xs text-[#97A0B3] shrink-0 whitespace-nowrap">
+              <Filter className="w-3.5 h-3.5 shrink-0" />
+              <span className="shrink-0">Dept:</span>
+              <CustomSelect
+                size="sm"
                 value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                className="bg-[#161F2D] border border-[#2A3446] rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#7FA0D6] shadow-sm cursor-pointer"
-              >
-                <option value="all">All Departments</option>
-                <option value="video">Video & Motion</option>
-                <option value="design">Graphic Design</option>
-                <option value="creative">Creative General</option>
-              </select>
+                onChange={setDepartment}
+                ariaLabel="Filter Department"
+                options={[
+                  { value: "all", label: "All Departments" },
+                  { value: "video", label: "Video & Motion" },
+                  { value: "design", label: "Graphic Design" },
+                  { value: "creative", label: "Creative General" },
+                ]}
+              />
             </div>
 
             {/* Task Type Filter */}
-            <div className="flex items-center gap-1.5 text-xs text-[#97A0B3]">
-              <Layers className="w-3.5 h-3.5" />
-              <span>Asset:</span>
-              <select
+            <div className="flex items-center gap-1.5 text-xs text-[#97A0B3] shrink-0 whitespace-nowrap">
+              <Layers className="w-3.5 h-3.5 shrink-0" />
+              <span className="shrink-0">Asset:</span>
+              <CustomSelect
+                size="sm"
                 value={taskType}
-                onChange={(e) => setTaskType(e.target.value)}
-                className="bg-[#161F2D] border border-[#2A3446] rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#7FA0D6] shadow-sm cursor-pointer"
-              >
-                <option value="all">All Deliverable Types</option>
-                <option value="reel">Reels / Shorts</option>
-                <option value="static_post">Static Posts</option>
-                <option value="carousel">Carousels</option>
-                <option value="story">Stories</option>
-              </select>
+                onChange={setTaskType}
+                ariaLabel="Filter Deliverable Type"
+                options={[
+                  { value: "all", label: "All Deliverable Types" },
+                  { value: "reel", label: "Reels / Shorts" },
+                  { value: "static_post", label: "Static Posts" },
+                  { value: "carousel", label: "Carousels" },
+                  { value: "story", label: "Stories" },
+                ]}
+              />
             </div>
           </div>
         </div>

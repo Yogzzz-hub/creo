@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Instagram, CheckCircle2, ExternalLink } from "lucide-react";
+import { CheckCircle2, ExternalLink } from "lucide-react";
+import { Instagram } from "../../ui/brand-icons";
 import { request } from "../../lib/http";
 import { useConfirm } from "../ui/ConfirmDialog";
 import { CreoInlineLoader } from "../ui/CreoLoader";

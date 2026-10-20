@@ -200,9 +200,9 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
   const getPriorityBadge = (priority: TicketRecord["priority"]) => {
     switch (priority) {
       case "Urgent":
-        return "bg-blue-950/80 text-[#BCCCE6] border border-blue-500/60 shadow-2xs";
+        return "bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-2xs";
       case "High":
-        return "bg-blue-900/50 text-[#BCCCE6] border border-blue-600/50";
+        return "bg-amber-500/10 text-amber-300 border border-amber-500/20";
       case "Medium":
         return "bg-blue-800/40 text-[#7FA0D6] border border-blue-700/40";
       case "Normal":
@@ -227,7 +227,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
               {openCount} Open
             </span>
           </div>
-          <span className="px-2 py-0.5 rounded-full text-[9px] font-black text-[#BCCCE6] bg-blue-950/80 border border-blue-500/60 shadow-2xs">
+          <span className="px-2 py-0.5 rounded-full text-[9px] font-black text-amber-400 bg-amber-500/15 border border-amber-500/30 shadow-2xs">
             {urgentCount} Urgent
           </span>
         </div>

@@ -76,6 +76,9 @@ const AdminSupportTicketsPage = lazyModule(() =>
 const AdminTicketDetailPage = lazyModule(() =>
   import("../features/admin/AdminTicketDetailPage").then((m) => ({ default: m.AdminTicketDetailPage }))
 );
+const AdminSLAPerformancePage = lazyModule(() =>
+  import("../features/admin/AdminSLAPerformancePage").then((m) => ({ default: m.AdminSLAPerformancePage }))
+);
 const ClientTicketDetailPage = lazyModule(() =>
   import("../pages/portal/PortalTicketDetailPage").then((m) => ({ default: m.ClientTicketDetailPage }))
 );
@@ -328,6 +331,8 @@ const dashboardRoutes = {
   "/admin/support": AdminSupportTicketsPage,
   "/admin/support/tickets": AdminSupportTicketsPage,
   "/admin/support/tickets/:ticketId": AdminTicketDetailPage,
+  "/admin/support/sla": AdminSLAPerformancePage,
+  "/admin/sla": AdminSLAPerformancePage,
   "/admin/teams": AdminTeamManagementPage,
   "/admin/team": AdminTeamManagementPage,
   "/admin/bde-management": AdminTeamManagementPage,
@@ -490,6 +495,49 @@ function SlackUniversalRedirect() {
   return <Navigate to="/login" replace />;
 }
 
+function LeaveUniversalRedirect() {
+  const { user } = useAuth();
+  if (user?.role === "admin" || user?.role === "super_admin") {
+    return <Navigate to="/admin/leaves" replace />;
+  }
+  if (user?.role === "team_lead") {
+    return <Navigate to="/lead/schedule" replace />;
+  }
+  if (user?.role === "team_member" || user?.role === "editor" || user?.role === "designer") {
+    return <Navigate to="/workstation/schedule" replace />;
+  }
+  if (user?.role === "sales" || user?.role === "bde" || user?.role === "bde_head") {
+    return <Navigate to="/bde/leave" replace />;
+  }
+  if (user?.role === "freelancer") {
+    return <Navigate to="/freelancer/tasks" replace />;
+  }
+  if (user) {
+    return <Navigate to="/portal" replace />;
+  }
+  return <Navigate to="/login" replace />;
+}
+
+function ScheduleUniversalRedirect() {
+  const { user } = useAuth();
+  if (user?.role === "admin" || user?.role === "super_admin") {
+    return <Navigate to="/admin/calendar" replace />;
+  }
+  if (user?.role === "team_lead") {
+    return <Navigate to="/lead/schedule" replace />;
+  }
+  if (user?.role === "team_member" || user?.role === "editor" || user?.role === "designer") {
+    return <Navigate to="/workstation/schedule" replace />;
+  }
+  if (user?.role === "client") {
+    return <Navigate to="/portal/calendar" replace />;
+  }
+  if (user) {
+    return <Navigate to="/admin/calendar" replace />;
+  }
+  return <Navigate to="/login" replace />;
+}
+
 export function App() {
   return (
     <AuthProvider>
@@ -499,9 +547,12 @@ export function App() {
           <RoutePrefetcher />
           <Suspense fallback={<RouteLoading />}>
             <Routes>
-              {/* Universal Support & Slack Redirects */}
+              {/* Universal Support, Slack, Leave & Schedule Redirects */}
               <Route path="/support" element={<SupportRedirect />} />
               <Route path="/slack" element={<SlackUniversalRedirect />} />
+              <Route path="/leave" element={<LeaveUniversalRedirect />} />
+              <Route path="/leaves" element={<LeaveUniversalRedirect />} />
+              <Route path="/schedule" element={<ScheduleUniversalRedirect />} />
 
               {/* 1. Public Marketing Pages (Open to All) */}
               <Route element={<PublicLayout />}>
@@ -671,8 +722,8 @@ export function App() {
                 <Route path="/admin/support/tickets" element={<AdminSupportTicketsPage />} />
                 <Route path="/admin/support/tickets/:ticketId" element={<AdminTicketDetailPage />} />
                 <Route path="/admin/support/:ticketId" element={<AdminTicketDetailPage />} />
-                <Route path="/admin/support/sla" element={<Navigate to="/admin/support" replace />} />
-                <Route path="/admin/sla" element={<Navigate to="/admin/support" replace />} />
+                <Route path="/admin/support/sla" element={<AdminSLAPerformancePage />} />
+                <Route path="/admin/sla" element={<AdminSLAPerformancePage />} />
                 <Route
                   path="/admin/teams"
                   element={
@@ -919,6 +970,8 @@ export function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/lead/leave" element={<Navigate to="/lead/schedule" replace />} />
+                <Route path="/lead/leaves" element={<Navigate to="/lead/schedule" replace />} />
                 <Route
                   path="/lead/clients"
                   element={
@@ -952,6 +1005,8 @@ export function App() {
 
                 <Route path="/workstation/schedule" element={<MemberSchedulePTOPage />} />
                 <Route path="/member/schedule" element={<MemberSchedulePTOPage />} />
+                <Route path="/workstation/leave" element={<Navigate to="/workstation/schedule" replace />} />
+                <Route path="/member/leave" element={<Navigate to="/workstation/schedule" replace />} />
 
                 <Route path="/workstation/settings" element={<MemberSettingsPage />} />
                 <Route path="/member/settings" element={<MemberSettingsPage />} />

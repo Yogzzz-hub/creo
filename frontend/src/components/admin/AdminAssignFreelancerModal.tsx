@@ -13,6 +13,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { assignFreelancerTask, FreelancerProfileItem } from "../../lib/freelancer-api";
 import { fetchAdminDeliverables } from "../../lib/ops-api";
+import { CustomSelect } from "../ui/CustomSelect";
 
 interface AdminAssignFreelancerModalProps {
   isOpen: boolean;
@@ -182,18 +183,20 @@ export function AdminAssignFreelancerModal({
           {assignmentMode === "deliverable" && (
             <div>
               <label className="block font-bold text-[#F1F5F9] mb-1">Select Active Deliverable</label>
-              <select
+              <CustomSelect
                 value={selectedDeliverableId}
-                onChange={(e) => handleSelectDeliverable(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs cursor-pointer font-medium"
-              >
-                <option value="">-- Choose deliverable to link --</option>
-                {deliverables.map((d: any) => (
-                  <option key={d.id} value={d.id} className="bg-[#161F2D] text-white">
-                    {d.title || d.concept_name || `Deliverable #${d.id.slice(0, 8)}`} ({d.format || d.deliverable_type || "Video"} • {d.state || d.status || "Pending"})
-                  </option>
-                ))}
-              </select>
+                onChange={handleSelectDeliverable}
+                ariaLabel="Select Active Deliverable"
+                className="w-full"
+                placeholder="-- Choose deliverable to link --"
+                options={[
+                  { value: "", label: "-- Choose deliverable to link --" },
+                  ...deliverables.map((d: any) => ({
+                    value: d.id,
+                    label: `${d.title || d.concept_name || `Deliverable #${d.id.slice(0, 8)}`} (${d.format || d.deliverable_type || "Video"} • ${d.state || d.status || "Pending"})`,
+                  })),
+                ]}
+              />
               {deliverables.length === 0 && !deliverablesQuery.isLoading && (
                 <span className="text-[10px] text-amber-400 mt-1 block">
                   No deliverables found in roster. You can switch to "New Custom Task" above.

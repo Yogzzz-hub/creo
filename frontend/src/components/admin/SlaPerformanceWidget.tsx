@@ -23,11 +23,11 @@ export function SlaPerformanceWidget({ slas }: SlaPerformanceWidgetProps) {
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <h2 className="text-[17px] font-black text-white group-hover:text-[#7FA0D6] transition-colors tracking-tight">SLA Performance</h2>
-          <span className="text-[9px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 py-0.5 rounded-full border border-[#7FA0D6]/30 shadow-2xs">
+          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border shadow-2xs ${isOptimal ? "text-[#7FA0D6] bg-[#7FA0D6]/15 border-[#7FA0D6]/30" : "text-amber-400 bg-amber-500/15 border-amber-500/30"}`}>
             {isOptimal ? "Goal Met" : "Requires Attention"}
           </span>
         </div>
-        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full shadow-2xs ${isOptimal ? "text-emerald-400 bg-emerald-400/15" : "text-rose-400 bg-rose-400/15"}`}>
+        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full shadow-2xs ${isOptimal ? "text-emerald-400 bg-emerald-400/15" : "text-amber-400 bg-amber-500/15 border border-amber-500/30"}`}>
           {isOptimal ? "Optimal" : "Breached"}
         </span>
       </div>
@@ -62,10 +62,10 @@ export function SlaPerformanceWidget({ slas }: SlaPerformanceWidgetProps) {
           <div className="flex flex-col gap-1">
             <div className="flex justify-between text-[11px] font-bold tracking-tight">
               <span className="text-[#97A0B3]">Current SLA Score</span>
-              <span className={isOptimal ? "text-emerald-400" : "text-rose-400"}>{overallSla.toFixed(1)}%</span>
+              <span className={isOptimal ? "text-emerald-400" : "text-amber-400"}>{overallSla.toFixed(1)}%</span>
             </div>
             <div className="w-full h-[5px] bg-[#2A3446] rounded-full overflow-hidden">
-              <div className={`h-full rounded-full ${isOptimal ? "bg-emerald-400" : "bg-rose-400"}`} style={{ width: `${overallSla}%` }} />
+              <div className={`h-full rounded-full ${isOptimal ? "bg-emerald-400" : "bg-amber-400"}`} style={{ width: `${overallSla}%` }} />
             </div>
           </div>
         </div>
@@ -75,10 +75,10 @@ export function SlaPerformanceWidget({ slas }: SlaPerformanceWidgetProps) {
       <div className="flex flex-col">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-600 shadow-[0_0_6px_rgba(244,63,94,0.6)]" />
+            <span className={`w-1.5 h-1.5 rounded-full ${activeAlerts > 0 ? "bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.6)]" : "bg-emerald-400"}`} />
             <h3 className="text-xs font-black text-white tracking-tight">Alerts Raised</h3>
           </div>
-          <span className="text-[9px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 py-0.5 rounded-full shadow-2xs">
+          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border shadow-2xs ${activeAlerts > 0 ? "text-amber-400 bg-amber-500/15 border-amber-500/30" : "text-[#7FA0D6] bg-[#7FA0D6]/15 border-[#7FA0D6]/30"}`}>
             {activeAlerts} Active
           </span>
         </div>
@@ -86,9 +86,9 @@ export function SlaPerformanceWidget({ slas }: SlaPerformanceWidgetProps) {
         <div className="flex flex-col gap-2">
           {slas.length > 0 ? (
             slas.slice(0, 2).map((sla) => (
-              <div key={sla.id} className="flex items-center justify-between p-2.5 rounded-xl border border-rose-900/40 bg-rose-950/30">
+              <div key={sla.id} className="flex items-center justify-between p-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center flex-shrink-0 shadow-2xs">
                     <AlertTriangle className="w-3.5 h-3.5 stroke-[2.5]" />
                   </div>
                   <div className="flex flex-col gap-0.5 min-w-0">
@@ -100,7 +100,7 @@ export function SlaPerformanceWidget({ slas }: SlaPerformanceWidgetProps) {
                     </span>
                   </div>
                 </div>
-                <span className="text-[9px] font-black text-rose-500 ml-2 tracking-wide shrink-0">Warning</span>
+                <span className="text-[9px] font-black text-amber-400 ml-2 tracking-wide shrink-0">Warning</span>
               </div>
             ))
           ) : (

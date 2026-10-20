@@ -1,5 +1,6 @@
 import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { PublishingControl } from "../../components/ops/PublishingPanel";
+import { CustomSelect } from "../../components/ui/CustomSelect";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
@@ -37,7 +38,7 @@ import { fetchPodDashboard, type PodDashboardData, type PodTask } from "../../li
 import { getEligibleDeliverableTypes, shouldShowTaskForUser } from "../../lib/creative-roles";
 import { MemberMobileTaskBoard } from "../../components/workstation/MemberMobileTaskBoard";
 
-export type Column = "assigned" | "production" | "qa" | "review";
+type Column = "assigned" | "production" | "qa" | "review";
 
 const FORMAT_LABELS: Record<string, string> = {
   reel: "Reel",
@@ -64,22 +65,22 @@ const RUBRIC = [
 
 const MB = 1024 * 1024;
 
-export function formatLabel(type: string): string {
+function formatLabel(type: string): string {
   return FORMAT_LABELS[type] || type.replace(/_/g, " ");
 }
 
-export function taskTitle(task: PodTask): string {
+function taskTitle(task: PodTask): string {
   return task.blueprint?.concept_name || task.blueprint?.title || `${formatLabel(task.deliverable_type)} for ${task.client_name}`;
 }
 
-export function columnOf(bucket: keyof PodDashboardData["tasks"]): Column {
+function columnOf(bucket: keyof PodDashboardData["tasks"]): Column {
   if (bucket === "backlog") return "assigned";
   if (bucket === "in_production") return "production";
   if (bucket === "internal_qa") return "qa";
   return "review";
 }
 
-export function dueText(task: PodTask): { text: string; urgent: boolean } {
+function dueText(task: PodTask): { text: string; urgent: boolean } {
   if (task.sla_due_at) {
     const hours = (new Date(task.sla_due_at).getTime() - Date.now()) / 3_600_000;
     if (hours < 0) return { text: `Overdue by ${Math.ceil(-hours)}h`, urgent: true };
@@ -93,7 +94,7 @@ export function dueText(task: PodTask): { text: string; urgent: boolean } {
 }
 
 /** Feedback the creative must act on: lead QA notes or the client's change request. */
-export function feedbackFor(task: PodTask): {
+function feedbackFor(task: PodTask): {
   source: "Lead QA" | "Client";
   text: string;
   voice_note_url?: string | null;
@@ -120,18 +121,18 @@ export function feedbackFor(task: PodTask): {
   return null;
 }
 
-export function isHighPriority(task: PodTask): boolean {
+function isHighPriority(task: PodTask): boolean {
   return task.is_near_sla || (task.hours_remaining ?? 1) < 0 || !!task.is_revision;
 }
 
-export function getTaskDueTimestamp(task: PodTask): number {
+function getTaskDueTimestamp(task: PodTask): number {
   const d = task.due_date || task.sla_due_at;
   if (!d) return Number.MAX_SAFE_INTEGER;
   const time = new Date(d).getTime();
   return isNaN(time) ? Number.MAX_SAFE_INTEGER : time;
 }
 
-export function compareTaskDueDates(a: PodTask, b: PodTask): number {
+function compareTaskDueDates(a: PodTask, b: PodTask): number {
   const timeA = getTaskDueTimestamp(a);
   const timeB = getTaskDueTimestamp(b);
   if (timeA !== timeB) return timeA - timeB;
@@ -498,36 +499,39 @@ export function MemberTaskBoardPage() {
             {/* Filters Row */}
             <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
               {/* Client Filter Dropdown */}
-              <select
+              <CustomSelect
+                size="sm"
                 value={selectedClient}
-                onChange={(e) => setSelectedClient(e.target.value)}
-                aria-label="Filter by client"
-                className="w-full sm:w-auto bg-[#0B111C] sm:bg-[#161F2D] border border-[#2A3446] text-white text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-[#7FA0D6] transition-colors cursor-pointer truncate"
-              >
-                <option value="all">All Clients ({tasks.length})</option>
-                {availableClients.map((client) => {
-                  const clientTaskCount = tasks.filter(
-                    (t) => t.task.client_id === client.id || t.task.client_name === client.name,
-                  ).length;
-                  return (
-                    <option key={client.id} value={client.id}>
-                      {client.name} ({clientTaskCount})
-                    </option>
-                  );
-                })}
-              </select>
+                onChange={setSelectedClient}
+                ariaLabel="Filter by client"
+                className="w-full sm:w-auto"
+                options={[
+                  { value: "all", label: `All Clients (${tasks.length})` },
+                  ...availableClients.map((client) => {
+                    const clientTaskCount = tasks.filter(
+                      (t) => t.task.client_id === client.id || t.task.client_name === client.name,
+                    ).length;
+                    return {
+                      value: client.id,
+                      label: `${client.name} (${clientTaskCount})`,
+                    };
+                  }),
+                ]}
+              />
 
               {/* Urgency Filter Dropdown */}
-              <select
+              <CustomSelect
+                size="sm"
                 value={urgencyFilter}
-                onChange={(e) => setUrgencyFilter(e.target.value)}
-                aria-label="Filter by urgency"
-                className="w-full sm:w-auto bg-[#0B111C] sm:bg-[#161F2D] border border-[#2A3446] text-white text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-[#7FA0D6] transition-colors cursor-pointer truncate"
-              >
-                <option value="All">All Urgency</option>
-                <option value="High">Due soon / revisions</option>
-                <option value="Normal">Normal</option>
-              </select>
+                onChange={setUrgencyFilter}
+                ariaLabel="Filter by urgency"
+                className="w-full sm:w-auto"
+                options={[
+                  { value: "All", label: "All Urgency" },
+                  { value: "High", label: "Due soon / revisions" },
+                  { value: "Normal", label: "Normal" },
+                ]}
+              />
             </div>
 
             {/* Actions Row */}

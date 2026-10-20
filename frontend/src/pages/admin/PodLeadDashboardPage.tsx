@@ -313,84 +313,101 @@ export function PodLeadDashboardPage() {
           </div>
         </div>
 
-        {/* 2. Top 3 KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3">
-          {/* Active Pod Capacity */}
+        {/* 2. Top 3 KPI Cards - All 3 Together in 1 Row on Mobile and Desktop */}
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
+          {/* Card 1: Active Pod Capacity */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.05 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
+            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative overflow-hidden"
           >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Active Pod Capacity</span>
-              <div className="size-6 sm:size-7 rounded-lg bg-[#7FA0D6]/20 text-[#7FA0D6] flex items-center justify-center">
-                <Users className="size-3 sm:size-3.5" />
+            <div className="flex items-center justify-between mb-1 gap-1">
+              <span className="text-[8.5px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] truncate">
+                <span className="sm:hidden">Capacity</span>
+                <span className="hidden sm:inline">Active Pod Capacity</span>
+              </span>
+              <div className="size-5 sm:size-7 rounded-md sm:rounded-lg bg-[#7FA0D6]/20 text-[#7FA0D6] flex items-center justify-center shrink-0">
+                <Users className="size-2.5 sm:size-3.5" />
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">{teamRoster.length > 0 ? teamRoster.length : (data?.members?.length || 0)} / {teamRoster.length > 0 ? teamRoster.length : (data?.members?.length || 4)}</span>
-                <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">Members Active</span>
-              </div>
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-[#2A3446]">
-                <span className="font-bold text-[#F1F5F9]">100% Bandwidth</span>
-                <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-emerald-950/40 text-emerald-400 border border-emerald-500/30">
-                  ● Optimal Flow
+              <div className="flex items-baseline gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
+                <span className="text-base sm:text-xl font-black text-white">
+                  {teamRoster.length > 0 ? teamRoster.length : (data?.members?.length || 0)}/{teamRoster.length > 0 ? teamRoster.length : (data?.members?.length || 4)}
                 </span>
+                <span className="text-[9px] sm:text-[11px] font-bold text-[#97A0B3] truncate">Active</span>
+              </div>
+              <div className="flex items-center justify-between text-[8px] sm:text-[11px] pt-1 sm:pt-1.5 border-t border-[#2A3446]/60">
+                <span className="px-1 sm:px-1.5 py-0.2 rounded-full text-[7.5px] sm:text-[9px] font-bold bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 truncate">
+                  ● 100% Flow
+                </span>
+                <span className="hidden sm:inline-block font-bold text-[#F1F5F9]">Bandwidth</span>
               </div>
             </div>
           </motion.div>
 
-          {/* Today's Review Queue */}
+          {/* Card 2: Today's Review Queue */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
+            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative overflow-hidden"
           >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Today's Review Queue</span>
-              <div className="size-6 sm:size-7 rounded-lg bg-rose-950/40 text-rose-400 flex items-center justify-center">
-                <MessageSquare className="size-3 sm:size-3.5" />
+            <div className="flex items-center justify-between mb-1 gap-1">
+              <span className="text-[8.5px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] truncate">
+                <span className="sm:hidden">Review</span>
+                <span className="hidden sm:inline">Today's Review Queue</span>
+              </span>
+              <div className="size-5 sm:size-7 rounded-md sm:rounded-lg bg-rose-950/40 text-rose-400 flex items-center justify-center shrink-0">
+                <MessageSquare className="size-2.5 sm:size-3.5" />
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">{(data?.tasks?.internal_qa?.length) ?? deliverablesList.length}</span>
-                <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">Pending Review</span>
+              <div className="flex items-baseline gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
+                <span className="text-base sm:text-xl font-black text-white">
+                  {(data?.tasks?.internal_qa?.length) ?? deliverablesList.length}
+                </span>
+                <span className="text-[9px] sm:text-[11px] font-bold text-[#97A0B3] truncate">Pending</span>
               </div>
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-[#2A3446]">
-                <span className="font-bold text-rose-600 flex items-center gap-1">
+              <div className="flex items-center justify-between text-[8px] sm:text-[11px] pt-1 sm:pt-1.5 border-t border-[#2A3446]/60">
+                <span className="font-bold text-rose-400 flex items-center gap-0.5 truncate text-[7.5px] sm:text-[10px]">
                   ▲ {(data?.tasks?.internal_qa?.filter((t: any) => t.is_near_sla).length) || 0} Urgent
                 </span>
-                <span className="font-bold text-[#97A0B3]">Avg: {(data as any)?.kpis?.avg_turnaround_hours ? `${Math.round((data as any).kpis.avg_turnaround_hours * 60)}m` : "38m"}</span>
+                <span className="hidden sm:inline-block font-bold text-[#97A0B3]">
+                  Avg: {(data as any)?.kpis?.avg_turnaround_hours ? `${Math.round((data as any).kpis.avg_turnaround_hours * 60)}m` : "38m"}
+                </span>
               </div>
             </div>
           </motion.div>
 
-          {/* Pod Leave & Attendance */}
+          {/* Card 3: Pod Leave & Attendance */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.15 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
+            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative overflow-hidden"
           >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Pod Leave & Attendance</span>
-              <div className="size-6 sm:size-7 rounded-lg bg-purple-950/40 text-purple-400 flex items-center justify-center">
-                <Calendar className="size-3 sm:size-3.5" />
+            <div className="flex items-center justify-between mb-1 gap-1">
+              <span className="text-[8.5px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] truncate">
+                <span className="sm:hidden">Leaves</span>
+                <span className="hidden sm:inline">Pod Leave & Attendance</span>
+              </span>
+              <div className="size-5 sm:size-7 rounded-md sm:rounded-lg bg-purple-950/40 text-purple-400 flex items-center justify-center shrink-0">
+                <Calendar className="size-2.5 sm:size-3.5" />
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">{pendingLeaveRequests.length}</span>
-                <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">Pending Leave Requests</span>
+              <div className="flex items-baseline gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
+                <span className="text-base sm:text-xl font-black text-white">
+                  {pendingLeaveRequests.length}
+                </span>
+                <span className="text-[9px] sm:text-[11px] font-bold text-[#97A0B3] truncate">Requests</span>
               </div>
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-[#2A3446]">
-                <span className="font-bold text-[#F1F5F9]">1 Upcoming Tomorrow</span>
-                <Link to="/lead/schedule" className="font-bold text-[#7FA0D6] hover:underline flex items-center gap-0.5">
-                  View <ChevronRight className="size-3" />
+              <div className="flex items-center justify-between text-[8px] sm:text-[11px] pt-1 sm:pt-1.5 border-t border-[#2A3446]/60">
+                <span className="font-bold text-[#F1F5F9] truncate text-[7.5px] sm:text-[10px]">1 Tomorrow</span>
+                <Link to="/lead/schedule" className="font-bold text-[#7FA0D6] hover:underline flex items-center gap-0.5 shrink-0">
+                  <span className="hidden sm:inline">View</span> <ChevronRight className="size-2.5 sm:size-3" />
                 </Link>
               </div>
             </div>
@@ -569,13 +586,13 @@ export function PodLeadDashboardPage() {
 
           {/* RIGHT 1 COLUMN */}
           <div className="space-y-3.5 sm:space-y-4">
-            {/* 1. Client SLA Warning / Status */}
-            {deliverablesList.some((d) => d.dueUrgent) ? (
+            {/* 1. Urgent Deliverable Alert (if any) */}
+            {deliverablesList.some((d) => d.dueUrgent) && (
               <div className="bg-gradient-to-br from-rose-950/40 via-red-950/20 to-[#161F2D] rounded-2xl p-4 border border-rose-500/30 shadow-2xs space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-rose-400 font-bold text-xs uppercase tracking-wider">
                     <ShieldAlert className="size-3.5 text-rose-400" />
-                    Client SLA Alert
+                    Urgent Deliverable
                   </div>
                   <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-rose-600 text-white uppercase tracking-wider">
                     Critical
@@ -588,7 +605,7 @@ export function PodLeadDashboardPage() {
                     {deliverablesList[0]?.due}
                   </div>
                   <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed font-medium">
-                    Review required to ensure client delivery SLA is fulfilled.
+                    Review required for client delivery.
                   </p>
                 </div>
 
@@ -598,27 +615,6 @@ export function PodLeadDashboardPage() {
                 >
                   Jump to Deliverable <ArrowRight className="size-3" />
                 </Link>
-              </div>
-            ) : (
-              <div className="bg-[#161F2D] rounded-2xl p-4 border border-emerald-500/30 shadow-2xs space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-xs uppercase tracking-wider">
-                    <ShieldAlert className="size-3.5 text-emerald-400" />
-                    Pod SLA Status
-                  </div>
-                  <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-emerald-600/30 text-emerald-400 uppercase tracking-wider border border-emerald-500/30">
-                    Optimal
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[11px] font-bold text-[#F1F5F9] block">{podName} Pipeline</span>
-                  <div className="text-xl font-black text-emerald-400 tracking-tight mt-0.5">
-                    100% On Track
-                  </div>
-                  <p className="text-[11px] text-[#97A0B3] mt-1 leading-relaxed font-medium">
-                    Zero critical escalations. All sprint deliverables are tracking within SLA bounds.
-                  </p>
-                </div>
               </div>
             )}
 
