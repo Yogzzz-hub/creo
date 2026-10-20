@@ -116,29 +116,49 @@ export function PortalLibraryPage() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-4 pb-4 overflow-x-hidden">
       {/* Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-3">
-        <div className="relative w-full sm:w-auto">
+      <div className="flex flex-row items-center justify-between sm:justify-end gap-2.5 sm:gap-3">
+        <div className="relative flex-1 sm:flex-initial">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search posts, captions..."
-            className="w-full sm:w-[280px] pl-10 pr-4 py-2 bg-[#161F2D] border border-[#2A3446] rounded-xl text-sm text-white placeholder:text-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6] transition-all"
+            className="w-full sm:w-[280px] pl-10 pr-4 py-2 bg-[#161F2D] border border-[#2A3446] rounded-xl text-xs sm:text-sm text-white placeholder:text-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6] transition-all"
           />
         </div>
         <button
           onClick={() => handleDownload("all")}
           disabled={assets.length === 0 || downloading === "all"}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-[#161F2D] border border-[#2A3446] hover:bg-white/[0.04] transition-colors rounded-xl text-sm font-medium text-white shrink-0 disabled:opacity-50 cursor-pointer"
+          className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#161F2D] border border-[#2A3446] hover:bg-white/[0.04] transition-colors rounded-xl text-xs sm:text-sm font-medium text-white shrink-0 disabled:opacity-50 cursor-pointer"
         >
-          {downloading === "all" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-          Download all
+          {downloading === "all" ? <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" /> : <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+          <span>Download all</span>
         </button>
       </div>
 
-      {/* Stats Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 bg-[#161F2D] border border-[#2A3446] rounded-2xl divide-y sm:divide-y-0 sm:divide-x divide-white/[0.05]">
+      {/* Mobile 4-Column Metrics Strip (< md, single compact row) */}
+      <div className="grid grid-cols-4 gap-1.5 p-2.5 bg-[#161F2D] border border-[#2A3446] rounded-xl text-center md:hidden">
+        <div>
+          <p className="text-base sm:text-lg font-black text-white">{counts.total}</p>
+          <p className="text-[10px] text-[#97A0B3] font-medium leading-tight">Delivered</p>
+        </div>
+        <div className="border-l border-white/[0.06]">
+          <p className="text-base sm:text-lg font-black text-white">{assets.filter(a => a.status === "Published").length}</p>
+          <p className="text-[10px] text-[#97A0B3] font-medium leading-tight">Published</p>
+        </div>
+        <div className="border-l border-white/[0.06]">
+          <p className="text-base sm:text-lg font-black text-white">{firstRoundPct === null ? "—" : `${firstRoundPct}%`}</p>
+          <p className="text-[10px] text-[#97A0B3] font-medium leading-tight">1st Round</p>
+        </div>
+        <div className="border-l border-white/[0.06]">
+          <p className="text-base sm:text-lg font-black text-white">{assets.filter(a => a.isVideo).length}</p>
+          <p className="text-[10px] text-[#97A0B3] font-medium leading-tight">Videos</p>
+        </div>
+      </div>
+
+      {/* Desktop Stats Bar (md: and up - strictly preserved) */}
+      <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 bg-[#161F2D] border border-[#2A3446] rounded-2xl divide-y sm:divide-y-0 sm:divide-x divide-white/[0.05]">
         <div className="p-3.5 sm:p-4">
           <p className="text-xs text-[#97A0B3] font-medium mb-1">Delivered since joining</p>
           <p className="text-2xl sm:text-3xl font-semibold text-white mb-0.5">{counts.total}</p>
@@ -195,13 +215,11 @@ export function PortalLibraryPage() {
         </p>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-h-[400px]">
+      {/* 2-Column Asset Grid on Mobile, 4-Column on Desktop */}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 md:gap-4 min-h-[400px]">
         {filteredAssets.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center text-[#97A0B3] py-20 border border-dashed border-white/[0.1] rounded-2xl">
-            <Search className="w-8 h-8 mb-4 opacity-50" />
-            <p className="text-sm font-medium text-white/80">{search ? "No assets match your search" : "No deliverables in your library yet"}</p>
-            <p className="text-xs text-[#97A0B3] mt-1">{search ? "Try searching for a different keyword" : "Completed content produced by your pod will appear here."}</p>
+          <div className="col-span-full flex items-center justify-center py-20 text-center">
+            <p className="text-sm text-[#97A0B3]">No assets to show</p>
           </div>
         ) : (
           filteredAssets.map((asset, i) => {

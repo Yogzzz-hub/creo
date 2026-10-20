@@ -169,10 +169,6 @@ export function PortalCreativePodPage() {
         document.body,
       )}
 
-      {/* Page Header */}
-      <div className="flex items-center justify-between pb-1">
-        <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">Your pod</h1>
-      </div>
 
       {/* ── Team Cards Grid ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

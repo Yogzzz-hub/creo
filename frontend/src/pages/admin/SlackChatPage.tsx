@@ -1866,7 +1866,7 @@ export function SlackChatPage() {
           </div>
 
           {/* Bottom Input Bar */}
-          <div className="bg-[#161F2D] p-2.5 sm:p-3 border-t border-[#2A3446] flex flex-col gap-2 shrink-0 z-20">
+          <div className="bg-[#161F2D] p-2.5 sm:p-3 pb-[max(0.625rem,env(safe-area-inset-bottom))] border-t border-[#2A3446] flex flex-col gap-2 shrink-0 z-20">
             {/* FULL EMOJI PICKER POPOVER */}
             {showEmojiPicker && (
               <div className="absolute bottom-18 left-3 sm:left-4 z-50 w-80 bg-[#161F2D] rounded-2xl p-3 shadow-2xl border border-[#2A3446] space-y-2 animate-in fade-in zoom-in-95">

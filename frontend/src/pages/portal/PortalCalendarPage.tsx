@@ -338,6 +338,60 @@ export function PortalCalendarPage() {
     }
   };
 
+  const [mobileView, setMobileView] = useState<"week" | "month">("week");
+
+  const activeDayNumber = selectedDate || (isCurrentMonth ? today.getDate() : 1);
+
+  const activeWeekDays = useMemo(() => {
+    const refDate = new Date(currentYear, currentMonth, activeDayNumber);
+    const dayOfWeek = refDate.getDay();
+    const sunday = new Date(currentYear, currentMonth, activeDayNumber - dayOfWeek);
+
+    return Array.from({ length: 7 }).map((_, i) => {
+      const d = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + i);
+      const day = d.getDate();
+      const month = d.getMonth();
+      const year = d.getFullYear();
+      const isThisMonth = month === currentMonth && year === currentYear;
+      const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+      const isSelected = selectedDate ? (selectedDate === day && month === currentMonth && year === currentYear) : (isToday && isThisMonth);
+      const dayName = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][i];
+
+      const dStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dayEntries = entries.filter((e) => {
+        if (!e.date) return false;
+        return e.date.startsWith(dStr);
+      });
+
+      return {
+        date: d,
+        day,
+        month,
+        year,
+        dayName,
+        isThisMonth,
+        isToday,
+        isSelected,
+        entries: dayEntries,
+      };
+    });
+  }, [currentYear, currentMonth, activeDayNumber, selectedDate, today, entries]);
+
+  const navigateWeek = (direction: number) => {
+    const refDate = new Date(currentYear, currentMonth, activeDayNumber + direction * 7);
+    setCurrentYear(refDate.getFullYear());
+    setCurrentMonth(refDate.getMonth());
+    setSelectedDate(refDate.getDate());
+  };
+
+  const getDotColor = (kind?: string) => {
+    const k = (kind || "").toLowerCase();
+    if (k.includes("reel")) return "bg-purple-500";
+    if (k.includes("story") || k.includes("carousel")) return "bg-amber-400";
+    if (k.includes("shoot") || k.includes("approved")) return "bg-emerald-400";
+    return "bg-blue-400";
+  };
+
   if (isSubLoading || isEntriesLoading) {
     return (
       <CreoInlineLoader />
@@ -354,67 +408,204 @@ export function PortalCalendarPage() {
   }
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-4 font-sans text-white">
+    <div className="flex w-full min-w-0 flex-col gap-3 md:gap-4 font-sans text-white">
       {/* ── Bento Grid Layout ──────────────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-stretch">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 md:gap-4 items-stretch">
         
         {/* Left Column: Calendar View (xl:col-span-2) */}
-        <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-4 sm:p-5 min-w-0 flex-col h-full">
+        <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-xl md:rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-3 sm:p-5 min-w-0 flex-col">
           {/* Calendar Header */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-3.5 sm:mb-4">
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-lg sm:text-[20px] font-black text-white tracking-tight">
+          <div className="flex items-center justify-between gap-2 mb-2 sm:mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2.5">
+              <h2 className="text-sm sm:text-lg md:text-[20px] font-black text-white tracking-tight leading-tight">
                 {MONTH_NAMES[currentMonth]} {currentYear}
               </h2>
-              <span className="text-xs sm:text-sm font-semibold text-[#97A0B3]">Production Horizon</span>
+              <span className="text-[11px] sm:text-xs text-slate-400 font-medium">
+                {monthEntries.length} {monthEntries.length === 1 ? "item" : "items"}
+              </span>
             </div>
             
-            <div className="flex items-center gap-2">
-              {user?.role === "client" && <button type="button" disabled={isRebalancing} onClick={rebuildDraftSchedule} className="rounded-full border border-[#2A3446] px-3 py-1.5 text-xs disabled:opacity-60">
-                {isRebalancing ? "Updating schedule…" : "Rebuild draft schedule"}
-              </button>}
+            <div className="flex items-center gap-1 sm:gap-2">
+              {/* Mobile View Toggle: Week vs Month (hidden on desktop) */}
+              <div className="md:hidden flex items-center bg-[#0B111C] p-0.5 rounded-full border border-[#2A3446]">
+                <button
+                  type="button"
+                  onClick={() => setMobileView("week")}
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
+                    mobileView === "week"
+                      ? "bg-[#BCCCE6] text-[#0B111C] shadow-xs"
+                      : "text-[#97A0B3] hover:text-white"
+                  }`}
+                >
+                  Week
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileView("month")}
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
+                    mobileView === "month"
+                      ? "bg-[#BCCCE6] text-[#0B111C] shadow-xs"
+                      : "text-[#97A0B3] hover:text-white"
+                  }`}
+                >
+                  Month
+                </button>
+              </div>
+
+              {user?.role === "client" && (
+                <button type="button" disabled={isRebalancing} onClick={rebuildDraftSchedule} className="hidden sm:inline-flex rounded-full border border-[#2A3446] px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs disabled:opacity-60">
+                  {isRebalancing ? "Updating schedule…" : "Rebuild draft schedule"}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => { setSelectedDate(null); goToToday(); }}
-                className="px-3.5 py-1.5 text-xs font-bold text-slate-200 hover:text-white bg-[#0B111C]/80 hover:bg-[#0B111C] rounded-full border border-[#2A3446] shadow-2xs transition-all cursor-pointer"
+                onClick={() => { setSelectedDate(today.getDate()); goToToday(); }}
+                className="px-2 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold text-slate-200 hover:text-white bg-[#0B111C]/80 hover:bg-[#0B111C] rounded-full border border-[#2A3446] shadow-2xs transition-all cursor-pointer"
               >
                 Today
               </button>
               <div className="flex items-center bg-[#0B111C]/80 border border-[#2A3446] rounded-full p-0.5 shadow-2xs">
-                <button onClick={() => { setSelectedDate(null); navigateMonth(-1); }} className="p-1.5 text-slate-400 hover:text-white rounded-full transition-all cursor-pointer" aria-label="Previous Month">
-                  <ChevronLeft className="size-4" strokeWidth={2.5} />
+                <button
+                  onClick={() => {
+                    if (mobileView === "week") {
+                      navigateWeek(-1);
+                    } else {
+                      setSelectedDate(null);
+                      navigateMonth(-1);
+                    }
+                  }}
+                  className="p-1 sm:p-1.5 text-slate-400 hover:text-white rounded-full transition-all cursor-pointer"
+                  aria-label="Previous"
+                >
+                  <ChevronLeft className="size-3.5 sm:size-4" strokeWidth={2.5} />
                 </button>
-                <div className="w-[1px] h-4 bg-[#2A3446] mx-1"></div>
-                <button onClick={() => { setSelectedDate(null); navigateMonth(1); }} className="p-1.5 text-slate-400 hover:text-white rounded-full transition-all cursor-pointer" aria-label="Next Month">
-                  <ChevronRight className="size-4" strokeWidth={2.5} />
+                <div className="w-[1px] h-3.5 sm:h-4 bg-[#2A3446] mx-0.5 sm:mx-1"></div>
+                <button
+                  onClick={() => {
+                    if (mobileView === "week") {
+                      navigateWeek(1);
+                    } else {
+                      setSelectedDate(null);
+                      navigateMonth(1);
+                    }
+                  }}
+                  className="p-1 sm:p-1.5 text-slate-400 hover:text-white rounded-full transition-all cursor-pointer"
+                  aria-label="Next"
+                >
+                  <ChevronRight className="size-3.5 sm:size-4" strokeWidth={2.5} />
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mb-3 text-xs text-slate-300 min-h-[28px]" aria-label="Monthly content totals">
+          <div className="hidden md:flex overflow-x-auto whitespace-nowrap scrollbar-hide gap-1.5 sm:gap-2 mb-2.5 sm:mb-3 text-xs text-slate-300 min-h-[28px] -mx-1 px-1 sm:mx-0 sm:px-0 md:flex-wrap" aria-label="Monthly content totals">
             {["reel", "poster", "story", "carousel"].map((kind) => {
               const count = monthEntries.filter(entry => (entry.type || entry.slot_kind) === kind).length;
               const config = getTypeConfig(kind);
               const Icon = config.icon;
               const pluralLabel = count > 1 ? (kind === "story" ? "Stories" : `${config.label}s`) : config.label;
               return count > 0 ? (
-                <span key={kind} className="inline-flex items-center gap-1.5 rounded-lg border border-[#2A3446] bg-[#0B111C]/60 px-2.5 py-1 font-semibold text-slate-200">
-                  <Icon className="size-3.5 shrink-0 stroke-[2.2] text-[#7FA0D6]" />
+                <span key={kind} className="inline-flex items-center gap-1.5 rounded-lg border border-[#2A3446] bg-[#0B111C]/60 px-2 sm:px-2.5 py-0.5 sm:py-1 font-semibold text-slate-200 text-[11px] sm:text-xs shrink-0">
+                  <Icon className="size-3 sm:size-3.5 shrink-0 stroke-[2.2] text-[#7FA0D6]" />
                   <span>{count} {pluralLabel}</span>
                 </span>
               ) : null;
             })}
-            <span className="px-2 py-1 text-[#97A0B3]">{monthEntries.length} planned this month</span>
+            <span className="px-2 py-0.5 sm:py-1 text-[11px] sm:text-xs text-[#97A0B3] shrink-0">{monthEntries.length} planned this month</span>
           </div>
-          {scheduleMessage && <p role="status" className="mb-3 text-sm text-slate-300">{scheduleMessage}</p>}
+          {scheduleMessage && <p role="status" className="mb-2 sm:mb-3 text-xs sm:text-sm text-slate-300">{scheduleMessage}</p>}
 
-          {/* Month Grid */}
-          <div className="flex-1 flex flex-col min-h-[460px]">
+          {/* ── MOBILE WEEK STRIP (< md) ── */}
+          {mobileView === "week" && (
+            <div className="md:hidden grid grid-cols-7 gap-1 sm:gap-1.5 pb-1">
+              {activeWeekDays.map((dayItem) => {
+                return (
+                  <button
+                    key={`${dayItem.month}-${dayItem.day}`}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDate(dayItem.day);
+                      if (dayItem.month !== currentMonth || dayItem.year !== currentYear) {
+                        setCurrentMonth(dayItem.month);
+                        setCurrentYear(dayItem.year);
+                      }
+                    }}
+                    className={`rounded-xl py-2 px-0.5 text-center cursor-pointer flex flex-col items-center justify-between transition-all border ${
+                      dayItem.isSelected
+                        ? "border-[#7FA0D6] bg-[#7FA0D6]/15 ring-1 ring-[#7FA0D6]/30 text-white font-black"
+                        : dayItem.isToday
+                        ? "border-[#7FA0D6]/40 bg-[#161F2D] text-[#7FA0D6]"
+                        : "border-[#2A3446] bg-[#0B111C]/60 text-slate-300 hover:border-[#7FA0D6]/40"
+                    }`}
+                  >
+                    <span className="text-[9px] font-bold text-[#97A0B3] uppercase tracking-wider">{dayItem.dayName}</span>
+                    <span className={`text-xs sm:text-sm font-black my-1 ${dayItem.isSelected ? "text-white" : dayItem.isToday ? "text-[#7FA0D6]" : "text-slate-200"}`}>
+                      {dayItem.day}
+                    </span>
+                    {/* Colored indicator dots */}
+                    <div className="flex items-center justify-center gap-0.5 min-h-[6px]">
+                      {dayItem.entries.slice(0, 3).map((entry, idx) => (
+                        <span key={entry.id || idx} className={`w-1.5 h-1.5 rounded-full ${getDotColor(entry.type || entry.slot_kind)}`} />
+                      ))}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ── MOBILE MONTH GRID (< md, only when Month toggled) ── */}
+          {mobileView === "month" && (
+            <div className="md:hidden flex flex-col">
+              <div className="grid grid-cols-7 mb-1 text-center">
+                {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day: string) => (
+                  <div key={day} className="text-[9px] font-black text-[#97A0B3] uppercase tracking-wider">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {calendarCells.map((cell) => {
+                  if (!cell.isCurrentMonth) {
+                    return <div key={cell.key} className="aspect-square bg-transparent p-0.5"></div>;
+                  }
+                  const day = cell.day;
+                  const dayEntries = getDayEntries(day);
+                  const isTodayCell = isCurrentMonth && today.getDate() === day;
+                  const isSelected = selectedDate === day;
+
+                  return (
+                    <button
+                      key={cell.key}
+                      type="button"
+                      onClick={() => setSelectedDate(day)}
+                      className={`aspect-square rounded-lg p-1 transition-all cursor-pointer flex flex-col items-center justify-between border ${
+                        isSelected
+                          ? "border-[#7FA0D6] bg-[#7FA0D6]/15 ring-1 ring-[#7FA0D6]/30 text-white font-bold"
+                          : isTodayCell
+                          ? "border-[#7FA0D6]/40 bg-[#161F2D] text-[#7FA0D6]"
+                          : "border-[#2A3446] bg-[#0B111C]/40 text-slate-300"
+                      }`}
+                    >
+                      <span className="text-[11px] font-bold leading-none">{day}</span>
+                      <div className="flex items-center justify-center gap-0.5 min-h-[4px]">
+                        {dayEntries.slice(0, 3).map((entry, idx) => (
+                          <span key={entry.id || idx} className={`w-1.5 h-1.5 rounded-full ${getDotColor(entry.type || entry.slot_kind)}`} />
+                        ))}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── DESKTOP MONTH GRID (md: and up - strictly preserved) ── */}
+          <div className="hidden md:flex flex-1 flex-col min-h-[300px] sm:min-h-[380px] md:min-h-[460px]">
             {/* Weekday Headers */}
-            <div className="grid grid-cols-7 mb-2">
+            <div className="grid grid-cols-7 mb-1.5 sm:mb-2">
               {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day: string) => (
-                <div key={day} className="py-1 text-center text-xs font-black text-[#97A0B3] uppercase tracking-wider">
+                <div key={day} className="py-0.5 sm:py-1 text-center text-[10px] sm:text-xs font-black text-[#97A0B3] uppercase tracking-wider">
                   {day}
                 </div>
               ))}
@@ -425,7 +616,7 @@ export function PortalCalendarPage() {
               {calendarCells.map((cell) => {
                 if (!cell.isCurrentMonth) {
                   return (
-                    <div key={cell.key} className="rounded-xl bg-transparent p-1"></div>
+                    <div key={cell.key} className="rounded-lg sm:rounded-xl bg-transparent p-0.5 sm:p-1"></div>
                   );
                 }
 
@@ -434,13 +625,11 @@ export function PortalCalendarPage() {
                 const isTodayCell = isCurrentMonth && today.getDate() === day;
                 const isSelected = selectedDate === day;
 
-
-
                 return (
                   <div
                     key={cell.key}
                     onClick={() => setSelectedDate(day)}
-                    className={`relative rounded-xl p-1 sm:p-2 min-w-0 transition-all cursor-pointer min-h-[110px] flex flex-col justify-between border-2 group ${
+                    className={`relative rounded-lg sm:rounded-xl p-1 sm:p-2 min-w-0 transition-all cursor-pointer min-h-[52px] sm:min-h-[80px] md:min-h-[110px] flex flex-col justify-between border group ${
                       isSelected 
                         ? "border-blue-500 bg-[#7FA0D6]/15 ring-2 ring-blue-500/20 shadow-lg scale-[1.01] z-10"
                         : isTodayCell
@@ -448,13 +637,13 @@ export function PortalCalendarPage() {
                         : "border-[#2A3446] hover:border-[#7FA0D6]/40 bg-[#0B111C]/40 hover:bg-[#161F2D] shadow-xs"
                     }`}
                   >
-                    <span className={`text-base sm:text-lg font-black ${
+                    <span className={`text-xs sm:text-base md:text-lg font-black ${
                       isSelected ? "text-white" : isTodayCell ? "text-[#7FA0D6]" : "text-slate-300 group-hover:text-white"
                     }`}>
                       {day}
                     </span>
                     
-                    <div className="mt-auto flex flex-col gap-1 w-full">
+                    <div className="mt-auto flex flex-col gap-0.5 sm:gap-1 w-full">
                       {Object.entries(dayEntries.reduce<Record<string, number>>((counts, entry) => {
                         const kind = entry.type || entry.slot_kind || "poster";
                         counts[kind] = (counts[kind] || 0) + 1;
@@ -466,11 +655,11 @@ export function PortalCalendarPage() {
                         return (
                           <span
                             key={kind}
-                            className="inline-flex items-center gap-1 rounded-md bg-blue-500/15 text-[#BCCCE6] px-1 sm:px-1.5 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-bold leading-tight truncate hover:bg-blue-500/25 transition-colors border border-blue-500/20"
+                            className="inline-flex items-center gap-0.5 sm:gap-1 rounded-md bg-blue-500/15 text-[#BCCCE6] px-1 sm:px-1.5 py-0.5 text-[8px] sm:text-[11px] font-bold leading-tight truncate hover:bg-blue-500/25 transition-colors border border-blue-500/20"
                             title={`${count} ${pluralLabel}`}
                           >
-                            <Icon className="size-2.5 sm:size-3 shrink-0 stroke-[2.2] text-[#7FA0D6]" />
-                            <span className="truncate">{count} {pluralLabel}</span>
+                            <Icon className="size-2 sm:size-3 shrink-0 stroke-[2.2] text-[#7FA0D6]" />
+                            <span className="truncate">{count} <span className="hidden sm:inline">{pluralLabel}</span></span>
                           </span>
                         );
                       })}
@@ -483,7 +672,7 @@ export function PortalCalendarPage() {
         </div>
 
         {/* Right Column: Dispatch Queue (xl:col-span-1) */}
-        <div className="xl:col-span-1 bg-[#161F2D] border border-[#2A3446] rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-4 sm:p-5 flex flex-col h-full min-w-0">
+        <div className="xl:col-span-1 bg-[#161F2D] border border-[#2A3446] rounded-xl md:rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-3 sm:p-5 flex flex-col h-full min-w-0">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg sm:text-[20px] font-black text-white tracking-tight">
               {selectedDate ? `Task Queue for ${selectedDate}th` : "Today's Dispatch Queue"}
@@ -810,7 +999,7 @@ export function PortalCalendarPage() {
               {/* Action Buttons Footer */}
               <div className="flex gap-3 pt-2 border-t border-[#2A3446]">
                 <Link
-                  to="/portal/deliverables"
+                  to={previewEntry.deliverable_id ? `/portal/deliverables/${previewEntry.deliverable_id}` : "/portal/deliverables"}
                   className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/50 text-white font-bold text-xs transition-colors"
                 >
                   <span>Deliverables Dock</span>

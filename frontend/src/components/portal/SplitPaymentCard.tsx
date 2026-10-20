@@ -6,6 +6,8 @@ import {
   Clock,
   ArrowRight,
   Loader2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { request } from "../../lib/http";
 import { openRazorpayCheckout } from "../../lib/razorpay";
@@ -49,6 +51,7 @@ export function SplitPaymentCard() {
   const queryClient = useQueryClient();
   const [payingInstalmentId, setPayingInstalmentId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const { data, isLoading } = useQuery<SplitSummaryData>({
     queryKey: ["split-payment-summary"],
@@ -57,44 +60,12 @@ export function SplitPaymentCard() {
   });
 
   if (isLoading) {
-    return (
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 flex items-center justify-center min-h-[180px]">
-        <Loader2 className="w-6 h-6 animate-spin text-[#7FA0D6]" />
-      </div>
-    );
+    return null;
   }
 
-  // If agency hasn't configured a split package yet, show clean state with instructions
+  // If client hasn't opted for split payment or no active package configured, do not render
   if (!data || !data.active_package || data.total_package_amount === 0) {
-    return (
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 space-y-3.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
-              <CreditCard className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-white">Instalment & Split Payment Management</h3>
-              <p className="text-xs text-[#97A0B3]">Flexible milestone payments & balance tracking</p>
-            </div>
-          </div>
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold font-mono bg-[#0B111C] text-[#7FA0D6] border border-[#2A3446]">
-            Standard Retainer
-          </span>
-        </div>
-        <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-4 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold text-white mb-1">Single Retainer Billing Active</p>
-            <p className="text-xs text-[#97A0B3] max-w-lg leading-relaxed">
-              Paying in instalments? Your dedicated Account Director can divide custom production packages into multiple agreed instalments with automated reminder tracking.
-            </p>
-          </div>
-          <span className="px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446] text-xs font-bold text-[#BCCCE6] shrink-0">
-            Split Invoicing Ready
-          </span>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const { total_package_amount, total_paid, pending_balance, currency, instalments, payment_history, next_due_date, active_package } = data;
@@ -133,35 +104,44 @@ export function SplitPaymentCard() {
   };
 
   return (
-    <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 space-y-4">
+    <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl md:rounded-2xl p-3 sm:p-5 space-y-3.5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2A3446] pb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] shrink-0">
-            <CreditCard className="w-5 h-5" />
+      <div
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="flex items-center justify-between cursor-pointer md:cursor-default select-none border-b border-[#2A3446] pb-3"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] shrink-0">
+            <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-white">{active_package.title || "Split Payment Package"}</h3>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              <h3 className="text-xs sm:text-base font-bold text-white truncate">{active_package.title || "Split Payment Package"}</h3>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shrink-0">
                 {active_package.status}
               </span>
             </div>
-            <p className="text-xs text-[#97A0B3]">
+            <p className="text-xs text-[#97A0B3] hidden sm:block">
               {instalments.length} Agreed Instalments · Balance and automated deadline alerts
             </p>
           </div>
         </div>
-        {next_due_date && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-semibold text-[#BCCCE6]">
-            <Clock className="w-3.5 h-3.5 text-amber-400" />
-            <span>Next Due: {new Date(next_due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {next_due_date && (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-semibold text-[#BCCCE6]">
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
+              <span>Next Due: {new Date(next_due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+            </div>
+          )}
+          <span className="text-[#7FA0D6] md:hidden">
+            {mobileOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+          </span>
+        </div>
       </div>
 
-      {actionMessage && (
-        <div className="p-3 rounded-xl bg-blue-950/40 border border-blue-800/70 text-blue-300 text-xs font-semibold">
+      <div className={`${mobileOpen ? "space-y-4" : "hidden md:block md:space-y-4"}`}>
+        {actionMessage && (
+          <div className="p-3 rounded-xl bg-blue-950/40 border border-blue-800/70 text-blue-300 text-xs font-semibold">
           {actionMessage}
         </div>
       )}
@@ -337,6 +317,7 @@ export function SplitPaymentCard() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
