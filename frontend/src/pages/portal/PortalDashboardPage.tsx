@@ -182,27 +182,30 @@ export function PortalDashboardPage() {
   }
 
   return (
-    <div className="w-full min-w-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="w-full min-w-0 space-y-3 md:space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
       {/* ── Top Header Bar ── */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-[#F8FAFC] tracking-tight">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#F8FAFC] tracking-tight truncate">
             Hi, {displayName}
           </h1>
         </div>
-        <div className={`flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0 pt-1 ${isLocked ? "hidden" : ""}`}>
-          <Link to="/portal/slack" className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-[#2A3446] text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors">
-            <svg className="w-4 h-4 text-[#7FA0D6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className={`flex items-center gap-2 shrink-0 ${isLocked ? "hidden" : ""}`}>
+          <Link
+            to="/portal/slack"
+            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 rounded-full border border-[#2A3446] text-xs md:text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors whitespace-nowrap"
+          >
+            <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#7FA0D6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            Message your pod
+            <span className="hidden xs:inline">Message</span> pod
           </Link>
           {pendingCount > 0 && (
             <Link
               to="/portal/deliverables"
-              className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors"
+              className="px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs md:text-[13px] font-bold hover:bg-white transition-colors whitespace-nowrap"
             >
-              Review now
+              Review ({pendingCount})
             </Link>
           )}
         </div>
@@ -212,11 +215,11 @@ export function PortalDashboardPage() {
       {isLocked && <ResumeOnboardingBanner variant="hero" />}
 
       {/* ── Main Content Grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 items-stretch">
         {/* Left Column: Batch Status + Asset List (2/3 width) */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
+        <div className="lg:col-span-2 flex flex-col gap-3 md:gap-4">
           {/* Batch Status Card */}
-          <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]">
+          <div className="bg-[#161F2D] rounded-2xl p-3.5 sm:p-5 border border-[#2A3446]">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-white">
@@ -302,14 +305,17 @@ export function PortalDashboardPage() {
               <div className="py-8 text-center">
                 <p className="text-sm text-[#97A0B3]">
                   {isLocked
-                    ? "Your production pipeline activates once setup is complete. Pieces waiting for your review will show up here."
-                    : "No deliverables pending review right now."}
+                    ? "Your production pipeline activates once setup is complete."
+                    : "No assets to show"}
                 </p>
               </div>
             ) : (
-              <div className="space-y-0 divide-y divide-white/[0.05]">
+              <div className="flex flex-col gap-2.5 md:gap-0 md:space-y-0 md:divide-y md:divide-white/[0.05]">
                 {pendingDeliverables.slice(0, 3).map((item: any) => (
-                  <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 py-3">
+                  <div
+                    key={item.id}
+                    className="w-full bg-[#0B111C]/90 md:bg-transparent border border-[#2A3446] md:border-none rounded-xl md:rounded-none p-3 md:p-0 md:py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shadow-sm md:shadow-none"
+                  >
                     {/* Thumbnail + Info */}
                     <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                       <Link
@@ -347,10 +353,10 @@ export function PortalDashboardPage() {
                       </div>
                     </div>
                     {/* Actions */}
-                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 w-full sm:w-auto justify-end">
+                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 w-full sm:w-auto justify-end pt-1 md:pt-0 border-t border-white/[0.04] md:border-t-0">
                       <button
                         onClick={(e) => handleDeclineDeliverable(item.id, e, item.title)}
-                        className="flex-1 sm:flex-initial px-4 py-2 rounded-full border border-[#2A3446] bg-[#0B111C] text-xs sm:text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors cursor-pointer text-center"
+                        className="flex-1 sm:flex-initial px-3.5 py-2 rounded-full border border-[#2A3446] bg-[#0B111C] text-xs sm:text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors cursor-pointer text-center"
                       >
                         Request change
                       </button>
@@ -369,15 +375,24 @@ export function PortalDashboardPage() {
 
           {/* Coming Up */}
           <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-3.5">
-              <h3 className="text-base font-semibold text-white">Coming up</h3>
-              <span className="text-xs font-medium text-[#97A0B3]">
-                next 7 days
-              </span>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm md:text-base font-semibold text-white">Coming up</h3>
+                <span className="text-[11px] md:text-xs font-medium text-[#97A0B3]">next 7 days</span>
+              </div>
+              {upcomingEntries.length > 0 && (
+                <Link
+                  to="/portal/calendar"
+                  className="text-xs font-bold text-[#7FA0D6] hover:text-white transition-colors flex items-center gap-1"
+                >
+                  <span>View all ({upcomingEntries.length})</span>
+                  <span aria-hidden="true">&rarr;</span>
+                </Link>
+              )}
             </div>
 
-            {/* Table Header */}
-            <div className="grid grid-cols-4 gap-4 text-[11px] uppercase tracking-[0.1em] text-[#97A0B3] font-bold pb-2 border-b border-[#2A3446]">
+            {/* Desktop Table Header (< md hidden) */}
+            <div className="hidden md:grid grid-cols-4 gap-2 sm:gap-4 text-[11px] uppercase tracking-[0.1em] text-[#97A0B3] font-bold pb-2 border-b border-[#2A3446]">
               <span>When</span>
               <span>Format</span>
               <span>Post</span>
@@ -394,6 +409,7 @@ export function PortalDashboardPage() {
                 </div>
               ) : (
                 upcomingEntries.map((entry: any, idx: number) => {
+                  const isHiddenOnMobile = idx >= 3;
                   const d = new Date(entry.date);
                   const dayStr = d.toLocaleDateString("en-US", { weekday: "short", day: "numeric" });
                   const timeStr = entry.scheduled_time ? ` · ${entry.scheduled_time}` : "";
@@ -407,15 +423,40 @@ export function PortalDashboardPage() {
                     statusLabel === "Approved" ? "bg-[#7FA0D6]/20 text-[#BCCCE6]" :
                     "bg-[#7FA0D6]/15 text-[#BCCCE6]";
                   return (
-                    <div key={entry.id || idx} className="grid grid-cols-4 gap-4 py-3 text-sm items-center hover:bg-white/[0.02] transition-colors -mx-2 px-2 rounded-lg cursor-pointer">
-                      <span className="text-[#97A0B3] text-[13px]">{dayStr}{timeStr}</span>
-                      <span className="text-white text-[13px] capitalize">{entry.format_label || entry.type}</span>
-                      <span className="text-[#97A0B3] text-[13px] truncate">{entry.topic || entry.title || "Scheduled post"}</span>
-                      <span className="text-right">
-                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeColor}`}>
-                          {statusLabel}
+                    <div key={entry.id || idx}>
+                      {/* Desktop 4-column row (md:) */}
+                      <div className="hidden md:grid grid-cols-4 gap-4 py-3 text-sm items-center hover:bg-white/[0.02] transition-colors -mx-2 px-2 rounded-lg cursor-pointer">
+                        <span className="text-[#97A0B3] text-[13px]">{dayStr}{timeStr}</span>
+                        <span className="text-white text-[13px] capitalize">{entry.format_label || entry.type}</span>
+                        <span className="text-[#97A0B3] text-[13px] truncate">{entry.topic || entry.title || "Scheduled post"}</span>
+                        <span className="text-right">
+                          <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeColor}`}>
+                            {statusLabel}
+                          </span>
                         </span>
-                      </span>
+                      </div>
+
+                      {/* Mobile compact 2-line row (< md) */}
+                      <div className={`${isHiddenOnMobile ? "hidden" : "flex"} md:hidden py-2.5 items-center justify-between gap-2.5 hover:bg-white/[0.02] transition-colors`}>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider bg-white/[0.06] text-[#7FA0D6] shrink-0">
+                              {entry.format_label || entry.type}
+                            </span>
+                            <span className="text-xs font-semibold text-white truncate">
+                              {entry.topic || entry.title || "Scheduled post"}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#97A0B3]">
+                            {dayStr}{timeStr}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${badgeColor}`}>
+                            {statusLabel}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   );
                 })
@@ -425,7 +466,7 @@ export function PortalDashboardPage() {
         </div>
 
         {/* Right Column: Plan + Results + Pod */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 md:gap-4">
           {/* Your plan this cycle */}
           <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]">
             <h3 className="text-base font-semibold text-white mb-3.5">Your plan this cycle</h3>
@@ -472,7 +513,8 @@ export function PortalDashboardPage() {
 
               return (
                 <>
-                  <div className="space-y-3">
+                  {/* Desktop Layout (md:) */}
+                  <div className="space-y-3 hidden md:block">
                     {usageItems.map((item) => {
                       const totalSafe = item.total > 0 ? item.total : 1;
                       const pct = Math.min(100, Math.round((item.used / totalSafe) * 100));
@@ -492,6 +534,33 @@ export function PortalDashboardPage() {
                               style={{ width: `${pct}%` }}
                             />
                           </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Mobile Compact 3-Column Mini-Grid (< md) */}
+                  <div className="grid grid-cols-3 gap-2 md:hidden">
+                    {usageItems.map((item) => {
+                      const totalSafe = item.total > 0 ? item.total : 1;
+                      const pct = Math.min(100, Math.round((item.used / totalSafe) * 100));
+                      const remaining = Math.max(0, item.total - item.used);
+                      return (
+                        <div key={item.label} className="bg-[#0B111C]/80 border border-[#2A3446] rounded-xl p-2.5 flex flex-col justify-between">
+                          <span className="text-[11px] font-bold text-[#97A0B3]">{item.label}</span>
+                          <div className="my-1.5">
+                            <div className="flex items-baseline justify-between mb-1">
+                              <span className="text-sm font-black text-white">{item.used}</span>
+                              <span className="text-[10px] text-[#97A0B3]">/{item.total}</span>
+                            </div>
+                            <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-[#7FA0D6] rounded-full"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-emerald-400 font-semibold">{remaining} left</span>
                         </div>
                       );
                     })}
@@ -576,16 +645,27 @@ export function PortalDashboardPage() {
 
           {/* From your pod */}
           <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446] flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-3.5">
-              <h3 className="text-base font-semibold text-white">From your pod</h3>
-              {!isLocked && (
-                <Link
-                  to="/portal/slack"
-                  className="px-4 py-1.5 rounded-full border border-[#2A3446] text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors"
-                >
-                  Open chat
-                </Link>
-              )}
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm md:text-base font-semibold text-white">From your pod</h3>
+              <div className="flex items-center gap-2">
+                {dashboard?.assigned_team && dashboard.assigned_team.length > 0 && (
+                  <Link
+                    to="/portal/slack"
+                    className="text-xs font-bold text-[#7FA0D6] hover:text-white transition-colors md:hidden flex items-center gap-1"
+                  >
+                    <span>View all ({dashboard.assigned_team.length})</span>
+                    <span aria-hidden="true">&rarr;</span>
+                  </Link>
+                )}
+                {!isLocked && (
+                  <Link
+                    to="/portal/slack"
+                    className="hidden md:inline-flex px-4 py-1.5 rounded-full border border-[#2A3446] text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors"
+                  >
+                    Open chat
+                  </Link>
+                )}
+              </div>
             </div>
 
             {/* Real Pod Team or Empty State */}
@@ -598,27 +678,49 @@ export function PortalDashboardPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {dashboard.assigned_team.slice(0, 3).map((member: any, i: number) => {
-                  const initials = member.name.split(" ").filter((w: string) => w.length > 0).map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
-                  const avatarBgs = ["bg-[#BCCCE6] text-[#0B111C]", "bg-white/[0.08] text-white", "bg-[#7FA0D6] text-white"];
-                  return (
-                    <div key={member.id || i} className="flex gap-3 items-center">
-                      <div className={`w-8 h-8 rounded-full ${avatarBgs[i % avatarBgs.length]} flex items-center justify-center text-[11px] font-bold shrink-0`}>
-                        {initials}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between mb-0.5">
-                          <span className="text-sm font-bold text-white truncate">{member.name}</span>
-                          <span className="text-xs text-[#97A0B3]">{member.is_primary ? "Lead" : "Pod"}</span>
+              <div>
+                {/* Mobile 2-Column Compact Chips (< md) */}
+                <div className="grid grid-cols-2 gap-2 md:hidden">
+                  {dashboard.assigned_team.slice(0, 4).map((member: any, i: number) => {
+                    const initials = member.name.split(" ").filter((w: string) => w.length > 0).map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
+                    const avatarBgs = ["bg-[#BCCCE6] text-[#0B111C]", "bg-white/[0.08] text-white", "bg-[#7FA0D6] text-white"];
+                    return (
+                      <div key={member.id || i} className="bg-[#0B111C]/80 border border-[#2A3446] rounded-xl p-2 flex items-center gap-2 min-w-0">
+                        <div className={`w-7 h-7 rounded-full ${avatarBgs[i % avatarBgs.length]} flex items-center justify-center text-[10px] font-bold shrink-0`}>
+                          {initials}
                         </div>
-                        <p className="text-[13px] text-[#97A0B3] truncate">
-                          {member.role || "Creative execution"}
-                        </p>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-white truncate leading-tight">{member.name}</p>
+                          <p className="text-[10px] text-[#97A0B3] truncate">{member.role || "Creative"}</p>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+
+                {/* Desktop List (md:) */}
+                <div className="hidden md:block space-y-3 sm:space-y-4">
+                  {dashboard.assigned_team.slice(0, 4).map((member: any, i: number) => {
+                    const initials = member.name.split(" ").filter((w: string) => w.length > 0).map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
+                    const avatarBgs = ["bg-[#BCCCE6] text-[#0B111C]", "bg-white/[0.08] text-white", "bg-[#7FA0D6] text-white"];
+                    return (
+                      <div key={member.id || i} className="flex gap-3 items-center">
+                        <div className={`w-8 h-8 rounded-full ${avatarBgs[i % avatarBgs.length]} flex items-center justify-center text-[11px] font-bold shrink-0`}>
+                          {initials}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-sm font-bold text-white truncate">{member.name}</span>
+                            <span className="text-xs text-[#97A0B3]">{member.is_primary ? "Lead" : "Pod"}</span>
+                          </div>
+                          <p className="text-[13px] text-[#97A0B3] truncate">
+                            {member.role || "Creative execution"}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>

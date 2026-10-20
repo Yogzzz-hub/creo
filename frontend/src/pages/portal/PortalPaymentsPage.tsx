@@ -1,7 +1,7 @@
 import { AutoPaySettings } from "../../components/portal/AutoPaySettings";
 import { useState } from "react";
 import { Link } from "react-router";
-import { Download, Loader2, PauseCircle, CheckCircle2, AlertCircle, PhoneCall, ArrowRight } from "lucide-react";
+import { Download, Loader2, PauseCircle, CheckCircle2, AlertCircle, PhoneCall, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
@@ -44,6 +44,9 @@ export function PortalPaymentsPage() {
   const [resumingSub, setResumingSub] = useState(false);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
+  const [mobileInvoicesOpen, setMobileInvoicesOpen] = useState(false);
+  const [mobilePaymentMethodOpen, setMobilePaymentMethodOpen] = useState(false);
+  const [mobileNegOpen, setMobileNegOpen] = useState(false);
 
   const { data: subData, isLoading: isSubLoading } = useQuery<ClientSubscriptionData>({
     queryKey: ["client-subscription", user?.id],
@@ -231,50 +234,6 @@ export function PortalPaymentsPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-2">
-            {hasActivePlan ? `${planName} PLAN • RENEWS ${renewalDate}` : "NO ACTIVE RETAINER • ONBOARDING INCOMPLETE"}
-          </p>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Plan & billing</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <button 
-            type="button"
-            onClick={() => setCompareModalOpen(true)}
-            className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
-          >
-            Compare plans
-          </button>
-          
-          {hasActivePlan && (
-            isPausedNextMonth ? (
-              <button
-                type="button"
-                onClick={handleResumePlan}
-                disabled={resumingSub}
-                className="px-5 py-2.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-[13px] font-bold text-amber-300 hover:bg-amber-500/20 transition-all flex items-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
-              >
-                {resumingSub ? (
-                  <Loader2 className="size-4 animate-spin text-amber-400" />
-                ) : (
-                  <PauseCircle className="size-4 text-amber-400" />
-                )}
-                <span>Paused for next cycle • Click to resume</span>
-              </button>
-            ) : (
-              <button 
-                type="button"
-                onClick={() => setPauseModalOpen(true)}
-                className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] hover:border-amber-500/40 transition-colors cursor-pointer"
-              >
-                Pause next month
-              </button>
-            )
-          )}
-        </div>
-      </div>
 
       {/* Paused for Next Month Notice Banner */}
       {isPausedNextMonth && (
@@ -303,10 +262,10 @@ export function PortalPaymentsPage() {
         </div>
       )}
 
-      {/* Active Negotiation Status Banner */}
+      {/* Active Negotiation Status Banner (Slim 1-line expandable on mobile) */}
       {latestNeg && (
         <div
-          className={`rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-[fadeIn_0.2s_ease-out] ${
+          className={`rounded-xl md:rounded-2xl border p-3 sm:p-5 shadow-sm animate-[fadeIn_0.2s_ease-out] ${
             latestNeg.status === "Accepted"
               ? "border-emerald-500/40 bg-emerald-950/25 text-emerald-200"
               : latestNeg.status === "Counter Offered"
@@ -316,78 +275,93 @@ export function PortalPaymentsPage() {
               : "border-[#7FA0D6]/40 bg-[#0B111C] text-[#BCCCE6]"
           }`}
         >
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="size-9 rounded-xl bg-[#161F2D] border border-[#2A3446] flex items-center justify-center shrink-0 text-[#7FA0D6]">
-              <PhoneCall className="size-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">Plan Negotiation</span>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                    latestNeg.status === "Accepted"
-                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
-                      : latestNeg.status === "Counter Offered"
-                      ? "bg-blue-500/20 text-blue-400 border border-blue-500/40"
-                      : latestNeg.status === "Declined"
-                      ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
-                      : "bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/40"
-                  }`}
-                >
-                  {latestNeg.status}
-                </span>
+          {/* Header row - clickable on mobile */}
+          <div
+            onClick={() => setMobileNegOpen((prev) => !prev)}
+            className="flex items-center justify-between cursor-pointer md:cursor-default select-none"
+          >
+            <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+              <div className="size-8 sm:size-9 rounded-xl bg-[#161F2D] border border-[#2A3446] flex items-center justify-center shrink-0 text-[#7FA0D6]">
+                <PhoneCall className="size-4" />
               </div>
-              <p className="text-sm font-bold text-white mt-0.5">
-                {latestNeg.targetTopic}
-                {latestNeg.proposedOffer ? ` (${latestNeg.proposedOffer})` : ""}
-              </p>
-              {latestNeg.status === "Accepted" && (
-                <div className="mt-2 space-y-1">
-                  <p className="text-xs text-emerald-300 font-bold">
-                    Approved Retainer Rate: ₹{(latestNeg.counterPrice || latestNeg.agreedAmount || 0).toLocaleString("en-IN")}/mo
-                    {latestNeg.counterNote ? ` • "${latestNeg.counterNote}"` : ""}
-                  </p>
-                  {(latestNeg.reelQuota || latestNeg.posterQuota || latestNeg.storyQuota) && (
-                    <p className="text-[11px] text-[#BCCCE6] font-semibold">
-                      Agreed Deliverables: {latestNeg.reelQuota || 8} Reels • {latestNeg.posterQuota || 12} Posters • {latestNeg.storyQuota || 15} Stories
-                    </p>
-                  )}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">Plan Negotiation</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase shrink-0 ${
+                      latestNeg.status === "Accepted"
+                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                        : latestNeg.status === "Counter Offered"
+                        ? "bg-blue-500/20 text-blue-400 border border-blue-500/40"
+                        : latestNeg.status === "Declined"
+                        ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
+                        : "bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/40"
+                    }`}
+                  >
+                    {latestNeg.status}
+                  </span>
                 </div>
-              )}
-              {latestNeg.status === "Counter Offered" && (
-                <div className="mt-2 space-y-1">
-                  <p className="text-xs text-blue-300 font-bold">
-                    Executive Counter-Offer: ₹{(latestNeg.counterPrice || 0).toLocaleString("en-IN")}/mo
-                    {latestNeg.counterNote ? ` • "${latestNeg.counterNote}"` : ""}
-                  </p>
-                  {(latestNeg.reelQuota || latestNeg.posterQuota || latestNeg.storyQuota) && (
-                    <p className="text-[11px] text-[#BCCCE6] font-semibold">
-                      Proposed Deliverables: {latestNeg.reelQuota || 8} Reels • {latestNeg.posterQuota || 12} Posters • {latestNeg.storyQuota || 15} Stories
-                    </p>
-                  )}
-                </div>
-              )}
-              {latestNeg.status === "Declined" && latestNeg.declineReason && (
-                <p className="text-xs text-rose-300 mt-1">
-                  Reason: {latestNeg.declineReason}
+                <p className="text-xs sm:text-sm font-bold text-white mt-0.5 truncate hidden sm:block">
+                  {latestNeg.targetTopic}
+                  {latestNeg.proposedOffer ? ` (${latestNeg.proposedOffer})` : ""}
                 </p>
-              )}
-              {latestNeg.status === "Pending Review" && (
-                <p className="text-xs text-[#97A0B3] mt-0.5">
-                  Our Agency Director will call you at {latestNeg.phoneNumber} ({latestNeg.preferredTime}).
-                </p>
-              )}
+              </div>
             </div>
+            <span className="text-[#7FA0D6] md:hidden">
+              {mobileNegOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+            </span>
+          </div>
+
+          {/* Details - Collapsed by default on mobile, always open on desktop */}
+          <div className={`${mobileNegOpen ? "block mt-2.5 pt-2.5 border-t border-white/10" : "hidden md:block md:mt-2"}`}>
+            <p className="text-xs sm:text-sm font-bold text-white sm:hidden mb-1">
+              {latestNeg.targetTopic}
+              {latestNeg.proposedOffer ? ` (${latestNeg.proposedOffer})` : ""}
+            </p>
+            {latestNeg.status === "Accepted" && (
+              <div className="space-y-1">
+                <p className="text-xs text-emerald-300 font-bold">
+                  Approved Retainer Rate: ₹{(latestNeg.counterPrice || latestNeg.agreedAmount || 0).toLocaleString("en-IN")}/mo
+                  {latestNeg.counterNote ? ` • "${latestNeg.counterNote}"` : ""}
+                </p>
+                {(latestNeg.reelQuota || latestNeg.posterQuota || latestNeg.storyQuota) && (
+                  <p className="text-[11px] text-[#BCCCE6] font-semibold">
+                    Agreed Deliverables: {latestNeg.reelQuota || 8} Reels • {latestNeg.posterQuota || 12} Posters • {latestNeg.storyQuota || 15} Stories
+                  </p>
+                )}
+              </div>
+            )}
+            {latestNeg.status === "Counter Offered" && (
+              <div className="space-y-1">
+                <p className="text-xs text-blue-300 font-bold">
+                  Executive Counter-Offer: ₹{(latestNeg.counterPrice || 0).toLocaleString("en-IN")}/mo
+                  {latestNeg.counterNote ? ` • "${latestNeg.counterNote}"` : ""}
+                </p>
+                {(latestNeg.reelQuota || latestNeg.posterQuota || latestNeg.storyQuota) && (
+                  <p className="text-[11px] text-[#BCCCE6] font-semibold">
+                    Proposed Deliverables: {latestNeg.reelQuota || 8} Reels • {latestNeg.posterQuota || 12} Posters • {latestNeg.storyQuota || 15} Stories
+                  </p>
+                )}
+              </div>
+            )}
+            {latestNeg.status === "Declined" && latestNeg.declineReason && (
+              <p className="text-xs text-rose-300 mt-1">
+                Reason: {latestNeg.declineReason}
+              </p>
+            )}
+            {latestNeg.status === "Pending Review" && (
+              <p className="text-xs text-[#97A0B3] mt-0.5">
+                Our Agency Director will call you at {latestNeg.phoneNumber} ({latestNeg.preferredTime}).
+              </p>
+            )}
           </div>
         </div>
       )}
 
-      {/* Split Payment & Instalment Plan Card (Requirement 2.3) */}
-      <SplitPaymentCard />
-
+      {/* Top Bento Row: Plan Details & Quotas (Left) + Add-ons (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         
-        {/* Top Left: Current Plan */}
+        {/* Top Left: Current Plan & Quotas */}
         <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
           {!hasActivePlan ? (
             <div className="flex flex-col justify-between h-full space-y-4">
@@ -396,9 +370,18 @@ export function PortalPaymentsPage() {
                   <span className="text-[11px] uppercase font-bold tracking-[0.16em] text-amber-400">
                     Status: Pending Activation
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-bold">
-                    Step 3 Pending
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      type="button"
+                      onClick={() => setCompareModalOpen(true)}
+                      className="px-3 py-1 rounded-full border border-[#2A3446] text-xs font-bold text-white hover:bg-[#0B111C] transition-colors cursor-pointer"
+                    >
+                      Compare plans
+                    </button>
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-bold">
+                      Step 3 Pending
+                    </span>
+                  </div>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">No Active Retainer</h2>
                 <p className="text-xs text-[#97A0B3] mt-1.5 leading-relaxed">
@@ -428,20 +411,77 @@ export function PortalPaymentsPage() {
             </div>
           ) : (
             <>
-              <div className="flex justify-between items-start mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
                 <div>
-                  <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-1">
-                    CURRENT PLAN
-                  </p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3]">
+                      CURRENT PLAN
+                    </span>
+                    <span className="text-xs text-[#7FA0D6] font-semibold">
+                      • Renews {renewalDate}
+                    </span>
+                  </div>
                   <h2 className="text-2xl sm:text-3xl font-bold text-white">{planName}</h2>
                 </div>
-                <div className="text-right">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white">₹{planPrice.toLocaleString('en-IN')}</h2>
-                  <p className="text-xs text-[#97A0B3] mt-0.5">per month • ₹{costPerAsset.toLocaleString('en-IN')} per asset</p>
+                <div className="flex flex-col sm:items-end gap-2">
+                  <div className="text-left sm:text-right">
+                    <span className="text-2xl sm:text-3xl font-bold text-white">₹{planPrice.toLocaleString('en-IN')}</span>
+                    <span className="text-xs text-[#97A0B3] ml-1.5 sm:block sm:ml-0">per month • ₹{costPerAsset.toLocaleString('en-IN')} per asset</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                    <button 
+                      type="button"
+                      onClick={() => setCompareModalOpen(true)}
+                      className="px-3 py-1.5 rounded-full border border-[#2A3446] text-xs font-bold text-white hover:bg-[#0B111C] hover:border-[#7FA0D6]/40 transition-colors cursor-pointer"
+                    >
+                      Compare plans
+                    </button>
+                    {isPausedNextMonth ? (
+                      <button
+                        type="button"
+                        onClick={handleResumePlan}
+                        disabled={resumingSub}
+                        className="px-3 py-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        {resumingSub ? (
+                          <Loader2 className="size-3.5 animate-spin text-amber-400" />
+                        ) : (
+                          <PauseCircle className="size-3.5 text-amber-400" />
+                        )}
+                        <span>Resume renewal</span>
+                      </button>
+                    ) : (
+                      <button 
+                        type="button"
+                        onClick={() => setPauseModalOpen(true)}
+                        className="px-3 py-1.5 rounded-full border border-[#2A3446] text-xs font-bold text-[#97A0B3] hover:text-white hover:bg-[#0B111C] hover:border-amber-500/40 transition-colors cursor-pointer"
+                      >
+                        Pause next month
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-3.5 mb-4">
+              {/* Mobile Compact 3-Column Quotas Row (< md) */}
+              <div className="grid grid-cols-3 gap-2 md:hidden mb-3">
+                {usageBars.map(item => {
+                  const pct = item.max > 0 ? Math.min(100, Math.round((item.current / item.max) * 100)) : 0;
+                  return (
+                    <div key={item.label} className="bg-[#0B111C]/60 border border-[#2A3446] rounded-xl p-2 text-center">
+                      <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">{item.label}</span>
+                      <div className="text-xs font-black text-white my-0.5">{item.current}/{item.max}</div>
+                      <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden my-1">
+                        <div className="h-full bg-[#7FA0D6] rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-[9px] text-emerald-400 font-semibold">{Math.max(0, item.max - item.current)} left</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Progress Bars (md: and up - strictly preserved) */}
+              <div className="space-y-3.5 mb-4 hidden md:block">
                 {usageBars.map(item => (
                   <div key={item.label}>
                     <div className="flex items-center justify-between mb-1.5">
@@ -466,27 +506,57 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Top Right: Add to this cycle */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5">
-          <h3 className="text-sm font-bold text-white mb-3.5">Add to this cycle</h3>
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl md:rounded-2xl p-3.5 sm:p-5">
+          <div className="flex items-center justify-between mb-2.5 md:mb-3.5">
+            <h3 className="text-xs sm:text-sm font-bold text-white">Add to this cycle</h3>
+          </div>
           {!hasActivePlan && (
-            <p className="text-xs text-[#97A0B3] -mt-1.5 mb-3">
+            <p className="text-xs text-[#97A0B3] -mt-1 mb-2.5">
               An active plan is required before you can add extras.
             </p>
           )}
-          <div className="divide-y divide-white/[0.05]">
+
+          {/* Mobile 2x2 Compact Grid (< md, zero scroll, 100% visible) */}
+          <div className="grid grid-cols-2 gap-2 md:hidden">
             {addons.map(addon => (
-              <div key={addon.id} className="py-2.5 sm:py-3 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div
+                key={addon.id}
+                className="p-2.5 rounded-xl bg-[#0B111C]/60 border border-[#2A3446] flex flex-col justify-between"
+              >
                 <div>
-                  <h4 className="text-[13px] font-bold text-white mb-1">{addon.name}</h4>
+                  <h4 className="text-xs font-bold text-white truncate">{addon.name}</h4>
+                  <span className="text-xs font-black text-[#7FA0D6] mt-0.5 block">₹{addon.price.toLocaleString('en-IN')}</span>
+                </div>
+                <button 
+                  onClick={() => handleAddon(addon)}
+                  disabled={!hasActivePlan || !!processingAddon}
+                  title={!hasActivePlan ? "An active plan is required to add extras" : undefined}
+                  className="mt-2 w-full py-1.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs font-bold hover:bg-white transition-colors flex items-center justify-center disabled:opacity-50 cursor-pointer"
+                >
+                  {processingAddon === addon.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Add"}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Add-on rows (md: and up - strictly preserved) */}
+          <div className="hidden md:block divide-y divide-white/[0.05]">
+            {addons.map(addon => (
+              <div
+                key={addon.id}
+                className="py-2.5 sm:py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-3"
+              >
+                <div>
+                  <h4 className="text-[13px] font-bold text-white mb-0.5">{addon.name}</h4>
                   <p className="text-xs text-[#97A0B3]">{addon.desc}</p>
                 </div>
-                <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0">
+                <div className="flex items-center justify-end gap-4 shrink-0">
                   <span className="text-[13px] font-bold text-white">₹{addon.price.toLocaleString('en-IN')}</span>
                   <button 
                     onClick={() => handleAddon(addon)}
                     disabled={!hasActivePlan || !!processingAddon}
                     title={!hasActivePlan ? "An active plan is required to add extras" : undefined}
-                    className={`px-5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold transition-colors w-20 flex items-center justify-center disabled:opacity-50 ${
+                    className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs sm:text-[13px] font-bold transition-colors w-18 sm:w-20 flex items-center justify-center disabled:opacity-50 ${
                       !hasActivePlan
                         ? "cursor-not-allowed"
                         : "cursor-pointer hover:bg-white disabled:cursor-wait"
@@ -499,36 +569,52 @@ export function PortalPaymentsPage() {
             ))}
           </div>
         </div>
+      </div>
 
+      {/* Split Payment & Instalment Plan Card (Renders only if opted into split payments) */}
+      <SplitPaymentCard />
+
+      {/* Lower Bento Row: Invoices (Left) + Payment Method (Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Bottom Left: Invoices */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5">
-          <h3 className="text-sm font-bold text-white mb-3.5">Invoices</h3>
-          <div className="overflow-x-auto scrollbar-hide">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl md:rounded-2xl p-3.5 sm:p-5">
+          <div 
+            onClick={() => setMobileInvoicesOpen(prev => !prev)}
+            className="flex items-center justify-between cursor-pointer md:cursor-default mb-0 md:mb-3.5 select-none"
+          >
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs sm:text-sm font-bold text-white">Invoices ({invoices.length})</h3>
+            </div>
+            <div className="md:hidden text-[#7FA0D6] p-0.5">
+              {mobileInvoicesOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+            </div>
+          </div>
+          <div className={`${mobileInvoicesOpen ? "block mt-3" : "hidden md:block"} overflow-x-auto scrollbar-hide`}>
             <table className="w-full min-w-[500px]">
               <thead>
                 <tr className="border-b border-[#2A3446]">
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Invoice</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Period</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Amount</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Status</th>
+                  <th className="text-left text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Invoice</th>
+                  <th className="text-left text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Period</th>
+                  <th className="text-left text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Amount</th>
+                  <th className="text-left text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Status</th>
                   <th className="pb-2"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.05]">
                 {invoices.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-sm text-[#97A0B3]">
+                    <td colSpan={5} className="py-6 text-center text-xs md:text-sm text-[#97A0B3]">
                       No invoices generated yet.
                     </td>
                   </tr>
                 ) : (
                   invoices.map((inv: any) => (
                     <tr key={inv.id}>
-                      <td className="py-2.5 text-[13px] font-medium text-[#97A0B3] font-mono">{inv.id}</td>
-                      <td className="py-2.5 text-[13px] text-white">{inv.period}</td>
-                      <td className="py-2.5 text-[13px] font-bold text-white">₹{inv.amount.toLocaleString('en-IN')}</td>
+                      <td className="py-2.5 text-xs sm:text-[13px] font-medium text-[#97A0B3] font-mono">{inv.id}</td>
+                      <td className="py-2.5 text-xs sm:text-[13px] text-white">{inv.period}</td>
+                      <td className="py-2.5 text-xs sm:text-[13px] font-bold text-white">₹{inv.amount.toLocaleString('en-IN')}</td>
                       <td className="py-2.5">
-                        <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#BCCCE6] text-xs font-bold">
+                        <span className="inline-flex items-center justify-center px-2 sm:px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#BCCCE6] text-[11px] sm:text-xs font-bold">
                           {inv.status}
                         </span>
                       </td>
@@ -536,13 +622,13 @@ export function PortalPaymentsPage() {
                         {inv.status?.toLowerCase() === "paid" ? (
                           <button 
                             onClick={() => handleDownload(inv.id)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#2A3446] text-xs font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-[#2A3446] text-[11px] sm:text-xs font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
                           >
                             {downloadingInv === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <Download className="w-3.5 h-3.5" />}
                             GST invoice
                           </button>
                         ) : (
-                          <span className="text-xs text-[#97A0B3] italic pr-2">Payment incomplete</span>
+                          <span className="text-[11px] sm:text-xs text-[#97A0B3] italic pr-2">Payment incomplete</span>
                         )}
                       </td>
                     </tr>
@@ -554,51 +640,59 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Bottom Right: Payment method */}
-        <div className="space-y-4">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-white mb-3.5">Payment method</h3>
-              
-              <div className="space-y-3 mb-4">
+        <div className="space-y-3 md:space-y-4">
+          <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl md:rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between">
+            <div 
+              onClick={() => setMobilePaymentMethodOpen(prev => !prev)}
+              className="flex items-center justify-between cursor-pointer md:cursor-default mb-0 md:mb-3.5 select-none"
+            >
+              <h3 className="text-xs sm:text-sm font-bold text-white">Payment method</h3>
+              <div className="md:hidden text-[#7FA0D6] p-0.5">
+                {mobilePaymentMethodOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+              </div>
+            </div>
+            
+            <div className={`${mobilePaymentMethodOpen ? "block mt-3" : "hidden md:block"} space-y-3 sm:space-y-4`}>
+              <div className="space-y-2.5 sm:space-y-3 mb-3 sm:mb-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] text-[#97A0B3]">Method</span>
-                  <span className="text-[13px] font-bold text-white">{(subData as any)?.autopay?.recurring ? "Razorpay AutoPay" : "No AutoPay mandate"}</span>
+                  <span className="text-xs sm:text-[13px] text-[#97A0B3]">Method</span>
+                  <span className="text-xs sm:text-[13px] font-bold text-white">{(subData as any)?.autopay?.recurring ? "Razorpay AutoPay" : "No AutoPay mandate"}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] text-[#97A0B3]">Next charge</span>
-                  <span className="text-[13px] font-bold text-white">
+                  <span className="text-xs sm:text-[13px] text-[#97A0B3]">Next charge</span>
+                  <span className="text-xs sm:text-[13px] font-bold text-white">
                     {isPausedNextMonth ? "Renewal paused" : !(subData as any)?.autopay?.enabled ? "No automatic charge confirmed" : hasActivePlan ? `₹${planPrice.toLocaleString('en-IN')} • ${renewalDate}` : "No upcoming charge (Plan inactive)"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] text-[#97A0B3]">GSTIN on invoices</span>
-                  <span className="text-[13px] font-bold text-white">Added</span>
+                  <span className="text-xs sm:text-[13px] text-[#97A0B3]">GSTIN on invoices</span>
+                  <span className="text-xs sm:text-[13px] font-bold text-white">Added</span>
                 </div>
               </div>
-            </div>
             
-            <button 
-              onClick={() => {
-                openRazorpayCheckout(
-                  {
-                    key: rzpKey,
-                    amount: 100,
-                    currency: "INR",
-                    name: "Creo Studio",
-                    description: "Update payment method (UPI / Card)",
-                    prefill: { name: user?.full_name || "", email: user?.email || "" },
-                  },
-                  () => {
-                    setActionNotice("Payment method updated successfully!");
-                    setTimeout(() => setActionNotice(null), 4000);
-                  },
-                  () => {}
-                );
-              }}
-              className="w-full py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors mt-auto cursor-pointer"
-            >
-              Change payment method
-            </button>
+              <button 
+                onClick={() => {
+                  openRazorpayCheckout(
+                    {
+                      key: rzpKey,
+                      amount: 100,
+                      currency: "INR",
+                      name: "Creo Studio",
+                      description: "Update payment method (UPI / Card)",
+                      prefill: { name: user?.full_name || "", email: user?.email || "" },
+                    },
+                    () => {
+                      setActionNotice("Payment method updated successfully!");
+                      setTimeout(() => setActionNotice(null), 4000);
+                    },
+                    () => {}
+                  );
+                }}
+                className="w-full py-2 sm:py-2.5 rounded-full border border-[#2A3446] text-xs sm:text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors mt-auto cursor-pointer"
+              >
+                Change payment method
+              </button>
+            </div>
           </div>
 
           <AutoPaySettings />

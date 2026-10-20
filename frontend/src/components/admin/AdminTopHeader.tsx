@@ -70,7 +70,7 @@ export function AdminTopHeader({
   const resolvedTitle =
     title ||
     (location.pathname === "/portal" || location.pathname === "/portal/"
-      ? "Client Dashboard"
+      ? ""
       : location.pathname.startsWith("/portal/deliverables")
       ? "Content Deliverables"
       : location.pathname.startsWith("/portal/calendar")
