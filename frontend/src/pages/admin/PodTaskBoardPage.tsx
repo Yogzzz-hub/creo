@@ -3,21 +3,9 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { submitPodQAReview, fetchPodDashboard, createPodTask, type PodDashboardData, type PodTask } from "../../lib/ops-api";
-import { startProductionTask } from "../../lib/deliverables-api";
+import { submitPodQAReview, fetchPodDashboard, createPodTask, type PodDashboardData } from "../../lib/ops-api";
 import { useAuth } from "../../lib/auth-context";
 import { motion } from "motion/react";
-import {
-  type Column,
-  formatLabel,
-  taskTitle,
-  columnOf,
-  dueText,
-  feedbackFor,
-  isHighPriority,
-  compareTaskDueDates,
-} from "./MemberTaskBoardPage";
-import { MemberMobileTaskBoard } from "../../components/workstation/MemberMobileTaskBoard";
 import {
   FolderKanban,
   AlertTriangle,
@@ -29,6 +17,7 @@ import {
   Check,
   X,
   FileText,
+  Search,
 } from "lucide-react";
 
 /** Backlog ages run into hundreds of hours, so show days past a day and keep hours below it. */
@@ -74,6 +63,46 @@ export function PodTaskBoardPage() {
   // Work already in flight is what a lead re-routes when it stalls.
   const allTasks = Object.values(data?.tasks || {}).flat();
   const totalActive = allTasks.filter(t => t.status !== "completed").length;
+
+  const [searchFilter, setSearchFilter] = useState("");
+  const [clientFilter, setClientFilter] = useState("all");
+  const [formatFilter, setFormatFilter] = useState("all");
+
+  const clientOptions = useMemo(() => {
+    const set = new Set<string>();
+    allTasks.forEach((t: any) => {
+      if (t.client_name) set.add(t.client_name);
+    });
+    return [
+      { value: "all", label: "All Clients" },
+      ...Array.from(set).map((c) => ({ value: c, label: c })),
+    ];
+  }, [allTasks]);
+
+  const filterTaskItem = (t: any) => {
+    if (searchFilter.trim()) {
+      const q = searchFilter.toLowerCase();
+      const title = (t.blueprint?.concept_name || t.title || "").toLowerCase();
+      const client = (t.client_name || "").toLowerCase();
+      const assignee = (t.assignee?.full_name || t.assignee_name || "").toLowerCase();
+      if (!title.includes(q) && !client.includes(q) && !assignee.includes(q)) return false;
+    }
+    if (clientFilter !== "all" && t.client_name !== clientFilter) return false;
+    if (formatFilter !== "all") {
+      const f = (t.deliverable_type || "").toLowerCase();
+      if (!f.includes(formatFilter.toLowerCase())) return false;
+    }
+    return true;
+  };
+
+  const filteredBacklog = (data?.tasks?.backlog || []).filter(filterTaskItem);
+  const filteredInProduction = (data?.tasks?.in_production || []).filter(filterTaskItem);
+  const filteredInternalQa = (data?.tasks?.internal_qa || []).filter(filterTaskItem);
+  const filteredDispatched = [
+    ...(data?.tasks?.ready_to_publish || []),
+    ...(data?.tasks?.completed || []),
+  ].filter(filterTaskItem);
+
   const activeTasks = [...(data?.tasks?.in_production || []), ...(data?.tasks?.internal_qa || [])];
   const rerouteTask = activeTasks.find((t) => t.id === rerouteTaskId) || activeTasks[0];
 
@@ -129,156 +158,13 @@ export function PodTaskBoardPage() {
     showToast("Downloaded Pod A Sprint Task Board CSV report", "success");
   };
 
-  // ── Mobile Task Board States (< md) ──
-  const [mobileSearchQuery, setMobileSearchQuery] = useState("");
-  const [mobileSelectedClient, setMobileSelectedClient] = useState("all");
-  const [mobileUrgencyFilter, setMobileUrgencyFilter] = useState("All");
-  const [mobileKanbanTab, setMobileKanbanTab] = useState<Column>("assigned");
-
-  const mobileTasks = useMemo(() => {
-    if (!data?.tasks) return [] as { task: PodTask; column: Column }[];
-    const buckets: (keyof PodDashboardData["tasks"])[] = [
-      "backlog", "in_production", "internal_qa", "client_review", "ready_to_publish", "completed",
-    ];
-    return buckets.flatMap((bucket) =>
-      (data.tasks[bucket] || []).map((task) => ({ task, column: columnOf(bucket) })),
-    );
-  }, [data]);
-
-  const availableClients = useMemo(() => {
-    const list: { id: string; name: string }[] = [];
-    const seenIds = new Set<string>();
-    const seenNames = new Set<string>();
-    (data?.clients || []).forEach((c) => {
-      if (c.id && !seenIds.has(c.id)) {
-        seenIds.add(c.id);
-        seenNames.add(c.name);
-        list.push({ id: c.id, name: c.name });
-      }
-    });
-    mobileTasks.forEach(({ task }) => {
-      const cId = task.client_id || task.client_name;
-      const cName = task.client_name;
-      if (cName && !seenNames.has(cName)) {
-        seenNames.add(cName);
-        seenIds.add(cId);
-        list.push({ id: cId, name: cName });
-      }
-    });
-    return list;
-  }, [data?.clients, mobileTasks]);
-
-  const filteredMobileTasks = useMemo(() => {
-    const q = mobileSearchQuery.toLowerCase();
-    const result = mobileTasks.filter(({ task }) => {
-      const matchesSearch =
-        !q ||
-        taskTitle(task).toLowerCase().includes(q) ||
-        task.client_name?.toLowerCase().includes(q) ||
-        formatLabel(task.deliverable_type).toLowerCase().includes(q);
-      const matchesClient =
-        mobileSelectedClient === "all" ||
-        mobileSelectedClient === "All Clients" ||
-        task.client_id === mobileSelectedClient ||
-        task.client_name === mobileSelectedClient;
-      const matchesUrgency =
-        mobileUrgencyFilter === "All" || (mobileUrgencyFilter === "High" ? isHighPriority(task) : !isHighPriority(task));
-      return matchesSearch && matchesClient && matchesUrgency;
-    });
-    return result.sort((a, b) => compareTaskDueDates(a.task, b.task));
-  }, [mobileTasks, mobileSearchQuery, mobileSelectedClient, mobileUrgencyFilter]);
-
-  const byCol = (column: Column) =>
-    filteredMobileTasks
-      .filter((t) => t.column === column)
-      .map((t) => t.task)
-      .sort(compareTaskDueDates);
-
-  const assigned = byCol("assigned");
-  const production = byCol("production");
-  const qa = byCol("qa");
-  const review = byCol("review");
-
-  const currentMobileTasks =
-    mobileKanbanTab === "assigned"
-      ? assigned
-      : mobileKanbanTab === "production"
-      ? production
-      : mobileKanbanTab === "qa"
-      ? qa
-      : review;
-
-  const userInitials = (user?.full_name || "TL")
-    .replace(/\(.*?\)/g, "")
-    .replace(/[^a-zA-Z0-9\s]/g, "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase() || "TL";
-
-  const startMutation = useMutation({
-    mutationFn: (taskId: string) => startProductionTask(taskId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
-      showToast("Task moved to In Production.");
-    },
-    onError: (err: Error) => showToast(err.message || "Could not start the task.", "error"),
-  });
-
-  const handleQaApprove = (taskId: string) => {
-    qaMutation.mutate({
-      taskId,
-      decision: "approve",
-      comment: "Direct QA sign-off from mobile Task Queue.",
-    });
-  };
-
   return (
     <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
       {/* Top Header */}
       <AdminTopHeader title="Content Engine" activeTab="Content Engine" />
 
-      {/* ── MOBILE TASK BOARD VIEW (< md) ── */}
-      <MemberMobileTaskBoard
-        user={user}
-        userInitials={userInitials}
-        leadName={leadName}
-        searchQuery={mobileSearchQuery}
-        setSearchQuery={setMobileSearchQuery}
-        selectedClient={mobileSelectedClient}
-        setSelectedClient={setMobileSelectedClient}
-        urgencyFilter={mobileUrgencyFilter}
-        setUrgencyFilter={setMobileUrgencyFilter}
-        mobileKanbanTab={mobileKanbanTab}
-        setMobileKanbanTab={setMobileKanbanTab}
-        tasks={mobileTasks}
-        availableClients={availableClients}
-        assigned={assigned}
-        production={production}
-        qa={qa}
-        review={review}
-        currentMobileTasks={currentMobileTasks}
-        toastMessage={toastMessage}
-        setToastMessage={setToastMessage}
-        showToast={showToast}
-        startMutation={startMutation}
-        onQaApprove={handleQaApprove}
-        openUpload={() => {}}
-        setCreateOpen={setAssignModalOpen}
-        setNewClientId={setNewCardClient}
-        isAdmin={false}
-        clients={data?.clients || []}
-        formatLabel={formatLabel}
-        taskTitle={taskTitle}
-        dueText={dueText}
-        feedbackFor={feedbackFor}
-      />
-
-      {/* ── DESKTOP TASK BOARD VIEW (>= md) ── */}
-      <main className="hidden md:flex flex-1 flex-col max-w-[1440px] w-full mx-auto px-3 sm:px-5 lg:px-6 py-3.5 pb-20 sm:pb-6 space-y-3.5 sm:space-y-4">
+      {/* Main Container */}
+      <main className="flex-1 max-w-[1440px] w-full mx-auto px-3 sm:px-5 lg:px-6 py-3.5 pb-20 sm:pb-6 space-y-3.5 sm:space-y-4">
         {isPending && <p role="status">Loading task queue...</p>}
         {isError && <p role="alert" className="text-amber-200">{error.message}<button onClick={() => void refetch()} className="ml-3 underline">Retry</button></p>}
         {/* Toast Alert */}
@@ -370,14 +256,85 @@ export function PodTaskBoardPage() {
           </div>
         </motion.div>
 
+        {/* Filter Toolbar */}
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#97A0B3]" />
+            <input
+              type="text"
+              placeholder="Search sprint tasks, clients, team..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6]"
+            />
+            {searchFilter && (
+              <button
+                onClick={() => setSearchFilter("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+
+          {/* Client Filter */}
+          <div className="min-w-[150px]">
+            <NativeSelect
+              value={clientFilter}
+              onChange={(e) => setClientFilter(e.target.value)}
+              aria-label="Filter Client"
+              className="w-full text-xs py-1.5 bg-[#0B111C] border-[#2A3446]"
+            >
+              {clientOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </NativeSelect>
+          </div>
+
+          {/* Format Filter */}
+          <div className="min-w-[140px]">
+            <NativeSelect
+              value={formatFilter}
+              onChange={(e) => setFormatFilter(e.target.value)}
+              aria-label="Filter Format"
+              className="w-full text-xs py-1.5 bg-[#0B111C] border-[#2A3446]"
+            >
+              <option value="all">All Formats</option>
+              <option value="reel">Reels / Videos</option>
+              <option value="poster">Posters / Graphics</option>
+              <option value="story">Stories</option>
+              <option value="carousel">Carousels</option>
+            </NativeSelect>
+          </div>
+
+          {/* Reset Filters */}
+          {(searchFilter || clientFilter !== "all" || formatFilter !== "all") && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchFilter("");
+                setClientFilter("all");
+                setFormatFilter("all");
+              }}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#7FA0D6] hover:text-white bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/40 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <X className="size-3.5" />
+              <span>Reset</span>
+            </button>
+          )}
+        </div>
+
         {/* Mobile-Only Kanban Column Selector Pills */}
         <div className="flex md:hidden items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs font-bold">
           {[
             { id: "all", label: "All Columns", count: totalActive },
-            { id: "backlog", label: "Backlog", count: data?.tasks.backlog.length || 0 },
-            { id: "in_progress", label: "In Progress", count: data?.tasks.in_production.length || 0 },
-            { id: "review", label: "QA Review", count: data?.tasks.internal_qa.length || 0 },
-            { id: "dispatched", label: "Dispatched", count: (data?.tasks.ready_to_publish.length || 0) + (data?.tasks.completed.length || 0) },
+            { id: "backlog", label: "Backlog", count: filteredBacklog.length },
+            { id: "in_progress", label: "In Progress", count: filteredInProduction.length },
+            { id: "review", label: "QA Review", count: filteredInternalQa.length },
+            { id: "dispatched", label: "Dispatched", count: filteredDispatched.length },
           ].map((col) => (
             <button
               key={col.id}
@@ -419,18 +376,18 @@ export function PodTaskBoardPage() {
                 <h3 className="text-xs font-black uppercase tracking-wider text-[#F1F5F9]">Backlog</h3>
               </div>
               <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-[#0B111C] text-[#7FA0D6] border border-[#2A3446]">
-                {data?.tasks?.backlog?.length || 0}
+                {filteredBacklog.length}
               </span>
             </div>
 
             {/* Cards */}
             <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar min-h-0">
-              {(!data?.tasks?.backlog || data.tasks.backlog.length === 0) ? (
+              {filteredBacklog.length === 0 ? (
                 <div className="bg-[#0B111C]/60 border border-dashed border-[#2A3446] rounded-xl p-4 text-center">
                   <p className="text-xs font-medium text-[#97A0B3]">No backlog tasks</p>
                 </div>
               ) : (
-                [...data.tasks.backlog]
+                [...filteredBacklog]
                   // Soonest first; tasks without an estimate sink to the bottom.
                   .sort(
                     (a, b) =>
@@ -479,18 +436,18 @@ export function PodTaskBoardPage() {
                 <h3 className="text-xs font-black uppercase tracking-wider text-[#7FA0D6]">In Progress</h3>
               </div>
               <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
-                {data?.tasks?.in_production?.length || 0}
+                {filteredInProduction.length}
               </span>
             </div>
 
             {/* Cards */}
             <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar min-h-0">
-              {(!data?.tasks?.in_production || data.tasks.in_production.length === 0) ? (
+              {filteredInProduction.length === 0 ? (
                 <div className="bg-[#0B111C]/60 border border-dashed border-[#2A3446] rounded-xl p-4 text-center">
                   <p className="text-xs font-medium text-[#97A0B3]">No tasks currently in progress</p>
                 </div>
               ) : (
-                data.tasks.in_production.map((task) => (
+                filteredInProduction.map((task) => (
                   <div key={task.id} className="bg-[#0B111C] rounded-xl p-3 border border-[#2A3446] shadow-2xs hover:border-[#7FA0D6]/30 transition-all space-y-2">
                     <div className="flex items-center justify-between text-[10.5px] font-bold">
                       <span className="text-[#7FA0D6] truncate max-w-[130px]">{task.client_name || "Client"}</span>
@@ -528,18 +485,18 @@ export function PodTaskBoardPage() {
                 <h3 className="text-xs font-black uppercase tracking-wider text-amber-400">Lead QA Review</h3>
               </div>
               <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                {data?.tasks?.internal_qa?.length || 0}
+                {filteredInternalQa.length}
               </span>
             </div>
 
             {/* Cards */}
             <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar min-h-0">
-              {(!data?.tasks?.internal_qa || data.tasks.internal_qa.length === 0) ? (
+              {filteredInternalQa.length === 0 ? (
                 <div className="bg-[#0B111C]/60 border border-dashed border-[#2A3446] rounded-xl p-4 text-center">
                   <p className="text-xs font-medium text-[#97A0B3]">No deliverables awaiting sign-off</p>
                 </div>
               ) : (
-                data.tasks.internal_qa.map((task) => (
+                filteredInternalQa.map((task) => (
                   <div key={task.id} className="bg-[#0B111C] rounded-xl p-3 border border-[#2A3446] shadow-2xs hover:border-amber-500/30 transition-all space-y-2">
                     <div className="flex items-center justify-between text-[10.5px] font-bold">
                       <span className="text-[#7FA0D6] truncate max-w-[130px]">{task.client_name || "Client"}</span>
@@ -585,19 +542,18 @@ export function PodTaskBoardPage() {
                 <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400">Dispatched</h3>
               </div>
               <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                <Check className="size-3" /> {(data?.tasks?.completed?.length || 0) + (data?.tasks?.ready_to_publish?.length || 0)}
+                <Check className="size-3" /> {filteredDispatched.length}
               </span>
             </div>
 
             {/* Cards */}
             <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar min-h-0">
-              {(!data?.tasks?.completed && !data?.tasks?.ready_to_publish) ||
-              ((data?.tasks?.completed?.length || 0) === 0 && (data?.tasks?.ready_to_publish?.length || 0) === 0) ? (
+              {filteredDispatched.length === 0 ? (
                 <div className="bg-[#0B111C]/60 border border-dashed border-[#2A3446] rounded-xl p-4 text-center">
                   <p className="text-xs font-medium text-[#97A0B3]">No dispatched tasks yet</p>
                 </div>
               ) : (
-                [...(data?.tasks?.ready_to_publish || []), ...(data?.tasks?.completed || [])].slice(0, 5).map((task) => (
+                filteredDispatched.slice(0, 8).map((task) => (
                   <div key={task.id} className="bg-[#0B111C] rounded-xl p-3 border border-[#2A3446] shadow-2xs hover-card-innovative space-y-2">
                     <div className="flex items-center justify-between text-[10.5px] font-bold">
                       <span className="text-emerald-400 font-bold text-[9.5px] flex items-center gap-1">

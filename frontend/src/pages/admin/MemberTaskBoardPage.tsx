@@ -37,7 +37,7 @@ import { fetchPodDashboard, type PodDashboardData, type PodTask } from "../../li
 import { getEligibleDeliverableTypes, shouldShowTaskForUser } from "../../lib/creative-roles";
 import { MemberMobileTaskBoard } from "../../components/workstation/MemberMobileTaskBoard";
 
-export type Column = "assigned" | "production" | "qa" | "review";
+type Column = "assigned" | "production" | "qa" | "review";
 
 const FORMAT_LABELS: Record<string, string> = {
   reel: "Reel",
@@ -64,22 +64,22 @@ const RUBRIC = [
 
 const MB = 1024 * 1024;
 
-export function formatLabel(type: string): string {
+function formatLabel(type: string): string {
   return FORMAT_LABELS[type] || type.replace(/_/g, " ");
 }
 
-export function taskTitle(task: PodTask): string {
+function taskTitle(task: PodTask): string {
   return task.blueprint?.concept_name || task.blueprint?.title || `${formatLabel(task.deliverable_type)} for ${task.client_name}`;
 }
 
-export function columnOf(bucket: keyof PodDashboardData["tasks"]): Column {
+function columnOf(bucket: keyof PodDashboardData["tasks"]): Column {
   if (bucket === "backlog") return "assigned";
   if (bucket === "in_production") return "production";
   if (bucket === "internal_qa") return "qa";
   return "review";
 }
 
-export function dueText(task: PodTask): { text: string; urgent: boolean } {
+function dueText(task: PodTask): { text: string; urgent: boolean } {
   if (task.sla_due_at) {
     const hours = (new Date(task.sla_due_at).getTime() - Date.now()) / 3_600_000;
     if (hours < 0) return { text: `Overdue by ${Math.ceil(-hours)}h`, urgent: true };
@@ -93,7 +93,7 @@ export function dueText(task: PodTask): { text: string; urgent: boolean } {
 }
 
 /** Feedback the creative must act on: lead QA notes or the client's change request. */
-export function feedbackFor(task: PodTask): {
+function feedbackFor(task: PodTask): {
   source: "Lead QA" | "Client";
   text: string;
   voice_note_url?: string | null;
@@ -120,18 +120,18 @@ export function feedbackFor(task: PodTask): {
   return null;
 }
 
-export function isHighPriority(task: PodTask): boolean {
+function isHighPriority(task: PodTask): boolean {
   return task.is_near_sla || (task.hours_remaining ?? 1) < 0 || !!task.is_revision;
 }
 
-export function getTaskDueTimestamp(task: PodTask): number {
+function getTaskDueTimestamp(task: PodTask): number {
   const d = task.due_date || task.sla_due_at;
   if (!d) return Number.MAX_SAFE_INTEGER;
   const time = new Date(d).getTime();
   return isNaN(time) ? Number.MAX_SAFE_INTEGER : time;
 }
 
-export function compareTaskDueDates(a: PodTask, b: PodTask): number {
+function compareTaskDueDates(a: PodTask, b: PodTask): number {
   const timeA = getTaskDueTimestamp(a);
   const timeB = getTaskDueTimestamp(b);
   if (timeA !== timeB) return timeA - timeB;

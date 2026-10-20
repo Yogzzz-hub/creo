@@ -11,11 +11,11 @@ import {
   Layers,
   ChevronRight,
   Mail,
-  Instagram,
   AlertTriangle,
   Bell,
   Loader2,
 } from "lucide-react";
+import { Instagram } from "../../ui/brand-icons";
 import { ClientRosterItem } from "@/types/ops";
 import { sendClientReminder } from "../../lib/ops-api";
 

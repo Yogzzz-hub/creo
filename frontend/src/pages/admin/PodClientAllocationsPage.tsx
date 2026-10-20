@@ -68,7 +68,7 @@ export function PodClientAllocationsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [clients, setClients] = useState<ClientAccount[]>(INITIAL_CLIENTS);
-  const [filterTab, setFilterTab] = useState<"all" | "sla" | "review">("all");
+  const [filterTab, setFilterTab] = useState<"all" | "review">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [reallocationModal, setReallocationModal] = useState(false);
@@ -254,7 +254,6 @@ export function PodClientAllocationsPage() {
   };
 
   const filteredClients = clients.filter((c) => {
-    if (filterTab === "sla" && !c.isHighPriority) return false;
     if (filterTab === "review" && !c.hasReviewToday && c.reviewAssetsCount === 0) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -337,18 +336,7 @@ export function PodClientAllocationsPage() {
                   : "bg-[#0B111C] text-[#F1F5F9] hover:bg-[#161F2D]"
               }`}
             >
-              All Assigned ({clients.length})
-            </button>
-            <button
-              onClick={() => setFilterTab("sla")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                filterTab === "sla"
-                  ? "bg-blue-600 text-white shadow-2xs"
-                  : "bg-[#0B111C] text-[#F1F5F9] hover:bg-[#161F2D]"
-              }`}
-            >
-              <span className="size-1.5 rounded-full bg-blue-500" />
-              High SLA ({clients.filter((c) => c.isHighPriority).length})
+              All Clients ({clients.length})
             </button>
             <button
               onClick={() => setFilterTab("review")}
@@ -359,7 +347,7 @@ export function PodClientAllocationsPage() {
               }`}
             >
               <span className="size-1.5 rounded-full bg-[#7FA0D6]" />
-              Review Today ({clients.filter((c) => c.hasReviewToday || c.reviewAssetsCount > 0).length})
+              Pending QA ({clients.filter((c) => c.hasReviewToday || c.reviewAssetsCount > 0).length})
             </button>
           </div>
 
@@ -370,8 +358,8 @@ export function PodClientAllocationsPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Filter clients..."
-                className="pl-7 pr-3 py-1 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-medium w-full sm:w-52 sm:focus:w-60 focus:bg-[#161F2D] focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                placeholder="Search clients, brands, slack..."
+                className="pl-7 pr-3 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-medium w-full sm:w-56 focus:bg-[#161F2D] focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
               />
             </div>
           </div>
@@ -400,7 +388,7 @@ export function PodClientAllocationsPage() {
               </div>
               <div className="pt-1.5 border-t border-[#2A3446] text-[10px] sm:text-[11px] flex justify-between items-center">
                 <span className="font-bold text-[#BCCCE6] flex items-center gap-1">
-                  ● 100% SLA compliance
+                  ● 100% On Schedule
                 </span>
                 <span className="text-[9px] font-bold text-[#97A0B3]">Tier 1 Pod</span>
               </div>
@@ -463,7 +451,7 @@ export function PodClientAllocationsPage() {
                 <span className="text-lg sm:text-xl font-black text-white">{totalSignoffs} Assets</span>
                 {urgentCount > 0 ? (
                   <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-blue-500/15 text-[#BCCCE6]">
-                    {urgentCount} SLA Alert{urgentCount > 1 ? "s" : ""}
+                    {urgentCount} Urgent Review{urgentCount > 1 ? "s" : ""}
                   </span>
                 ) : (
                   <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-blue-500/15 text-[#BCCCE6]">
@@ -543,22 +531,20 @@ export function PodClientAllocationsPage() {
               filteredClients.map((client) => (
               <div
                 key={client.id}
-                className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs hover:border-[#7FA0D6]/30 hover:shadow-xs transition-all space-y-3.5"
+                onClick={() => navigate(`/lead/clients/${client.id}`)}
+                className="bg-[#161F2D] rounded-2xl p-3.5 sm:p-5 border border-[#2A3446]/80 shadow-2xs hover:border-[#7FA0D6]/50 hover:shadow-md transition-all space-y-3 cursor-pointer group"
               >
                 {/* Account Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#2A3446] gap-2.5">
-                  <Link
-                    to={`/lead/clients/${client.id}`}
-                    className="flex items-center gap-3 group cursor-pointer"
-                  >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 sm:pb-3 border-b border-[#2A3446] gap-2.5">
+                  <div className="flex items-center gap-3">
                     <div
-                      className={`size-10 rounded-xl ${client.avatarBg} text-white font-black text-xs flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform`}
+                      className={`size-10 rounded-xl ${client.avatarBg} text-white font-black text-xs flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform shrink-0`}
                     >
                       {client.avatar}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <h3 className="text-sm font-black text-white group-hover:text-[#7FA0D6] transition-colors flex items-center gap-1">
+                        <h3 className="text-sm font-black text-white group-hover:text-[#7FA0D6] transition-colors flex items-center gap-1 truncate">
                           {client.name}
                           <ArrowRight className="size-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-[#7FA0D6]" />
                         </h3>
@@ -569,28 +555,19 @@ export function PodClientAllocationsPage() {
                           {client.statusBadge}
                         </span>
                       </div>
-                      <p className="text-[11px] text-[#97A0B3] font-medium mt-0.5">
+                      <p className="text-[11px] text-[#97A0B3] font-medium mt-0.5 truncate">
                         {client.contact} · <span className="text-[#7FA0D6] font-bold">{client.slackChannel}</span>
                       </p>
                     </div>
-                  </Link>
+                  </div>
 
-                  <div className="flex items-center gap-2 self-start sm:self-auto">
-                    {/* Button 1: Client Details */}
-                    <Link
-                      to={`/lead/clients/${client.id}`}
-                      className="px-3 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#7FA0D6]/20 border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs active:scale-95 cursor-pointer"
-                    >
-                      <Sparkles className="size-3 text-[#7FA0D6]" />
-                      Client Details
-                    </Link>
-
-                    {/* Button 2: Sign-off QA Now / Review Assets */}
+                  <div className="flex items-center gap-2 self-start sm:self-auto shrink-0" onClick={(e) => e.stopPropagation()}>
+                    {/* Action Button: Sign-off QA Now / Review Assets or QA Cleared */}
                     {client.reviewAssetsCount > 0 ? (
                       <button
                         type="button"
                         onClick={() => handleOpenReview(client)}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer ${
                           client.isUrgent
                             ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20 animate-pulse"
                             : "bg-[#7FA0D6] hover:bg-blue-700 text-white shadow-blue-500/20"
@@ -609,29 +586,33 @@ export function PodClientAllocationsPage() {
                         )}
                       </button>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/lead/clients/${client.id}`)}
-                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-blue-500/15 text-[#BCCCE6] border border-blue-500/30 shadow-2xs transition-all cursor-pointer"
-                      >
-                        <ShieldCheck className="size-3 text-[#BCCCE6]" />
+                      <span className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1 bg-blue-500/10 text-[#BCCCE6] border border-blue-500/20">
+                        <ShieldCheck className="size-3 text-[#7FA0D6]" />
                         QA Cleared
-                      </button>
+                      </span>
                     )}
+
+                    <Link
+                      to={`/lead/clients/${client.id}`}
+                      className="px-3 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#7FA0D6]/20 border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs active:scale-95 cursor-pointer"
+                    >
+                      <Sparkles className="size-3 text-[#7FA0D6]" />
+                      <span>Workspace →</span>
+                    </Link>
                   </div>
                 </div>
 
-                {/* Deliverables Burndown Bars */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {/* Deliverables Burndown Bars - Compact 3-Column on all screens */}
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5">
                   {client.deliverables.map((del) => (
-                    <div key={del.label} className="bg-[#0B111C] p-2.5 rounded-xl border border-[#2A3446] space-y-1">
-                      <div className="flex justify-between text-[11px] font-bold">
-                        <span className="text-[#F1F5F9]">{del.label}</span>
-                        <span className="text-[#97A0B3]">
-                          {del.current} / {del.target} ({del.percent}%)
+                    <div key={del.label} className="bg-[#0B111C] p-2 sm:p-2.5 rounded-xl border border-[#2A3446] space-y-1">
+                      <div className="flex justify-between items-center text-[10px] sm:text-[11px] font-bold">
+                        <span className="text-[#F1F5F9] truncate">{del.label}</span>
+                        <span className="text-[#97A0B3] text-[9.5px] sm:text-[11px] shrink-0">
+                          {del.current}/{del.target}
                         </span>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-200/70 rounded-full overflow-hidden">
+                      <div className="h-1.5 w-full bg-[#161F2D] rounded-full overflow-hidden">
                         <div
                           className={`h-full ${del.color} rounded-full transition-all duration-500`}
                           style={{ width: `${del.percent}%` }}
@@ -642,39 +623,37 @@ export function PodClientAllocationsPage() {
                 </div>
 
                 {/* Assignees & Next Handoff Footer */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-[#2A3446] text-xs text-[#F1F5F9] gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-[#97A0B3]">Pod Assignees:</span>
-                    <div className="flex items-center gap-1.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-2.5 sm:pt-3 border-t border-[#2A3446]/60 text-xs text-[#F1F5F9] gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] sm:text-xs font-bold text-[#97A0B3]">Talent:</span>
+                    <div className="flex items-center gap-1 flex-wrap">
                       {client.assignees.map((assignee) => (
                         <div
                           key={assignee.name}
-                          className="flex items-center gap-1 bg-[#161F2D] px-2 py-0.5 rounded-lg border border-[#2A3446] text-[11px] font-bold"
+                          className="flex items-center gap-1 bg-[#0B111C] px-1.5 sm:px-2 py-0.5 rounded-lg border border-[#2A3446] text-[10px] font-bold"
                         >
                           <div
-                            className={`size-4 rounded-md ${assignee.bg} text-white flex items-center justify-center text-[8px] font-black`}
+                            className={`size-3.5 sm:size-4 rounded-md ${assignee.bg} text-white flex items-center justify-center text-[7.5px] sm:text-[8px] font-black`}
                           >
                             {assignee.avatar}
                           </div>
-                          <span>
-                            {assignee.name} ({assignee.role})
+                          <span className="truncate max-w-[80px] sm:max-w-none">
+                            {assignee.name}
                           </span>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4">
-                    <span className="font-bold text-[#F1F5F9] flex items-center gap-1 text-[11px]">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 text-[10px] sm:text-[11px]">
+                    <span className="font-bold text-[#F1F5F9] flex items-center gap-1">
                       <Clock className="size-3 text-[#97A0B3]" />
-                      Next Handoff: <span className="text-[#7FA0D6]">{client.nextHandoff}</span>
+                      <span className="text-[#97A0B3]">Handoff:</span>
+                      <span className="text-[#7FA0D6] truncate">{client.nextHandoff}</span>
                     </span>
-                    <Link
-                      to={`/lead/clients/${client.id}`}
-                      className="text-[11px] font-bold text-[#7FA0D6] hover:text-blue-800 hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      View Profile →
-                    </Link>
+                    <span className="font-bold text-[#7FA0D6] group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                      Open Space →
+                    </span>
                   </div>
                 </div>
               </div>
@@ -737,7 +716,7 @@ export function PodClientAllocationsPage() {
                 </span>
                 {reviewModal.client.isUrgent ? (
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-500/15 text-[#BCCCE6] border border-blue-500/30 animate-pulse">
-                    ⚡ Urgent SLA: 1h 14m remaining
+                    ⚡ Priority QA: Pending Lead Sign-off
                   </span>
                 ) : (
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">

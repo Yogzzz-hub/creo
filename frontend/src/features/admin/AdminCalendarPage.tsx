@@ -146,6 +146,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
+  const [viewMode, setViewMode] = useState<"month" | "week">("month");
   // Filter State
   const [selectedClient, setSelectedClient] = useState("all");
   const [formatFilter, setFormatFilter] = useState<"all" | "reel" | "poster" | "story">("all");
@@ -283,12 +284,45 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
 
   // Calendar Math
   const dayCount = new Date(year, monthNumber, 0).getDate();
-  const offset = (month.getDay() + 6) % 7;
+  const offset = month.getDay(); // 0 for Sunday to align with SUN..SAT headers
   const selectedDayEvents = visible.filter((ev) => Number(ev.date.split("-")[2]) === selectedDay);
+
+  const selectedDate = useMemo(() => {
+    return new Date(year, month.getMonth(), Math.min(selectedDay, dayCount));
+  }, [year, month, selectedDay, dayCount]);
+
+  const weekDays = useMemo(() => {
+    const dayOfWeek = selectedDate.getDay(); // 0 is Sunday
+    const start = new Date(selectedDate);
+    start.setDate(selectedDate.getDate() - dayOfWeek);
+
+    const days: { date: Date; dateStr: string; dayNumber: number; isCurrentMonth: boolean }[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      days.push({
+        date: d,
+        dateStr: `${y}-${m}-${day}`,
+        dayNumber: d.getDate(),
+        isCurrentMonth: d.getMonth() === month.getMonth(),
+      });
+    }
+    return days;
+  }, [selectedDate, month]);
 
   const moveMonth = (delta: number) => {
     setMonth(new Date(year, month.getMonth() + delta, 1));
     setSelectedDay(1);
+  };
+
+  const moveWeek = (delta: number) => {
+    const nextDate = new Date(selectedDate);
+    nextDate.setDate(selectedDate.getDate() + delta * 7);
+    setMonth(new Date(nextDate.getFullYear(), nextDate.getMonth(), 1));
+    setSelectedDay(nextDate.getDate());
   };
 
   // Monthly KPI Totals
@@ -531,19 +565,55 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div>
               <h2 className="text-[18px] sm:text-[22px] font-black text-white tracking-tight">
-                {month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+                {viewMode === "month"
+                  ? month.toLocaleDateString(undefined, { month: "long", year: "numeric" })
+                  : `${weekDays[0]?.date.toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    }) ?? ""} – ${weekDays[6]?.date.toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    }) ?? ""}`}
               </h2>
               <span className="text-xs text-[#97A0B3] font-medium">
                 {visible.length} deliverables matching filters
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Monthly / Weekly View Toggle */}
+              <div className="flex items-center bg-[#0B111C]/80 border border-[#2A3446] rounded-full p-1">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("month")}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                    viewMode === "month"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-[#97A0B3] hover:text-white"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("week")}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                    viewMode === "week"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-[#97A0B3] hover:text-white"
+                  }`}
+                >
+                  Weekly
+                </button>
+              </div>
+
               <button
                 type="button"
                 onClick={() => {
-                  setMonth(new Date());
-                  setSelectedDay(new Date().getDate());
+                  const now = new Date();
+                  setMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+                  setSelectedDay(now.getDate());
                 }}
                 className="px-4 py-1.5 text-xs font-bold text-slate-200 hover:text-white bg-[#0B111C]/80 hover:bg-[#0B111C] rounded-full border border-[#2A3446] transition-all cursor-pointer"
               >
@@ -551,17 +621,17 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               </button>
               <div className="flex items-center bg-[#0B111C]/80 border border-[#2A3446] rounded-full p-1">
                 <button
-                  onClick={() => moveMonth(-1)}
+                  onClick={() => (viewMode === "month" ? moveMonth(-1) : moveWeek(-1))}
                   className="p-1.5 text-slate-400 hover:text-white rounded-full transition-all cursor-pointer"
-                  title="Previous Month"
+                  title={viewMode === "month" ? "Previous Month" : "Previous Week"}
                 >
                   <ChevronLeft className="size-4" strokeWidth={2.5} />
                 </button>
                 <div className="w-[1px] h-4 bg-[#2A3446] mx-1"></div>
                 <button
-                  onClick={() => moveMonth(1)}
+                  onClick={() => (viewMode === "month" ? moveMonth(1) : moveWeek(1))}
                   className="p-1.5 text-slate-400 hover:text-white rounded-full transition-all cursor-pointer"
-                  title="Next Month"
+                  title={viewMode === "month" ? "Next Month" : "Next Week"}
                 >
                   <ChevronRight className="size-4" strokeWidth={2.5} />
                 </button>
@@ -569,100 +639,203 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col min-h-[500px]">
-            {/* Weekday Headers */}
-            <div className="grid grid-cols-7 mb-3">
-              {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day) => (
-                <div
-                  key={day}
-                  className="py-1 text-center text-[10px] sm:text-xs font-black text-[#97A0B3] uppercase tracking-wider"
-                >
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* Grid Cells */}
-            <div className="grid grid-cols-7 gap-1 sm:gap-2 flex-1 auto-rows-fr">
-              {Array.from({ length: offset }, (_, index) => (
-                <div key={`empty-${index}`} className="rounded-[1.25rem] bg-transparent p-2" />
-              ))}
-
-              {Array.from({ length: dayCount }, (_, index) => {
-                const day = index + 1;
-                const dayEvents = visible.filter((ev) => Number(ev.date.split("-")[2]) === day);
-                const isSelected = selectedDay === day;
-                const now = new Date();
-                const isToday =
-                  now.getDate() === day && now.getMonth() === month.getMonth() && now.getFullYear() === month.getFullYear();
-
-                // Compute counts by format for this cell
-                const dayCounts = dayEvents.reduce<Record<string, number>>((acc, ev) => {
-                  const t = (ev.type || "").toLowerCase();
-                  const key = t.includes("reel") || t.includes("video")
-                    ? "reel"
-                    : t.includes("story")
-                    ? "story"
-                    : t.includes("carousel")
-                    ? "carousel"
-                    : "poster";
-                  acc[key] = (acc[key] || 0) + 1;
-                  return acc;
-                }, {});
-
-                return (
-                  <button
+          {viewMode === "month" ? (
+            <div className="flex-1 flex flex-col min-h-[500px]">
+              {/* Weekday Headers */}
+              <div className="grid grid-cols-7 mb-3">
+                {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day) => (
+                  <div
                     key={day}
-                    onClick={() => setSelectedDay(day)}
-                    aria-pressed={isSelected}
-                    className={`relative rounded-xl p-1.5 sm:p-2 min-w-0 transition-all cursor-pointer min-h-[90px] sm:min-h-[110px] flex flex-col justify-between border-2 group ${
-                      isSelected
-                        ? "border-blue-500 bg-[#7FA0D6]/15 ring-2 ring-blue-500/20 shadow-lg scale-[1.01] z-10"
-                        : isToday
-                        ? "border-[#7FA0D6]/50 bg-[#161F2D] shadow-sm"
-                        : "border-[#2A3446] hover:border-[#7FA0D6]/40 bg-[#0B111C]/40 hover:bg-[#161F2D] shadow-xs"
-                    }`}
+                    className="py-1 text-center text-[10px] sm:text-xs font-black text-[#97A0B3] uppercase tracking-wider"
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <span
-                        className={`text-xs sm:text-base font-black ${
-                          isSelected ? "text-white" : isToday ? "text-[#7FA0D6]" : "text-slate-300 group-hover:text-white"
-                        }`}
-                      >
-                        {day}
-                      </span>
-                      {dayEvents.length > 0 && (
-                        <span className="text-[9px] font-bold text-[#97A0B3] hidden sm:inline-block">
-                          {dayEvents.length}
-                        </span>
-                      )}
-                    </div>
+                    {day}
+                  </div>
+                ))}
+              </div>
 
-                    {/* Chips with Format-Specific Icons */}
-                    <div className="mt-auto flex flex-col gap-1 w-full text-left overflow-hidden">
-                      {Object.entries(dayCounts).map(([fmtKey, count]) => {
-                        const cfg = FORMAT_CONFIG[fmtKey as keyof typeof FORMAT_CONFIG] || FORMAT_CONFIG.poster;
-                        const IconComponent = cfg.icon;
-                        return (
-                          <div
-                            key={fmtKey}
-                            className={`flex items-center gap-1 px-1 sm:px-1.5 py-0.5 rounded-md border text-[8px] sm:text-[9.5px] font-bold leading-tight truncate ${cfg.chipBg} ${cfg.chipText} ${cfg.border}`}
-                            title={`${count} ${cfg.label}${count > 1 ? "s" : ""}`}
-                          >
-                            <IconComponent className="size-2.5 sm:size-3 shrink-0" />
-                            <span className="truncate">
-                              {count} {cfg.label}
-                              {count > 1 ? "s" : ""}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </button>
-                );
-              })}
+              {/* Grid Cells */}
+              <div className="grid grid-cols-7 gap-1 sm:gap-2 flex-1 auto-rows-fr">
+                {Array.from({ length: offset }, (_, index) => (
+                  <div key={`empty-${index}`} className="rounded-[1.25rem] bg-transparent p-2" />
+                ))}
+
+                {Array.from({ length: dayCount }, (_, index) => {
+                  const day = index + 1;
+                  const dayEvents = visible.filter((ev) => Number(ev.date.split("-")[2]) === day);
+                  const isSelected = selectedDay === day;
+                  const now = new Date();
+                  const isToday =
+                    now.getDate() === day && now.getMonth() === month.getMonth() && now.getFullYear() === month.getFullYear();
+
+                  // Compute counts by format for this cell
+                  const dayCounts = dayEvents.reduce<Record<string, number>>((acc, ev) => {
+                    const t = (ev.type || "").toLowerCase();
+                    const key = t.includes("reel") || t.includes("video")
+                      ? "reel"
+                      : t.includes("story")
+                      ? "story"
+                      : t.includes("carousel")
+                      ? "carousel"
+                      : "poster";
+                    acc[key] = (acc[key] || 0) + 1;
+                    return acc;
+                  }, {});
+
+                  return (
+                    <button
+                      key={day}
+                      onClick={() => setSelectedDay(day)}
+                      aria-pressed={isSelected}
+                      className={`relative rounded-xl p-1.5 sm:p-2 min-w-0 transition-all cursor-pointer min-h-[90px] sm:min-h-[110px] flex flex-col justify-between border-2 group ${
+                        isSelected
+                          ? "border-blue-500 bg-[#7FA0D6]/15 ring-2 ring-blue-500/20 shadow-lg scale-[1.01] z-10"
+                          : isToday
+                          ? "border-[#7FA0D6]/50 bg-[#161F2D] shadow-sm"
+                          : "border-[#2A3446] hover:border-[#7FA0D6]/40 bg-[#0B111C]/40 hover:bg-[#161F2D] shadow-xs"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span
+                          className={`text-xs sm:text-base font-black ${
+                            isSelected ? "text-white" : isToday ? "text-[#7FA0D6]" : "text-slate-300 group-hover:text-white"
+                          }`}
+                        >
+                          {day}
+                        </span>
+                        {dayEvents.length > 0 && (
+                          <span className="text-[9px] font-bold text-[#97A0B3] hidden sm:inline-block">
+                            {dayEvents.length}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Chips with Format-Specific Icons */}
+                      <div className="mt-auto flex flex-col gap-1 w-full text-left overflow-hidden">
+                        {Object.entries(dayCounts).map(([fmtKey, count]) => {
+                          const cfg = FORMAT_CONFIG[fmtKey as keyof typeof FORMAT_CONFIG] || FORMAT_CONFIG.poster;
+                          const IconComponent = cfg.icon;
+                          return (
+                            <div
+                              key={fmtKey}
+                              className={`flex items-center gap-1 px-1 sm:px-1.5 py-0.5 rounded-md border text-[8px] sm:text-[9.5px] font-bold leading-tight truncate ${cfg.chipBg} ${cfg.chipText} ${cfg.border}`}
+                              title={`${count} ${cfg.label}${count > 1 ? "s" : ""}`}
+                            >
+                              <IconComponent className="size-2.5 sm:size-3 shrink-0" />
+                              <span className="truncate">
+                                {count} {cfg.label}
+                                {count > 1 ? "s" : ""}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex-1 flex flex-col min-h-[500px]">
+              {/* Weekly View */}
+              <div className="flex lg:grid lg:grid-cols-7 gap-2.5 overflow-x-auto pb-2.5 snap-x snap-mandatory flex-1 auto-rows-fr">
+                {weekDays.map((wDay) => {
+                  const dayEvents = visible.filter((ev) => ev.date === wDay.dateStr);
+                  const isSelected = selectedDay === wDay.dayNumber && wDay.isCurrentMonth;
+                  const now = new Date();
+                  const isToday =
+                    now.getDate() === wDay.dayNumber &&
+                    now.getMonth() === wDay.date.getMonth() &&
+                    now.getFullYear() === wDay.date.getFullYear();
+
+                  return (
+                    <div
+                      key={wDay.dateStr}
+                      onClick={() => {
+                        if (wDay.isCurrentMonth) setSelectedDay(wDay.dayNumber);
+                      }}
+                      className={`min-w-[240px] sm:min-w-[280px] lg:min-w-0 snap-start flex-1 rounded-2xl p-2.5 flex flex-col border transition-all cursor-pointer ${
+                        isSelected
+                          ? "border-blue-500 bg-[#7FA0D6]/10 ring-1 ring-blue-500/20"
+                          : isToday
+                          ? "border-[#7FA0D6]/40 bg-[#161F2D]"
+                          : "border-[#2A3446] bg-[#0B111C]/40 hover:bg-[#161F2D]/60"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#2A3446]/60">
+                        <span className="text-[11px] font-black uppercase text-[#97A0B3]">
+                          {wDay.date.toLocaleDateString(undefined, { weekday: "short" })}
+                        </span>
+                        <span
+                          className={`text-xs font-black px-2 py-0.5 rounded-full ${
+                            isToday
+                              ? "bg-blue-600 text-white"
+                              : isSelected
+                              ? "bg-blue-500/20 text-[#7FA0D6]"
+                              : "text-slate-300"
+                          }`}
+                        >
+                          {wDay.dayNumber}
+                        </span>
+                      </div>
+
+                      <div className="flex-1 space-y-2 overflow-y-auto max-h-[460px] pr-0.5">
+                        {dayEvents.length === 0 ? (
+                          <div className="text-[11px] text-[#97A0B3]/50 italic py-8 text-center flex flex-col items-center justify-center">
+                            <span>No items</span>
+                          </div>
+                        ) : (
+                          dayEvents.map((ev) => {
+                            const cfg = getFormatConfig(ev.type);
+                            const Icon = cfg.icon;
+                            return (
+                              <div
+                                key={ev.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setInspectEvent(ev);
+                                }}
+                                className="p-2.5 rounded-xl bg-[#161F2D] hover:bg-[#1C2738] border border-[#2A3446] hover:border-[#7FA0D6]/50 transition-all cursor-pointer group flex flex-col gap-1.5 shadow-xs"
+                              >
+                                <div className="flex items-center justify-between gap-1">
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8.5px] font-black ${cfg.chipBg} ${cfg.chipText} border ${cfg.border}`}
+                                  >
+                                    <Icon className="size-2.5" />
+                                    {cfg.label}
+                                  </span>
+                                  <span className="text-[9.5px] font-mono font-bold text-[#7FA0D6]">
+                                    {ev.time}
+                                  </span>
+                                </div>
+                                <p className="text-[11.5px] font-bold text-white line-clamp-2 leading-tight group-hover:text-[#7FA0D6]">
+                                  {ev.title}
+                                </p>
+                                <div className="flex items-center justify-between pt-1 border-t border-[#2A3446]/60 mt-0.5 text-[10px]">
+                                  <span className="font-semibold text-[#97A0B3] truncate max-w-[70px]">
+                                    {ev.client_name}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setInspectEvent(ev);
+                                    }}
+                                    className="text-blue-400 font-bold hover:underline"
+                                  >
+                                    Details
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Selected Day Event Rundown */}
@@ -721,7 +894,8 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                 return (
                   <div
                     key={event.id}
-                    className="group relative bg-[#0B111C] hover:bg-[#111A28] border border-[#2A3446] hover:border-[#7FA0D6]/40 rounded-[1.25rem] p-4 transition-all overflow-hidden flex flex-col gap-2.5 shadow-sm"
+                    onClick={() => setInspectEvent(event)}
+                    className="group relative bg-[#0B111C] hover:bg-[#111A28] border border-[#2A3446] hover:border-[#7FA0D6]/40 rounded-[1.25rem] p-4 transition-all overflow-hidden flex flex-col gap-2.5 shadow-sm cursor-pointer"
                   >
                     {/* Top Row: Format Badge with Icon + Status */}
                     <div className="flex items-center justify-between gap-2">
@@ -790,14 +964,18 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                         )}
 
                         <button
-                          onClick={() => setInspectEvent(event)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setInspectEvent(event);
+                          }}
                           className="px-2 py-1 rounded-lg text-[10px] font-bold bg-[#161F2D] hover:bg-[#2A3446] text-[#7FA0D6] border border-[#2A3446] transition-all cursor-pointer inline-flex items-center gap-1"
                         >
                           <Eye size={11} /> Details
                         </button>
 
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedSlotForEdit(event);
                             setStoryModalOpen(true);
                           }}
@@ -818,8 +996,8 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
 
       {/* MODAL 1: Schedule Publication (Admin Need) */}
       {isScheduleOpen && canSchedulePublication && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-3 sm:p-4 backdrop-blur-xs">
+          <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-4 sm:p-7 max-w-lg w-full shadow-2xl relative max-h-[92vh] flex flex-col overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-[#2A3446] mb-5">
               <h3 className="text-lg font-black text-white flex items-center gap-2">
                 <CalendarIcon className="size-5 text-[#7FA0D6]" />
@@ -980,8 +1158,8 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
 
       {/* MODAL 2: Event Details & Admin Management (Admin Need) */}
       {inspectEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-7 max-w-xl w-full shadow-2xl relative max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-3 sm:p-4 backdrop-blur-xs">
+          <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-4 sm:p-7 max-w-xl w-full shadow-2xl relative max-h-[92vh] flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-[#2A3446] shrink-0">
               <div className="flex items-center gap-2">

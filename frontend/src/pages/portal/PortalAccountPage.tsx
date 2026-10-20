@@ -12,8 +12,6 @@ import {
   Phone,
   Mail,
   ShieldCheck,
-  Instagram,
-  Facebook,
   ArrowUpRight,
   ExternalLink,
   CheckCircle2,
@@ -27,6 +25,7 @@ import {
   Radio,
   Lock,
 } from "lucide-react";
+import { Instagram, Facebook } from "../../ui/brand-icons";
 import {
   disconnectInstagram,
   fetchInstagramStatus,

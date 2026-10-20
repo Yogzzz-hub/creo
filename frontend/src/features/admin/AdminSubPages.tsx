@@ -88,7 +88,6 @@ import {
   Layers,
   Mail,
   Phone,
-  Instagram,
   ExternalLink,
   FileText,
   Edit3,
@@ -117,6 +116,7 @@ import {
   Maximize2,
   Columns2,
 } from "lucide-react";
+import { Instagram } from "../../ui/brand-icons";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CustomSelect } from "../../components/ui/CustomSelect";
 import { DeliverableHistoryModal } from "../../components/portal/DeliverableHistoryModal";
@@ -4085,7 +4085,7 @@ export function AdminTasksPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPod, setSelectedPod] = useState("all");
   const [selectedClient, setSelectedClient] = useState("all");
-  const [priorityFilter, _setPriorityFilter] = useState<"all" | "urgent" | "high">("all"); void _setPriorityFilter;
+  const [priorityFilter, setPriorityFilter] = useState<"all" | "urgent" | "high">("all");
   const [assigneeTypeFilter, setAssigneeTypeFilter] = useState<"all" | "freelancers" | "in_house">("all");
   const [selectedFreelancer, setSelectedFreelancer] = useState("all");
   const [viewMode, setViewMode] = useState<"kanban" | "freelancer_roster">("kanban");
@@ -4636,7 +4636,7 @@ export function AdminTasksPage() {
 
             {/* Quick Status / Reset Filters */}
             <div className="flex items-center gap-2 text-xs">
-              {(searchQuery || selectedFreelancer !== "all" || selectedPod !== "all" || selectedClient !== "all") ? (
+              {(searchQuery || selectedFreelancer !== "all" || selectedPod !== "all" || selectedClient !== "all" || priorityFilter !== "all") ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -4644,6 +4644,7 @@ export function AdminTasksPage() {
                     setSelectedFreelancer("all");
                     setSelectedPod("all");
                     setSelectedClient("all");
+                    setPriorityFilter("all");
                   }}
                   className="px-2.5 py-1 rounded-lg text-xs font-semibold text-[#7FA0D6] hover:text-white hover:bg-[#7FA0D6]/10 transition-all flex items-center gap-1.5 cursor-pointer"
                 >
@@ -4695,6 +4696,21 @@ export function AdminTasksPage() {
                   { value: "Pod A", label: "Pod A (Brand Strategy)" },
                   { value: "Pod B", label: "Pod B (Performance Video)" },
                   { value: "Pod C", label: "Pod C (3D Motion)" },
+                ]}
+                className="!min-h-[42px] !h-[42px] !text-xs sm:!text-sm w-full"
+              />
+            </div>
+
+            {/* Priority Filter */}
+            <div className="w-full sm:w-auto shrink-0 min-w-[140px]">
+              <CustomSelect
+                value={priorityFilter}
+                onChange={(val) => setPriorityFilter(val as "all" | "urgent" | "high")}
+                ariaLabel="Filter Priority"
+                options={[
+                  { value: "all", label: "All Priorities" },
+                  { value: "urgent", label: "Urgent Only" },
+                  { value: "high", label: "High & Urgent" },
                 ]}
                 className="!min-h-[42px] !h-[42px] !text-xs sm:!text-sm w-full"
               />

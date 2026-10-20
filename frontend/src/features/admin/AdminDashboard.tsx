@@ -162,17 +162,15 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
         )}
 
         {/* Bottom Widget: Support Tickets */}
-        {(activeTab === "Dashboard" || activeTab === "Support" || activeTab === "Support Desk" || activeTab === "SLA & Support") && (
-          <div className="mt-3.5 sm:mt-4 grid grid-cols-1 gap-3.5 sm:gap-4">
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.25, ease: "easeOut" }}
-              className="hover-card-innovative rounded-2xl h-full"
-            >
-              {slaQuery.data ? <SupportTicketsWidget slas={slas} /> : <LoadingPanel label={slaQuery.isError ? "Support data unavailable" : "Loading support?"} />}
-            </motion.div>
-          </div>
+        {(activeTab === "Dashboard" || activeTab === "SLA & Support") && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.25, ease: "easeOut" }}
+            className="mt-3.5 sm:mt-4 hover-card-innovative rounded-2xl"
+          >
+            {slaQuery.data ? <SupportTicketsWidget slas={slas} /> : <LoadingPanel label={slaQuery.isError ? "Support data unavailable" : "Loading support?"} />}
+          </motion.div>
         )}
 
       </main>

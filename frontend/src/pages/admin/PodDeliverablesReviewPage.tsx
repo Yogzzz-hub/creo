@@ -1,6 +1,5 @@
 import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "motion/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -141,48 +140,48 @@ export function PodDeliverablesReviewPage() {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#161F2D] p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-[#2A3446]/80">
-          <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-[#7FA0D6] animate-pulse" />
-            <span className="text-xs font-bold text-[#F1F5F9]">{podName} · Lead QA before anything reaches the client</span>
+        {/* Compact Single-Row Header & Metrics Bar */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 bg-[#161F2D] p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-[#2A3446]/80 shrink-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-[#7FA0D6] animate-pulse" />
+              <span className="text-xs font-black text-white">{podName} · Lead QA</span>
+            </div>
+
+            {/* Metrics Chips */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#0B111C] border border-[#2A3446] text-white">
+                <FileCheck2 className="size-3 text-[#7FA0D6]" />
+                <span>Pending QA:</span>
+                <span className="text-[#7FA0D6]">{isLoading ? "..." : queue.length}</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#0B111C] border border-[#2A3446] text-[#97A0B3]">
+                <Users className="size-3 text-emerald-400" />
+                <span>With Client:</span>
+                <span className="text-white">{isLoading ? "..." : withClient}</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#0B111C] border border-[#2A3446] text-[#97A0B3]">
+                <AlertTriangle className="size-3 text-amber-400" />
+                <span>In Revision:</span>
+                <span className="text-white">{isLoading ? "..." : inRevision}</span>
+              </span>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => refetch()}
-              className="px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] hover:bg-[#161F2D] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <RefreshCw className={`size-3.5 text-[#97A0B3] ${isFetching ? "animate-spin" : ""}`} /> Refresh
             </button>
             <button
               onClick={handleExportReviewLedger}
-              className="px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] hover:bg-[#161F2D] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <FileText className="size-3.5 text-[#97A0B3]" /> Export ledger
             </button>
           </div>
-        </div>
-
-        <div className="flex md:grid md:grid-cols-3 overflow-x-auto gap-2.5 sm:gap-3 pb-1.5 md:pb-0 no-scrollbar snap-x overscroll-x-contain -mx-1 px-1 md:mx-0 md:px-0">
-          {[
-            { label: "Pending lead sign-off", value: isLoading ? "..." : isError ? "Unavailable" : queue.length, note: `${queue.filter((t) => t.is_near_sla).length} due within 24h`, icon: FileCheck2 },
-            { label: "With the client", value: isLoading ? "..." : isError ? "Unavailable" : withClient, note: "awaiting client approval", icon: Users },
-            { label: "Revisions in progress", value: isLoading ? "..." : isError ? "Unavailable" : inRevision, note: "returned by QA or the client", icon: AlertTriangle },
-          ].map((card, i) => (
-            <motion.div
-              key={card.label}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.05 * (i + 1) }}
-              className="min-w-[150px] md:min-w-0 flex-1 shrink-0 bg-[#161F2D] rounded-2xl p-3 border border-[#2A3446]/80 snap-start shadow-xs"
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] truncate">{card.label}</span>
-                <card.icon className="size-3.5 text-[#7FA0D6] shrink-0 ml-1" />
-              </div>
-              <div className="text-xl font-black text-white">{card.value}</div>
-              <div className="text-[10px] sm:text-[11px] text-[#97A0B3] mt-1 truncate">{card.note}</div>
-            </motion.div>
-          ))}
         </div>
 
         {isError && (
@@ -207,17 +206,17 @@ export function PodDeliverablesReviewPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
             {/* Queue */}
-            <div className="lg:col-span-3 bg-[#161F2D] rounded-2xl border border-[#2A3446]/80 p-3 space-y-2 max-h-[360px] lg:max-h-[calc(100vh-300px)] overflow-y-auto">
+            <div className="lg:col-span-3 bg-[#161F2D] rounded-2xl border border-[#2A3446]/80 p-2.5 sm:p-3 space-y-1.5 sm:space-y-2 max-h-[140px] sm:max-h-[220px] lg:max-h-[calc(100vh-300px)] overflow-y-auto">
               <h2 className="text-[11px] font-black uppercase tracking-wider text-[#97A0B3] px-1">Queue · {queue.length}</h2>
               {queue.map((task) => (
                 <button
                   key={task.id}
                   onClick={() => setSelectedId(task.id)}
-                  className={`w-full flex items-center gap-3 p-2 rounded-xl border text-left transition-colors ${
+                  className={`w-full flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-xl border text-left transition-colors ${
                     task.id === current.id ? "border-[#7FA0D6]/50 bg-[#0B111C]" : "border-transparent hover:bg-white/[0.03]"
                   }`}
                 >
-                  <div className="size-12 rounded-lg overflow-hidden bg-black shrink-0 border border-[#2A3446]">
+                  <div className="size-9 sm:size-12 rounded-lg overflow-hidden bg-black shrink-0 border border-[#2A3446]">
                     <DeliverableMedia
                       url={task.deliverable?.file_url}
                       isVideo={!!task.deliverable?.is_video}
@@ -263,11 +262,11 @@ export function PodDeliverablesReviewPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start">
                 <div className="lg:col-span-5 space-y-2">
                   <div
                     className={`w-full mx-auto bg-black rounded-2xl overflow-hidden border border-slate-800 ${
-                      deliverable.is_video || current.deliverable_type === "story" ? "aspect-[9/16] max-w-[300px]" : "aspect-[4/5] max-w-[360px]"
+                      deliverable.is_video || current.deliverable_type === "story" ? "aspect-[9/16] max-w-[200px] sm:max-w-[300px]" : "aspect-[4/5] max-w-[240px] sm:max-w-[360px]"
                     }`}
                   >
                     <DeliverableMedia url={deliverable.file_url} isVideo={deliverable.is_video} title={titleOf(current)} className="w-full h-full" />

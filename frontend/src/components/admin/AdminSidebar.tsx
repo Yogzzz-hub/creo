@@ -21,6 +21,7 @@ import {
   Send,
   Building2,
   LifeBuoy,
+  ShieldCheck,
   ExternalLink,
   CheckSquare,
   CalendarCheck,
@@ -52,13 +53,7 @@ export function AdminSidebar() {
   const [loggingOut, setLoggingOut] = useState(false);
 
   const isAdminOrSuper = user?.role === "admin" || user?.role === "super_admin";
-  const isTeamLead =
-    user?.role === "team_lead" ||
-    user?.role === "lead" ||
-    location.pathname.startsWith("/lead") ||
-    location.pathname.startsWith("/team-lead") ||
-    location.pathname === "/admin/pod-dashboard" ||
-    location.pathname === "/admin/pod";
+  const isTeamLead = user?.role === "team_lead";
   const isSpecialist =
     user?.role === "team_member" ||
     user?.role === "editor" ||
@@ -87,7 +82,7 @@ export function AdminSidebar() {
 
   // Handle escape key on mobile
   useEffect(() => {
-    if (isMemberRole || isTeamLead) return;
+    if (isMemberRole) return;
     if (!mobileOpen) {
       document.body.style.overflow = "";
       return;
@@ -222,16 +217,11 @@ export function AdminSidebar() {
         location.pathname.startsWith("/admin/support/tickets")
       );
     }
-    if (href === "/admin/calendar") {
+    if (href === "/admin/sla" || href === "/admin/support/sla") {
       return (
-        location.pathname === "/admin/calendar" ||
-        location.pathname.startsWith("/admin/calendar/")
-      );
-    }
-    if (href === "/workstation/settings") {
-      return (
-        location.pathname === "/workstation/settings" ||
-        location.pathname === "/admin/settings"
+        location.pathname === "/admin/sla" ||
+        location.pathname === "/admin/support/sla" ||
+        location.pathname.startsWith("/admin/support/sla")
       );
     }
     if (location.pathname === href) return true;
@@ -267,9 +257,10 @@ export function AdminSidebar() {
       ],
     },
     {
-      label: "OPERATIONS",
+      label: "OPERATIONS & SLA",
       items: [
         { label: "Slack Chat", href: "/slack", icon: MessageSquare, badge: "Chat" },
+        { label: "SLA Performance", href: "/admin/support/sla", icon: ShieldCheck },
         { label: "Support Desk", href: "/admin/support", icon: LifeBuoy },
       ],
     },
@@ -281,7 +272,7 @@ export function AdminSidebar() {
 
   const leadNavSections: NavSection[] = [
     {
-      label: "",
+      label: "OVERVIEW",
       items: [
         { label: "Home", href: "/admin/pod-dashboard", icon: Home },
         {
@@ -303,9 +294,10 @@ export function AdminSidebar() {
       ],
     },
     {
-      label: "OPERATIONS",
+      label: "OPERATIONS & SLA",
       items: [
         { label: "Slack Chat", href: "/slack", icon: MessageSquare, badge: "Chat" },
+        { label: "SLA Performance", href: "/admin/sla", icon: ShieldCheck },
         { label: "Support Desk", href: "/admin/support", icon: LifeBuoy },
       ],
     },
@@ -399,7 +391,7 @@ export function AdminSidebar() {
     ? freelancerNavSections
     : isBDERole
     ? bdeNavSections
-    : isTeamLead
+    : user?.role === "team_lead"
     ? (location.pathname.startsWith("/portal") ? [portalPreviewSection, ...leadNavSections] : leadNavSections)
     : (isAdminOrSuper && location.pathname.startsWith("/portal"))
     ? [portalPreviewSection, ...adminNavSections]
