@@ -1,17 +1,72 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   Creo public site theme — midnight navy, electric blue, ice.
-   Scoped to .public-site so the portal and admin surfaces are untouched.
+   Creo public site theme — burnished amber, obsidian, ivory and midnight.
+   Scoped to .public-site so the portal and admin surfaces keep their own
+   palette (the token names are historical: "blue" is the amber brand).
 
-     Midnight   #050A1A  page background
-     Abyss      #030714  footer
-     Surface    #0F1A3A  cards / glass base
-     Line       #223058  borders
-     Mist       #93A0BF  secondary copy
-     Ink        #F4F7FF  headings
-     Electric   #4F7BFF  brand blue (#3B6BFF in fills)
-     Ice        #DCE8FF  light pair
-     Sky        #7DD3FC  secondary light accent
+     Burnished amber  #D2965A  brand fills, CTAs, accents (7.5:1 on obsidian)
+     Obsidian         #0F0E0C  page background (dark)
+     Ivory            #F5EEE3  ink (dark) / page background (light)
+     Midnight         #172338  secondary section tone (amber 6:1, ivory 13:1)
+     Espresso         #2B1E15  ink (light)
+     Bronze           #8A5A2B  accent text on ivory (5:1; amber itself is 2.2)
+   Text on amber is near-black (--on-brand): ivory on amber is only 2.2:1.
 ───────────────────────────────────────────────────────────────────────────── */
+
+.public-site {
+  --hi: #f7f1e8;
+  --shadow-rgb: 0 0 0;
+  --on-brand: #1a120c;
+
+  --site-bg: #0f0e0c;
+  --site-abyss: #090807;
+  --site-deep: #171513;
+  --site-surface: #1f1c19;
+  --site-surface-2: #282420;
+  --site-line: #3a342d;
+  --site-mist: #b9ad9c;
+  --site-mist-2: #d6cbbb;
+  --site-ink: #f5eee3;
+  --site-blue: #dda56c;
+  --site-blue-deep: #d2965a;
+  --site-blue-light: #e0ad7a;
+  --site-peri: #a9b8d4;
+  --site-ice: #f5eee3;
+  --site-sky: #4a5d82;
+  --site-panel: #172338;
+  --site-panel-2: #101a2b;
+  --site-amber: #e0ad7a;
+  --site-rose: #d98a7a;
+}
+
+/* Light: ivory paper with espresso ink (14:1); accent text is bronze and
+   midnight, amber itself only fills. */
+:root[data-theme="light"] .public-site {
+  --hi: #2b1e15;
+  --shadow-rgb: 60 40 20;
+  --shadow-k: 0.3;
+  --sage: #4a5d82;
+  --blush: #f8f1e6;
+
+  --site-bg: #f5eee3;
+  --site-abyss: #e9dfcf;
+  --site-deep: #efe6d8;
+  --site-surface: #fbf7f0;
+  --site-surface-2: #f2e9dc;
+  --site-line: #d8c8b2;
+  --site-mist: #6e5f50;
+  --site-mist-2: #54473b;
+  --site-ink: #2b1e15;
+  --site-blue: #dda56c;
+  --site-blue-deep: #d2965a;
+  --site-blue-light: #8a5a2b;
+  --site-peri: #172338;
+  --site-ice: #172338;
+  --site-sky: #4a5d82;
+  --site-panel: #e9dfcf;
+  --site-panel-2: #fbf7f0;
+  --site-amber: #8a5a2b;
+  --site-rose: #9a3f2f;
+}
 
 .public-site {
   --creo-bg: var(--site-bg);
@@ -46,14 +101,14 @@
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(60rem 40rem at 85% -10%, rgba(59, 107, 255, 0.16), transparent 60%),
-    radial-gradient(50rem 36rem at -10% 30%, rgba(125, 211, 252, 0.07), transparent 60%),
-    radial-gradient(70rem 50rem at 50% 120%, rgba(59, 107, 255, 0.1), transparent 60%);
+    radial-gradient(60rem 40rem at 85% -10%, rgba(210, 150, 90, 0.08), transparent 60%),
+    radial-gradient(50rem 36rem at -10% 30%, rgba(74, 93, 130, 0.14), transparent 60%),
+    radial-gradient(70rem 50rem at 50% 120%, rgba(210, 150, 90, 0.06), transparent 60%);
 }
 
 .public-site ::selection {
-  background: rgba(79, 123, 255, 0.35);
-  color: #fff;
+  background: #d2965a;
+  color: var(--on-brand);
 }
 
 /* ── Glass ─────────────────────────────────────────────────────────────── */
@@ -64,32 +119,32 @@
    Tailwind's backdrop-blur themselves. */
 .creo-glass {
   background:
-    linear-gradient(180deg, rgba(26, 41, 92, 0.55), rgba(10, 18, 44, 0.5)) padding-box,
-    linear-gradient(180deg, rgba(220, 232, 255, 0.22), rgba(79, 123, 255, 0.08) 45%, rgba(220, 232, 255, 0.06)) border-box;
+    linear-gradient(180deg, rgba(42, 40, 38, 0.55), rgba(24, 23, 22, 0.5)) padding-box,
+    linear-gradient(180deg, rgba(245, 238, 227, 0.22), rgba(210, 150, 90, 0.08) 45%, rgba(245, 238, 227, 0.06)) border-box;
   border: 1px solid transparent;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 18px 48px -20px rgba(1, 4, 16, 0.85);
+    0 18px 48px -20px rgba(0, 0, 0, 0.85);
 }
 
 .creo-glass-strong {
   background:
-    linear-gradient(180deg, rgba(22, 36, 82, 0.72), rgba(7, 13, 34, 0.66)) padding-box,
-    linear-gradient(180deg, rgba(220, 232, 255, 0.26), rgba(79, 123, 255, 0.12) 45%, rgba(220, 232, 255, 0.08)) border-box;
+    linear-gradient(180deg, rgba(40, 38, 36, 0.72), rgba(20, 19, 18, 0.66)) padding-box,
+    linear-gradient(180deg, rgba(245, 238, 227, 0.26), rgba(210, 150, 90, 0.12) 45%, rgba(245, 238, 227, 0.08)) border-box;
   border: 1px solid transparent;
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 24px 60px -24px rgba(1, 4, 16, 0.95),
-    0 0 0 1px rgba(79, 123, 255, 0.05);
+    0 24px 60px -24px rgba(0, 0, 0, 0.95),
+    0 0 0 1px rgba(210, 150, 90, 0.05);
 }
 
 /* Without backdrop-filter support, fall back to a solid tinted panel */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .creo-glass,
   .creo-glass-strong {
-    background-color: rgba(9, 16, 40, 0.96);
+    background-color: rgba(24, 23, 22, 0.96);
   }
 }
 
@@ -139,8 +194,8 @@
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--creo-ice);
-  background: rgba(79, 123, 255, 0.08);
-  border: 1px solid rgba(79, 123, 255, 0.28);
+  background: rgba(210, 150, 90, 0.08);
+  border: 1px solid rgba(210, 150, 90, 0.28);
 }
 
 .creo-eyebrow::before {
@@ -149,7 +204,7 @@
   height: 6px;
   border-radius: 999px;
   background: var(--creo-blue);
-  box-shadow: 0 0 12px 2px rgba(79, 123, 255, 0.7);
+  box-shadow: 0 0 12px 2px rgba(210, 150, 90, 0.7);
 }
 
 /* ── Buttons ──────────────────────────────────────────────────────────── */
@@ -158,12 +213,12 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  color: #fff;
+  color: var(--on-brand);
   background: linear-gradient(180deg, var(--site-blue) 0%, var(--site-blue-deep) 55%, var(--site-blue-deep) 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    0 0 0 1px rgba(79, 123, 255, 0.55),
-    0 12px 32px -10px rgba(59, 107, 255, 0.75);
+    0 0 0 1px rgba(210, 150, 90, 0.55),
+    0 12px 32px -10px rgba(210, 150, 90, 0.75);
   transition:
     box-shadow 0.4s var(--creo-ease),
     transform 0.4s var(--creo-ease),
@@ -184,8 +239,8 @@
   filter: brightness(1.08);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.32),
-    0 0 0 1px rgba(125, 162, 255, 0.8),
-    0 18px 44px -10px rgba(59, 107, 255, 0.9);
+    0 0 0 1px rgba(210, 150, 90, 0.8),
+    0 18px 44px -10px rgba(210, 150, 90, 0.9);
 }
 
 .creo-btn-primary:hover::after {
@@ -194,8 +249,8 @@
 
 .creo-btn-ghost {
   color: var(--creo-ink);
-  background: rgba(220, 232, 255, 0.04);
-  border: 1px solid rgba(220, 232, 255, 0.14);
+  background: rgba(245, 238, 227, 0.04);
+  border: 1px solid rgba(245, 238, 227, 0.14);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   transition:
@@ -204,8 +259,8 @@
 }
 
 .creo-btn-ghost:hover {
-  background: rgba(220, 232, 255, 0.08);
-  border-color: rgba(125, 162, 255, 0.55);
+  background: rgba(245, 238, 227, 0.08);
+  border-color: rgba(210, 150, 90, 0.55);
 }
 
 /* ── Masks & textures ─────────────────────────────────────────────────── */
@@ -213,17 +268,17 @@
 /* Fine blueprint grid; pair with a mask to fade it out */
 .creo-grid-bg {
   background-image:
-    linear-gradient(rgba(125, 162, 255, 0.09) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(125, 162, 255, 0.09) 1px, transparent 1px);
+    linear-gradient(rgba(210, 150, 90, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 150, 90, 0.09) 1px, transparent 1px);
   background-size: 56px 56px;
 }
 
 /* Brighter grid inside a soft circle; moved with transforms by CursorSpotlight */
 .creo-spotlight {
   background-image:
-    radial-gradient(closest-side, rgba(79, 123, 255, 0.14), transparent),
-    linear-gradient(rgba(125, 162, 255, 0.24) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(125, 162, 255, 0.24) 1px, transparent 1px);
+    radial-gradient(closest-side, rgba(210, 150, 90, 0.14), transparent),
+    linear-gradient(rgba(210, 150, 90, 0.24) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 150, 90, 0.24) 1px, transparent 1px);
   background-size:
     100% 100%,
     56px 56px,
@@ -254,19 +309,19 @@
 /* Soft seam between sections instead of hard borders */
 .creo-seam {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(79, 123, 255, 0.45), rgba(220, 232, 255, 0.35), rgba(79, 123, 255, 0.45), transparent);
+  background: linear-gradient(90deg, transparent, rgba(210, 150, 90, 0.45), rgba(245, 238, 227, 0.35), rgba(210, 150, 90, 0.45), transparent);
 }
 
 .creo-glow-ring {
   box-shadow:
-    0 0 0 1px rgba(79, 123, 255, 0.35),
-    0 30px 80px -30px rgba(59, 107, 255, 0.55);
+    0 0 0 1px rgba(210, 150, 90, 0.35),
+    0 30px 80px -30px rgba(210, 150, 90, 0.55);
 }
 
 /* Rotating gradient edge for the recommended plan (--creo-angle lives in tokens.css) */
 .creo-featured-border {
   background:
-    linear-gradient(180deg, #101e4c, #0a1334) padding-box,
+    linear-gradient(180deg, #2a2826, #1c1b1a) padding-box,
     conic-gradient(from var(--creo-angle), var(--site-blue), var(--site-ice) 18%, var(--site-line) 38%, var(--site-sky) 58%, var(--site-blue-deep) 78%, var(--site-blue)) border-box;
   border: 1.5px solid transparent;
   animation: creoSpinAngle 6s linear infinite;
@@ -309,8 +364,8 @@
     from var(--creo-beam-angle),
     transparent 0deg,
     transparent 270deg,
-    rgba(79, 123, 255, 0.35) 310deg,
-    rgba(79, 123, 255, 0.95) 340deg,
+    rgba(210, 150, 90, 0.35) 310deg,
+    rgba(210, 150, 90, 0.95) 340deg,
     var(--site-ink) 355deg,
     transparent 360deg
   );
@@ -424,7 +479,7 @@ html.creo-cursor-on .public-site :is(input, textarea, select, [contenteditable="
 /* Native scrollbar that matches the palette */
 .public-site,
 .public-site * {
-  scrollbar-color: #2b3d78 transparent;
+  scrollbar-color: #d2965a transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -453,46 +508,46 @@ html.creo-cursor-on .public-site :is(input, textarea, select, [contenteditable="
   }
 }
 
-/* ── Light theme ("Sage & Stone") ──────────────────────────────────────────
+/* ── Light theme (ivory paper) ──────────────────────────────────────────
    The palette variables flip in tokens.css; these rules re-tune the effects
    that were drawn with raw rgba for a dark canvas: glass, glows, grids.
-   Sage (144,153,127) drives glows, Blush (246,226,233) the soft highlights. */
+   Midnight (23,35,56) drives glows, ivory the soft highlights; bronze the accents. */
 
 :root[data-theme="light"] .public-site::before {
   background:
-    radial-gradient(60rem 40rem at 85% -10%, rgba(144, 153, 127, 0.28), transparent 60%),
-    radial-gradient(50rem 36rem at -10% 30%, rgba(246, 226, 233, 0.7), transparent 60%),
-    radial-gradient(70rem 50rem at 50% 120%, rgba(175, 181, 157, 0.25), transparent 60%);
+    radial-gradient(60rem 40rem at 85% -10%, rgba(23, 35, 56, 0.28), transparent 60%),
+    radial-gradient(50rem 36rem at -10% 30%, rgba(248, 241, 230, 0.7), transparent 60%),
+    radial-gradient(70rem 50rem at 50% 120%, rgba(216, 200, 178, 0.25), transparent 60%);
 }
 
 :root[data-theme="light"] .public-site ::selection {
-  background: rgba(144, 153, 127, 0.35);
+  background: rgba(23, 35, 56, 0.35);
   color: var(--site-ink);
 }
 
 :root[data-theme="light"] .creo-glass {
   background:
-    linear-gradient(180deg, rgba(250, 249, 244, 0.92), rgba(240, 238, 229, 0.86)) padding-box,
-    linear-gradient(180deg, rgba(144, 153, 127, 0.45), rgba(175, 181, 157, 0.18) 45%, rgba(144, 153, 127, 0.3)) border-box;
+    linear-gradient(180deg, rgba(252, 249, 243, 0.92), rgba(242, 234, 221, 0.86)) padding-box,
+    linear-gradient(180deg, rgba(23, 35, 56, 0.45), rgba(216, 200, 178, 0.18) 45%, rgba(23, 35, 56, 0.3)) border-box;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    0 18px 48px -24px rgba(57, 73, 49, 0.25);
+    0 18px 48px -24px rgba(60, 40, 20, 0.25);
 }
 
 :root[data-theme="light"] .creo-glass-strong {
   background:
-    linear-gradient(180deg, rgba(250, 249, 244, 0.82), rgba(236, 234, 223, 0.74)) padding-box,
-    linear-gradient(180deg, rgba(144, 153, 127, 0.5), rgba(175, 181, 157, 0.2) 45%, rgba(144, 153, 127, 0.32)) border-box;
+    linear-gradient(180deg, rgba(252, 249, 243, 0.82), rgba(240, 231, 217, 0.74)) padding-box,
+    linear-gradient(180deg, rgba(23, 35, 56, 0.5), rgba(216, 200, 178, 0.2) 45%, rgba(23, 35, 56, 0.32)) border-box;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 24px 60px -28px rgba(57, 73, 49, 0.32),
-    0 0 0 1px rgba(144, 153, 127, 0.06);
+    0 24px 60px -28px rgba(60, 40, 20, 0.32),
+    0 0 0 1px rgba(23, 35, 56, 0.06);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :root[data-theme="light"] .creo-glass,
   :root[data-theme="light"] .creo-glass-strong {
-    background-color: rgba(247, 246, 240, 0.97);
+    background-color: rgba(250, 246, 239, 0.97);
   }
 }
 
@@ -500,51 +555,51 @@ html.creo-cursor-on .public-site :is(input, textarea, select, [contenteditable="
 :root[data-theme="light"] .creo-eyebrow {
   color: var(--site-ink);
   background: var(--blush);
-  border-color: rgba(142, 74, 94, 0.22);
+  border-color: rgba(138, 90, 43, 0.22);
 }
 
 :root[data-theme="light"] .creo-eyebrow::before {
   background: var(--site-rose);
-  box-shadow: 0 0 10px 1px rgba(142, 74, 94, 0.35);
+  box-shadow: 0 0 10px 1px rgba(138, 90, 43, 0.35);
 }
 
 :root[data-theme="light"] .creo-btn-primary {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.25),
-    0 0 0 1px rgba(77, 90, 62, 0.55),
-    0 12px 28px -12px rgba(57, 73, 49, 0.5);
+    0 0 0 1px rgba(138, 90, 43, 0.55),
+    0 12px 28px -12px rgba(60, 40, 20, 0.5);
 }
 
 :root[data-theme="light"] .creo-btn-primary:hover {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 0 0 1px rgba(77, 90, 62, 0.75),
-    0 18px 40px -12px rgba(57, 73, 49, 0.55);
+    0 0 0 1px rgba(138, 90, 43, 0.75),
+    0 18px 40px -12px rgba(60, 40, 20, 0.55);
 }
 
 /* Secondary CTA: the gentle blush call to action */
 :root[data-theme="light"] .creo-btn-ghost {
   color: var(--site-ink);
   background: var(--blush);
-  border-color: rgba(142, 74, 94, 0.2);
+  border-color: rgba(138, 90, 43, 0.2);
 }
 
 :root[data-theme="light"] .creo-btn-ghost:hover {
-  background: #f9eaf0;
-  border-color: rgba(142, 74, 94, 0.45);
+  background: #fbf5ea;
+  border-color: rgba(138, 90, 43, 0.45);
 }
 
 :root[data-theme="light"] .creo-grid-bg {
   background-image:
-    linear-gradient(rgba(144, 153, 127, 0.16) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(144, 153, 127, 0.16) 1px, transparent 1px);
+    linear-gradient(rgba(23, 35, 56, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 35, 56, 0.16) 1px, transparent 1px);
 }
 
 :root[data-theme="light"] .creo-spotlight {
   background-image:
-    radial-gradient(closest-side, rgba(144, 153, 127, 0.18), transparent),
-    linear-gradient(rgba(144, 153, 127, 0.3) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(144, 153, 127, 0.3) 1px, transparent 1px);
+    radial-gradient(closest-side, rgba(23, 35, 56, 0.18), transparent),
+    linear-gradient(rgba(23, 35, 56, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 35, 56, 0.3) 1px, transparent 1px);
 }
 
 :root[data-theme="light"] .public-site .creo-grain::after {
@@ -552,19 +607,19 @@ html.creo-cursor-on .public-site :is(input, textarea, select, [contenteditable="
 }
 
 :root[data-theme="light"] .creo-seam {
-  background: linear-gradient(90deg, transparent, rgba(144, 153, 127, 0.6), rgba(142, 74, 94, 0.25), rgba(144, 153, 127, 0.6), transparent);
+  background: linear-gradient(90deg, transparent, rgba(23, 35, 56, 0.6), rgba(138, 90, 43, 0.25), rgba(23, 35, 56, 0.6), transparent);
 }
 
 :root[data-theme="light"] .creo-glow-ring {
   box-shadow:
-    0 0 0 1px rgba(144, 153, 127, 0.45),
-    0 30px 70px -34px rgba(57, 73, 49, 0.35);
+    0 0 0 1px rgba(23, 35, 56, 0.45),
+    0 30px 70px -34px rgba(60, 40, 20, 0.35);
 }
 
 :root[data-theme="light"] .creo-featured-border {
   background:
-    linear-gradient(180deg, #f9f8f3, #efede3) padding-box,
-    conic-gradient(from var(--creo-angle), var(--sage), var(--blush) 18%, var(--site-line) 38%, #c99aa9 58%, var(--site-blue-deep) 78%, var(--sage)) border-box;
+    linear-gradient(180deg, #fcf9f3, #f2e9dc) padding-box,
+    conic-gradient(from var(--creo-angle), var(--sage), var(--blush) 18%, var(--site-line) 38%, #d2965a 58%, var(--site-blue-deep) 78%, var(--sage)) border-box;
 }
 
 :root[data-theme="light"] .creo-beam::before {
@@ -572,8 +627,8 @@ html.creo-cursor-on .public-site :is(input, textarea, select, [contenteditable="
     from var(--creo-beam-angle),
     transparent 0deg,
     transparent 270deg,
-    rgba(144, 153, 127, 0.35) 310deg,
-    rgba(110, 122, 91, 0.9) 340deg,
+    rgba(23, 35, 56, 0.35) 310deg,
+    rgba(23, 35, 56, 0.9) 340deg,
     var(--site-blue-deep) 355deg,
     transparent 360deg
   );
@@ -582,4 +637,19 @@ html.creo-cursor-on .public-site :is(input, textarea, select, [contenteditable="
 :root[data-theme="light"] .public-site,
 :root[data-theme="light"] .public-site * {
   scrollbar-color: var(--site-line) transparent;
+}
+
+/* ── Footer: ivory-to-amber dusk ──────────────────────────────────────────
+   The same in both themes, like the reference: dark espresso type on a
+   light gradient that warms toward the wordmark at the bottom. */
+.public-site .footer-dusk {
+  --site-bg: #f5eee3;
+  --tone-bg: #f5eee3;
+  --site-ink: #1a120c;
+  --site-mist: #5e4e3f;
+  --site-mist-2: #47392d;
+  --site-blue-light: #8a5a2b;
+  --hi: #1a120c;
+  background: linear-gradient(180deg, #f5eee3 0%, #f0e4d2 34%, #e9cba5 66%, #dda774 100%);
+  color: var(--site-ink);
 }

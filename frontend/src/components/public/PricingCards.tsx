@@ -73,18 +73,18 @@ export function PricingCards({
               whileHover={reduce ? undefined : { y: -6 }}
               className={`group relative rounded-[28px] p-8 sm:p-9 flex flex-col gap-6 text-hi transition-shadow duration-500 ${
                 featured
-                  ? "creo-featured-border shadow-[0_30px_80px_-30px_rgba(59,107,255,0.8)] lg:-my-3 lg:py-12"
-                  : "creo-glass creo-beam hover:shadow-[0_30px_70px_-30px_rgba(59,107,255,0.45)]"
+                  ? "creo-featured-border shadow-[0_30px_80px_-30px_rgba(210,150,90,0.8)] lg:-my-3 lg:py-12"
+                  : "creo-glass creo-beam hover:shadow-[0_30px_70px_-30px_rgba(210,150,90,0.45)]"
               }`}
             >
               {featured && (
-                <div aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[radial-gradient(80%_50%_at_50%_0%,rgba(79,123,255,0.22),transparent)]" />
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[radial-gradient(80%_50%_at_50%_0%,rgba(210,150,90,0.22),transparent)]" />
               )}
 
               <div className="relative flex items-center justify-between gap-2">
                 <h2 className="text-2xl font-black tracking-[-0.02em] text-hi">{plan.display_name}</h2>
                 {featured && (
-                  <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] px-3 py-1.5 rounded-full bg-gradient-to-r from-site-blue to-site-blue-deep text-white shadow-[0_6px_20px_-6px_rgba(59,107,255,0.9)]">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] px-3 py-1.5 rounded-full bg-gradient-to-r from-site-blue to-site-blue-deep text-[var(--on-brand)] shadow-[0_6px_20px_-6px_rgba(210,150,90,0.9)]">
                     <Sparkles className="size-3" />
                     Recommended
                   </span>
@@ -127,7 +127,7 @@ export function PricingCards({
                 <ul className="relative space-y-3 text-sm text-site-mist-2 pt-5 border-t border-hi/[0.08]">
                   {plan.highlights.map((h, i) => (
                     <li key={i} className="flex items-start gap-2.5">
-                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-site-blue shadow-[0_0_8px_1px_rgba(79,123,255,0.8)]" />
+                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-site-blue shadow-[0_0_8px_1px_rgba(210,150,90,0.8)]" />
                       <span>{h}</span>
                     </li>
                   ))}

@@ -296,7 +296,7 @@ export function ClientTicketDetailPage() {
               className={`size-14 sm:size-16 rounded-2xl flex items-center justify-center shrink-0 border ${
                 isSolved
                   ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_24px_rgba(16,185,129,0.25)]"
-                  : "bg-blue-500/20 text-app-accent border-blue-500/30 shadow-[0_0_24px_rgba(59,130,246,0.2)]"
+                  : "bg-blue-500/20 text-app-accent border-blue-500/30 shadow-[0_0_24px_rgba(210,150,90,0.2)]"
               }`}
             >
               {isSolved ? (

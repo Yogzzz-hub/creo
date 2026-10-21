@@ -24,8 +24,8 @@ export interface CreoLoaderProps {
  * mode adds the bobbing "creo." wordmark. Pure CSS so it can render before any
  * animation library has loaded; everything stops for reduced motion.
  *
- * Palette: midnight #050A1A, electric blue #4F7BFF / #3B6BFF, ice #DCE8FF,
- * mist #93A0BF.
+ * Colours come from the site tokens in scope (blue on the admin surfaces,
+ * amber on the public site and client portal).
  */
 export function CreoLoader({
   label = "VERIFYING",
@@ -113,43 +113,43 @@ export function CreoLoader({
 
         .creo-ld-halo {
           inset: -40%;
-          background: radial-gradient(circle, rgba(59,107,255,0.22) 0%, rgba(59,107,255,0.06) 35%, transparent 65%);
+          background: radial-gradient(circle, color-mix(in oklab, var(--site-blue-deep) 22%, transparent) 0%, color-mix(in oklab, var(--site-blue-deep) 6%, transparent) 35%, transparent 65%);
           animation: creoLdHalo 2.4s ease-in-out infinite;
         }
-        .creo-ld-ring { inset: 0; border: 1px solid rgba(79,123,255,0.2); }
-        .creo-ld-track { inset: 17%; border: 1px dashed rgba(220,232,255,0.16); animation: creoLdSpin 9s linear infinite reverse; }
+        .creo-ld-ring { inset: 0; border: 1px solid color-mix(in oklab, var(--site-blue) 20%, transparent); }
+        .creo-ld-track { inset: 17%; border: 1px dashed color-mix(in oklab, var(--site-ice) 16%, transparent); animation: creoLdSpin 9s linear infinite reverse; }
 
         /* Comet: a conic tail masked to the ring, with a bright head at the leading edge */
-        .creo-ld-comet { inset: 0; animation: creoLdSpin 1.15s cubic-bezier(0.45, 0.1, 0.5, 0.9) infinite; filter: drop-shadow(0 0 6px rgba(79,123,255,0.9)); }
+        .creo-ld-comet { inset: 0; animation: creoLdSpin 1.15s cubic-bezier(0.45, 0.1, 0.5, 0.9) infinite; filter: drop-shadow(0 0 6px color-mix(in oklab, var(--site-blue) 90%, transparent)); }
         .creo-ld-comet i {
           position: absolute; inset: 0; border-radius: 9999px;
-          background: conic-gradient(from 0deg, transparent 0 52%, rgba(79,123,255,0.15) 62%, var(--site-blue) 88%, var(--site-ice) 100%);
+          background: conic-gradient(from 0deg, transparent 0 52%, color-mix(in oklab, var(--site-blue) 15%, transparent) 62%, var(--site-blue) 88%, var(--site-ice) 100%);
           -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
           mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
         }
         .creo-ld-comet::after {
           content: ""; position: absolute; top: -2px; left: 50%; width: 6px; height: 6px; margin-left: -3px;
-          border-radius: 9999px; background: #fff; box-shadow: 0 0 12px 4px rgba(79,123,255,0.9);
+          border-radius: 9999px; background: #fff; box-shadow: 0 0 12px 4px color-mix(in oklab, var(--site-blue) 90%, transparent);
         }
 
         /* Satellite on the inner track */
         .creo-ld-sat { inset: 17%; animation: creoLdSpin 3.2s linear infinite; }
         .creo-ld-sat i {
           position: absolute; top: -2.5px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px;
-          border-radius: 9999px; background: var(--site-ice); box-shadow: 0 0 8px 2px rgba(220,232,255,0.7);
+          border-radius: 9999px; background: var(--site-ice); box-shadow: 0 0 8px 2px color-mix(in oklab, var(--site-ice) 70%, transparent);
         }
 
         /* Pulse rings and breathing core */
         .creo-ld-ping {
           left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px;
-          border: 1px solid rgba(125,162,255,0.8);
+          border: 1px solid color-mix(in oklab, var(--site-blue-light) 80%, transparent);
           animation: creoLdPing 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
         }
         .creo-ld-ping--late { animation-delay: 1.1s; }
         .creo-ld-core {
           left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px;
           background: radial-gradient(circle at 35% 30%, var(--site-peri), var(--site-blue) 55%, var(--site-blue-deep));
-          box-shadow: 0 0 22px 6px rgba(79,123,255,0.6), 0 0 60px 10px rgba(59,107,255,0.25);
+          box-shadow: 0 0 22px 6px color-mix(in oklab, var(--site-blue) 60%, transparent), 0 0 60px 10px color-mix(in oklab, var(--site-blue-deep) 25%, transparent);
           animation: creoLdBreathe 2.2s ease-in-out infinite;
         }
         .creo-ld-orbit--sm .creo-ld-core { width: 12px; height: 12px; margin: -6px 0 0 -6px; }
@@ -162,7 +162,7 @@ export function CreoLoader({
         .creo-ld-letter { display: inline-block; animation: creoLdWave 1.8s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
         .creo-ld-dot {
           width: 0.3em; height: 0.3em; margin-left: 0.04em; border-radius: 9999px;
-          background: linear-gradient(135deg, var(--site-blue-light), var(--site-blue-deep)); box-shadow: 0 0 12px 2px rgba(79,123,255,0.7);
+          background: linear-gradient(135deg, var(--site-blue-light), var(--site-blue-deep)); box-shadow: 0 0 12px 2px color-mix(in oklab, var(--site-blue) 70%, transparent);
         }
 
         /* ── Text shimmer ── */
@@ -176,7 +176,7 @@ export function CreoLoader({
         /* ── Progress ── */
         .creo-ld-progress {
           position: relative; margin-top: 16px; width: 220px; max-width: 75vw; height: 2px;
-          overflow: hidden; border-radius: 9999px; background: rgba(79,123,255,0.14);
+          overflow: hidden; border-radius: 9999px; background: color-mix(in oklab, var(--site-blue) 14%, transparent);
         }
         .creo-ld-progress span {
           position: absolute; top: 0; bottom: 0; width: 38%; border-radius: 9999px;
@@ -241,7 +241,7 @@ export function CreoLoader({
         style={{
           backgroundColor: "var(--site-bg)",
           backgroundImage:
-            "radial-gradient(ellipse at 50% 42%, rgba(59,107,255,0.12) 0%, transparent 55%), radial-gradient(ellipse at 50% 40%, var(--site-deep) 0%, var(--site-bg) 70%)",
+            "radial-gradient(ellipse at 50% 42%, color-mix(in oklab, var(--site-blue-deep) 12%, transparent) 0%, transparent 55%), radial-gradient(ellipse at 50% 40%, var(--site-deep) 0%, var(--site-bg) 70%)",
         }}
       >
         {/* Faint blueprint grid fading out from the centre */}
@@ -250,7 +250,7 @@ export function CreoLoader({
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(125,162,255,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(125,162,255,0.07) 1px, transparent 1px)",
+              "linear-gradient(color-mix(in oklab, var(--site-blue-light) 7%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklab, var(--site-blue-light) 7%, transparent) 1px, transparent 1px)",
             backgroundSize: "56px 56px",
             WebkitMaskImage: "radial-gradient(45% 45% at 50% 45%, #000, transparent)",
             maskImage: "radial-gradient(45% 45% at 50% 45%, #000, transparent)",

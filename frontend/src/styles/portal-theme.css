@@ -1,0 +1,148 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Client portal theme — the public site's palette (obsidian, ivory, burnished
+   amber, midnight) mapped onto the app tokens every portal surface reads.
+
+   PortalLayout puts .portal-theme on <html> while it is mounted, so dialogs
+   portalled to <body> pick it up too; the admin and team surfaces never set it
+   and keep their own palette. Tailwind's remapped colours (emerald, amber,
+   slate...) follow these tokens automatically (see tokens.css).
+
+     Burnished amber  #D2965A  accent fills, status, focus (7.5:1 on obsidian)
+     Obsidian         #0F0E0C  page (dark)
+     Ivory            #F5EEE3  ink (dark) / page (light) / primary buttons (dark)
+     Espresso         #2B1E15  ink (light) / primary buttons (light)
+     Bronze           #8A5A2B  accent text on ivory (5:1)
+     Terracotta       #D98A7A  warnings and declines (dark); #9A3F2F (light)
+───────────────────────────────────────────────────────────────────────────── */
+
+:root.portal-theme {
+  --hi: #f7f1e8;
+  --shadow-rgb: 0 0 0;
+  --shadow-k: 1;
+
+  --app-void: #090807;
+  --app-nested: #141210;
+  --app-base: #0f0e0c;
+  --app-bento: #171513;
+  --app-surface: #1b1916;
+  --app-line: #3a342d;
+  --app-line-soft: #2a2622;
+  --app-mist: #b9ad9c;
+  --app-ink: #f5eee3;
+  --app-ink-2: #efe6d8;
+  --app-ink-3: #d6cbbb;
+  --app-accent: #d2965a;
+  --app-accent-soft: #f5eee3;
+  --app-warm: #d98a7a;
+
+  /* Loaders and shared pieces that read the site tokens */
+  --site-bg: #0f0e0c;
+  --site-abyss: #090807;
+  --site-deep: #171513;
+  --site-surface: #1f1c19;
+  --site-surface-2: #282420;
+  --site-line: #3a342d;
+  --site-mist: #b9ad9c;
+  --site-mist-2: #d6cbbb;
+  --site-ink: #f5eee3;
+  --site-blue: #dda56c;
+  --site-blue-deep: #d2965a;
+  --site-blue-light: #e0ad7a;
+  --site-peri: #a9b8d4;
+  --site-ice: #f5eee3;
+  --site-sky: #4a5d82;
+  --site-panel: #172338;
+  --site-panel-2: #101a2b;
+  --site-amber: #e0ad7a;
+  --site-rose: #d98a7a;
+
+  /* Fixed brand colours for the gold plan card and the pill arrow discs */
+  --portal-amber: #d2965a;
+  --portal-on-amber: #1a120c;
+}
+
+/* Light: ivory paper, espresso ink, bronze accent text */
+:root.portal-theme[data-theme="light"] {
+  --hi: #2b1e15;
+  --shadow-rgb: 60 40 20;
+  --shadow-k: 0.3;
+
+  --app-void: #e9dfcf;
+  --app-nested: #efe6d8;
+  --app-base: #f5eee3;
+  --app-bento: #fbf7f0;
+  --app-surface: #fbf7f0;
+  --app-line: #d8c8b2;
+  --app-line-soft: #e6dac8;
+  --app-mist: #6e5f50;
+  --app-ink: #2b1e15;
+  --app-ink-2: #33241a;
+  --app-ink-3: #54473b;
+  --app-accent: #8a5a2b;
+  --app-accent-soft: #2b1e15;
+  --app-warm: #9a3f2f;
+
+  --site-bg: #f5eee3;
+  --site-abyss: #e9dfcf;
+  --site-deep: #efe6d8;
+  --site-surface: #fbf7f0;
+  --site-surface-2: #f2e9dc;
+  --site-line: #d8c8b2;
+  --site-mist: #6e5f50;
+  --site-mist-2: #54473b;
+  --site-ink: #2b1e15;
+  --site-blue: #dda56c;
+  --site-blue-deep: #d2965a;
+  --site-blue-light: #8a5a2b;
+  --site-peri: #172338;
+  --site-ice: #172338;
+  --site-sky: #4a5d82;
+  --site-panel: #e9dfcf;
+  --site-panel-2: #fbf7f0;
+  --site-amber: #8a5a2b;
+  --site-rose: #9a3f2f;
+}
+
+:root.portal-theme ::selection {
+  background: #d2965a;
+  color: #1a120c;
+}
+
+/* Native controls follow the theme instead of the app's forced dark scheme */
+:root.portal-theme[data-theme="light"],
+:root.portal-theme[data-theme="light"] .bento-theme,
+:root.portal-theme[data-theme="light"] .bento-theme :is(input, select, textarea) {
+  color-scheme: light !important;
+}
+
+:root.portal-theme .bento-theme :is(input, textarea)::placeholder {
+  color: color-mix(in oklab, var(--app-mist) 70%, transparent) !important;
+}
+
+/* ── Type: the site's medium-weight, tightly tracked headings ─────────────── */
+
+.portal-site :is(h1, h2, h3) {
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.portal-site :is(h1, h2, h3).portal-display {
+  letter-spacing: -0.05em;
+}
+
+/* ── Shape: the site's softer, larger card corners ───────────────────────── */
+
+.portal-site .rounded-2xl {
+  border-radius: 1.5rem;
+}
+
+.portal-site .rounded-3xl {
+  border-radius: 2rem;
+}
+
+/* Scrollbars in the palette */
+.portal-site,
+.portal-site * {
+  scrollbar-color: color-mix(in oklab, var(--app-accent) 55%, transparent) transparent;
+}

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, X } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
+import { AuthField, EYEBROW, FIELD_INPUT, SubmitPill, TEXT_ACTION } from "./AuthPieces";
 
 type Step = "email" | "code" | "password" | "done";
 
@@ -99,12 +100,6 @@ export function PasswordRecoveryModal({
 		else if (step === "password") await save();
 	}
 
-	const field =
-		"w-full bg-app-nested border border-app-line-soft rounded-xl px-3 py-3 text-sm text-hi focus:outline-none focus:border-app-accent";
-	const label = "block text-[11px] font-bold uppercase tracking-wider text-app-mist mb-1.5";
-	const secondaryButton =
-		"inline-flex min-h-10 items-center justify-center rounded-xl border border-app-line bg-app-nested px-3.5 py-2 text-sm font-semibold text-app-accent-soft transition-colors hover:border-app-accent/60 hover:bg-app-surface hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent disabled:cursor-not-allowed disabled:opacity-45";
-
 	const title =
 		step === "password" && !hasPassword
 			? "Create your CREO password"
@@ -125,55 +120,77 @@ export function PasswordRecoveryModal({
 						: `Add a password to ${sentEmail} so you can sign in with email and password${hasGoogle ? " as well as Google" : ""}.`
 					: `You can now sign in with your email and password${hasGoogle ? " or with Google" : ""}.`;
 
+
+	const passwordToggle = (
+		<button
+			type="button"
+			onClick={() => setShowPassword(!showPassword)}
+			className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-site-mist transition-colors hover:text-site-ink"
+			aria-label={showPassword ? "Hide password" : "Show password"}
+		>
+			{showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+		</button>
+	);
+
+	// Rendered inside the auth page's .public-site root so the site palette applies
 	return createPortal(
-		<div className="fixed inset-0 z-[1000] grid min-h-dvh place-items-center overflow-y-auto p-4 sm:p-6 bg-app-base/80 backdrop-blur-md">
+		<div className="fixed inset-0 z-[1000] grid min-h-dvh place-items-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:p-6">
 			<dialog
 				open
 				aria-modal="true"
 				aria-labelledby="recovery-title"
-				className="static m-0 w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto bg-app-bento border border-app-line-soft rounded-2xl p-6 text-hi space-y-4"
+				className="st-base static m-0 max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-[2rem] border border-hi/10 bg-site-bg p-7 text-site-ink shadow-[0_30px_80px_-30px_rgb(0_0_0/0.8)] sm:p-9"
 			>
-				<h2 id="recovery-title" className="text-lg font-bold">
+				<div className="flex items-start justify-between gap-4">
+					<p className={EYEBROW}>
+						{step === "done" ? "All set" : step === "email" ? "Step 1 of 3" : step === "code" ? "Step 2 of 3" : "Step 3 of 3"}
+					</p>
+					{step !== "done" && (
+						<button
+							type="button"
+							disabled={busy}
+							onClick={onClose}
+							aria-label="Close"
+							className="-mr-2 -mt-2 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-site-mist transition-colors hover:text-site-ink disabled:opacity-50"
+						>
+							<X className="size-5" />
+						</button>
+					)}
+				</div>
+				<h2 id="recovery-title" className="mt-3 text-3xl font-medium leading-tight tracking-[-0.04em] text-site-ink">
 					{title}
 				</h2>
-				<p className="text-sm text-app-mist">{description}</p>
+				<p className="mt-3 text-base leading-relaxed text-site-mist">{description}</p>
 				{error && (
-					<p role="alert" className="text-sm text-red-300">
+					<p role="alert" className="mt-6 rounded-2xl border border-site-rose/40 bg-site-rose/10 px-4 py-3 text-sm font-medium text-site-ink">
 						{error}
 					</p>
 				)}
 				{step === "done" ? (
-					<button
-						type="button"
-						onClick={onClose}
-						className="w-full py-3 rounded-xl bg-app-accent-soft text-app-base font-bold"
-					>
-						Done
-					</button>
+					<div className="mt-8">
+						<SubmitPill type="button" onClick={onClose}>
+							Done
+						</SubmitPill>
+					</div>
 				) : (
-					<form onSubmit={submit} className="space-y-4">
+					<form onSubmit={submit} className="mt-8 space-y-7">
 						{step === "email" && (
-							<div>
-								<label htmlFor="recovery-email" className={label}>
-									Account email
-								</label>
+							<AuthField id="recovery-email" label="Account email">
 								<input
 									id="recovery-email"
 									type="email"
 									autoComplete="email"
 									autoFocus
 									required
+									placeholder="name@brand.com"
 									value={email}
 									onChange={(e) => setEmail(e.target.value)}
-									className={field}
+									className={FIELD_INPUT}
 								/>
-							</div>
+							</AuthField>
 						)}
 						{step === "code" && (
-							<div>
-								<label htmlFor="recovery-code" className={label}>
-									Verification code
-								</label>
+							<AuthField id="recovery-code" label="Verification code">
 								<input
 									id="recovery-code"
 									type="text"
@@ -183,50 +200,36 @@ export function PasswordRecoveryModal({
 									required
 									pattern="[0-9]{6}"
 									maxLength={6}
+									placeholder="000000"
 									value={code}
 									onChange={(e) =>
 										setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
 									}
-									className={`${field} text-center font-mono tracking-[0.35em]`}
+									className={`${FIELD_INPUT} text-center font-mono text-3xl! tracking-[0.45em]`}
 								/>
-							</div>
+							</AuthField>
 						)}
 						{step === "password" && (
 							<>
 								{/* Lets password managers save the credential against the right account */}
 								<input type="email" autoComplete="username" value={sentEmail} readOnly hidden />
-								<div>
-									<label htmlFor="recovery-new-password" className={label}>
-										New password
-									</label>
-									<div className="relative">
-										<input
-											id="recovery-new-password"
-											type={showPassword ? "text" : "password"}
-											autoComplete="new-password"
-											autoFocus
-											required
-											minLength={8}
-											maxLength={128}
-											placeholder="8+ characters, a letter and a number"
-											value={newPassword}
-											onChange={(e) => setNewPassword(e.target.value)}
-											className={`${field} pr-10`}
-										/>
-										<button
-											type="button"
-											onClick={() => setShowPassword(!showPassword)}
-											className="absolute right-3 top-1/2 -translate-y-1/2 text-app-mist hover:text-hi"
-											aria-label={showPassword ? "Hide password" : "Show password"}
-										>
-											{showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-										</button>
-									</div>
-								</div>
-								<div>
-									<label htmlFor="recovery-confirm-password" className={label}>
-										Confirm password
-									</label>
+								<AuthField id="recovery-new-password" label="New password">
+									<input
+										id="recovery-new-password"
+										type={showPassword ? "text" : "password"}
+										autoComplete="new-password"
+										autoFocus
+										required
+										minLength={8}
+										maxLength={128}
+										placeholder="8+ characters, a letter and a number"
+										value={newPassword}
+										onChange={(e) => setNewPassword(e.target.value)}
+										className={FIELD_INPUT}
+									/>
+									{passwordToggle}
+								</AuthField>
+								<AuthField id="recovery-confirm-password" label="Confirm password">
 									<input
 										id="recovery-confirm-password"
 										type={showPassword ? "text" : "password"}
@@ -236,15 +239,12 @@ export function PasswordRecoveryModal({
 										maxLength={128}
 										value={confirmPassword}
 										onChange={(e) => setConfirmPassword(e.target.value)}
-										className={field}
+										className={FIELD_INPUT}
 									/>
-								</div>
+								</AuthField>
 							</>
 						)}
-						<button
-							disabled={busy}
-							className="w-full py-3 rounded-xl bg-app-accent-soft text-app-base font-bold disabled:opacity-50"
-						>
+						<SubmitPill loading={busy}>
 							{busy
 								? "Please wait..."
 								: step === "email"
@@ -254,41 +254,33 @@ export function PasswordRecoveryModal({
 										: hasPassword
 											? "Save new password"
 											: "Save password & sign in"}
-						</button>
+						</SubmitPill>
 					</form>
 				)}
 				{step === "code" && (
-					<div className="flex flex-wrap gap-2">
+					<div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm">
+						<button type="button" disabled={busy} onClick={startOver} className="cursor-pointer font-semibold text-site-mist transition-colors hover:text-site-ink disabled:opacity-50">
+							Change email
+						</button>
 						<button
 							type="button"
 							disabled={busy || cooldown > 0}
 							onClick={() => void send()}
-							className={secondaryButton}
+							className={TEXT_ACTION}
 						>
 							{cooldown ? `Resend in ${cooldown}s` : "Resend code"}
-						</button>
-						<button type="button" disabled={busy} onClick={startOver} className={secondaryButton}>
-							Change email
 						</button>
 					</div>
 				)}
 				{step === "password" && (
-					<button type="button" disabled={busy} onClick={startOver} className={secondaryButton}>
-						Start over
-					</button>
-				)}
-				{step !== "done" && (
-					<button
-						type="button"
-						disabled={busy}
-						onClick={onClose}
-						className={secondaryButton}
-					>
-						Cancel
-					</button>
+					<div className="mt-6 text-sm">
+						<button type="button" disabled={busy} onClick={startOver} className="cursor-pointer font-semibold text-site-mist transition-colors hover:text-site-ink disabled:opacity-50">
+							Start over
+						</button>
+					</div>
 				)}
 			</dialog>
 		</div>,
-		document.body,
+		document.querySelector(".public-site") ?? document.body,
 	);
 }

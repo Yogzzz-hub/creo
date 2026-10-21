@@ -202,7 +202,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
   const currentIgHandle = (query.data?.instagram_username || "").replace(/^@/, "");
 
   return (
-    <main className="text-hi space-y-6 pb-16 max-w-6xl mx-auto">
+    <div className="text-hi space-y-6 pb-16 max-w-6xl mx-auto">
       {/* Tab Navigation & User Preview Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-app-line/60">
         <nav aria-label="Account Settings Tabs" className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -898,6 +898,6 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           </div>,
           document.body
         )}
-    </main>
+    </div>
   );
 }

@@ -1,473 +1,305 @@
-import { useState } from "react";
-import { 
-  Play, Activity, 
-  CheckSquare, ChevronRight, Zap, Layers,
-  Link, Clock, Unlock, Plus, Volume2, Settings, Maximize, Copy
-} from "lucide-react";
+import { Check } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useRef, useState } from "react";
+import { EASE_OUT_EXPO, Reveal } from "../../components/motion";
+import { ScrollFlipText } from "../../components/motion/ScrollFlipText";
+import { SEOHead } from "../../components/public/SEOHead";
+import { DISPLAY, PillLink, SampleCta } from "../../components/public/StagePieces";
+import { SCREEN_IMAGES, Stage3DRoot, useStageLayer } from "../../components/stage3d/registry";
+
+const EYEBROW = "text-sm font-bold uppercase tracking-[0.18em] text-site-mist";
+
+const CATEGORIES = [
+  {
+    name: "Beauty & skincare",
+    image: SCREEN_IMAGES[1],
+    about:
+      "Launch countdowns, routine reels and ingredient carousels that keep a new product talked about all week.",
+    formats: ["Launch countdowns", "Routine reels", "Ingredient carousels"],
+  },
+  {
+    name: "Food & drink",
+    image: SCREEN_IMAGES[2],
+    about:
+      "Step-by-step recipe reels, menu carousels and drop-day stories, cut to make people hungry.",
+    formats: ["Recipe reels", "Menu carousels", "Drop-day stories"],
+  },
+  {
+    name: "Fashion & apparel",
+    image: SCREEN_IMAGES[3],
+    about: "Lookbooks, try-on reels and new-arrival stories that move with every collection.",
+    formats: ["Lookbooks", "Try-on reels", "New-arrival stories"],
+  },
+  {
+    name: "Fitness & wellness",
+    image: SCREEN_IMAGES[0],
+    about: "Workout reels, product demos and challenge stories that turn followers into regulars.",
+    formats: ["Workout reels", "Product demos", "Challenge stories"],
+  },
+  {
+    name: "Home & living",
+    image: SCREEN_IMAGES[4],
+    about:
+      "Room refreshes, styling carousels and before-and-after stories that show the product at home.",
+    formats: ["Room refreshes", "Styling carousels", "Before-and-after stories"],
+  },
+];
+
+const FIRST_MONTH = [
+  {
+    when: "Day 1",
+    title: "Your Brand DNA",
+    body: "Upload your logo, fonts, colours, past posts and guidelines. Your creative lead turns them into the Brand DNA your pod works from.",
+  },
+  {
+    when: "Within 7 days",
+    title: "Your first batch",
+    body: "Reels, carousels and stories land in your portal, organised by batch and ready for review.",
+  },
+  {
+    when: "Every week",
+    title: "Review and approve",
+    body: "Approve in one click, or decline with a note and the pod revises within your plan's quota.",
+  },
+  {
+    when: "Every month",
+    title: "Plan the next one",
+    body: "Your lead maps the next content calendar with you. Upgrade, pause renewal or cancel anytime.",
+  },
+];
+
+const FIT = [
+  "You sell direct to consumers and grow on Instagram",
+  "You need fresh reels, carousels and stories every week",
+  "You'd rather approve work than brief it from scratch",
+  "You want a clear due date on every batch",
+];
 
 export function ClientsPage() {
-  const [activeWorkflowTab, setActiveWorkflowTab] = useState('All');
+  return (
+    <Stage3DRoot>
+      <ClientsContent />
+    </Stage3DRoot>
+  );
+}
+
+function ClientsContent() {
+  const reduce = useReducedMotion() ?? false;
+  const heroRef = useRef<HTMLElement>(null);
+  const heroViewRef = useRef<HTMLDivElement>(null);
+  const fitRef = useRef<HTMLElement>(null);
+  const fitViewRef = useRef<HTMLDivElement>(null);
+
+  useStageLayer({
+    kind: "blocks",
+    mode: "assemble",
+    drive: "pass",
+    views: [heroViewRef],
+    section: heroRef,
+  });
+  useStageLayer({ kind: "mailbox", views: [fitViewRef], section: fitRef });
+
+  const [active, setActive] = useState(0);
+  const category = CATEGORIES[active] ?? CATEGORIES[0];
 
   return (
-    <div className="w-full bg-site-bg text-site-ink min-h-screen pb-20 lg:pb-24 font-sans selection:bg-site-blue/30">
-      
-      {/* ── Section 1: Hero & Pipeline Monitor ── */}
-      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-6 pb-16 sm:pt-8 sm:pb-20 lg:pt-10 lg:pb-24">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          
-          {/* Left Column - Headline & Metrics */}
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-site-surface border border-site-line/50 text-site-blue text-[11px] font-bold px-3 py-1 mb-6 uppercase tracking-wider">
-              CREATIVE OPERATIONS
-            </div>
-            
-            <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-black tracking-tight leading-[1.05] text-site-ink mb-6">
-              Trusted by the world's most ambitious <span className="text-site-blue">creative teams.</span>
-            </h1>
-            
-            <p className="text-sm text-site-mist max-w-lg mb-10 leading-relaxed">
-              High-performance creative production, AI-assisted workflows, and secure asset delivery — all in one place.
-            </p>
-            
-            {/* Metrics */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="bg-site-surface/60 backdrop-blur-md border border-site-line/50 rounded-xl p-4 flex flex-col justify-center">
-                <div className="text-site-mist mb-2"><Zap className="size-4" /></div>
-                <div className="text-2xl font-black text-site-ink leading-none mb-1">48h</div>
-                <div className="text-[10px] text-site-ink font-semibold mb-1">Turnaround</div>
-                <div className="text-[9px] text-site-mist">Average delivery time</div>
-              </div>
-              <div className="bg-site-surface/60 backdrop-blur-md border border-site-line/50 rounded-xl p-4 flex flex-col justify-center">
-                <div className="text-site-mist mb-2"><Clock className="size-4" /></div>
-                <div className="text-2xl font-black text-site-ink leading-none mb-1">99.4%</div>
-                <div className="text-[10px] text-site-ink font-semibold mb-1">On-Time</div>
-                <div className="text-[9px] text-site-mist">Delivery success rate</div>
-              </div>
-              <div className="bg-site-surface/60 backdrop-blur-md border border-site-line/50 rounded-xl p-4 flex flex-col justify-center">
-                <div className="text-site-mist mb-2"><Activity className="size-4" /></div>
-                <div className="text-2xl font-black text-site-ink leading-none mb-1">1.1x</div>
-                <div className="text-[10px] text-site-ink font-semibold mb-1">Review Loops</div>
-                <div className="text-[9px] text-site-mist">Avg. per project</div>
-              </div>
-              <div className="bg-site-surface/60 backdrop-blur-md border border-site-line/50 rounded-xl p-4 flex flex-col justify-center">
-                <div className="text-site-mist mb-2"><Link className="size-4" /></div>
-                <div className="text-2xl font-black text-site-ink leading-none mb-1">100%</div>
-                <div className="text-[10px] text-site-ink font-semibold mb-1">Token Magic-Links</div>
-                <div className="text-[9px] text-site-mist">Secure client access</div>
-              </div>
-            </div>
-          </div>
+    <>
+      <SEOHead
+        title="Who We Work With | Creo D2C Content Pods"
+        description="Creo pods make weekly reels, carousels and stories for D2C brands in beauty, food, fashion, fitness and home. See what your first month looks like."
+      />
 
-          {/* Right Column - Asset Pipeline Monitor */}
-          <div className="bg-site-surface/60 backdrop-blur-md border border-site-line/50 rounded-2xl p-4 sm:p-6 shadow-2xl">
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-site-line/50">
-              <div className="flex items-center gap-2 text-sm font-bold text-site-ink">
-                <Layers className="size-4 text-site-blue" /> Asset Pipeline
+      {/* 1. Hero — scattered blocks assemble into one cube as the page scrolls */}
+      <section
+        ref={heroRef}
+        className="st-tone st-hero relative -mt-[76px] overflow-hidden px-6 pb-20 pt-[calc(76px+10svh)] sm:-mt-[84px] sm:px-8 sm:pt-[calc(84px+12svh)] lg:px-12"
+      >
+        <div className="mx-auto grid max-w-[1240px] items-center gap-6 lg:min-h-[66svh] lg:grid-cols-2">
+          <div className="relative z-10">
+            <p className={EYEBROW}>Who we work with</p>
+            <ScrollFlipText
+              as="h1"
+              playOnMount
+              delay={0.2}
+              text="For brands that post every week."
+              className={`creo-display mt-6 block max-w-[12ch] text-[clamp(3rem,7vw,6.75rem)] leading-[0.92] ${DISPLAY}`}
+            />
+            <Reveal delay={0.6}>
+              <p className="mt-6 max-w-lg text-lg leading-relaxed text-site-mist">
+                Creo pods work with direct-to-consumer brands that need fresh reels, carousels and
+                stories every week, without building an in-house team.
+              </p>
+            </Reveal>
+            <Reveal delay={0.75}>
+              <div className="mt-10 flex flex-wrap gap-3">
+                <PillLink to="/pricing">Compare plans</PillLink>
               </div>
-              <div className="flex items-center gap-2 text-xs font-semibold text-site-blue">
-                <span className="size-2 rounded-full bg-site-blue animate-pulse"></span> Live
-              </div>
-            </div>
-            
-            <div className="space-y-6">
-              {/* Ingested */}
-              <div>
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <div className="flex items-center gap-2 text-site-ink font-semibold">
-                    <span className="size-1.5 rounded-full bg-site-blue"></span> Ingested
-                  </div>
-                  <div className="text-[10px] text-site-mist">100%</div>
-                </div>
-                <div className="text-[10px] text-site-mist mb-2">12 assets</div>
-                <div className="h-1.5 w-full bg-site-deep rounded-full overflow-hidden">
-                  <div className="h-full bg-site-blue w-full" />
-                </div>
-              </div>
-              {/* In Review */}
-              <div>
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <div className="flex items-center gap-2 text-site-ink font-semibold">
-                    <span className="size-1.5 rounded-full bg-site-blue"></span> In Review
-                  </div>
-                  <div className="text-[10px] text-site-mist">58%</div>
-                </div>
-                <div className="text-[10px] text-site-mist mb-2">7 assets</div>
-                <div className="h-1.5 w-full bg-site-deep rounded-full overflow-hidden">
-                  <div className="h-full bg-site-blue w-[58%]" />
-                </div>
-              </div>
-              {/* Changes Requested */}
-              <div>
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <div className="flex items-center gap-2 text-site-ink font-semibold">
-                    <span className="size-1.5 rounded-full bg-site-sky"></span> Changes Requested
-                  </div>
-                  <div className="text-[10px] text-site-mist">25%</div>
-                </div>
-                <div className="text-[10px] text-site-mist mb-2">3 assets</div>
-                <div className="h-1.5 w-full bg-site-deep rounded-full overflow-hidden">
-                  <div className="h-full bg-site-sky w-[25%]" />
-                </div>
-              </div>
-              {/* Approved */}
-              <div>
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <div className="flex items-center gap-2 text-site-ink font-semibold">
-                    <span className="size-1.5 rounded-full bg-site-blue"></span> Approved
-                  </div>
-                  <div className="text-[10px] text-site-mist">100%</div>
-                </div>
-                <div className="text-[10px] text-site-mist mb-2">8 assets</div>
-                <div className="h-1.5 w-full bg-site-deep rounded-full overflow-hidden">
-                  <div className="h-full bg-site-blue w-full" />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 pt-4 border-t border-site-line/50 flex items-center gap-3">
-               <div className="relative size-4 flex items-center justify-center">
-                 <Activity className="size-4 text-site-blue relative z-10" />
-                 <div className="absolute inset-0 bg-site-blue rounded-full animate-ping opacity-20"></div>
-               </div>
-               <div>
-                 <div className="text-[10px] font-bold text-site-ink">Pipeline healthy</div>
-                 <div className="text-[10px] text-site-mist">All systems operational</div>
-               </div>
-            </div>
+            </Reveal>
           </div>
+          <div
+            ref={heroViewRef}
+            className="pointer-events-none -order-1 h-[34svh] lg:order-none lg:h-[66svh]"
+          />
         </div>
       </section>
 
-      {/* ── Section 2: Creative Workflows ── */}
-      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-site-line/50">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-site-ink mb-2">Creative Workflows</h2>
-            <p className="text-sm text-site-mist">From concept to final delivery — optimized for speed, quality and scale.</p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between lg:justify-end gap-6 lg:gap-12 w-full lg:w-auto">
-            <div className="flex items-center gap-2 bg-site-surface border border-site-line/50 p-1 rounded-full overflow-x-auto w-full sm:w-auto hide-scrollbar">
-              {['All', 'Video', 'Design', 'Motion', 'Post'].map(tab => (
-                <button 
-                  key={tab}
-                  onClick={() => setActiveWorkflowTab(tab)}
-                  className={`text-[11px] font-semibold px-4 py-1.5 rounded-full transition-colors whitespace-nowrap ${activeWorkflowTab === tab ? 'bg-site-blue text-site-bg' : 'text-site-mist hover:text-site-ink'}`}
-                >
-                  {tab}
-                </button>
+      {/* 2. Brands we build for — pick a category, see what the pod makes for it */}
+      <section className="st-tone st-inverse relative overflow-hidden px-6 py-28 sm:px-8 lg:px-12 lg:py-36">
+        <div className="mx-auto max-w-[1440px]">
+          <ScrollFlipText
+            as="h2"
+            text="Brands we build for"
+            className="block max-w-[12ch] text-[clamp(3.5rem,9vw,8.5rem)] font-medium leading-[0.88] tracking-[-0.06em] text-[var(--tone-accent)]"
+          />
+          <div className="mt-14 grid items-start gap-12 lg:grid-cols-12">
+            <ul className="lg:col-span-4">
+              {CATEGORIES.map((item, i) => (
+                <li key={item.name}>
+                  <button
+                    type="button"
+                    aria-pressed={active === i}
+                    onClick={() => setActive(i)}
+                    onMouseEnter={() => setActive(i)}
+                    onFocus={() => setActive(i)}
+                    className={`w-full cursor-pointer border-b-2 py-5 text-left text-2xl font-medium tracking-[-0.03em] transition-colors duration-300 sm:text-3xl ${
+                      active === i
+                        ? "border-[var(--tone-accent)] text-site-ink"
+                        : "border-hi/10 text-site-mist hover:text-site-ink"
+                    }`}
+                  >
+                    {item.name}
+                  </button>
+                </li>
               ))}
-            </div>
-            <div className="text-[11px] font-bold text-site-ink flex items-center gap-1.5 cursor-pointer hover:text-site-blue transition-colors shrink-0">
-              View All <ChevronRight className="size-3" />
-            </div>
-          </div>
-        </div>
+            </ul>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            { title: 'Motion & 3D Pod', desc: '3D motion, CGI, virtual production, product demos.', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80', badge: 'VIDEO' },
-            { title: 'High-Velocity DTC Creative', desc: 'Short-form, social, paid media, performance creative.', img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80', badge: 'VIDEO' },
-            { title: 'Brand & Design Architecture', desc: 'Visual identity, brand systems, motion design.', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80', badge: 'DESIGN' },
-            { title: 'Performance Ad Operations', desc: 'Creative testing, scaling, reporting, optimization.', img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80', badge: 'OPS' },
-            { title: 'Enterprise Creative Ops', desc: 'Workflow management, stakeholder sync, delivery.', img: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=800&q=80', badge: 'OPS' },
-            { title: 'Post-Production House', desc: 'Edit, color, sound, VFX, final mastering.', img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=800&q=80', badge: 'POST' }
-          ].map(card => (
-            <div key={card.title} className="backdrop-blur-md bg-site-surface/60 border border-site-line/50 rounded-2xl p-4 sm:p-8 group cursor-pointer hover:border-site-blue/40 transition-colors flex flex-col">
-              <div className="relative mb-5">
-                <img src={card.img} alt={card.title} className="w-full h-44 object-cover rounded-xl border border-site-line/40 transition-transform duration-500 hover:scale-[1.02]" />
-                <div className="absolute top-3 right-3 bg-site-bg/80 backdrop-blur-sm border border-site-line px-2 py-1 rounded text-[9px] font-bold text-site-ink">
-                  {card.badge}
-                </div>
-              </div>
-              <h3 className="text-sm font-bold text-site-ink mb-2">{card.title}</h3>
-              <p className="text-xs text-site-mist mb-6 flex-1">{card.desc}</p>
-              <div className="flex items-center justify-between border-t border-site-line/50 pt-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 text-[9px] text-site-mist font-semibold"><CheckSquare className="size-3" /> 4K ProRes</div>
-                  <div className="flex items-center gap-1.5 text-[9px] text-site-mist font-semibold"><Maximize className="size-3" /> 9:16 Scale</div>
-                  <div className="flex items-center gap-1.5 text-[9px] text-site-mist font-semibold"><Unlock className="size-3" /> Token Gate</div>
-                </div>
-                <ChevronRight className="size-4 text-site-blue group-hover:translate-x-1 transition-transform" />
+            <div className="flex justify-center lg:col-span-4">
+              <div className="relative size-52 rotate-45 overflow-hidden rounded-[3rem] sm:size-64 sm:rounded-[3.5rem] lg:size-72">
+                <AnimatePresence initial={false}>
+                  <motion.img
+                    key={category?.name}
+                    src={category?.image}
+                    alt=""
+                    initial={reduce ? false : { opacity: 0, scale: 1.15 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
+                    className="absolute inset-[-21%] size-[142%] max-w-none -rotate-45 object-cover"
+                  />
+                </AnimatePresence>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* ── Section 3: Engineering Standards ── */}
-      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-site-line/50">
-        <div className="mb-12">
-          <h2 className="text-2xl sm:text-3xl font-black text-site-ink mb-2">Our Engineering Standards</h2>
-          <p className="text-sm text-site-mist">Built for security, speed and creative freedom.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-site-surface/60 backdrop-blur-md border border-site-line/50 rounded-2xl p-4 sm:p-6 lg:p-8 flex flex-col">
-            <div className="w-12 h-12 rounded-xl bg-site-deep border border-site-line flex items-center justify-center mb-6">
-              <Link className="size-5 text-site-blue" />
+            <div className="lg:col-span-4">
+              <p className={EYEBROW}>What your pod makes</p>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={category?.name}
+                  initial={reduce ? false : { opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.35 }}
+                >
+                  <p className="mt-4 max-w-sm text-lg leading-relaxed text-site-ink">
+                    {category?.about}
+                  </p>
+                  <ul className="mt-6 space-y-2.5">
+                    {category?.formats.map((format) => (
+                      <li key={format} className="flex items-start gap-3 text-base text-site-ink">
+                        <Check className="mt-1 size-4 shrink-0 text-[var(--tone-accent)]" />
+                        {format}
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              </AnimatePresence>
             </div>
-            <h3 className="text-sm font-bold text-site-ink mb-3">Zero-Login Client Magic Links</h3>
-            <p className="text-xs text-site-mist leading-relaxed">
-              Instant, secure access for your team and clients. No accounts. No friction.
-            </p>
-          </div>
-          <div className="bg-site-surface/60 backdrop-blur-md border border-site-line/50 rounded-2xl p-4 sm:p-6 lg:p-8 flex flex-col">
-            <div className="w-12 h-12 rounded-xl bg-site-deep border border-site-line flex items-center justify-center mb-6">
-              <Maximize className="size-5 text-site-blue" />
-            </div>
-            <h3 className="text-sm font-bold text-site-ink mb-3">Frame-Accurate Video Annotations</h3>
-            <p className="text-xs text-site-mist leading-relaxed">
-              Collaborate with precision. Comment on exact frames, not just timestamps.
-            </p>
-          </div>
-          <div className="bg-site-surface/60 backdrop-blur-md border border-site-line/50 rounded-2xl p-4 sm:p-6 lg:p-8 flex flex-col">
-            <div className="w-12 h-12 rounded-xl bg-site-deep border border-site-line flex items-center justify-center mb-6">
-              <CheckSquare className="size-5 text-site-blue" />
-            </div>
-            <h3 className="text-sm font-bold text-site-ink mb-3">Automated Sign-Off Gates</h3>
-            <p className="text-xs text-site-mist leading-relaxed">
-              Built-in approval workflows, version control and audit trails for complete transparency.
-            </p>
           </div>
         </div>
       </section>
 
-      {/* ── Section 4: Video Deliverable Review Cockpit ── */}
-      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-site-line/50">
-        <div className="mb-12">
-          <div className="text-[10px] font-bold text-site-blue uppercase tracking-wider mb-2">CLIENT PORTAL</div>
-          <h2 className="text-2xl sm:text-3xl font-black text-site-ink mb-2">Video Deliverable Review</h2>
-          <p className="text-sm text-site-mist">Review, annotate, and approve your creative assets — all in one place.</p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Left: Video Player */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="bg-site-bg border border-site-line/50 rounded-2xl overflow-hidden relative group aspect-video">
-              <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1400&q=80" alt="Video Player" className="absolute inset-0 w-full h-full object-cover opacity-80" />
-              
-              {/* Player Top Bar */}
-              <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between bg-gradient-to-b from-site-bg/80 to-transparent">
-                <div className="flex items-center gap-2">
-                  <div className="size-6 rounded bg-site-surface/80 backdrop-blur flex items-center justify-center border border-site-line">
-                    <Layers className="size-3 text-site-ink" />
-                  </div>
-                  <span className="text-xs font-bold text-site-ink">NOSTIC Brand Film v3</span>
-                </div>
-                <div className="bg-site-surface/80 backdrop-blur border border-site-line text-[9px] font-bold text-site-ink px-2 py-1 rounded">
-                  4K
-                </div>
-              </div>
-
-              {/* Center Play Button Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="size-16 rounded-full bg-site-deep/80 backdrop-blur-md flex items-center justify-center border border-site-line">
-                  <Play className="size-6 text-site-ink ml-1" />
-                </div>
-              </div>
-
-              {/* On-video annotation pin */}
-              <div className="absolute top-1/2 left-1/3">
-                 <div className="relative">
-                   <div className="size-6 rounded-full bg-site-deep border-2 border-site-blue flex items-center justify-center text-[10px] font-bold text-site-ink shadow-lg absolute -translate-x-1/2 -translate-y-1/2 z-10 cursor-pointer">
-                     1
-                     <div className="absolute inset-0 rounded-full border-2 border-site-blue animate-ping opacity-30"></div>
-                   </div>
-                   <div className="absolute top-4 left-4 backdrop-blur-md bg-site-surface/90 border border-site-line/50 p-3 rounded-xl shadow-2xl w-48 z-20">
-                     <div className="text-[10px] font-bold text-site-ink mb-1">01:24</div>
-                     <div className="text-[10px] text-site-mist">Great shot. Keep this.</div>
-                   </div>
-                 </div>
-              </div>
-
-              {/* Player Bottom Bar */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-site-bg/90 to-transparent">
-                {/* Progress Bar */}
-                <div className="relative h-1.5 bg-site-line rounded-full mb-4 group/scrubber cursor-pointer">
-                  <div className="absolute top-0 left-0 bottom-0 w-[45%] bg-site-blue rounded-full"></div>
-                  {/* Scrubber Knob */}
-                  <div className="absolute top-1/2 left-[45%] -translate-x-1/2 -translate-y-1/2 size-3 rounded-full bg-site-ink shadow opacity-0 group-hover/scrubber:opacity-100"></div>
-                  
-                  {/* Pins on timeline */}
-                  <div className="absolute top-1/2 left-[15%] -translate-x-1/2 -translate-y-1/2 size-2 rounded-full bg-site-sky border border-site-bg"></div>
-                  <div className="absolute top-1/2 left-[30%] -translate-x-1/2 -translate-y-1/2 size-2 rounded-full bg-site-blue border border-site-bg"></div>
-                  <div className="absolute top-1/2 left-[60%] -translate-x-1/2 -translate-y-1/2 size-2 rounded-full bg-site-sky border border-site-bg"></div>
-                  <div className="absolute top-1/2 left-[85%] -translate-x-1/2 -translate-y-1/2 size-2 rounded-full bg-site-blue border border-site-bg"></div>
-                </div>
-
-                <div className="flex items-center justify-between text-site-ink">
-                  <div className="flex items-center gap-4">
-                    <Play className="size-4 cursor-pointer" />
-                    <span className="text-[10px] font-medium font-mono">01:24 / 02:14</span>
-                  </div>
-                  <div className="flex items-center gap-4 text-site-mist">
-                    <span className="text-[10px] font-bold cursor-pointer hover:text-site-ink">1x</span>
-                    <Volume2 className="size-4 cursor-pointer hover:text-site-ink" />
-                    <Settings className="size-4 cursor-pointer hover:text-site-ink" />
-                    <Maximize className="size-4 cursor-pointer hover:text-site-ink" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Magic Link Share Box */}
-            <div className="bg-site-surface/60 backdrop-blur-md border border-site-line/50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-site-deep/80 border border-site-line/40 flex items-center justify-center shrink-0">
-                  <Link className="size-4 text-site-blue" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-site-ink mb-0.5">Magic Link Access</div>
-                  <div className="text-[10px] text-site-mist">Share this link for 1-click access (no login required).</div>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="bg-site-deep/80 border border-site-line/40 text-site-mist text-[10px] font-mono px-3 py-2 rounded-xl flex-1 sm:w-48 truncate">
-                  https://ryze-works.app/review/7f9a3c...
-                </div>
-                <button className="bg-site-surface hover:bg-site-line border border-site-line text-site-ink text-[10px] font-semibold px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors shrink-0">
-                  <Copy className="size-3" /> Copy Link
-                </button>
-              </div>
-
-              <div className="hidden lg:flex items-center gap-2 pl-4 border-l border-site-line/50">
-                 <span className="size-2 rounded-full bg-site-blue"></span>
-                 <div>
-                   <div className="text-[10px] font-bold text-site-blue">Active</div>
-                   <div className="text-[9px] text-site-mist whitespace-nowrap">Expires in 7 days</div>
-                 </div>
-              </div>
+      {/* 3. Your first month — a ruled timeline beside a sticky title */}
+      <section className="st-tone st-base px-6 py-24 sm:px-8 sm:py-32 lg:px-12">
+        <div className="mx-auto grid max-w-[1240px] gap-12 lg:grid-cols-12 lg:gap-16">
+          <div className="lg:col-span-5">
+            <div className="lg:sticky lg:top-32">
+              <ScrollFlipText
+                as="h2"
+                text="Your first month."
+                className={`block text-[clamp(2.6rem,5vw,4.75rem)] leading-[1] ${DISPLAY}`}
+              />
+              <Reveal delay={0.1}>
+                <p className="mt-6 max-w-md text-lg leading-relaxed text-site-mist">
+                  From sign-up to a steady weekly rhythm. Here's what happens, and when.
+                </p>
+              </Reveal>
             </div>
           </div>
-
-          {/* Right: Revision Pins & Related Assets */}
-          <div className="flex flex-col gap-4">
-            
-            {/* Revision Pins */}
-            <div className="bg-site-surface/60 backdrop-blur-md border border-site-line/50 rounded-2xl flex flex-col h-[320px]">
-              <div className="p-4 border-b border-site-line/50 flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-site-ink">Revision Pins</span>
-                  <span className="bg-site-line text-site-ink text-[10px] font-bold px-1.5 py-0.5 rounded">4</span>
-                </div>
-                <button className="text-[10px] font-bold text-site-mist hover:text-site-ink flex items-center gap-1">
-                  <Plus className="size-3" /> Add Review Pin
-                </button>
-              </div>
-
-              <div className="p-4 overflow-y-auto flex-1 space-y-4 hide-scrollbar">
-                {/* Pin 1 - Needs Update */}
-                <div className="flex gap-3">
-                  <div className="flex flex-col items-center mt-1">
-                    <div className="size-2.5 rounded-full bg-site-sky"></div>
-                    <div className="w-[1px] h-full bg-site-line/50 my-1"></div>
-                  </div>
-                  <div className="flex-1 pb-4">
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="text-[11px] font-mono font-bold text-site-ink">00:32</div>
-                      <div className="text-[9px] font-bold text-site-sky bg-site-sky/10 border border-site-sky/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                         <span className="size-1 rounded-full bg-site-sky"></span> Needs Update
-                      </div>
-                    </div>
-                    <div className="text-[11px] text-site-mist">Logo transition too slow. Please speed up by 2x.</div>
-                  </div>
-                </div>
-
-                {/* Pin 2 - Approved */}
-                <div className="flex gap-3">
-                  <div className="flex flex-col items-center mt-1">
-                    <div className="size-2.5 rounded-full bg-site-blue"></div>
-                    <div className="w-[1px] h-full bg-site-line/50 my-1"></div>
-                  </div>
-                  <div className="flex-1 pb-4">
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="text-[11px] font-mono font-bold text-site-ink">01:24</div>
-                      <div className="text-[9px] font-bold text-site-blue bg-site-blue/10 border border-site-blue/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                         <span className="size-1 rounded-full bg-site-blue"></span> Approved
-                      </div>
-                    </div>
-                    <div className="text-[11px] text-site-mist">Great shot. Keep this.</div>
-                  </div>
-                </div>
-
-                {/* Pin 3 - Needs Update */}
-                <div className="flex gap-3">
-                  <div className="flex flex-col items-center mt-1">
-                    <div className="size-2.5 rounded-full bg-site-sky"></div>
-                    <div className="w-[1px] h-full bg-site-line/50 my-1"></div>
-                  </div>
-                  <div className="flex-1 pb-4">
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="text-[11px] font-mono font-bold text-site-ink">01:58</div>
-                      <div className="text-[9px] font-bold text-site-sky bg-site-sky/10 border border-site-sky/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                         <span className="size-1 rounded-full bg-site-sky"></span> Needs Update
-                      </div>
-                    </div>
-                    <div className="text-[11px] text-site-mist">Color grading looks slightly washed out here.</div>
-                  </div>
-                </div>
-
-                {/* Pin 4 - Approved */}
-                <div className="flex gap-3">
-                  <div className="flex flex-col items-center mt-1">
-                    <div className="size-2.5 rounded-full bg-site-blue"></div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="text-[11px] font-mono font-bold text-site-ink">02:05</div>
-                      <div className="text-[9px] font-bold text-site-blue bg-site-blue/10 border border-site-blue/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                         <span className="size-1 rounded-full bg-site-blue"></span> Approved
-                      </div>
-                    </div>
-                    <div className="text-[11px] text-site-mist">End card looks perfect.</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Related Assets */}
-            <div className="bg-site-surface/60 backdrop-blur-md border border-site-line/50 rounded-2xl p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-site-ink">Related Assets</span>
-                  <span className="bg-site-line text-site-ink text-[10px] font-bold px-1.5 py-0.5 rounded">3</span>
-                </div>
-                <div className="text-[10px] font-bold text-site-mist hover:text-site-ink cursor-pointer">
-                  View All
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pb-2">
-                {[
-                  { name: 'NOSTIC_Logo_v2.png', size: '2.4 MB', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=100&q=80' },
-                  { name: 'Behind the Scenes.mp4', size: '1.2 GB', img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=100&q=80' },
-                  { name: 'Final Cut v3.mov', size: '890 MB', img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=100&q=80' }
-                ].map(asset => (
-                  <div key={asset.name} className="flex-1 min-w-0 bg-site-deep/80 border border-site-line/40 rounded-xl p-2 flex items-center gap-2 group cursor-pointer hover:border-site-blue/40 transition-colors">
-                    <img src={asset.img} className="size-10 shrink-0 rounded object-cover border border-site-line/50" />
-                    <div className="overflow-hidden">
-                      <div className="text-[9px] font-bold text-site-ink truncate mb-0.5">{asset.name}</div>
-                      <div className="text-[8px] text-site-mist">{asset.size}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Action */}
-            <div className="flex justify-end mt-2">
-              <button className="bg-site-ice text-site-bg hover:bg-site-ice font-bold text-xs px-6 py-3 rounded-full flex items-center gap-2 transition-all shadow-sm hover:shadow-[0_0_20px_rgba(220,232,255,0.25)] group">
-                Approve All <svg className="size-4 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" className="animate-[dash_0.5s_ease-out_forwards]" strokeDasharray="24" strokeDashoffset="0" /></svg>
-              </button>
-            </div>
-
-          </div>
-
+          <ol className="border-t-2 border-hi/80 lg:col-span-7">
+            {FIRST_MONTH.map((step, i) => (
+              <Reveal
+                key={step.title}
+                as="li"
+                delay={i * 0.06}
+                className="grid gap-3 border-b border-hi/15 py-10 sm:grid-cols-[9.5rem_1fr] sm:gap-8"
+              >
+                <span className="pt-2 font-mono text-sm text-[var(--tone-accent)]">
+                  {step.when}
+                </span>
+                <span>
+                  <span className="block text-3xl font-medium tracking-[-0.03em] text-site-ink sm:text-4xl">
+                    {step.title}
+                  </span>
+                  <span className="mt-3 block max-w-xl text-lg leading-relaxed text-site-mist">
+                    {step.body}
+                  </span>
+                </span>
+              </Reveal>
+            ))}
+          </ol>
         </div>
       </section>
-      
-    </div>
+
+      {/* 4. A good fit — the mailbox raising its flag beside the checklist */}
+      <section
+        ref={fitRef}
+        className="st-tone st-midnight relative overflow-hidden px-6 py-24 sm:px-8 sm:py-32 lg:px-12"
+      >
+        <div className="mx-auto grid max-w-[1240px] items-center gap-10 lg:grid-cols-2">
+          <div className="relative z-10">
+            <ScrollFlipText
+              as="h2"
+              text="A good fit if you..."
+              className={`block text-[clamp(2.6rem,5.5vw,5rem)] leading-[0.95] ${DISPLAY}`}
+            />
+            <ul className="mt-10 border-t border-hi/15">
+              {FIT.map((item, i) => (
+                <Reveal
+                  key={item}
+                  as="li"
+                  delay={i * 0.06}
+                  className="flex items-start gap-4 border-b border-hi/15 py-5 text-xl font-medium leading-snug text-site-ink"
+                >
+                  <Check
+                    className="mt-1 size-5 shrink-0 text-[var(--tone-accent)]"
+                    strokeWidth={2.5}
+                  />
+                  {item}
+                </Reveal>
+              ))}
+            </ul>
+            <Reveal delay={0.2}>
+              <div className="mt-10 flex flex-wrap gap-3">
+                <PillLink to="/pricing">Compare plans</PillLink>
+                <PillLink href="https://wa.me/919941999415">Ask us on WhatsApp</PillLink>
+              </div>
+            </Reveal>
+          </div>
+          <div ref={fitViewRef} className="pointer-events-none h-[42svh] lg:h-[66svh]" />
+        </div>
+      </section>
+
+      <SampleCta />
+    </>
   );
 }

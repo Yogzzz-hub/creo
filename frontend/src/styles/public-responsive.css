@@ -57,7 +57,8 @@
 }
 
 @media (max-width: 639px) {
-  .public-site h1 {
+  /* The landing page's display headline sizes itself */
+  .public-site h1:not(.creo-display) {
     font-size: clamp(2rem, 8.8vw, 3rem);
     line-height: 1.08;
     letter-spacing: -0.035em;

@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronDown, ArrowRight } from "lucide-react";
+import { Plus } from "lucide-react";
 import { SEOHead } from "../../components/public/SEOHead";
-import { PageHero } from "../../components/public/PageBlocks";
-import { EASE_OUT_EXPO, MaskReveal, RollText, Stagger, StaggerItem } from "../../components/motion";
+import { DISPLAY, PillLink, SampleCta } from "../../components/public/StagePieces";
+import { EASE_OUT_EXPO, Reveal } from "../../components/motion";
+import { ScrollFlipText } from "../../components/motion/ScrollFlipText";
+import { Stage3DRoot, useStageLayer } from "../../components/stage3d/registry";
 
 const FAQ_ITEMS = [
   {
@@ -34,49 +35,72 @@ const FAQ_ITEMS = [
 ];
 
 export function FaqPage() {
+  return (
+    <Stage3DRoot>
+      <FaqContent />
+    </Stage3DRoot>
+  );
+}
+
+function FaqContent() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const heroRef = useRef<HTMLElement>(null);
+  const heroViewRef = useRef<HTMLDivElement>(null);
+  const askRef = useRef<HTMLElement>(null);
+  const askViewRef = useRef<HTMLDivElement>(null);
+
+  useStageLayer({ kind: "bubble", views: [heroViewRef], section: heroRef });
+  useStageLayer({ kind: "mailbox", views: [askViewRef], section: askRef });
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    "mainEntity": FAQ_ITEMS.map((item) => ({
+    mainEntity: FAQ_ITEMS.map((item) => ({
       "@type": "Question",
-      "name": item.q,
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": item.a,
-      },
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
     })),
   };
 
   return (
-    <div className="min-h-screen w-full pb-12 font-sans text-site-ink sm:pb-16">
+    <>
       <SEOHead
         title="Frequently Asked Questions | Creo D2C Content Pods"
         description="Learn how Creo content pods deliver weekly reels, carousels, and stories for D2C brands with transparent SLAs and clear monthly tiers."
         jsonLd={jsonLd}
       />
 
-      <PageHero
-        eyebrow="Help & knowledge base"
-        title="Frequently Asked Questions"
-        accent={["Questions"]}
-        lead="Everything you need to know about Creo content pods, deliverable SLAs, and monthly retainer tiers for D2C brands."
-      />
+      {/* 1. Hero — a glossy speech bubble beside the headline */}
+      <section ref={heroRef} className="st-tone st-hero relative -mt-[76px] overflow-hidden px-6 pb-20 pt-[calc(76px+12svh)] sm:-mt-[84px] sm:px-8 sm:pt-[calc(84px+14svh)] lg:px-12">
+        <div className="mx-auto grid max-w-[1240px] items-center gap-6 lg:min-h-[64svh] lg:grid-cols-2">
+          <div className="relative z-10">
+            <p className="text-sm font-bold uppercase tracking-[0.18em] text-site-mist">Help & knowledge base</p>
+            <ScrollFlipText
+              as="h1"
+              playOnMount
+              delay={0.2}
+              text="Questions, answered."
+              className={`creo-display mt-6 block text-[clamp(3rem,8vw,7.5rem)] leading-[0.92] ${DISPLAY}`}
+            />
+            <Reveal delay={0.6}>
+              <p className="mt-6 max-w-lg text-lg leading-relaxed text-site-mist">
+                Everything you need to know about Creo content pods, deliverable SLAs, and monthly retainer tiers for D2C brands.
+              </p>
+            </Reveal>
+          </div>
+          <div ref={heroViewRef} className="pointer-events-none -order-1 h-[34svh] lg:order-none lg:h-[64svh]" />
+        </div>
+      </section>
 
-      <section className="mx-auto max-w-[920px] px-6 sm:px-8">
-        <Stagger className="space-y-3.5" gap={0.08}>
+      {/* 2. The questions — numbered, ruled rows */}
+      <section className="st-tone st-base px-6 py-24 sm:px-8 sm:py-32 lg:px-12">
+        <div className="mx-auto max-w-[1100px] border-b border-hi/10">
           {FAQ_ITEMS.map((item, index) => {
             const isOpen = openIndex === index;
             const panelId = `faq-panel-${index}`;
             const buttonId = `faq-button-${index}`;
             return (
-              <StaggerItem
-                key={item.q}
-                className={`rounded-2xl transition-[box-shadow,background-color] duration-500 ${
-                  isOpen ? "creo-glass creo-glow-ring creo-beam" : "creo-glass hover:bg-hi/[0.03]"
-                }`}
-              >
+              <div key={item.q} className="border-t border-hi/10">
                 <h3>
                   <button
                     id={buttonId}
@@ -84,30 +108,23 @@ export function FaqPage() {
                     aria-expanded={isOpen}
                     aria-controls={panelId}
                     onClick={() => setOpenIndex(isOpen ? null : index)}
-                    className="flex w-full cursor-pointer items-center justify-between gap-4 p-5 text-left sm:p-6"
+                    className="group flex w-full cursor-pointer items-center gap-5 py-8 text-left sm:gap-8"
                   >
-                    <span className="flex items-baseline gap-4">
-                      <span
-                        className={`font-mono text-xs transition-colors duration-300 ${isOpen ? "text-site-blue-light" : "text-site-blue/70"}`}
-                      >
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                      <span className="text-base font-semibold leading-snug tracking-[-0.01em] text-hi sm:text-lg">
-                        {item.q}
-                      </span>
+                    <span className="w-10 shrink-0 font-mono text-sm text-[var(--tone-accent)] sm:w-14">{String(index + 1).padStart(2, "0")}</span>
+                    <span className="flex-1 text-xl font-medium leading-snug tracking-[-0.02em] text-site-ink transition-colors group-hover:text-[var(--tone-accent)] sm:text-3xl">
+                      {item.q}
                     </span>
                     <motion.span
-                      animate={{ rotate: isOpen ? 180 : 0 }}
+                      animate={{ rotate: isOpen ? 45 : 0 }}
                       transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
-                      className={`flex size-9 shrink-0 items-center justify-center rounded-full border transition-colors duration-300 ${
-                        isOpen ? "border-site-blue/60 bg-site-blue/15 text-hi" : "border-hi/10 text-site-mist"
+                      className={`flex size-11 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                        isOpen ? "border-[var(--site-blue-deep)] bg-[var(--site-blue-deep)] text-[var(--on-brand)]" : "border-hi/15 text-site-ink"
                       }`}
                     >
-                      <ChevronDown className="size-4" />
+                      <Plus className="size-5" />
                     </motion.span>
                   </button>
                 </h3>
-
                 <AnimatePresence initial={false}>
                   {isOpen && (
                     <motion.section
@@ -120,46 +137,38 @@ export function FaqPage() {
                       transition={{ duration: 0.45, ease: EASE_OUT_EXPO }}
                       className="overflow-hidden"
                     >
-                      <p className="px-5 pb-6 pl-[3.6rem] text-[15px] leading-relaxed text-site-mist-2 sm:px-6 sm:pl-[4.1rem]">
-                        {item.a}
-                      </p>
+                      <p className="max-w-2xl pb-9 pl-[3.75rem] text-base leading-relaxed text-site-mist sm:pl-[5.5rem] sm:text-lg">{item.a}</p>
                     </motion.section>
                   )}
                 </AnimatePresence>
-              </StaggerItem>
+              </div>
             );
           })}
-        </Stagger>
-
-        {/* Closing prompt */}
-        <MaskReveal from="bottom" zoom={1.04} className="mt-16 rounded-[32px]">
-          <div className="creo-glass creo-beam relative overflow-hidden rounded-[32px] px-6 py-12 text-center sm:px-12 sm:py-14">
-            <div aria-hidden="true" className="creo-grid-bg absolute inset-0 opacity-60 [mask-image:radial-gradient(60%_80%_at_50%_0%,#000,transparent)]" />
-            <div aria-hidden="true" className="absolute -top-24 left-1/2 size-[380px] -translate-x-1/2 rounded-full bg-site-blue/20 blur-[100px]" />
-            <h2 className="relative text-2xl font-black tracking-[-0.03em] text-hi sm:text-3xl">
-              Have a specific question about your brand?
-            </h2>
-            <p className="relative mx-auto mb-8 mt-3 max-w-md text-[15px] leading-relaxed text-site-mist">
-              Get a free custom sample batch of reels and carousels engineered specifically for your brand identity.
-            </p>
-            <div className="relative flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-              <Link
-                to="/signup?intent=sample"
-                className="creo-btn-primary group inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold"
-              >
-                <RollText>Start with a free sample</RollText>
-                <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
-              </Link>
-              <Link
-                to="/pricing"
-                className="creo-btn-ghost group inline-flex items-center justify-center rounded-full px-7 py-3.5 text-sm font-semibold"
-              >
-                <RollText>Compare plans</RollText>
-              </Link>
-            </div>
-          </div>
-        </MaskReveal>
+        </div>
       </section>
-    </div>
+
+      {/* 3. Still curious — a mailbox with its flag up */}
+      <section ref={askRef} className="st-tone st-midnight relative overflow-hidden px-6 py-24 sm:px-8 sm:py-32 lg:px-12">
+        <div className="mx-auto grid max-w-[1240px] items-center gap-10 lg:grid-cols-2">
+          <div>
+            <ScrollFlipText as="h2" text="Still have a question?" className={`block text-[clamp(2.6rem,5.5vw,5rem)] leading-[0.95] ${DISPLAY}`} />
+            <Reveal delay={0.1}>
+              <p className="mt-6 max-w-md text-lg leading-relaxed text-site-mist">
+                Ask us anything about your brand, or start with a free custom sample batch of reels and carousels.
+              </p>
+            </Reveal>
+            <Reveal delay={0.2}>
+              <div className="mt-10 flex flex-wrap gap-3">
+                <PillLink href="https://wa.me/919941999415">Ask us on WhatsApp</PillLink>
+                <PillLink to="/pricing">Compare plans</PillLink>
+              </div>
+            </Reveal>
+          </div>
+          <div ref={askViewRef} className="pointer-events-none h-[42svh] lg:h-[66svh]" />
+        </div>
+      </section>
+
+      <SampleCta />
+    </>
   );
 }

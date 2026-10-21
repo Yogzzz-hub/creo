@@ -1,21 +1,19 @@
-import { useState } from "react";
+import { ArrowRight, Check, Search, X } from "lucide-react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Link } from "react-router";
-import {
-  ShieldCheck,
-  Search,
-  CheckCircle2,
-  Clock,
-  Lock,
-  ArrowRight,
-  ArrowLeft,
-  FileText,
-  ChevronRight,
-  CreditCard,
-  RefreshCw,
-  X,
-} from "lucide-react";
+import { Reveal } from "../../components/motion";
+import { ScrollFlipText } from "../../components/motion/ScrollFlipText";
+import { SEOHead } from "../../components/public/SEOHead";
+import { DISPLAY, PillLink } from "../../components/public/StagePieces";
 
-const TERMS_SECTIONS = [
+interface LegalSection {
+  id: string;
+  title: string;
+  badge?: string;
+  content: string[];
+}
+
+const TERMS_SECTIONS: LegalSection[] = [
   {
     id: "acceptance",
     title: "1. Acceptance of Terms",
@@ -157,7 +155,7 @@ const TERMS_SECTIONS = [
   },
 ];
 
-const PRIVACY_SECTIONS = [
+const PRIVACY_SECTIONS: LegalSection[] = [
   {
     id: "collection",
     title: "1. Information We Collect",
@@ -275,418 +273,330 @@ const PRIVACY_SECTIONS = [
   },
 ];
 
-export function TermsPage() {
-  const [search, setSearch] = useState("");
-  const [activeSection, setActiveSection] = useState<string | null>(null);
+const EYEBROW = "text-sm font-bold uppercase tracking-[0.18em] text-site-mist";
 
-  const filtered = TERMS_SECTIONS.filter((s) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return s.title.toLowerCase().includes(q) || s.content.some((c) => c.toLowerCase().includes(q));
-  });
+/** "3. Payment Terms" → ["03", "Payment Terms"] */
+function splitTitle(title: string): [string, string] {
+  const match = /^(\d+)\.\s*(.*)$/.exec(title);
+  return match ? [match[1]?.padStart(2, "0") ?? "", match[2] ?? title] : ["", title];
+}
+
+/** Id of the clause nearest the top of the reading area, for the contents list. */
+function useActiveClause(ids: string[]) {
+  const [active, setActive] = useState<string | null>(ids[0] ?? null);
+  const key = ids.join(",");
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActive(visible[0].target.id);
+      },
+      { rootMargin: "-20% 0px -65% 0px" },
+    );
+    for (const id of key.split(",")) {
+      const el = id && document.getElementById(id);
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, [key]);
+  return active;
+}
+
+/**
+ * Shared shell for the legal pages in the 3D pages' style: a dark hero with the
+ * flip headline, numbered ruled clauses beside a sticky search and contents
+ * list, and a midnight closing band with ways to reach us.
+ */
+function LegalPage({
+  seoTitle,
+  seoDescription,
+  title,
+  lead,
+  highlights,
+  sections,
+  searchPlaceholder,
+  related,
+  closingTitle,
+  closingText,
+  closingActions,
+}: {
+  seoTitle: string;
+  seoDescription: string;
+  title: string;
+  lead: string;
+  highlights: string[];
+  sections: LegalSection[];
+  searchPlaceholder: string;
+  related: { to: string; label: string };
+  closingTitle: string;
+  closingText: string;
+  closingActions: ReactNode;
+}) {
+  const [search, setSearch] = useState("");
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? sections.filter(
+        (s) =>
+          s.title.toLowerCase().includes(q) || s.content.some((c) => c.toLowerCase().includes(q)),
+      )
+    : sections;
+  const active = useActiveClause(filtered.map((s) => s.id));
 
   return (
-    <div className="w-full bg-site-bg text-site-ink min-h-screen font-sans selection:bg-site-blue/30">
-      {/* Hero Header */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-site-deep via-site-bg to-site-bg pt-10 pb-10 sm:pt-14 sm:pb-14 border-b border-site-surface-2">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-site-blue/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <div className="mb-4">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-site-mist hover:text-site-blue transition-colors"
-            >
-              <ArrowLeft className="size-3.5" />
-              <span>Back to Home</span>
-            </Link>
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-site-surface px-3.5 py-1 text-xs font-bold text-site-blue border border-site-line mb-4">
-            <ShieldCheck className="size-3.5" />
-            <span>Official Legal Governance</span>
-          </div>
+    <div className="w-full font-sans text-site-ink">
+      <SEOHead title={seoTitle} description={seoDescription} />
 
-          <h1 className="text-3xl font-black tracking-tight text-site-ink sm:text-5xl">
-            Terms &amp; Conditions
-          </h1>
-          <p className="mt-2 text-xs sm:text-sm text-site-mist font-medium">
-            Last updated: June 29, 2026 &bull; Effective for all active client retainers
-          </p>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-site-mist sm:text-base">
-            Transparent, founder-friendly terms governing our monthly production retainers, guaranteed turnaround SLAs, revision cycles, and client portal access.
-          </p>
+      {/* 1. Hero */}
+      <section className="st-tone st-hero relative -mt-[76px] overflow-hidden px-6 pb-16 pt-[calc(76px+10svh)] sm:-mt-[84px] sm:px-8 sm:pb-20 sm:pt-[calc(84px+12svh)] lg:px-12">
+        <div className="mx-auto max-w-[1240px]">
+          <p className={EYEBROW}>Legal &middot; Last updated June 29, 2026</p>
+          <ScrollFlipText
+            as="h1"
+            playOnMount
+            delay={0.2}
+            text={title}
+            className={`creo-display mt-6 block max-w-[14ch] text-[clamp(3rem,8vw,7.5rem)] leading-[0.92] ${DISPLAY}`}
+          />
+          <Reveal delay={0.5}>
+            <p className="mt-7 max-w-2xl text-lg leading-relaxed text-site-mist">{lead}</p>
+          </Reveal>
+          <Reveal delay={0.6}>
+            <ul className="mt-12 grid gap-4 border-t border-hi/20 pt-6 sm:grid-cols-3">
+              {highlights.map((item) => (
+                <li
+                  key={item}
+                  className="flex items-start gap-3 text-base font-medium text-site-ink"
+                >
+                  <Check
+                    className="mt-1 size-4 shrink-0 text-[var(--tone-accent)]"
+                    strokeWidth={3}
+                  />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        </div>
+      </section>
 
-          {/* Quick SLA Highlights */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-site-ice">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-site-surface border border-site-line">
-              <Clock className="size-3.5 text-site-blue" /> 7-Day First Batch SLA
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-site-surface border border-site-line">
-              <RefreshCw className="size-3.5 text-site-blue" /> 2 Revision Rounds Included
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-site-surface border border-site-line">
-              <CreditCard className="size-3.5 text-site-blue-light" /> Month-to-Month. Cancel Anytime.
-            </span>
-          </div>
+      {/* 2. The clauses */}
+      <section className="st-tone st-base px-6 py-20 sm:px-8 sm:py-28 lg:px-12">
+        <div className="mx-auto grid max-w-[1240px] gap-12 lg:grid-cols-12 lg:gap-16">
+          <aside className="lg:col-span-4">
+            <div className="lg:sticky lg:top-28">
+              <label className="flex items-center gap-3 border-b-2 border-hi/15 transition-colors duration-300 focus-within:border-[var(--tone-accent)]">
+                <Search className="size-5 shrink-0 text-site-mist" />
+                <span className="sr-only">Search this page</span>
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  className="w-full min-w-0 bg-transparent py-3 text-lg font-medium text-site-ink placeholder:text-site-mist/50 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    aria-label="Clear search"
+                    className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-site-mist transition-colors hover:text-site-ink"
+                  >
+                    <X className="size-4" />
+                  </button>
+                )}
+              </label>
 
-          {/* In-Page Search */}
-          <div className="mt-8 max-w-lg mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-site-mist" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search terms, SLAs, revisions, quotas..."
-              className="w-full rounded-2xl border border-site-line bg-site-deep pl-11 pr-10 py-3 text-sm text-site-ink placeholder-site-mist/50 shadow-xs focus:ring-2 focus:ring-site-blue/30 focus:border-site-blue outline-none transition-all"
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-site-mist hover:text-site-ink cursor-pointer"
-              >
-                <X className="size-4" />
-              </button>
+              {/* Phones: a collapsed contents list */}
+              <details className="mt-8 border-y border-hi/10 lg:hidden">
+                <summary className="flex min-h-12 cursor-pointer items-center justify-between text-base font-semibold text-site-ink">
+                  Jump to a section
+                  <span className="text-sm font-medium text-site-mist">{filtered.length}</span>
+                </summary>
+                <nav aria-label="Page sections" className="pb-3">
+                  {filtered.map((section) => {
+                    const [num, name] = splitTitle(section.title);
+                    return (
+                      <a
+                        key={section.id}
+                        href={`#${section.id}`}
+                        className="flex min-h-11 items-baseline gap-3 py-1.5 text-base text-site-mist hover:text-site-ink"
+                      >
+                        <span className="w-6 shrink-0 font-mono text-xs text-[var(--tone-accent)]">
+                          {num}
+                        </span>
+                        {name}
+                      </a>
+                    );
+                  })}
+                </nav>
+              </details>
+
+              <nav aria-label="Page sections" className="mt-10 hidden lg:block">
+                <p className={EYEBROW}>Contents</p>
+                <ol
+                  className="mt-4 max-h-[calc(100svh-22rem)] overflow-y-auto overscroll-contain pr-2"
+                  data-lenis-prevent
+                >
+                  {filtered.map((section) => {
+                    const [num, name] = splitTitle(section.title);
+                    const isActive = active === section.id;
+                    return (
+                      <li key={section.id}>
+                        <a
+                          href={`#${section.id}`}
+                          aria-current={isActive ? "location" : undefined}
+                          className={`flex items-baseline gap-3 border-l-2 py-1.5 pl-4 text-[15px] transition-colors duration-300 ${
+                            isActive
+                              ? "border-[var(--tone-accent)] font-semibold text-site-ink"
+                              : "border-hi/10 text-site-mist hover:text-site-ink"
+                          }`}
+                        >
+                          <span className="w-6 shrink-0 font-mono text-xs text-[var(--tone-accent)]">
+                            {num}
+                          </span>
+                          {name}
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ol>
+                <Link
+                  to={related.to}
+                  className="group mt-8 inline-flex items-center gap-2 text-sm font-semibold text-site-ink underline decoration-hi/30 underline-offset-4 hover:decoration-current"
+                >
+                  {related.label}
+                  <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+              </nav>
+            </div>
+          </aside>
+
+          <div className="lg:col-span-8">
+            {filtered.length === 0 ? (
+              <div className="border-y border-hi/10 py-16 text-center">
+                <p className="text-2xl font-medium tracking-[-0.02em] text-site-ink">
+                  Nothing matches &ldquo;{search.trim()}&rdquo;.
+                </p>
+                <p className="mt-3 text-base text-site-mist">
+                  Try another word, or clear the search to see every clause.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="mt-6 cursor-pointer text-base font-semibold text-[var(--tone-accent)] underline decoration-current/30 underline-offset-4 hover:decoration-current"
+                >
+                  Clear search
+                </button>
+              </div>
+            ) : (
+              <div className="border-b border-hi/10">
+                {filtered.map((section) => {
+                  const [num, name] = splitTitle(section.title);
+                  return (
+                    <article
+                      key={section.id}
+                      id={section.id}
+                      className="scroll-mt-28 border-t border-hi/10 py-12 first:border-t-2 first:border-hi/80 first:pt-10"
+                    >
+                      <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
+                        <span className="font-mono text-sm text-[var(--tone-accent)]">{num}</span>
+                        <h2 className="text-3xl font-medium leading-tight tracking-[-0.03em] text-site-ink sm:text-4xl">
+                          {name}
+                        </h2>
+                      </div>
+                      {section.badge && (
+                        <p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-site-mist">
+                          {section.badge}
+                        </p>
+                      )}
+                      <div className="mt-6 max-w-2xl space-y-4 text-base leading-relaxed text-site-mist sm:text-lg">
+                        {section.content.map((paragraph) => (
+                          <p key={paragraph}>{paragraph}</p>
+                        ))}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* Main Content Area: TOC + Sections */}
-      <section className="py-12 sm:py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <details className="mb-6 rounded-2xl border border-site-line bg-site-surface p-4 lg:hidden">
-            <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-site-ice">Jump to a section</summary>
-            <nav aria-label="Page sections" className="mt-3 grid gap-1">
-              {filtered.map((section) => (
-                <a key={section.id} href={`#${section.id}`} className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-site-mist hover:bg-site-deep hover:text-hi">{section.title}</a>
-              ))}
-            </nav>
-          </details>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Table of Contents Sidebar */}
-            <aside className="lg:col-span-4 sticky top-24 rounded-3xl border border-site-line bg-site-surface p-4 sm:p-6 shadow-xl hidden lg:block">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-site-surface-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-site-blue">
-                  Table of Contents
-                </span>
-                <span className="text-[11px] font-semibold text-site-mist">
-                  {TERMS_SECTIONS.length} Clauses
-                </span>
-              </div>
-              <nav className="space-y-1 max-h-[60vh] overflow-y-auto pr-1">
-                {TERMS_SECTIONS.map((s) => (
-                  <a
-                    key={s.id}
-                    href={`#${s.id}`}
-                    onClick={() => setActiveSection(s.id)}
-                    className={`block px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                      activeSection === s.id
-                        ? "bg-site-deep text-site-blue font-bold border border-site-blue/30"
-                        : "text-site-mist hover:bg-site-deep/60 hover:text-site-ink"
-                    }`}
-                  >
-                    {s.title}
-                  </a>
-                ))}
-              </nav>
-
-              <div className="mt-6 pt-4 border-t border-site-surface-2 flex flex-col gap-2">
-                <Link
-                  to="/privacy"
-                  className="inline-flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-site-deep border border-site-line text-xs font-semibold text-site-mist hover:border-site-blue/40 hover:text-site-blue transition-colors"
-                >
-                  <span>View Privacy Policy</span>
-                  <ChevronRight className="size-3.5" />
-                </Link>
-                <Link
-                  to="/pricing"
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-site-ice text-site-bg hover:bg-hi text-xs font-bold transition-all shadow-sm"
-                >
-                  <span>Explore Retainer Plans</span>
-                  <ArrowRight className="size-3.5" />
-                </Link>
-              </div>
-            </aside>
-
-            {/* Clauses Content */}
-            <main className="lg:col-span-8 space-y-6">
-              {filtered.length === 0 ? (
-                <div className="rounded-3xl border border-site-line bg-site-surface p-12 text-center shadow-xl">
-                  <FileText className="size-10 text-site-mist/40 mx-auto mb-3" />
-                  <h3 className="text-base font-bold text-site-ink">No matching clauses found</h3>
-                  <p className="text-xs text-site-mist mt-1">
-                    Try searching with another keyword or reset the search filter.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setSearch("")}
-                    className="mt-4 px-4 py-2 rounded-xl bg-site-blue text-site-bg text-xs font-bold hover:bg-site-blue transition-colors cursor-pointer"
-                  >
-                    Reset Search
-                  </button>
-                </div>
-              ) : (
-                filtered.map((section) => (
-                  <article
-                    key={section.id}
-                    id={section.id}
-                    className="scroll-mt-24 rounded-3xl border border-site-line bg-site-surface p-4 sm:p-8 shadow-xl hover:border-site-blue/40 transition-colors"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-site-surface-2">
-                      <h2 className="text-lg sm:text-xl font-bold text-site-ink">
-                        {section.title}
-                      </h2>
-                      {section.badge && (
-                        <span className="rounded-full bg-site-deep border border-site-blue/30 px-3 py-0.5 text-[10px] font-bold text-site-blue">
-                          {section.badge}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="space-y-3.5 text-sm leading-relaxed text-site-mist">
-                      {section.content.map((p, idx) => (
-                        <p key={idx}>{p}</p>
-                      ))}
-                    </div>
-                  </article>
-                ))
-              )}
-
-              {/* Bottom Support Banner */}
-              <div className="rounded-3xl border border-site-line bg-site-deep p-4 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
-                <div>
-                  <h4 className="text-base font-bold text-site-ink">
-                    Need Clarification on Our Retainer Terms?
-                  </h4>
-                  <p className="text-xs text-site-mist mt-1">
-                    Our team is available to explain deliverable SLAs, revision cycles, or custom enterprise contracts.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2.5 shrink-0">
-                  <Link
-                    to="/pricing"
-                    className="px-4 py-2.5 rounded-xl border border-site-line bg-site-deep text-xs font-bold text-site-ink hover:border-site-blue/40 hover:text-site-blue transition-colors shadow-2xs"
-                  >
-                    Explore Plans
-                  </Link>
-                  <a
-                    href="https://wa.me/919941999415"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-5 py-2.5 rounded-xl bg-site-ice text-site-bg hover:bg-hi text-xs font-bold transition-all shadow-sm"
-                  >
-                    Contact Legal Desk
-                  </a>
-                </div>
-              </div>
-            </main>
-          </div>
+      {/* 3. Closing — how to reach us */}
+      <section className="st-tone st-midnight px-6 py-24 sm:px-8 sm:py-32 lg:px-12">
+        <div className="mx-auto max-w-[1240px]">
+          <ScrollFlipText
+            as="h2"
+            text={closingTitle}
+            className={`block max-w-4xl text-[clamp(2.6rem,5.5vw,5rem)] leading-[0.95] ${DISPLAY}`}
+          />
+          <Reveal delay={0.1}>
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-site-mist">{closingText}</p>
+          </Reveal>
+          <Reveal delay={0.2}>
+            <div className="mt-10 flex flex-wrap gap-3">{closingActions}</div>
+          </Reveal>
         </div>
       </section>
     </div>
   );
 }
 
-export function PrivacyPage() {
-  const [search, setSearch] = useState("");
-  const [activeSection, setActiveSection] = useState<string | null>(null);
-
-  const filtered = PRIVACY_SECTIONS.filter((s) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return s.title.toLowerCase().includes(q) || s.content.some((c) => c.toLowerCase().includes(q));
-  });
-
+export function TermsPage() {
   return (
-    <div className="w-full bg-site-bg text-site-ink min-h-screen font-sans selection:bg-site-blue/30">
-      {/* Hero Header */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-site-deep via-site-bg to-site-bg pt-10 pb-10 sm:pt-14 sm:pb-14 border-b border-site-surface-2">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-site-blue/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <div className="mb-4">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-site-mist hover:text-site-blue transition-colors"
-            >
-              <ArrowLeft className="size-3.5" />
-              <span>Back to Home</span>
-            </Link>
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-site-surface px-3.5 py-1 text-xs font-bold text-site-blue border border-site-line mb-4">
-            <Lock className="size-3.5" />
-            <span>Zero-Trust Data Protection</span>
-          </div>
+    <LegalPage
+      seoTitle="Terms & Conditions | Creo"
+      seoDescription="The terms behind Creo's month-to-month content retainers: plans and quotas, turnaround SLAs, revisions, payments and cancellation."
+      title="Terms & Conditions"
+      lead="Plain terms for our monthly production retainers: turnaround SLAs, revision rounds, quotas, payments and portal access."
+      highlights={[
+        "First batch within 7 days",
+        "Revision rounds included",
+        "Month-to-month, cancel anytime",
+      ]}
+      sections={TERMS_SECTIONS}
+      searchPlaceholder="Search SLAs, revisions, quotas..."
+      related={{ to: "/privacy", label: "Read the Privacy Policy" }}
+      closingTitle="Questions about these terms?"
+      closingText="We're happy to walk you through SLAs, revision rounds or a custom contract before you sign up."
+      closingActions={
+        <>
+          <PillLink href="https://wa.me/919941999415">Ask us on WhatsApp</PillLink>
+          <PillLink href="mailto:legal@getcreo.in">Email legal@getcreo.in</PillLink>
+          <PillLink to="/pricing">Compare plans</PillLink>
+        </>
+      }
+    />
+  );
+}
 
-          <h1 className="text-3xl font-black tracking-tight text-site-ink sm:text-5xl">
-            Privacy Policy &amp; Data Security
-          </h1>
-          <p className="mt-2 text-xs sm:text-sm text-site-mist font-medium">
-            Last updated: June 29, 2026 &bull; Compliant with Global Privacy Regulations
-          </p>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-site-mist sm:text-base">
-            How Creo encrypts, isolates, and protects your brand assets, Instagram tokens, and financial records with multi-tenant database isolation.
-          </p>
-
-          {/* Quick Security Highlights */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-site-ice">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-site-surface border border-site-line">
-              <ShieldCheck className="size-3.5 text-site-blue" /> PostgreSQL Row-Level Security
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-site-surface border border-site-line">
-              <Lock className="size-3.5 text-site-blue" /> AES-256 Storage &amp; Fernet Tokens
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-site-surface border border-site-line">
-              <CheckCircle2 className="size-3.5 text-site-blue-light" /> Never Sold. Never Scraped.
-            </span>
-          </div>
-
-          {/* In-Page Search */}
-          <div className="mt-8 max-w-lg mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-site-mist" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search encryption, tokens, retention, rights..."
-              className="w-full rounded-2xl border border-site-line bg-site-deep pl-11 pr-10 py-3 text-sm text-site-ink placeholder-site-mist/50 shadow-xs focus:ring-2 focus:ring-site-blue/30 focus:border-site-blue outline-none transition-all"
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-site-mist hover:text-site-ink cursor-pointer"
-              >
-                <X className="size-4" />
-              </button>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Main Content Area */}
-      <section className="py-12 sm:py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <details className="mb-6 rounded-2xl border border-site-line bg-site-surface p-4 lg:hidden">
-            <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-site-ice">Jump to a section</summary>
-            <nav aria-label="Page sections" className="mt-3 grid gap-1">
-              {filtered.map((section) => (
-                <a key={section.id} href={`#${section.id}`} className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-site-mist hover:bg-site-deep hover:text-hi">{section.title}</a>
-              ))}
-            </nav>
-          </details>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Table of Contents Sidebar */}
-            <aside className="lg:col-span-4 sticky top-24 rounded-3xl border border-site-line bg-site-surface p-4 sm:p-6 shadow-xl hidden lg:block">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-site-surface-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-site-blue">
-                  Privacy Index
-                </span>
-                <span className="text-[11px] font-semibold text-site-mist">
-                  {PRIVACY_SECTIONS.length} Clauses
-                </span>
-              </div>
-              <nav className="space-y-1 max-h-[60vh] overflow-y-auto pr-1">
-                {PRIVACY_SECTIONS.map((s) => (
-                  <a
-                    key={s.id}
-                    href={`#${s.id}`}
-                    onClick={() => setActiveSection(s.id)}
-                    className={`block px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                      activeSection === s.id
-                        ? "bg-site-deep text-site-blue font-bold border border-site-blue/30"
-                        : "text-site-mist hover:bg-site-deep/60 hover:text-site-ink"
-                    }`}
-                  >
-                    {s.title}
-                  </a>
-                ))}
-              </nav>
-
-              <div className="mt-6 pt-4 border-t border-site-surface-2 flex flex-col gap-2">
-                <Link
-                  to="/terms"
-                  className="inline-flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-site-deep border border-site-line text-xs font-semibold text-site-mist hover:border-site-blue/40 hover:text-site-blue transition-colors"
-                >
-                  <span>View Terms &amp; Conditions</span>
-                  <ChevronRight className="size-3.5" />
-                </Link>
-                <Link
-                  to="/pricing"
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-site-ice text-site-bg hover:bg-hi text-xs font-bold transition-all shadow-sm"
-                >
-                  <span>Explore Retainer Plans</span>
-                  <ArrowRight className="size-3.5" />
-                </Link>
-              </div>
-            </aside>
-
-            {/* Clauses Content */}
-            <main className="lg:col-span-8 space-y-6">
-              {filtered.length === 0 ? (
-                <div className="rounded-3xl border border-site-line bg-site-surface p-12 text-center shadow-xl">
-                  <Lock className="size-10 text-site-mist/40 mx-auto mb-3" />
-                  <h3 className="text-base font-bold text-site-ink">No matching clauses found</h3>
-                  <p className="text-xs text-site-mist mt-1">
-                    Try searching with another keyword or reset the search filter.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setSearch("")}
-                    className="mt-4 px-4 py-2 rounded-xl bg-site-blue text-site-bg text-xs font-bold hover:bg-site-blue transition-colors cursor-pointer"
-                  >
-                    Reset Search
-                  </button>
-                </div>
-              ) : (
-                filtered.map((section) => (
-                  <article
-                    key={section.id}
-                    id={section.id}
-                    className="scroll-mt-24 rounded-3xl border border-site-line bg-site-surface p-4 sm:p-8 shadow-xl hover:border-site-blue/40 transition-colors"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-site-surface-2">
-                      <h2 className="text-lg sm:text-xl font-bold text-site-ink">
-                        {section.title}
-                      </h2>
-                      {section.badge && (
-                        <span className="rounded-full bg-site-deep border border-site-blue/30 px-3 py-0.5 text-[10px] font-bold text-site-blue">
-                          {section.badge}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="space-y-3.5 text-sm leading-relaxed text-site-mist">
-                      {section.content.map((p, idx) => (
-                        <p key={idx}>{p}</p>
-                      ))}
-                    </div>
-                  </article>
-                ))
-              )}
-
-              {/* Bottom Privacy Banner */}
-              <div className="rounded-3xl border border-site-line bg-site-deep p-4 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
-                <div>
-                  <h4 className="text-base font-bold text-site-ink">
-                    Questions Regarding Your Data or Instagram Access?
-                  </h4>
-                  <p className="text-xs text-site-mist mt-1">
-                    Contact our dedicated Privacy and Security Officer for data exports, token revocations, or compliance audits.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2.5 shrink-0">
-                  <a
-                    href="mailto:privacy@getcreo.in"
-                    className="px-5 py-2.5 rounded-xl bg-site-ice text-site-bg hover:bg-hi text-xs font-bold transition-all shadow-sm"
-                  >
-                    Email Privacy Officer
-                  </a>
-                </div>
-              </div>
-            </main>
-          </div>
-        </div>
-      </section>
-    </div>
+export function PrivacyPage() {
+  return (
+    <LegalPage
+      seoTitle="Privacy Policy | Creo"
+      seoDescription="How Creo collects, stores and protects your account details, brand assets, Instagram access and billing records."
+      title="Privacy Policy"
+      lead="How Creo collects, stores and protects your account details, brand assets, Instagram access and billing records."
+      highlights={[
+        "Row-level data isolation",
+        "Encrypted storage and tokens",
+        "Never sold, never scraped",
+      ]}
+      sections={PRIVACY_SECTIONS}
+      searchPlaceholder="Search data, Instagram, deletion..."
+      related={{ to: "/terms", label: "Read the Terms & Conditions" }}
+      closingTitle="Questions about your data?"
+      closingText="Ask our privacy officer about data exports, revoking Instagram access, deleting your account or compliance reviews."
+      closingActions={
+        <>
+          <PillLink href="mailto:privacy@getcreo.in">Email privacy@getcreo.in</PillLink>
+          <PillLink href="https://wa.me/919941999415">Ask us on WhatsApp</PillLink>
+        </>
+      }
+    />
   );
 }

@@ -26,7 +26,7 @@ function Wordmark() {
       className="group relative flex items-baseline text-[1.6rem] font-black tracking-[-0.04em] text-site-ink"
     >
       creo
-      <span className="relative ml-[1px] inline-block size-[0.36em] translate-y-[-0.02em] rounded-full bg-gradient-to-br from-site-blue-light to-site-blue-deep shadow-[0_0_14px_2px_rgba(79,123,255,0.65)] transition-transform duration-500 group-hover:-translate-y-1.5 group-hover:scale-125" />
+      <span className="relative ml-[1px] inline-block size-[0.36em] translate-y-[-0.02em] rounded-full bg-gradient-to-br from-site-blue-light to-site-blue-deep shadow-[0_0_14px_2px_rgba(210,150,90,0.65)] transition-transform duration-500 group-hover:-translate-y-1.5 group-hover:scale-125" />
     </Link>
   );
 }
@@ -152,7 +152,7 @@ export function Navbar() {
                     {isActive && (
                       <motion.span
                         layoutId="nav-active-dot"
-                        className="absolute -bottom-0.5 left-1/2 size-1 -translate-x-1/2 rounded-full bg-site-blue-light shadow-[0_0_10px_2px_rgba(79,123,255,0.8)]"
+                        className="absolute -bottom-0.5 left-1/2 size-1 -translate-x-1/2 rounded-full bg-site-blue-light shadow-[0_0_10px_2px_rgba(210,150,90,0.8)]"
                         transition={{ type: "spring", stiffness: 420, damping: 34 }}
                       />
                     )}

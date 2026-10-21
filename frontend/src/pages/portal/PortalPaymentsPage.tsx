@@ -11,8 +11,8 @@ import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { PausePlanModal } from "../../components/portal/PausePlanModal";
 import { ComparePlansModal } from "../../components/portal/ComparePlansModal";
 import { PlanBargainCallModal } from "../../components/portal/PlanBargainCallModal";
-import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
+import { PortalPageHeader, PortalPill } from "../../components/portal/PortalPieces";
 
 import type { InvoiceData } from "../../lib/pdf-invoice";
 
@@ -231,49 +231,33 @@ export function PortalPaymentsPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-app-mist mb-2">
-            {hasActivePlan ? `${planName} PLAN • RENEWS ${renewalDate}` : "NO ACTIVE RETAINER • ONBOARDING INCOMPLETE"}
-          </p>
-          <h1 className="text-3xl font-bold text-hi tracking-tight">Plan & billing</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <button 
-            type="button"
-            onClick={() => setCompareModalOpen(true)}
-            className="px-5 py-2.5 rounded-full border border-app-line text-[13px] font-bold text-hi hover:bg-app-surface transition-colors cursor-pointer"
-          >
-            Compare plans
-          </button>
-          
-          {hasActivePlan && (
-            isPausedNextMonth ? (
-              <button
-                type="button"
-                onClick={handleResumePlan}
-                disabled={resumingSub}
-                className="px-5 py-2.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-[13px] font-bold text-amber-300 hover:bg-amber-500/20 transition-all flex items-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
-              >
-                {resumingSub ? (
-                  <Loader2 className="size-4 animate-spin text-amber-400" />
-                ) : (
-                  <PauseCircle className="size-4 text-amber-400" />
-                )}
-                <span>Paused for next cycle • Click to resume</span>
-              </button>
-            ) : (
-              <button 
-                type="button"
-                onClick={() => setPauseModalOpen(true)}
-                className="px-5 py-2.5 rounded-full border border-app-line text-[13px] font-bold text-hi hover:bg-app-surface hover:border-amber-500/40 transition-colors cursor-pointer"
-              >
-                Pause next month
-              </button>
-            )
-          )}
-        </div>
-      </div>
+      <PortalPageHeader
+        eyebrow={hasActivePlan ? `${planName} plan · Renews ${renewalDate}` : "No active plan yet"}
+        title="Plan & billing."
+        lead="Your plan, what's left this cycle, add-ons and invoices."
+        actions={
+          <>
+            <PortalPill variant="outline" onClick={() => setCompareModalOpen(true)}>
+              Compare plans
+            </PortalPill>
+            {hasActivePlan &&
+              (isPausedNextMonth ? (
+                <PortalPill
+                  variant="outline"
+                  onClick={handleResumePlan}
+                  disabled={resumingSub}
+                  icon={resumingSub ? <Loader2 className="size-4 animate-spin text-app-warm" /> : <PauseCircle className="size-4 text-app-warm" />}
+                >
+                  Paused next cycle · Resume
+                </PortalPill>
+              ) : (
+                <PortalPill variant="outline" onClick={() => setPauseModalOpen(true)}>
+                  Pause next month
+                </PortalPill>
+              ))}
+          </>
+        }
+      />
 
       {/* Paused for Next Month Notice Banner */}
       {isPausedNextMonth && (

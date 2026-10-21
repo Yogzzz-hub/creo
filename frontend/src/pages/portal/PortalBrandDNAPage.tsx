@@ -32,7 +32,7 @@ import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
 
 /* ── Fallback Brand Palette ── */
-const DEFAULT_PALETTE = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"];
+const DEFAULT_PALETTE = ["#0F0E0C", "#D2965A", "#172338", "#F5EEE3"];
 
 function sanitizeColor(val: unknown, fallback: string): string {
   if (typeof val !== "string") return fallback;
@@ -195,7 +195,7 @@ export function PortalBrandDNAPage() {
         : DEFAULT_PALETTE;
 
       const cleanColors = [0, 1, 2, 3].map((i) =>
-        sanitizeColor(rawPalette[i], DEFAULT_PALETTE[i] || "#161F2D")
+        sanitizeColor(rawPalette[i], DEFAULT_PALETTE[i] || "#0F0E0C")
       );
 
       const words = Array.isArray(dna.tone?.voice_words) && dna.tone.voice_words.length > 0
@@ -557,7 +557,7 @@ export function PortalBrandDNAPage() {
                       <div className="relative w-full h-10 rounded-lg border border-app-line overflow-hidden flex items-center justify-center">
                         <input
                           type="color"
-                          value={color.startsWith("#") ? color : "#161F2D"}
+                          value={color.startsWith("#") ? color : "#0F0E0C"}
                           onChange={(e) => updateColor(idx, e.target.value)}
                           className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
                         />

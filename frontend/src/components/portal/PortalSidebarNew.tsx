@@ -139,10 +139,15 @@ export function PortalSidebarNew() {
     },
   ];
 
+  const planLabel = dashboardData?.active_plan?.tier
+    ? `${dashboardData.active_plan.tier.charAt(0).toUpperCase()}${dashboardData.active_plan.tier.slice(1)} plan`
+    : "Growth plan";
+
   return (
     <>
       {mobileOpen && (
         <button
+          type="button"
           aria-label="Close navigation overlay"
           onClick={() => setMobileOpen(false)}
           className="fixed inset-0 z-[9998] bg-app-void/75 backdrop-blur-sm lg:hidden"
@@ -151,118 +156,115 @@ export function PortalSidebarNew() {
 
       <aside
         aria-label="Client navigation sidebar"
-        className={`fixed inset-y-0 left-0 z-[9999] lg:z-40 flex w-[280px] max-w-[85vw] flex-col bg-app-surface border-r border-app-line shadow-2xl transition-transform duration-300 lg:translate-x-0 ${
-          mobileOpen ? "translate-x-0 visible" : "-translate-x-full invisible lg:visible"
+        className={`fixed inset-y-0 left-0 z-[9999] flex w-[280px] max-w-[85vw] flex-col border-r border-app-line/60 bg-app-base transition-transform duration-300 lg:z-40 lg:translate-x-0 ${
+          mobileOpen ? "visible translate-x-0 shadow-2xl" : "invisible -translate-x-full lg:visible"
         }`}
       >
-        {/* Brand Header */}
-        <div className="p-4 sm:p-5 border-b border-app-line flex items-center justify-between bg-app-base/60 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <Link to="/portal" className="text-xl font-black text-hi tracking-tighter">
-              creo<span className="text-app-accent text-2xl leading-none">.</span>
+        {/* Wordmark */}
+        <div className="flex shrink-0 items-start justify-between px-6 pb-6 pt-7">
+          <div>
+            <Link to="/portal" aria-label="Portal home" className="group flex items-baseline text-[1.6rem] font-black leading-none tracking-[-0.04em] text-hi">
+              creo
+              <span className="ml-[1px] inline-block size-[0.36em] rounded-full bg-[var(--portal-amber)] transition-transform duration-500 group-hover:-translate-y-1" />
             </Link>
-            <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-app-accent/15 text-app-accent border border-app-accent/30">
-              Client Portal
-            </span>
+            <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.18em] text-app-mist">Client portal</p>
           </div>
           {/* Phones get the toggle in the top header instead */}
           <div className="hidden lg:block">
-            <ThemeToggle className="size-8" />
+            <ThemeToggle className="size-9 rounded-full" />
           </div>
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="lg:hidden size-8 rounded-xl flex items-center justify-center text-app-mist hover:text-hi hover:bg-app-surface border border-transparent hover:border-app-line transition-colors cursor-pointer"
+            className="flex size-10 cursor-pointer items-center justify-center rounded-full text-app-mist transition-colors hover:bg-hi/[0.05] hover:text-hi lg:hidden"
             aria-label="Close navigation sidebar"
           >
-            <X className="w-5 h-5" />
+            <X className="size-5" />
           </button>
         </div>
 
-        {/* Scrollable Navigation */}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 space-y-5 text-left [scrollbar-width:thin] [scrollbar-color:#2A3446_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-app-line [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-app-accent/50">
+        {/* Navigation */}
+        <nav aria-label="Portal" className="min-h-0 flex-1 space-y-7 overflow-y-auto overflow-x-hidden overscroll-contain px-4 pb-6 text-left [scrollbar-width:thin]">
           {sections.map((section) => (
-            <div key={section.label} className="space-y-1.5">
-              <div className="px-3 pb-1 text-xs font-black uppercase tracking-wider text-app-accent">
-                {section.label}
-              </div>
-              <div className="space-y-1">
+            <div key={section.label}>
+              <div className="px-3 pb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-app-mist/80">{section.label}</div>
+              <ul className="space-y-0.5">
                 {section.items.map((item) => {
                   const active = isActive(item.href, location.pathname, location.search);
                   const Icon = item.icon;
+                  const isCount = item.badge !== undefined && /^\d+$/.test(item.badge);
                   return (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-bold transition-all ${
-                        active
-                          ? "bg-app-accent-soft text-app-base shadow-sm font-black"
-                          : "text-app-mist hover:text-white hover:bg-app-base/50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <Icon className={`w-[18px] h-[18px] shrink-0 ${active ? "text-app-base" : "text-app-accent"}`} />
-                        <span className="truncate">{item.label}</span>
-                      </div>
-                      {item.badge && (
-                        <span
-                          className={`text-[11px] px-2 py-0.5 rounded-md font-black shrink-0 ${
-                            active ? "bg-app-base/20 text-app-base" : "bg-app-accent/20 text-app-accent"
-                          }`}
-                        >
-                          {item.badge}
+                    <li key={item.href}>
+                      <Link
+                        to={item.href}
+                        aria-current={active ? "page" : undefined}
+                        onClick={() => setMobileOpen(false)}
+                        className={`flex items-center justify-between gap-3 rounded-full px-4 py-2.5 text-[15px] font-medium tracking-[-0.01em] transition-colors duration-200 ${
+                          active ? "bg-app-ink text-app-base" : "text-app-mist hover:bg-hi/[0.04] hover:text-hi"
+                        }`}
+                      >
+                        <span className="flex min-w-0 items-center gap-3">
+                          <Icon className={`size-[18px] shrink-0 ${active ? "text-app-base" : ""}`} />
+                          <span className="truncate">{item.label}</span>
                         </span>
-                      )}
-                    </Link>
+                        {item.badge && (
+                          <span
+                            className={
+                              isCount
+                                ? "flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-[var(--portal-amber)] px-1.5 text-xs font-bold text-[var(--portal-on-amber)]"
+                                : `shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
+                                    active ? "border-app-base/25 text-app-base" : "border-app-line text-app-mist"
+                                  }`
+                            }
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    </li>
                   );
                 })}
 
                 {/* Direct Log out action in Account section */}
                 {section.label === "Account" && (
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    disabled={loggingOut}
-                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-bold text-app-mist hover:text-hi hover:bg-app-base/50 transition-all cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <LogOut className="w-[18px] h-[18px] shrink-0 text-app-accent" />
+                  <li>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      disabled={loggingOut}
+                      className="flex w-full cursor-pointer items-center gap-3 rounded-full px-4 py-2.5 text-[15px] font-medium tracking-[-0.01em] text-app-mist transition-colors hover:bg-hi/[0.04] hover:text-hi"
+                    >
+                      <LogOut className="size-[18px] shrink-0" />
                       <span className="truncate">{loggingOut ? "Signing out..." : "Log out"}</span>
-                    </div>
-                  </button>
+                    </button>
+                  </li>
                 )}
-              </div>
+              </ul>
             </div>
           ))}
-        </div>
+        </nav>
 
-        {/* Footer: User Profile Card & Direct Sign Out */}
-        <div className="p-3.5 border-t border-app-line bg-app-base/80 shrink-0 space-y-2 text-left">
-          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-app-surface border border-app-line">
-            <div className="size-8 rounded-full bg-app-accent-soft text-app-base font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+        {/* Account */}
+        <div className="shrink-0 space-y-3 border-t border-app-line/60 px-5 py-5 text-left">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--portal-amber)] text-xs font-bold text-[var(--portal-on-amber)]">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <h4 className="text-xs font-bold text-hi truncate">{companyName}</h4>
-              <p className="text-[10px] text-app-mist font-medium truncate">
-                {dashboardData?.active_plan?.tier
-                  ? dashboardData.active_plan.tier.charAt(0).toUpperCase() +
-                    dashboardData.active_plan.tier.slice(1) +
-                    " plan"
-                  : "Growth plan"}{" "}
-                · Pod {dashboardData?.assigned_team?.length ? "Assigned" : "Pending"}
+              <p className="truncate text-sm font-semibold text-hi">{companyName}</p>
+              <p className="truncate text-xs text-app-mist">
+                {planLabel} · Pod {dashboardData?.assigned_team?.length ? "assigned" : "pending"}
               </p>
             </div>
             <button
               type="button"
               onClick={handleLogout}
               disabled={loggingOut}
-              className="p-1.5 rounded-lg text-app-mist hover:text-app-warm hover:bg-app-warm/10 transition-colors cursor-pointer"
-              title="Sign Out / Log Out"
-              aria-label="Sign Out"
+              className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-app-mist transition-colors hover:bg-app-warm/10 hover:text-app-warm"
+              title="Sign out"
+              aria-label="Sign out"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="size-4" />
             </button>
           </div>
 
@@ -270,10 +272,10 @@ export function PortalSidebarNew() {
           {(user?.role === "admin" || user?.role === "super_admin") && (
             <Link
               to="/admin"
-              className="w-full flex items-center justify-between text-xs font-bold text-app-accent hover:text-hi px-3 py-2 rounded-xl bg-app-base border border-app-accent/30 hover:border-app-accent/60 transition-colors shadow-xs"
+              className="flex w-full items-center justify-between rounded-full border-2 border-app-line px-4 py-2 text-sm font-semibold text-hi transition-colors hover:border-app-accent"
             >
-              <span>Admin Dashboard</span>
-              <LayoutDashboard className="w-3.5 h-3.5" />
+              <span>Admin dashboard</span>
+              <LayoutDashboard className="size-4 text-app-accent" />
             </Link>
           )}
         </div>

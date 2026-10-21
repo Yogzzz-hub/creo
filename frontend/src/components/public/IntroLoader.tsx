@@ -92,7 +92,7 @@ export function IntroLoader({ onLift, onDone }: { onLift: () => void; onDone: ()
             </span>
           ))}
           <motion.span
-            className="ml-[0.03em] inline-block size-[0.2em] rounded-full bg-gradient-to-br from-site-blue-light to-site-blue-deep shadow-[0_0_40px_8px_rgba(79,123,255,0.55)]"
+            className="ml-[0.03em] inline-block size-[0.2em] rounded-full bg-gradient-to-br from-site-blue-light to-site-blue-deep shadow-[0_0_40px_8px_rgba(210,150,90,0.55)]"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 13, delay: 0.65 }}

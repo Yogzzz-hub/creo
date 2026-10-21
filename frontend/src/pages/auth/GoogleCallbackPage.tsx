@@ -1,7 +1,12 @@
 import "../../styles/public-responsive.css";
+import "../../styles/public-theme.css";
 import { useEffect, useState, useRef } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router";
-import { Check, AlertCircle, ArrowRight, Lock, Loader2 } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router";
+import { Loader2 } from "lucide-react";
+import { AuthWordmark, EYEBROW, TEXT_ACTION } from "../../components/auth/AuthPieces";
+import { ScrollFlipText } from "../../components/motion/ScrollFlipText";
+import { DISPLAY, PillLink } from "../../components/public/StagePieces";
+import { Stage3DRoot, useStageLayer } from "../../components/stage3d/registry";
 import { request } from "../../lib/http";
 import { GOOGLE_OAUTH_STATE_KEY, useAuth } from "../../lib/auth-context";
 import { setAuthToken } from "../../lib/auth-token";
@@ -117,152 +122,77 @@ export function GoogleCallbackPage() {
     exchangeCode();
   }, [searchParams, navigate, refresh]);
 
+  const firstName = (authenticatedUser ?? user)?.full_name?.split(" ")[0];
+
   return (
-    <div className="auth-page min-h-[100svh] w-full bg-app-void flex flex-col items-center justify-center p-4 sm:p-6 select-none relative overflow-hidden font-sans">
-      {/* Subtle Night Navy depth backdrop (admin screens style) */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_45%,#0B111C_0%,#050810_100%)] pointer-events-none -z-10"
-      />
-
-      {/* Main Authentication Card */}
-      <div className="relative w-full max-w-[760px] mx-auto rounded-[22px] border border-app-line bg-app-surface py-8 sm:py-12 px-4 sm:px-12 shadow-[0_20px_50px_rgb(var(--shadow-rgb)/calc(0.6*var(--shadow-k)))] flex flex-col items-center text-center">
-        {/* Authentication Connection Row: Google → Lock → CREO */}
-        <div className="relative flex items-center justify-between w-full max-w-[320px] mx-auto h-14">
-          {/* Connector Line Exactly Through Centers */}
-          <div className="absolute inset-x-7 top-1/2 -translate-y-1/2 h-px bg-app-line" />
-          <div className="absolute inset-x-12 top-1/2 -translate-y-1/2 h-px bg-gradient-to-r from-transparent via-app-accent/40 to-transparent" />
-
-          {/* 1. Google Icon: dark Surface container, Steel Line border */}
-          <div className="relative z-10 flex size-14 items-center justify-center rounded-2xl bg-app-base border border-app-line shadow-sm shrink-0">
-            <svg className="size-6" viewBox="0 0 24 24">
-              <path
-                fill="var(--app-accent)"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="var(--app-accent)"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="var(--app-warm)"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-              />
-              <path
-                fill="var(--app-warm)"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-              />
-            </svg>
-          </div>
-
-          {/* 2. Lock: compact circular Night Navy/Surface control, periwinkle lock icon, subtle #7FA0D6 active ring */}
-          <div className="relative z-10 flex size-9 items-center justify-center rounded-full bg-app-base border border-app-line ring-1 ring-app-accent/30 shadow-xs shrink-0">
-            <Lock className="size-3.5 text-app-accent-soft" />
-          </div>
-
-          {/* 3. CREO Icon: Periwinkle #BCCCE6 button-like tile, dark #050810 "C", subtle Glow Blue edge */}
-          <div className="relative z-10 flex size-14 items-center justify-center rounded-2xl bg-app-accent-soft border border-app-accent/40 shadow-sm shrink-0">
-            <span className="font-mono font-black text-2xl text-app-void leading-none select-none">
-              C
-            </span>
-          </div>
-        </div>
-
-        {/* Status Content */}
-        <div className="mt-8 flex flex-col items-center w-full">
-          {/* Status: Loading */}
-          {status === "loading" && (
-            <div className="flex flex-col items-center w-full">
-              <div className="relative flex items-center justify-center size-14 rounded-full bg-app-base border border-app-line mb-6 shadow-xs">
-                <Loader2 className="size-6 text-app-accent animate-spin" />
-              </div>
-
-              <h1 className="text-[30px] sm:text-[32px] font-semibold text-app-ink tracking-tight leading-tight">
-                Signing in with Google
-              </h1>
-              <p className="text-[14px] sm:text-[15px] font-normal text-app-mist mt-2.5 sm:mt-3 leading-relaxed max-w-lg">
-                {step === 1 && "Verifying secure cryptographic signature…"}
-                {step === 2 && "Synchronizing workspace credentials & profile…"}
-                {step >= 3 && "Configuring authenticated session…"}
-              </p>
-            </div>
-          )}
-
-          {/* Status: Success */}
-          {status === "success" && (
-            <div className="flex flex-col items-center w-full">
-              {/* Success Indicator: dark circular base, Periwinkle/Glow Blue check mark, thin concentric ring, subtle pulse */}
-              <div className="relative flex items-center justify-center size-14 mb-6">
-                <div className="absolute inset-0 rounded-full border border-app-accent/35 animate-ping opacity-30" />
-                <div className="size-12 rounded-full bg-app-base border border-app-line flex items-center justify-center shadow-xs relative z-10">
-                  <Check className="size-5 text-app-accent-soft" strokeWidth={2.5} />
-                </div>
-              </div>
-
-              <h1 className="text-[30px] sm:text-[32px] font-semibold text-app-ink tracking-tight leading-tight">
-                {(() => {
-                  const firstName = (authenticatedUser ?? user)?.full_name?.split(" ")[0];
-                  return firstName ? `Welcome, ${firstName}!` : "Welcome back!";
-                })()}
-              </h1>
-              <p className="text-[14px] sm:text-[15px] font-normal text-app-mist mt-2.5 sm:mt-3 leading-relaxed max-w-lg">
-                Authentication confirmed. Launching your production workspace…
-              </p>
-
-              {/* Redirect State: Nebula-style control */}
-              <div className="inline-flex items-center gap-2.5 h-11 sm:h-12 px-5 sm:px-6 rounded-full bg-app-base border border-app-line mt-6 shadow-xs">
-                <Loader2 className="size-4 animate-spin text-app-accent" />
-                <span className="text-[13px] sm:text-[14px] font-semibold text-app-accent-soft">
-                  Redirecting automatically
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Status: Error */}
-          {status === "error" && (
-            <div className="flex flex-col items-center w-full">
-              <div className="size-12 rounded-full bg-app-base border border-app-line text-app-warm flex items-center justify-center mb-6 shadow-xs">
-                <AlertCircle className="size-6 text-app-warm" />
-              </div>
-
-              <h1 className="text-[30px] sm:text-[32px] font-semibold text-app-ink tracking-tight leading-tight">
-                Authentication Failed
-              </h1>
-              <p className="text-[14px] sm:text-[15px] font-normal text-app-mist bg-app-base p-4 rounded-xl border border-app-line mt-4 leading-relaxed max-w-md text-center">
-                {errorMessage}
-              </p>
-
-              <div className="mt-6">
-                <Link
-                  to="/login"
-                  className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-app-accent-soft px-6 py-2.5 text-[13px] font-semibold text-app-void hover:bg-hi transition-colors"
-                >
-                  Back to Sign In <ArrowRight className="size-4" />
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Bottom Message: Card → footer spacing 48–56px */}
-      <div className="flex items-center justify-center gap-3 w-full max-w-[540px] mx-auto mt-12 sm:mt-14 text-[12px] sm:text-[13px] text-app-mist">
-        <div className="h-px bg-app-line flex-1 hidden sm:block" />
-        <div className="flex flex-wrap items-center justify-center gap-1.5 text-center">
-          <span>Protected by Creo Zero-Trust Infrastructure</span>
-          <span className="text-app-line">&middot;</span>
-          <a
-            href="https://wa.me/919941999415"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-app-accent-soft font-medium hover:underline hover:text-hi transition-colors"
-          >
-            Need Support?
-          </a>
-        </div>
-        <div className="h-px bg-app-line flex-1 hidden sm:block" />
-      </div>
+    <div className="public-site auth-page min-h-[100svh]">
+      <Stage3DRoot>
+        <CallbackScreen status={status} step={step} errorMessage={errorMessage} firstName={firstName} />
+      </Stage3DRoot>
     </div>
+  );
+}
+
+const STEP_MESSAGES = ["Checking your Google account...", "Loading your profile...", "Opening your portal..."];
+
+/** The chrome "c." turning on the hero dark while the Google handshake finishes. */
+function CallbackScreen({
+  status,
+  step,
+  errorMessage,
+  firstName,
+}: {
+  status: "loading" | "success" | "error";
+  step: number;
+  errorMessage: string | null;
+  firstName?: string;
+}) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const markViewRef = useRef<HTMLDivElement>(null);
+  useStageLayer({ kind: "chromeMark", drive: "progress", views: [markViewRef], section: sectionRef });
+
+  const title =
+    status === "error" ? "That didn't work." : status === "success" ? (firstName ? `Welcome, ${firstName}.` : "Welcome back.") : "Signing you in.";
+
+  return (
+    <section ref={sectionRef} className="st-tone st-hero relative flex min-h-[100svh] flex-col px-6 pb-8 pt-6 sm:px-10 lg:px-12">
+      <div ref={markViewRef} className="pointer-events-none absolute inset-x-0 top-[6%] h-[44%]" />
+      <header className="relative z-10">
+        <AuthWordmark dot="bg-[#d2965a]" />
+      </header>
+
+      <div className="relative z-10 mx-auto mt-auto flex w-full max-w-2xl flex-col items-center pt-[40svh] text-center">
+        <p className={EYEBROW}>Google sign-in</p>
+        <ScrollFlipText
+          key={title}
+          as="h1"
+          playOnMount
+          text={title}
+          className={`creo-display mt-5 block text-[clamp(2.75rem,7vw,6rem)] leading-[0.95] ${DISPLAY}`}
+        />
+        {status === "error" ? (
+          <>
+            <p role="alert" className="mt-6 max-w-md text-lg leading-relaxed text-site-mist">
+              {errorMessage}
+            </p>
+            <div className="mt-8">
+              <PillLink to="/login">Back to sign in</PillLink>
+            </div>
+          </>
+        ) : (
+          <output className="mt-6 flex items-center gap-3 text-lg text-site-mist">
+            <Loader2 className="size-5 animate-spin text-[var(--tone-accent)]" />
+            {status === "loading" ? STEP_MESSAGES[Math.min(step, 3) - 1] : "Taking you to your portal..."}
+          </output>
+        )}
+      </div>
+
+      <p className="relative z-10 mt-auto pt-12 text-center text-sm text-site-mist">
+        Need a hand?{" "}
+        <a href="https://wa.me/919941999415" target="_blank" rel="noopener noreferrer" className={TEXT_ACTION}>
+          Message us on WhatsApp
+        </a>
+      </p>
+    </section>
   );
 }

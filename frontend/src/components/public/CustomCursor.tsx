@@ -119,11 +119,11 @@ export function CustomCursor() {
             scale: pressed ? 0.82 : 1,
             // Translucent so effects under the cursor (image ripple, carousel) stay visible
             backgroundColor: isLabel
-              ? "rgba(59,107,255,0.22)"
+              ? "rgba(210,150,90,0.22)"
               : mode === "link"
                 ? `rgba(${ink},0.12)`
                 : `rgba(${ink},0)`,
-            borderColor: isLabel ? (theme === "light" ? "rgba(110,122,91,0.85)" : "rgba(220,232,255,0.85)") : `rgba(${ink},0.7)`,
+            borderColor: isLabel ? (theme === "light" ? "rgba(74,93,130,0.85)" : "rgba(245,238,227,0.85)") : `rgba(${ink},0.7)`,
           }}
           transition={{ type: "spring", stiffness: 320, damping: 26, mass: 0.6 }}
         >
