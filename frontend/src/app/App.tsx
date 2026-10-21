@@ -32,6 +32,14 @@ import {
   preloadPortalPages,
   whenIdle,
   lazyModule,
+  PlatformDashboardPage,
+  PlatformAgenciesPage,
+  PlatformAgencyDetailPage,
+  PlatformPlansPage,
+  PlatformSubscriptionsPage,
+  PlatformSecurityPage,
+  PlatformSettingsPage,
+  PlatformRevenuePage,
 } from "./lazy-pages";
 
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
@@ -157,6 +165,9 @@ const FreelancerLeavePage = lazyModule(() =>
 );
 const AdminBDEOversightPage = lazyModule(() =>
   import("../pages/admin/AdminBDEOversightPage").then((m) => ({ default: m.AdminBDEOversightPage }))
+);
+const PlatformLayout = lazyModule(() =>
+  import("../components/platform/PlatformLayout").then((m) => ({ default: m.PlatformLayout }))
 );
 
 function RouteLoading() {
@@ -1040,7 +1051,26 @@ export function App() {
                 <Route path="/kanban" element={<Navigate to="/admin/tasks" replace />} />
               </Route>
 
-              {/* 6. System Smoke Test & Fallbacks */}
+              {/* 6. Platform Super Admin Surface (/platform/*) */}
+              <Route
+                element={
+                  <ProtectedRoute allowedRoles={["platform_super_admin", "admin", "super_admin"]}>
+                    <PlatformLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/platform" element={<PlatformDashboardPage />} />
+                <Route path="/platform/agencies" element={<PlatformAgenciesPage />} />
+                <Route path="/platform/agencies/:agencyId" element={<PlatformAgencyDetailPage />} />
+                <Route path="/platform/plans" element={<PlatformPlansPage />} />
+                <Route path="/platform/subscriptions" element={<PlatformSubscriptionsPage />} />
+                <Route path="/platform/revenue" element={<PlatformRevenuePage />} />
+                <Route path="/platform/finance" element={<PlatformRevenuePage />} />
+                <Route path="/platform/security" element={<PlatformSecurityPage />} />
+                <Route path="/platform/settings" element={<PlatformSettingsPage />} />
+              </Route>
+
+              {/* 7. System Smoke Test & Fallbacks */}
               <Route path="/health" element={<HealthPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
