@@ -116,3 +116,33 @@ export function preloadPortalPages(options: { includeOnboarding?: boolean } = {}
   }
   for (const page of PORTAL_CORE_PAGES) void page.preload().catch(() => {});
 }
+
+// ── Platform Super Admin ──────────────────────────────────────────────────────
+export const PlatformDashboardPage = lazyPage(() =>
+  import("../pages/platform/PlatformDashboardPage").then((m) => m.PlatformDashboardPage),
+);
+export const PlatformAgenciesPage = lazyPage(() =>
+  import("../pages/platform/PlatformAgenciesPage").then((m) => m.PlatformAgenciesPage),
+);
+export const PlatformAgencyDetailPage = lazyPage(() =>
+  import("../pages/platform/PlatformAgenciesPage").then((m) => m.PlatformAgencyDetailPage),
+);
+export const PlatformPlansPage = lazyPage(() =>
+  import("../pages/platform/PlatformPlansPage").then((m) => m.PlatformPlansPage),
+);
+export const PlatformSubscriptionsPage = lazyPage(() =>
+  import("../pages/platform/PlatformSubscriptionsPage").then((m) => m.PlatformSubscriptionsPage),
+);
+export const PlatformFinancePage = lazyPage(() =>
+  import("../pages/platform/PlatformFinancePage").then((m) => m.PlatformFinancePage),
+);
+export const PlatformSecurityPage = lazyPage(() =>
+  import("../pages/platform/PlatformSecurityPage").then((m) => m.PlatformSecurityPage),
+);
+export const PlatformSettingsPage = lazyPage(() =>
+  import("../pages/platform/PlatformSettingsPage").then((m) => m.PlatformSettingsPage),
+);
+export const PlatformRevenuePage = lazyPage(() =>
+  import("../pages/platform/PlatformRevenuePage").then((m) => m.PlatformRevenuePage),
+);
+

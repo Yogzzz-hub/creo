@@ -174,9 +174,12 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
         const { getRoleHome } = await import("../../components/auth/ProtectedRoute");
         const roleHome = getRoleHome(loggedInUser.role);
 
-        // Strict role routing: admins go to /admin, clients go to /portal
+        // Strict role routing: platform super admin goes to /platform, agency admins go to /admin, clients to /portal
         const r = (loggedInUser.role || "").toLowerCase();
-        if (r === "admin" || r === "super_admin" || r.includes("admin")) {
+        const userEmail = (loggedInUser.email || cleanEmail).toLowerCase();
+        if (userEmail === "superadmin@creo.agency" || r === "platform_super_admin") {
+          navigate("/platform", { replace: true });
+        } else if (r === "admin" || r === "super_admin" || r.includes("admin")) {
           navigate("/admin", { replace: true });
         } else if (r === "client" || r === "client_owner" || r.includes("client")) {
           navigate("/portal", { replace: true });

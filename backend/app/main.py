@@ -68,19 +68,23 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         from app.core.security import hash_password
         from sqlalchemy import select
         async with AsyncSessionLocal() as db:
-            res = await db.execute(select(User).where(User.email == "admin@creo.agency"))
-            admin = res.scalar_one_or_none()
-            if not admin and settings.ENVIRONMENT == "development":
-                admin = User(
-                    email="admin@creo.agency",
-                    auth_id="auth_admin_001",
-                    full_name="Creo Super Admin",
-                    role=UserRole.SUPER_ADMIN,
-                    account_status=AccountStatus.ACTIVE,
-                    hashed_password=hash_password("Admin123!"),
-                )
-                db.add(admin)
-                await db.commit()
+            for s_email, s_auth, s_name in [
+                ("admin@creo.agency", "auth_admin_001", "Creo Super Admin"),
+                ("superadmin@creo.agency", "auth_superadmin_001", "Creo Platform Super Admin"),
+            ]:
+                res = await db.execute(select(User).where(User.email == s_email))
+                user_record = res.scalar_one_or_none()
+                if not user_record and settings.ENVIRONMENT == "development":
+                    user_record = User(
+                        email=s_email,
+                        auth_id=s_auth,
+                        full_name=s_name,
+                        role=UserRole.SUPER_ADMIN,
+                        account_status=AccountStatus.ACTIVE,
+                        hashed_password=hash_password("Admin123!"),
+                    )
+                    db.add(user_record)
+                    await db.commit()
 
             # Ensure plan_negotiations table exists
             await db.execute(text("""

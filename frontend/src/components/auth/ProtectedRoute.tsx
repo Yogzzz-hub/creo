@@ -14,6 +14,9 @@ export const ROLE_HOMES: Record<string, string> = {
   bde_head: "/bde/crm/overview",
   admin: "/admin",
   super_admin: "/admin",
+  platform_super_admin: "/platform",
+  platform_finance: "/platform",
+  platform_support: "/platform/agencies",
   investor_relations: "/admin/reports",
   freelancer: "/freelancer/tasks",
 };
@@ -21,6 +24,7 @@ export const ROLE_HOMES: Record<string, string> = {
 export function getRoleHome(role?: string | null): string {
   if (!role) return "/portal";
   const r = role.toLowerCase();
+  if (r === "platform_super_admin" || r === "platform_finance" || r === "platform_support") return ROLE_HOMES[r] || "/platform";
   if (r === "admin" || r === "super_admin" || r.includes("admin")) return "/admin";
   if (r === "client" || r === "client_owner" || r.includes("client")) return "/portal";
   return ROLE_HOMES[r] || ROLE_HOMES[role] || "/portal";
