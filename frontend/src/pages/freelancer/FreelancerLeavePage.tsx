@@ -98,52 +98,73 @@ export function FreelancerLeavePage() {
   const activePeriods = myLeaves.filter(
     (l) => l.status === "approved" && new Date(l.end_date) >= new Date()
   );
+  const pendingLeaves = myLeaves.filter((l) => l.status === "pending");
+  const totalApprovedDays = activePeriods.reduce((acc, l) => acc + calcDays(l.start_date, l.end_date), 0);
+  const totalPendingDays = pendingLeaves.reduce((acc, l) => acc + calcDays(l.start_date, l.end_date), 0);
 
   return (
-    <div className="min-h-screen bg-[#0B111C] text-slate-100">
+    <div className="min-h-screen bg-[#0B111C] text-slate-100 flex flex-col overflow-x-hidden">
       <AdminTopHeader activeTab="Time Off & Blackout" hideTitle />
 
-      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-24 space-y-6">
-        {/* Status & Workload Impact Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <main className="max-w-[1600px] w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 space-y-6 flex-1">
+        {/* Status & Workload Impact Overview: Responsive Side-by-Side Cards (Mobile: 2 cols, Desktop: 5/7 aligned with bottom grid) */}
+        <div className="grid grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-6 w-full">
+          {/* Card 1: Upcoming Blackout Windows (aligns with Form - col-span-5) */}
           <motion.div
             whileHover={{ y: -2 }}
-            className="bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-4 sm:p-5 shadow-[0_0_20px_rgba(127,160,214,0.22)] transition-all"
+            className="col-span-1 lg:col-span-5 bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/50 rounded-2xl p-3.5 sm:p-5 lg:p-6 transition-all shadow-xl flex flex-col justify-between"
           >
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block">
-              Current Availability
-            </span>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xl font-black text-emerald-400">Available for Tasks</span>
+            <div>
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <span className="text-[9px] sm:text-[10px] font-black text-[#97A0B3] uppercase tracking-wider leading-tight">
+                  UPCOMING BLACKOUT WINDOWS
+                </span>
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shrink-0">
+                  <Palmtree className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2">
+                <span className="text-lg sm:text-2xl lg:text-3xl font-black text-[#7FA0D6] tracking-tight">
+                  {activePeriods.length} Scheduled
+                </span>
+                <span className="text-[10px] sm:text-xs font-semibold text-[#97A0B3]">
+                  ({totalApprovedDays} {totalApprovedDays === 1 ? "day" : "days"} total)
+                </span>
+              </div>
             </div>
-            <span className="text-[11px] text-[#97A0B3] mt-1 block">Ready for creative overflow assignments</span>
+            <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-[#2A3446] text-[10px] sm:text-xs font-bold text-[#7FA0D6] flex items-center gap-1.5 leading-snug">
+              <CalendarCheck2 className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate sm:whitespace-normal">Out-of-office locked with Team Lead</span>
+            </div>
           </motion.div>
 
+          {/* Card 2: Pending Coordination (aligns with History - col-span-7) */}
           <motion.div
             whileHover={{ y: -2 }}
-            className="bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-4 sm:p-5 shadow-[0_0_20px_rgba(127,160,214,0.22)] transition-all"
+            className="col-span-1 lg:col-span-7 bg-[#161F2D] border border-[#2A3446] hover:border-amber-500/50 rounded-2xl p-3.5 sm:p-5 lg:p-6 transition-all shadow-xl flex flex-col justify-between"
           >
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block">
-              Upcoming Blackout Windows
-            </span>
-            <div className="text-2xl font-black text-[#7FA0D6] font-mono mt-1">
-              {activePeriods.length} Scheduled
+            <div>
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <span className="text-[9px] sm:text-[10px] font-black text-[#97A0B3] uppercase tracking-wider leading-tight">
+                  PENDING COORDINATION
+                </span>
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
+                  <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2">
+                <span className="text-lg sm:text-2xl lg:text-3xl font-black text-amber-400 tracking-tight">
+                  {pendingLeaves.length} Under Review
+                </span>
+                <span className="text-[10px] sm:text-xs font-semibold text-[#97A0B3]">
+                  ({totalPendingDays} {totalPendingDays === 1 ? "day" : "days"} requested)
+                </span>
+              </div>
             </div>
-            <span className="text-[11px] text-[#7FA0D6]/80 mt-1 block font-medium">Out-of-office periods</span>
-          </motion.div>
-
-          <motion.div
-            whileHover={{ y: -2 }}
-            className="bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-4 sm:p-5 shadow-[0_0_20px_rgba(127,160,214,0.22)] transition-all"
-          >
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block">
-              Pending Coordination
-            </span>
-            <div className="text-2xl font-black text-amber-400 font-mono mt-1">
-              {myLeaves.filter((l) => l.status === "pending").length} Under Review
+            <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-[#2A3446] text-[10px] sm:text-xs font-bold text-amber-400 flex items-center gap-1.5 leading-snug">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate sm:whitespace-normal">Awaiting Team Lead & Admin coordination sign-off</span>
             </div>
-            <span className="text-[11px] text-amber-400/80 mt-1 block font-medium">Awaiting lead sign-off</span>
           </motion.div>
         </div>
 
@@ -185,7 +206,7 @@ export function FreelancerLeavePage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="lg:col-span-5 bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-6 shadow-[0_0_20px_rgba(127,160,214,0.22)] hover:shadow-[0_0_30px_rgba(127,160,214,0.35)] transition-all flex flex-col justify-between"
+            className="lg:col-span-5 bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-4 sm:p-6 shadow-[0_0_20px_rgba(127,160,214,0.22)] hover:shadow-[0_0_30px_rgba(127,160,214,0.35)] transition-all flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center gap-2.5 pb-4 border-b border-[#2A3446]">
@@ -222,7 +243,7 @@ export function FreelancerLeavePage() {
                         key={cat}
                         type="button"
                         onClick={() => setCategory(cat)}
-                        className={`px-3 py-2 rounded-xl text-xs font-semibold text-center transition-all cursor-pointer border ${
+                        className={`px-2.5 sm:px-3 py-2 rounded-xl text-[11px] sm:text-xs font-semibold text-center transition-all cursor-pointer border ${
                           category === cat
                             ? "bg-[#7FA0D6] text-[#0B111C] border-[#7FA0D6] font-bold shadow-md shadow-[#7FA0D6]/20"
                             : "bg-[#0B111C] border-[#2A3446] text-[#97A0B3] hover:text-white hover:border-[#7FA0D6]/50"
@@ -307,7 +328,7 @@ export function FreelancerLeavePage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="lg:col-span-7 bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-6 shadow-[0_0_20px_rgba(127,160,214,0.22)] hover:shadow-[0_0_30px_rgba(127,160,214,0.35)] transition-all flex flex-col"
+            className="lg:col-span-7 bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-4 sm:p-6 shadow-[0_0_20px_rgba(127,160,214,0.22)] hover:shadow-[0_0_30px_rgba(127,160,214,0.35)] transition-all flex flex-col"
           >
             <div className="flex items-center justify-between pb-4 border-b border-[#2A3446]">
               <div className="flex items-center gap-2.5">
@@ -343,37 +364,39 @@ export function FreelancerLeavePage() {
                   <motion.div
                     key={leave.id}
                     whileHover={{ scale: 1.01 }}
-                    className="bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/60 rounded-xl p-4 space-y-3 transition-all"
+                    className="bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/60 rounded-xl p-3.5 sm:p-4 space-y-3 transition-all"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CalendarIcon className="w-4 h-4 text-[#7FA0D6]" />
-                        <span className="text-xs font-bold text-white">
-                          {leave.start_date} <ArrowRight className="w-3 h-3 inline mx-1 text-[#97A0B3]" /> {leave.end_date}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div className="flex items-center flex-wrap gap-2">
+                        <CalendarIcon className="w-4 h-4 text-[#7FA0D6] shrink-0" />
+                        <span className="text-xs font-bold text-white whitespace-nowrap">
+                          {leave.start_date} <ArrowRight className="w-3 h-3 inline mx-0.5 text-[#97A0B3]" /> {leave.end_date}
                         </span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/10 text-[#7FA0D6] border border-[#7FA0D6]/20">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/10 text-[#7FA0D6] border border-[#7FA0D6]/20 shrink-0 whitespace-nowrap">
                           {days} Day{days > 1 ? "s" : ""}
                         </span>
                       </div>
 
-                      <span
-                        className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
-                          isPending
-                            ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                            : isApproved
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                            : "bg-rose-500/10 text-rose-400 border-rose-500/30"
-                        }`}
-                      >
-                        {leave.status}
-                      </span>
+                      <div className="flex items-center self-start sm:self-auto">
+                        <span
+                          className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border shrink-0 ${
+                            isPending
+                              ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                              : isApproved
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                              : "bg-rose-500/10 text-rose-400 border-rose-500/30"
+                          }`}
+                        >
+                          {leave.status}
+                        </span>
+                      </div>
                     </div>
 
-                    <p className="text-xs text-[#97A0B3] leading-relaxed">{leave.reason}</p>
+                    <p className="text-xs text-[#97A0B3] leading-relaxed break-words">{leave.reason}</p>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-[#2A3446]/60 text-[11px]">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#2A3446]/60 text-[11px]">
                       <span className="text-[#97A0B3]/80">
-                        Reviewer: <span className="text-white font-medium">{leave.team_lead_name || "Agency Admin"}</span>
+                        Reviewer: <span className="text-white font-medium">{leave.team_lead_name || "Creative Pod Lead"}</span>
                       </span>
 
                       {leave.can_cancel && (
@@ -382,7 +405,7 @@ export function FreelancerLeavePage() {
                           {...btnTap}
                           disabled={cancelMutation.isPending}
                           onClick={() => cancelMutation.mutate(leave.id)}
-                          className="px-2.5 py-1 rounded-lg border border-rose-500/40 text-rose-300 hover:bg-rose-500/20 text-[10px] font-bold transition-all cursor-pointer"
+                          className="px-2.5 py-1 rounded-lg border border-rose-500/40 text-rose-300 hover:bg-rose-500/20 text-[10px] font-bold transition-all cursor-pointer shrink-0"
                         >
                           Withdraw Blackout
                         </motion.button>

@@ -84,9 +84,6 @@ const AdminSupportTicketsPage = lazyModule(() =>
 const AdminTicketDetailPage = lazyModule(() =>
   import("../features/admin/AdminTicketDetailPage").then((m) => ({ default: m.AdminTicketDetailPage }))
 );
-const AdminSLAPerformancePage = lazyModule(() =>
-  import("../features/admin/AdminSLAPerformancePage").then((m) => ({ default: m.AdminSLAPerformancePage }))
-);
 const ClientTicketDetailPage = lazyModule(() =>
   import("../pages/portal/PortalTicketDetailPage").then((m) => ({ default: m.ClientTicketDetailPage }))
 );
@@ -162,6 +159,9 @@ const BDELeavePage = lazyModule(() =>
 );
 const FreelancerLeavePage = lazyModule(() =>
   import("../pages/freelancer/FreelancerLeavePage").then((m) => ({ default: m.FreelancerLeavePage }))
+);
+const FreelancerSettingsPage = lazyModule(() =>
+  import("../pages/freelancer/FreelancerSettingsPage").then((m) => ({ default: m.FreelancerSettingsPage }))
 );
 const AdminBDEOversightPage = lazyModule(() =>
   import("../pages/admin/AdminBDEOversightPage").then((m) => ({ default: m.AdminBDEOversightPage }))
@@ -342,8 +342,6 @@ const dashboardRoutes = {
   "/admin/support": AdminSupportTicketsPage,
   "/admin/support/tickets": AdminSupportTicketsPage,
   "/admin/support/tickets/:ticketId": AdminTicketDetailPage,
-  "/admin/support/sla": AdminSLAPerformancePage,
-  "/admin/sla": AdminSLAPerformancePage,
   "/admin/teams": AdminTeamManagementPage,
   "/admin/team": AdminTeamManagementPage,
   "/admin/bde-management": AdminTeamManagementPage,
@@ -459,11 +457,15 @@ function ScrollToTop() {
     document.documentElement.scrollTo({ top: 0, left: 0, behavior: "instant" });
     document.body.scrollTo({ top: 0, left: 0, behavior: "instant" });
 
-    // Reset internal container scroll positions (e.g., ops/portal layout surfaces)
+    // Reset page content container scroll positions (e.g., ops/portal layout surfaces),
+    // but strictly exclude sidebar and navigation elements so user scroll position stays intact!
     const scrollContainers = document.querySelectorAll(
-      "main, [data-surface], .overflow-y-auto, div[class*='overflow-y-auto']"
+      "main, [data-surface]"
     );
     scrollContainers.forEach((el) => {
+      if (el.closest("aside") || el.closest("nav") || el.closest("[data-sidebar]")) {
+        return;
+      }
       try {
         el.scrollTop = 0;
       } catch (_e) {
@@ -733,8 +735,6 @@ export function App() {
                 <Route path="/admin/support/tickets" element={<AdminSupportTicketsPage />} />
                 <Route path="/admin/support/tickets/:ticketId" element={<AdminTicketDetailPage />} />
                 <Route path="/admin/support/:ticketId" element={<AdminTicketDetailPage />} />
-                <Route path="/admin/support/sla" element={<AdminSLAPerformancePage />} />
-                <Route path="/admin/sla" element={<AdminSLAPerformancePage />} />
                 <Route
                   path="/admin/teams"
                   element={
@@ -808,7 +808,9 @@ export function App() {
                   path="/bde"
                   element={
                     <ProtectedRoute allowedRoles={["sales", "bde", "bde_head", "admin", "super_admin"]}>
-                      <Navigate to="/bde/crm/overview" replace />
+                      <SimpleErrorBoundary name="BDE Dashboard">
+                        <BDEDashboardPage />
+                      </SimpleErrorBoundary>
                     </ProtectedRoute>
                   }
                 />
@@ -1042,6 +1044,14 @@ export function App() {
                   element={
                     <ProtectedRoute allowedRoles={["freelancer", "admin", "super_admin"]}>
                       <FreelancerLeavePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/freelancer/settings"
+                  element={
+                    <ProtectedRoute allowedRoles={["freelancer", "admin", "super_admin"]}>
+                      <FreelancerSettingsPage />
                     </ProtectedRoute>
                   }
                 />

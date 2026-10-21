@@ -54,6 +54,12 @@ class TaskCreateRequest(BaseModel):
     auto_dispatch: bool = False
     title: str | None = Field(default=None, max_length=200)
     brief: str | None = Field(default=None, max_length=2000)
+    raw_footage_url: str | None = None
+    format: str | None = None
+    target_duration: str | None = None
+    audio_notes: str | None = None
+    reference_url: str | None = None
+    hook: str | None = None
 
 
 class TaskAssignRequest(BaseModel):
@@ -120,12 +126,16 @@ async def get_kanban_board(
         where_conditions.append("(t.deliverable_type IN ('static_post', 'carousel', 'story') OR t.assigned_to = :actor_id)")
         params["actor_id"] = actor.user_id
     elif actor.role in (UserRole.TEAM_LEAD, "team_lead"):
-        # Team Leads see unassigned backlog tasks, tasks assigned to them, or tasks assigned to members of their pod
+        # Team Leads see unassigned backlog tasks, tasks assigned to them, tasks assigned to members of their pod, or freelancer tasks
         where_conditions.append("""(
             t.assigned_to IS NULL 
             OR t.assigned_to = :actor_id 
             OR t.assigned_to IN (SELECT user_id FROM staff_profiles WHERE team_lead_id = :actor_id)
+            OR t.assigned_to IN (SELECT id FROM users WHERE role = 'freelancer')
         )""")
+        params["actor_id"] = actor.user_id
+    elif actor.role in (UserRole.FREELANCER, "freelancer"):
+        where_conditions.append("t.assigned_to = :actor_id")
         params["actor_id"] = actor.user_id
 
     where_sql = ("WHERE " + " AND ".join(where_conditions)) if where_conditions else ""
@@ -319,8 +329,20 @@ async def create_task(
 
     blueprint = {
         key: value.strip()
-        for key, value in (("concept_name", payload.title), ("brief", payload.brief))
-        if value and value.strip()
+        for key, value in (
+            ("concept_name", payload.title),
+            ("title", payload.title),
+            ("brief", payload.brief),
+            ("raw_footage_url", payload.raw_footage_url),
+            ("drive_url", payload.raw_footage_url),
+            ("brief_url", payload.raw_footage_url or payload.reference_url),
+            ("format", payload.format or payload.deliverable_type.value),
+            ("target_duration", payload.target_duration),
+            ("audio_notes", payload.audio_notes),
+            ("reference_url", payload.reference_url),
+            ("hook", payload.hook),
+        )
+        if value and isinstance(value, str) and value.strip()
     }
     task = Task(
         agency_id=client.agency_id,

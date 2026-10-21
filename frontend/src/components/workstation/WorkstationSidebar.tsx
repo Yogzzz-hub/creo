@@ -71,7 +71,7 @@ const SECTIONS: NavSection[] = [
     label: "WORKSPACE",
     items: [
       { label: "Tasks", href: "/workstation/tasks", icon: CheckSquare },
-      { label: "Instagram Publishing", href: "/admin/publishing", icon: Send },
+      { label: "Instagram Connect", href: "/admin/publishing", icon: Send },
       { label: "Leave Requests", href: "/workstation/schedule", icon: Calendar },
       { label: "Workspace Hub", href: "/workstation/slack", icon: MessageSquare, badge: "Chat" },
     ],

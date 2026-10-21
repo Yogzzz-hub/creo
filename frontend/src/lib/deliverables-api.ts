@@ -336,6 +336,12 @@ export async function createProductionTask(payload: {
   title: string;
   brief?: string;
   due_date?: string | null;
+  raw_footage_url?: string;
+  format?: string;
+  target_duration?: string;
+  audio_notes?: string;
+  reference_url?: string;
+  hook?: string;
 }): Promise<{ id: string; status: string }> {
   return request(`/api/v1/tasks`, {
     method: "POST",

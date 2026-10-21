@@ -612,12 +612,6 @@ async def get_chat_channels(
                 "is_pod_channel": True,
             },
             {
-                "id": "bde-sales-hub",
-                "label": "bde-sales-hub",
-                "desc": "BDE Commercial Outreach & Pipeline Command (Sales Reps & Admin)",
-                "is_pod_channel": True,
-            },
-            {
                 "id": "pod-alpha-team",
                 "label": "pod-alpha-team",
                 "desc": "Pod Alpha • Brand & Creative Design (Lead & Specialists)",
@@ -772,7 +766,15 @@ async def get_chat_contacts(
             .order_by(User.created_at.asc())
         )
         admin_res = await db.execute(admin_stmt)
-        admins = list(admin_res.scalars().all())
+        all_admins = list(admin_res.scalars().all())
+        has_super_admin = False
+        for a in all_admins:
+            if str(a.role).lower() in ("super_admin",):
+                if not has_super_admin:
+                    admins.append(a)
+                    has_super_admin = True
+            else:
+                admins.append(a)
 
     # --- RULE 1: FREELANCER -> ONLY ADMIN, NONE ELSE ---
     if is_freelancer:
@@ -980,7 +982,7 @@ async def get_chat_contacts(
 
         return contacts
 
-    # --- RULE 6: BDE -> ONLY CLIENTS, ADMINS, AND OTHER BDE MEMBERS ---
+    # --- RULE 6: BDE -> ONLY THEIR ADDED/ASSIGNED LEADS/CLIENTS, ADMINS, AND OTHER BDE MEMBERS ---
     if is_bde:
         # A. Admins
         for adm in admins:
@@ -994,18 +996,119 @@ async def get_chat_contacts(
                     "online": True,
                 })
 
-        # B. All Clients
-        client_stmt = select(User).where(User.role == "client").order_by(User.full_name.asc())
-        for cu in (await db.execute(client_stmt)).scalars().all():
-            if cu.id != current_user_id:
+        # B. Clients that this BDE added (as leads) or is assigned to — NOT all clients from the platform!
+        from app.models.crm import Lead
+        from app.models.work import ClientAssignment
+        from app.models.enums import AccountStatus
+        from sqlalchemy import func
+
+        # 1. Fetch leads assigned to or created by this BDE
+        lead_stmt = select(Lead).where(
+            or_(
+                Lead.assigned_bde_id == current_user_id,
+                Lead.metadata_extra["created_by"].as_string() == str(current_user_id),
+            )
+        ).order_by(Lead.created_at.desc())
+        bde_leads = list((await db.execute(lead_stmt)).scalars().all())
+
+        lead_emails = {l.email.strip().lower() for l in bde_leads if l.email}
+
+        # 2. Get client users assigned via ClientAssignment
+        assigned_client_ids_stmt = select(ClientAssignment.client_id).where(
+            ClientAssignment.user_id == current_user_id
+        )
+        assigned_client_ids = set((await db.execute(assigned_client_ids_stmt)).scalars().all())
+
+        # 3. Query existing client users matching either assigned_client_ids or lead emails
+        client_conditions = []
+        if assigned_client_ids:
+            client_conditions.append(User.id.in_(list(assigned_client_ids)))
+        if lead_emails:
+            client_conditions.append(func.lower(User.email).in_(list(lead_emails)))
+
+        found_clients: list[User] = []
+        if client_conditions:
+            client_stmt = select(User).where(
+                User.role == UserRole.CLIENT,
+                or_(*client_conditions),
+            ).order_by(User.full_name.asc())
+            found_clients = list((await db.execute(client_stmt)).scalars().all())
+
+        found_emails = {c.email.strip().lower() for c in found_clients if c.email}
+        added_user_ids = set()
+
+        for cu in found_clients:
+            if cu.id != current_user_id and cu.id not in added_user_ids:
+                added_user_ids.add(cu.id)
+                matching_lead = next((l for l in bde_leads if l.email and l.email.strip().lower() == cu.email.strip().lower()), None)
+                company_label = f" ({matching_lead.company_name})" if matching_lead and matching_lead.company_name else ""
                 contacts.append({
                     "id": str(cu.id),
                     "name": cu.full_name or cu.email.split("@")[0],
                     "email": cu.email,
-                    "role": "Client",
+                    "role": f"Client{company_label}",
                     "is_client": True,
                     "online": True,
                 })
+
+        # 4. For any lead that does not yet have a matching User account, auto-provision a client User so they can speak!
+        needs_commit = False
+        for lead in bde_leads:
+            lead_email = (lead.email or "").strip().lower()
+            if lead_email and lead_email in found_emails:
+                continue
+
+            client_u = None
+            if lead_email:
+                client_u = (await db.execute(select(User).where(func.lower(User.email) == lead_email))).scalar_one_or_none()
+
+            if not client_u:
+                user_email = lead_email or f"prospect_{lead.id}@creo.agency"
+                client_u = User(
+                    agency_id=lead.agency_id or actor.agency_id,
+                    auth_id=f"lead_{lead.id}",
+                    email=user_email,
+                    full_name=lead.name,
+                    role=UserRole.CLIENT,
+                    account_status=AccountStatus.ACTIVE,
+                )
+                db.add(client_u)
+                await db.flush()
+                needs_commit = True
+
+            ca_exists = (await db.execute(
+                select(ClientAssignment).where(
+                    ClientAssignment.client_id == client_u.id,
+                    ClientAssignment.user_id == current_user_id,
+                )
+            )).scalar_one_or_none()
+            if not ca_exists:
+                db.add(ClientAssignment(
+                    agency_id=lead.agency_id or actor.agency_id,
+                    client_id=client_u.id,
+                    user_id=current_user_id,
+                    role="bde",
+                    craft_role="bde",
+                    is_primary=True,
+                ))
+                needs_commit = True
+
+            if client_u.id not in added_user_ids and client_u.id != current_user_id:
+                added_user_ids.add(client_u.id)
+                company_label = f" ({lead.company_name})" if lead.company_name else ""
+                contacts.append({
+                    "id": str(client_u.id),
+                    "name": lead.name or client_u.full_name or "Prospective Client",
+                    "email": client_u.email,
+                    "role": f"Client{company_label}",
+                    "is_client": True,
+                    "online": True,
+                })
+            if lead_email:
+                found_emails.add(lead_email)
+
+        if needs_commit:
+            await db.commit()
 
         # C. Other BDE Members
         bde_stmt = select(User).where(User.role.in_([UserRole.SALES, "sales", "bde"])).where(User.id != current_user_id).order_by(User.full_name.asc())

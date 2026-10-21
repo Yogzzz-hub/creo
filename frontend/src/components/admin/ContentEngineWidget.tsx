@@ -140,14 +140,14 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
       </div>
 
       {/* Footer Navigation */}
-      <div className="pt-2.5 mt-2 border-t border-[#2A3446] flex items-center justify-between text-xs text-[#97A0B3] font-medium shrink-0" onClick={(e) => e.stopPropagation()}>
-        <span className="text-[10.5px]">All 4 workflow modules active</span>
+      <div className="pt-2.5 mt-2 border-t border-[#2A3446] shrink-0" onClick={(e) => e.stopPropagation()}>
         <Link
           to="/admin/calendar"
           onClick={(e) => e.stopPropagation()}
-          className="text-[11px] font-bold text-[#7FA0D6] hover:text-blue-300 hover:translate-x-0.5 transition-all flex items-center gap-0.5 cursor-pointer"
+          className="w-full min-h-[38px] py-2 px-3 bg-[#0B111C] hover:bg-[#161F2D] hover:border-[#7FA0D6]/60 hover:scale-[1.01] hover:text-[#7FA0D6] text-white rounded-xl text-xs font-bold border border-[#2A3446] transition-all duration-200 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          Content Engine &rarr;
+          <span>Content Engine</span>
+          <span>&rarr;</span>
         </Link>
       </div>
     </div>

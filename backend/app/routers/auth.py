@@ -366,6 +366,11 @@ class ResetPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=128)
 
 
+class DirectResetPasswordRequest(BaseModel):
+    email: EmailStr
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
 class SetMandatoryPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=128)
 
@@ -606,6 +611,38 @@ async def verify_reset_otp(
         "reset_token": create_password_reset_token(user.id, user.token_version),
         "expires_in_seconds": 900,
         "sign_in_methods": _sign_in_methods(user),
+    }
+
+
+@router.post("/direct-reset-password", response_model=dict[str, Any])
+async def direct_reset_password(
+    payload: DirectResetPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Directly set or reset password for an account without requiring email OTP verification."""
+    email_clean = _normalize_email(payload.email)
+    user = await _get_user_by_email(db, email_clean)
+    if not user:
+        raise HTTPException(status_code=404, detail="No account found with this email address.")
+    if user.account_status == AccountStatus.SUSPENDED:
+        raise HTTPException(status_code=403, detail="Your account has been suspended. Please contact support.")
+
+    valid, err = validate_password_strength(payload.new_password)
+    if not valid:
+        raise HTTPException(status_code=400, detail=err)
+
+    await _apply_new_password(user, payload.new_password)
+    if user.email_verified_at is None:
+        user.email_verified_at = datetime.now(timezone.utc)
+    if user.must_reset_password:
+        user.must_reset_password = False
+    await db.commit()
+    await db.refresh(user)
+
+    return {
+        "status": "success",
+        "message": "Password updated successfully. You can now use your new password.",
+        "email": email_clean,
     }
 
 

@@ -4,13 +4,10 @@ import {
   Users,
   PhoneCall,
   MessageSquare,
-  Mail,
   Calendar,
   TrendingUp,
-  Clock,
   Search,
   Building2,
-  Sparkles,
   RefreshCw,
   IndianRupee,
   Flame,
@@ -152,22 +149,6 @@ export function AdminBDEOversightPage() {
     );
   };
 
-  const getActivityIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "call":
-        return <PhoneCall className="w-3.5 h-3.5 text-blue-400" />;
-      case "whatsapp":
-        return <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />;
-      case "email":
-        return <Mail className="w-3.5 h-3.5 text-indigo-400" />;
-      case "meeting":
-        return <Calendar className="w-3.5 h-3.5 text-purple-400" />;
-      case "proposal":
-        return <FileText className="w-3.5 h-3.5 text-amber-400" />;
-      default:
-        return <Sparkles className="w-3.5 h-3.5 text-[#7FA0D6]" />;
-    }
-  };
 
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
@@ -287,10 +268,10 @@ export function AdminBDEOversightPage() {
           </div>
         </div>
 
-      {/* ── Top Row: Rep Leaderboard (2 Cols) + Live Activity Stream (1 Col) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch">
-        {/* Left Column (2 Cols): BDE Representative Work Breakdown */}
-        <div className="lg:col-span-2 flex flex-col">
+      {/* ── Top Row: Rep Leaderboard ── */}
+      <div className="w-full">
+        {/* BDE Representative Work Breakdown */}
+        <div className="w-full flex flex-col">
           <div className="p-4 sm:p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm flex-1 flex flex-col">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
@@ -438,69 +419,6 @@ export function AdminBDEOversightPage() {
                   </table>
                 </div>
               </>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column (1 Col): Real-Time Outreach & Touchpoints Stream */}
-        <div className="lg:col-span-1 flex flex-col">
-          <div className="p-4 sm:p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-emerald-400" />
-                  Live Outreach Stream
-                </h2>
-                <p className="text-[11px] text-[#97A0B3] mt-0.5">
-                  Latest calls, meetings, WhatsApp notes, and proposals.
-                </p>
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                Live
-              </span>
-            </div>
-
-            {recentActivities.length === 0 ? (
-              <div className="text-center py-8 text-xs text-[#97A0B3] my-auto">
-                No outreach activities logged yet.
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-[360px] sm:max-h-[420px] overflow-y-auto pr-1">
-                {recentActivities.slice(0, 15).map((act) => (
-                  <div
-                    key={act.id}
-                    className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/30 transition-all text-xs space-y-1.5"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <div className="p-1 rounded-md bg-[#161F2D] border border-[#2A3446]">
-                          {getActivityIcon(act.activity_type)}
-                        </div>
-                        <span className="font-bold text-white uppercase text-[10px] tracking-wide">
-                          {act.activity_type}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-[#97A0B3]">
-                        {act.created_at ? new Date(act.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
-                      </span>
-                    </div>
-
-                    <p className="text-[#BCCCE6] text-[11px] leading-relaxed">
-                      <span className="font-semibold text-white">{act.bde_name}</span> reached out to{" "}
-                      <span className="font-semibold text-[#7FA0D6]">{act.lead_name}</span> ({act.company_name})
-                    </p>
-
-                    <div className="p-2 rounded-lg bg-[#161F2D]/70 border border-[#2A3446]/60 text-[11px] text-[#97A0B3]">
-                      <p className="italic">"{act.summary}"</p>
-                      {act.outcome && (
-                        <p className="mt-1 text-[10px] font-semibold text-emerald-400">
-                          Outcome: {act.outcome}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
             )}
           </div>
         </div>
