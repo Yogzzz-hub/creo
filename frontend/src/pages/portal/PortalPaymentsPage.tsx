@@ -14,6 +14,7 @@ import { ComparePlansModal } from "../../components/portal/ComparePlansModal";
 import { PlanBargainCallModal } from "../../components/portal/PlanBargainCallModal";
 import { SplitPaymentCard } from "../../components/portal/SplitPaymentCard";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
+import { PortalPageHeader } from "../../components/portal/PortalPieces";
 
 import type { InvoiceData } from "../../lib/pdf-invoice";
 
@@ -108,9 +109,9 @@ export function PortalPaymentsPage() {
 
   const usage = (subData as any)?.quotas || (subData as any)?.usage || {};
   const usageBars = [
-    { label: "Reels", current: usage.reel?.used || 0, max: usage.reel?.quota ?? (subData as any)?.plan?.reel_quota ?? 0, color: "bg-[#7FA0D6]" },
-    { label: "Posts", current: (usage.static_post?.used ?? usage.poster?.used) || 0, max: (usage.static_post?.quota ?? usage.poster?.quota) ?? (subData as any)?.plan?.poster_quota ?? 0, color: "bg-[#7FA0D6]" },
-    { label: "Stories", current: (usage.story?.used ?? usage.carousel?.used) || 0, max: (usage.story?.quota ?? usage.carousel?.quota) ?? (subData as any)?.plan?.story_quota ?? 0, color: "bg-[#7FA0D6]" }
+    { label: "Reels", current: usage.reel?.used || 0, max: usage.reel?.quota ?? (subData as any)?.plan?.reel_quota ?? 0, color: "bg-app-accent" },
+    { label: "Posts", current: (usage.static_post?.used ?? usage.poster?.used) || 0, max: (usage.static_post?.quota ?? usage.poster?.quota) ?? (subData as any)?.plan?.poster_quota ?? 0, color: "bg-app-accent" },
+    { label: "Stories", current: (usage.story?.used ?? usage.carousel?.used) || 0, max: (usage.story?.quota ?? usage.carousel?.quota) ?? (subData as any)?.plan?.story_quota ?? 0, color: "bg-app-accent" }
   ];
 
   const totalMax = usageBars.reduce((sum, item) => sum + item.max, 0);
@@ -218,6 +219,12 @@ export function PortalPaymentsPage() {
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full min-w-0 space-y-4">
+      <PortalPageHeader
+        eyebrow={hasActivePlan ? `${planName} plan · Renews ${renewalDate}` : "No active plan yet"}
+        title="Plan & billing."
+        lead="Your plan, what's left this cycle, add-ons and invoices."
+      />
+
       {/* Action Toast / Confirmation Notice */}
       {actionNotice && (
         <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-700/60 text-emerald-300 text-xs font-semibold flex items-center gap-2.5 animate-[fadeIn_0.2s_ease-out]">
@@ -255,7 +262,7 @@ export function PortalPaymentsPage() {
             type="button"
             onClick={handleResumePlan}
             disabled={resumingSub}
-            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#0B111C] text-xs font-bold transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-app-base text-xs font-bold transition-colors shrink-0 cursor-pointer disabled:opacity-50"
           >
             {resumingSub ? "Resuming..." : "Resume Renewal"}
           </button>
@@ -272,7 +279,7 @@ export function PortalPaymentsPage() {
               ? "border-blue-500/40 bg-blue-950/25 text-blue-200"
               : latestNeg.status === "Declined"
               ? "border-rose-500/30 bg-rose-950/20 text-rose-200"
-              : "border-[#7FA0D6]/40 bg-[#0B111C] text-[#BCCCE6]"
+              : "border-app-accent/40 bg-app-base text-app-accent-soft"
           }`}
         >
           {/* Header row - clickable on mobile */}
@@ -281,12 +288,12 @@ export function PortalPaymentsPage() {
             className="flex items-center justify-between cursor-pointer md:cursor-default select-none"
           >
             <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
-              <div className="size-8 sm:size-9 rounded-xl bg-[#161F2D] border border-[#2A3446] flex items-center justify-center shrink-0 text-[#7FA0D6]">
+              <div className="size-8 sm:size-9 rounded-xl bg-app-surface border border-app-line flex items-center justify-center shrink-0 text-app-accent">
                 <PhoneCall className="size-4" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">Plan Negotiation</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-app-mist">Plan Negotiation</span>
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase shrink-0 ${
                       latestNeg.status === "Accepted"
@@ -295,26 +302,26 @@ export function PortalPaymentsPage() {
                         ? "bg-blue-500/20 text-blue-400 border border-blue-500/40"
                         : latestNeg.status === "Declined"
                         ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
-                        : "bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/40"
+                        : "bg-app-accent/20 text-app-accent border border-app-accent/40"
                     }`}
                   >
                     {latestNeg.status}
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm font-bold text-white mt-0.5 truncate hidden sm:block">
+                <p className="text-xs sm:text-sm font-bold text-hi mt-0.5 truncate hidden sm:block">
                   {latestNeg.targetTopic}
                   {latestNeg.proposedOffer ? ` (${latestNeg.proposedOffer})` : ""}
                 </p>
               </div>
             </div>
-            <span className="text-[#7FA0D6] md:hidden">
+            <span className="text-app-accent md:hidden">
               {mobileNegOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
             </span>
           </div>
 
           {/* Details - Collapsed by default on mobile, always open on desktop */}
-          <div className={`${mobileNegOpen ? "block mt-2.5 pt-2.5 border-t border-white/10" : "hidden md:block md:mt-2"}`}>
-            <p className="text-xs sm:text-sm font-bold text-white sm:hidden mb-1">
+          <div className={`${mobileNegOpen ? "block mt-2.5 pt-2.5 border-t border-hi/10" : "hidden md:block md:mt-2"}`}>
+            <p className="text-xs sm:text-sm font-bold text-hi sm:hidden mb-1">
               {latestNeg.targetTopic}
               {latestNeg.proposedOffer ? ` (${latestNeg.proposedOffer})` : ""}
             </p>
@@ -325,7 +332,7 @@ export function PortalPaymentsPage() {
                   {latestNeg.counterNote ? ` • "${latestNeg.counterNote}"` : ""}
                 </p>
                 {(latestNeg.reelQuota || latestNeg.posterQuota || latestNeg.storyQuota) && (
-                  <p className="text-[11px] text-[#BCCCE6] font-semibold">
+                  <p className="text-[11px] text-app-accent-soft font-semibold">
                     Agreed Deliverables: {latestNeg.reelQuota || 8} Reels • {latestNeg.posterQuota || 12} Posters • {latestNeg.storyQuota || 15} Stories
                   </p>
                 )}
@@ -338,7 +345,7 @@ export function PortalPaymentsPage() {
                   {latestNeg.counterNote ? ` • "${latestNeg.counterNote}"` : ""}
                 </p>
                 {(latestNeg.reelQuota || latestNeg.posterQuota || latestNeg.storyQuota) && (
-                  <p className="text-[11px] text-[#BCCCE6] font-semibold">
+                  <p className="text-[11px] text-app-accent-soft font-semibold">
                     Proposed Deliverables: {latestNeg.reelQuota || 8} Reels • {latestNeg.posterQuota || 12} Posters • {latestNeg.storyQuota || 15} Stories
                   </p>
                 )}
@@ -350,7 +357,7 @@ export function PortalPaymentsPage() {
               </p>
             )}
             {latestNeg.status === "Pending Review" && (
-              <p className="text-xs text-[#97A0B3] mt-0.5">
+              <p className="text-xs text-app-mist mt-0.5">
                 Our Agency Director will call you at {latestNeg.phoneNumber} ({latestNeg.preferredTime}).
               </p>
             )}
@@ -362,7 +369,7 @@ export function PortalPaymentsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         
         {/* Top Left: Current Plan & Quotas */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+        <div className="bg-app-surface border border-app-line rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
           {!hasActivePlan ? (
             <div className="flex flex-col justify-between h-full space-y-4">
               <div>
@@ -374,7 +381,7 @@ export function PortalPaymentsPage() {
                     <button 
                       type="button"
                       onClick={() => setCompareModalOpen(true)}
-                      className="px-3 py-1 rounded-full border border-[#2A3446] text-xs font-bold text-white hover:bg-[#0B111C] transition-colors cursor-pointer"
+                      className="px-3 py-1 rounded-full border border-app-line text-xs font-bold text-hi hover:bg-app-base transition-colors cursor-pointer"
                     >
                       Compare plans
                     </button>
@@ -383,18 +390,18 @@ export function PortalPaymentsPage() {
                     </span>
                   </div>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">No Active Retainer</h2>
-                <p className="text-xs text-[#97A0B3] mt-1.5 leading-relaxed">
+                <h2 className="text-2xl sm:text-3xl font-bold text-hi tracking-tight">No Active Retainer</h2>
+                <p className="text-xs text-app-mist mt-1.5 leading-relaxed">
                   You have not completed plan selection or payment yet. Pick a subscription tier to launch your dedicated creative pod.
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-[#0B111C]/80 border border-[#2A3446] space-y-2 text-xs">
-                <p className="text-white font-semibold flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-[#7FA0D6]" />
+              <div className="p-3.5 rounded-xl bg-app-base/80 border border-app-line space-y-2 text-xs">
+                <p className="text-hi font-semibold flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-app-accent" />
                   What unlocks with an active retainer:
                 </p>
-                <ul className="space-y-1.5 text-[#97A0B3] pl-4 list-disc">
+                <ul className="space-y-1.5 text-app-mist pl-4 list-disc">
                   <li>Dedicated Creative Director, Copywriter & Motion Lead</li>
                   <li>Monthly batches of Reels, Posts, and Story creatives</li>
                   <li>Automated Instagram publishing, scheduling & SLA delivery</li>
@@ -403,7 +410,7 @@ export function PortalPaymentsPage() {
 
               <Link
                 to="/onboarding?step=3"
-                className="w-full py-2.5 px-6 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-sm text-center transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mt-auto"
+                className="w-full py-2.5 px-6 rounded-xl bg-app-accent-soft hover:bg-hi text-app-base font-bold text-sm text-center transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mt-auto"
               >
                 <span>Choose Retainer Plan</span>
                 <ArrowRight className="w-4 h-4" />
@@ -414,25 +421,25 @@ export function PortalPaymentsPage() {
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3]">
+                    <span className="text-[11px] uppercase font-bold tracking-[0.16em] text-app-mist">
                       CURRENT PLAN
                     </span>
-                    <span className="text-xs text-[#7FA0D6] font-semibold">
+                    <span className="text-xs text-app-accent font-semibold">
                       • Renews {renewalDate}
                     </span>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white">{planName}</h2>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-hi">{planName}</h2>
                 </div>
                 <div className="flex flex-col sm:items-end gap-2">
                   <div className="text-left sm:text-right">
-                    <span className="text-2xl sm:text-3xl font-bold text-white">₹{planPrice.toLocaleString('en-IN')}</span>
-                    <span className="text-xs text-[#97A0B3] ml-1.5 sm:block sm:ml-0">per month • ₹{costPerAsset.toLocaleString('en-IN')} per asset</span>
+                    <span className="text-2xl sm:text-3xl font-bold text-hi">₹{planPrice.toLocaleString('en-IN')}</span>
+                    <span className="text-xs text-app-mist ml-1.5 sm:block sm:ml-0">per month • ₹{costPerAsset.toLocaleString('en-IN')} per asset</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 mt-0.5">
                     <button 
                       type="button"
                       onClick={() => setCompareModalOpen(true)}
-                      className="px-3 py-1.5 rounded-full border border-[#2A3446] text-xs font-bold text-white hover:bg-[#0B111C] hover:border-[#7FA0D6]/40 transition-colors cursor-pointer"
+                      className="px-3 py-1.5 rounded-full border border-app-line text-xs font-bold text-hi hover:bg-app-base hover:border-app-accent/40 transition-colors cursor-pointer"
                     >
                       Compare plans
                     </button>
@@ -454,7 +461,7 @@ export function PortalPaymentsPage() {
                       <button 
                         type="button"
                         onClick={() => setPauseModalOpen(true)}
-                        className="px-3 py-1.5 rounded-full border border-[#2A3446] text-xs font-bold text-[#97A0B3] hover:text-white hover:bg-[#0B111C] hover:border-amber-500/40 transition-colors cursor-pointer"
+                        className="px-3 py-1.5 rounded-full border border-app-line text-xs font-bold text-app-mist hover:text-hi hover:bg-app-base hover:border-amber-500/40 transition-colors cursor-pointer"
                       >
                         Pause next month
                       </button>
@@ -468,11 +475,11 @@ export function PortalPaymentsPage() {
                 {usageBars.map(item => {
                   const pct = item.max > 0 ? Math.min(100, Math.round((item.current / item.max) * 100)) : 0;
                   return (
-                    <div key={item.label} className="bg-[#0B111C]/60 border border-[#2A3446] rounded-xl p-2 text-center">
-                      <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">{item.label}</span>
-                      <div className="text-xs font-black text-white my-0.5">{item.current}/{item.max}</div>
-                      <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden my-1">
-                        <div className="h-full bg-[#7FA0D6] rounded-full" style={{ width: `${pct}%` }} />
+                    <div key={item.label} className="bg-app-base/60 border border-app-line rounded-xl p-2 text-center">
+                      <span className="text-[10px] font-bold text-app-mist uppercase tracking-wider">{item.label}</span>
+                      <div className="text-xs font-black text-hi my-0.5">{item.current}/{item.max}</div>
+                      <div className="h-1 bg-hi/[0.06] rounded-full overflow-hidden my-1">
+                        <div className="h-full bg-app-accent rounded-full" style={{ width: `${pct}%` }} />
                       </div>
                       <span className="text-[9px] text-emerald-400 font-semibold">{Math.max(0, item.max - item.current)} left</span>
                     </div>
@@ -485,20 +492,20 @@ export function PortalPaymentsPage() {
                 {usageBars.map(item => (
                   <div key={item.label}>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[13px] font-bold text-white">{item.label}</span>
-                      <span className="text-[13px] font-medium text-[#97A0B3]">
+                      <span className="text-[13px] font-bold text-hi">{item.label}</span>
+                      <span className="text-[13px] font-medium text-app-mist">
                         {item.current} / {item.max}
                         <span className="text-emerald-400 font-semibold ml-1.5">({Math.max(0, item.max - item.current)} remaining)</span>
                       </span>
                     </div>
-                    <div className="h-1.5 w-full bg-white/[0.05] rounded-full overflow-hidden">
+                    <div className="h-1.5 w-full bg-hi/[0.05] rounded-full overflow-hidden">
                       <div className={`h-full ${item.color} rounded-full`} style={{ width: `${(item.current / item.max) * 100}%` }} />
                     </div>
                   </div>
                 ))}
               </div>
 
-              <p className="text-xs text-[#97A0B3] font-medium leading-relaxed">
+              <p className="text-xs text-app-mist font-medium leading-relaxed">
                 2 revision rounds per asset • 2 business-day batch SLA • dedicated account director
               </p>
             </>
@@ -506,12 +513,12 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Top Right: Add to this cycle */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl md:rounded-2xl p-3.5 sm:p-5">
+        <div className="bg-app-surface border border-app-line rounded-xl md:rounded-2xl p-3.5 sm:p-5">
           <div className="flex items-center justify-between mb-2.5 md:mb-3.5">
-            <h3 className="text-xs sm:text-sm font-bold text-white">Add to this cycle</h3>
+            <h3 className="text-xs sm:text-sm font-bold text-hi">Add to this cycle</h3>
           </div>
           {!hasActivePlan && (
-            <p className="text-xs text-[#97A0B3] -mt-1 mb-2.5">
+            <p className="text-xs text-app-mist -mt-1 mb-2.5">
               An active plan is required before you can add extras.
             </p>
           )}
@@ -521,17 +528,17 @@ export function PortalPaymentsPage() {
             {addons.map(addon => (
               <div
                 key={addon.id}
-                className="p-2.5 rounded-xl bg-[#0B111C]/60 border border-[#2A3446] flex flex-col justify-between"
+                className="p-2.5 rounded-xl bg-app-base/60 border border-app-line flex flex-col justify-between"
               >
                 <div>
-                  <h4 className="text-xs font-bold text-white truncate">{addon.name}</h4>
-                  <span className="text-xs font-black text-[#7FA0D6] mt-0.5 block">₹{addon.price.toLocaleString('en-IN')}</span>
+                  <h4 className="text-xs font-bold text-hi truncate">{addon.name}</h4>
+                  <span className="text-xs font-black text-app-accent mt-0.5 block">₹{addon.price.toLocaleString('en-IN')}</span>
                 </div>
                 <button 
                   onClick={() => handleAddon(addon)}
                   disabled={!hasActivePlan || !!processingAddon}
                   title={!hasActivePlan ? "An active plan is required to add extras" : undefined}
-                  className="mt-2 w-full py-1.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs font-bold hover:bg-white transition-colors flex items-center justify-center disabled:opacity-50 cursor-pointer"
+                  className="mt-2 w-full py-1.5 rounded-full bg-app-accent-soft text-app-base text-xs font-bold hover:bg-hi transition-colors flex items-center justify-center disabled:opacity-50 cursor-pointer"
                 >
                   {processingAddon === addon.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Add"}
                 </button>
@@ -540,26 +547,26 @@ export function PortalPaymentsPage() {
           </div>
 
           {/* Desktop Add-on rows (md: and up - strictly preserved) */}
-          <div className="hidden md:block divide-y divide-white/[0.05]">
+          <div className="hidden md:block divide-y divide-hi/[0.05]">
             {addons.map(addon => (
               <div
                 key={addon.id}
                 className="py-2.5 sm:py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-3"
               >
                 <div>
-                  <h4 className="text-[13px] font-bold text-white mb-0.5">{addon.name}</h4>
-                  <p className="text-xs text-[#97A0B3]">{addon.desc}</p>
+                  <h4 className="text-[13px] font-bold text-hi mb-0.5">{addon.name}</h4>
+                  <p className="text-xs text-app-mist">{addon.desc}</p>
                 </div>
                 <div className="flex items-center justify-end gap-4 shrink-0">
-                  <span className="text-[13px] font-bold text-white">₹{addon.price.toLocaleString('en-IN')}</span>
+                  <span className="text-[13px] font-bold text-hi">₹{addon.price.toLocaleString('en-IN')}</span>
                   <button 
                     onClick={() => handleAddon(addon)}
                     disabled={!hasActivePlan || !!processingAddon}
                     title={!hasActivePlan ? "An active plan is required to add extras" : undefined}
-                    className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs sm:text-[13px] font-bold transition-colors w-18 sm:w-20 flex items-center justify-center disabled:opacity-50 ${
+                    className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full bg-app-accent-soft text-app-base text-xs sm:text-[13px] font-bold transition-colors w-18 sm:w-20 flex items-center justify-center disabled:opacity-50 ${
                       !hasActivePlan
                         ? "cursor-not-allowed"
-                        : "cursor-pointer hover:bg-white disabled:cursor-wait"
+                        : "cursor-pointer hover:bg-hi disabled:cursor-wait"
                     }`}
                   >
                     {processingAddon === addon.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Add"}
@@ -577,44 +584,44 @@ export function PortalPaymentsPage() {
       {/* Lower Bento Row: Invoices (Left) + Payment Method (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Bottom Left: Invoices */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl md:rounded-2xl p-3.5 sm:p-5">
+        <div className="bg-app-surface border border-app-line rounded-xl md:rounded-2xl p-3.5 sm:p-5">
           <div 
             onClick={() => setMobileInvoicesOpen(prev => !prev)}
             className="flex items-center justify-between cursor-pointer md:cursor-default mb-0 md:mb-3.5 select-none"
           >
             <div className="flex items-center gap-2">
-              <h3 className="text-xs sm:text-sm font-bold text-white">Invoices ({invoices.length})</h3>
+              <h3 className="text-xs sm:text-sm font-bold text-hi">Invoices ({invoices.length})</h3>
             </div>
-            <div className="md:hidden text-[#7FA0D6] p-0.5">
+            <div className="md:hidden text-app-accent p-0.5">
               {mobileInvoicesOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
             </div>
           </div>
           <div className={`${mobileInvoicesOpen ? "block mt-3" : "hidden md:block"} overflow-x-auto scrollbar-hide`}>
             <table className="w-full min-w-[500px]">
               <thead>
-                <tr className="border-b border-[#2A3446]">
-                  <th className="text-left text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Invoice</th>
-                  <th className="text-left text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Period</th>
-                  <th className="text-left text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Amount</th>
-                  <th className="text-left text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-2 font-mono">Status</th>
+                <tr className="border-b border-app-line">
+                  <th className="text-left text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-app-mist pb-2 font-mono">Invoice</th>
+                  <th className="text-left text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-app-mist pb-2 font-mono">Period</th>
+                  <th className="text-left text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-app-mist pb-2 font-mono">Amount</th>
+                  <th className="text-left text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-app-mist pb-2 font-mono">Status</th>
                   <th className="pb-2"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.05]">
+              <tbody className="divide-y divide-hi/[0.05]">
                 {invoices.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-xs md:text-sm text-[#97A0B3]">
+                    <td colSpan={5} className="py-6 text-center text-xs md:text-sm text-app-mist">
                       No invoices generated yet.
                     </td>
                   </tr>
                 ) : (
                   invoices.map((inv: any) => (
                     <tr key={inv.id}>
-                      <td className="py-2.5 text-xs sm:text-[13px] font-medium text-[#97A0B3] font-mono">{inv.id}</td>
-                      <td className="py-2.5 text-xs sm:text-[13px] text-white">{inv.period}</td>
-                      <td className="py-2.5 text-xs sm:text-[13px] font-bold text-white">₹{inv.amount.toLocaleString('en-IN')}</td>
+                      <td className="py-2.5 text-xs sm:text-[13px] font-medium text-app-mist font-mono">{inv.id}</td>
+                      <td className="py-2.5 text-xs sm:text-[13px] text-hi">{inv.period}</td>
+                      <td className="py-2.5 text-xs sm:text-[13px] font-bold text-hi">₹{inv.amount.toLocaleString('en-IN')}</td>
                       <td className="py-2.5">
-                        <span className="inline-flex items-center justify-center px-2 sm:px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#BCCCE6] text-[11px] sm:text-xs font-bold">
+                        <span className="inline-flex items-center justify-center px-2 sm:px-2.5 py-0.5 rounded-full bg-app-accent/15 text-app-accent-soft text-[11px] sm:text-xs font-bold">
                           {inv.status}
                         </span>
                       </td>
@@ -622,13 +629,13 @@ export function PortalPaymentsPage() {
                         {inv.status?.toLowerCase() === "paid" ? (
                           <button 
                             onClick={() => handleDownload(inv.id)}
-                            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-[#2A3446] text-[11px] sm:text-xs font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-app-line text-[11px] sm:text-xs font-bold text-hi hover:bg-app-surface transition-colors cursor-pointer"
                           >
-                            {downloadingInv === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <Download className="w-3.5 h-3.5" />}
+                            {downloadingInv === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-hi" /> : <Download className="w-3.5 h-3.5" />}
                             GST invoice
                           </button>
                         ) : (
-                          <span className="text-[11px] sm:text-xs text-[#97A0B3] italic pr-2">Payment incomplete</span>
+                          <span className="text-[11px] sm:text-xs text-app-mist italic pr-2">Payment incomplete</span>
                         )}
                       </td>
                     </tr>
@@ -641,13 +648,13 @@ export function PortalPaymentsPage() {
 
         {/* Bottom Right: Payment method */}
         <div className="space-y-3 md:space-y-4">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl md:rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between">
+          <div className="bg-app-surface border border-app-line rounded-xl md:rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between">
             <div 
               onClick={() => setMobilePaymentMethodOpen(prev => !prev)}
               className="flex items-center justify-between cursor-pointer md:cursor-default mb-0 md:mb-3.5 select-none"
             >
-              <h3 className="text-xs sm:text-sm font-bold text-white">Payment method</h3>
-              <div className="md:hidden text-[#7FA0D6] p-0.5">
+              <h3 className="text-xs sm:text-sm font-bold text-hi">Payment method</h3>
+              <div className="md:hidden text-app-accent p-0.5">
                 {mobilePaymentMethodOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
               </div>
             </div>
@@ -655,18 +662,18 @@ export function PortalPaymentsPage() {
             <div className={`${mobilePaymentMethodOpen ? "block mt-3" : "hidden md:block"} space-y-3 sm:space-y-4`}>
               <div className="space-y-2.5 sm:space-y-3 mb-3 sm:mb-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs sm:text-[13px] text-[#97A0B3]">Method</span>
-                  <span className="text-xs sm:text-[13px] font-bold text-white">{(subData as any)?.autopay?.recurring ? "Razorpay AutoPay" : "No AutoPay mandate"}</span>
+                  <span className="text-xs sm:text-[13px] text-app-mist">Method</span>
+                  <span className="text-xs sm:text-[13px] font-bold text-hi">{(subData as any)?.autopay?.recurring ? "Razorpay AutoPay" : "No AutoPay mandate"}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs sm:text-[13px] text-[#97A0B3]">Next charge</span>
-                  <span className="text-xs sm:text-[13px] font-bold text-white">
+                  <span className="text-xs sm:text-[13px] text-app-mist">Next charge</span>
+                  <span className="text-xs sm:text-[13px] font-bold text-hi">
                     {isPausedNextMonth ? "Renewal paused" : !(subData as any)?.autopay?.enabled ? "No automatic charge confirmed" : hasActivePlan ? `₹${planPrice.toLocaleString('en-IN')} • ${renewalDate}` : "No upcoming charge (Plan inactive)"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs sm:text-[13px] text-[#97A0B3]">GSTIN on invoices</span>
-                  <span className="text-xs sm:text-[13px] font-bold text-white">Added</span>
+                  <span className="text-xs sm:text-[13px] text-app-mist">GSTIN on invoices</span>
+                  <span className="text-xs sm:text-[13px] font-bold text-hi">Added</span>
                 </div>
               </div>
             
@@ -688,7 +695,7 @@ export function PortalPaymentsPage() {
                     () => {}
                   );
                 }}
-                className="w-full py-2 sm:py-2.5 rounded-full border border-[#2A3446] text-xs sm:text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors mt-auto cursor-pointer"
+                className="w-full py-2 sm:py-2.5 rounded-full border border-app-line text-xs sm:text-[13px] font-bold text-hi hover:bg-app-surface transition-colors mt-auto cursor-pointer"
               >
                 Change payment method
               </button>

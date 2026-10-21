@@ -43,13 +43,13 @@ import {
   type ProposalLine,
 } from "../../lib/revenue-crm";
 
-const panel = "min-w-0 rounded-2xl border border-[#2A3446] bg-[#131C2A]";
+const panel = "min-w-0 rounded-2xl border border-app-line bg-[#131C2A]";
 const input =
-  "w-full min-w-0 min-h-11 rounded-xl border border-[#303D52] bg-[#0B111C] px-3 py-2 text-sm text-white placeholder:text-[#6F7E96] focus:border-[#9EB8E1] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]/20 [color-scheme:dark]";
+  "w-full min-w-0 min-h-11 rounded-xl border border-[#303D52] bg-app-base px-3 py-2 text-sm text-hi placeholder:text-[#6F7E96] focus:border-[#9EB8E1] focus:outline-none focus:ring-2 focus:ring-app-accent/20 [color-scheme:dark]";
 const buttonBase =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A9C4EE] disabled:cursor-not-allowed disabled:opacity-40";
 const button = `${buttonBase} border-[#34435C] bg-[#1B293D] text-[#D0DDF1] hover:bg-[#263952]`;
-const primary = `${buttonBase} border-transparent bg-[#BCCCE6] text-[#0B111C] hover:bg-white`;
+const primary = `${buttonBase} border-transparent bg-app-accent-soft text-app-base hover:bg-hi`;
 const stages = [
   "new",
   "contacted",
@@ -101,7 +101,7 @@ function Badge({ children, status = "" }: { children: ReactNode; status?: string
     ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
     : ["overdue", "lost", "suppressed", "rejected"].includes(status)
       ? "border-rose-400/25 bg-rose-400/10 text-rose-300"
-      : "border-[#7FA0D6]/25 bg-[#7FA0D6]/10 text-[#BCCCE6]";
+      : "border-app-accent/25 bg-app-accent/10 text-app-accent-soft";
   return (
     <span
       className={`inline-flex shrink-0 items-center rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${tone}`}
@@ -114,7 +114,7 @@ function Empty({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <div className="flex min-h-48 flex-col items-center justify-center gap-2 p-8 text-center">
       <BriefcaseBusiness className="mb-1 size-7 text-[#6884AD]" />
-      <h3 className="font-semibold text-white">{title}</h3>
+      <h3 className="font-semibold text-hi">{title}</h3>
       <p className="max-w-sm text-sm leading-relaxed text-[#96A5BB]">{children}</p>
     </div>
   );
@@ -149,9 +149,9 @@ function Field({
   };
   return (
     <label className="block min-w-0 space-y-2" htmlFor={props.id}>
-      <span className="text-xs font-semibold text-[#BCCCE6]">
+      <span className="text-xs font-semibold text-app-accent-soft">
         {title}
-        {required && <span className="ml-1 text-[#7FA0D6]">*</span>}
+        {required && <span className="ml-1 text-app-accent">*</span>}
       </span>
       {options ? (
         <select {...props}>
@@ -234,9 +234,9 @@ function Modal({
         aria-label={title}
         className={`${panel} max-h-[92dvh] w-full overflow-y-auto shadow-2xl ${wide ? "max-w-4xl" : "max-w-xl"}`}
       >
-        <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[#2A3446] bg-[#131C2A] p-5 sm:p-6">
+        <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-app-line bg-[#131C2A] p-5 sm:p-6">
           <div>
-            <h2 className="text-lg font-bold text-white">{title}</h2>
+            <h2 className="text-lg font-bold text-hi">{title}</h2>
             {subtitle && <p className="mt-1 text-xs leading-relaxed text-[#96A5BB]">{subtitle}</p>}
           </div>
           <button
@@ -272,7 +272,7 @@ export function RevenueCRMPage() {
   }, [options.data, agency]);
   if (user?.role !== "super_admin") {
     return (
-      <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+      <div data-surface="ops" className="w-full min-h-screen font-sans bg-app-base flex flex-col">
         <AdminTopHeader activeTab="Revenue" hideTitle />
         <RevenueCRMWorkspace />
       </div>
@@ -280,10 +280,10 @@ export function RevenueCRMPage() {
   }
   const valid = options.data?.some((item) => item.id === agency);
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-app-base flex flex-col">
       <AdminTopHeader activeTab="Revenue" hideTitle />
       <div className="mx-auto w-full max-w-[1500px] px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6">
-        <label className="block max-w-md text-sm text-[#BCCCE6]">
+        <label className="block max-w-md text-sm text-app-accent-soft">
           Agency workspace
           <select
             aria-label="Agency workspace"
@@ -456,7 +456,7 @@ function RevenueCRMWorkspace() {
   const queryError = queries.find((q) => q.isError);
 
   return (
-    <main className="mx-auto w-full min-w-0 max-w-[1500px] flex-1 space-y-4 sm:space-y-6 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 text-white">
+    <main className="mx-auto w-full min-w-0 max-w-[1500px] flex-1 space-y-4 sm:space-y-6 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 text-hi">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Badge>
@@ -476,7 +476,7 @@ function RevenueCRMWorkspace() {
       </header>
       <nav
         aria-label="Revenue CRM pages"
-        className="-mx-1 flex gap-1 overflow-x-auto border-b border-[#2A3446] px-1 pb-3"
+        className="-mx-1 flex gap-1 overflow-x-auto border-b border-app-line px-1 pb-3"
       >
         {navigation
           .filter((n) => n.id !== "settings" || canConfigure)
@@ -485,7 +485,7 @@ function RevenueCRMWorkspace() {
               key={id}
               to={`/bde/crm/${id}`}
               className={({ isActive }) =>
-                `inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition-colors ${isActive ? "bg-[#BCCCE6] text-[#0B111C]" : "text-[#96A5BB] hover:bg-[#1B293D] hover:text-white"}`
+                `inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition-colors ${isActive ? "bg-app-accent-soft text-app-base" : "text-[#96A5BB] hover:bg-[#1B293D] hover:text-hi"}`
               }
             >
               <Icon className="size-4" />
@@ -627,7 +627,7 @@ function RevenueCRMWorkspace() {
                   ["Overdue", stats.summary.overdue],
                   ["Proposals to review", stats.summary.proposal_attention],
                 ].map(([title, value]) => (
-                  <div key={title} className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-3">
+                  <div key={title} className="rounded-xl border border-app-line bg-app-base p-3">
                     <p className="text-xl font-bold tabular-nums">{value}</p>
                     <p className="mt-1 text-[11px] text-[#96A5BB]">{title}</p>
                   </div>
@@ -636,7 +636,7 @@ function RevenueCRMWorkspace() {
               {pendingTasks.slice(0, 5).map((t) => (
                 <div
                   key={t.id}
-                  className="flex flex-wrap items-center justify-between gap-3 border-t border-[#2A3446] py-3"
+                  className="flex flex-wrap items-center justify-between gap-3 border-t border-app-line py-3"
                 >
                   <button className="min-w-0 text-left" onClick={() => setSelectedLead(t.lead_id)}>
                     <p className="text-sm font-semibold">{t.title}</p>
@@ -707,7 +707,7 @@ function RevenueCRMWorkspace() {
           </div>
           {canManage && (
             <section className={`${panel} overflow-hidden`}>
-              <div className="border-b border-[#2A3446] p-5">
+              <div className="border-b border-app-line p-5">
                 <h2 className="font-semibold">BDE team scorecard</h2>
                 <p className="mt-1 text-xs text-[#96A5BB]">
                   Current assigned pipeline, wins in this month, and referrals credited to the
@@ -716,7 +716,7 @@ function RevenueCRMWorkspace() {
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[620px] text-left text-sm">
-                  <thead className="bg-[#0B111C] text-xs text-[#96A5BB]">
+                  <thead className="bg-app-base text-xs text-[#96A5BB]">
                     <tr>
                       {["BDE", "Active", "Wins", "Booked", "Referrals", "Overdue"].map((h) => (
                         <th className="p-4 font-medium" key={h}>
@@ -727,7 +727,7 @@ function RevenueCRMWorkspace() {
                   </thead>
                   <tbody>
                     {stats.scorecards.map((p) => (
-                      <tr key={p.id} className="border-t border-[#2A3446]">
+                      <tr key={p.id} className="border-t border-app-line">
                         <td className="p-4 font-semibold">{p.name}</td>
                         <td className="p-4">{p.active}</td>
                         <td className="p-4">{p.won}</td>
@@ -756,7 +756,7 @@ function RevenueCRMWorkspace() {
                 <button
                   key={e.id}
                   onClick={() => setSelectedLead(e.id)}
-                  className="flex min-h-12 w-full items-center justify-between gap-3 border-t border-[#2A3446] py-3 text-left text-sm"
+                  className="flex min-h-12 w-full items-center justify-between gap-3 border-t border-app-line py-3 text-left text-sm"
                 >
                   <span>{e.name}</span>
                   <Badge status="overdue">{e.reason}</Badge>
@@ -869,7 +869,7 @@ function RevenueCRMWorkspace() {
 
       {section === "tasks" && (
         <section className={panel}>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2A3446] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app-line p-5">
             <div>
               <h2 className="font-semibold">Follow-up queue</h2>
               <p className="mt-1 text-xs text-[#96A5BB]">
@@ -888,7 +888,7 @@ function RevenueCRMWorkspace() {
               Create a lead or schedule a next action to build your queue.
             </Empty>
           ) : (
-            <div className="divide-y divide-[#2A3446]">
+            <div className="divide-y divide-app-line">
               {taskQuery.data.map((t) => (
                 <div key={t.id} className="flex flex-wrap items-center justify-between gap-4 p-5">
                   <button
@@ -930,7 +930,7 @@ function RevenueCRMWorkspace() {
 
       {section === "proposals" && (
         <section className={panel}>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2A3446] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app-line p-5">
             <div>
               <h2 className="font-semibold">Priced, reviewed, versioned</h2>
               <p className="mt-1 text-xs text-[#96A5BB]">
@@ -949,7 +949,7 @@ function RevenueCRMWorkspace() {
               Build a proposal from a CRM lead and your agency service catalog.
             </Empty>
           ) : (
-            <div className="divide-y divide-[#2A3446]">
+            <div className="divide-y divide-app-line">
               {proposalQuery.data.map((p) => (
                 <article key={p.id} className="space-y-4 p-5">
                   <div className="flex flex-wrap justify-between gap-3">
@@ -968,7 +968,7 @@ function RevenueCRMWorkspace() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(p.snapshot.totals).map(([billing, total]) => (
-                      <span key={billing} className="rounded-lg bg-[#0B111C] px-3 py-2 text-xs">
+                      <span key={billing} className="rounded-lg bg-app-base px-3 py-2 text-xs">
                         <span className="text-[#96A5BB]">{label(billing)} </span>
                         {crmMoney(total.total, p.currency)}
                       </span>
@@ -1063,7 +1063,7 @@ function RevenueCRMWorkspace() {
 
       {section === "referrals" && (
         <section className={panel}>
-          <div className="flex flex-wrap justify-between gap-3 border-b border-[#2A3446] p-5">
+          <div className="flex flex-wrap justify-between gap-3 border-b border-app-line p-5">
             <div>
               <h2 className="font-semibold">Relationships that grow with you</h2>
               <p className="mt-1 text-xs text-[#96A5BB]">
@@ -1085,7 +1085,7 @@ function RevenueCRMWorkspace() {
             referralQuery.data.map((r) => (
               <div
                 key={r.id}
-                className="flex flex-wrap items-center justify-between gap-4 border-t border-[#2A3446] p-5"
+                className="flex flex-wrap items-center justify-between gap-4 border-t border-app-line p-5"
               >
                 <div>
                   <p className="font-semibold">{r.company}</p>
@@ -1128,7 +1128,7 @@ function RevenueCRMWorkspace() {
         <div className="space-y-4">
           <IntegrationCards data={integrations.data} only="whatsapp" />
           <section className={panel}>
-            <div className="flex flex-wrap justify-between gap-3 border-b border-[#2A3446] p-5">
+            <div className="flex flex-wrap justify-between gap-3 border-b border-app-line p-5">
               <div>
                 <h2 className="font-semibold">Conversation drafts</h2>
                 <p className="mt-1 text-xs text-[#96A5BB]">
@@ -1146,12 +1146,12 @@ function RevenueCRMWorkspace() {
               </Empty>
             ) : (
               messageQuery.data.map((m) => (
-                <article className="space-y-2 border-t border-[#2A3446] p-5" key={m.id}>
+                <article className="space-y-2 border-t border-app-line p-5" key={m.id}>
                   <div className="flex flex-wrap justify-between gap-2">
                     <h3 className="font-semibold">{m.company}</h3>
                     <Badge status={m.status}>{m.status}</Badge>
                   </div>
-                  <p className="whitespace-pre-wrap text-sm text-[#BCCCE6]">{m.body}</p>
+                  <p className="whitespace-pre-wrap text-sm text-app-accent-soft">{m.body}</p>
                   {m.error && <p className="text-xs text-rose-300">{m.error}</p>}
                   <p className="text-xs text-[#8292AB]">
                     {m.status === "scheduled" && m.scheduled_at
@@ -1203,7 +1203,7 @@ function RevenueCRMWorkspace() {
               }
             />
             {aiDraft && (
-              <div className="space-y-3 rounded-xl bg-[#0B111C] p-4">
+              <div className="space-y-3 rounded-xl bg-app-base p-4">
                 <Badge>AI suggestion · review required</Badge>
                 <textarea
                   aria-label="Editable AI suggestion"
@@ -1228,7 +1228,7 @@ function RevenueCRMWorkspace() {
 
       {section === "reports" && (
         <section className={panel}>
-          <div className="flex flex-wrap justify-between gap-3 border-b border-[#2A3446] p-5">
+          <div className="flex flex-wrap justify-between gap-3 border-b border-app-line p-5">
             <div>
               <h2 className="font-semibold">Invoices & actual receipts</h2>
               {canManage && (
@@ -1255,7 +1255,7 @@ function RevenueCRMWorkspace() {
             financeQuery.data.map((e) => (
               <div
                 key={e.id}
-                className="flex flex-wrap items-center justify-between gap-3 border-t border-[#2A3446] p-5"
+                className="flex flex-wrap items-center justify-between gap-3 border-t border-app-line p-5"
               >
                 <div>
                   <p className="font-semibold">{e.company}</p>
@@ -1282,7 +1282,7 @@ function RevenueCRMWorkspace() {
             <CRMSettings onSaved={() => void cache.invalidateQueries({ queryKey: ["crm"] })} />
             <CRMTeamSettings />
             <section className={panel}>
-              <div className="flex flex-wrap justify-between gap-3 border-b border-[#2A3446] p-5">
+              <div className="flex flex-wrap justify-between gap-3 border-b border-app-line p-5">
                 <div>
                   <h2 className="font-semibold">Agency service catalog</h2>
                   <p className="mt-1 text-xs text-[#96A5BB]">
@@ -1302,7 +1302,7 @@ function RevenueCRMWorkspace() {
                 catalog.data.map((s) => (
                   <div
                     key={s.id}
-                    className="flex flex-wrap justify-between gap-3 border-t border-[#2A3446] p-5"
+                    className="flex flex-wrap justify-between gap-3 border-t border-app-line p-5"
                   >
                     <div>
                       <p className="font-semibold">{s.title}</p>
@@ -1480,8 +1480,8 @@ function LeadCard({
       <p className="mt-4 text-lg font-semibold tabular-nums">
         {money(lead.estimated_deal_value * 100)}
       </p>
-      <div className="mt-4 border-t border-[#2A3446] pt-3">
-        <p className="truncate text-xs font-medium text-[#BCCCE6]">
+      <div className="mt-4 border-t border-app-line pt-3">
+        <p className="truncate text-xs font-medium text-app-accent-soft">
           {lead.metadata_extra?.next_action || "Set a next action"}
         </p>
         <p className="mt-1 text-[11px] text-[#8292AB]">
@@ -1499,7 +1499,7 @@ function LeadCard({
   return onClick ? (
     <button
       onClick={onClick}
-      className={`${panel} w-full p-5 text-left transition-colors hover:border-[#7FA0D6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8FAEDC]`}
+      className={`${panel} w-full p-5 text-left transition-colors hover:border-app-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8FAEDC]`}
     >
       {content}
     </button>
@@ -2000,7 +2000,7 @@ function CRMForm({
                 label: t.name + " (" + t.language + ")",
               })),
             )}
-            <p className="whitespace-pre-wrap rounded-xl bg-[#0B111C] p-3 text-sm text-[#BCCCE6]">
+            <p className="whitespace-pre-wrap rounded-xl bg-app-base p-3 text-sm text-app-accent-soft">
               {templateQuery.data
                 ?.find((t) => t.name + "|" + t.language === values.template)
                 ?.components.find((c) => c.type === "BODY")?.text ||
@@ -2139,11 +2139,11 @@ function CRMForm({
             {field("csv_text", "CSV contents", "textarea")}
             {field("due_at", "Initial follow-up for imported leads", "datetime-local")}
             {importPreview && (
-              <div className="max-h-64 overflow-auto rounded-xl border border-[#2A3446]">
+              <div className="max-h-64 overflow-auto rounded-xl border border-app-line">
                 {importPreview.map((row) => (
                   <div
                     key={row.row}
-                    className="flex justify-between gap-3 border-b border-[#2A3446] p-3 text-xs"
+                    className="flex justify-between gap-3 border-b border-app-line p-3 text-xs"
                   >
                     <span>
                       Row {row.row} · {row.company}
@@ -2157,7 +2157,7 @@ function CRMForm({
             )}
           </>
         )}
-        <div className="flex justify-end gap-2 border-t border-[#2A3446] pt-4">
+        <div className="flex justify-end gap-2 border-t border-app-line pt-4">
           <button type="button" className={button} onClick={close} disabled={saving}>
             Cancel
           </button>
@@ -2318,7 +2318,7 @@ function ProposalBuilder({
           {lines.map((line, index) => (
             <div
               key={index}
-              className="space-y-3 rounded-xl border border-[#2A3446] bg-[#0B111C] p-4"
+              className="space-y-3 rounded-xl border border-app-line bg-app-base p-4"
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs font-semibold text-[#8FAEDC]">Service {index + 1}</span>
@@ -2451,7 +2451,7 @@ function ProposalBuilder({
           one-time charges.
         </p>
         {field("terms", "Payment terms, milestones & acceptance", "textarea", false)}
-        <div className="flex justify-end gap-2 border-t border-[#2A3446] pt-4">
+        <div className="flex justify-end gap-2 border-t border-app-line pt-4">
           <button type="button" className={button} onClick={close} disabled={saving}>
             Cancel
           </button>
@@ -2804,7 +2804,7 @@ function CRMTeamSettings() {
           Assign head
         </button>
       </form>
-      <div className="divide-y divide-[#2A3446]">
+      <div className="divide-y divide-app-line">
         {query.data?.map((p) => (
           <div key={p.id} className="flex justify-between gap-3 py-3 text-xs">
             <span>
@@ -2839,7 +2839,7 @@ function HandoffList({ timezone }: { timezone: string }) {
   });
   return (
     <section className={panel}>
-      <header className="border-b border-[#2A3446] p-5">
+      <header className="border-b border-app-line p-5">
         <h2 className="font-semibold">Sales to delivery</h2>
         <p className="mt-1 text-xs text-[#96A5BB]">
           Create a handoff from an accepted proposal after confirming the deal as won.
@@ -2858,7 +2858,7 @@ function HandoffList({ timezone }: { timezone: string }) {
         </Empty>
       ) : (
         query.data.map((h) => (
-          <article className="space-y-3 border-t border-[#2A3446] p-5" key={h.id}>
+          <article className="space-y-3 border-t border-app-line p-5" key={h.id}>
             <div className="flex justify-between gap-3">
               <h3 className="font-semibold">{h.snapshot.lead.company}</h3>
               <Badge status={h.status}>{h.status}</Badge>
@@ -2867,7 +2867,7 @@ function HandoffList({ timezone }: { timezone: string }) {
               {h.snapshot.proposal.number} / v{h.snapshot.proposal.version} -{" "}
               {crmDate(h.created_at, timezone)}
             </p>
-            <p className="whitespace-pre-wrap text-sm text-[#BCCCE6]">
+            <p className="whitespace-pre-wrap text-sm text-app-accent-soft">
               {h.snapshot.proposal.snapshot.scope ||
                 "Review the accepted proposal for agreed scope."}
             </p>
@@ -2954,7 +2954,7 @@ function DiscoveryPanel({
         </p>
       </div>
       {!configured && (
-        <p className="rounded-xl bg-[#0B111C] p-4 text-sm text-[#96A5BB]">
+        <p className="rounded-xl bg-app-base p-4 text-sm text-[#96A5BB]">
           A licensed provider must be connected by the agency administrator before discovery is
           available.
         </p>
@@ -2986,7 +2986,7 @@ function DiscoveryPanel({
         {results.map((r, i) => (
           <article
             key={r.review_token}
-            className="space-y-3 rounded-xl border border-[#2A3446] bg-[#0B111C] p-4"
+            className="space-y-3 rounded-xl border border-app-line bg-app-base p-4"
           >
             <h3 className="font-semibold">{r.company_name}</h3>
             <p className="text-xs text-[#96A5BB]">
@@ -3021,7 +3021,7 @@ function DiscoveryPanel({
       {selected && (
         <form
           onSubmit={importResult}
-          className="space-y-4 rounded-xl border border-[#7FA0D6]/40 p-4"
+          className="space-y-4 rounded-xl border border-app-accent/40 p-4"
         >
           <h3 className="font-semibold">Review: {selected.company_name}</h3>
           <Field

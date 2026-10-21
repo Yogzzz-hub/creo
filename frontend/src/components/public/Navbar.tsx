@@ -1,26 +1,52 @@
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
+import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll } from "motion/react";
 import { Link, useNavigate, useLocation } from "react-router";
-import { Menu, X, LogOut } from "lucide-react";
+import { ArrowRight, ArrowUpRight, LogOut } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { useConfirm } from "../ui/ConfirmDialog";
 import { getRoleHome } from "../auth/ProtectedRoute";
+import { RollText } from "../motion";
+import { ThemeToggle } from "../ui/ThemeToggle";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Work", href: "/work" },
   { label: "Pricing", href: "/pricing" },
+  { label: "FAQ", href: "/faq" },
   { label: "About", href: "/about" },
 ];
 
-export function Navbar({ landing = false }: { landing?: boolean }) {
+const EASE = [0.16, 1, 0.3, 1] as const;
+
+function Wordmark() {
+  return (
+    <Link
+      to="/"
+      aria-label="Creo home"
+      className="group relative flex items-baseline text-[1.6rem] font-black tracking-[-0.04em] text-site-ink"
+    >
+      creo
+      <span className="relative ml-[1px] inline-block size-[0.36em] translate-y-[-0.02em] rounded-full bg-gradient-to-br from-site-blue-light to-site-blue-deep shadow-[0_0_14px_2px_rgba(210,150,90,0.65)] transition-transform duration-500 group-hover:-translate-y-1.5 group-hover:scale-125" />
+    </Link>
+  );
+}
+
+export function Navbar() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
+  const reduce = useReducedMotion();
   const { scrollY } = useScroll();
-  useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 12));
+  useMotionValueEvent(scrollY, "change", (y) => {
+    const prev = scrollY.getPrevious() ?? 0;
+    setScrolled(y > 24);
+    // Tuck the bar away while reading down the page, bring it back on any scroll up
+    if (y > 320 && y > prev + 2) setHidden(true);
+    else if (y < prev - 2 || y <= 320) setHidden(false);
+  });
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -75,184 +101,229 @@ export function Navbar({ landing = false }: { landing?: boolean }) {
     }
   }
 
+  const isHidden = hidden && !sheetOpen;
+
   return (
-    <header
-      className={`sticky top-0 left-0 right-0 z-40 w-full flex items-center transition-[height,background-color,border-color,box-shadow] duration-500 ease-out ${
-        scrolled
-          ? "h-14 bg-[#0B111C]/75 backdrop-blur-xl border-b border-[#2A3446]/80 shadow-[0_10px_30px_-18px_rgba(0,0,0,0.9)]"
-          : "h-16 bg-deep-surface border-b border-hairline"
-      }`}
-    >
-      <nav className={`mx-auto flex w-full h-full items-center justify-between ${landing ? "max-w-[1240px] px-4 sm:px-6" : "max-w-[1440px] px-6 sm:px-8 lg:px-12"}`}>
-        <div className="flex items-center">
-          <Link to="/" className="group text-2xl font-black tracking-tight text-off-white flex items-baseline">
-            creo
-            <span className="text-glow-blue text-3xl leading-none inline-block transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-125">.</span>
-          </Link>
-        </div>
-
-        <ul className="hidden lg:flex items-center h-full gap-1" onMouseLeave={() => setHovered(null)}>
-          {NAV_LINKS.map((link) => {
-            const isActive = location.pathname === link.href;
-            return (
-              <li key={link.href} className="h-full flex items-center relative">
-                <Link
-                  to={link.href}
-                  onMouseEnter={() => setHovered(link.href)}
-                  className={`relative z-10 px-3.5 py-1.5 text-sm transition-colors ${
-                    isActive
-                      ? "text-off-white font-bold"
-                      : "text-slate-mist hover:text-off-white font-medium"
-                  }`}
-                >
-                  {hovered === link.href && (
-                    <motion.span
-                      layoutId="nav-hover-pill"
-                      className="absolute inset-0 -z-10 rounded-full bg-[#161F2D] border border-[#2A3446]"
-                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                    />
-                  )}
-                  {link.label}
-                </Link>
-                {isActive && (
-                  <motion.div
-                    layoutId="nav-active-underline"
-                    className="absolute bottom-0 left-3 right-3 h-[2px] bg-glow-blue rounded-t-full"
-                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                  />
-                )}
-              </li>
-            );
-          })}
-        </ul>
-
-        <div className="hidden lg:flex items-center gap-6">
-          {user ? (
-            <>
-              <Link
-                to={userHome}
-                className="bg-cta-primary hover:bg-white text-void font-black text-xs px-5 py-2.5 rounded-full shadow-sm transition-colors"
-              >
-                {userPortalLabel}
-              </Link>
-              <button
-                onClick={handleLogout}
-                disabled={loggingOut}
-                className="flex items-center gap-2 text-sm font-medium text-slate-mist hover:text-off-white transition-colors cursor-pointer"
-              >
-                <LogOut className="size-4" />
-                {loggingOut ? "Logging out..." : "Log out"}
-              </button>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                className="text-sm font-medium text-slate-mist hover:text-off-white transition-colors"
-              >
-                Log In
-              </Link>
-              <Link
-                to="/signup"
-                className="bg-cta-primary hover:bg-white text-void font-black text-xs px-5 py-2.5 rounded-full shadow-sm transition-colors"
-              >
-                Get Started &rarr;
-              </Link>
-            </>
-          )}
-        </div>
-
-        {/* Mobile Menu Trigger */}
-        <button
-          type="button"
-          onClick={() => setSheetOpen(!sheetOpen)}
-          ref={menuButtonRef}
-          aria-expanded={sheetOpen}
-          aria-controls="public-mobile-menu"
-          className="lg:hidden flex size-11 items-center justify-center rounded-lg text-off-white hover:bg-bento-surface transition-colors"
-          aria-label={sheetOpen ? "Close menu" : "Open menu"}
+    <header className="pointer-events-none sticky top-0 z-50 h-[76px] w-full sm:h-[84px]">
+      <motion.div
+        initial={reduce ? false : { y: -40, opacity: 0 }}
+        animate={{ y: isHidden ? "-130%" : 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: EASE }}
+        className="pointer-events-auto absolute inset-x-0 top-0 px-3 pt-3 sm:px-5 sm:pt-4"
+      >
+        <nav
+          aria-label="Primary"
+          className={`relative mx-auto flex h-[56px] items-center justify-between rounded-full pl-5 pr-2 backdrop-blur-xl backdrop-saturate-150 transition-[max-width,box-shadow] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] sm:pl-6 ${
+            scrolled || sheetOpen ? "creo-glass-strong max-w-[1080px]" : "creo-glass max-w-[1320px]"
+          }`}
         >
-          {sheetOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-        </button>
-      </nav>
+          {/* Top-edge sheen that gives the glass its thickness */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-hi/40 to-transparent"
+          />
 
-      {/* Mobile Drawer */}
-      <AnimatePresence>
-      {sheetOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -12, clipPath: "inset(0 0 100% 0)" }}
-          animate={{ opacity: 1, y: 0, clipPath: "inset(0 0 0% 0)" }}
-          exit={{ opacity: 0, y: -8, clipPath: "inset(0 0 100% 0)" }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          id="public-mobile-menu"
-          className="absolute inset-x-0 top-full max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain bg-deep-surface border-b border-hairline shadow-lg p-4 sm:p-6 lg:hidden flex flex-col gap-3"
-        >
-          <nav aria-label="Mobile navigation" className="flex flex-col gap-2">
+          <Wordmark />
+
+          <ul
+            className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-0.5 lg:flex"
+            onMouseLeave={() => setHovered(null)}
+          >
             {NAV_LINKS.map((link) => {
               const isActive = location.pathname === link.href;
               return (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  aria-current={isActive ? "page" : undefined}
-                  onClick={() => setSheetOpen(false)}
-                  className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm transition-all duration-200 ${
-                    isActive
-                      ? "bg-bento-surface text-off-white font-bold border-l-4 border-glow-blue shadow-xs"
-                      : "text-slate-mist font-medium hover:bg-bento-surface hover:text-off-white"
-                  }`}
-                >
-                  <span>{link.label}</span>
-                </Link>
+                <li key={link.href} className="relative">
+                  <Link
+                    to={link.href}
+                    aria-current={isActive ? "page" : undefined}
+                    onMouseEnter={() => setHovered(link.href)}
+                    className={`group relative z-10 block rounded-full px-4 py-2 text-[13.5px] tracking-[-0.01em] transition-colors duration-300 ${
+                      isActive ? "font-semibold text-hi" : "font-medium text-site-mist-2 hover:text-hi"
+                    }`}
+                  >
+                    {hovered === link.href && (
+                      <motion.span
+                        layoutId="nav-hover-pill"
+                        className="absolute inset-0 -z-10 rounded-full bg-hi/[0.07] ring-1 ring-inset ring-hi/10"
+                        transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                      />
+                    )}
+                    <RollText>{link.label}</RollText>
+                    {isActive && (
+                      <motion.span
+                        layoutId="nav-active-dot"
+                        className="absolute -bottom-0.5 left-1/2 size-1 -translate-x-1/2 rounded-full bg-site-blue-light shadow-[0_0_10px_2px_rgba(210,150,90,0.8)]"
+                        transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                      />
+                    )}
+                  </Link>
+                </li>
               );
             })}
-          </nav>
+          </ul>
 
-          <div className="pt-4 border-t border-hairline flex flex-col gap-3">
+          <div className="hidden items-center gap-2 lg:flex">
+            <ThemeToggle variant="site" />
             {user ? (
               <>
-                <Link
-                  to={userHome}
-                  onClick={() => setSheetOpen(false)}
-                  className="bg-cta-primary hover:bg-white text-void font-black text-sm min-h-11 rounded-full shadow-sm flex items-center justify-center transition-colors"
-                >
-                  {userPortalLabel}
-                </Link>
                 <button
-                  onClick={() => {
-                    setSheetOpen(false);
-                    handleLogout();
-                  }}
+                  type="button"
+                  onClick={handleLogout}
                   disabled={loggingOut}
-                  className="flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-center text-sm font-medium text-slate-mist hover:text-off-white transition-colors cursor-pointer"
+                  className="flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-[13.5px] font-medium text-site-mist-2 transition-colors hover:text-hi disabled:opacity-60"
                 >
                   <LogOut className="size-4" />
                   {loggingOut ? "Logging out..." : "Log out"}
                 </button>
+                <Link
+                  to={userHome}
+                  className="creo-btn-primary group inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-[13px] font-semibold"
+                >
+                  <RollText>{userPortalLabel}</RollText>
+                  <ArrowUpRight className="size-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                </Link>
               </>
             ) : (
               <>
                 <Link
                   to="/login"
-                  onClick={() => setSheetOpen(false)}
-                  className="block rounded-lg px-3 py-2.5 text-center text-sm font-medium text-slate-mist hover:text-off-white transition-colors"
+                  className="group rounded-full px-4 py-2 text-[13.5px] font-medium text-site-mist-2 transition-colors hover:text-hi"
                 >
-                  Log In
+                  <RollText>Log in</RollText>
                 </Link>
                 <Link
                   to="/signup"
-                  onClick={() => setSheetOpen(false)}
-                  className="bg-cta-primary hover:bg-white text-void font-black text-sm min-h-11 rounded-full shadow-sm flex items-center justify-center transition-colors"
+                  className="creo-btn-primary group inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-[13px] font-semibold"
                 >
-                  Get Started &rarr;
+                  <RollText>Get started</RollText>
+                  <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
                 </Link>
               </>
             )}
           </div>
-        </motion.div>
-      )}
-      </AnimatePresence>
+
+          <div className="flex items-center gap-2 lg:hidden">
+          <ThemeToggle variant="site" className="size-11" />
+          {/* Mobile menu trigger: two bars that fold into an X */}
+          <button
+            type="button"
+            onClick={() => setSheetOpen(!sheetOpen)}
+            ref={menuButtonRef}
+            aria-expanded={sheetOpen}
+            aria-controls="public-mobile-menu"
+            aria-label={sheetOpen ? "Close menu" : "Open menu"}
+            className="relative flex size-11 cursor-pointer items-center justify-center rounded-full bg-hi/[0.06] ring-1 ring-inset ring-hi/10 transition-colors hover:bg-hi/10 lg:hidden"
+          >
+            <span className="relative block h-3 w-[18px]">
+              <motion.span
+                className="absolute left-0 top-0 block h-[1.5px] w-full rounded-full bg-site-ink"
+                animate={sheetOpen ? { rotate: 45, y: 5.25 } : { rotate: 0, y: 0 }}
+                transition={{ duration: 0.4, ease: EASE }}
+              />
+              <motion.span
+                className="absolute bottom-0 left-0 block h-[1.5px] w-full rounded-full bg-site-ink"
+                animate={sheetOpen ? { rotate: -45, y: -5.25 } : { rotate: 0, y: 0 }}
+                transition={{ duration: 0.4, ease: EASE }}
+              />
+            </span>
+          </button>
+          </div>
+        </nav>
+
+        {/* Mobile drawer */}
+        <AnimatePresence>
+          {sheetOpen && (
+            <motion.div
+              key="mobile-menu"
+              id="public-mobile-menu"
+              initial={{ opacity: 0, y: -10, clipPath: "inset(0% 0% 100% 0% round 28px)" }}
+              animate={{ opacity: 1, y: 0, clipPath: "inset(0% 0% 0% 0% round 28px)" }}
+              exit={{ opacity: 0, y: -8, clipPath: "inset(0% 0% 100% 0% round 28px)" }}
+              transition={{ duration: 0.55, ease: EASE }}
+              className="creo-glass-strong mx-auto mt-2 flex max-h-[calc(100dvh-6rem)] max-w-[1080px] flex-col gap-2 overflow-y-auto overscroll-contain rounded-[28px] p-3 lg:hidden"
+            >
+              <motion.nav
+                aria-label="Mobile navigation"
+                className="flex flex-col"
+                initial="hidden"
+                animate="show"
+                variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05, delayChildren: 0.08 } } }}
+              >
+                {NAV_LINKS.map((link, i) => {
+                  const isActive = location.pathname === link.href;
+                  return (
+                    <motion.div
+                      key={link.href}
+                      variants={{
+                        hidden: { opacity: 0, y: 14 },
+                        show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } },
+                      }}
+                    >
+                      <Link
+                        to={link.href}
+                        aria-current={isActive ? "page" : undefined}
+                        onClick={() => setSheetOpen(false)}
+                        className={`group flex items-center justify-between rounded-2xl px-4 py-3.5 transition-colors ${
+                          isActive ? "bg-hi/[0.07] text-hi" : "text-site-mist-2 hover:bg-hi/[0.05] hover:text-hi"
+                        }`}
+                      >
+                        <span className="flex items-baseline gap-3">
+                          <span className="font-mono text-[11px] text-site-blue">0{i + 1}</span>
+                          <span className="text-xl font-semibold tracking-[-0.02em]">{link.label}</span>
+                        </span>
+                        <ArrowUpRight className="size-4 opacity-40 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100" />
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </motion.nav>
+
+              <div className="mt-1 grid grid-cols-2 gap-2 border-t border-hi/10 pt-3">
+                {user ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSheetOpen(false);
+                        handleLogout();
+                      }}
+                      disabled={loggingOut}
+                      className="creo-btn-ghost flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full text-sm font-medium"
+                    >
+                      <LogOut className="size-4" />
+                      {loggingOut ? "Logging out..." : "Log out"}
+                    </button>
+                    <Link
+                      to={userHome}
+                      onClick={() => setSheetOpen(false)}
+                      className="creo-btn-primary flex min-h-12 items-center justify-center rounded-full text-sm font-semibold"
+                    >
+                      {userPortalLabel}
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      onClick={() => setSheetOpen(false)}
+                      className="creo-btn-ghost flex min-h-12 items-center justify-center rounded-full text-sm font-medium"
+                    >
+                      Log in
+                    </Link>
+                    <Link
+                      to="/signup"
+                      onClick={() => setSheetOpen(false)}
+                      className="creo-btn-primary flex min-h-12 items-center justify-center gap-1.5 rounded-full text-sm font-semibold"
+                    >
+                      Get started <ArrowRight className="size-4" />
+                    </Link>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </header>
   );
 }
-

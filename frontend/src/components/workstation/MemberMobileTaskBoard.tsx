@@ -105,14 +105,14 @@ export function MemberMobileTaskBoard({
           <button
             type="button"
             onClick={toggleMobile}
-            className="size-8 rounded-xl bg-[#131C2B] border border-[#2A3446] flex items-center justify-center text-slate-300 hover:text-white transition cursor-pointer shrink-0"
+            className="size-8 rounded-xl bg-[#131C2B] border border-app-line flex items-center justify-center text-slate-300 hover:text-hi transition cursor-pointer shrink-0"
             aria-label="Open navigation sidebar"
             title="Open navigation menu"
           >
             <Menu className="size-4" />
           </button>
           <div className="flex items-center">
-            <span className="text-lg font-black tracking-tight text-white">Creo</span>
+            <span className="text-lg font-black tracking-tight text-hi">Creo</span>
             <span className="text-lg font-black text-sky-400">.</span>
           </div>
           <span className="border border-sky-500/30 bg-sky-500/10 text-sky-300 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
@@ -126,7 +126,7 @@ export function MemberMobileTaskBoard({
             aria-label="Notifications"
             type="button"
             onClick={() => showToast("All task notifications are up to date")}
-            className="size-8 rounded-full bg-[#131C2B] border border-[#2A3446] flex items-center justify-center text-slate-300 hover:text-white transition cursor-pointer"
+            className="size-8 rounded-full bg-[#131C2B] border border-app-line flex items-center justify-center text-slate-300 hover:text-hi transition cursor-pointer"
           >
             <Bell className="size-4" />
           </button>
@@ -189,7 +189,7 @@ export function MemberMobileTaskBoard({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter tasks by client, format or title..."
-              className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl text-xs py-2.5 pl-9 pr-3.5 text-slate-200 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition shadow-inner"
+              className="w-full bg-app-base border border-app-line rounded-xl text-xs py-2.5 pl-9 pr-3.5 text-slate-200 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition shadow-inner"
             />
           </div>
 
@@ -201,7 +201,7 @@ export function MemberMobileTaskBoard({
                 value={selectedClient}
                 onChange={(e) => setSelectedClient(e.target.value)}
                 aria-label="Filter by client"
-                className="w-full bg-[#0F1726] border border-[#2A3446] rounded-xl py-2 pl-3 pr-7 text-xs font-medium text-slate-200 hover:border-slate-500 transition appearance-none cursor-pointer truncate focus:outline-none focus:border-sky-500"
+                className="w-full bg-[#0F1726] border border-app-line rounded-xl py-2 pl-3 pr-7 text-xs font-medium text-slate-200 hover:border-slate-500 transition appearance-none cursor-pointer truncate focus:outline-none focus:border-sky-500"
               >
                 <option value="all">All Clients ({tasks.length})</option>
                 {availableClients.map((client) => {
@@ -224,7 +224,7 @@ export function MemberMobileTaskBoard({
                 value={urgencyFilter}
                 onChange={(e) => setUrgencyFilter(e.target.value)}
                 aria-label="Filter by urgency"
-                className="w-full bg-[#0F1726] border border-[#2A3446] rounded-xl py-2 pl-3 pr-7 text-xs font-medium text-slate-200 hover:border-slate-500 transition appearance-none cursor-pointer truncate focus:outline-none focus:border-sky-500"
+                className="w-full bg-[#0F1726] border border-app-line rounded-xl py-2 pl-3 pr-7 text-xs font-medium text-slate-200 hover:border-slate-500 transition appearance-none cursor-pointer truncate focus:outline-none focus:border-sky-500"
               >
                 <option value="All">All Urgency</option>
                 <option value="High">Due soon / revisions</option>
@@ -255,7 +255,7 @@ export function MemberMobileTaskBoard({
         {/* BEGIN: ProductionStageTabs */}
         <nav
           aria-label="Stages"
-          className="flex gap-1.5 p-1 bg-[#0B111C]/90 border border-[#2A3446] rounded-2xl overflow-x-auto no-scrollbar"
+          className="flex gap-1.5 p-1 bg-app-base/90 border border-app-line rounded-2xl overflow-x-auto no-scrollbar"
           data-purpose="stage-navigation"
         >
           {([
@@ -285,7 +285,7 @@ export function MemberMobileTaskBoard({
 
         {/* BEGIN: KanbanColumnContainer */}
         <section
-          className="border border-[#2A3446] bg-[#111724]/70 rounded-2xl p-3.5 flex flex-col gap-3"
+          className="border border-app-line bg-[#111724]/70 rounded-2xl p-3.5 flex flex-col gap-3"
           data-purpose="kanban-column"
         >
           {/* Column Header */}
@@ -313,7 +313,7 @@ export function MemberMobileTaskBoard({
               </h2>
             </div>
             {/* Counter Badge */}
-            <span className="bg-[#161F2D] text-slate-300 border border-[#2A3446] text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+            <span className="bg-app-surface text-slate-300 border border-app-line text-[11px] font-bold px-2.5 py-0.5 rounded-full">
               {currentMobileTasks.length}
             </span>
           </div>
@@ -347,7 +347,7 @@ export function MemberMobileTaskBoard({
                       </span>
                     </div>
 
-                    <h3 className="text-sm font-bold text-white mt-2 leading-snug">
+                    <h3 className="text-sm font-bold text-hi mt-2 leading-snug">
                       {taskTitle(task)}
                     </h3>
 
@@ -372,7 +372,7 @@ export function MemberMobileTaskBoard({
 
                     {/* Production stage feedback note */}
                     {feedback && (
-                      <div className="p-2.5 my-2 rounded-lg bg-[#0B111C] border border-amber-400/40 text-xs space-y-1.5">
+                      <div className="p-2.5 my-2 rounded-lg bg-app-base border border-amber-400/40 text-xs space-y-1.5">
                         <div className="font-bold text-amber-300 text-[10px] uppercase tracking-wider flex items-center justify-between">
                           <span>{feedback.source} requested changes</span>
                           {feedback.voice_note_url && (

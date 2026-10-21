@@ -59,21 +59,21 @@ export const MandatoryPasswordResetModal: React.FC = () => {
       aria-modal="true"
       aria-labelledby="mandatory-reset-title"
     >
-      <div className="relative w-full max-w-md bg-white border border-[#2A3446] rounded-3xl p-8 shadow-2xl shadow-slate-900/15 text-[#0B111C] animate-in fade-in zoom-in-95 duration-300">
+      <div className="relative w-full max-w-md bg-hi border border-app-line rounded-3xl p-8 shadow-2xl shadow-slate-900/15 text-app-base animate-in fade-in zoom-in-95 duration-300">
         {/* Glow backdrop */}
-        <div className="absolute -top-16 -left-16 w-32 h-32 bg-[#7FA0D6]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -right-16 w-32 h-32 bg-[#7FA0D6]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-16 -left-16 w-32 h-32 bg-app-accent/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -right-16 w-32 h-32 bg-app-accent/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#BCCCE6] border border-[#2A3446] text-[#7FA0D6] mb-4 shadow-sm">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-app-accent-soft border border-app-line text-app-accent mb-4 shadow-sm">
             <ShieldAlert className="w-8 h-8 animate-pulse" />
           </div>
-          <h2 id="mandatory-reset-title" className="text-2xl font-bold tracking-tight text-[#0B111C]">
+          <h2 id="mandatory-reset-title" className="text-2xl font-bold tracking-tight text-app-base">
             Set your Creo password
           </h2>
-          <p className="mt-2 text-sm text-[#97A0B3] leading-relaxed">
+          <p className="mt-2 text-sm text-app-mist leading-relaxed">
             For your security, you{" "}
-            <span className="text-[#7FA0D6] font-semibold">must set a new permanent password</span> before continuing.
+            <span className="text-app-accent font-semibold">must set a new permanent password</span> before continuing.
           </p>
         </div>
 
@@ -89,13 +89,13 @@ export const MandatoryPasswordResetModal: React.FC = () => {
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 mb-4 shadow-xs">
               <CheckCircle2 className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-semibold text-[#0B111C]">Password Updated!</h3>
-            <p className="text-sm text-[#97A0B3] mt-1">Unlocking your dashboard...</p>
+            <h3 className="text-lg font-semibold text-app-base">Password Updated!</h3>
+            <p className="text-sm text-app-mist mt-1">Unlocking your dashboard...</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="new-password" className="block text-xs font-semibold text-[#0B111C] mb-1.5">
+              <label htmlFor="new-password" className="block text-xs font-semibold text-app-base mb-1.5">
                 New Password <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
@@ -110,12 +110,12 @@ export const MandatoryPasswordResetModal: React.FC = () => {
                   minLength={8}
                   maxLength={128}
                   autoComplete="new-password"
-                  className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#2A3446] rounded-xl text-[#0B111C] placeholder-[#97A0B3] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]/30 focus:border-[#7FA0D6] text-sm transition-all"
+                  className="w-full px-4 py-3 bg-app-ink border border-app-line rounded-xl text-app-base placeholder-app-mist focus:bg-hi focus:outline-none focus:ring-2 focus:ring-app-accent/30 focus:border-app-accent text-sm transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-[#0B111C] transition-colors cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-app-mist hover:text-app-base transition-colors cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -123,7 +123,7 @@ export const MandatoryPasswordResetModal: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="confirm-password" className="block text-xs font-semibold text-[#0B111C] mb-1.5">
+              <label htmlFor="confirm-password" className="block text-xs font-semibold text-app-base mb-1.5">
                 Confirm New Password <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
@@ -137,12 +137,12 @@ export const MandatoryPasswordResetModal: React.FC = () => {
                   minLength={8}
                   maxLength={128}
                   autoComplete="new-password"
-                  className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#2A3446] rounded-xl text-[#0B111C] placeholder-[#97A0B3] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]/30 focus:border-[#7FA0D6] text-sm transition-all"
+                  className="w-full px-4 py-3 bg-app-ink border border-app-line rounded-xl text-app-base placeholder-app-mist focus:bg-hi focus:outline-none focus:ring-2 focus:ring-app-accent/30 focus:border-app-accent text-sm transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-[#0B111C] transition-colors cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-app-mist hover:text-app-base transition-colors cursor-pointer"
                 >
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -153,7 +153,7 @@ export const MandatoryPasswordResetModal: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading || !newPassword || !confirmPassword}
-                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#7FA0D6] to-[#7FA0D6] hover:brightness-105 text-white font-semibold text-sm transition-all shadow-md shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-app-accent to-app-accent hover:brightness-105 text-white font-semibold text-sm transition-all shadow-md shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? (
                   <>

@@ -129,12 +129,12 @@ export function MemberSettingsPage() {
     : "Creative Specialist";
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
+    <div data-surface="ops" className="min-h-screen bg-app-base text-hi font-sans flex flex-col">
       <AdminTopHeader activeTab="Preferences" hideTitle />
       <main className="flex-1 max-w-[1200px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20 sm:pb-8 space-y-6">
         {/* Role Badge */}
         <div className="flex items-center justify-end gap-2 pb-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6]">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-app-surface border border-app-line text-app-accent">
             <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
             {formattedRole}
           </span>
@@ -168,29 +168,29 @@ export function MemberSettingsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch w-full">
           {/* ── CARD 1: Personal Details Card ── */}
-          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]/80 shadow-2xs space-y-5 h-full flex flex-col justify-between">
+          <div className="bg-app-surface rounded-2xl p-5 sm:p-6 border border-app-line/80 shadow-2xs space-y-5 h-full flex flex-col justify-between">
             <div className="space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
+              <div className="flex items-center justify-between pb-3 border-b border-app-line">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center justify-center">
+                  <div className="size-8 rounded-xl bg-app-accent/15 text-app-accent border border-app-accent/30 flex items-center justify-center">
                     <UserRound className="size-4" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold text-white">Personal Details</h2>
-                    <p className="text-[11px] text-[#97A0B3]">Your name, phone number, and account identity</p>
+                    <h2 className="text-sm font-bold text-hi">Personal Details</h2>
+                    <p className="text-[11px] text-app-mist">Your name, phone number, and account identity</p>
                   </div>
                 </div>
               </div>
 
               {/* Profile Header Pill */}
-              <div className="flex items-center gap-3.5 p-3 rounded-xl bg-[#0B111C]/80 border border-[#2A3446]/60">
-                <div className="size-12 min-w-12 rounded-xl bg-[#7FA0D6] flex items-center justify-center text-white text-sm font-black shrink-0 overflow-hidden leading-none select-none text-center shadow-sm">
+              <div className="flex items-center gap-3.5 p-3 rounded-xl bg-app-base/80 border border-app-line/60">
+                <div className="size-12 min-w-12 rounded-xl bg-app-accent flex items-center justify-center text-white text-sm font-black shrink-0 overflow-hidden leading-none select-none text-center shadow-sm">
                   {userInitials}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{form.name || "Specialist"}</p>
-                  <p className="text-xs text-[#97A0B3] truncate">{form.email}</p>
-                  <p className="text-[10px] text-[#7FA0D6] font-semibold mt-0.5">
+                  <p className="text-sm font-semibold text-hi truncate">{form.name || "Specialist"}</p>
+                  <p className="text-xs text-app-mist truncate">{form.email}</p>
+                  <p className="text-[10px] text-app-accent font-semibold mt-0.5">
                     {formattedRole} · {podName}
                   </p>
                 </div>
@@ -200,7 +200,7 @@ export function MemberSettingsPage() {
             <form onSubmit={handleSave} className="space-y-4 flex-1 flex flex-col justify-between pt-2">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#97A0B3] mb-1.5">
+                  <label className="block text-xs font-semibold text-app-mist mb-1.5">
                     Full Name
                   </label>
                   <input
@@ -208,13 +208,13 @@ export function MemberSettingsPage() {
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder="e.g. Elena Rostova"
-                    className="h-11 w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3.5 text-xs sm:text-sm text-white placeholder:text-[#66738A] outline-none transition focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
+                    className="h-11 w-full rounded-xl border border-app-line bg-app-base px-3.5 text-xs sm:text-sm text-hi placeholder:text-[#66738A] outline-none transition focus:border-app-accent focus:ring-1 focus:ring-app-accent"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#97A0B3] mb-1.5 flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-app-mist mb-1.5 flex items-center justify-between">
                     <span>Phone Number</span>
                     <span className="text-[10px] text-[#66738A]">Optional for emergency pod dispatch</span>
                   </label>
@@ -224,14 +224,14 @@ export function MemberSettingsPage() {
                       value={form.phone}
                       onChange={(e) => setForm({ ...form, phone: e.target.value })}
                       placeholder="+1 (555) 234-5678"
-                      className="h-11 w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3.5 pl-9 text-xs sm:text-sm text-white placeholder:text-[#66738A] outline-none transition focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
+                      className="h-11 w-full rounded-xl border border-app-line bg-app-base px-3.5 pl-9 text-xs sm:text-sm text-hi placeholder:text-[#66738A] outline-none transition focus:border-app-accent focus:ring-1 focus:ring-app-accent"
                     />
                     <Phone className="size-4 text-[#66738A] absolute left-3 top-3.5" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#97A0B3] mb-1.5 flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-app-mist mb-1.5 flex items-center justify-between">
                     <span>Work Email</span>
                     <span className="text-[10px] text-[#66738A] flex items-center gap-1">
                       <Lock className="size-2.5" /> Read-only
@@ -243,7 +243,7 @@ export function MemberSettingsPage() {
                       value={form.email}
                       readOnly
                       disabled
-                      className="h-11 w-full rounded-xl border border-[#2A3446]/60 bg-[#0B111C]/50 px-3.5 pl-9 text-xs sm:text-sm text-[#97A0B3] cursor-not-allowed outline-none"
+                      className="h-11 w-full rounded-xl border border-app-line/60 bg-app-base/50 px-3.5 pl-9 text-xs sm:text-sm text-app-mist cursor-not-allowed outline-none"
                     />
                     <Mail className="size-4 text-[#66738A] absolute left-3 top-3.5" />
                   </div>
@@ -257,7 +257,7 @@ export function MemberSettingsPage() {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#7FA0D6] hover:bg-[#6c8fc9] text-white text-xs font-bold transition-colors cursor-pointer shadow-sm disabled:opacity-50"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-app-accent hover:bg-[#6c8fc9] text-white text-xs font-bold transition-colors cursor-pointer shadow-sm disabled:opacity-50"
                 >
                   {isSaving ? (
                     <>
@@ -276,16 +276,16 @@ export function MemberSettingsPage() {
           </div>
 
           {/* ── CARD 2: Your Assigned Team / Pod Card ── */}
-          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446]/80 shadow-2xs space-y-5 h-full flex flex-col justify-between">
+          <div className="bg-app-surface rounded-2xl p-5 sm:p-6 border border-app-line/80 shadow-2xs space-y-5 h-full flex flex-col justify-between">
             <div className="space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
+              <div className="flex items-center justify-between pb-3 border-b border-app-line">
                 <div className="flex items-center gap-2.5">
                   <div className="size-8 rounded-xl bg-purple-500/15 text-purple-400 border border-purple-500/30 flex items-center justify-center">
                     <UsersRound className="size-4" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold text-white">Your Assigned Team & Pod</h2>
-                    <p className="text-[11px] text-[#97A0B3]">Active sprint unit and reporting pod leads</p>
+                    <h2 className="text-sm font-bold text-hi">Your Assigned Team & Pod</h2>
+                    <p className="text-[11px] text-app-mist">Active sprint unit and reporting pod leads</p>
                   </div>
                 </div>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
@@ -294,9 +294,9 @@ export function MemberSettingsPage() {
               </div>
 
               {/* Pod Lead Banner */}
-              <div className="p-4 rounded-xl bg-[#0B111C]/80 border border-[#2A3446]/70 space-y-3">
+              <div className="p-4 rounded-xl bg-app-base/80 border border-app-line/70 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[#7FA0D6]">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-app-accent">
                     Reporting Pod Lead
                   </span>
                   <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
@@ -308,14 +308,14 @@ export function MemberSettingsPage() {
                     {getCleanInitials(podLead?.full_name, "PL")}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs sm:text-sm font-bold text-white truncate">
+                    <p className="text-xs sm:text-sm font-bold text-hi truncate">
                       {podLead?.full_name || "Sarah Connor"}
                     </p>
-                    <p className="text-[11px] text-[#97A0B3] truncate">
+                    <p className="text-[11px] text-app-mist truncate">
                       {podLead?.email || "sarah.connor@creo.agency"}
                     </p>
                   </div>
-                  <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-[#161F2D] text-[#97A0B3] border border-[#2A3446]">
+                  <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-app-surface text-app-mist border border-app-line">
                     Pod Lead
                   </span>
                 </div>
@@ -325,7 +325,7 @@ export function MemberSettingsPage() {
             {/* Pod Peers Roster */}
             <div className="space-y-2.5 flex-1 flex flex-col my-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#97A0B3]">Pod Specialists & Peers</span>
+                <span className="text-xs font-bold text-app-mist">Pod Specialists & Peers</span>
                 <span className="text-[10px] text-[#66738A]">{members.length} Total Members</span>
               </div>
 
@@ -335,20 +335,20 @@ export function MemberSettingsPage() {
                     return (
                       <div
                         key={peer.id}
-                        className="flex items-center justify-between p-2.5 rounded-xl bg-[#0B111C]/60 border border-[#2A3446]/50"
+                        className="flex items-center justify-between p-2.5 rounded-xl bg-app-base/60 border border-app-line/50"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="size-8 min-w-8 rounded-lg bg-[#2A3446] text-white text-[11px] font-black flex items-center justify-center shrink-0 overflow-hidden leading-none select-none text-center">
+                          <div className="size-8 min-w-8 rounded-lg bg-app-line text-hi text-[11px] font-black flex items-center justify-center shrink-0 overflow-hidden leading-none select-none text-center">
                             {getCleanInitials(peer.full_name, "CP")}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-semibold text-white truncate">{peer.full_name}</p>
-                            <p className="text-[10px] text-[#97A0B3] truncate capitalize">
+                            <p className="text-xs font-semibold text-hi truncate">{peer.full_name}</p>
+                            <p className="text-[10px] text-app-mist truncate capitalize">
                               {peer.role?.replace("_", " ") || "Specialist"}
                             </p>
                           </div>
                         </div>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#161F2D] text-[#7FA0D6] border border-[#2A3446]/60">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-app-surface text-app-accent border border-app-line/60">
                           {peer.role?.includes("editor")
                             ? "Editor"
                             : peer.role?.includes("designer")
@@ -359,7 +359,7 @@ export function MemberSettingsPage() {
                     );
                   })
                 ) : (
-                  <div className="p-3 rounded-xl bg-[#0B111C]/40 border border-[#2A3446]/40 text-center text-xs text-[#97A0B3]">
+                  <div className="p-3 rounded-xl bg-app-base/40 border border-[#2A3446]/40 text-center text-xs text-app-mist">
                     No other specialists in this pod.
                   </div>
                 )}
@@ -367,19 +367,19 @@ export function MemberSettingsPage() {
             </div>
 
             {/* Daily Standup Zoom Link */}
-            <div className="p-3 rounded-xl bg-[#7FA0D6]/10 border border-[#7FA0D6]/20 flex items-center justify-between gap-3">
+            <div className="p-3 rounded-xl bg-app-accent/10 border border-app-accent/20 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
-                <Video className="size-4 text-[#7FA0D6] shrink-0" />
+                <Video className="size-4 text-app-accent shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-white truncate">10:00 AM Daily Standup</p>
-                  <p className="text-[10px] text-[#7FA0D6] truncate">Pod sync on Google Meet / Zoom</p>
+                  <p className="text-xs font-bold text-hi truncate">10:00 AM Daily Standup</p>
+                  <p className="text-[10px] text-app-accent truncate">Pod sync on Google Meet / Zoom</p>
                 </div>
               </div>
               <a
                 href={STANDUP_MEETING_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3 py-1 rounded-lg bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1 transition-colors shrink-0"
+                className="px-3 py-1 rounded-lg bg-app-accent hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1 transition-colors shrink-0"
               >
                 <span>Join</span>
                 <ExternalLink className="size-3" />

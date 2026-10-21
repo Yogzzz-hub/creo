@@ -35,14 +35,14 @@ export function PublishingPage() {
   const canManage = ["admin", "super_admin", "team_lead"].includes(user?.role || "");
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-slate-100 flex flex-col">
+    <div data-surface="ops" className="min-h-screen bg-app-base text-slate-100 flex flex-col">
       <AdminTopHeader activeTab="Publishing" hideTitle />
       <main className="w-full max-w-[1550px] mx-auto px-3.5 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
-              <CalendarClock className="w-6 h-6 text-[#7FA0D6]" />
+            <h1 className="text-xl sm:text-2xl font-black text-hi tracking-tight flex items-center gap-2.5">
+              <CalendarClock className="w-6 h-6 text-app-accent" />
               Scheduled Publishing Queue
             </h1>
 
@@ -53,7 +53,7 @@ export function PublishingPage() {
               <button
                 disabled={planning}
                 onClick={() => void planCalendar()}
-                className="flex items-center gap-2 rounded-xl bg-[#BCCCE6] hover:bg-white px-4 py-2.5 text-xs font-bold text-[#0B111C] disabled:opacity-50 cursor-pointer transition-all shadow-sm"
+                className="flex items-center gap-2 rounded-xl bg-app-accent-soft hover:bg-hi px-4 py-2.5 text-xs font-bold text-app-base disabled:opacity-50 cursor-pointer transition-all shadow-sm"
               >
                 {planning ? (
                   <>
@@ -62,7 +62,7 @@ export function PublishingPage() {
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4 text-[#0B111C]" />
+                    <Sparkles className="w-4 h-4 text-app-base" />
                     <span>Plan Posts From Calendars</span>
                   </>
                 )}
@@ -75,13 +75,13 @@ export function PublishingPage() {
         {result && (
           <div
             role="status"
-            className="rounded-2xl border border-[#7FA0D6]/30 bg-[#7FA0D6]/10 p-4 text-xs font-medium text-[#BCCCE6] flex items-center justify-between gap-3 shadow-xs"
+            className="rounded-2xl border border-app-accent/30 bg-app-accent/10 p-4 text-xs font-medium text-app-accent-soft flex items-center justify-between gap-3 shadow-xs"
           >
             <p className="leading-relaxed">{result}</p>
             <button
               type="button"
               onClick={() => setResult("")}
-              className="text-[#97A0B3] hover:text-white text-xs font-bold shrink-0 cursor-pointer"
+              className="text-app-mist hover:text-hi text-xs font-bold shrink-0 cursor-pointer"
             >
               Dismiss
             </button>

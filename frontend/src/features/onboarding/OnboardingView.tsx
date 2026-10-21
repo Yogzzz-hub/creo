@@ -34,18 +34,18 @@ function ProgressStepper({
   return (
     <div className="w-full mb-5 sm:mb-6">
       {/* Stepper Card */}
-      <div className="relative bg-[#161F2D] rounded-2xl shadow-xl border border-[#2A3446] px-3 sm:px-8 py-4 sm:py-5">
+      <div className="relative bg-app-surface rounded-2xl shadow-xl border border-app-line px-3 sm:px-8 py-4 sm:py-5">
         {/* Track Row — guaranteed center alignment between lines and circles */}
         <div className="relative flex items-center justify-between w-full h-9 mb-3">
           {/* Background track line */}
           <div
-            className="absolute left-[10%] right-[10%] h-[2px] rounded-full bg-[#2A3446] top-1/2 -translate-y-1/2"
+            className="absolute left-[10%] right-[10%] h-[2px] rounded-full bg-app-line top-1/2 -translate-y-1/2"
             aria-hidden="true"
           />
 
           {/* Completed track line */}
           <div
-            className="absolute left-[10%] h-[2px] rounded-full transition-all duration-500 bg-[#7FA0D6] top-1/2 -translate-y-1/2"
+            className="absolute left-[10%] h-[2px] rounded-full transition-all duration-500 bg-app-accent top-1/2 -translate-y-1/2"
             aria-hidden="true"
             style={{
               width: `${Math.max(0, Math.min(1, (maxUnlockedStep - 1) / (STAGES.length - 1))) * 80}%`,
@@ -66,12 +66,12 @@ function ProgressStepper({
                   disabled={!isUnlocked}
                   className={`size-9 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-200 select-none ${
                     isDone
-                      ? "bg-[#7FA0D6] text-[#0B111C] shadow-sm hover:scale-105 cursor-pointer"
+                      ? "bg-app-accent text-app-base shadow-sm hover:scale-105 cursor-pointer"
                       : isActive
-                      ? "bg-[#BCCCE6] text-[#0B111C] font-black ring-4 ring-[#BCCCE6]/25 shadow-md hover:scale-105 cursor-pointer"
+                      ? "bg-app-accent-soft text-app-base font-black ring-4 ring-app-accent-soft/25 shadow-md hover:scale-105 cursor-pointer"
                       : isUnlocked
-                      ? "bg-[#0B111C] text-[#97A0B3] border border-[#2A3446] hover:border-[#7FA0D6]/60 hover:text-white cursor-pointer"
-                      : "bg-[#0B111C] text-[#97A0B3]/50 border border-[#2A3446]/50 cursor-not-allowed"
+                      ? "bg-app-base text-app-mist border border-app-line hover:border-app-accent/60 hover:text-white cursor-pointer"
+                      : "bg-app-base text-app-mist/50 border border-app-line/50 cursor-not-allowed"
                   }`}
                   aria-label={`Step ${s.step}: ${s.label}`}
                 >
@@ -111,7 +111,7 @@ function ProgressStepper({
               >
                 <p
                   className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mb-0.5 ${
-                    isActive ? "text-[#BCCCE6]" : isDone ? "text-[#7FA0D6]" : "text-[#97A0B3]"
+                    isActive ? "text-app-accent-soft" : isDone ? "text-app-accent" : "text-app-mist"
                   }`}
                 >
                   Step {s.step}
@@ -119,10 +119,10 @@ function ProgressStepper({
                 <p
                   className={`text-xs sm:text-sm font-semibold transition-colors truncate px-0.5 ${
                     isActive
-                      ? "text-white font-bold"
+                      ? "text-hi font-bold"
                       : isDone
-                      ? "text-[#BCCCE6]"
-                      : "text-[#97A0B3]"
+                      ? "text-app-accent-soft"
+                      : "text-app-mist"
                   }`}
                 >
                   <span className="sm:hidden">{s.short}</span>
@@ -204,20 +204,20 @@ function StageVerifyEmail({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
-      className="w-full max-w-xl mx-auto rounded-xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-8 shadow-xl text-center"
+      className="w-full max-w-xl mx-auto rounded-xl border border-app-line bg-app-surface p-5 sm:p-8 shadow-xl text-center"
     >
-      <div className="size-14 mx-auto mb-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
+      <div className="size-14 mx-auto mb-4 rounded-2xl bg-app-base border border-app-line flex items-center justify-center text-app-accent">
         {verifiedSuccess ? (
           <ShieldCheck className="size-7 text-emerald-400" />
         ) : (
-          <Mail className="size-7 text-[#7FA0D6]" />
+          <Mail className="size-7 text-app-accent" />
         )}
       </div>
 
-      <h2 className="text-xl sm:text-2xl font-bold font-display text-[#F8FAFC] tracking-tight">
+      <h2 className="text-xl sm:text-2xl font-bold font-display text-app-ink tracking-tight">
         {verifiedSuccess ? "Email Verified" : "Verify Your Email"}
       </h2>
-      <p className="text-sm text-[#97A0B3] mt-2 max-w-md mx-auto leading-relaxed">
+      <p className="text-sm text-app-mist mt-2 max-w-md mx-auto leading-relaxed">
         {verifiedSuccess
           ? "Your email address has been confirmed. You can now proceed to review and sign the Master Service Agreement."
           : "We protect your agency workspace with fast email verification. Enter your email to receive a 6-digit code."}
@@ -246,7 +246,7 @@ function StageVerifyEmail({
             <button
               type="button"
               onClick={onContinueToTerms}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-sm hover:bg-white shadow-sm transition-all cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-app-accent-soft text-app-base font-bold text-sm hover:bg-hi shadow-sm transition-all cursor-pointer"
             >
               <span>Continue to Master Service Agreement (Step 2)</span>
               <ArrowRight className="size-4" />
@@ -258,7 +258,7 @@ function StageVerifyEmail({
           {!otpSent ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#F8FAFC] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink mb-1.5">
                   Email Address
                 </label>
                 <input
@@ -267,14 +267,14 @@ function StageVerifyEmail({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@company.com"
                   required
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-sm text-[#F8FAFC] placeholder-[#97A0B3]/50 focus:outline-none focus:border-[#7FA0D6] focus:ring-2 focus:ring-[#7FA0D6]/20 transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-app-line bg-app-base text-sm text-app-ink placeholder-app-mist/50 focus:outline-none focus:border-app-accent focus:ring-2 focus:ring-app-accent/20 transition-all"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-sm hover:bg-white shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-app-accent-soft text-app-base font-bold text-sm hover:bg-hi shadow-sm transition-all disabled:opacity-50 cursor-pointer"
               >
                 {loading && <RefreshCw className="size-4 animate-spin" />}
                 <span>Send Verification Code</span>
@@ -284,14 +284,14 @@ function StageVerifyEmail({
             <form onSubmit={handleVerifyOtp} className="space-y-5">
               <div>
                 <div className="flex justify-between items-center mb-3">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">
+                  <label className="text-xs font-bold uppercase tracking-wider text-app-mist">
                     Enter 6-Digit Security Code
                   </label>
                   <button
                     type="button"
                     onClick={() => handleSendOtp()}
                     disabled={loading}
-                    className="text-xs font-semibold text-[#7FA0D6] hover:text-[#BCCCE6] transition-colors"
+                    className="text-xs font-semibold text-app-accent hover:text-app-accent-soft transition-colors"
                   >
                     Resend Code
                   </button>
@@ -308,7 +308,7 @@ function StageVerifyEmail({
               <button
                 type="submit"
                 disabled={loading || otpCode.length < 4}
-                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-sm hover:bg-white shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-app-accent-soft text-app-base font-bold text-sm hover:bg-hi shadow-sm transition-all disabled:opacity-50 cursor-pointer"
               >
                 {loading && <RefreshCw className="size-4 animate-spin" />}
                 <span>Verify Code & Continue</span>
@@ -316,11 +316,11 @@ function StageVerifyEmail({
             </form>
           )}
 
-          <div className="mt-4 pt-4 border-t border-[#2A3446] text-center">
+          <div className="mt-4 pt-4 border-t border-app-line text-center">
             <button
               type="button"
               onClick={onContinueToTerms}
-              className="text-xs text-[#97A0B3] hover:text-white underline transition-colors"
+              className="text-xs text-app-mist hover:text-hi underline transition-colors"
             >
               Skip verification for now and proceed to Terms →
             </button>
@@ -449,14 +449,14 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
   if (isError && !hasStage) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] p-6 text-center">
-        <div className="max-w-md w-full p-6 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-xl">
+        <div className="max-w-md w-full p-6 rounded-2xl bg-app-surface border border-app-line shadow-xl">
           <p className="text-sm text-rose-400 font-medium mb-3">
             Unable to connect to onboarding service.
           </p>
           <button
             type="button"
             onClick={() => void refreshStatus()}
-            className="px-4 py-2 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-xs hover:bg-white transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-app-accent-soft text-app-base font-bold text-xs hover:bg-hi transition-colors cursor-pointer"
           >
             Retry Connection
           </button>

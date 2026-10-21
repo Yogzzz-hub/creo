@@ -427,7 +427,7 @@ export function AdminSidebar() {
           type="button"
           aria-label="Close navigation overlay"
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-[9998] bg-[#050810]/75 backdrop-blur-sm lg:hidden cursor-pointer"
+          className="fixed inset-0 z-[9998] bg-app-void/75 backdrop-blur-sm lg:hidden cursor-pointer"
         />
       )}
 
@@ -435,24 +435,24 @@ export function AdminSidebar() {
       <aside
         data-sidebar="true"
         aria-label="Operations navigation sidebar"
-        className={`fixed inset-y-0 left-0 z-[9999] lg:z-30 flex w-[280px] max-w-[85vw] flex-col bg-[#161F2D] border-r border-[#2A3446] shadow-2xl transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-[9999] lg:z-30 flex w-[280px] max-w-[85vw] flex-col bg-app-surface border-r border-app-line shadow-2xl transition-transform duration-300 lg:translate-x-0 ${
           mobileOpen ? "translate-x-0 visible" : "-translate-x-full invisible lg:visible"
         }`}
       >
         {/* Brand Header */}
-        <div className="p-4 sm:p-5 border-b border-[#2A3446] flex items-center justify-between bg-[#0B111C]/60 shrink-0">
+        <div className="p-4 sm:p-5 border-b border-app-line flex items-center justify-between bg-app-base/60 shrink-0">
           <div className="flex items-center gap-2.5">
-            <Link to={homeHref} className="text-xl font-black text-white tracking-tighter">
-              creo<span className="text-[#7FA0D6] text-2xl leading-none">.</span>
+            <Link to={homeHref} className="text-xl font-black text-hi tracking-tighter">
+              creo<span className="text-app-accent text-2xl leading-none">.</span>
             </Link>
-            <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+            <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-app-accent/15 text-app-accent border border-app-accent/30">
               {roleBadge}
             </span>
           </div>
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="lg:hidden size-8 rounded-xl flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] border border-transparent hover:border-[#2A3446] transition-colors cursor-pointer"
+            className="lg:hidden size-8 rounded-xl flex items-center justify-center text-app-mist hover:text-hi hover:bg-app-surface border border-transparent hover:border-app-line transition-colors cursor-pointer"
             aria-label="Close navigation sidebar"
           >
             <X className="w-5 h-5" />
@@ -461,11 +461,11 @@ export function AdminSidebar() {
 
         {/* Quick Return Banner for Staff/Admins inspecting Client Portal */}
         {isAdminOrSuper && location.pathname.startsWith("/portal") && (
-          <div className="p-3 bg-[#7FA0D6]/10 border-b border-[#2A3446] text-left shrink-0">
+          <div className="p-3 bg-app-accent/10 border-b border-app-line text-left shrink-0">
             <Link
               to="/admin"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center justify-between text-xs font-bold text-[#7FA0D6] hover:text-white px-3 py-2 rounded-xl bg-[#0B111C] border border-[#7FA0D6]/30 hover:border-[#7FA0D6]/60 transition-colors shadow-xs"
+              className="flex items-center justify-between text-xs font-bold text-app-accent hover:text-hi px-3 py-2 rounded-xl bg-app-base border border-app-accent/30 hover:border-app-accent/60 transition-colors shadow-xs"
             >
               <span>← Return to Admin Console</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -473,11 +473,11 @@ export function AdminSidebar() {
           </div>
         )}
         {isTeamLead && location.pathname.startsWith("/portal") && (
-          <div className="p-3 bg-[#7FA0D6]/10 border-b border-[#2A3446] text-left shrink-0">
+          <div className="p-3 bg-app-accent/10 border-b border-app-line text-left shrink-0">
             <Link
               to="/admin/pod-dashboard"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center justify-between text-xs font-bold text-[#7FA0D6] hover:text-white px-3 py-2 rounded-xl bg-[#0B111C] border border-[#7FA0D6]/30 hover:border-[#7FA0D6]/60 transition-colors shadow-xs"
+              className="flex items-center justify-between text-xs font-bold text-app-accent hover:text-hi px-3 py-2 rounded-xl bg-app-base border border-app-accent/30 hover:border-app-accent/60 transition-colors shadow-xs"
             >
               <span>← Return to Pod Dashboard</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -492,12 +492,12 @@ export function AdminSidebar() {
           onScroll={(e) => {
             sessionStorage.setItem("admin_sidebar_scroll", String(e.currentTarget.scrollTop));
           }}
-          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 space-y-5 text-left [scrollbar-width:thin] [scrollbar-color:#2A3446_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#2A3446] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#7FA0D6]/50"
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 space-y-5 text-left [scrollbar-width:thin] [scrollbar-color:#2A3446_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-app-line [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-app-accent/50"
         >
           {currentNavSections.map((section, idx) => (
             <div key={section.label || `section-${idx}`} className="space-y-1.5">
               {section.label && (
-                <div className="px-3 pb-1 text-xs font-black uppercase tracking-wider text-[#7FA0D6]">
+                <div className="px-3 pb-1 text-xs font-black uppercase tracking-wider text-app-accent">
                   {section.label}
                 </div>
               )}
@@ -512,14 +512,14 @@ export function AdminSidebar() {
                       onClick={() => setMobileOpen(false)}
                       className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-bold transition-all ${
                         active
-                          ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm font-black"
-                          : "text-[#97A0B3] hover:text-white hover:bg-[#0B111C]/50"
+                          ? "bg-app-accent-soft text-app-base shadow-sm font-black"
+                          : "text-app-mist hover:text-hi hover:bg-app-base/50"
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <Icon
                           className={`w-[18px] h-[18px] shrink-0 ${
-                            active ? "text-[#0B111C]" : "text-[#7FA0D6]"
+                            active ? "text-app-base" : "text-app-accent"
                           }`}
                         />
                         <span className="truncate">{item.label}</span>
@@ -528,8 +528,8 @@ export function AdminSidebar() {
                         <span
                           className={`text-[11px] px-2 py-0.5 rounded-md font-black shrink-0 ${
                             active
-                              ? "bg-[#0B111C]/20 text-[#0B111C]"
-                              : "bg-[#7FA0D6]/20 text-[#7FA0D6]"
+                              ? "bg-app-base/20 text-app-base"
+                              : "bg-app-accent/20 text-app-accent"
                           }`}
                         >
                           {item.badge}
@@ -545,10 +545,10 @@ export function AdminSidebar() {
                     type="button"
                     onClick={handleLogout}
                     disabled={loggingOut}
-                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-bold text-[#97A0B3] hover:text-white hover:bg-[#0B111C]/50 transition-all cursor-pointer"
+                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-bold text-app-mist hover:text-hi hover:bg-app-base/50 transition-all cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <LogOut className="w-[18px] h-[18px] shrink-0 text-[#7FA0D6]" />
+                      <LogOut className="w-[18px] h-[18px] shrink-0 text-app-accent" />
                       <span className="truncate">{loggingOut ? "Signing out..." : "Log out"}</span>
                     </div>
                   </button>

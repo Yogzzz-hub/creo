@@ -180,27 +180,27 @@ function PalettePopover({
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute z-50 mt-2 top-full left-0 sm:left-auto sm:right-0 bg-[#0B111C] p-3.5 rounded-2xl border border-[#2A3446] shadow-2xl space-y-3 w-[330px] sm:w-[370px] max-w-[92vw]">
+      <div className="absolute z-50 mt-2 top-full left-0 sm:left-auto sm:right-0 bg-app-base p-3.5 rounded-2xl border border-app-line shadow-2xl space-y-3 w-[330px] sm:w-[370px] max-w-[92vw]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#2A3446] pb-2">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-white uppercase tracking-wider">
-            <Palette className="w-3.5 h-3.5 text-[#7FA0D6]" />
+        <div className="flex items-center justify-between border-b border-app-line pb-2">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-hi uppercase tracking-wider">
+            <Palette className="w-3.5 h-3.5 text-app-accent" />
             <span>{title}</span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-[#97A0B3] hover:text-white p-1 rounded-md cursor-pointer transition-colors"
+            className="text-app-mist hover:text-hi p-1 rounded-md cursor-pointer transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Direct Color Entry Row */}
-        <div className="bg-[#161F2D] p-2.5 rounded-xl border border-[#2A3446] space-y-2">
-          <div className="flex items-center justify-between text-[11px] font-semibold text-[#97A0B3]">
+        <div className="bg-app-surface p-2.5 rounded-xl border border-app-line space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-app-mist">
             <span>Enter Custom Hex or Pick Color:</span>
-            <span className="font-mono text-white text-xs">{enteredHex || currentHex}</span>
+            <span className="font-mono text-hi text-xs">{enteredHex || currentHex}</span>
           </div>
           <div className="flex items-center gap-2">
             {/* Native Color Picker button */}
@@ -216,11 +216,11 @@ function PalettePopover({
                 className="absolute inset-0 opacity-0 w-8 h-8 cursor-pointer"
               />
               <div
-                className="w-8 h-8 rounded-lg border border-white/20 shadow-inner flex items-center justify-center transition-transform group-hover:scale-105"
+                className="w-8 h-8 rounded-lg border border-hi/20 shadow-inner flex items-center justify-center transition-transform group-hover:scale-105"
                 style={{ backgroundColor: enteredHex || currentHex }}
                 title="Click for full spectrum color wheel"
               >
-                <Pipette className="w-3.5 h-3.5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
+                <Pipette className="w-3.5 h-3.5 text-hi drop-shadow-[0_1px_2px_rgb(var(--shadow-rgb)/calc(0.8*var(--shadow-k)))]" />
               </div>
             </label>
 
@@ -242,14 +242,14 @@ function PalettePopover({
                   }
                 }}
                 placeholder="#7FA0D6"
-                className="w-full bg-[#0B111C] border border-[#2A3446] text-white text-xs px-2.5 py-1.5 rounded-lg font-mono uppercase focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full bg-app-base border border-app-line text-hi text-xs px-2.5 py-1.5 rounded-lg font-mono uppercase focus:outline-none focus:border-app-accent"
               />
             </div>
 
             <button
               type="button"
               onClick={() => handleApplyHex(enteredHex)}
-              className="px-2.5 py-1.5 bg-[#7FA0D6] hover:bg-[#9BB7E2] text-[#0B111C] text-xs font-bold rounded-lg cursor-pointer transition-colors shrink-0"
+              className="px-2.5 py-1.5 bg-app-accent hover:bg-app-accent text-app-base text-xs font-bold rounded-lg cursor-pointer transition-colors shrink-0"
             >
               Apply
             </button>
@@ -258,19 +258,19 @@ function PalettePopover({
 
         {/* Search Input in that Palette */}
         <div className="relative">
-          <Search className="w-3.5 h-3.5 text-[#97A0B3] absolute left-2.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-app-mist absolute left-2.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search colors in palette (e.g. blue, gold, #F43F5E)..."
-            className="w-full pl-8 pr-7 py-1.5 text-xs bg-[#161F2D] border border-[#2A3446] text-white rounded-xl placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6]"
+            className="w-full pl-8 pr-7 py-1.5 text-xs bg-app-surface border border-app-line text-hi rounded-xl placeholder-app-mist focus:outline-none focus:border-app-accent"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-app-mist hover:text-hi"
             >
               <X className="w-3 h-3" />
             </button>
@@ -286,8 +286,8 @@ function PalettePopover({
               onClick={() => setCategory(cat)}
               className={`px-2 py-0.5 rounded-lg whitespace-nowrap font-medium transition-colors cursor-pointer ${
                 category === cat
-                  ? "bg-[#7FA0D6] text-[#0B111C]"
-                  : "bg-[#161F2D] text-[#97A0B3] hover:text-white hover:bg-[#2A3446]"
+                  ? "bg-app-accent text-app-base"
+                  : "bg-app-surface text-app-mist hover:text-hi hover:bg-app-line"
               }`}
             >
               {cat}
@@ -302,23 +302,23 @@ function PalettePopover({
               onSelect(searchAsHex);
               setEnteredHex(searchAsHex);
             }}
-            className="flex items-center justify-between p-2 rounded-xl bg-[#161F2D] border border-[#7FA0D6]/40 hover:border-[#7FA0D6] cursor-pointer transition-all"
+            className="flex items-center justify-between p-2 rounded-xl bg-app-surface border border-app-accent/40 hover:border-app-accent cursor-pointer transition-all"
           >
             <div className="flex items-center gap-2">
               <div
-                className="w-5 h-5 rounded-full border border-white/20 shadow-sm"
+                className="w-5 h-5 rounded-full border border-hi/20 shadow-sm"
                 style={{ backgroundColor: searchAsHex }}
               />
-              <span className="text-xs font-bold text-white">Use Custom Hex: {searchAsHex}</span>
+              <span className="text-xs font-bold text-hi">Use Custom Hex: {searchAsHex}</span>
             </div>
-            <span className="text-[10px] text-[#7FA0D6] font-semibold">Select ➔</span>
+            <span className="text-[10px] text-app-accent font-semibold">Select ➔</span>
           </div>
         )}
 
         {/* Scrollable Palette Colors Grid */}
         <div className="max-h-48 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
           {filteredPalette.length === 0 && !searchAsHex ? (
-            <div className="text-center py-6 text-xs text-[#97A0B3]">
+            <div className="text-center py-6 text-xs text-app-mist">
               No palette colors match "{search}". Try another term or enter a custom hex code above.
             </div>
           ) : (
@@ -335,19 +335,19 @@ function PalettePopover({
                     }}
                     className={`flex items-center gap-2 p-1.5 rounded-xl border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-[#7FA0D6]/20 border-[#7FA0D6] text-white"
-                        : "bg-[#161F2D]/70 border-[#2A3446] text-[#BCCCE6] hover:bg-[#161F2D] hover:border-[#7FA0D6]/50"
+                        ? "bg-app-accent/20 border-app-accent text-hi"
+                        : "bg-app-surface/70 border-app-line text-app-accent-soft hover:bg-app-surface hover:border-app-accent/50"
                     }`}
                   >
                     <div
-                      className="w-5 h-5 rounded-lg border border-white/20 shadow-sm shrink-0 flex items-center justify-center"
+                      className="w-5 h-5 rounded-lg border border-hi/20 shadow-sm shrink-0 flex items-center justify-center"
                       style={{ backgroundColor: item.hex }}
                     >
-                      {isSelected && <Check className="w-3 h-3 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />}
+                      {isSelected && <Check className="w-3 h-3 text-hi drop-shadow-[0_1px_2px_rgb(var(--shadow-rgb)/calc(0.9*var(--shadow-k)))]" />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-medium truncate leading-tight text-white">{item.name}</p>
-                      <p className="text-[9px] font-mono text-[#97A0B3] uppercase leading-tight">{item.hex}</p>
+                      <p className="text-[11px] font-medium truncate leading-tight text-hi">{item.name}</p>
+                      <p className="text-[9px] font-mono text-app-mist uppercase leading-tight">{item.hex}</p>
                     </div>
                   </button>
                 );
@@ -357,8 +357,8 @@ function PalettePopover({
         </div>
 
         {/* Quick Brand Presets row */}
-        <div className="pt-2 border-t border-[#2A3446]">
-          <div className="flex items-center justify-between mb-1.5 text-[10px] text-[#97A0B3]">
+        <div className="pt-2 border-t border-app-line">
+          <div className="flex items-center justify-between mb-1.5 text-[10px] text-app-mist">
             <span>Quick Presets:</span>
             <span>7 popular tones</span>
           </div>
@@ -371,7 +371,7 @@ function PalettePopover({
                   onSelect(preset);
                   setEnteredHex(preset);
                 }}
-                className="w-6 h-6 rounded-lg border border-white/20 transition-transform hover:scale-110 active:scale-95 shadow-sm"
+                className="w-6 h-6 rounded-lg border border-hi/20 transition-transform hover:scale-110 active:scale-95 shadow-sm"
                 style={{ backgroundColor: preset }}
                 title={preset}
               />
@@ -390,7 +390,7 @@ function AdvancedColorPicker({ color, onChange }: { color: string; onChange: (he
   return (
     <div className="relative flex items-center">
       <div
-        className="w-8 h-8 rounded-lg cursor-pointer border border-[#2A3446] shadow-sm relative z-10 transition-transform hover:scale-105 active:scale-95"
+        className="w-8 h-8 rounded-lg cursor-pointer border border-app-line shadow-sm relative z-10 transition-transform hover:scale-105 active:scale-95"
         style={{ backgroundColor: currentHex }}
         onClick={() => setOpen(!open)}
         title="Click to open color palette and search"
@@ -417,7 +417,7 @@ function AddColorPaletteButton({ onAddColor }: { onAddColor: (hex: string) => vo
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="px-3.5 py-2 border border-dashed border-[#2A3446] hover:border-[#7FA0D6] rounded-xl text-xs font-bold text-[#7FA0D6] hover:text-[#BCCCE6] flex items-center gap-1.5 cursor-pointer transition-all hover:bg-[#161F2D] active:scale-95 shadow-sm"
+        className="px-3.5 py-2 border border-dashed border-app-line hover:border-app-accent rounded-xl text-xs font-bold text-app-accent hover:text-app-accent-soft flex items-center gap-1.5 cursor-pointer transition-all hover:bg-app-surface active:scale-95 shadow-sm"
       >
         <Plus className="w-3.5 h-3.5" /> Add Color
       </button>
@@ -1680,7 +1680,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
     return (
       <div className="flex flex-col items-center justify-center p-16 space-y-4">
         <CreoInlineLoader />
-        <p className="text-xs text-[#97A0B3] font-medium">Restoring your brand discovery session...</p>
+        <p className="text-xs text-app-mist font-medium">Restoring your brand discovery session...</p>
       </div>
     );
   }
@@ -1722,37 +1722,37 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
               disabled={!isUnlocked}
               className={`flex flex-col items-start p-3 rounded-xl border text-left w-full transition-all disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer select-none ${
                 isActive
-                  ? "bg-[#161F2D] border-2 border-[#BCCCE6] text-white shadow-lg ring-2 ring-[#BCCCE6]/20"
+                  ? "bg-app-surface border-2 border-app-accent-soft text-hi shadow-lg ring-2 ring-app-accent-soft/20"
                   : isDone
-                  ? "bg-[#161F2D]/90 border-[#7FA0D6]/40 text-[#BCCCE6] hover:border-[#7FA0D6]"
-                  : "bg-[#161F2D]/60 border-[#2A3446] text-[#97A0B3] hover:border-[#7FA0D6]/40"
+                  ? "bg-app-surface/90 border-app-accent/40 text-app-accent-soft hover:border-app-accent"
+                  : "bg-app-surface/60 border-app-line text-app-mist hover:border-app-accent/40"
               }`}
             >
               <div className="flex items-center justify-between w-full mb-1">
                 <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded font-mono ${
                   isActive
-                    ? "bg-[#7FA0D6] text-[#0B111C]"
+                    ? "bg-app-accent text-app-base"
                     : isDone
                     ? "bg-emerald-950/60 text-emerald-300 border border-emerald-800/60"
-                    : "bg-[#0B111C] text-[#97A0B3] border border-[#2A3446]"
+                    : "bg-app-base text-app-mist border border-app-line"
                 }`}>
                   {isDone ? `✓ ${sec.badge}` : sec.badge}
                 </span>
                 {!sec.isCore ? (
-                  <span className="text-[10px] font-bold text-[#D8BF9B] bg-[#D8BF9B]/10 border border-[#D8BF9B]/30 px-1 py-0.5 rounded shrink-0">
+                  <span className="text-[10px] font-bold text-app-warm bg-app-warm/10 border border-app-warm/30 px-1 py-0.5 rounded shrink-0">
                     Optional
                   </span>
                 ) : (
-                  <span className="text-[10px] font-bold text-[#7FA0D6] uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-app-accent uppercase tracking-wider">
                     {isDone ? "Done" : "Req"}
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-1.5 mt-1 w-full min-w-0">
-                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#7FA0D6]" : isDone ? "text-emerald-400" : "text-[#97A0B3]"}`} />
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-app-accent" : isDone ? "text-emerald-400" : "text-app-mist"}`} />
                 <span className="text-xs font-bold truncate">{sec.label}</span>
               </div>
-              <span className="text-[11px] text-[#97A0B3] mt-1 font-medium">~{sec.estMinutes} min</span>
+              <span className="text-[11px] text-app-mist mt-1 font-medium">~{sec.estMinutes} min</span>
             </button>
           );
         })}
@@ -1783,7 +1783,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
               setApiError(null);
               if (failedSection) void saveSectionInBackground(failedSection);
             }}
-            className="px-3 py-1 bg-white text-[#0B111C] rounded-lg font-bold hover:bg-[#BCCCE6] transition-colors shrink-0 flex items-center gap-1"
+            className="px-3 py-1 bg-hi text-app-base rounded-lg font-bold hover:bg-app-accent-soft transition-colors shrink-0 flex items-center gap-1"
           >
             <RefreshCw className="size-3" /> Retry
           </button>
@@ -1791,19 +1791,19 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
       )}
 
       {/* Main Section Content Form (Full dark theme, high contrast) */}
-      <div className="bg-[#161F2D] rounded-xl border border-[#2A3446] p-4 sm:p-6 shadow-xl text-white" style={{ colorScheme: "dark" }}>
+      <div className="bg-app-surface rounded-xl border border-app-line p-4 sm:p-6 shadow-xl text-hi" style={{ colorScheme: "dark" }}>
         
         {/* SECTION A: BRAND IDENTITY */}
         {activeSection === "a" && (
           <div className="space-y-6">
-            <div className="border-b border-[#2A3446] pb-4">
-              <h2 className="text-lg font-bold text-white">Section A: Brand Identity</h2>
-              <p className="text-xs text-[#97A0B3]">Required · Establishes official naming, social presence, and core category</p>
+            <div className="border-b border-app-line pb-4">
+              <h2 className="text-lg font-bold text-hi">Section A: Brand Identity</h2>
+              <p className="text-xs text-app-mist">Required · Establishes official naming, social presence, and core category</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-brand_name">
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   A1: Brand Name (as it appears on screen) <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <input
@@ -1814,10 +1814,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                     setSecA({ ...secA, brand_name: e.target.value });
                     clearFieldError("brand_name");
                   }}
-                  className={`w-full px-3.5 py-2.5 rounded-xl border bg-[#0B111C] text-sm text-white placeholder-[#97A0B3] focus:outline-none transition-all ${
+                  className={`w-full px-3.5 py-2.5 rounded-xl border bg-app-base text-sm text-white placeholder-app-mist focus:outline-none transition-all ${
                     fieldErrors.brand_name
                       ? "border-rose-500 bg-rose-950/10 focus:border-rose-500"
-                      : "border-[#2A3446] focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/30"
+                      : "border-app-line focus:border-app-accent focus:ring-1 focus:ring-app-accent/30"
                   }`}
                 />
                 {fieldErrors.brand_name && (
@@ -1828,7 +1828,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
               </div>
 
               <div id="field-instagram_handle">
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   A2: Instagram Handle <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <input
@@ -1839,10 +1839,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                     setSecA({ ...secA, instagram_handle: e.target.value });
                     clearFieldError("instagram_handle");
                   }}
-                  className={`w-full px-3.5 py-2.5 rounded-xl border bg-[#0B111C] text-sm text-white placeholder-[#97A0B3] focus:outline-none transition-all ${
+                  className={`w-full px-3.5 py-2.5 rounded-xl border bg-app-base text-sm text-white placeholder-app-mist focus:outline-none transition-all ${
                     fieldErrors.instagram_handle
                       ? "border-rose-500 bg-rose-950/10 focus:border-rose-500"
-                      : "border-[#2A3446] focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/30"
+                      : "border-app-line focus:border-app-accent focus:ring-1 focus:ring-app-accent/30"
                   }`}
                 />
                 {fieldErrors.instagram_handle && (
@@ -1855,10 +1855,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
 
             <div id="field-one_liner">
               <div className="flex justify-between items-center mb-1.5">
-                <label className="block text-xs font-semibold text-[#F1F5F9]">
+                <label className="block text-xs font-semibold text-app-ink-2">
                   A3: In one sentence, what does your brand do? <span className="text-rose-400 font-bold">*</span>
                 </label>
-                <span className="text-[11px] text-[#97A0B3] font-mono">
+                <span className="text-[11px] text-app-mist font-mono">
                   {secA.one_liner?.length || 0}/180
                 </span>
               </div>
@@ -1871,10 +1871,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   setSecA({ ...secA, one_liner: e.target.value });
                   clearFieldError("one_liner");
                 }}
-                className={`w-full px-3.5 py-2.5 rounded-xl border bg-[#0B111C] text-sm text-white placeholder-[#97A0B3] focus:outline-none transition-all ${
+                className={`w-full px-3.5 py-2.5 rounded-xl border bg-app-base text-sm text-white placeholder-app-mist focus:outline-none transition-all ${
                   fieldErrors.one_liner
                     ? "border-rose-500 bg-rose-950/10 focus:border-rose-500"
-                    : "border-[#2A3446] focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/30"
+                    : "border-app-line focus:border-app-accent focus:ring-1 focus:ring-app-accent/30"
                 }`}
               />
               {fieldErrors.one_liner && (
@@ -1886,7 +1886,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-category">
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   A4: Primary Category <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <NativeSelect
@@ -1896,10 +1896,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                     clearFieldError("category");
                   }}
                   style={{ colorScheme: "dark" }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-sm text-white focus:border-[#7FA0D6] focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-app-line bg-app-base text-sm text-hi focus:border-app-accent focus:outline-none cursor-pointer"
                 >
                   {CATEGORY_OPTIONS.map((c) => (
-                    <option key={c.value} value={c.value} className="bg-[#0B111C] text-white">
+                    <option key={c.value} value={c.value} className="bg-app-base text-hi">
                       {c.label}
                     </option>
                   ))}
@@ -1912,7 +1912,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
               </div>
 
               <div id="field-primary_goal">
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   A6: Single Outcome That Matters Most <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <NativeSelect
@@ -1922,10 +1922,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                     clearFieldError("primary_goal");
                   }}
                   style={{ colorScheme: "dark" }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-sm text-white focus:border-[#7FA0D6] focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-app-line bg-app-base text-sm text-hi focus:border-app-accent focus:outline-none cursor-pointer"
                 >
                   {GOAL_OPTIONS.map((g) => (
-                    <option key={g.value} value={g.value} className="bg-[#0B111C] text-white">
+                    <option key={g.value} value={g.value} className="bg-app-base text-hi">
                       {g.label}
                     </option>
                   ))}
@@ -1939,12 +1939,12 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
             </div>
 
             <div id="field-products">
-              <label className="block text-xs font-semibold text-[#F1F5F9] mb-2">
+              <label className="block text-xs font-semibold text-app-ink-2 mb-2">
                 A5: Products / Services (Most important first) <span className="text-rose-400 font-bold">*</span>
               </label>
               <div className="space-y-3">
                 {secA.products?.map((prod, idx) => (
-                  <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 bg-[#0B111C] border border-[#2A3446] rounded-xl">
+                  <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 bg-app-base border border-app-line rounded-xl">
                     <input
                       type="text"
                       placeholder="Product / Service Name"
@@ -1957,7 +1957,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                         }
                         clearFieldError("products");
                       }}
-                      className="w-full sm:w-1/3 px-3 py-2 text-xs bg-[#161F2D] text-white rounded-lg border border-[#2A3446] placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
+                      className="w-full sm:w-1/3 px-3 py-2 text-xs bg-app-surface text-hi rounded-lg border border-app-line placeholder-app-mist focus:border-app-accent focus:outline-none"
                     />
                     <input
                       type="text"
@@ -1970,7 +1970,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                           setSecA({ ...secA, products: next });
                         }
                       }}
-                      className="w-full sm:w-1/2 px-3 py-2 text-xs bg-[#161F2D] text-white rounded-lg border border-[#2A3446] placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
+                      className="w-full sm:w-1/2 px-3 py-2 text-xs bg-app-surface text-hi rounded-lg border border-app-line placeholder-app-mist focus:border-app-accent focus:outline-none"
                     />
                     <NativeSelect
                       value={prod.price_band}
@@ -1982,7 +1982,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                           setSecA({ ...secA, products: next });
                         }
                       }}
-                      className="px-2.5 py-2 text-xs bg-[#161F2D] text-white rounded-lg border border-[#2A3446] focus:border-[#7FA0D6] focus:outline-none"
+                      className="px-2.5 py-2 text-xs bg-app-surface text-hi rounded-lg border border-app-line focus:border-app-accent focus:outline-none"
                     >
                       <option value="budget">Budget</option>
                       <option value="mid">Mid-Tier</option>
@@ -1996,7 +1996,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                           const next = secA.products.filter((_, i) => i !== idx);
                           setSecA({ ...secA, products: next });
                         }}
-                        className="text-[#97A0B3] hover:text-rose-400 p-1.5 transition-colors cursor-pointer"
+                        className="text-app-mist hover:text-rose-400 p-1.5 transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -2011,7 +2011,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                 <button
                   type="button"
                   onClick={() => setSecA({ ...secA, products: [...secA.products, { name: "", description: "", price_band: "mid" }] })}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7FA0D6] hover:text-[#BCCCE6] cursor-pointer pt-1 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-app-accent hover:text-app-accent-soft cursor-pointer pt-1 transition-colors"
                 >
                   <Plus className="w-4 h-4" /> Add Another Product/Offering
                 </button>
@@ -2019,13 +2019,13 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
             </div>
 
             {/* A6: BRAND LOGO ASSET (Requirement 2.2) */}
-            <div id="field-brand_logo" className="space-y-3 pt-3 border-t border-[#2A3446]">
+            <div id="field-brand_logo" className="space-y-3 pt-3 border-t border-app-line">
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="block text-xs font-semibold text-[#F1F5F9]">
+                  <label className="block text-xs font-semibold text-app-ink-2">
                     A6: Official Brand Logo Asset
                   </label>
-                  <p className="text-[11px] text-[#97A0B3]">
+                  <p className="text-[11px] text-app-mist">
                     Upload your high-resolution brand logo (PNG, JPG, JPEG, SVG · Max 10MB). Stored in your client profile and accessible across creative pods.
                   </p>
                 </div>
@@ -2056,8 +2056,8 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
               />
 
               {secA.brand_logo_url ? (
-                <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-5">
-                  <div className="w-40 h-28 rounded-xl border border-[#2A3446] bg-[radial-gradient(#2A3446_1px,transparent_1px)] [background-size:12px_12px] bg-[#0E1524] flex items-center justify-center p-3 overflow-hidden shadow-inner shrink-0">
+                <div className="bg-app-base border border-app-line rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-5">
+                  <div className="w-40 h-28 rounded-xl border border-app-line bg-[radial-gradient(#2A3446_1px,transparent_1px)] [background-size:12px_12px] bg-[#0E1524] flex items-center justify-center p-3 overflow-hidden shadow-inner shrink-0">
                     <img
                       src={apiUrl(secA.brand_logo_url)}
                       alt="Brand Logo Preview"
@@ -2066,12 +2066,12 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   </div>
                   <div className="flex-1 space-y-2 text-center sm:text-left">
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                      <span className="text-xs font-bold text-white">Active Brand Asset</span>
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-[#161F2D] text-[#7FA0D6] border border-[#2A3446]">
+                      <span className="text-xs font-bold text-hi">Active Brand Asset</span>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-app-surface text-app-accent border border-app-line">
                         Synced with Profile & Pod
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#97A0B3] break-all font-mono">
+                    <p className="text-[11px] text-app-mist break-all font-mono">
                       {secA.brand_logo_url.split("/").pop()}
                     </p>
                     <div className="flex items-center justify-center sm:justify-start gap-3 pt-1">
@@ -2079,7 +2079,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                         type="button"
                         disabled={logoUploading}
                         onClick={() => logoInputRef.current?.click()}
-                        className="px-3 py-1.5 rounded-lg bg-[#7FA0D6] text-[#0B111C] hover:bg-[#BCCCE6] text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-lg bg-app-accent text-app-base hover:bg-app-accent-soft text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
                       >
                         {logoUploading ? "Updating..." : "Replace Logo"}
                       </button>
@@ -2103,31 +2103,31 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                     const file = e.dataTransfer.files?.[0];
                     if (file) handleLogoFileChange(file);
                   }}
-                  className={`border-2 border-dashed border-[#2A3446] hover:border-[#7FA0D6] bg-[#0B111C]/60 hover:bg-[#0B111C] rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+                  className={`border-2 border-dashed border-app-line hover:border-app-accent bg-app-base/60 hover:bg-app-base rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
                     logoUploading ? "opacity-60 cursor-not-allowed" : ""
                   }`}
                 >
                   {logoUploading ? (
                     <div className="flex flex-col items-center gap-2">
-                      <Loader2 className="w-8 h-8 text-[#7FA0D6] animate-spin" />
-                      <p className="text-xs font-semibold text-white">Uploading & validating logo asset...</p>
+                      <Loader2 className="w-8 h-8 text-app-accent animate-spin" />
+                      <p className="text-xs font-semibold text-hi">Uploading & validating logo asset...</p>
                     </div>
                   ) : (
                     <>
-                      <div className="w-12 h-12 rounded-full bg-[#7FA0D6]/10 border border-[#7FA0D6]/30 flex items-center justify-center text-[#7FA0D6] mb-3">
+                      <div className="w-12 h-12 rounded-full bg-app-accent/10 border border-app-accent/30 flex items-center justify-center text-app-accent mb-3">
                         <UploadCloud className="w-6 h-6" />
                       </div>
-                      <p className="text-sm font-semibold text-white">
+                      <p className="text-sm font-semibold text-hi">
                         Click to upload or drag & drop brand logo
                       </p>
-                      <p className="text-xs text-[#97A0B3] mt-1">
+                      <p className="text-xs text-app-mist mt-1">
                         PNG, JPG, JPEG, or SVG up to 10MB
                       </p>
                       <div className="flex items-center gap-1.5 mt-3">
                         {["PNG", "JPG", "JPEG", "SVG"].map((fmt) => (
                           <span
                             key={fmt}
-                            className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#161F2D] text-[#7FA0D6] border border-[#2A3446]"
+                            className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-app-surface text-app-accent border border-app-line"
                           >
                             {fmt}
                           </span>
@@ -2140,7 +2140,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+              <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                 A7: Anything else about that outcome? (Optional)
               </label>
               <textarea
@@ -2148,7 +2148,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                 placeholder="Specific monthly targets, promotional events, or milestones..."
                 value={secA.goal_notes}
                 onChange={(e) => setSecA({ ...secA, goal_notes: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi placeholder-app-mist focus:border-app-accent focus:outline-none"
               />
             </div>
           </div>
@@ -2157,13 +2157,13 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
         {/* SECTION B: AUDIENCE & POSITIONING */}
         {activeSection === "b" && (
           <div className="space-y-6">
-            <div className="border-b border-[#2A3446] pb-4">
-              <h2 className="text-lg font-bold text-white">Section B: Audience & Positioning</h2>
-              <p className="text-xs text-[#97A0B3]">Required · Establishes audience archetype, core pain points, and why they buy</p>
+            <div className="border-b border-app-line pb-4">
+              <h2 className="text-lg font-bold text-hi">Section B: Audience & Positioning</h2>
+              <p className="text-xs text-app-mist">Required · Establishes audience archetype, core pain points, and why they buy</p>
             </div>
 
             <div id="field-ideal_customer">
-              <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+              <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                 B1: Describe your ideal customer <span className="text-rose-400 font-bold">*</span>
               </label>
               <textarea
@@ -2174,10 +2174,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   setSecB({ ...secB, ideal_customer: e.target.value });
                   clearFieldError("ideal_customer");
                 }}
-                className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-[#0B111C] text-white placeholder-[#97A0B3] focus:outline-none transition-all ${
+                className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-app-base text-white placeholder-app-mist focus:outline-none transition-all ${
                   fieldErrors.ideal_customer
                     ? "border-rose-500 bg-rose-950/10 focus:border-rose-500"
-                    : "border-[#2A3446] focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/30"
+                    : "border-app-line focus:border-app-accent focus:ring-1 focus:ring-app-accent/30"
                 }`}
               />
               {fieldErrors.ideal_customer && (
@@ -2189,7 +2189,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-problem">
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   B2: What core problem are they trying to solve? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <textarea
@@ -2200,10 +2200,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                     setSecB({ ...secB, problem: e.target.value });
                     clearFieldError("problem");
                   }}
-                  className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-[#0B111C] text-white placeholder-[#97A0B3] focus:outline-none transition-all ${
+                  className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-app-base text-white placeholder-app-mist focus:outline-none transition-all ${
                     fieldErrors.problem
                       ? "border-rose-500 bg-rose-950/10 focus:border-rose-500"
-                      : "border-[#2A3446] focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/30"
+                      : "border-app-line focus:border-app-accent focus:ring-1 focus:ring-app-accent/30"
                   }`}
                 />
                 {fieldErrors.problem && (
@@ -2214,7 +2214,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
               </div>
 
               <div id="field-why_chosen">
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   B3: Why do customers choose you over alternatives? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <textarea
@@ -2225,10 +2225,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                     setSecB({ ...secB, why_chosen: e.target.value });
                     clearFieldError("why_chosen");
                   }}
-                  className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-[#0B111C] text-white placeholder-[#97A0B3] focus:outline-none transition-all ${
+                  className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-app-base text-white placeholder-app-mist focus:outline-none transition-all ${
                     fieldErrors.why_chosen
                       ? "border-rose-500 bg-rose-950/10 focus:border-rose-500"
-                      : "border-[#2A3446] focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/30"
+                      : "border-app-line focus:border-app-accent focus:ring-1 focus:ring-app-accent/30"
                   }`}
                 />
                 {fieldErrors.why_chosen && (
@@ -2240,12 +2240,12 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
             </div>
 
             {/* B4: Objections Asset Box */}
-            <div className="bg-[#0B111C] border border-[#D8BF9B]/30 rounded-xl p-4 shadow-xs">
-              <div className="flex items-center gap-1.5 text-[#D8BF9B] font-bold text-xs mb-1">
-                <Sparkles className="w-4 h-4 text-[#D8BF9B]" />
+            <div className="bg-app-base border border-app-warm/30 rounded-xl p-4 shadow-xs">
+              <div className="flex items-center gap-1.5 text-app-warm font-bold text-xs mb-1">
+                <Sparkles className="w-4 h-4 text-app-warm" />
                 <span>B4: Why might someone hesitate before buying? (Crucial Conversion Asset)</span>
               </div>
-              <p className="text-xs text-[#97A0B3] mb-2 leading-relaxed">
+              <p className="text-xs text-app-mist mb-2 leading-relaxed">
                 Every objection here converts directly into high-converting video and carousel pillars.
               </p>
               <textarea
@@ -2254,13 +2254,13 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                 value={secB.objections}
                 onChange={(e) => setSecB({ ...secB, objections: e.target.value })}
                 style={{ colorScheme: "dark" }}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#161F2D] border border-[#2A3446] text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none transition-all"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-app-surface border border-app-line text-hi placeholder-app-mist focus:border-app-accent focus:outline-none transition-all"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-languages">
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   B6: Primary Audience Languages <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -2280,8 +2280,8 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                         }}
                         className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
                           isSelected
-                            ? "bg-[#7FA0D6] text-[#0B111C] border-[#7FA0D6]"
-                            : "bg-[#0B111C] text-[#BCCCE6] border-[#2A3446] hover:border-[#7FA0D6]/60"
+                            ? "bg-app-accent text-app-base border-app-accent"
+                            : "bg-app-base text-app-accent-soft border-app-line hover:border-app-accent/60"
                         }`}
                       >
                         {lang.label}
@@ -2297,7 +2297,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
               </div>
 
               <div id="field-caption_script">
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   B7: Caption & Script Format <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <NativeSelect
@@ -2307,10 +2307,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                     clearFieldError("caption_script");
                   }}
                   style={{ colorScheme: "dark" }}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:border-[#7FA0D6] focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi focus:border-app-accent focus:outline-none cursor-pointer"
                 >
                   {SCRIPT_OPTIONS.map((s) => (
-                    <option key={s.value} value={s.value} className="bg-[#0B111C] text-white">
+                    <option key={s.value} value={s.value} className="bg-app-base text-hi">
                       {s.label}
                     </option>
                   ))}
@@ -2328,20 +2328,20 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
         {/* SECTION C: VOICE & TONE FRAMEWORK */}
         {activeSection === "c" && (
           <div className="space-y-6">
-            <div className="border-b border-[#2A3446] pb-4">
-              <h2 className="text-lg font-bold text-white">Section C: Voice & Tone Framework</h2>
-              <p className="text-xs text-[#97A0B3]">
+            <div className="border-b border-app-line pb-4">
+              <h2 className="text-lg font-bold text-hi">Section C: Voice & Tone Framework</h2>
+              <p className="text-xs text-app-mist">
                 Four validated bipolar scales (NN/g) + anti-tone negative constraints (~2 min)
               </p>
             </div>
 
             {/* Live Preview Box */}
-            <div className="bg-[#0B111C] text-white rounded-xl p-4.5 border border-[#2A3446] shadow-xl relative overflow-hidden transition-all duration-300 hover:border-[#7FA0D6]/50">
+            <div className="bg-app-base text-hi rounded-xl p-4.5 border border-app-line shadow-xl relative overflow-hidden transition-all duration-300 hover:border-app-accent/50">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono mb-2.5">
-                <div className="flex items-center gap-2 text-[#7FA0D6] uppercase tracking-wider font-semibold">
+                <div className="flex items-center gap-2 text-app-accent uppercase tracking-wider font-semibold">
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#7FA0D6] opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#7FA0D6]"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-app-accent opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-app-accent"></span>
                   </span>
                   <Sliders className="w-3.5 h-3.5" />
                   <span>Live Voice Synthesizer Preview</span>
@@ -2352,7 +2352,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   {(secC.voice_words || []).map((w: string) => (
                     <span
                       key={w}
-                      className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/40 uppercase tracking-wider shadow-[0_0_8px_rgba(127,160,214,0.2)]"
+                      className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-app-accent/20 text-app-accent border border-app-accent/40 uppercase tracking-wider shadow-[0_0_8px_rgba(127,160,214,0.2)]"
                     >
                       ✦ {w}
                     </span>
@@ -2366,7 +2366,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                     </span>
                   ))}
                   {(!secC.voice_words || secC.voice_words.length === 0) && (
-                    <span className="text-[10px] text-[#97A0B3] italic">
+                    <span className="text-[10px] text-app-mist italic">
                       Pick voice words below to dynamically synthesize tone
                     </span>
                   )}
@@ -2380,7 +2380,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
                   exit={{ opacity: 0, y: -4, scale: 0.99, filter: "blur(2px)" }}
                   transition={{ duration: 0.22, ease: "easeOut" }}
-                  className="text-sm sm:text-base font-medium italic text-[#E2E8F0] leading-relaxed"
+                  className="text-sm sm:text-base font-medium italic text-app-ink-2 leading-relaxed"
                 >
                   {liveSentencePreview}
                 </motion.p>
@@ -2389,10 +2389,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
 
             {/* 4 Sliders */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="bg-[#0B111C] p-4 rounded-xl border border-[#2A3446]">
-                <div className="flex justify-between items-center text-xs font-bold text-[#F1F5F9] mb-2">
+              <div className="bg-app-base p-4 rounded-xl border border-app-line">
+                <div className="flex justify-between items-center text-xs font-bold text-app-ink-2 mb-2">
                   <span>C1: Serious</span>
-                  <span className="font-mono text-[#7FA0D6]">{secC.humour}/10</span>
+                  <span className="font-mono text-app-accent">{secC.humour}/10</span>
                   <span>Funny</span>
                 </div>
                 <input
@@ -2402,14 +2402,14 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   value={secC.humour}
                   onChange={(e) => setSecC({ ...secC, humour: Number(e.target.value) })}
                   style={{ colorScheme: "dark" }}
-                  className="w-full accent-[#7FA0D6] cursor-pointer bg-transparent"
+                  className="w-full accent-app-accent cursor-pointer bg-transparent"
                 />
               </div>
 
-              <div className="bg-[#0B111C] p-4 rounded-xl border border-[#2A3446]">
-                <div className="flex justify-between items-center text-xs font-bold text-[#F1F5F9] mb-2">
+              <div className="bg-app-base p-4 rounded-xl border border-app-line">
+                <div className="flex justify-between items-center text-xs font-bold text-app-ink-2 mb-2">
                   <span>C2: Formal</span>
-                  <span className="font-mono text-[#7FA0D6]">{secC.formality}/10</span>
+                  <span className="font-mono text-app-accent">{secC.formality}/10</span>
                   <span>Casual</span>
                 </div>
                 <input
@@ -2419,14 +2419,14 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   value={secC.formality}
                   onChange={(e) => setSecC({ ...secC, formality: Number(e.target.value) })}
                   style={{ colorScheme: "dark" }}
-                  className="w-full accent-[#7FA0D6] cursor-pointer bg-transparent"
+                  className="w-full accent-app-accent cursor-pointer bg-transparent"
                 />
               </div>
 
-              <div className="bg-[#0B111C] p-4 rounded-xl border border-[#2A3446]">
-                <div className="flex justify-between items-center text-xs font-bold text-[#F1F5F9] mb-2">
+              <div className="bg-app-base p-4 rounded-xl border border-app-line">
+                <div className="flex justify-between items-center text-xs font-bold text-app-ink-2 mb-2">
                   <span>C3: Respectful</span>
-                  <span className="font-mono text-[#7FA0D6]">{secC.respectfulness}/10</span>
+                  <span className="font-mono text-app-accent">{secC.respectfulness}/10</span>
                   <span>Irreverent</span>
                 </div>
                 <input
@@ -2436,14 +2436,14 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   value={secC.respectfulness}
                   onChange={(e) => setSecC({ ...secC, respectfulness: Number(e.target.value) })}
                   style={{ colorScheme: "dark" }}
-                  className="w-full accent-[#7FA0D6] cursor-pointer bg-transparent"
+                  className="w-full accent-app-accent cursor-pointer bg-transparent"
                 />
               </div>
 
-              <div className="bg-[#0B111C] p-4 rounded-xl border border-[#2A3446]">
-                <div className="flex justify-between items-center text-xs font-bold text-[#F1F5F9] mb-2">
+              <div className="bg-app-base p-4 rounded-xl border border-app-line">
+                <div className="flex justify-between items-center text-xs font-bold text-app-ink-2 mb-2">
                   <span>C4: Matter-of-Fact</span>
-                  <span className="font-mono text-[#7FA0D6]">{secC.energy}/10</span>
+                  <span className="font-mono text-app-accent">{secC.energy}/10</span>
                   <span>Enthusiastic</span>
                 </div>
                 <input
@@ -2453,7 +2453,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   value={secC.energy}
                   onChange={(e) => setSecC({ ...secC, energy: Number(e.target.value) })}
                   style={{ colorScheme: "dark" }}
-                  className="w-full accent-[#7FA0D6] cursor-pointer bg-transparent"
+                  className="w-full accent-app-accent cursor-pointer bg-transparent"
                 />
               </div>
             </div>
@@ -2461,10 +2461,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
             {/* C5: Words that describe voice */}
             <div id="field-voice_words">
               <div className="flex justify-between items-center mb-1.5">
-                <label className="text-xs font-semibold text-[#F1F5F9]">
+                <label className="text-xs font-semibold text-app-ink-2">
                   C5: Pick up to 4 words that describe your voice <span className="text-rose-400 font-bold">*</span>
                 </label>
-                <span className="text-xs text-[#97A0B3] font-mono">
+                <span className="text-xs text-app-mist font-mono">
                   {secC.voice_words?.length || 0}/4 selected
                 </span>
               </div>
@@ -2486,8 +2486,8 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                       }}
                       className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer transform active:scale-95 hover:scale-[1.02] ${
                         isSelected
-                          ? "bg-[#7FA0D6] text-[#0B111C] border-[#7FA0D6] shadow-[0_0_12px_rgba(127,160,214,0.45)] ring-1 ring-[#7FA0D6]"
-                          : "bg-[#0B111C] text-[#BCCCE6] border-[#2A3446] hover:border-[#7FA0D6]/60 hover:text-white"
+                          ? "bg-app-accent text-app-base border-app-accent shadow-[0_0_12px_rgba(127,160,214,0.45)] ring-1 ring-app-accent"
+                          : "bg-app-base text-app-accent-soft border-app-line hover:border-app-accent/60 hover:text-hi"
                       }`}
                     >
                       {word}
@@ -2503,7 +2503,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
             </div>
 
             {/* C6: Anti-tone Guardrail */}
-            <div id="field-anti_voice_words" className="bg-[#0B111C] border border-rose-900/40 rounded-xl p-4">
+            <div id="field-anti_voice_words" className="bg-app-base border border-rose-900/40 rounded-xl p-4">
               <div className="flex justify-between items-center mb-1">
                 <label className="text-xs font-bold text-rose-200 flex items-center gap-1.5">
                   <ShieldAlert className="w-4 h-4 text-rose-400" />
@@ -2532,7 +2532,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer transform active:scale-95 hover:scale-[1.02] ${
                         isSelected
                           ? "bg-rose-600 text-white border-rose-500 shadow-[0_0_12px_rgba(225,29,72,0.4)] ring-1 ring-rose-400"
-                          : "bg-[#161F2D] text-rose-200 border-rose-900/50 hover:border-rose-700 hover:text-rose-100"
+                          : "bg-app-surface text-rose-200 border-rose-900/50 hover:border-rose-700 hover:text-rose-100"
                       }`}
                     >
                       {word}
@@ -2548,7 +2548,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+              <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                 C7: Words, phrases or claims we must never use
               </label>
               <textarea
@@ -2556,7 +2556,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                 placeholder="e.g. Miracle cure, Guaranteed 10x, Cheap, Discount, Hack..."
                 value={secC.forbidden_phrases}
                 onChange={(e) => setSecC({ ...secC, forbidden_phrases: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi placeholder-app-mist focus:border-app-accent focus:outline-none"
               />
             </div>
           </div>
@@ -2565,14 +2565,14 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
         {/* SECTION D: LOOK & ASSETS */}
         {activeSection === "d" && (
           <div className="space-y-6">
-            <div className="border-b border-[#2A3446] pb-4">
-              <h2 className="text-lg font-bold text-white">Section D: Visual Direction & Assets</h2>
-              <p className="text-xs text-[#97A0B3]">Required · Supplies our graphic designers & animators (~2 min)</p>
+            <div className="border-b border-app-line pb-4">
+              <h2 className="text-lg font-bold text-hi">Section D: Visual Direction & Assets</h2>
+              <p className="text-xs text-app-mist">Required · Supplies our graphic designers & animators (~2 min)</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-brand_guidelines">
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   D1: Do you have existing brand guidelines? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <NativeSelect
@@ -2582,7 +2582,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                     clearFieldError("brand_guidelines");
                   }}
                   style={{ colorScheme: "dark" }}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:border-[#7FA0D6] focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi focus:border-app-accent focus:outline-none cursor-pointer"
                 >
                   <option value="yes_will_upload">Yes, will upload full guidelines PDF</option>
                   <option value="partial">Partial (We have logo & colors only)</option>
@@ -2591,7 +2591,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   D3: Primary Brand Fonts (if any)
                 </label>
                 <input
@@ -2599,19 +2599,19 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   placeholder="e.g. Montserrat, Playfair Display, Inter"
                   value={secD.fonts}
                   onChange={(e) => setSecD({ ...secD, fonts: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi placeholder-app-mist focus:border-app-accent focus:outline-none"
                 />
               </div>
             </div>
 
             {/* D2: Brand Colours */}
             <div id="field-colours">
-              <label className="block text-xs font-semibold text-[#F1F5F9] mb-2">
+              <label className="block text-xs font-semibold text-app-ink-2 mb-2">
                 D2: Brand Hex Colours <span className="text-rose-400 font-bold">*</span>
               </label>
               <div className="flex flex-wrap gap-2.5">
                 {secD.colours?.map((col, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-2 bg-[#0B111C] border border-[#2A3446] rounded-xl">
+                  <div key={idx} className="flex items-center gap-2 p-2 bg-app-base border border-app-line rounded-xl">
                     <AdvancedColorPicker
                       color={col.hex}
                       onChange={(newHex) => {
@@ -2633,7 +2633,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                           setSecD({ ...secD, colours: next });
                         }
                       }}
-                      className="w-20 px-2 py-1 text-xs font-mono bg-[#161F2D] border border-[#2A3446] text-white rounded-lg uppercase"
+                      className="w-20 px-2 py-1 text-xs font-mono bg-app-surface border border-app-line text-hi rounded-lg uppercase"
                     />
                     <NativeSelect
                       value={col.label}
@@ -2645,7 +2645,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                           setSecD({ ...secD, colours: next });
                         }
                       }}
-                      className="text-xs bg-[#161F2D] text-white border border-[#2A3446] rounded-lg px-2 py-1"
+                      className="text-xs bg-app-surface text-hi border border-app-line rounded-lg px-2 py-1"
                     >
                       <option value="primary">Primary</option>
                       <option value="accent">Accent</option>
@@ -2658,7 +2658,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                           const next = secD.colours.filter((_, i) => i !== idx);
                           setSecD({ ...secD, colours: next });
                         }}
-                        className="text-[#97A0B3] hover:text-rose-400 p-1 cursor-pointer"
+                        className="text-app-mist hover:text-rose-400 p-1 cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -2685,16 +2685,16 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
             {/* D6: Visual Direction */}
             <div id="field-visual_direction" className="space-y-4">
               <div className="flex justify-between items-center mb-1">
-                <label className="text-xs font-semibold text-[#F1F5F9]">
+                <label className="text-xs font-semibold text-app-ink-2">
                   D6: Visual Direction (Pick up to 3) <span className="text-rose-400 font-bold">*</span>
                 </label>
-                <span className="text-xs text-[#97A0B3] font-mono">
+                <span className="text-xs text-app-mist font-mono">
                   {secD.visual_direction?.length || 0}/3 selected
                 </span>
               </div>
 
               {/* LIVE VISUAL DIRECTION SYNTHESIZER PREVIEW BOX */}
-              <div className="bg-[#0B111C] rounded-2xl p-4.5 border border-[#2A3446] shadow-xl relative overflow-hidden transition-all duration-300 hover:border-[#7FA0D6]/50">
+              <div className="bg-app-base rounded-2xl p-4.5 border border-app-line shadow-xl relative overflow-hidden transition-all duration-300 hover:border-app-accent/50">
                 {/* Ambient glow from user's primary brand color */}
                 <div
                   className="absolute -top-16 -right-16 w-44 h-44 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-500"
@@ -2702,10 +2702,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                 />
 
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono mb-2.5">
-                  <div className="flex items-center gap-2 text-[#7FA0D6] uppercase tracking-wider font-semibold">
+                  <div className="flex items-center gap-2 text-app-accent uppercase tracking-wider font-semibold">
                     <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#7FA0D6] opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#7FA0D6]"></span>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-app-accent opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-app-accent"></span>
                     </span>
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Live Visual Direction & Style Preview</span>
@@ -2718,14 +2718,14 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                       return (
                         <span
                           key={vVal}
-                          className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/40 uppercase tracking-wider shadow-[0_0_8px_rgba(127,160,214,0.2)]"
+                          className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-app-accent/20 text-app-accent border border-app-accent/40 uppercase tracking-wider shadow-[0_0_8px_rgba(127,160,214,0.2)]"
                         >
                           ✦ {opt?.label || vVal}
                         </span>
                       );
                     })}
                     {(!secD.visual_direction || secD.visual_direction.length === 0) && (
-                      <span className="text-[10px] text-[#97A0B3] italic">
+                      <span className="text-[10px] text-app-mist italic">
                         Select styles below to synthesize art direction
                       </span>
                     )}
@@ -2742,38 +2742,38 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                     transition={{ duration: 0.22, ease: "easeOut" }}
                     className="space-y-3"
                   >
-                    <div className="border-l-2 border-[#7FA0D6] pl-3 py-0.5">
-                      <h4 className="text-sm font-bold text-white tracking-wide">
+                    <div className="border-l-2 border-app-accent pl-3 py-0.5">
+                      <h4 className="text-sm font-bold text-hi tracking-wide">
                         {visualPreview.headline}
                       </h4>
-                      <p className="text-xs text-[#BCCCE6] mt-1 leading-relaxed italic">
+                      <p className="text-xs text-app-accent-soft mt-1 leading-relaxed italic">
                         "{visualPreview.creativeDirective}"
                       </p>
                     </div>
 
                     {/* Miniature Live Creative Canvas / Mockup Banner */}
-                    <div className="p-3 rounded-xl border border-[#2A3446] bg-[#161F2D]/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                    <div className="p-3 rounded-xl border border-app-line bg-app-surface/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono uppercase tracking-wider text-[#97A0B3]">Brand Harmony:</span>
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-app-mist">Brand Harmony:</span>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {secD.colours?.map((c, i) => (
                               <div
                                 key={i}
-                                className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#0B111C] border border-white/10 text-[10px] font-mono text-white"
+                                className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-app-base border border-hi/10 text-[10px] font-mono text-hi"
                               >
-                                <span className="w-2.5 h-2.5 rounded-full border border-white/20" style={{ backgroundColor: c.hex }} />
+                                <span className="w-2.5 h-2.5 rounded-full border border-hi/20" style={{ backgroundColor: c.hex }} />
                                 <span>{c.hex}</span>
-                                <span className="text-[9px] text-[#97A0B3] lowercase">({c.label})</span>
+                                <span className="text-[9px] text-app-mist lowercase">({c.label})</span>
                               </div>
                             ))}
                           </div>
                         </div>
 
                         {secD.fonts && (
-                          <div className="flex items-center gap-1.5 text-[10px] text-[#97A0B3] font-mono">
+                          <div className="flex items-center gap-1.5 text-[10px] text-app-mist font-mono">
                             <span>Primary Font:</span>
-                            <span className="text-[#7FA0D6] font-semibold">{secD.fonts}</span>
+                            <span className="text-app-accent font-semibold">{secD.fonts}</span>
                           </div>
                         )}
                       </div>
@@ -2783,7 +2783,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                         {visualPreview.designPillars.map((pillar, idx) => (
                           <span
                             key={idx}
-                            className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-[#0B111C] text-[#BCCCE6] border border-[#2A3446]"
+                            className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-app-base text-app-accent-soft border border-app-line"
                           >
                             {pillar}
                           </span>
@@ -2813,8 +2813,8 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                       }}
                       className={`p-3 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer transform active:scale-95 hover:scale-[1.02] ${
                         isSelected
-                          ? "bg-[#7FA0D6] text-[#0B111C] border-[#7FA0D6] shadow-[0_0_12px_rgba(127,160,214,0.45)] ring-1 ring-[#7FA0D6]"
-                          : "bg-[#0B111C] text-[#BCCCE6] border-[#2A3446] hover:border-[#7FA0D6]/60 hover:text-white"
+                          ? "bg-app-accent text-app-base border-app-accent shadow-[0_0_12px_rgba(127,160,214,0.45)] ring-1 ring-app-accent"
+                          : "bg-app-base text-app-accent-soft border-app-line hover:border-app-accent/60 hover:text-hi"
                       }`}
                     >
                       {vd.label}
@@ -2830,7 +2830,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+              <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                 D7: Visual styles, colours or treatments to strictly avoid
               </label>
               <textarea
@@ -2838,7 +2838,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                 placeholder="e.g. Neon gradients, loud yellow text, stock photo handshakes, chaotic fast cuts..."
                 value={secD.visual_avoid}
                 onChange={(e) => setSecD({ ...secD, visual_avoid: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi placeholder-app-mist focus:border-app-accent focus:outline-none"
               />
             </div>
           </div>
@@ -2847,23 +2847,23 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
         {/* SECTION E: PRODUCTION REALITY */}
         {activeSection === "e" && (
           <div className="space-y-6">
-            <div className="border-b border-[#2A3446] pb-4">
-              <h2 className="text-lg font-bold text-white">Section E: Production Reality & Constraints</h2>
-              <p className="text-xs text-[#97A0B3]">
+            <div className="border-b border-app-line pb-4">
+              <h2 className="text-lg font-bold text-hi">Section E: Production Reality & Constraints</h2>
+              <p className="text-xs text-app-mist">
                 Required · The facts an editor, shoot coordinator, and producer need before Monday (~3 min)
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-on_camera">
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   E1: Who can appear on camera? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <div className="space-y-2">
                   {ON_CAMERA_OPTIONS.map((opt) => {
                     const isChecked = secE.on_camera?.includes(opt.value);
                     return (
-                      <label key={opt.value} className="flex items-center gap-2.5 text-xs text-[#BCCCE6] cursor-pointer p-2 rounded-lg bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/40">
+                      <label key={opt.value} className="flex items-center gap-2.5 text-xs text-app-accent-soft cursor-pointer p-2 rounded-lg bg-app-base border border-app-line hover:border-app-accent/40">
                         <input
                           type="checkbox"
                           checked={isChecked}
@@ -2875,7 +2875,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                             setSecE({ ...secE, on_camera: next });
                             clearFieldError("on_camera");
                           }}
-                          className="rounded border-[#2A3446] text-[#7FA0D6] accent-[#7FA0D6]"
+                          className="rounded border-app-line text-app-accent accent-app-accent"
                         />
                         <span>{opt.label}</span>
                       </label>
@@ -2890,14 +2890,14 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   E2: Is the founder comfortable on camera? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <NativeSelect
                   value={secE.founder_comfort}
                   onChange={(e) => setSecE({ ...secE, founder_comfort: e.target.value })}
                   style={{ colorScheme: "dark" }}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:border-[#7FA0D6] focus:outline-none mb-4 cursor-pointer"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi focus:border-app-accent focus:outline-none mb-4 cursor-pointer"
                 >
                   <option value="yes_confident">Yes, confident & experienced</option>
                   <option value="yes_with_direction">Yes, with teleprompter & direction</option>
@@ -2906,14 +2906,14 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                 </NativeSelect>
 
                 <div id="field-shoot_locations">
-                  <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                  <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                     E3: Where can we shoot? <span className="text-rose-400 font-bold">*</span>
                   </label>
                   <div className="space-y-2 mb-4">
                     {SHOOT_LOCATION_OPTIONS.map((loc) => {
                       const isChecked = secE.shoot_locations?.includes(loc.value);
                       return (
-                        <label key={loc.value} className="flex items-center gap-2.5 text-xs text-[#BCCCE6] cursor-pointer p-2 rounded-lg bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/40">
+                        <label key={loc.value} className="flex items-center gap-2.5 text-xs text-app-accent-soft cursor-pointer p-2 rounded-lg bg-app-base border border-app-line hover:border-app-accent/40">
                           <input
                             type="checkbox"
                             checked={isChecked}
@@ -2925,7 +2925,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                               setSecE({ ...secE, shoot_locations: next });
                               clearFieldError("shoot_locations");
                             }}
-                            className="rounded border-[#2A3446] text-[#7FA0D6] accent-[#7FA0D6]"
+                            className="rounded border-app-line text-app-accent accent-app-accent"
                           />
                           <span>{loc.label}</span>
                         </label>
@@ -2940,7 +2940,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                 </div>
 
                 <div id="field-shoot_city">
-                  <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                  <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                     E4: City for Physical Shoots <span className="text-rose-400 font-bold">*</span>
                   </label>
                   <input
@@ -2951,10 +2951,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                       setSecE({ ...secE, shoot_city: e.target.value });
                       clearFieldError("shoot_city");
                     }}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-[#0B111C] text-white placeholder-[#97A0B3] focus:outline-none transition-all ${
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-app-base text-white placeholder-app-mist focus:outline-none transition-all ${
                       fieldErrors.shoot_city
                         ? "border-rose-500 bg-rose-950/10 focus:border-rose-500"
-                        : "border-[#2A3446] focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/30"
+                        : "border-app-line focus:border-app-accent focus:ring-1 focus:ring-app-accent/30"
                     }`}
                   />
                   {fieldErrors.shoot_city && (
@@ -2968,7 +2968,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-cta_destination">
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   E8: Where should content send viewers? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <NativeSelect
@@ -2978,10 +2978,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                     clearFieldError("cta_destination");
                   }}
                   style={{ colorScheme: "dark" }}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:border-[#7FA0D6] focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi focus:border-app-accent focus:outline-none cursor-pointer"
                 >
                   {CTA_DESTINATION_OPTIONS.map((c) => (
-                    <option key={c.value} value={c.value} className="bg-[#0B111C] text-white">
+                    <option key={c.value} value={c.value} className="bg-app-base text-hi">
                       {c.label}
                     </option>
                   ))}
@@ -2989,7 +2989,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   E9: CTA Target Destination URL / Number
                 </label>
                 <input
@@ -2997,18 +2997,18 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   placeholder="https://yourbrand.com or +919876543210"
                   value={secE.cta_target}
                   onChange={(e) => setSecE({ ...secE, cta_target: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi placeholder-app-mist focus:border-app-accent focus:outline-none"
                 />
               </div>
             </div>
 
             {/* E10: Regulatory Box */}
-            <div className="bg-[#0B111C] border border-rose-900/40 rounded-xl p-4 shadow-xs">
+            <div className="bg-app-base border border-rose-900/40 rounded-xl p-4 shadow-xs">
               <div className="flex items-center gap-1.5 text-rose-300 font-bold text-xs mb-1">
                 <AlertCircle className="w-4 h-4 text-rose-400" />
                 <span>E10: Regulatory or Legal Constraints on Claims (Agency Liability Shield)</span>
               </div>
-              <p className="text-xs text-[#97A0B3] mb-2 leading-relaxed">
+              <p className="text-xs text-app-mist mb-2 leading-relaxed">
                 e.g. Supplements cannot claim to cure disease; FinTech must carry risk disclaimers; healthcare cannot show patient before/after results.
               </p>
               <textarea
@@ -3017,20 +3017,20 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                 value={secE.legal_constraints}
                 onChange={(e) => setSecE({ ...secE, legal_constraints: e.target.value })}
                 style={{ colorScheme: "dark" }}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#161F2D] border border-rose-900/60 text-white placeholder-[#97A0B3] focus:border-rose-500 focus:outline-none transition-all"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-app-surface border border-rose-900/60 text-hi placeholder-app-mist focus:border-rose-500 focus:outline-none transition-all"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   E11: Who approves content and how fast? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <NativeSelect
                   value={secE.approval_speed}
                   onChange={(e) => setSecE({ ...secE, approval_speed: e.target.value })}
                   style={{ colorScheme: "dark" }}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:border-[#7FA0D6] focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi focus:border-app-accent focus:outline-none cursor-pointer"
                 >
                   <option value="founder_same_day">Founder (Same Day Turnaround)</option>
                   <option value="founder_2_3_days">Founder (2–3 Days)</option>
@@ -3040,7 +3040,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   E7: Formats you do NOT want produced
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -3060,7 +3060,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                         className={`px-2.5 py-1 text-xs rounded-lg border transition-colors cursor-pointer ${
                           isExcl
                             ? "bg-rose-900/50 text-rose-300 border-rose-700 font-semibold"
-                            : "bg-[#0B111C] text-[#BCCCE6] border-[#2A3446] hover:border-[#7FA0D6]/50"
+                            : "bg-app-base text-app-accent-soft border-app-line hover:border-app-accent/50"
                         }`}
                       >
                         {f.label}
@@ -3076,18 +3076,18 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
         {/* SECTION F: HISTORICAL DATA (OPTIONAL) */}
         {activeSection === "f" && (
           <div className="space-y-6">
-            <div className="border-b border-[#2A3446] pb-4">
+            <div className="border-b border-app-line pb-4">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-white">Section F: Historical Content Data</h2>
-                <span className="text-[11px] font-bold bg-[#D8BF9B]/20 text-[#D8BF9B] border border-[#D8BF9B]/30 px-2 py-0.5 rounded-full">
+                <h2 className="text-lg font-bold text-hi">Section F: Historical Content Data</h2>
+                <span className="text-[11px] font-bold bg-app-warm/20 text-app-warm border border-app-warm/30 px-2 py-0.5 rounded-full">
                   Optional Enrichment
                 </span>
               </div>
-              <p className="text-xs text-[#97A0B3] mt-1">Helps our team avoid repeating what flopped before (~2 min)</p>
+              <p className="text-xs text-app-mist mt-1">Helps our team avoid repeating what flopped before (~2 min)</p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+              <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                 F4: Anything that has clearly NOT worked before?
               </label>
               <textarea
@@ -3095,7 +3095,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                 placeholder="Styles, topics, formats, or angles that flopped or generated negative engagement..."
                 value={secF.what_failed}
                 onChange={(e) => setSecF({ ...secF, what_failed: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi placeholder-app-mist focus:border-app-accent focus:outline-none"
               />
             </div>
           </div>
@@ -3104,20 +3104,20 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
         {/* SECTION G: STORY & VISION (OPTIONAL) */}
         {activeSection === "g" && (
           <div className="space-y-6">
-            <div className="border-b border-[#2A3446] pb-4">
+            <div className="border-b border-app-line pb-4">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-white">Section G: Founder Story & Long-Term Vision</h2>
-                <span className="text-[11px] font-bold bg-[#D8BF9B]/20 text-[#D8BF9B] border border-[#D8BF9B]/30 px-2 py-0.5 rounded-full">
+                <h2 className="text-lg font-bold text-hi">Section G: Founder Story & Long-Term Vision</h2>
+                <span className="text-[11px] font-bold bg-app-warm/20 text-app-warm border border-app-warm/30 px-2 py-0.5 rounded-full">
                   Optional Enrichment
                 </span>
               </div>
-              <p className="text-xs text-[#97A0B3] mt-1">
+              <p className="text-xs text-app-mist mt-1">
                 Keep these in your own authentic words — they inform our copywriters and narrative strategists.
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+              <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                 G1: Why was the brand started?
               </label>
               <textarea
@@ -3125,12 +3125,12 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                 placeholder="The inciting moment, frustration with the industry, or origin story..."
                 value={secG.origin}
                 onChange={(e) => setSecG({ ...secG, origin: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi placeholder-app-mist focus:border-app-accent focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+              <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                 G2: What does your brand stand for today?
               </label>
               <textarea
@@ -3138,13 +3138,13 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                 placeholder="Core conviction, moral stance, or uncompromising standard..."
                 value={secG.stands_for}
                 onChange={(e) => setSecG({ ...secG, stands_for: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi placeholder-app-mist focus:border-app-accent focus:outline-none"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   G3: What do you want people to remember you for?
                 </label>
                 <textarea
@@ -3152,12 +3152,12 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   placeholder="The lingering feeling or reputation you want to hold..."
                   value={secG.remembered_for}
                   onChange={(e) => setSecG({ ...secG, remembered_for: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi placeholder-app-mist focus:border-app-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1.5">
                   G4: Where do you want the brand in 1–3 years?
                 </label>
                 <textarea
@@ -3165,7 +3165,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   placeholder="Market share, global reach, revenue milestone, or new product verticals..."
                   value={secG.vision}
                   onChange={(e) => setSecG({ ...secG, vision: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#2A3446] bg-[#0B111C] text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-app-line bg-app-base text-hi placeholder-app-mist focus:border-app-accent focus:outline-none"
                 />
               </div>
             </div>
@@ -3178,12 +3178,12 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
         )}
 
         {/* Footer Actions */}
-        <div className="flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-[#2A3446] mt-8 gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-app-line mt-8 gap-4">
           <button
             type="button"
             onClick={handlePrevSection}
             disabled={activeSection === "a"}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-[#97A0B3] text-xs font-bold hover:text-white hover:border-[#7FA0D6] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-app-line bg-app-base text-app-mist text-xs font-bold hover:text-hi hover:border-app-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Previous Section</span>
@@ -3194,7 +3194,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
               <button
                 type="button"
                 onClick={handleNextSection}
-                className="w-full sm:w-auto min-w-[200px] px-6 py-3 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-sm font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto min-w-[200px] px-6 py-3 rounded-xl bg-app-accent-soft hover:bg-hi text-app-base text-sm font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Continue</span>
                 <ArrowRight className="w-4 h-4" />
@@ -3204,16 +3204,16 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                 type="button"
                 onClick={handleSynthesizeAndFinish}
                 disabled={isSynthesizing || isMetaConnecting}
-                className="w-full sm:w-auto min-w-[240px] px-6 py-2.5 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-sm font-black transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-wait"
+                className="w-full sm:w-auto min-w-[240px] px-6 py-2.5 rounded-xl bg-app-accent-soft hover:bg-hi text-app-base text-sm font-black transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-wait"
               >
                 {isSynthesizing ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-[#0B111C]" />
+                    <Loader2 className="w-4 h-4 animate-spin text-app-base" />
                     <span>{synthPhase}</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4 text-[#0B111C]" />
+                    <Sparkles className="w-4 h-4 text-app-base" />
                     <span>Finish & allocate my pod</span>
                   </>
                 )}

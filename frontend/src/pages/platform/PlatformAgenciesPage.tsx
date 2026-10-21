@@ -122,7 +122,7 @@ export interface AgencyItem {
   };
 }
 
-const DEFAULT_STATUS_CONFIG = { label: "Suspended", cls: "bg-[#2A3446] text-[#97A0B3] border-[#2A3446]", icon: XCircle };
+const DEFAULT_STATUS_CONFIG = { label: "Suspended", cls: "bg-app-line text-app-mist border-app-line", icon: XCircle };
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: React.ComponentType<{className?: string}> }> = {
   active: { label: "Active", cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30", icon: CheckCircle2 },
@@ -212,8 +212,8 @@ export function PlatformAgenciesPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
         <div>
-          <h1 className="text-2xl font-black text-white">Agency Directory</h1>
-          <p className="text-xs text-[#97A0B3]">
+          <h1 className="text-2xl font-black text-hi">Agency Directory</h1>
+          <p className="text-xs text-app-mist">
             Subscribed agency workspaces · Real records from Supabase PostgreSQL
           </p>
         </div>
@@ -221,7 +221,7 @@ export function PlatformAgenciesPage() {
           <button
             type="button"
             onClick={() => void refetch()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs font-bold text-[#97A0B3] hover:text-white transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-app-surface border border-app-line hover:border-app-accent/40 text-xs font-bold text-app-mist hover:text-hi transition-all cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Refresh
@@ -229,7 +229,7 @@ export function PlatformAgenciesPage() {
           <button
             type="button"
             onClick={() => setShowProvisionModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#7FA0D6] to-[#4F70A6] text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer shadow-lg shadow-[#7FA0D6]/10"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer shadow-lg shadow-app-accent/10"
           >
             <Plus className="w-3.5 h-3.5" />
             Provision Agency
@@ -238,15 +238,15 @@ export function PlatformAgenciesPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <div className="bg-app-surface border border-app-line rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-app-mist" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by agency name, code, slug, or owner email..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6]"
+            className="w-full pl-10 pr-4 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi placeholder-app-mist focus:outline-none focus:border-app-accent"
           />
         </div>
 
@@ -255,7 +255,7 @@ export function PlatformAgenciesPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-bold text-white focus:outline-none focus:border-[#7FA0D6] cursor-pointer"
+              className="appearance-none pl-3 pr-8 py-2 rounded-xl bg-app-base border border-app-line text-xs font-bold text-hi focus:outline-none focus:border-app-accent cursor-pointer"
             >
               <option value="all">All Statuses ({agencies.length})</option>
               <option value="active">Active</option>
@@ -263,37 +263,37 @@ export function PlatformAgenciesPage() {
               <option value="past_due">Past Due</option>
               <option value="suspended">Suspended</option>
             </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#97A0B3] pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-app-mist pointer-events-none" />
           </div>
         </div>
       </div>
 
       {isLoading && (
-        <div className="p-12 text-center bg-[#161F2D] border border-[#2A3446] rounded-2xl">
+        <div className="p-12 text-center bg-app-surface border border-app-line rounded-2xl">
           <CreoInlineLoader label="Loading agencies from database..." />
         </div>
       )}
 
       {/* Agencies Table Card */}
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl overflow-hidden">
+      <div className="bg-app-surface border border-app-line rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-[#2A3446]">
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Agency</th>
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Owner / Contact</th>
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">SaaS Plan</th>
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">MRR</th>
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Capacity</th>
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Status</th>
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Created</th>
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6] text-right">Actions</th>
+              <tr className="border-b border-app-line">
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent">Agency</th>
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent">Owner / Contact</th>
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent">SaaS Plan</th>
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent">MRR</th>
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent">Capacity</th>
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent">Status</th>
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent">Created</th>
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A3446]">
+            <tbody className="divide-y divide-app-line">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-sm text-[#97A0B3]">
+                  <td colSpan={8} className="px-5 py-12 text-center text-sm text-app-mist">
                     No agencies match the selected filter.
                   </td>
                 </tr>
@@ -302,39 +302,39 @@ export function PlatformAgenciesPage() {
                   <tr key={a.id} className="hover:bg-[#0B111C]/40 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="size-9 rounded-xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-center text-xs font-black text-[#7FA0D6]">
+                        <div className="size-9 rounded-xl bg-app-base border border-app-line flex items-center justify-center text-xs font-black text-app-accent">
                           {a.name.slice(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <span className="text-[13px] font-black text-white hover:text-[#7FA0D6] transition-colors">
+                          <span className="text-[13px] font-black text-hi hover:text-app-accent transition-colors">
                             {a.name}
                           </span>
-                          <p className="text-[11px] text-[#97A0B3]">{a.code} · /{a.slug}</p>
+                          <p className="text-[11px] text-app-mist">{a.code} · /{a.slug}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <p className="text-[12px] font-bold text-white">{a.owner}</p>
-                      <p className="text-[11px] text-[#97A0B3]">{a.email}</p>
+                      <p className="text-[12px] font-bold text-hi">{a.owner}</p>
+                      <p className="text-[11px] text-app-mist">{a.email}</p>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#7FA0D6]/10 text-[#BCCCE6] border border-[#7FA0D6]/20">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-app-accent/10 text-app-accent-soft border border-app-accent/20">
                         {a.plan}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-[13px] font-black text-white">{fmt(a.mrr)}</td>
+                    <td className="px-5 py-4 text-[13px] font-black text-hi">{fmt(a.mrr)}</td>
                     <td className="px-5 py-4">
-                      <p className="text-[12px] font-bold text-white">{(a.clients_count ?? 0)} / {a.max_clients} clients</p>
-                      <p className="text-[11px] text-[#97A0B3]">{(a.seats_count ?? 0)} / {a.max_staff} seats</p>
+                      <p className="text-[12px] font-bold text-hi">{(a.clients_count ?? 0)} / {a.max_clients} clients</p>
+                      <p className="text-[11px] text-app-mist">{(a.seats_count ?? 0)} / {a.max_staff} seats</p>
                     </td>
                     <td className="px-5 py-4">
                       <StatusBadge status={a.status} />
                     </td>
-                    <td className="px-5 py-4 text-[12px] text-[#97A0B3]">{a.joined}</td>
+                    <td className="px-5 py-4 text-[12px] text-app-mist">{a.joined}</td>
                     <td className="px-5 py-4 text-right">
                       <Link
                         to={`/platform/agencies/${a.id}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs font-bold text-[#7FA0D6] hover:text-white transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-app-base border border-app-line hover:border-app-accent/40 text-xs font-bold text-app-accent hover:text-hi transition-all cursor-pointer"
                       >
                         Inspect
                         <ArrowUpRight className="w-3.5 h-3.5" />
@@ -351,13 +351,13 @@ export function PlatformAgenciesPage() {
       {/* Provision Agency Modal */}
       {showProvisionModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl w-full max-w-lg p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h2 className="text-lg font-black text-white">Provision New Agency</h2>
+          <div className="bg-app-surface border border-app-line rounded-2xl w-full max-w-lg p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
+              <h2 className="text-lg font-black text-hi">Provision New Agency</h2>
               <button
                 type="button"
                 onClick={() => setShowProvisionModal(false)}
-                className="text-[#97A0B3] hover:text-white"
+                className="text-app-mist hover:text-hi"
               >
                 ✕
               </button>
@@ -371,67 +371,67 @@ export function PlatformAgenciesPage() {
 
             <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Agency Name</label>
+                <label className="text-[11px] font-bold text-app-mist uppercase">Agency Name</label>
                 <input
                   type="text"
                   value={provisionName}
                   onChange={(e) => setProvisionName(e.target.value)}
                   placeholder="e.g. Apex Media Agency"
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Public Slug</label>
+                <label className="text-[11px] font-bold text-app-mist uppercase">Public Slug</label>
                 <input
                   type="text"
                   value={provisionSlug}
                   onChange={(e) => setProvisionSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                   placeholder="e.g. apexmedia"
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Admin Full Name</label>
+                  <label className="text-[11px] font-bold text-app-mist uppercase">Admin Full Name</label>
                   <input
                     type="text"
                     value={provisionAdminName}
                     onChange={(e) => setProvisionAdminName(e.target.value)}
                     placeholder="e.g. Rajesh Sharma"
-                    className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                    className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Admin Email</label>
+                  <label className="text-[11px] font-bold text-app-mist uppercase">Admin Email</label>
                   <input
                     type="email"
                     value={provisionEmail}
                     onChange={(e) => setProvisionEmail(e.target.value)}
                     placeholder="e.g. rajesh@apex.in"
-                    className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                    className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Initial Password</label>
+                <label className="text-[11px] font-bold text-app-mist uppercase">Initial Password</label>
                 <input
                   type="password"
                   value={provisionPassword}
                   onChange={(e) => setProvisionPassword(e.target.value)}
                   placeholder="Set initial password"
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-[#97A0B3] uppercase">SaaS Plan Tier</label>
+                <label className="text-[11px] font-bold text-app-mist uppercase">SaaS Plan Tier</label>
                 <select
                   value={provisionPlan}
                   onChange={(e) => setProvisionPlan(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                 >
                   <option value="launch">Launch Tier (₹1,999/mo · 10 clients)</option>
                   <option value="growth">Growth Tier (₹5,999/mo · 50 clients)</option>
@@ -441,11 +441,11 @@ export function PlatformAgenciesPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#2A3446]">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-line">
               <button
                 type="button"
                 onClick={() => setShowProvisionModal(false)}
-                className="px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-bold text-[#97A0B3] hover:text-white"
+                className="px-4 py-2 rounded-xl bg-app-base border border-app-line text-xs font-bold text-app-mist hover:text-hi"
               >
                 Cancel
               </button>
@@ -453,7 +453,7 @@ export function PlatformAgenciesPage() {
                 type="button"
                 disabled={provisionMutation.isPending || !provisionName || !provisionEmail || !provisionPassword}
                 onClick={() => provisionMutation.mutate()}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#7FA0D6] to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
               >
                 {provisionMutation.isPending ? "Provisioning..." : "Provision Agency"}
               </button>
@@ -584,7 +584,7 @@ export function PlatformAgencyDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="p-12 text-center bg-[#161F2D] border border-[#2A3446] rounded-2xl">
+      <div className="p-12 text-center bg-app-surface border border-app-line rounded-2xl">
         <CreoInlineLoader label="Loading agency profile from database..." />
       </div>
     );
@@ -592,7 +592,7 @@ export function PlatformAgencyDetailPage() {
 
   if (!agency) {
     return (
-      <div className="p-8 text-center text-sm text-[#97A0B3] bg-[#161F2D] border border-[#2A3446] rounded-2xl">
+      <div className="p-8 text-center text-sm text-app-mist bg-app-surface border border-app-line rounded-2xl">
         Agency not found.
       </div>
     );
@@ -627,25 +627,25 @@ export function PlatformAgencyDetailPage() {
     <div className="space-y-6 pb-8">
       {/* Back button */}
       <div className="flex items-center gap-3 pt-1">
-        <Link to="/platform/agencies" className="text-[#97A0B3] hover:text-white transition-colors text-sm font-bold">
+        <Link to="/platform/agencies" className="text-app-mist hover:text-hi transition-colors text-sm font-bold">
           ← Agencies Directory
         </Link>
       </div>
 
       {/* Agency Header Card */}
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-5 sm:p-6">
+      <div className="bg-app-surface border border-app-line rounded-2xl p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="size-14 rounded-2xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-center">
-              <span className="text-lg font-black text-[#7FA0D6]">{agency.name.slice(0, 2).toUpperCase()}</span>
+            <div className="size-14 rounded-2xl bg-app-base border border-app-line flex items-center justify-center">
+              <span className="text-lg font-black text-app-accent">{agency.name.slice(0, 2).toUpperCase()}</span>
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-black text-white">{agency.name}</h1>
+                <h1 className="text-xl font-black text-hi">{agency.name}</h1>
                 <StatusBadge status={agency.status} />
               </div>
-              <p className="text-sm text-[#97A0B3]">{agency.code} · /{agency.slug}</p>
-              <p className="text-xs text-[#97A0B3] mt-0.5">Agency Admin: {agency.owner} ({agency.email})</p>
+              <p className="text-sm text-app-mist">{agency.code} · /{agency.slug}</p>
+              <p className="text-xs text-app-mist mt-0.5">Agency Admin: {agency.owner} ({agency.email})</p>
             </div>
           </div>
 
@@ -659,7 +659,7 @@ export function PlatformAgencyDetailPage() {
                 setCustomStaffLimit(agency.max_staff || 15);
                 setShowNegotiateModal(true);
               }}
-              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#7FA0D6] to-[#4F70A6] text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1.5 shadow-md shadow-[#7FA0D6]/10"
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1.5 shadow-md shadow-app-accent/10"
             >
               <Sliders className="w-3.5 h-3.5" />
               Change / Negotiate Plan
@@ -668,7 +668,7 @@ export function PlatformAgencyDetailPage() {
               type="button"
               disabled={suspendMutation.isPending}
               onClick={() => suspendMutation.mutate()}
-              className="px-3 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] hover:border-rose-500/40 text-xs font-bold text-[#97A0B3] hover:text-rose-400 transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-xl bg-app-base border border-app-line hover:border-rose-500/40 text-xs font-bold text-app-mist hover:text-rose-400 transition-all cursor-pointer flex items-center gap-1.5"
             >
               <ShieldAlert className="w-3.5 h-3.5" />
               {agency.status === "suspended" ? "Reactivate Workspace" : "Suspend Agency"}
@@ -677,22 +677,22 @@ export function PlatformAgencyDetailPage() {
         </div>
 
         {/* Scoped Metric Bars */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-5 border-t border-[#2A3446]">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-5 border-t border-app-line">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-wider text-[#97A0B3]">Active Plan</p>
-            <p className="text-lg font-black text-[#7FA0D6] mt-1">{agency.plan}</p>
+            <p className="text-[11px] font-black uppercase tracking-wider text-app-mist">Active Plan</p>
+            <p className="text-lg font-black text-app-accent mt-1">{agency.plan}</p>
           </div>
           <div>
-            <p className="text-[11px] font-black uppercase tracking-wider text-[#97A0B3]">Contract Value</p>
-            <p className="text-lg font-black text-white mt-1">₹{agency.mrr.toLocaleString()}/mo</p>
+            <p className="text-[11px] font-black uppercase tracking-wider text-app-mist">Contract Value</p>
+            <p className="text-lg font-black text-hi mt-1">₹{agency.mrr.toLocaleString()}/mo</p>
           </div>
           <div>
-            <p className="text-[11px] font-black uppercase tracking-wider text-[#97A0B3]">Staff & Pod Seats</p>
-            <p className="text-lg font-black text-white mt-1">{staffList.length} / {agency.max_staff}</p>
+            <p className="text-[11px] font-black uppercase tracking-wider text-app-mist">Staff & Pod Seats</p>
+            <p className="text-lg font-black text-hi mt-1">{staffList.length} / {agency.max_staff}</p>
           </div>
           <div>
-            <p className="text-[11px] font-black uppercase tracking-wider text-[#97A0B3]">Storage Quota</p>
-            <p className="text-lg font-black text-white mt-1">
+            <p className="text-[11px] font-black uppercase tracking-wider text-app-mist">Storage Quota</p>
+            <p className="text-lg font-black text-hi mt-1">
               {agency.storage?.used_gb ?? 1.4} GB / {agency.storage?.quota_gb ?? 100} GB
             </p>
           </div>
@@ -700,15 +700,15 @@ export function PlatformAgencyDetailPage() {
       </div>
 
       {/* Personalized Links & Brand Isolation Banner */}
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-5 space-y-4">
+      <div className="bg-app-surface border border-app-line rounded-2xl p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
+            <div className="size-10 rounded-xl bg-app-base border border-app-line flex items-center justify-center text-app-accent">
               <Globe className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-black text-white">Agency Personalized Onboarding & Pricing Links</h2>
-              <p className="text-xs text-[#97A0B3]">
+              <h2 className="text-sm font-black text-hi">Agency Personalized Onboarding & Pricing Links</h2>
+              <p className="text-xs text-app-mist">
                 Dedicated URLs ensuring prospective clients see exclusively {agency.name}'s packages and branding
               </p>
             </div>
@@ -720,7 +720,7 @@ export function PlatformAgencyDetailPage() {
               setNewCustomDomain(agency.custom_domain || "");
               setShowSlugModal(true);
             }}
-            className="px-3 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-xs font-bold text-[#7FA0D6] hover:text-white transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-app-base hover:bg-app-line border border-app-line text-xs font-bold text-app-accent hover:text-hi transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
           >
             <Edit3 className="w-3.5 h-3.5" />
             Customize Vanity Slug
@@ -729,14 +729,14 @@ export function PlatformAgencyDetailPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
           {/* Onboarding Link */}
-          <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] flex flex-col justify-between gap-2">
+          <div className="p-3.5 rounded-xl bg-app-base border border-app-line flex flex-col justify-between gap-2">
             <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#97A0B3]">Personalized Client Onboarding URL</span>
-              <p className="text-xs font-mono font-bold text-[#7FA0D6] mt-0.5 break-all">
+              <span className="text-[10px] font-black uppercase tracking-wider text-app-mist">Personalized Client Onboarding URL</span>
+              <p className="text-xs font-mono font-bold text-app-accent mt-0.5 break-all">
                 {onboardingUrl}
               </p>
             </div>
-            <div className="flex items-center gap-2 pt-2 border-t border-[#2A3446]/60">
+            <div className="flex items-center gap-2 pt-2 border-t border-app-line/60">
               <button
                 type="button"
                 onClick={() => {
@@ -744,16 +744,16 @@ export function PlatformAgencyDetailPage() {
                   setCopiedLink(true);
                   setTimeout(() => setCopiedLink(false), 2000);
                 }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#161F2D] hover:bg-[#2A3446] text-xs font-bold text-white transition-colors cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-app-surface hover:bg-app-line text-xs font-bold text-hi transition-colors cursor-pointer"
               >
-                {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-[#97A0B3]" />}
+                {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-app-mist" />}
                 {copiedLink ? "Copied!" : "Copy Link"}
               </button>
               <a
                 href={`/onboarding?agency=${agency.slug}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#161F2D] hover:bg-[#2A3446] text-xs font-bold text-[#97A0B3] hover:text-white transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-app-surface hover:bg-app-line text-xs font-bold text-app-mist hover:text-hi transition-colors"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 Open In New Tab
@@ -762,14 +762,14 @@ export function PlatformAgencyDetailPage() {
           </div>
 
           {/* Pricing Link */}
-          <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] flex flex-col justify-between gap-2">
+          <div className="p-3.5 rounded-xl bg-app-base border border-app-line flex flex-col justify-between gap-2">
             <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#97A0B3]">Agency Isolated Pricing Catalog URL</span>
-              <p className="text-xs font-mono font-bold text-[#7FA0D6] mt-0.5 break-all">
+              <span className="text-[10px] font-black uppercase tracking-wider text-app-mist">Agency Isolated Pricing Catalog URL</span>
+              <p className="text-xs font-mono font-bold text-app-accent mt-0.5 break-all">
                 {pricingUrl}
               </p>
             </div>
-            <div className="flex items-center gap-2 pt-2 border-t border-[#2A3446]/60">
+            <div className="flex items-center gap-2 pt-2 border-t border-app-line/60">
               <button
                 type="button"
                 onClick={() => {
@@ -777,16 +777,16 @@ export function PlatformAgencyDetailPage() {
                   setCopiedPricing(true);
                   setTimeout(() => setCopiedPricing(false), 2000);
                 }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#161F2D] hover:bg-[#2A3446] text-xs font-bold text-white transition-colors cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-app-surface hover:bg-app-line text-xs font-bold text-hi transition-colors cursor-pointer"
               >
-                {copiedPricing ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-[#97A0B3]" />}
+                {copiedPricing ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-app-mist" />}
                 {copiedPricing ? "Copied!" : "Copy Link"}
               </button>
               <a
                 href={`/pricing?agency=${agency.slug}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#161F2D] hover:bg-[#2A3446] text-xs font-bold text-[#97A0B3] hover:text-white transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-app-surface hover:bg-app-line text-xs font-bold text-app-mist hover:text-hi transition-colors"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 Open In New Tab
@@ -797,14 +797,14 @@ export function PlatformAgencyDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-[#0B111C] border border-[#2A3446] rounded-xl w-fit flex-wrap">
+      <div className="flex gap-1 p-1 bg-app-base border border-app-line rounded-xl w-fit flex-wrap">
         <button
           type="button"
           onClick={() => setActiveTab("Plan")}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "Plan"
-              ? "bg-gradient-to-r from-[#7FA0D6] to-[#4F70A6] text-black shadow-md font-black"
-              : "text-[#97A0B3] hover:text-white"
+              ? "bg-gradient-to-r from-app-accent to-[#4F70A6] text-black shadow-md font-black"
+              : "text-app-mist hover:text-hi"
           }`}
         >
           Plan & Storage
@@ -814,8 +814,8 @@ export function PlatformAgencyDetailPage() {
           onClick={() => setActiveTab("Teams")}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "Teams"
-              ? "bg-gradient-to-r from-[#7FA0D6] to-[#4F70A6] text-black shadow-md font-black"
-              : "text-[#97A0B3] hover:text-white"
+              ? "bg-gradient-to-r from-app-accent to-[#4F70A6] text-black shadow-md font-black"
+              : "text-app-mist hover:text-hi"
           }`}
         >
           Teams & Staff ({staffList.length})
@@ -825,8 +825,8 @@ export function PlatformAgencyDetailPage() {
           onClick={() => setActiveTab("Packages")}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "Packages"
-              ? "bg-gradient-to-r from-[#7FA0D6] to-[#4F70A6] text-black shadow-md font-black"
-              : "text-[#97A0B3] hover:text-white"
+              ? "bg-gradient-to-r from-app-accent to-[#4F70A6] text-black shadow-md font-black"
+              : "text-app-mist hover:text-hi"
           }`}
         >
           Client Packages Offered ({clientPlans.length})
@@ -836,8 +836,8 @@ export function PlatformAgencyDetailPage() {
           onClick={() => setActiveTab("Clients")}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "Clients"
-              ? "bg-gradient-to-r from-[#7FA0D6] to-[#4F70A6] text-black shadow-md font-black"
-              : "text-[#97A0B3] hover:text-white"
+              ? "bg-gradient-to-r from-app-accent to-[#4F70A6] text-black shadow-md font-black"
+              : "text-app-mist hover:text-hi"
           }`}
         >
           Agency Clients ({clientsList.length})
@@ -847,8 +847,8 @@ export function PlatformAgencyDetailPage() {
           onClick={() => setActiveTab("Support")}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "Support"
-              ? "bg-gradient-to-r from-[#7FA0D6] to-[#4F70A6] text-black shadow-md font-black"
-              : "text-[#97A0B3] hover:text-white"
+              ? "bg-gradient-to-r from-app-accent to-[#4F70A6] text-black shadow-md font-black"
+              : "text-app-mist hover:text-hi"
           }`}
         >
           Support History ({supportTickets.length})
@@ -859,47 +859,47 @@ export function PlatformAgencyDetailPage() {
       {activeTab === "Plan" && (
         <div className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] space-y-2">
-              <div className="flex items-center justify-between text-xs text-[#97A0B3]">
+            <div className="p-5 rounded-2xl bg-app-surface border border-app-line space-y-2">
+              <div className="flex items-center justify-between text-xs text-app-mist">
                 <span className="font-bold uppercase tracking-wider">Current Tier</span>
-                <CreditCard className="w-4 h-4 text-[#7FA0D6]" />
+                <CreditCard className="w-4 h-4 text-app-accent" />
               </div>
-              <p className="text-xl font-black text-white">{agency.plan} Tier</p>
+              <p className="text-xl font-black text-hi">{agency.plan} Tier</p>
               <p className="text-xs text-emerald-400 font-bold">Active Standing</p>
-              <p className="text-[11px] text-[#97A0B3]">Contract rate: ₹{agency.mrr.toLocaleString()}/month</p>
+              <p className="text-[11px] text-app-mist">Contract rate: ₹{agency.mrr.toLocaleString()}/month</p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] space-y-2">
-              <div className="flex items-center justify-between text-xs text-[#97A0B3]">
+            <div className="p-5 rounded-2xl bg-app-surface border border-app-line space-y-2">
+              <div className="flex items-center justify-between text-xs text-app-mist">
                 <span className="font-bold uppercase tracking-wider">Storage Consumption</span>
-                <HardDrive className="w-4 h-4 text-[#7FA0D6]" />
+                <HardDrive className="w-4 h-4 text-app-accent" />
               </div>
-              <p className="text-xl font-black text-white">
-                {agency.storage?.used_gb ?? 1.4} GB <span className="text-xs text-[#97A0B3]">/ {agency.storage?.quota_gb ?? 100} GB</span>
+              <p className="text-xl font-black text-hi">
+                {agency.storage?.used_gb ?? 1.4} GB <span className="text-xs text-app-mist">/ {agency.storage?.quota_gb ?? 100} GB</span>
               </p>
-              <div className="w-full h-1.5 rounded-full bg-[#0B111C] overflow-hidden border border-[#2A3446]">
+              <div className="w-full h-1.5 rounded-full bg-app-base overflow-hidden border border-app-line">
                 <div
-                  className="h-full bg-gradient-to-r from-[#7FA0D6] to-emerald-400"
+                  className="h-full bg-gradient-to-r from-app-accent to-emerald-400"
                   style={{ width: `${agency.storage?.percentage ?? 1.4}%` }}
                 />
               </div>
-              <p className="text-[11px] text-[#97A0B3]">
+              <p className="text-[11px] text-app-mist">
                 {((agency.storage?.quota_gb ?? 100) - (agency.storage?.used_gb ?? 1.4)).toFixed(1)} GB available
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] space-y-2">
-              <div className="flex items-center justify-between text-xs text-[#97A0B3]">
+            <div className="p-5 rounded-2xl bg-app-surface border border-app-line space-y-2">
+              <div className="flex items-center justify-between text-xs text-app-mist">
                 <span className="font-bold uppercase tracking-wider">Payment Gateway</span>
                 <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
                   Connected
                 </span>
               </div>
-              <p className="text-xl font-black text-white">Razorpay</p>
-              <p className="text-xs text-[#97A0B3]">
+              <p className="text-xl font-black text-hi">Razorpay</p>
+              <p className="text-xs text-app-mist">
                 Next renewal: {agency.subscription?.period_end ? new Date(agency.subscription.period_end).toLocaleDateString() : "Active"}
               </p>
-              <p className="text-[11px] text-[#7FA0D6] font-mono">India Subscriptions Route</p>
+              <p className="text-[11px] text-app-accent font-mono">India Subscriptions Route</p>
             </div>
           </div>
         </div>
@@ -910,29 +910,29 @@ export function PlatformAgencyDetailPage() {
         <div className="space-y-6">
           {/* Teams / Pods Cards */}
           <div>
-            <h2 className="text-base font-black text-white mb-3">Creative Teams & Pods ({teamsList.length})</h2>
+            <h2 className="text-base font-black text-hi mb-3">Creative Teams & Pods ({teamsList.length})</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {teamsList.map((team) => (
-                <div key={team.id} className="p-4 rounded-2xl bg-[#161F2D] border border-[#2A3446] space-y-2">
+                <div key={team.id} className="p-4 rounded-2xl bg-app-surface border border-app-line space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-black text-white flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-[#7FA0D6]" />
+                    <span className="text-sm font-black text-hi flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-app-accent" />
                       {team.name}
                     </span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                       Active
                     </span>
                   </div>
-                  <p className="text-xs text-[#97A0B3]">
-                    Pod Lead: <span className="font-bold text-white">{team.lead_name}</span>
+                  <p className="text-xs text-app-mist">
+                    Pod Lead: <span className="font-bold text-hi">{team.lead_name}</span>
                   </p>
-                  <p className="text-[11px] text-[#7FA0D6]">
+                  <p className="text-[11px] text-app-accent">
                     {team.members_count} team members assigned
                   </p>
                 </div>
               ))}
               {teamsList.length === 0 && (
-                <div className="col-span-3 p-6 text-center bg-[#161F2D] border border-[#2A3446] rounded-2xl text-xs text-[#97A0B3]">
+                <div className="col-span-3 p-6 text-center bg-app-surface border border-app-line rounded-2xl text-xs text-app-mist">
                   No pods configured yet.
                 </div>
               )}
@@ -940,20 +940,20 @@ export function PlatformAgencyDetailPage() {
           </div>
 
           {/* Staff Directory Table */}
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-5 space-y-4">
+          <div className="bg-app-surface border border-app-line rounded-2xl p-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-base font-black text-white">Agency Staff Directory ({staffList.length})</h2>
-                <p className="text-xs text-[#97A0B3]">Staff seats utilized under the agency's {agency.plan} plan quota</p>
+                <h2 className="text-base font-black text-hi">Agency Staff Directory ({staffList.length})</h2>
+                <p className="text-xs text-app-mist">Staff seats utilized under the agency's {agency.plan} plan quota</p>
               </div>
               <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#97A0B3]" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-app-mist" />
                 <input
                   type="text"
                   value={staffSearch}
                   onChange={(e) => setStaffSearch(e.target.value)}
                   placeholder="Search staff members..."
-                  className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-app-base border border-app-line text-xs text-hi placeholder-app-mist focus:outline-none focus:border-app-accent"
                 />
               </div>
             </div>
@@ -961,39 +961,39 @@ export function PlatformAgencyDetailPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-[#2A3446]">
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Member Name</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Email</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Role</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Team / Pod</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Status</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Joined</th>
+                  <tr className="border-b border-app-line">
+                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-app-accent">Member Name</th>
+                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-app-accent">Email</th>
+                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-app-accent">Role</th>
+                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-app-accent">Team / Pod</th>
+                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-app-accent">Status</th>
+                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-app-accent">Joined</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#2A3446]">
+                <tbody className="divide-y divide-app-line">
                   {filteredStaff.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-sm text-[#97A0B3]">
+                      <td colSpan={6} className="px-4 py-8 text-center text-sm text-app-mist">
                         No staff members found.
                       </td>
                     </tr>
                   ) : (
                     filteredStaff.map((s) => (
                       <tr key={s.id} className="hover:bg-[#0B111C]/40 transition-colors">
-                        <td className="px-4 py-3 text-xs font-bold text-white">{s.name}</td>
-                        <td className="px-4 py-3 text-xs text-[#BCCCE6] font-mono">{s.email}</td>
+                        <td className="px-4 py-3 text-xs font-bold text-hi">{s.name}</td>
+                        <td className="px-4 py-3 text-xs text-app-accent-soft font-mono">{s.email}</td>
                         <td className="px-4 py-3">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 uppercase">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-app-accent/15 text-app-accent border border-app-accent/30 uppercase">
                             {s.role}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-xs text-white font-medium">{s.team_name}</td>
+                        <td className="px-4 py-3 text-xs text-hi font-medium">{s.team_name}</td>
                         <td className="px-4 py-3">
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 capitalize">
                             {s.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-xs text-[#97A0B3]">{s.joined}</td>
+                        <td className="px-4 py-3 text-xs text-app-mist">{s.joined}</td>
                       </tr>
                     ))
                   )}
@@ -1009,8 +1009,8 @@ export function PlatformAgencyDetailPage() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="text-base font-black text-white">Client Pricing Packages Offered by {agency.name}</h2>
-              <p className="text-xs text-[#97A0B3]">
+              <h2 className="text-base font-black text-hi">Client Pricing Packages Offered by {agency.name}</h2>
+              <p className="text-xs text-app-mist">
                 Packages this agency sells to their onboarding clients. You can edit quotas, prices, and features directly.
               </p>
             </div>
@@ -1020,48 +1020,48 @@ export function PlatformAgencyDetailPage() {
             {clientPlans.map((p) => (
               <div
                 key={p.id}
-                className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/40 flex flex-col justify-between gap-4 transition-all"
+                className="p-5 rounded-2xl bg-app-surface border border-app-line hover:border-app-accent/40 flex flex-col justify-between gap-4 transition-all"
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-black text-white">{p.display_name}</span>
+                    <span className="text-sm font-black text-hi">{p.display_name}</span>
                     {p.is_recommended && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#7FA0D6] text-black">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-app-accent text-black">
                         Recommended
                       </span>
                     )}
                   </div>
-                  <div className="mt-2 pb-3 border-b border-[#2A3446]">
-                    <span className="text-2xl font-black text-white">₹{p.monthly_price.toLocaleString()}</span>
-                    <span className="text-xs text-[#97A0B3]">/month</span>
+                  <div className="mt-2 pb-3 border-b border-app-line">
+                    <span className="text-2xl font-black text-hi">₹{p.monthly_price.toLocaleString()}</span>
+                    <span className="text-xs text-app-mist">/month</span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 my-3 text-center">
-                    <div className="p-2 rounded-xl bg-[#0B111C] border border-[#2A3446]">
-                      <p className="text-[10px] text-[#97A0B3]">Posters</p>
-                      <p className="text-xs font-black text-white">{p.poster_quota}</p>
+                    <div className="p-2 rounded-xl bg-app-base border border-app-line">
+                      <p className="text-[10px] text-app-mist">Posters</p>
+                      <p className="text-xs font-black text-hi">{p.poster_quota}</p>
                     </div>
-                    <div className="p-2 rounded-xl bg-[#0B111C] border border-[#2A3446]">
-                      <p className="text-[10px] text-[#97A0B3]">Reels</p>
-                      <p className="text-xs font-black text-white">{p.reel_quota}</p>
+                    <div className="p-2 rounded-xl bg-app-base border border-app-line">
+                      <p className="text-[10px] text-app-mist">Reels</p>
+                      <p className="text-xs font-black text-hi">{p.reel_quota}</p>
                     </div>
-                    <div className="p-2 rounded-xl bg-[#0B111C] border border-[#2A3446]">
-                      <p className="text-[10px] text-[#97A0B3]">Stories</p>
-                      <p className="text-xs font-black text-white">{p.story_quota}</p>
+                    <div className="p-2 rounded-xl bg-app-base border border-app-line">
+                      <p className="text-[10px] text-app-mist">Stories</p>
+                      <p className="text-xs font-black text-hi">{p.story_quota}</p>
                     </div>
                   </div>
 
-                  <div className="space-y-1.5 text-xs text-[#BCCCE6]">
+                  <div className="space-y-1.5 text-xs text-app-accent-soft">
                     <div className="flex items-center justify-between">
-                      <span className="text-[#97A0B3]">Revision Rounds:</span>
-                      <span className="font-bold text-white">{p.revision_rounds}</span>
+                      <span className="text-app-mist">Revision Rounds:</span>
+                      <span className="font-bold text-hi">{p.revision_rounds}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[#97A0B3]">Dedicated Manager:</span>
-                      <span className="font-bold text-white">{p.has_dedicated_manager ? "Yes" : "No"}</span>
+                      <span className="text-app-mist">Dedicated Manager:</span>
+                      <span className="font-bold text-hi">{p.has_dedicated_manager ? "Yes" : "No"}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[#97A0B3]">Active State:</span>
+                      <span className="text-app-mist">Active State:</span>
                       <span className={p.is_active ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
                         {p.is_active ? "Available" : "Hidden"}
                       </span>
@@ -1072,7 +1072,7 @@ export function PlatformAgencyDetailPage() {
                 <button
                   type="button"
                   onClick={() => setEditingClientPlan(p)}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#0B111C] hover:bg-[#7FA0D6] hover:text-black border border-[#2A3446] hover:border-[#7FA0D6] text-xs font-black text-white transition-all cursor-pointer"
+                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-app-base hover:bg-app-accent hover:text-black border border-app-line hover:border-app-accent text-xs font-black text-hi transition-all cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   Edit Client Package
@@ -1080,7 +1080,7 @@ export function PlatformAgencyDetailPage() {
               </div>
             ))}
             {clientPlans.length === 0 && (
-              <div className="col-span-3 p-8 text-center bg-[#161F2D] border border-[#2A3446] rounded-2xl text-[#97A0B3]">
+              <div className="col-span-3 p-8 text-center bg-app-surface border border-app-line rounded-2xl text-app-mist">
                 No client packages configured yet.
               </div>
             )}
@@ -1090,20 +1090,20 @@ export function PlatformAgencyDetailPage() {
 
       {/* Tab 4: Agency Clients List */}
       {activeTab === "Clients" && (
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl overflow-hidden space-y-4 p-5">
+        <div className="bg-app-surface border border-app-line rounded-2xl overflow-hidden space-y-4 p-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="text-base font-black text-white">Onboarded Clients ({clientsList.length})</h2>
-              <p className="text-xs text-[#97A0B3]">Clients managed by {agency.name} (tenant privacy preserved)</p>
+              <h2 className="text-base font-black text-hi">Onboarded Clients ({clientsList.length})</h2>
+              <p className="text-xs text-app-mist">Clients managed by {agency.name} (tenant privacy preserved)</p>
             </div>
             <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#97A0B3]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-app-mist" />
               <input
                 type="text"
                 value={clientSearch}
                 onChange={(e) => setClientSearch(e.target.value)}
                 placeholder="Search clients..."
-                className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-app-base border border-app-line text-xs text-hi placeholder-app-mist focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -1111,31 +1111,31 @@ export function PlatformAgencyDetailPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-[#2A3446]">
-                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Client Name</th>
-                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Email</th>
-                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Status</th>
-                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Onboarded Date</th>
+                <tr className="border-b border-app-line">
+                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-app-accent">Client Name</th>
+                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-app-accent">Email</th>
+                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-app-accent">Status</th>
+                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-wider text-app-accent">Onboarded Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#2A3446]">
+              <tbody className="divide-y divide-app-line">
                 {filteredClients.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-sm text-[#97A0B3]">
+                    <td colSpan={4} className="px-4 py-8 text-center text-sm text-app-mist">
                       No clients found matching search.
                     </td>
                   </tr>
                 ) : (
                   filteredClients.map((c) => (
                     <tr key={c.id} className="hover:bg-[#0B111C]/40 transition-colors">
-                      <td className="px-4 py-3 text-xs font-bold text-white">{c.name}</td>
-                      <td className="px-4 py-3 text-xs text-[#BCCCE6] font-mono">{c.email}</td>
+                      <td className="px-4 py-3 text-xs font-bold text-hi">{c.name}</td>
+                      <td className="px-4 py-3 text-xs text-app-accent-soft font-mono">{c.email}</td>
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 capitalize">
                           {c.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-[#97A0B3]">{c.joined}</td>
+                      <td className="px-4 py-3 text-xs text-app-mist">{c.joined}</td>
                     </tr>
                   ))
                 )}
@@ -1147,16 +1147,16 @@ export function PlatformAgencyDetailPage() {
 
       {/* Tab 5: Support History & Current Help */}
       {activeTab === "Support" && (
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-5 space-y-4">
+        <div className="bg-app-surface border border-app-line rounded-2xl p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-black text-white">Agency Support Requests & History</h2>
-              <p className="text-xs text-[#97A0B3]">Support tickets submitted by {agency.name} or assistance dispatched</p>
+              <h2 className="text-base font-black text-hi">Agency Support Requests & History</h2>
+              <p className="text-xs text-app-mist">Support tickets submitted by {agency.name} or assistance dispatched</p>
             </div>
             <button
               type="button"
               onClick={() => setShowSupportModal(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#7FA0D6] to-[#4F70A6] text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1.5"
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1.5"
             >
               <LifeBuoy className="w-3.5 h-3.5" />
               Dispatch Assistance
@@ -1165,22 +1165,22 @@ export function PlatformAgencyDetailPage() {
 
           <div className="space-y-3 pt-2">
             {supportTickets.length === 0 ? (
-              <div className="p-8 text-center bg-[#0B111C] border border-[#2A3446] rounded-xl text-[#97A0B3]">
-                <LifeBuoy className="w-6 h-6 mx-auto mb-2 text-[#7FA0D6]" />
-                <p className="text-xs font-bold text-white">No unresolved support tickets</p>
-                <p className="text-[11px] text-[#97A0B3] mt-1">Agency is operating smoothly with 0 open escalations.</p>
+              <div className="p-8 text-center bg-app-base border border-app-line rounded-xl text-app-mist">
+                <LifeBuoy className="w-6 h-6 mx-auto mb-2 text-app-accent" />
+                <p className="text-xs font-bold text-hi">No unresolved support tickets</p>
+                <p className="text-[11px] text-app-mist mt-1">Agency is operating smoothly with 0 open escalations.</p>
               </div>
             ) : (
               supportTickets.map((t) => (
-                <div key={t.id} className="p-4 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-2">
+                <div key={t.id} className="p-4 rounded-xl bg-app-base border border-app-line space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-white">{t.title}</span>
+                    <span className="text-sm font-bold text-hi">{t.title}</span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
                       {t.status}
                     </span>
                   </div>
-                  <p className="text-xs text-[#BCCCE6]">{t.description}</p>
-                  <div className="flex items-center justify-between text-[11px] text-[#97A0B3] pt-1 border-t border-[#2A3446]/60">
+                  <p className="text-xs text-app-accent-soft">{t.description}</p>
+                  <div className="flex items-center justify-between text-[11px] text-app-mist pt-1 border-t border-app-line/60">
                     <span>Priority: {t.priority}</span>
                     <span>Created: {t.created_at}</span>
                   </div>
@@ -1206,16 +1206,16 @@ export function PlatformAgencyDetailPage() {
       {/* Edit Vanity Slug Modal */}
       {showSlugModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="bg-app-surface border border-app-line rounded-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
               <div>
-                <h2 className="text-base font-black text-white">Customize Vanity Link & Domain</h2>
-                <p className="text-xs text-[#97A0B3]">Sets personalized link path for {agency.name}</p>
+                <h2 className="text-base font-black text-hi">Customize Vanity Link & Domain</h2>
+                <p className="text-xs text-app-mist">Sets personalized link path for {agency.name}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowSlugModal(false)}
-                className="text-[#97A0B3] hover:text-white"
+                className="text-app-mist hover:text-hi"
               >
                 ✕
               </button>
@@ -1223,36 +1223,36 @@ export function PlatformAgencyDetailPage() {
 
             <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Agency URL Slug</label>
-                <div className="flex items-center mt-1 rounded-xl bg-[#0B111C] border border-[#2A3446] overflow-hidden">
-                  <span className="px-3 text-xs text-[#97A0B3] font-mono border-r border-[#2A3446]">/onboarding?agency=</span>
+                <label className="text-[11px] font-bold text-app-mist uppercase">Agency URL Slug</label>
+                <div className="flex items-center mt-1 rounded-xl bg-app-base border border-app-line overflow-hidden">
+                  <span className="px-3 text-xs text-app-mist font-mono border-r border-app-line">/onboarding?agency=</span>
                   <input
                     type="text"
                     value={newSlug}
                     onChange={(e) => setNewSlug(e.target.value)}
                     placeholder="e.g. creo"
-                    className="w-full px-3 py-2 text-sm text-white focus:outline-none bg-transparent font-mono"
+                    className="w-full px-3 py-2 text-sm text-hi focus:outline-none bg-transparent font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-[#97A0B3] uppercase">White-Label Custom Domain (Optional)</label>
+                <label className="text-[11px] font-bold text-app-mist uppercase">White-Label Custom Domain (Optional)</label>
                 <input
                   type="text"
                   value={newCustomDomain}
                   onChange={(e) => setNewCustomDomain(e.target.value)}
                   placeholder="e.g. portal.creoagency.com"
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#2A3446]">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-line">
               <button
                 type="button"
                 onClick={() => setShowSlugModal(false)}
-                className="px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-bold text-[#97A0B3] hover:text-white"
+                className="px-4 py-2 rounded-xl bg-app-base border border-app-line text-xs font-bold text-app-mist hover:text-hi"
               >
                 Cancel
               </button>
@@ -1260,7 +1260,7 @@ export function PlatformAgencyDetailPage() {
                 type="button"
                 disabled={slugMutation.isPending || !newSlug}
                 onClick={() => slugMutation.mutate()}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#7FA0D6] to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
               >
                 {slugMutation.isPending ? "Saving..." : "Save Vanity Link"}
               </button>
@@ -1272,16 +1272,16 @@ export function PlatformAgencyDetailPage() {
       {/* Plan Negotiation Modal */}
       {showNegotiateModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="bg-app-surface border border-app-line rounded-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
               <div>
-                <h2 className="text-base font-black text-white">Negotiate / Change SaaS Plan</h2>
-                <p className="text-xs text-[#97A0B3]">Custom contract terms for {agency.name}</p>
+                <h2 className="text-base font-black text-hi">Negotiate / Change SaaS Plan</h2>
+                <p className="text-xs text-app-mist">Custom contract terms for {agency.name}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowNegotiateModal(false)}
-                className="text-[#97A0B3] hover:text-white"
+                className="text-app-mist hover:text-hi"
               >
                 ✕
               </button>
@@ -1289,11 +1289,11 @@ export function PlatformAgencyDetailPage() {
 
             <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Plan Tier</label>
+                <label className="text-[11px] font-bold text-app-mist uppercase">Plan Tier</label>
                 <select
                   value={negotiatedTier}
                   onChange={(e) => setNegotiatedTier(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                 >
                   <option value="launch">Launch Tier</option>
                   <option value="growth">Growth Tier</option>
@@ -1303,55 +1303,55 @@ export function PlatformAgencyDetailPage() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Negotiated Monthly Price (INR)</label>
+                <label className="text-[11px] font-bold text-app-mist uppercase">Negotiated Monthly Price (INR)</label>
                 <input
                   type="number"
                   value={negotiatedAmount}
                   onChange={(e) => setNegotiatedAmount(parseFloat(e.target.value) || 0)}
                   placeholder="e.g. 5000"
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                 />
-                <p className="text-[10px] text-[#97A0B3] mt-0.5">Allows custom enterprise or discounted pricing.</p>
+                <p className="text-[10px] text-app-mist mt-0.5">Allows custom enterprise or discounted pricing.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Max Clients Limit</label>
+                  <label className="text-[11px] font-bold text-app-mist uppercase">Max Clients Limit</label>
                   <input
                     type="number"
                     value={customClientsLimit}
                     onChange={(e) => setCustomClientsLimit(parseInt(e.target.value, 10) || 50)}
-                    className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                    className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Staff Seats</label>
+                  <label className="text-[11px] font-bold text-app-mist uppercase">Staff Seats</label>
                   <input
                     type="number"
                     value={customStaffLimit}
                     onChange={(e) => setCustomStaffLimit(parseInt(e.target.value, 10) || 15)}
-                    className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                    className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Negotiation Notes / Contract Reference</label>
+                <label className="text-[11px] font-bold text-app-mist uppercase">Negotiation Notes / Contract Reference</label>
                 <textarea
                   value={negotiateNotes}
                   onChange={(e) => setNegotiateNotes(e.target.value)}
                   rows={2}
                   placeholder="e.g. Approved 15% annual commitment discount"
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#2A3446]">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-line">
               <button
                 type="button"
                 onClick={() => setShowNegotiateModal(false)}
-                className="px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-bold text-[#97A0B3] hover:text-white"
+                className="px-4 py-2 rounded-xl bg-app-base border border-app-line text-xs font-bold text-app-mist hover:text-hi"
               >
                 Cancel
               </button>
@@ -1359,7 +1359,7 @@ export function PlatformAgencyDetailPage() {
                 type="button"
                 disabled={negotiateMutation.isPending}
                 onClick={() => negotiateMutation.mutate()}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#7FA0D6] to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
               >
                 {negotiateMutation.isPending ? "Applying..." : "Save Negotiated Plan"}
               </button>
@@ -1371,16 +1371,16 @@ export function PlatformAgencyDetailPage() {
       {/* Support Assistance Modal */}
       {showSupportModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="bg-app-surface border border-app-line rounded-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
               <div>
-                <h2 className="text-base font-black text-white">Dispatch Assistance Ticket</h2>
-                <p className="text-xs text-[#97A0B3]">Direct help note for {agency.name}</p>
+                <h2 className="text-base font-black text-hi">Dispatch Assistance Ticket</h2>
+                <p className="text-xs text-app-mist">Direct help note for {agency.name}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowSupportModal(false)}
-                className="text-[#97A0B3] hover:text-white"
+                className="text-app-mist hover:text-hi"
               >
                 ✕
               </button>
@@ -1388,22 +1388,22 @@ export function PlatformAgencyDetailPage() {
 
             <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Issue Subject</label>
+                <label className="text-[11px] font-bold text-app-mist uppercase">Issue Subject</label>
                 <input
                   type="text"
                   value={supportTitle}
                   onChange={(e) => setSupportTitle(e.target.value)}
                   placeholder="e.g. Assistance with Razorpay route settlement"
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Priority</label>
+                <label className="text-[11px] font-bold text-app-mist uppercase">Priority</label>
                 <select
                   value={supportPriority}
                   onChange={(e) => setSupportPriority(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -1412,22 +1412,22 @@ export function PlatformAgencyDetailPage() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Description / Assistance Note</label>
+                <label className="text-[11px] font-bold text-app-mist uppercase">Description / Assistance Note</label>
                 <textarea
                   value={supportDesc}
                   onChange={(e) => setSupportDesc(e.target.value)}
                   rows={3}
                   placeholder="Provide resolution or assistance steps..."
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#2A3446]">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-line">
               <button
                 type="button"
                 onClick={() => setShowSupportModal(false)}
-                className="px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-bold text-[#97A0B3] hover:text-white"
+                className="px-4 py-2 rounded-xl bg-app-base border border-app-line text-xs font-bold text-app-mist hover:text-hi"
               >
                 Cancel
               </button>
@@ -1435,7 +1435,7 @@ export function PlatformAgencyDetailPage() {
                 type="button"
                 disabled={supportMutation.isPending || !supportTitle || !supportDesc}
                 onClick={() => supportMutation.mutate()}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#7FA0D6] to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
               >
                 {supportMutation.isPending ? "Dispatching..." : "Dispatch Assistance"}
               </button>
@@ -1482,16 +1482,16 @@ function EditClientPackageModal({ plan, isPending, onClose, onSave }: EditClient
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl w-full max-w-lg p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+      <div className="bg-app-surface border border-app-line rounded-2xl w-full max-w-lg p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-app-line pb-3">
           <div>
-            <h2 className="text-base font-black text-white">Edit Client Package ({plan.name})</h2>
-            <p className="text-xs text-[#97A0B3]">Directly configure the pricing & quota offered to agency clients</p>
+            <h2 className="text-base font-black text-hi">Edit Client Package ({plan.name})</h2>
+            <p className="text-xs text-app-mist">Directly configure the pricing & quota offered to agency clients</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-[#97A0B3] hover:text-white"
+            className="text-app-mist hover:text-hi"
           >
             ✕
           </button>
@@ -1500,74 +1500,74 @@ function EditClientPackageModal({ plan, isPending, onClose, onSave }: EditClient
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Package Display Name</label>
+              <label className="text-[11px] font-bold text-app-mist uppercase">Package Display Name</label>
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 required
-                className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Monthly Price (₹ INR)</label>
+              <label className="text-[11px] font-bold text-app-mist uppercase">Monthly Price (₹ INR)</label>
               <input
                 type="number"
                 value={monthlyPrice}
                 onChange={(e) => setMonthlyPrice(Number(e.target.value))}
                 required
                 min={0}
-                className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Poster Quota</label>
+              <label className="text-[11px] font-bold text-app-mist uppercase">Poster Quota</label>
               <input
                 type="number"
                 value={posterQuota}
                 onChange={(e) => setPosterQuota(Number(e.target.value))}
                 required
                 min={0}
-                className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Reel Quota</label>
+              <label className="text-[11px] font-bold text-app-mist uppercase">Reel Quota</label>
               <input
                 type="number"
                 value={reelQuota}
                 onChange={(e) => setReelQuota(Number(e.target.value))}
                 required
                 min={0}
-                className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Story Quota</label>
+              <label className="text-[11px] font-bold text-app-mist uppercase">Story Quota</label>
               <input
                 type="number"
                 value={storyQuota}
                 onChange={(e) => setStoryQuota(Number(e.target.value))}
                 required
                 min={0}
-                className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3 pt-1">
             <div>
-              <label className="text-[11px] font-bold text-[#97A0B3] uppercase">Revision Rounds</label>
+              <label className="text-[11px] font-bold text-app-mist uppercase">Revision Rounds</label>
               <input
                 type="number"
                 value={revisionRounds}
                 onChange={(e) => setRevisionRounds(Number(e.target.value))}
                 required
                 min={0}
-                className="w-full mt-1 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full mt-1 px-3 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi focus:outline-none focus:border-app-accent"
               />
             </div>
             <div className="flex items-center gap-2 pt-6">
@@ -1576,9 +1576,9 @@ function EditClientPackageModal({ plan, isPending, onClose, onSave }: EditClient
                 id="dedicatedManager"
                 checked={hasDedicatedManager}
                 onChange={(e) => setHasDedicatedManager(e.target.checked)}
-                className="size-4 rounded accent-[#7FA0D6]"
+                className="size-4 rounded accent-app-accent"
               />
-              <label htmlFor="dedicatedManager" className="text-xs font-bold text-white cursor-pointer">
+              <label htmlFor="dedicatedManager" className="text-xs font-bold text-hi cursor-pointer">
                 Dedicated Lead
               </label>
             </div>
@@ -1588,9 +1588,9 @@ function EditClientPackageModal({ plan, isPending, onClose, onSave }: EditClient
                 id="isRecommended"
                 checked={isRecommended}
                 onChange={(e) => setIsRecommended(e.target.checked)}
-                className="size-4 rounded accent-[#7FA0D6]"
+                className="size-4 rounded accent-app-accent"
               />
-              <label htmlFor="isRecommended" className="text-xs font-bold text-white cursor-pointer">
+              <label htmlFor="isRecommended" className="text-xs font-bold text-hi cursor-pointer">
                 Recommended
               </label>
             </div>
@@ -1602,25 +1602,25 @@ function EditClientPackageModal({ plan, isPending, onClose, onSave }: EditClient
               id="isActive"
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
-              className="size-4 rounded accent-[#7FA0D6]"
+              className="size-4 rounded accent-app-accent"
             />
-            <label htmlFor="isActive" className="text-xs font-bold text-white cursor-pointer">
+            <label htmlFor="isActive" className="text-xs font-bold text-hi cursor-pointer">
               Active / Visible on Client Onboarding Page
             </label>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#2A3446]">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-app-line">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-bold text-[#97A0B3] hover:text-white"
+              className="px-4 py-2 rounded-xl bg-app-base border border-app-line text-xs font-bold text-app-mist hover:text-hi"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isPending}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-gradient-to-r from-[#7FA0D6] to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5" />
               {isPending ? "Saving..." : "Save Package"}

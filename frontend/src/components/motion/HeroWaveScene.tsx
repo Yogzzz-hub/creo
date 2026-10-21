@@ -5,6 +5,7 @@ import {
   BufferAttribute,
   BufferGeometry,
   Color,
+  NormalBlending,
   PerspectiveCamera,
   Points,
   Scene,
@@ -57,7 +58,7 @@ const FRAGMENT = /* glsl */ `
     if (r > 0.5) discard;
     float soft = smoothstep(0.5, 0.0, r);
     vec3 col = mix(uBlue, uMist, smoothstep(-0.6, 1.2, vHeight));
-    // A sparse set of warm glints so it doesn't read as a stock blue gradient
+    // A sparse set of sky-blue glints so it doesn't read as a stock blue gradient
     col = mix(col, uGold, step(0.965, vSeed) * 0.85);
     float alpha = soft * vFade * (0.35 + 0.45 * smoothstep(-0.8, 1.4, vHeight));
     gl_FragColor = vec4(col, alpha);
@@ -122,9 +123,9 @@ export default function HeroWaveScene({ className = "" }: { className?: string }
       uPointer: { value: [0, 0] as [number, number] },
       uScroll: { value: 0 },
       uPixelRatio: { value: pixelRatio },
-      uBlue: { value: new Color("#7FA0D6") },
-      uMist: { value: new Color("#BCCCE6") },
-      uGold: { value: new Color("#D8BF9B") },
+      uBlue: { value: new Color() },
+      uMist: { value: new Color() },
+      uGold: { value: new Color() },
     };
     const material = new ShaderMaterial({
       vertexShader: VERTEX,
@@ -134,6 +135,22 @@ export default function HeroWaveScene({ className = "" }: { className?: string }
       depthWrite: false,
       blending: AdditiveBlending,
     });
+    // Glowing additive dots on the dark canvas; sage/charcoal dots, normally blended, on stone paper
+    const applyPalette = () => {
+      const light = document.documentElement.dataset.theme === "light";
+      uniforms.uBlue.value.set(light ? "#6E7A5B" : "#4F7BFF");
+      uniforms.uMist.value.set(light ? "#394931" : "#DCE8FF");
+      uniforms.uGold.value.set(light ? "#C99AA9" : "#7DD3FC");
+      material.blending = light ? NormalBlending : AdditiveBlending;
+      material.needsUpdate = true;
+    };
+    applyPalette();
+    const themeObserver = new MutationObserver(() => {
+      applyPalette();
+      if (reduce) renderer.render(scene, camera);
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
     const points = new Points(geometry, material);
     points.rotation.x = -0.08;
     scene.add(points);
@@ -198,6 +215,7 @@ export default function HeroWaveScene({ className = "" }: { className?: string }
       window.removeEventListener("pointermove", onPointer);
       io.disconnect();
       ro.disconnect();
+      themeObserver.disconnect();
       geometry.dispose();
       material.dispose();
       renderer.dispose();

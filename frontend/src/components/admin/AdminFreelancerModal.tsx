@@ -161,25 +161,25 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
       onClick={onClose}
     >
       <div
-        className="bg-[#161F2D] rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-5 text-white max-h-[92vh] overflow-y-auto my-auto"
+        className="bg-app-surface rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-app-line space-y-5 text-hi max-h-[92vh] overflow-y-auto my-auto"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+        <div className="flex items-center justify-between border-b border-app-line pb-3">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
               <UserPlus className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm sm:text-base font-bold text-white">Onboard Freelancer</h3>
+                <h3 className="text-sm sm:text-base font-bold text-hi">Onboard Freelancer</h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
                   Role Scoped
                 </span>
               </div>
-              <p className="text-[11px] text-[#97A0B3]">
+              <p className="text-[11px] text-app-mist">
                 Assign project access & task deliverables
               </p>
             </div>
@@ -187,7 +187,7 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-[#97A0B3] hover:text-white rounded-xl hover:bg-[#0B111C] transition-colors"
+            className="p-1.5 text-app-mist hover:text-hi rounded-xl hover:bg-app-base transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -210,7 +210,7 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
           {/* Full Name & Email */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block font-bold text-[#F1F5F9] mb-1">Full Name *</label>
+              <label className="block font-bold text-app-ink-2 mb-1">Full Name *</label>
               <input
                 type="text"
                 required
@@ -224,32 +224,32 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                   }
                 }}
                 placeholder="e.g. Alex Rivera"
-                className="w-full px-3 py-2 rounded-lg border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs"
+                className="w-full px-3 py-2 rounded-lg border border-app-line bg-app-base text-hi focus:outline-none focus:border-purple-400 text-xs"
               />
             </div>
             <div>
-              <label className="block font-bold text-[#F1F5F9] mb-1">Email Address *</label>
+              <label className="block font-bold text-app-ink-2 mb-1">Email Address *</label>
               <div className="relative">
-                <Mail className="w-3.5 h-3.5 text-[#97A0B3] absolute left-3 top-2.5" />
+                <Mail className="w-3.5 h-3.5 text-app-mist absolute left-3 top-2.5" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="alex.editor@creo.agency"
-                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-app-line bg-app-base text-hi focus:outline-none focus:border-purple-400 text-xs"
                 />
               </div>
             </div>
           </div>
 
           {/* Dispatch / Personal Email Option - Minimalist */}
-          <div className="bg-[#0B111C]/60 p-2.5 sm:p-3 rounded-xl border border-[#2A3446] space-y-2">
+          <div className="bg-app-base/60 p-2.5 sm:p-3 rounded-xl border border-app-line space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5">
+              <label className="text-xs font-bold text-app-ink-2 flex items-center gap-1.5">
                 <Mail className="w-3.5 h-3.5 text-purple-400" />
                 <span>Personal Email</span>
-                <span className="text-[10px] text-[#97A0B3] font-normal">(Optional dispatch)</span>
+                <span className="text-[10px] text-app-mist font-normal">(Optional dispatch)</span>
               </label>
               <label className="flex items-center gap-1.5 cursor-pointer text-purple-300 text-[11px] font-medium select-none">
                 <input
@@ -266,13 +266,13 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
               value={dispatchEmail}
               onChange={(e) => setDispatchEmail(e.target.value)}
               placeholder="e.g. alex.personal@gmail.com"
-              className="w-full px-3 py-2 rounded-lg border border-[#2A3446] bg-[#161F2D] text-white focus:outline-none focus:border-purple-400 text-xs"
+              className="w-full px-3 py-2 rounded-lg border border-app-line bg-app-surface text-hi focus:outline-none focus:border-purple-400 text-xs"
             />
           </div>
 
           {/* Specialty Dropdown & Custom Option */}
           <div>
-            <label className="block font-bold text-[#F1F5F9] mb-1">Specialty & Creative Track *</label>
+            <label className="block font-bold text-app-ink-2 mb-1">Specialty & Creative Track *</label>
             <CustomSelect
               value={selectedSpecialty || ""}
               onChange={setSelectedSpecialty}
@@ -291,7 +291,7 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                 value={customSpecialty}
                 onChange={(e) => setCustomSpecialty(e.target.value)}
                 placeholder="Type custom specialty (e.g. Drone Pilot / Aerial Cinematographer)..."
-                className="w-full mt-2 px-3.5 py-2.5 rounded-xl border border-purple-500/40 bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs"
+                className="w-full mt-2 px-3.5 py-2.5 rounded-xl border border-purple-500/40 bg-app-base text-hi focus:outline-none focus:border-purple-400 text-xs"
               />
             )}
           </div>
@@ -300,7 +300,7 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="font-bold text-[#F1F5F9]">Agreed Compensation Rate</label>
+                <label className="font-bold text-app-ink-2">Agreed Compensation Rate</label>
                 <div className="flex items-center gap-1 text-[10px]">
                   <button
                     type="button"
@@ -308,7 +308,7 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                     className={`px-2 py-0.5 rounded-md font-bold transition-all ${
                       rateType === "hourly"
                         ? "bg-purple-600 text-white"
-                        : "text-[#97A0B3] hover:text-white"
+                        : "text-app-mist hover:text-hi"
                     }`}
                   >
                     Per Hour
@@ -319,7 +319,7 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                     className={`px-2 py-0.5 rounded-md font-bold transition-all ${
                       rateType === "fixed"
                         ? "bg-purple-600 text-white"
-                        : "text-[#97A0B3] hover:text-white"
+                        : "text-app-mist hover:text-hi"
                     }`}
                   >
                     Per Project
@@ -327,7 +327,7 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                 </div>
               </div>
               <div className="relative">
-                <IndianRupee className="w-3.5 h-3.5 text-[#97A0B3] absolute left-3 top-3" />
+                <IndianRupee className="w-3.5 h-3.5 text-app-mist absolute left-3 top-3" />
                 <input
                   type="number"
                   min="0"
@@ -335,9 +335,9 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                   value={hourlyRate}
                   onChange={(e) => setHourlyRate(Number(e.target.value))}
                   placeholder="1500"
-                  className="w-full pl-9 pr-16 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs font-semibold"
+                  className="w-full pl-9 pr-16 py-2.5 rounded-xl border border-app-line bg-app-base text-hi focus:outline-none focus:border-purple-400 text-xs font-semibold"
                 />
-                <span className="absolute right-3 top-2.5 text-[10px] text-[#97A0B3] font-bold">
+                <span className="absolute right-3 top-2.5 text-[10px] text-app-mist font-bold">
                   {rateType === "hourly" ? "₹ / hr" : "₹ / task"}
                 </span>
               </div>
@@ -346,7 +346,7 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
             {/* Portfolio Link */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="font-bold text-[#F1F5F9]">Portfolio / Showreel URL</label>
+                <label className="font-bold text-app-ink-2">Portfolio / Showreel URL</label>
                 {portfolioLink && (
                   <a
                     href={portfolioLink}
@@ -359,13 +359,13 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                 )}
               </div>
               <div className="relative">
-                <LinkIcon className="w-3.5 h-3.5 text-[#97A0B3] absolute left-3 top-3" />
+                <LinkIcon className="w-3.5 h-3.5 text-app-mist absolute left-3 top-3" />
                 <input
                   type="url"
                   value={portfolioLink}
                   onChange={(e) => setPortfolioLink(e.target.value)}
                   placeholder="https://behance.net/username or vimeo.com/..."
-                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs"
+                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-app-line bg-app-base text-hi focus:outline-none focus:border-purple-400 text-xs"
                 />
               </div>
             </div>
@@ -374,10 +374,10 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
           {/* Interactive Skills Selection */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="font-bold text-[#F1F5F9]">Core Software & Production Skills</label>
-              <span className="text-[10px] text-[#97A0B3]">Click to toggle or add custom below</span>
+              <label className="font-bold text-app-ink-2">Core Software & Production Skills</label>
+              <span className="text-[10px] text-app-mist">Click to toggle or add custom below</span>
             </div>
-            <div className="flex flex-wrap gap-1.5 p-2.5 rounded-2xl bg-[#0B111C] border border-[#2A3446]">
+            <div className="flex flex-wrap gap-1.5 p-2.5 rounded-2xl bg-app-base border border-app-line">
               {PRESET_SKILLS.map((skill) => {
                 const isSelected = selectedSkills.includes(skill);
                 return (
@@ -388,7 +388,7 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                       isSelected
                         ? "bg-purple-600 text-white shadow-sm shadow-purple-500/20"
-                        : "bg-[#161F2D] text-[#97A0B3] hover:text-white border border-[#2A3446]"
+                        : "bg-app-surface text-app-mist hover:text-hi border border-app-line"
                     }`}
                   >
                     {isSelected ? `✓ ${skill}` : `+ ${skill}`}
@@ -405,12 +405,12 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                 onChange={(e) => setCustomSkillInput(e.target.value)}
                 onKeyDown={handleAddCustomSkill}
                 placeholder="Type additional skill and press Enter (e.g. Mocha Pro, Midjourney)..."
-                className="flex-1 px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs focus:outline-none focus:border-purple-400"
+                className="flex-1 px-3 py-1.5 rounded-xl border border-app-line bg-app-base text-hi text-xs focus:outline-none focus:border-purple-400"
               />
               <button
                 type="button"
                 onClick={handleAddCustomSkill}
-                className="px-3 py-1.5 rounded-xl bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-purple-300 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                className="px-3 py-1.5 rounded-xl bg-app-surface hover:bg-app-line border border-app-line text-purple-300 font-bold text-xs flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" /> Add
               </button>
@@ -420,7 +420,7 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
           {/* Initial Password with Generator & Copy */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="font-bold text-[#F1F5F9]">Initial Account Password</label>
+              <label className="font-bold text-app-ink-2">Initial Account Password</label>
               <button
                 type="button"
                 onClick={() => setPassword(generateSecurePassword())}
@@ -430,19 +430,19 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
               </button>
             </div>
             <div className="relative flex items-center">
-              <Lock className="w-3.5 h-3.5 text-[#97A0B3] absolute left-3 top-3" />
+              <Lock className="w-3.5 h-3.5 text-app-mist absolute left-3 top-3" />
               <input
                 type={showPassword ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-9 pr-24 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-mono text-xs focus:outline-none focus:border-purple-400"
+                className="w-full pl-9 pr-24 py-2.5 rounded-xl border border-app-line bg-app-base text-hi font-mono text-xs focus:outline-none focus:border-purple-400"
               />
               <div className="absolute right-2.5 flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="p-1 text-[#97A0B3] hover:text-white rounded-md"
+                  className="p-1 text-app-mist hover:text-hi rounded-md"
                   title={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -469,28 +469,28 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
 
           {/* Engagement Notes / Contract Details */}
           <div>
-            <label className="block font-bold text-[#F1F5F9] mb-1">
+            <label className="block font-bold text-app-ink-2 mb-1">
               Internal Notes & Terms (Optional)
             </label>
             <div className="relative">
-              <FileText className="w-3.5 h-3.5 text-[#97A0B3] absolute left-3 top-2.5" />
+              <FileText className="w-3.5 h-3.5 text-app-mist absolute left-3 top-2.5" />
               <textarea
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="NDA status, turnaround SLA, working hours..."
-                className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs"
+                className="w-full pl-9 pr-3 py-2 rounded-lg border border-app-line bg-app-base text-hi focus:outline-none focus:border-purple-400 text-xs"
               />
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-app-line">
             <button
               type="button"
               onClick={onClose}
               disabled={busy}
-              className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#97A0B3] hover:text-white hover:bg-[#0B111C] transition-colors cursor-pointer text-xs"
+              className="px-4 py-2 rounded-xl border border-app-line font-bold text-app-mist hover:text-hi hover:bg-app-base transition-colors cursor-pointer text-xs"
             >
               Cancel
             </button>

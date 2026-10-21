@@ -25,7 +25,7 @@
 
 .public-site :where(a, button, input, [tabindex]):focus-visible,
 .auth-page :where(a, button):focus-visible {
-  outline: 2px solid #7fa0d6;
+  outline: 2px solid var(--site-blue);
   outline-offset: 4px;
 }
 
@@ -41,8 +41,8 @@
   z-index: 100;
   padding: 12px 20px;
   border-radius: 12px;
-  background: #bccce6;
-  color: #050810;
+  background: var(--site-ice);
+  color: var(--site-bg);
   transform: translateY(-160%);
 }
 
@@ -53,11 +53,12 @@
 .public-scroll-region {
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
-  scrollbar-color: #7fa0d6 #0a0f18;
+  scrollbar-color: var(--site-blue) var(--site-deep);
 }
 
 @media (max-width: 639px) {
-  .public-site h1 {
+  /* The landing page's display headline sizes itself */
+  .public-site h1:not(.creo-display) {
     font-size: clamp(2rem, 8.8vw, 3rem);
     line-height: 1.08;
     letter-spacing: -0.035em;

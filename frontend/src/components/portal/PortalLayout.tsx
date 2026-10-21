@@ -7,7 +7,62 @@ import { AdminTopHeader } from "../admin/AdminTopHeader";
 import { CreoInlineLoader } from "../ui/CreoLoader";
 
 import { ResumeOnboardingBanner } from "./ResumeOnboardingBanner";
+import { PortalPageHeader } from "./PortalPieces";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
+import "../../styles/portal-theme.css";
+
+/**
+ * Display headers for the pages that don't open with their own. Home and Plan &
+ * billing build theirs in-page; tickets and chat run edge to edge.
+ */
+const PAGE_HEADERS: { path: string; eyebrow: string; title: string; lead: string; width?: string }[] = [
+  {
+    path: "/portal/deliverables",
+    eyebrow: "Review",
+    title: "Ready for your review.",
+    lead: "Approve in one click, or decline with a note and your pod revises within your plan's quota.",
+  },
+  {
+    path: "/portal/calendar",
+    eyebrow: "Calendar",
+    title: "Your content calendar.",
+    lead: "Every post your pod has planned, day by day, from concept to publish.",
+  },
+  {
+    path: "/portal/library",
+    eyebrow: "Library",
+    title: "Everything we've made.",
+    lead: "Approved reels, carousels and stories with their captions, ready to download.",
+  },
+  {
+    path: "/portal/brand",
+    eyebrow: "Brand DNA",
+    title: "Your Brand DNA.",
+    lead: "The voice, palette and rules your pod works from on every piece.",
+  },
+  {
+    path: "/portal/support",
+    eyebrow: "Help",
+    title: "How can we help?",
+    lead: "Raise a ticket about a batch, your plan or the portal, and your pod picks it up.",
+    width: "max-w-6xl mx-auto",
+  },
+  {
+    path: "/portal/account",
+    eyebrow: "Settings",
+    title: "Your account.",
+    lead: "Profile, company details, security and your Instagram connection.",
+    width: "max-w-6xl mx-auto",
+  },
+];
+
+function headerFor(pathname: string) {
+  const clean = pathname.replace(/\/$/, "");
+  return PAGE_HEADERS.find((h) =>
+    // Ticket threads (/portal/support/:id) open with their own header
+    h.path === "/portal/support" ? clean === h.path : clean === h.path || clean.startsWith(`${h.path}/`) || clean.startsWith(`${h.path}-`),
+  );
+}
 
 export function PortalLayout() {
   // Passively save current route to sessionStorage on every navigation
@@ -20,19 +75,26 @@ export function PortalLayout() {
   const gate = useOnboardingGate();
   // Only an unlocked chat uses a fixed-height viewport; locked pages scroll normally.
   const isSlack = pathname.startsWith("/portal/slack") && gate.isComplete;
+  const pageHeader = isSlack ? undefined : headerFor(pathname);
+
+  // The portal palette lives on <html> so dialogs portalled to <body> share it
+  useLayoutEffect(() => {
+    document.documentElement.classList.add("portal-theme");
+    return () => document.documentElement.classList.remove("portal-theme");
+  }, []);
 
   return (
     <AdminSidebarProvider>
       <div
         className={
           isSlack
-            ? "portal-dark bento-theme h-screen max-h-screen w-full flex bg-[#0B111C] text-[#F8FAFC] overflow-hidden"
-            : "portal-dark bento-theme min-h-screen w-full flex bg-[#0B111C] text-[#F8FAFC]"
+            ? "portal-dark portal-site bento-theme h-screen max-h-screen w-full flex bg-app-base text-app-ink overflow-hidden"
+            : "portal-dark portal-site bento-theme min-h-screen w-full flex bg-app-base text-app-ink"
         }
       >
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[999] focus:rounded-lg focus:bg-[#BCCCE6] focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-[#0B111C] focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] focus:ring-offset-2"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[999] focus:rounded-lg focus:bg-app-ink focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-app-base focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-app-accent focus:ring-offset-2"
         >
           Skip to content
         </a>
@@ -58,15 +120,15 @@ export function PortalLayout() {
             id="main-content"
             className={
               isSlack
-                ? "portal-main flex-1 w-full px-2 sm:px-4 lg:px-6 pt-3 sm:pt-4 pb-3 sm:pb-4 flex flex-col min-h-0 overflow-hidden"
-                : "portal-main flex-1 w-full px-2.5 sm:px-5 lg:px-6 pt-2.5 sm:pt-4.5 lg:pt-5 pb-4 sm:pb-8 min-w-0 overflow-x-hidden"
+                ? "portal-main flex-1 w-full px-2 sm:px-4 lg:px-6 pt-1 sm:pt-2 pb-2 sm:pb-3 flex flex-col min-h-0 overflow-hidden"
+                : "portal-main flex-1 w-full px-4 sm:px-6 lg:px-10 pt-6 sm:pt-8 lg:pt-12 pb-12 min-w-0 overflow-x-hidden"
             }
           >
             <div
               className={
                 isSlack
                   ? "mx-auto w-full max-w-[1700px] flex-1 min-h-0 flex flex-col h-full max-h-full overflow-hidden"
-                  : "mx-auto w-full max-w-[1600px] min-w-0"
+                  : "mx-auto w-full max-w-[1400px] min-w-0"
               }
             >
               {!isSlack && pathname !== "/portal" && pathname !== "/portal/" && (
@@ -81,6 +143,11 @@ export function PortalLayout() {
                       : "animate-page-in"
                   }
                 >
+                  {pageHeader && (
+                    <div className={pageHeader.width}>
+                      <PortalPageHeader eyebrow={pageHeader.eyebrow} title={pageHeader.title} lead={pageHeader.lead} />
+                    </div>
+                  )}
                   <Outlet />
                 </div>
               </Suspense>

@@ -100,7 +100,7 @@ export function PausePlanModal({
       }}
     >
       <div
-        className="relative w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] border border-[#2A3446] max-h-[90vh] overflow-y-auto text-[#F8FAFC] m-auto animate-[zoomIn_0.2s_cubic-bezier(0.16,1,0.3,1)]"
+        className="relative w-full max-w-lg rounded-3xl bg-app-surface p-6 sm:p-7 shadow-[0_25px_60px_-15px_rgb(var(--shadow-rgb)/calc(0.85*var(--shadow-k)))] border border-app-line max-h-[90vh] overflow-y-auto text-app-ink m-auto animate-[zoomIn_0.2s_cubic-bezier(0.16,1,0.3,1)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -109,7 +109,7 @@ export function PausePlanModal({
           onClick={onClose}
           disabled={loading}
           aria-label="Close modal"
-          className="absolute top-5 right-5 size-8 rounded-full bg-[#0B111C] border border-[#2A3446] text-[#97A0B3] hover:bg-[#2A3446] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute top-5 right-5 size-8 rounded-full bg-app-base border border-app-line text-app-mist hover:bg-app-line hover:text-hi flex items-center justify-center transition-colors cursor-pointer"
         >
           <X className="size-4" />
         </button>
@@ -119,25 +119,25 @@ export function PausePlanModal({
             <div className="size-14 rounded-full bg-amber-950/60 border border-amber-600/60 text-amber-400 mx-auto flex items-center justify-center shadow-sm">
               <CheckCircle2 className="size-7" />
             </div>
-            <h3 className="text-lg font-bold text-[#F8FAFC]">Pause Request Sent</h3>
-            <p className="text-xs text-[#97A0B3] max-w-sm mx-auto leading-relaxed">
-              Your {planName} plan remains 100% active until <strong className="text-white">{renewalDate}</strong>.
+            <h3 className="text-lg font-bold text-app-ink">Pause Request Sent</h3>
+            <p className="text-xs text-app-mist max-w-sm mx-auto leading-relaxed">
+              Your {planName} plan remains 100% active until <strong className="text-hi">{renewalDate}</strong>.
               AutoPay remains active until an administrator approves this request.
             </p>
           </div>
         ) : (
           <form onSubmit={handleConfirmPause} className="space-y-4">
             {/* Header */}
-            <div className="flex items-start gap-3.5 pb-3 border-b border-[#2A3446]">
+            <div className="flex items-start gap-3.5 pb-3 border-b border-app-line">
               <div className="size-10 rounded-2xl bg-amber-950/40 border border-amber-700/60 text-amber-400 flex items-center justify-center shrink-0 shadow-sm">
                 <PauseCircle className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-[#F8FAFC] tracking-tight">
+                <h3 className="text-lg font-bold text-app-ink tracking-tight">
                   Request Pause for Next Month
                 </h3>
-                <p className="text-xs text-[#97A0B3] mt-0.5">
-                  Effective on your renewal date: <span className="text-white font-semibold">{renewalDate}</span>
+                <p className="text-xs text-app-mist mt-0.5">
+                  Effective on your renewal date: <span className="text-hi font-semibold">{renewalDate}</span>
                 </p>
               </div>
             </div>
@@ -149,39 +149,39 @@ export function PausePlanModal({
             )}
 
             {/* Key Guarantees Box */}
-            <div className="rounded-2xl border border-[#2A3446] bg-[#0B111C]/80 p-3.5 space-y-2.5 text-xs text-[#BCCCE6]">
+            <div className="rounded-2xl border border-app-line bg-app-base/80 p-3.5 space-y-2.5 text-xs text-app-accent-soft">
               <div className="flex items-start gap-2.5">
                 <ShieldCheck className="size-4 text-emerald-400 shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-white">Active through {renewalDate}:</strong> All deliverables and your dedicated pod continue working normally until this cycle ends.
+                  <strong className="text-hi">Active through {renewalDate}:</strong> All deliverables and your dedicated pod continue working normally until this cycle ends.
                 </span>
               </div>
               <div className="flex items-start gap-2.5">
                 <Calendar className="size-4 text-amber-400 shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-white">Admin approval required:</strong> AutoPay stops only after your administrator approves. Charges remain enabled while this request is pending.
+                  <strong className="text-hi">Admin approval required:</strong> AutoPay stops only after your administrator approves. Charges remain enabled while this request is pending.
                 </span>
               </div>
               <div className="flex items-start gap-2.5">
-                <RotateCcw className="size-4 text-[#7FA0D6] shrink-0 mt-0.5" />
+                <RotateCcw className="size-4 text-app-accent shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-white">Resume anytime:</strong> Re-activate your plan with a single click whenever you are ready.
+                  <strong className="text-hi">Resume anytime:</strong> Re-activate your plan with a single click whenever you are ready.
                 </span>
               </div>
             </div>
 
             {/* Reason Selector */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-[#F8FAFC]">
+              <label className="block text-xs font-semibold text-app-ink">
                 Reason for pause (Optional feedback)
               </label>
               <NativeSelect
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
+                className="w-full rounded-xl border border-app-line bg-app-base px-3 py-2 text-xs text-app-ink focus:outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent"
               >
                 {REASONS.map((r) => (
-                  <option key={r} value={r} className="bg-[#0B111C] text-[#F8FAFC]">
+                  <option key={r} value={r} className="bg-app-base text-app-ink">
                     {r}
                   </option>
                 ))}
@@ -190,7 +190,7 @@ export function PausePlanModal({
 
             {/* Optional Notes */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-[#F8FAFC]">
+              <label className="block text-xs font-semibold text-app-ink">
                 Additional instructions or notes (Optional)
               </label>
               <textarea
@@ -198,24 +198,24 @@ export function PausePlanModal({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Let your account director know if you need anything wrapped up before the pause..."
-                className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] placeholder-[#97A0B3]/50 focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6] resize-none"
+                className="w-full rounded-xl border border-app-line bg-app-base px-3 py-2 text-xs text-app-ink placeholder-app-mist/50 focus:outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent resize-none"
               />
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-app-line">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#97A0B3] hover:bg-[#0B111C] hover:text-white transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-app-mist hover:bg-app-base hover:text-hi transition-colors cursor-pointer"
               >
                 Keep Plan Active
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#0B111C] text-xs font-bold transition-all shadow-md shadow-amber-500/20 inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-app-base text-xs font-bold transition-all shadow-md shadow-amber-500/20 inline-flex items-center gap-1.5 cursor-pointer"
               >
                 {loading ? <Loader2 className="size-3.5 animate-spin" /> : <PauseCircle className="size-3.5" />}
                 <span>Send Pause Request</span>

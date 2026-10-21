@@ -1,0 +1,99 @@
+/* Section tones for the 3D marketing pages: burnished amber #D2965A,
+   midnight #172338 and ivory #F5EEE3 on an obsidian page in dark mode.
+   Each section declares the colour it sits on (--tone-bg) and re-points the
+   text tokens for it, so shared components read correctly on every tone.
+   The WebGL stage paints --tone-bg behind its 3D; the CSS fill below is the
+   fallback until the stage is live, or when WebGL is unavailable. */
+
+:root {
+  --hero-dark: #0a0908;
+}
+
+.st-tone {
+  background: var(--tone-bg);
+}
+
+.st-live .st-tone {
+  background: transparent;
+}
+
+/* The page colour: obsidian in dark mode, ivory in light */
+.st-base {
+  --tone-bg: var(--site-bg);
+  --tone-accent: #d2965a;
+}
+
+:root[data-theme="light"] .st-base {
+  --tone-accent: #8a5a2b;
+}
+
+.st-hero {
+  --tone-bg: var(--hero-dark);
+  --site-ink: #f5eee3;
+  --site-mist: rgb(245 238 227 / 0.72);
+  --hi: #f5eee3;
+  --tone-accent: #d2965a;
+}
+
+/* The opposite of the page colour: ivory with espresso type in dark mode,
+   obsidian with ivory type in light */
+.st-inverse {
+  --tone-bg: #f5eee3;
+  --site-ink: #2b1e15;
+  --site-mist: #6e5f50;
+  --site-mist-2: #54473b;
+  --site-blue-light: #8a5a2b;
+  --site-peri: #172338;
+  --hi: #2b1e15;
+  --tone-accent: #8a5a2b;
+}
+
+:root[data-theme="light"] .st-inverse {
+  --tone-bg: #0f0e0c;
+  --site-ink: #f5eee3;
+  --site-mist: #b9ad9c;
+  --site-mist-2: #d6cbbb;
+  --site-blue-light: #e0ad7a;
+  --site-peri: #a9b8d4;
+  --hi: #f5eee3;
+  --tone-accent: #d2965a;
+}
+
+/* Midnight navy with ivory type (13:1) and amber accents (6:1) */
+.st-midnight {
+  --tone-bg: #172338;
+  --site-ink: #f5eee3;
+  --site-mist: rgb(245 238 227 / 0.8);
+  --site-mist-2: rgb(245 238 227 / 0.9);
+  --site-blue-light: #e0ad7a;
+  --site-peri: #e0ad7a;
+  --hi: #f5eee3;
+  --tone-accent: #d2965a;
+}
+
+/* Burnished amber with near-black type (7.5:1), like a gold card */
+.st-brand {
+  --tone-bg: #d2965a;
+  --site-ink: #1a120c;
+  --site-mist: rgb(26 18 12 / 0.8);
+  --site-blue-light: #1a120c;
+  --hi: #1a120c;
+  --tone-accent: #1a120c;
+}
+
+/* The big CTA button: a CSS stand-in until the 3D button is drawn into it */
+.st-big-button {
+  background: radial-gradient(circle at 34% 28%, #f0c896, #d2965a 58%, #0f0e0c 60%);
+  box-shadow:
+    0 0 0 6px #0f0e0c,
+    0 18px 30px -10px rgb(0 0 0 / 0.45);
+}
+
+.st-live .st-big-button {
+  background: transparent;
+  box-shadow: none;
+}
+
+.st-live .st-big-button-icon {
+  opacity: 0;
+}

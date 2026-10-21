@@ -177,7 +177,7 @@ export function PodTaskBoardPage() {
   };
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
+    <div data-surface="ops" className="min-h-screen bg-app-base text-hi font-sans flex flex-col">
       {/* Top Header */}
       <AdminTopHeader title="Content Engine" activeTab="Content Engine" />
 
@@ -202,23 +202,23 @@ export function PodTaskBoardPage() {
         )}
 
         {/* 1. Quick Actions Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#161F2D] p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-[#2A3446]/80 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-app-surface p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-app-line/80 shadow-2xs">
           <div className="flex items-center gap-2">
             <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold text-[#F1F5F9]">{podName} Sprint Workflow · Lead {leadName}</span>
+            <span className="text-xs font-bold text-app-ink-2">{podName} Sprint Workflow · Lead {leadName}</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleExportSprintCSV}
-              className="px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-app-surface border border-app-line hover:bg-app-base text-app-ink-2 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
-              <FileText className="size-3.5 text-[#97A0B3]" />
+              <FileText className="size-3.5 text-app-mist" />
               Export Report
             </button>
             <button
               onClick={() => setAssignModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
               <Plus className="size-3.5" />
               Assign New Task
@@ -234,35 +234,35 @@ export function PodTaskBoardPage() {
           className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3"
         >
           {/* Card 1: Total Active Tasks */}
-          <div className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs hover-card-innovative flex items-center justify-between">
+          <div className="bg-app-surface rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-app-line/80 shadow-2xs hover-card-innovative flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Total Active Tasks</span>
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-app-mist">Total Active Tasks</span>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-lg sm:text-xl font-black text-white">{isPending ? "..." : isError ? "Unavailable" : totalActive}</span>
-                <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">Tasks in Sprint</span>
+                <span className="text-lg sm:text-xl font-black text-hi">{isPending ? "..." : isError ? "Unavailable" : totalActive}</span>
+                <span className="text-[10.5px] sm:text-[11px] font-bold text-app-mist">Tasks in Sprint</span>
               </div>
-              <p className="text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] pt-0.5">
+              <p className="text-[10px] sm:text-[11px] font-bold text-app-accent pt-0.5">
                 {data?.tasks.in_production.length || 0} In Progress / {data?.tasks.internal_qa.length || 0} Review / {data?.tasks.backlog.length || 0} Backlog
               </p>
             </div>
-            <div className="size-7 sm:size-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shrink-0">
+            <div className="size-7 sm:size-8 rounded-xl bg-app-accent/15 text-app-accent flex items-center justify-center shrink-0">
               <FolderKanban className="size-3.5 sm:size-4" />
             </div>
           </div>
 
           {/* Card 2: Blockers / Escalations */}
-          <div className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs hover-card-innovative flex items-center justify-between">
+          <div className="bg-app-surface rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-app-line/80 shadow-2xs hover-card-innovative flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Blockers / Escalations</span>
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-app-mist">Blockers / Escalations</span>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-lg sm:text-xl font-black text-rose-400">1</span>
                 <span className="text-[10.5px] sm:text-[11px] font-bold text-rose-400">Action Blocker</span>
               </div>
               <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-[10px] sm:text-[11px]">
-                <span className="text-[#F1F5F9] font-medium">Atlas copy sign-off required</span>
+                <span className="text-app-ink-2 font-medium">Atlas copy sign-off required</span>
                 <button
                   onClick={() => showToast("Reminder ping dispatched to Atlas client Slack channel", "success")}
-                  className="font-bold text-[#7FA0D6] hover:underline cursor-pointer"
+                  className="font-bold text-app-accent hover:underline cursor-pointer"
                 >
                   Ping Client
                 </button>
@@ -275,21 +275,21 @@ export function PodTaskBoardPage() {
         </motion.div>
 
         {/* Filter Toolbar */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+        <div className="bg-app-surface border border-app-line rounded-2xl p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
           {/* Search Input */}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#97A0B3]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-app-mist" />
             <input
               type="text"
               placeholder="Search sprint tasks, clients, team..."
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
-              className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6]"
+              className="w-full bg-app-base border border-app-line rounded-xl pl-8 pr-3 py-1.5 text-xs text-hi placeholder-app-mist focus:outline-none focus:border-app-accent"
             />
             {searchFilter && (
               <button
                 onClick={() => setSearchFilter("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-hi"
               >
                 <X size={12} />
               </button>
@@ -302,7 +302,7 @@ export function PodTaskBoardPage() {
               value={clientFilter}
               onChange={(e) => setClientFilter(e.target.value)}
               aria-label="Filter Client"
-              className="w-full text-xs py-1.5 bg-[#0B111C] border-[#2A3446]"
+              className="w-full text-xs py-1.5 bg-app-base border-app-line"
             >
               {clientOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -318,7 +318,7 @@ export function PodTaskBoardPage() {
               value={formatFilter}
               onChange={(e) => setFormatFilter(e.target.value)}
               aria-label="Filter Format"
-              className="w-full text-xs py-1.5 bg-[#0B111C] border-[#2A3446]"
+              className="w-full text-xs py-1.5 bg-app-base border-app-line"
             >
               <option value="all">All Formats</option>
               <option value="reel">Reels / Videos</option>
@@ -337,7 +337,7 @@ export function PodTaskBoardPage() {
                 setClientFilter("all");
                 setFormatFilter("all");
               }}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#7FA0D6] hover:text-white bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/40 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              className="px-3 py-1.5 rounded-xl text-xs font-bold text-app-accent hover:text-hi bg-app-base border border-app-line hover:border-app-accent/40 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
             >
               <X className="size-3.5" />
               <span>Reset</span>
@@ -359,14 +359,14 @@ export function PodTaskBoardPage() {
               onClick={() => setActiveMobileCol(col.id as any)}
               className={`px-2.5 py-1 rounded-full shrink-0 transition-all flex items-center gap-1 cursor-pointer text-xs ${
                 activeMobileCol === col.id
-                  ? "bg-[#7FA0D6] text-[#0B111C] font-black"
-                  : "bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:bg-[#0B111C]"
+                  ? "bg-app-accent text-app-base font-black"
+                  : "bg-app-surface border border-app-line text-app-ink-2 hover:bg-app-base"
               }`}
             >
               <span>{col.label}</span>
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[9px] ${
-                  activeMobileCol === col.id ? "bg-[#0B111C] text-[#7FA0D6]" : "bg-[#0B111C] text-[#F1F5F9]"
+                  activeMobileCol === col.id ? "bg-app-base text-app-accent" : "bg-app-base text-app-ink-2"
                 }`}
               >
                 {col.count}
@@ -386,14 +386,14 @@ export function PodTaskBoardPage() {
           <div
             className={`${
               activeMobileCol === "backlog" ? "flex" : "hidden md:flex"
-            } flex-col h-full bg-[#161F2D] rounded-2xl p-3 border border-[#2A3446] space-y-2.5 min-h-0`}
+            } flex-col h-full bg-app-surface rounded-2xl p-3 border border-app-line space-y-2.5 min-h-0`}
           >
             <div className="flex items-center justify-between px-1 shrink-0">
               <div className="flex items-center gap-1.5">
                 <span className="size-2 rounded-full bg-slate-400" />
-                <h3 className="text-xs font-black uppercase tracking-wider text-[#F1F5F9]">Backlog</h3>
+                <h3 className="text-xs font-black uppercase tracking-wider text-app-ink-2">Backlog</h3>
               </div>
-              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-[#0B111C] text-[#7FA0D6] border border-[#2A3446]">
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-app-base text-app-accent border border-app-line">
                 {filteredBacklog.length}
               </span>
             </div>
@@ -401,8 +401,8 @@ export function PodTaskBoardPage() {
             {/* Cards */}
             <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar min-h-0">
               {filteredBacklog.length === 0 ? (
-                <div className="bg-[#0B111C]/60 border border-dashed border-[#2A3446] rounded-xl p-4 text-center">
-                  <p className="text-xs font-medium text-[#97A0B3]">No backlog tasks</p>
+                <div className="bg-app-base/60 border border-dashed border-app-line rounded-xl p-4 text-center">
+                  <p className="text-xs font-medium text-app-mist">No backlog tasks</p>
                 </div>
               ) : (
                 [...filteredBacklog]
@@ -413,12 +413,12 @@ export function PodTaskBoardPage() {
                       (b.hours_remaining ?? Number.POSITIVE_INFINITY),
                   )
                   .map((task) => (
-                  <div key={task.id} className="bg-[#0B111C] rounded-xl p-3 border border-[#2A3446] shadow-2xs hover:border-[#7FA0D6]/30 transition-all space-y-2">
+                  <div key={task.id} className="bg-app-base rounded-xl p-3 border border-app-line shadow-2xs hover:border-app-accent/30 transition-all space-y-2">
                     <div className="flex items-center justify-between text-[10.5px] font-bold">
-                      <span className="text-[#7FA0D6] truncate max-w-[130px]">{task.client_name || "Client"}</span>
-                      <span className="text-[#97A0B3]">{task.hours_remaining ? formatDuration(task.hours_remaining) : (task.due_date || "")}</span>
+                      <span className="text-app-accent truncate max-w-[130px]">{task.client_name || "Client"}</span>
+                      <span className="text-app-mist">{task.hours_remaining ? formatDuration(task.hours_remaining) : (task.due_date || "")}</span>
                     </div>
-                    <h4 className="text-xs font-black text-white leading-snug">
+                    <h4 className="text-xs font-black text-hi leading-snug">
                       {task.blueprint?.concept_name || `${task.client_name || "Sprint"} ${task.deliverable_type?.toUpperCase() || "Asset"}`}
                     </h4>
                     {(() => {
@@ -433,7 +433,7 @@ export function PodTaskBoardPage() {
                               target="_blank"
                               rel="noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="inline-flex items-center gap-1 text-[9.5px] text-blue-300 hover:text-white font-bold bg-blue-500/15 hover:bg-blue-500/25 px-1.5 py-0.5 rounded border border-blue-500/30 transition-all"
+                              className="inline-flex items-center gap-1 text-[9.5px] text-blue-300 hover:text-hi font-bold bg-blue-500/15 hover:bg-blue-500/25 px-1.5 py-0.5 rounded border border-blue-500/30 transition-all"
                             >
                               <FolderGit2 className="size-2.5 text-blue-400" />
                               <span>Drive Footage</span>
@@ -441,18 +441,18 @@ export function PodTaskBoardPage() {
                             </a>
                           )}
                           {duration && (
-                            <span className="text-[9.5px] text-purple-300 font-mono px-1 py-0.2 bg-[#161F2D] rounded border border-[#2A3446]">
+                            <span className="text-[9.5px] text-purple-300 font-mono px-1 py-0.2 bg-app-surface rounded border border-app-line">
                               {duration}
                             </span>
                           )}
                         </div>
                       );
                     })()}
-                    <div className="flex items-center justify-between pt-1.5 border-t border-[#2A3446] text-[10.5px]">
-                      <span className="px-1.5 py-0.2 rounded bg-[#7FA0D6]/15 text-[#7FA0D6] font-bold text-[9px] border border-[#7FA0D6]/30">
+                    <div className="flex items-center justify-between pt-1.5 border-t border-app-line text-[10.5px]">
+                      <span className="px-1.5 py-0.2 rounded bg-app-accent/15 text-app-accent font-bold text-[9px] border border-app-accent/30">
                         {task.deliverable_type?.toUpperCase() || "ASSET"}
                       </span>
-                      <div className="flex items-center gap-1 text-[#F1F5F9] font-bold text-[9.5px]">
+                      <div className="flex items-center gap-1 text-app-ink-2 font-bold text-[9.5px]">
                         <span>{task.assignee?.full_name || task.assignee_name || "Unassigned"}</span>
                       </div>
                     </div>
@@ -462,7 +462,7 @@ export function PodTaskBoardPage() {
 
               <button
                 onClick={() => setAssignModalOpen(true)}
-                className="w-full py-2 rounded-xl border border-dashed border-[#2A3446] text-[#97A0B3] hover:text-[#7FA0D6] hover:border-[#7FA0D6] hover:bg-[#0B111C] text-xs font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                className="w-full py-2 rounded-xl border border-dashed border-app-line text-app-mist hover:text-app-accent hover:border-app-accent hover:bg-app-base text-xs font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
               >
                 <Plus className="size-3" /> Add Backlog Card
               </button>
@@ -473,14 +473,14 @@ export function PodTaskBoardPage() {
           <div
             className={`${
               activeMobileCol === "in_progress" ? "flex" : "hidden md:flex"
-            } flex-col h-full bg-[#161F2D] rounded-2xl p-3 border border-[#7FA0D6]/30 space-y-2.5 min-h-0`}
+            } flex-col h-full bg-app-surface rounded-2xl p-3 border border-app-accent/30 space-y-2.5 min-h-0`}
           >
             <div className="flex items-center justify-between px-1 shrink-0">
               <div className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-[#7FA0D6] animate-pulse" />
-                <h3 className="text-xs font-black uppercase tracking-wider text-[#7FA0D6]">In Progress</h3>
+                <span className="size-2 rounded-full bg-app-accent animate-pulse" />
+                <h3 className="text-xs font-black uppercase tracking-wider text-app-accent">In Progress</h3>
               </div>
-              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-app-accent/15 text-app-accent border border-app-accent/30">
                 {filteredInProduction.length}
               </span>
             </div>
@@ -488,20 +488,20 @@ export function PodTaskBoardPage() {
             {/* Cards */}
             <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar min-h-0">
               {filteredInProduction.length === 0 ? (
-                <div className="bg-[#0B111C]/60 border border-dashed border-[#2A3446] rounded-xl p-4 text-center">
-                  <p className="text-xs font-medium text-[#97A0B3]">No tasks currently in progress</p>
+                <div className="bg-app-base/60 border border-dashed border-app-line rounded-xl p-4 text-center">
+                  <p className="text-xs font-medium text-app-mist">No tasks currently in progress</p>
                 </div>
               ) : (
                 filteredInProduction.map((task) => (
-                  <div key={task.id} className="bg-[#0B111C] rounded-xl p-3 border border-[#2A3446] shadow-2xs hover:border-[#7FA0D6]/30 transition-all space-y-2">
+                  <div key={task.id} className="bg-app-base rounded-xl p-3 border border-app-line shadow-2xs hover:border-app-accent/30 transition-all space-y-2">
                     <div className="flex items-center justify-between text-[10.5px] font-bold">
-                      <span className="text-[#7FA0D6] truncate max-w-[130px]">{task.client_name || "Client"}</span>
+                      <span className="text-app-accent truncate max-w-[130px]">{task.client_name || "Client"}</span>
                       {task.is_near_sla && (
                         <span className="px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[8.5px] font-extrabold">Urgent SLA</span>
                       )}
                     </div>
                     <div>
-                      <h4 className="text-xs font-black text-white leading-snug">
+                      <h4 className="text-xs font-black text-hi leading-snug">
                         {task.blueprint?.concept_name || `${task.client_name || "Sprint"} ${task.deliverable_type?.toUpperCase() || "Asset"}`}
                       </h4>
                       {(() => {
@@ -516,7 +516,7 @@ export function PodTaskBoardPage() {
                                 target="_blank"
                                 rel="noreferrer"
                                 onClick={(e) => e.stopPropagation()}
-                                className="inline-flex items-center gap-1 text-[9.5px] text-blue-300 hover:text-white font-bold bg-blue-500/15 hover:bg-blue-500/25 px-1.5 py-0.5 rounded border border-blue-500/30 transition-all"
+                                className="inline-flex items-center gap-1 text-[9.5px] text-blue-300 hover:text-hi font-bold bg-blue-500/15 hover:bg-blue-500/25 px-1.5 py-0.5 rounded border border-blue-500/30 transition-all"
                               >
                                 <FolderGit2 className="size-2.5 text-blue-400" />
                                 <span>Drive Footage</span>
@@ -524,18 +524,18 @@ export function PodTaskBoardPage() {
                               </a>
                             )}
                             {duration && (
-                              <span className="text-[9.5px] text-purple-300 font-mono px-1 py-0.2 bg-[#161F2D] rounded border border-[#2A3446]">
+                              <span className="text-[9.5px] text-purple-300 font-mono px-1 py-0.2 bg-app-surface rounded border border-app-line">
                                 {duration}
                               </span>
                             )}
                           </div>
                         );
                       })()}
-                      <p className="text-[9.5px] text-[#97A0B3] font-medium mt-0.5">{task.assignee_role || "Creative Execution"}</p>
+                      <p className="text-[9.5px] text-app-mist font-medium mt-0.5">{task.assignee_role || "Creative Execution"}</p>
                     </div>
-                    <div className="flex items-center justify-between pt-1.5 border-t border-[#2A3446] text-[9.5px] font-bold text-[#F1F5F9]">
+                    <div className="flex items-center justify-between pt-1.5 border-t border-app-line text-[9.5px] font-bold text-app-ink-2">
                       <span>{task.assignee?.full_name || task.assignee_name || "Specialist"}</span>
-                      <span className="px-1.5 py-0.2 rounded bg-[#7FA0D6]/15 text-[#7FA0D6] font-bold text-[9px] border border-[#7FA0D6]/30">
+                      <span className="px-1.5 py-0.2 rounded bg-app-accent/15 text-app-accent font-bold text-[9px] border border-app-accent/30">
                         {task.deliverable_type?.toUpperCase() || "ASSET"}
                       </span>
                     </div>
@@ -549,7 +549,7 @@ export function PodTaskBoardPage() {
           <div
             className={`${
               activeMobileCol === "review" ? "flex" : "hidden md:flex"
-            } flex-col h-full bg-[#161F2D] rounded-2xl p-3 border border-amber-500/40 space-y-2.5 min-h-0`}
+            } flex-col h-full bg-app-surface rounded-2xl p-3 border border-amber-500/40 space-y-2.5 min-h-0`}
           >
             <div className="flex items-center justify-between px-1 shrink-0">
               <div className="flex items-center gap-1.5">
@@ -564,26 +564,26 @@ export function PodTaskBoardPage() {
             {/* Cards */}
             <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar min-h-0">
               {filteredInternalQa.length === 0 ? (
-                <div className="bg-[#0B111C]/60 border border-dashed border-[#2A3446] rounded-xl p-4 text-center">
-                  <p className="text-xs font-medium text-[#97A0B3]">No deliverables awaiting sign-off</p>
+                <div className="bg-app-base/60 border border-dashed border-app-line rounded-xl p-4 text-center">
+                  <p className="text-xs font-medium text-app-mist">No deliverables awaiting sign-off</p>
                 </div>
               ) : (
                 filteredInternalQa.map((task) => (
-                  <div key={task.id} className="bg-[#0B111C] rounded-xl p-3 border border-[#2A3446] shadow-2xs hover:border-amber-500/30 transition-all space-y-2">
+                  <div key={task.id} className="bg-app-base rounded-xl p-3 border border-app-line shadow-2xs hover:border-amber-500/30 transition-all space-y-2">
                     <div className="flex items-center justify-between text-[10.5px] font-bold">
-                      <span className="text-[#7FA0D6] truncate max-w-[130px]">{task.client_name || "Client"}</span>
+                      <span className="text-app-accent truncate max-w-[130px]">{task.client_name || "Client"}</span>
                       <span className="text-amber-400 font-bold text-[9.5px]">Awaiting QA</span>
                     </div>
                     <div>
-                      <h4 className="text-xs font-black text-white leading-snug">
+                      <h4 className="text-xs font-black text-hi leading-snug">
                         {task.blueprint?.concept_name || `${task.client_name || "Sprint"} ${task.deliverable_type?.toUpperCase() || "Asset"}`}
                       </h4>
-                      <p className="text-[9.5px] text-[#97A0B3] font-medium mt-0.5">{task.assignee?.full_name || task.assignee_name}</p>
+                      <p className="text-[9.5px] text-app-mist font-medium mt-0.5">{task.assignee?.full_name || task.assignee_name}</p>
                     </div>
-                    <div className="flex items-center gap-1.5 pt-1.5 border-t border-[#2A3446]">
+                    <div className="flex items-center gap-1.5 pt-1.5 border-t border-app-line">
                       <Link
                         to="/lead/deliverables"
-                        className="flex-1 py-1 rounded-lg bg-[#161F2D] border border-[#2A3446] hover:bg-[#161F2D] text-[#F1F5F9] hover:text-[#7FA0D6] text-[10px] font-bold flex items-center justify-center gap-1 transition-colors"
+                        className="flex-1 py-1 rounded-lg bg-app-surface border border-app-line hover:bg-app-surface text-app-ink-2 hover:text-app-accent text-[10px] font-bold flex items-center justify-center gap-1 transition-colors"
                       >
                         <Eye className="size-3" /> Inspect
                       </Link>
@@ -591,7 +591,7 @@ export function PodTaskBoardPage() {
                         onClick={() => {
                           qaMutation.mutate({ taskId: task.id, decision: "approve", comment: "Direct QA sign-off from Task Board." });
                         }}
-                        className="flex-1 py-1 rounded-lg bg-[#7FA0D6] hover:bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center gap-1 shadow-xs cursor-pointer transition-colors"
+                        className="flex-1 py-1 rounded-lg bg-app-accent hover:bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center gap-1 shadow-xs cursor-pointer transition-colors"
                       >
                         <Check className="size-3" /> Sign-off
                       </button>
@@ -606,7 +606,7 @@ export function PodTaskBoardPage() {
           <div
             className={`${
               activeMobileCol === "dispatched" ? "flex" : "hidden md:flex"
-            } flex-col h-full bg-[#161F2D] rounded-2xl p-3 border border-emerald-500/40 space-y-2.5 min-h-0`}
+            } flex-col h-full bg-app-surface rounded-2xl p-3 border border-emerald-500/40 space-y-2.5 min-h-0`}
           >
             <div className="flex items-center justify-between px-1 shrink-0">
               <div className="flex items-center gap-1.5">
@@ -621,25 +621,25 @@ export function PodTaskBoardPage() {
             {/* Cards */}
             <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar min-h-0">
               {filteredDispatched.length === 0 ? (
-                <div className="bg-[#0B111C]/60 border border-dashed border-[#2A3446] rounded-xl p-4 text-center">
-                  <p className="text-xs font-medium text-[#97A0B3]">No dispatched tasks yet</p>
+                <div className="bg-app-base/60 border border-dashed border-app-line rounded-xl p-4 text-center">
+                  <p className="text-xs font-medium text-app-mist">No dispatched tasks yet</p>
                 </div>
               ) : (
                 filteredDispatched.slice(0, 8).map((task) => (
-                  <div key={task.id} className="bg-[#0B111C] rounded-xl p-3 border border-[#2A3446] shadow-2xs hover-card-innovative space-y-2">
+                  <div key={task.id} className="bg-app-base rounded-xl p-3 border border-app-line shadow-2xs hover-card-innovative space-y-2">
                     <div className="flex items-center justify-between text-[10.5px] font-bold">
                       <span className="text-emerald-400 font-bold text-[9.5px] flex items-center gap-1">
                         <CheckCircle2 className="size-3 text-emerald-400" /> Dispatched
                       </span>
-                      <span className="text-[#97A0B3] text-[9.5px]">{task.deliverable_type?.toUpperCase()}</span>
+                      <span className="text-app-mist text-[9.5px]">{task.deliverable_type?.toUpperCase()}</span>
                     </div>
                     <div>
-                      <h4 className="text-xs font-black text-white leading-snug">
+                      <h4 className="text-xs font-black text-hi leading-snug">
                         {task.blueprint?.concept_name || `${task.client_name || "Client"} Asset`}
                       </h4>
-                      <p className="text-[9.5px] text-[#97A0B3] font-medium mt-0.5">Delivered to client vault</p>
+                      <p className="text-[9.5px] text-app-mist font-medium mt-0.5">Delivered to client vault</p>
                     </div>
-                    <div className="flex items-center justify-between pt-1.5 border-t border-[#2A3446] text-[9.5px] font-bold text-[#F1F5F9]">
+                    <div className="flex items-center justify-between pt-1.5 border-t border-app-line text-[9.5px] font-bold text-app-ink-2">
                       <span>{task.assignee?.full_name || task.assignee_name || "Specialist"}</span>
                       <span className="text-emerald-400">● Accepted</span>
                     </div>
@@ -651,23 +651,23 @@ export function PodTaskBoardPage() {
         </motion.div>
 
         {/* 4. Bottom Footer Banner (Lead Management Controls) */}
-        <div className="bg-[#161F2D] rounded-2xl p-3.5 sm:p-4 border border-[#2A3446]/80 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="bg-app-surface rounded-2xl p-3.5 sm:p-4 border border-app-line/80 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="size-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black">
+            <div className="size-8 rounded-xl bg-app-accent/15 text-app-accent flex items-center justify-center font-black">
               <Sparkles className="size-3.5" />
             </div>
             <div>
-              <h4 className="text-xs font-black text-white">Lead Management Controls</h4>
-              <p className="text-[10.5px] text-[#97A0B3] font-medium">{leadName} acting on {podName} Production Authority</p>
+              <h4 className="text-xs font-black text-hi">Lead Management Controls</h4>
+              <p className="text-[10.5px] text-app-mist font-medium">{leadName} acting on {podName} Production Authority</p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setRerouteModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-95"
+              className="px-3.5 py-2 rounded-xl bg-app-base hover:bg-app-surface border border-app-line hover:border-app-accent text-app-ink-2 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-95"
             >
-              <RefreshCw className="size-3.5 text-[#7FA0D6]" /> Re-route Blocked
+              <RefreshCw className="size-3.5 text-app-accent" /> Re-route Blocked
             </button>
           </div>
         </div>
@@ -676,29 +676,29 @@ export function PodTaskBoardPage() {
       {/* Assign Modal */}
       {assignModalOpen && (
         <div className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4">
+          <div className="w-full max-w-lg bg-app-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-app-line space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-black text-white">Add Task to Sprint</h3>
-              <button onClick={() => setAssignModalOpen(false)} className="text-[#97A0B3] hover:text-[#F1F5F9]">
+              <h3 className="text-base font-black text-hi">Add Task to Sprint</h3>
+              <button onClick={() => setAssignModalOpen(false)} className="text-app-mist hover:text-app-ink-2">
                 <X className="size-5" />
               </button>
             </div>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Task Title</label>
+                <label className="font-bold text-app-ink-2 block mb-1">Task Title</label>
                 <input
                   type="text"
                   value={newCardTitle}
                   onChange={(e) => setNewCardTitle(e.target.value)}
                   placeholder="e.g. Brand Launch Story Sequence"
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white"
+                  className="w-full p-2.5 rounded-xl border border-app-line bg-app-base font-medium text-hi"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Content Format</label>
+                  <label className="font-bold text-app-ink-2 block mb-1">Content Format</label>
                   <NativeSelect value={newCardFormat} onChange={e => setNewCardFormat(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white"
+                    className="w-full p-2.5 rounded-xl border border-app-line bg-app-base font-medium text-hi"
                   >
                     <option value="reel">Reel</option>
                     <option value="story">Story</option>
@@ -706,11 +706,11 @@ export function PodTaskBoardPage() {
                   </NativeSelect>
                 </div>
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Client</label>
+                  <label className="font-bold text-app-ink-2 block mb-1">Client</label>
                   <NativeSelect
                     value={newCardClient}
                     onChange={(e) => setNewCardClient(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white"
+                    className="w-full p-2.5 rounded-xl border border-app-line bg-app-base font-medium text-hi"
                   >
                     {(!data?.clients || data.clients.length === 0) ? (
                       <option value="">No clients assigned to pod</option>
@@ -723,11 +723,11 @@ export function PodTaskBoardPage() {
                 </div>
               </div>
               <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Specialist / Assignee</label>
+                <label className="font-bold text-app-ink-2 block mb-1">Specialist / Assignee</label>
                 <NativeSelect
                   value={newCardAssignee}
                   onChange={(e) => setNewCardAssignee(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white"
+                  className="w-full p-2.5 rounded-xl border border-app-line bg-app-base font-medium text-hi"
                 >
                   <option value="">Leave unassigned (Backlog)</option>
                   {(data?.members || []).map((m) => (
@@ -737,47 +737,47 @@ export function PodTaskBoardPage() {
               </div>
 
               {/* Content Specifications (Raw Footage Drive Link & Target Length) */}
-              <div className="p-3 rounded-2xl bg-[#0B111C] border border-blue-500/30 space-y-2.5">
+              <div className="p-3 rounded-2xl bg-app-base border border-blue-500/30 space-y-2.5">
                 <span className="font-extrabold text-[11px] text-blue-400 flex items-center gap-1.5 uppercase tracking-wider">
                   <FolderGit2 className="size-3.5 text-blue-400" /> Raw Footage & Specifications
                 </span>
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Raw Footage / Google Drive Link</label>
+                  <label className="font-bold text-app-ink-2 block mb-1">Raw Footage / Google Drive Link</label>
                   <input
                     type="url"
                     value={newCardRawFootageUrl}
                     onChange={(e) => setNewCardRawFootageUrl(e.target.value)}
                     placeholder="https://drive.google.com/drive/folders/..."
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] font-mono text-white text-xs"
+                    className="w-full p-2.5 rounded-xl border border-app-line bg-app-surface font-mono text-hi text-xs"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Target Duration / Length</label>
+                  <label className="font-bold text-app-ink-2 block mb-1">Target Duration / Length</label>
                   <input
                     type="text"
                     value={newCardDuration}
                     onChange={(e) => setNewCardDuration(e.target.value)}
                     placeholder="e.g. 30-60s or 15s"
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white text-xs"
+                    className="w-full p-2.5 rounded-xl border border-app-line bg-app-surface text-hi text-xs"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Brief & Notes</label>
+                <label className="font-bold text-app-ink-2 block mb-1">Brief & Notes</label>
                 <textarea
                   rows={2}
                   value={newCardBrief}
                   onChange={(e) => setNewCardBrief(e.target.value)}
                   placeholder="Hook, reference links, editing notes..."
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs resize-none"
+                  className="w-full p-2.5 rounded-xl border border-app-line bg-app-base text-hi text-xs resize-none"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-3">
               <button
                 onClick={() => setAssignModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#0B111C] text-[#F1F5F9] text-xs font-bold hover:bg-[#161F2D] border border-[#2A3446] transition"
+                className="px-4 py-2 rounded-xl bg-app-base text-app-ink-2 text-xs font-bold hover:bg-app-surface border border-app-line transition"
               >
                 Cancel
               </button>
@@ -796,22 +796,22 @@ export function PodTaskBoardPage() {
       {/* Interactive Re-route Blocked Modal */}
       {rerouteModalOpen && (
         <div className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 shadow-2xl border border-[#2A3446] space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="w-full max-w-lg bg-app-surface rounded-3xl p-6 shadow-2xl border border-app-line space-y-4">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
               <div className="flex items-center gap-2">
                 <RefreshCw className="size-5 text-amber-400" />
-                <h3 className="text-base font-black text-white">Re-route Blocked Tasks</h3>
+                <h3 className="text-base font-black text-hi">Re-route Blocked Tasks</h3>
               </div>
-              <button onClick={() => setRerouteModalOpen(false)} className="text-[#97A0B3] hover:text-white">
+              <button onClick={() => setRerouteModalOpen(false)} className="text-app-mist hover:text-hi">
                 <X className="size-5" />
               </button>
             </div>
             <div className="space-y-2 text-xs">
-              <label className="font-bold text-[#F1F5F9] block">Blocked task</label>
+              <label className="font-bold text-app-ink-2 block">Blocked task</label>
               <NativeSelect
                 value={rerouteTaskId || rerouteTask?.id || ""}
                 onChange={(e) => setRerouteTaskId(e.target.value)}
-                className="w-full p-3 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold"
+                className="w-full p-3 rounded-xl border border-app-line bg-app-base text-hi font-bold"
               >
                 {activeTasks.length === 0 ? (
                   <option value="">No active tasks to re-route</option>
@@ -847,16 +847,16 @@ export function PodTaskBoardPage() {
                 </dl>
               </div>
             ) : (
-              <div className="p-3.5 rounded-xl bg-[#0B111C] border border-dashed border-[#2A3446] text-[11px] text-[#97A0B3]">
+              <div className="p-3.5 rounded-xl bg-app-base border border-dashed border-app-line text-[11px] text-app-mist">
                 Nothing is in production or QA right now, so there is no task to re-route.
               </div>
             )}
             <div className="space-y-2 text-xs">
-              <label className="font-bold text-[#F1F5F9] block">Re-route to specialist</label>
+              <label className="font-bold text-app-ink-2 block">Re-route to specialist</label>
               <NativeSelect
                 value={rerouteTarget}
                 onChange={(e) => setRerouteTarget(e.target.value)}
-                className="w-full p-3 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold"
+                className="w-full p-3 rounded-xl border border-app-line bg-app-base text-hi font-bold"
               >
                 {(!data?.members || data.members.length === 0) ? (
                   <option value="">No specialists registered</option>
@@ -867,10 +867,10 @@ export function PodTaskBoardPage() {
                 )}
               </NativeSelect>
             </div>
-            <div className="flex justify-end gap-3 pt-3 border-t border-[#2A3446]">
+            <div className="flex justify-end gap-3 pt-3 border-t border-app-line">
               <button
                 onClick={() => setRerouteModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[#F1F5F9] text-xs font-bold hover:bg-[#161F2D] transition"
+                className="px-4 py-2 rounded-xl bg-app-base border border-app-line text-app-ink-2 text-xs font-bold hover:bg-app-surface transition"
               >
                 Cancel
               </button>
@@ -883,7 +883,7 @@ export function PodTaskBoardPage() {
                   setRerouteModalOpen(false);
                   setRerouteTaskId("");
                 }}
-                className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 text-white text-xs font-bold transition shadow-md shadow-blue-500/20"
+                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-600 text-white text-xs font-bold transition shadow-md shadow-blue-500/20"
               >
                 Re-route Task Now
               </button>

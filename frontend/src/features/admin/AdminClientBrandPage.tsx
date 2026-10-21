@@ -32,9 +32,9 @@ import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
     active: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-    trialing: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+    trialing: "bg-app-accent/15 text-app-accent border-app-accent/30",
     expired: "bg-rose-500/15 text-rose-400 border-rose-500/30",
-    canceled: "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
+    canceled: "bg-app-surface text-app-ink-2 border-app-line",
   };
   return (
     <span
@@ -61,13 +61,13 @@ function SectionCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-[#2A3446]/80 bg-[#161F2D] shadow-sm overflow-hidden hover-card-innovative ${className}`}
+      className={`rounded-2xl border border-app-line/80 bg-app-surface shadow-sm overflow-hidden hover-card-innovative ${className}`}
     >
-      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-[#2A3446] bg-[#0B111C]/50">
-        <div className="size-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
+      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-app-line bg-app-base/50">
+        <div className="size-7 rounded-lg bg-app-accent/15 border border-app-line flex items-center justify-center text-app-accent">
           <Icon className="size-3.5" />
         </div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-white">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-hi">
           {title}
         </h3>
       </div>
@@ -84,11 +84,11 @@ function TagBadge({
   color?: "blue" | "red" | "green" | "amber" | "slate";
 }) {
   const colors = {
-    blue: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+    blue: "bg-app-accent/15 text-app-accent border-app-accent/30",
     red: "bg-rose-500/15 text-rose-400 border-rose-500/30",
     green: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
     amber: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-    slate: "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
+    slate: "bg-app-surface text-app-ink-2 border-app-line",
   };
   return (
     <span
@@ -109,16 +109,16 @@ function ColorSwatch({ color, index }: { color: string | any; index?: number }) 
   const hex = typeof color === "string" ? color : (color?.hex || color?.color || "#0F172A");
   const name = typeof color === "object" && color?.name ? color.name : (index !== undefined && labels[index] ? labels[index] : `Accent Tone ${(index ?? 0) + 1}`);
   return (
-    <div className="flex items-center gap-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 min-w-[130px] shadow-xs">
+    <div className="flex items-center gap-2.5 rounded-xl border border-app-line bg-app-base px-3 py-2 min-w-[130px] shadow-xs">
       <div
-        className="size-6 rounded-lg border border-white/20 shadow-inner shrink-0"
+        className="size-6 rounded-lg border border-hi/20 shadow-inner shrink-0"
         style={{ backgroundColor: hex }}
       />
       <div className="flex flex-col min-w-0">
-        <span className="text-[10px] font-semibold text-[#97A0B3] truncate">
+        <span className="text-[10px] font-semibold text-app-mist truncate">
           {name}
         </span>
-        <span className="font-mono text-xs font-bold text-white uppercase truncate">
+        <span className="font-mono text-xs font-bold text-hi uppercase truncate">
           {hex}
         </span>
       </div>
@@ -149,11 +149,11 @@ export function AdminClientBrandPage() {
   // span forever. Surface the reason and a way out instead.
   if (isError || !serverClient) {
     return (
-      <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white">
+      <div data-surface="ops" className="min-h-screen bg-app-base text-hi">
         <AdminTopHeader title="Client Details" activeTab="Client Details" />
         <main className="mx-auto flex min-h-[60vh] w-full max-w-xl flex-col items-center justify-center gap-4 px-4 text-center">
           <h1 className="text-lg font-black">This client profile could not be loaded</h1>
-          <p role="alert" className="text-sm text-[#97A0B3]">
+          <p role="alert" className="text-sm text-app-mist">
             {error instanceof Error
               ? error.message
               : "The client was not found, or you are not assigned to them."}
@@ -162,13 +162,13 @@ export function AdminClientBrandPage() {
             <button
               type="button"
               onClick={() => void refetch()}
-              className="min-h-10 rounded-xl bg-[#BCCCE6] px-5 text-xs font-bold text-[#0B111C] hover:bg-white cursor-pointer"
+              className="min-h-10 rounded-xl bg-app-accent-soft px-5 text-xs font-bold text-app-base hover:bg-hi cursor-pointer"
             >
               Try again
             </button>
             <Link
               to="/lead/clients"
-              className="inline-flex min-h-10 items-center rounded-xl border border-[#2A3446] bg-[#161F2D] px-5 text-xs font-bold text-[#BCCCE6] hover:text-white cursor-pointer"
+              className="inline-flex min-h-10 items-center rounded-xl border border-app-line bg-app-surface px-5 text-xs font-bold text-app-accent-soft hover:text-hi cursor-pointer"
             >
               Back to client allocations
             </Link>
@@ -272,7 +272,7 @@ export function AdminClientBrandPage() {
   };
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-app-base flex flex-col">
       <AdminTopHeader activeTab="Client Details" />
       <motion.main 
         initial={{ opacity: 0, y: 15 }}
@@ -291,13 +291,13 @@ export function AdminClientBrandPage() {
                 window.location.assign("/lead/clients");
               }
             }}
-            className="inline-flex items-center gap-1.5 text-[#97A0B3] hover:text-[#7FA0D6] font-semibold transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-app-mist hover:text-app-accent font-semibold transition-colors cursor-pointer"
           >
             <ArrowLeft className="size-3.5" />
             Back to Client Directory
           </button>
           <span className="text-slate-300">/</span>
-          <span className="text-[#97A0B3]">{client.company_name || client.full_name || "Client"} Brand Brief & Profile</span>
+          <span className="text-app-mist">{client.company_name || client.full_name || "Client"} Brand Brief & Profile</span>
         </div>
 
       {/* ── Client Header Hero ─────────────────────────────── */}
@@ -313,7 +313,7 @@ export function AdminClientBrandPage() {
           .toUpperCase() || "C";
 
         return (
-          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-7 text-white relative overflow-hidden shadow-xl shadow-black/40">
+          <div className="rounded-2xl border border-app-line bg-app-surface p-5 sm:p-7 text-hi relative overflow-hidden shadow-xl shadow-black/40">
             {/* Subtle ambient glow */}
             <div className="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-blue-600/10 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-20 -left-20 size-60 rounded-full bg-indigo-600/10 blur-3xl" />
@@ -326,7 +326,7 @@ export function AdminClientBrandPage() {
 
               <div className="flex-1 min-w-0 space-y-2.5">
                 <div className="flex flex-wrap items-center gap-2.5">
-                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-hi">
                     {displayName}
                   </h1>
                   {lifecycleStatus === "onboarded" ? (
@@ -362,7 +362,7 @@ export function AdminClientBrandPage() {
                       <p className="text-xs font-bold text-amber-300">
                         user not paid and not onboarded yet
                       </p>
-                      <p className="text-[11px] text-[#C5CEE0] leading-relaxed">
+                      <p className="text-[11px] text-app-ink-3 leading-relaxed">
                         This client has registered/logged in but has not completed payment or the brand onboarding intake questionnaire. Mock deliverables and assets are disabled.
                       </p>
                     </div>
@@ -375,26 +375,26 @@ export function AdminClientBrandPage() {
                       <p className="text-xs font-bold text-sky-300">
                         user paid but not onboarded
                       </p>
-                      <p className="text-[11px] text-[#C5CEE0] leading-relaxed">
+                      <p className="text-[11px] text-app-ink-3 leading-relaxed">
                         Subscription payment is verified and active. However, the client has not finalized their brand onboarding questionnaire yet. Brand DNA and creative pod assignment are pending.
                       </p>
                     </div>
                   </div>
                 )}
 
-                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[#97A0B3]">
-                  <span className="inline-flex items-center gap-1.5 font-medium text-[#F1F5F9]">
-                    <Mail className="size-3.5 text-[#7FA0D6]" />
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-app-mist">
+                  <span className="inline-flex items-center gap-1.5 font-medium text-app-ink-2">
+                    <Mail className="size-3.5 text-app-accent" />
                     {client.email}
                   </span>
                   {client.instagram_username && (
-                    <span className="inline-flex items-center gap-1.5 font-medium text-[#F1F5F9]">
+                    <span className="inline-flex items-center gap-1.5 font-medium text-app-ink-2">
                       <Instagram className="size-3.5 text-pink-400" />@
                       {client.instagram_username}
                     </span>
                   )}
                   {client.subscription?.plan_display_name && (
-                    <span className="inline-flex items-center gap-1.5 font-medium text-[#F1F5F9]">
+                    <span className="inline-flex items-center gap-1.5 font-medium text-app-ink-2">
                       <Shield className="size-3.5 text-cyan-400" />
                       {client.subscription.plan_display_name}
                       {client.subscription.monthly_price
@@ -403,7 +403,7 @@ export function AdminClientBrandPage() {
                     </span>
                   )}
                   {client.timezone && (
-                    <span className="inline-flex items-center gap-1.5 font-medium text-[#F1F5F9]">
+                    <span className="inline-flex items-center gap-1.5 font-medium text-app-ink-2">
                       <Globe className="size-3.5 text-emerald-400" />
                       {client.timezone}
                     </span>
@@ -411,11 +411,11 @@ export function AdminClientBrandPage() {
                 </div>
 
                 {positioning && (
-                  <div className="mt-3 p-3.5 rounded-xl border border-[#2A3446] bg-[#0B111C]/80">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1">
+                  <div className="mt-3 p-3.5 rounded-xl border border-app-line bg-app-base/80">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-app-mist mb-1">
                       Brand Positioning & Mission
                     </p>
-                    <p className="text-xs sm:text-sm text-[#F1F5F9] leading-relaxed italic">
+                    <p className="text-xs sm:text-sm text-app-ink-2 leading-relaxed italic">
                       &ldquo;{positioning}&rdquo;
                     </p>
                   </div>
@@ -429,7 +429,7 @@ export function AdminClientBrandPage() {
                     label: "Total Tasks",
                     value: isOnboarded ? (client.task_stats?.total ?? 0) : 0,
                     icon: CheckSquare,
-                    color: "text-[#7FA0D6]",
+                    color: "text-app-accent",
                   },
                   {
                     label: "Pending",
@@ -446,11 +446,11 @@ export function AdminClientBrandPage() {
                 ].map((s) => (
                   <div
                     key={s.label}
-                    className="text-center px-3.5 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] flex-1 min-w-[80px]"
+                    className="text-center px-3.5 py-2.5 rounded-xl bg-app-base border border-app-line flex-1 min-w-[80px]"
                   >
                     <s.icon className={`size-4 mx-auto mb-1 ${s.color}`} />
-                    <p className="text-lg font-black text-white">{s.value}</p>
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-[#97A0B3]">
+                    <p className="text-lg font-black text-hi">{s.value}</p>
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-app-mist">
                       {s.label}
                     </p>
                   </div>
@@ -459,22 +459,22 @@ export function AdminClientBrandPage() {
             </div>
 
             {/* Quick Action Links */}
-            <div className="relative z-10 flex flex-wrap gap-2 mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-[#2A3446]">
+            <div className="relative z-10 flex flex-wrap gap-2 mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-app-line">
               <Link
                 to="/admin/tasks"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#0B111C] hover:bg-[#161F2D] text-[#F1F5F9] text-[11px] font-bold border border-[#2A3446] transition-all"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-app-base hover:bg-app-surface text-app-ink-2 text-[11px] font-bold border border-app-line transition-all"
               >
-                <CheckSquare className="size-3 text-[#7FA0D6]" /> View Tasks
+                <CheckSquare className="size-3 text-app-accent" /> View Tasks
               </Link>
               <Link
                 to="/admin/calendar"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#0B111C] hover:bg-[#161F2D] text-[#F1F5F9] text-[11px] font-bold border border-[#2A3446] transition-all"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-app-base hover:bg-app-surface text-app-ink-2 text-[11px] font-bold border border-app-line transition-all"
               >
                 <CalendarDays className="size-3 text-cyan-400" /> Content Calendar
               </Link>
               <Link
                 to="/admin/deliverables"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#0B111C] hover:bg-[#161F2D] text-[#F1F5F9] text-[11px] font-bold border border-[#2A3446] transition-all"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-app-base hover:bg-app-surface text-app-ink-2 text-[11px] font-bold border border-app-line transition-all"
               >
                 <FileStack className="size-3 text-emerald-400" /> Deliverables
               </Link>
@@ -490,7 +490,7 @@ export function AdminClientBrandPage() {
           <div className="space-y-4">
             {voiceWords.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2 flex items-center gap-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-app-mist mb-2 flex items-center gap-1.5">
                   <Eye className="size-3" /> Voice Words
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -502,7 +502,7 @@ export function AdminClientBrandPage() {
             )}
             {antiVoice.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2 flex items-center gap-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-app-mist mb-2 flex items-center gap-1.5">
                   <EyeOff className="size-3" /> Anti-Voice (Avoid)
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -514,14 +514,14 @@ export function AdminClientBrandPage() {
             )}
             {writingRules.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-app-mist mb-2">
                   Writing Rules
                 </p>
                 <ul className="space-y-1.5">
                   {writingRules.map((r, i) => (
                     <li
                       key={i}
-                      className="text-xs text-[#F1F5F9] pl-3 relative before:content-[''] before:absolute before:left-0 before:top-1.5 before:size-1.5 before:rounded-full before:bg-[#7FA0D6]"
+                      className="text-xs text-app-ink-2 pl-3 relative before:content-[''] before:absolute before:left-0 before:top-1.5 before:size-1.5 before:rounded-full before:bg-app-accent"
                     >
                       {r}
                     </li>
@@ -532,7 +532,7 @@ export function AdminClientBrandPage() {
             {voiceWords.length === 0 &&
               antiVoice.length === 0 &&
               writingRules.length === 0 && (
-                <p className="text-xs text-[#97A0B3] italic">
+                <p className="text-xs text-app-mist italic">
                   No tone data available yet. Brand DNA will be generated once
                   the client completes the questionnaire.
                 </p>
@@ -545,7 +545,7 @@ export function AdminClientBrandPage() {
           <div className="space-y-4">
             {palette.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-app-mist mb-2">
                   Brand Color Palette
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -556,38 +556,38 @@ export function AdminClientBrandPage() {
               </div>
             )}
             {/* Typography Pairing */}
-            <div className="pt-2 border-t border-[#2A3446]/60">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2 flex items-center gap-1.5">
-                <Type className="size-3 text-[#7FA0D6]" /> Typography Pairing & System
+            <div className="pt-2 border-t border-app-line/60">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-app-mist mb-2 flex items-center gap-1.5">
+                <Type className="size-3 text-app-accent" /> Typography Pairing & System
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
+                <div className="bg-app-base border border-app-line rounded-xl p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-app-mist block mb-1">
                     Headlines / Display
                   </span>
-                  <p className="text-sm font-bold text-white">
+                  <p className="text-sm font-bold text-hi">
                     {dna.typography?.headline || visualDir.headings_font || "Inter Display · 700 Bold"}
                   </p>
-                  <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                  <p className="text-[11px] text-app-mist mt-0.5">
                     Bold, punchy titles optimized for feed stops.
                   </p>
                 </div>
-                <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
+                <div className="bg-app-base border border-app-line rounded-xl p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-app-mist block mb-1">
                     Body Copy / Subtitles
                   </span>
-                  <p className="text-sm font-normal text-white">
+                  <p className="text-sm font-normal text-hi">
                     {dna.typography?.body || visualDir.body_font || "Inter Sans · 400 Regular"}
                   </p>
-                  <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                  <p className="text-[11px] text-app-mist mt-0.5">
                     High legibility for reel captions and carousel body copy.
                   </p>
                 </div>
               </div>
             </div>
             {visualStyles.length > 0 && (
-              <div className="pt-2 border-t border-[#2A3446]/60">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
+              <div className="pt-2 border-t border-app-line/60">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-app-mist mb-2">
                   Visual Styles
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -598,7 +598,7 @@ export function AdminClientBrandPage() {
               </div>
             )}
             {palette.length === 0 && visualStyles.length === 0 && (
-              <p className="text-xs text-[#97A0B3] italic">
+              <p className="text-xs text-app-mist italic">
                 No visual direction data available yet.
               </p>
             )}
@@ -612,15 +612,15 @@ export function AdminClientBrandPage() {
               {audiences.map((a: any, i: number) => (
                 <div
                   key={i}
-                  className="rounded-xl border border-[#2A3446] bg-[#0B111C]/50 p-3.5"
+                  className="rounded-xl border border-app-line bg-app-base/50 p-3.5"
                 >
-                  <p className="text-xs font-bold text-white">
+                  <p className="text-xs font-bold text-hi">
                     {typeof a === "string"
                       ? a
                       : a.name || "Audience Segment"}
                   </p>
                   {typeof a === "object" && a.description && (
-                    <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed">
+                    <p className="text-[11px] text-app-ink-2 mt-1 leading-relaxed">
                       {a.description}
                     </p>
                   )}
@@ -633,7 +633,7 @@ export function AdminClientBrandPage() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-[#97A0B3] italic">
+            <p className="text-xs text-app-mist italic">
               No audience segment data available.
             </p>
           )}
@@ -646,10 +646,10 @@ export function AdminClientBrandPage() {
               {pillars.map((p: any, i: number) => (
                 <div
                   key={i}
-                  className="rounded-xl border border-[#2A3446] bg-[#0B111C]/50 p-3.5"
+                  className="rounded-xl border border-app-line bg-app-base/50 p-3.5"
                 >
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className="text-xs font-bold text-white">
+                    <p className="text-xs font-bold text-hi">
                       {typeof p === "string" ? p : p.name || "Content Pillar"}
                     </p>
                     {typeof p === "object" && p.funnel_stage && (
@@ -665,7 +665,7 @@ export function AdminClientBrandPage() {
                     )}
                   </div>
                   {typeof p === "object" && p.rationale && (
-                    <p className="text-[11px] text-[#F1F5F9] leading-relaxed">
+                    <p className="text-[11px] text-app-ink-2 leading-relaxed">
                       {p.rationale}
                     </p>
                   )}
@@ -682,7 +682,7 @@ export function AdminClientBrandPage() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-[#97A0B3] italic">
+            <p className="text-xs text-app-mist italic">
               No content pillar data available.
             </p>
           )}
@@ -708,7 +708,7 @@ export function AdminClientBrandPage() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-[#97A0B3] italic">
+            <p className="text-xs text-app-mist italic">
               No &quot;do not&quot; rules specified.
             </p>
           )}
@@ -719,7 +719,7 @@ export function AdminClientBrandPage() {
           <div className="space-y-4">
             {formats.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-app-mist mb-2">
                   Feasible Formats
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -730,7 +730,7 @@ export function AdminClientBrandPage() {
               </div>
             )}
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-app-mist mb-2">
                 Default Reel Style
               </p>
               <TagBadge
@@ -742,21 +742,21 @@ export function AdminClientBrandPage() {
             {/* Quota usage */}
             {Array.isArray(client.quota_usage) && client.quota_usage.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-app-mist mb-2">
                   Monthly Quota Usage
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {client.quota_usage.map((q) => (
                     <div
                       key={q.kind}
-                      className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-3 text-center"
+                      className="rounded-xl border border-app-line bg-app-base p-3 text-center"
                     >
-                      <p className="text-xs font-bold text-white capitalize">
+                      <p className="text-xs font-bold text-hi capitalize">
                         {q.kind.replace(/_/g, " ")}
                       </p>
-                      <p className="text-lg font-black text-[#7FA0D6] mt-0.5">
+                      <p className="text-lg font-black text-app-accent mt-0.5">
                         {q.used}
-                        <span className="text-xs text-[#97A0B3] font-medium">
+                        <span className="text-xs text-app-mist font-medium">
                           {" "}
                           / {q.quota}
                         </span>
@@ -764,9 +764,9 @@ export function AdminClientBrandPage() {
                       <p className="text-[10px] font-bold text-emerald-400 mt-0.5">
                         {Math.max(0, q.quota - q.used)} remaining
                       </p>
-                      <div className="w-full h-1.5 bg-[#0B111C] border border-[#2A3446] rounded-full mt-1.5 overflow-hidden">
+                      <div className="w-full h-1.5 bg-app-base border border-app-line rounded-full mt-1.5 overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-blue-500 to-[#7FA0D6] rounded-full transition-all"
+                          className="h-full bg-gradient-to-r from-blue-500 to-app-accent rounded-full transition-all"
                           style={{
                             width: `${Math.min(100, q.quota > 0 ? (q.used / q.quota) * 100 : 0)}%`,
                           }}
@@ -787,30 +787,30 @@ export function AdminClientBrandPage() {
           <div className="overflow-x-auto -mx-1 -mr-2">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] border-b border-[#2A3446]">
+                <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-app-mist border-b border-app-line">
                   <th className="pb-2.5 pl-1 pr-3">Team Member</th>
                   <th className="pb-2.5 pr-3">Role</th>
                   <th className="pb-2.5 pr-3">Email</th>
                   <th className="pb-2.5 pr-1 text-center">Primary</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#2A3446]">
+              <tbody className="divide-y divide-app-line">
                 {client.assigned_team.map((m) => (
-                  <tr key={m.id} className="hover:bg-[#0B111C]/50 transition-colors">
+                  <tr key={m.id} className="hover:bg-app-base/50 transition-colors">
                     <td className="py-3 pl-1 pr-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="size-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[10px] font-bold text-[#7FA0D6]">
+                        <div className="size-7 rounded-lg bg-app-accent/15 border border-app-line flex items-center justify-center text-[10px] font-bold text-app-accent">
                           {(m.name?.[0] || "?").toUpperCase()}
                         </div>
-                        <span className="font-semibold text-white">
+                        <span className="font-semibold text-hi">
                           {m.name}
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 pr-3 text-[#F1F5F9] font-medium">
+                    <td className="py-3 pr-3 text-app-ink-2 font-medium">
                       {m.role_label}
                     </td>
-                    <td className="py-3 pr-3 text-[#97A0B3]">{m.email}</td>
+                    <td className="py-3 pr-3 text-app-mist">{m.email}</td>
                     <td className="py-3 pr-1 text-center">
                       {m.is_primary && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
@@ -827,28 +827,28 @@ export function AdminClientBrandPage() {
       )}
 
       {/* ── Brand DNA Meta Footer ──────────────────────────── */}
-      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-2 sm:gap-3 py-3 px-3 sm:px-4 rounded-xl border border-[#2A3446] bg-[#0B111C]/50 text-[10px] text-[#97A0B3] font-medium">
+      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-2 sm:gap-3 py-3 px-3 sm:px-4 rounded-xl border border-app-line bg-app-base/50 text-[10px] text-app-mist font-medium">
         <div className="flex items-center gap-4">
           <span>
             DNA Source:{" "}
-            <strong className="text-[#F1F5F9] capitalize">
+            <strong className="text-app-ink-2 capitalize">
               {client.brand_dna_source}
             </strong>
           </span>
           <span>
             Version:{" "}
-            <strong className="text-[#F1F5F9]">v{client.brand_dna_version}</strong>
+            <strong className="text-app-ink-2">v{client.brand_dna_version}</strong>
           </span>
           {client.onboarding_completed_at && (
             <span>
               Onboarded:{" "}
-              <strong className="text-[#F1F5F9]">
+              <strong className="text-app-ink-2">
                 {new Date(client.onboarding_completed_at).toLocaleDateString()}
               </strong>
             </span>
           )}
         </div>
-        <span className="text-[9px] uppercase tracking-wider text-[#97A0B3]">
+        <span className="text-[9px] uppercase tracking-wider text-app-mist">
           Client ID: {(client.client_id || "").slice(0, 8)}
         </span>
       </div>

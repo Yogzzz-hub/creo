@@ -141,7 +141,7 @@ export function PortalHeader() {
   ].includes(location.pathname);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-[#2A3446]/70 bg-[#0B111C]/95 backdrop-blur-sm px-4 sm:px-8 shadow-sm">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-app-line/70 bg-app-base/95 backdrop-blur-sm px-4 sm:px-8 shadow-sm">
       {/* Dynamic Page Title & Back Button */}
       <div className="flex items-center gap-2.5">
         {!isMainPortalPage && (
@@ -154,13 +154,13 @@ export function PortalHeader() {
                 navigate("/portal");
               }
             }}
-            className="flex size-8 items-center justify-center rounded-xl border border-[#BCCCE6] bg-[#161F2D]/60 text-[#7FA0D6] hover:bg-[#161F2D] hover:border-[#7FA0D6]/40 transition-all cursor-pointer shadow-2xs group"
+            className="flex size-8 items-center justify-center rounded-xl border border-app-accent-soft bg-app-surface/60 text-app-accent hover:bg-app-surface hover:border-app-accent/40 transition-all cursor-pointer shadow-2xs group"
             title="Go Back"
           >
             <ChevronLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
           </button>
         )}
-        <h1 className="text-sm font-bold tracking-wider text-[#F1F5F9]">
+        <h1 className="text-sm font-bold tracking-wider text-app-ink-2">
           {getPageTitle()}
         </h1>
       </div>
@@ -188,7 +188,7 @@ export function PortalHeader() {
               setNotificationOpen(!notificationOpen);
               setDropdownOpen(false);
             }}
-            className="relative flex size-9 items-center justify-center rounded-lg text-[#0B111C]/70 hover:bg-slate-100 hover:text-[#0B111C] transition-colors cursor-pointer"
+            className="relative flex size-9 items-center justify-center rounded-lg text-app-base/70 hover:bg-slate-100 hover:text-app-base transition-colors cursor-pointer"
             aria-label="Notifications"
           >
             <Bell className="size-5" />
@@ -200,14 +200,14 @@ export function PortalHeader() {
           </button>
 
           {notificationOpen && (
-            <div className="absolute right-0 mt-2 w-84 rounded-2xl border border-[#2A3446]/70 bg-[#161F2D] p-4 shadow-xl z-50 text-[#F1F5F9] space-y-3 animate-[zoomIn_0.1s_ease-out]">
+            <div className="absolute right-0 mt-2 w-84 rounded-2xl border border-app-line/70 bg-app-surface p-4 shadow-xl z-50 text-app-ink-2 space-y-3 animate-[zoomIn_0.1s_ease-out]">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#7FA0D6]">
+                  <span className="text-xs font-bold uppercase tracking-wider text-app-accent">
                     Notifications
                   </span>
                   {unreadCount > 0 && (
-                    <span className="rounded-full bg-blue-100 px-1.5 py-0.2 text-[10px] font-bold text-[#7FA0D6]">
+                    <span className="rounded-full bg-blue-100 px-1.5 py-0.2 text-[10px] font-bold text-app-accent">
                       {unreadCount} New
                     </span>
                   )}
@@ -216,7 +216,7 @@ export function PortalHeader() {
                   <button
                     type="button"
                     onClick={handleMarkAllRead}
-                    className="text-[11px] font-semibold text-slate-500 hover:text-[#7FA0D6] cursor-pointer"
+                    className="text-[11px] font-semibold text-slate-500 hover:text-app-accent cursor-pointer"
                   >
                     Mark all read
                   </button>
@@ -235,23 +235,23 @@ export function PortalHeader() {
                       onClick={() => handleItemClick(n)}
                       className={`rounded-xl p-3 text-xs space-y-1 cursor-pointer transition-all border ${
                         !n.is_read
-                          ? "bg-[#161F2D]/70 border-[#BCCCE6] hover:bg-[#161F2D]"
+                          ? "bg-app-surface/70 border-app-accent-soft hover:bg-app-surface"
                           : "bg-slate-50/70 border-slate-100 hover:bg-slate-100 text-slate-600"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <p className={`font-bold truncate ${!n.is_read ? "text-[#0B111C]" : "text-slate-700"}`}>
+                        <p className={`font-bold truncate ${!n.is_read ? "text-app-base" : "text-slate-700"}`}>
                           {n.title}
                         </p>
                         {!n.is_read && (
-                          <span className="size-2 rounded-full bg-[#7FA0D6] shrink-0" />
+                          <span className="size-2 rounded-full bg-app-accent shrink-0" />
                         )}
                       </div>
                       <p className="text-slate-600 text-[11px] leading-relaxed line-clamp-2">
                         {n.message}
                       </p>
                       {n.link && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#7FA0D6]">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-app-accent">
                           View details <ExternalLink className="size-2.5" />
                         </span>
                       )}
@@ -271,20 +271,20 @@ export function PortalHeader() {
               setDropdownOpen(!dropdownOpen);
               setNotificationOpen(false);
             }}
-            className="flex size-9 items-center justify-center rounded-full bg-[#7FA0D6] text-white text-sm font-semibold outline-hidden focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 cursor-pointer shadow-xs"
+            className="flex size-9 items-center justify-center rounded-full bg-app-accent text-white text-sm font-semibold outline-hidden focus-visible:ring-2 focus-visible:ring-app-accent focus-visible:ring-offset-2 cursor-pointer shadow-xs"
           >
             {initial}
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-64 rounded-xl border border-[#2A3446]/70 bg-[#161F2D] p-2 shadow-lg z-50 text-[#F1F5F9]">
+            <div className="absolute right-0 mt-2 w-64 rounded-xl border border-app-line/70 bg-app-surface p-2 shadow-lg z-50 text-app-ink-2">
               <div className="px-3 py-2 border-b border-border mb-1">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-[#7FA0D6] text-white text-xs font-semibold">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-app-accent text-white text-xs font-semibold">
                     {initial}
                   </div>
                   <div className="truncate">
-                    <p className="text-sm font-semibold text-[#0B111C] truncate">{displayName}</p>
+                    <p className="text-sm font-semibold text-app-base truncate">{displayName}</p>
                     <p className="text-xs text-slate-500 truncate">{user?.email ?? ""}</p>
                   </div>
                 </div>
@@ -303,7 +303,7 @@ export function PortalHeader() {
                     setDropdownOpen(false);
                     navigate("/portal/account");
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-[#161F2D] hover:text-[#7FA0D6] rounded-lg transition-colors text-left cursor-pointer"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-app-surface hover:text-app-accent rounded-lg transition-colors text-left cursor-pointer"
                 >
                   <Settings className="size-4" />
                   Account Settings
@@ -314,7 +314,7 @@ export function PortalHeader() {
                     setDropdownOpen(false);
                     navigate("/portal/support");
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-[#161F2D] hover:text-[#7FA0D6] rounded-lg transition-colors text-left cursor-pointer"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-app-surface hover:text-app-accent rounded-lg transition-colors text-left cursor-pointer"
                 >
                   <LifeBuoy className="size-4" />
                   Help & Support

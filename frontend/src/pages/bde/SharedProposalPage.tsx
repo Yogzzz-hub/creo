@@ -37,7 +37,7 @@ export function SharedProposalPage() {
 		}
 	}
 	return (
-		<main className="min-h-screen bg-[#0B111C] px-4 py-8 text-white">
+		<main className="min-h-screen bg-app-base px-4 py-8 text-hi">
 			<div className="mx-auto max-w-4xl space-y-6">
 				<p className="text-xs font-bold uppercase tracking-widest text-[#8FAEDC]">
 					Creo · Secure proposal review
@@ -65,7 +65,7 @@ export function SharedProposalPage() {
 						{["sent", "viewed"].includes(query.data.status) ? (
 							<form
 								onSubmit={submit}
-								className="space-y-4 rounded-2xl border border-[#2A3446] bg-[#131C2A] p-5"
+								className="space-y-4 rounded-2xl border border-app-line bg-[#131C2A] p-5"
 							>
 								<h1 className="text-lg font-semibold">
 									Your decision on version {query.data.version}
@@ -85,7 +85,7 @@ export function SharedProposalPage() {
 										required
 										minLength={2}
 										maxLength={255}
-										className="min-h-11 w-full rounded-xl border border-[#34435C] bg-[#0B111C] p-3"
+										className="min-h-11 w-full rounded-xl border border-[#34435C] bg-app-base p-3"
 										value={name}
 										onChange={(e) => setName(e.target.value)}
 									/>
@@ -93,7 +93,7 @@ export function SharedProposalPage() {
 								<label className="block space-y-2 text-sm">
 									Decision
 									<select
-										className="min-h-11 w-full rounded-xl border border-[#34435C] bg-[#0B111C] p-3"
+										className="min-h-11 w-full rounded-xl border border-[#34435C] bg-app-base p-3"
 										value={decision}
 										onChange={(e) => setDecision(e.target.value)}
 									>
@@ -108,7 +108,7 @@ export function SharedProposalPage() {
 									Comments
 									<textarea
 										maxLength={5000}
-										className="w-full rounded-xl border border-[#34435C] bg-[#0B111C] p-3"
+										className="w-full rounded-xl border border-[#34435C] bg-app-base p-3"
 										rows={3}
 										value={note}
 										onChange={(e) => setNote(e.target.value)}
@@ -116,7 +116,7 @@ export function SharedProposalPage() {
 								</label>
 								<button
 									disabled={busy}
-									className="min-h-11 rounded-xl bg-[#BCCCE6] px-5 font-semibold text-[#0B111C] disabled:opacity-50"
+									className="min-h-11 rounded-xl bg-app-accent-soft px-5 font-semibold text-app-base disabled:opacity-50"
 								>
 									{busy ? "Recording..." : "Confirm decision"}
 								</button>
@@ -124,7 +124,7 @@ export function SharedProposalPage() {
 						) : (
 							<p
 								role="status"
-								className="rounded-xl border border-[#2A3446] p-5"
+								className="rounded-xl border border-app-line p-5"
 							>
 								Your proposal status: {query.data.status.replaceAll("_", " ")}.
 								Contact the agency for changes.

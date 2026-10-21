@@ -225,7 +225,7 @@ export function FreelancerTasksPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B111C] text-white flex flex-col overflow-x-hidden">
+    <div className="min-h-screen bg-app-base text-hi flex flex-col overflow-x-hidden">
       <AdminTopHeader activeTab="Assigned Workload" hideTitle />
 
       <div className="max-w-[1600px] w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 flex-1">
@@ -239,8 +239,8 @@ export function FreelancerTasksPage() {
 
       {/* ── MOBILE: 2 KPI CARDS (Earned & Expected Earnings) ── */}
       <div className="sm:hidden grid grid-cols-2 gap-2">
-        <div className="p-2.5 bg-[#161F2D] border border-[#2A3446] rounded-xl space-y-0.5 shadow-xs">
-          <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+        <div className="p-2.5 bg-app-surface border border-app-line rounded-xl space-y-0.5 shadow-xs">
+          <div className="flex items-center justify-between text-[10px] font-bold text-app-mist uppercase tracking-wider">
             <span>Earned</span>
             <IndianRupee className="w-3.5 h-3.5 text-emerald-400" />
           </div>
@@ -250,8 +250,8 @@ export function FreelancerTasksPage() {
           <p className="text-[10px] text-emerald-400/80 font-bold truncate">{earnings.completedCount} approved</p>
         </div>
 
-        <div className="p-2.5 bg-[#161F2D] border border-[#2A3446] rounded-xl space-y-0.5 shadow-xs">
-          <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+        <div className="p-2.5 bg-app-surface border border-app-line rounded-xl space-y-0.5 shadow-xs">
+          <div className="flex items-center justify-between text-[10px] font-bold text-app-mist uppercase tracking-wider">
             <span>Expected Earnings</span>
             <Wallet className="w-3.5 h-3.5 text-amber-400" />
           </div>
@@ -265,9 +265,9 @@ export function FreelancerTasksPage() {
       {/* ── DESKTOP/TABLET: 2 Financial & Earnings Summary Cards ── */}
       <div className="hidden sm:grid sm:grid-cols-2 gap-4 w-full">
         {/* Card 1: Earned & Settled */}
-        <div className="bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-emerald-500/30 transition-all shadow-xl flex flex-col justify-between">
+        <div className="bg-app-surface rounded-3xl p-5 border-2 border-app-surface hover:border-emerald-500/30 transition-all shadow-xl flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
+            <span className="text-[10px] font-black text-app-mist uppercase tracking-wider">
               EARNED & SETTLED
             </span>
             <div className="w-8 h-8 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
@@ -278,19 +278,19 @@ export function FreelancerTasksPage() {
             <span className="text-2xl font-black text-emerald-400">
               ₹{earnings.earnedSettled.toLocaleString("en-IN")}
             </span>
-            <span className="text-xs font-semibold text-[#97A0B3]">
+            <span className="text-xs font-semibold text-app-mist">
               ({earnings.completedCount} approved)
             </span>
           </div>
-          <div className="mt-3 pt-3 border-t border-[#2A3446] text-xs font-bold text-emerald-400 flex items-center gap-1">
+          <div className="mt-3 pt-3 border-t border-app-line text-xs font-bold text-emerald-400 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" /> Payout cleared on sign-off
           </div>
         </div>
 
         {/* Card 2: Expected Earnings */}
-        <div className="bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-amber-500/30 transition-all shadow-xl flex flex-col justify-between">
+        <div className="bg-app-surface rounded-3xl p-5 border-2 border-app-surface hover:border-amber-500/30 transition-all shadow-xl flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
+            <span className="text-[10px] font-black text-app-mist uppercase tracking-wider">
               EXPECTED EARNINGS
             </span>
             <div className="w-8 h-8 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
@@ -301,18 +301,18 @@ export function FreelancerTasksPage() {
             <span className="text-2xl font-black text-amber-400">
               ₹{earnings.totalPipeline.toLocaleString("en-IN")}
             </span>
-            <span className="text-xs font-semibold text-[#97A0B3]">
+            <span className="text-xs font-semibold text-app-mist">
               ({taskList.length} deliverables)
             </span>
           </div>
-          <div className="mt-3 pt-3 border-t border-[#2A3446] text-xs font-bold text-amber-400 flex items-center gap-1">
+          <div className="mt-3 pt-3 border-t border-app-line text-xs font-bold text-amber-400 flex items-center gap-1">
             <Wallet className="w-3.5 h-3.5" /> All assigned milestones
           </div>
         </div>
       </div>
 
       {/* Filters Bar: Full-Width Segmented Controls */}
-      <div className="bg-[#161F2D] p-1.5 sm:p-2 rounded-2xl border border-[#2A3446] w-full shadow-xs">
+      <div className="bg-app-surface p-1.5 sm:p-2 rounded-2xl border border-app-line w-full shadow-xs">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 w-full">
           {[
             { key: "pending", label: "In Progress", count: tabCounts.pending },
@@ -326,15 +326,15 @@ export function FreelancerTasksPage() {
               className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center flex items-center justify-center gap-2 ${
                 filterStatus === tab.key
                   ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
-                  : "text-[#97A0B3] hover:text-white hover:bg-[#0B111C]"
+                  : "text-app-mist hover:text-hi hover:bg-app-base"
               }`}
             >
               <span>{tab.label}</span>
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
                   filterStatus === tab.key
-                    ? "bg-white/20 text-white font-black"
-                    : "bg-[#2A3446] text-[#97A0B3]"
+                    ? "bg-hi/20 text-hi font-black"
+                    : "bg-app-line text-app-mist"
                 }`}
               >
                 {tab.count}
@@ -346,12 +346,12 @@ export function FreelancerTasksPage() {
 
       {/* Task Cards List */}
       {isLoading ? (
-        <div className="text-center py-16 text-sm text-[#97A0B3]">Loading assigned tasks...</div>
+        <div className="text-center py-16 text-sm text-app-mist">Loading assigned tasks...</div>
       ) : filteredTasks.length === 0 ? (
-        <div className="bg-[#161F2D] rounded-3xl p-12 text-center border border-[#2A3446] space-y-3">
-          <Briefcase className="w-10 h-10 text-[#97A0B3] mx-auto opacity-40" />
-          <h3 className="text-base font-bold text-white">No deliverables in current filter</h3>
-          <p className="text-xs text-[#97A0B3] max-w-sm mx-auto">
+        <div className="bg-app-surface rounded-3xl p-12 text-center border border-app-line space-y-3">
+          <Briefcase className="w-10 h-10 text-app-mist mx-auto opacity-40" />
+          <h3 className="text-base font-bold text-hi">No deliverables in current filter</h3>
+          <p className="text-xs text-app-mist max-w-sm mx-auto">
             You will receive tasks directly from Team Leads with creative briefs, due dates, and milestone payout values.
           </p>
         </div>
@@ -365,7 +365,7 @@ export function FreelancerTasksPage() {
             return (
               <div
                 key={task.id}
-                className="bg-[#161F2D] rounded-3xl p-4 sm:p-6 border border-[#2A3446] shadow-lg hover:border-purple-500/40 transition-all flex flex-col justify-between space-y-4"
+                className="bg-app-surface rounded-3xl p-4 sm:p-6 border border-app-line shadow-lg hover:border-purple-500/40 transition-all flex flex-col justify-between space-y-4"
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
@@ -373,7 +373,7 @@ export function FreelancerTasksPage() {
                       <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider">
                         Client: {task.client_name}
                       </span>
-                      <h3 className="text-base font-bold text-white">{task.title}</h3>
+                      <h3 className="text-base font-bold text-hi">{task.title}</h3>
                     </div>
                     {getStatusBadge(task.status)}
                   </div>
@@ -397,19 +397,19 @@ export function FreelancerTasksPage() {
                           <span className="px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold flex items-center gap-1">
                             <IndianRupee className="w-3.5 h-3.5" /> Payout: ₹{fee.toLocaleString("en-IN")}
                           </span>
-                          <span className="px-2 py-0.5 rounded-lg bg-[#0B111C] border border-[#2A3446] font-mono text-purple-300 flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded-lg bg-app-base border border-app-line font-mono text-purple-300 flex items-center gap-1">
                             <Film className="w-3 h-3 text-purple-400" />
                             {task.format}
                           </span>
                           {duration && (
-                            <span className="px-2 py-0.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-blue-300 flex items-center gap-1 font-mono">
+                            <span className="px-2 py-0.5 rounded-lg bg-app-base border border-app-line text-blue-300 flex items-center gap-1 font-mono">
                               <Clock className="w-3 h-3 text-blue-400" />
                               Length: {duration}
                             </span>
                           )}
                           {task.due_date && (
-                            <span className="flex items-center gap-1 text-[#97A0B3] bg-[#0B111C] px-2 py-0.5 rounded-lg border border-[#2A3446]">
-                              <Calendar className="w-3 h-3 text-[#97A0B3]" /> Due: {task.due_date}
+                            <span className="flex items-center gap-1 text-app-mist bg-app-base px-2 py-0.5 rounded-lg border border-app-line">
+                              <Calendar className="w-3 h-3 text-app-mist" /> Due: {task.due_date}
                             </span>
                           )}
                         </div>
@@ -420,7 +420,7 @@ export function FreelancerTasksPage() {
                             href={footageUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-blue-900/40 via-[#13233c] to-indigo-900/30 border border-blue-500/40 hover:border-blue-400 text-white transition-all group shadow-md gap-2.5"
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-blue-900/40 via-[#13233c] to-indigo-900/30 border border-blue-500/40 hover:border-blue-400 text-hi transition-all group shadow-md gap-2.5"
                           >
                             <div className="flex items-start sm:items-center gap-2.5 min-w-0">
                               <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform mt-0.5 sm:mt-0">
@@ -428,7 +428,7 @@ export function FreelancerTasksPage() {
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                                  <span className="text-xs font-black text-white truncate">
+                                  <span className="text-xs font-black text-hi truncate">
                                     Raw Footage / Source Assets (Drive)
                                   </span>
                                   <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
@@ -446,7 +446,7 @@ export function FreelancerTasksPage() {
                             </div>
                           </a>
                         ) : (
-                          <div className="p-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[11px] text-[#97A0B3] flex items-center gap-2">
+                          <div className="p-2.5 rounded-xl bg-app-base border border-app-line text-[11px] text-app-mist flex items-center gap-2">
                             <FolderGit2 className="w-4 h-4 text-amber-400 shrink-0" />
                             <span>
                               Raw Footage Drive link: <strong className="text-amber-300">Pending link from Admin / TL</strong>
@@ -456,7 +456,7 @@ export function FreelancerTasksPage() {
 
                         {/* Creative Directives Box (Hook, Audio, References) */}
                         {(hookText || audio || refLink) && (
-                          <div className="p-3 bg-[#0B111C] rounded-2xl border border-purple-500/20 text-xs space-y-2">
+                          <div className="p-3 bg-app-base rounded-2xl border border-purple-500/20 text-xs space-y-2">
                             {hookText && (
                               <div className="flex items-start gap-1.5 text-amber-300">
                                 <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
@@ -464,25 +464,25 @@ export function FreelancerTasksPage() {
                                   <strong className="text-[10px] uppercase tracking-wider text-amber-400 block font-black">
                                     Hook / Concept Angle:
                                   </strong>
-                                  <p className="text-white text-xs leading-snug font-medium">"{hookText}"</p>
+                                  <p className="text-hi text-xs leading-snug font-medium">"{hookText}"</p>
                                 </div>
                               </div>
                             )}
 
                             {audio && (
-                              <div className="flex items-start gap-1.5 text-pink-300 pt-1 border-t border-[#2A3446]/60">
+                              <div className="flex items-start gap-1.5 text-pink-300 pt-1 border-t border-app-line/60">
                                 <Music className="w-3.5 h-3.5 text-pink-400 shrink-0 mt-0.5" />
                                 <div>
                                   <strong className="text-[10px] uppercase tracking-wider text-pink-400 block font-black">
                                     Audio & Sound Directions:
                                   </strong>
-                                  <p className="text-[#F1F5F9] text-xs leading-snug">{audio}</p>
+                                  <p className="text-app-ink-2 text-xs leading-snug">{audio}</p>
                                 </div>
                               </div>
                             )}
 
                             {refLink && (
-                              <div className="pt-1 border-t border-[#2A3446]/60">
+                              <div className="pt-1 border-t border-app-line/60">
                                 <a
                                   href={refLink}
                                   target="_blank"
@@ -498,8 +498,8 @@ export function FreelancerTasksPage() {
 
                         {/* Brief & Scope */}
                         {task.description && (
-                          <div className="p-3 bg-[#0B111C] rounded-2xl text-xs text-[#F1F5F9] border border-[#2A3446] space-y-1">
-                            <span className="font-bold text-[#97A0B3] block text-[10px] uppercase">
+                          <div className="p-3 bg-app-base rounded-2xl text-xs text-app-ink-2 border border-app-line space-y-1">
+                            <span className="font-bold text-app-mist block text-[10px] uppercase">
                               Creative Brief & Scope
                             </span>
                             <p className="line-clamp-4 text-xs leading-relaxed whitespace-pre-wrap">{task.description}</p>
@@ -523,12 +523,12 @@ export function FreelancerTasksPage() {
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                                    <span className="text-xs font-bold text-white">v{versionNum} Submitted for QA Review</span>
+                                    <span className="text-xs font-bold text-hi">v{versionNum} Submitted for QA Review</span>
                                     <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/30 shrink-0">
                                       In QA Review
                                     </span>
                                   </div>
-                                  <p className="text-[11px] text-[#97A0B3] truncate font-mono mt-0.5">
+                                  <p className="text-[11px] text-app-mist truncate font-mono mt-0.5">
                                     {displayFileName}
                                   </p>
                                 </div>
@@ -553,15 +553,15 @@ export function FreelancerTasksPage() {
                 </div>
 
                 {/* Card Action Footer */}
-                <div className="pt-3 border-t border-[#2A3446] flex flex-wrap items-center justify-between gap-2">
+                <div className="pt-3 border-t border-app-line flex flex-wrap items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={() =>
                       setHistoryDeliverable({ id: task.deliverable_id || task.id, title: task.title })
                     }
-                    className="px-3 py-1.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#97A0B3] hover:text-white hover:bg-[#0B111C] flex items-center gap-1.5 cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl border border-app-line text-xs font-bold text-app-mist hover:text-hi hover:bg-app-base flex items-center gap-1.5 cursor-pointer"
                   >
-                    <History className="w-3.5 h-3.5 text-[#97A0B3]" /> History
+                    <History className="w-3.5 h-3.5 text-app-mist" /> History
                   </button>
 
                   <div className="flex items-center gap-2">
@@ -595,7 +595,7 @@ export function FreelancerTasksPage() {
                             setSubmissionNotes("");
                             setSubmitError(null);
                           }}
-                          className="px-3 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-xs font-semibold text-[#97A0B3] hover:text-white flex items-center gap-1.5 cursor-pointer transition-all"
+                          className="px-3 py-1.5 rounded-xl bg-app-base hover:bg-app-line border border-app-line text-xs font-semibold text-app-mist hover:text-hi flex items-center gap-1.5 cursor-pointer transition-all"
                         >
                           <UploadCloud className="w-3.5 h-3.5" /> Re-upload
                         </button>
@@ -627,35 +627,35 @@ export function FreelancerTasksPage() {
       {/* ── Submission Modal: Direct File Upload or Cloud Link ── */}
       {selectedTaskForSubmit && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
-          <div className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-purple-500/40 space-y-4 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="bg-app-surface rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-purple-500/40 space-y-4 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-2xl bg-purple-500/15 text-purple-400 flex items-center justify-center font-black">
                   <UploadCloud className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Upload Deliverable Content</h3>
-                  <p className="text-[11px] text-[#97A0B3]">Task: {selectedTaskForSubmit.title}</p>
+                  <h3 className="text-base font-bold text-hi">Upload Deliverable Content</h3>
+                  <p className="text-[11px] text-app-mist">Task: {selectedTaskForSubmit.title}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedTaskForSubmit(null)}
-                className="p-1.5 text-[#97A0B3] hover:text-white rounded-lg hover:bg-[#0B111C]"
+                className="p-1.5 text-app-mist hover:text-hi rounded-lg hover:bg-app-base"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Mode Switcher: Direct File Upload vs Cloud Link */}
-            <div className="flex items-center gap-2 bg-[#0B111C] p-1.5 rounded-2xl border border-[#2A3446]">
+            <div className="flex items-center gap-2 bg-app-base p-1.5 rounded-2xl border border-app-line">
               <button
                 type="button"
                 onClick={() => setSubmissionMode("file")}
                 className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   submissionMode === "file"
                     ? "bg-purple-600 text-white shadow-md"
-                    : "text-[#97A0B3] hover:text-white"
+                    : "text-app-mist hover:text-hi"
                 }`}
               >
                 <FileUp className="w-4 h-4" /> Direct File Upload
@@ -666,7 +666,7 @@ export function FreelancerTasksPage() {
                 className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   submissionMode === "link"
                     ? "bg-purple-600 text-white shadow-md"
-                    : "text-[#97A0B3] hover:text-white"
+                    : "text-app-mist hover:text-hi"
                 }`}
               >
                 <LinkIcon className="w-4 h-4" /> Cloud Storage Link
@@ -683,7 +683,7 @@ export function FreelancerTasksPage() {
               {submissionMode === "file" ? (
                 /* ── Direct File Upload Mode ── */
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1.5">
+                  <label className="block font-bold text-app-ink-2 mb-1.5">
                     Select Local Media File (Video, Audio, Graphic, or Project Archive) *
                   </label>
                   <div
@@ -697,7 +697,7 @@ export function FreelancerTasksPage() {
                     className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
                       selectedFile
                         ? "border-emerald-500/60 bg-emerald-500/5"
-                        : "border-[#2A3446] hover:border-purple-500/60 bg-[#0B111C]"
+                        : "border-app-line hover:border-purple-500/60 bg-app-base"
                     }`}
                   >
                     {selectedFile ? (
@@ -706,10 +706,10 @@ export function FreelancerTasksPage() {
                           <CheckCircle2 className="w-6 h-6" />
                         </div>
                         <div>
-                          <p className="font-bold text-white text-xs truncate max-w-xs mx-auto">
+                          <p className="font-bold text-hi text-xs truncate max-w-xs mx-auto">
                             {selectedFile.name}
                           </p>
-                          <p className="text-[10px] text-[#97A0B3]">
+                          <p className="text-[10px] text-app-mist">
                             {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • {selectedFile.type || "Media file"}
                           </p>
                         </div>
@@ -727,14 +727,14 @@ export function FreelancerTasksPage() {
                           <FileUp className="w-5 h-5" />
                         </div>
                         <div>
-                          <p className="font-bold text-white text-xs">
+                          <p className="font-bold text-hi text-xs">
                             Drag & drop your deliverable file here, or browse
                           </p>
-                          <p className="text-[10px] text-[#97A0B3] mt-0.5">
+                          <p className="text-[10px] text-app-mist mt-0.5">
                             Supports MP4, MOV, PNG, JPG, PDF, ZIP, PSD up to 500MB
                           </p>
                         </div>
-                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161F2D] hover:bg-[#202B3D] border border-[#2A3446] text-xs font-bold text-purple-300 cursor-pointer transition-colors">
+                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-app-surface hover:bg-app-line-soft border border-app-line text-xs font-bold text-purple-300 cursor-pointer transition-colors">
                           <UploadCloud className="w-3.5 h-3.5" />
                           <span>Browse Local File</span>
                           <input
@@ -754,25 +754,25 @@ export function FreelancerTasksPage() {
               ) : (
                 /* ── Cloud URL Mode ── */
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1.5">
+                  <label className="block font-bold text-app-ink-2 mb-1.5">
                     Cloud Storage URL (Google Drive, Frame.io, Dropbox, Figma, WeTransfer) *
                   </label>
                   <div className="relative">
-                    <LinkIcon className="w-3.5 h-3.5 text-[#97A0B3] absolute left-3 top-2.5" />
+                    <LinkIcon className="w-3.5 h-3.5 text-app-mist absolute left-3 top-2.5" />
                     <input
                       type="url"
                       required
                       value={assetUrl}
                       onChange={(e) => setAssetUrl(e.target.value)}
                       placeholder="https://drive.google.com/file/d/..."
-                      className="w-full pl-9 pr-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400"
+                      className="w-full pl-9 pr-3 py-2 rounded-xl border border-app-line bg-app-base text-hi focus:outline-none focus:border-purple-400"
                     />
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">
+                <label className="block font-bold text-app-ink-2 mb-1">
                   Submission Notes & Version Summary (Optional)
                 </label>
                 <textarea
@@ -780,15 +780,15 @@ export function FreelancerTasksPage() {
                   value={submissionNotes}
                   onChange={(e) => setSubmissionNotes(e.target.value)}
                   placeholder="e.g. Master render exported in 4K ProRes 422HQ, color graded according to brief tokens."
-                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400"
+                  className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-base text-hi focus:outline-none focus:border-purple-400"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+              <div className="flex justify-end gap-2 pt-2 border-t border-app-line">
                 <button
                   type="button"
                   onClick={() => setSelectedTaskForSubmit(null)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#97A0B3] hover:text-white hover:bg-[#0B111C]"
+                  className="px-4 py-2 rounded-xl border border-app-line font-bold text-app-mist hover:text-hi hover:bg-app-base"
                 >
                   Cancel
                 </button>

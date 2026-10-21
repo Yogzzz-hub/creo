@@ -54,21 +54,21 @@ interface Details {
   account?: string;
 }
 const input =
-  "mt-1.5 w-full min-h-11 rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-sm text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none disabled:opacity-50";
-const labelText = "block text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]";
+  "mt-1.5 w-full min-h-11 rounded-xl border border-app-line bg-app-base px-3 py-2 text-sm text-hi placeholder-app-mist focus:border-app-accent focus:outline-none disabled:opacity-50";
+const labelText = "block text-[11px] font-bold uppercase tracking-wider text-app-mist";
 // One button system for every publishing surface: same height, radius and type size,
 // so rows of actions always line up. `flex-1` makes a row share its width evenly.
 const btnBase =
-  "inline-flex min-h-10 flex-1 basis-36 items-center justify-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition-colors cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] disabled:cursor-not-allowed disabled:opacity-50";
-const button = `${btnBase} border-[#2A3446] bg-[#161F2D] text-[#BCCCE6] enabled:hover:border-[#7FA0D6]/50 enabled:hover:text-white`;
-const buttonPrimary = `${btnBase} border-transparent bg-[#BCCCE6] text-[#0B111C] enabled:hover:bg-white`;
+  "inline-flex min-h-10 flex-1 basis-36 items-center justify-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition-colors cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent disabled:cursor-not-allowed disabled:opacity-50";
+const button = `${btnBase} border-app-line bg-app-surface text-app-accent-soft enabled:hover:border-[#7FA0D6]/50 enabled:hover:text-hi`;
+const buttonPrimary = `${btnBase} border-transparent bg-app-accent-soft text-app-base enabled:hover:bg-hi`;
 const buttonDanger = `${btnBase} border-rose-500/30 bg-rose-500/10 text-rose-300 enabled:hover:border-rose-400/60 enabled:hover:text-rose-200`;
 const linkButton = `${button} no-underline`;
 
 const STATUS_TONE: Record<string, string> = {
   published: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-  scheduled: "bg-[#7FA0D6]/15 text-[#BCCCE6] border-[#7FA0D6]/30",
-  processing: "bg-[#7FA0D6]/15 text-[#BCCCE6] border-[#7FA0D6]/30",
+  scheduled: "bg-app-accent/15 text-app-accent-soft border-app-accent/30",
+  processing: "bg-app-accent/15 text-app-accent-soft border-app-accent/30",
   needs_schedule: "bg-amber-500/15 text-amber-300 border-amber-500/30",
   pending_approval: "bg-amber-500/15 text-amber-300 border-amber-500/30",
   failed: "bg-rose-500/15 text-rose-300 border-rose-500/30",
@@ -81,7 +81,7 @@ function StatusBadge({ status, label }: { status: string; label: string }) {
   return (
     <span
       className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-        STATUS_TONE[status] || "bg-[#2A3446]/40 text-[#BCCCE6] border-[#2A3446]"
+        STATUS_TONE[status] || "bg-[#2A3446]/40 text-app-accent-soft border-app-line"
       }`}
     >
       {label}
@@ -247,7 +247,7 @@ export function PublishingPanel({
   }
   if (query.isPending)
     return (
-      <output className="flex items-center gap-2 rounded-2xl border border-[#2A3446] bg-[#0B111C]/50 p-4 text-xs text-[#97A0B3]">
+      <output className="flex items-center gap-2 rounded-2xl border border-app-line bg-app-base/50 p-4 text-xs text-app-mist">
         <Loader2 className="size-3.5 animate-spin motion-reduce:animate-none" /> Loading Instagram
         publishing…
       </output>
@@ -311,10 +311,10 @@ export function PublishingPanel({
       job?.status === "paused" ||
       (admin && ["scheduled", "failed", "uncertain"].includes(job?.status || "")));
   return (
-    <section className="min-w-0 space-y-4 rounded-2xl border border-[#2A3446] bg-[#0B111C]/60 p-4 text-white sm:p-5">
+    <section className="min-w-0 space-y-4 rounded-2xl border border-app-line bg-app-base/60 p-4 text-hi sm:p-5">
       <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#2A3446] bg-[#161F2D] text-[#7FA0D6]">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-app-line bg-app-surface text-app-accent">
             <Instagram className="size-4" />
           </span>
           <h3 className="truncate text-sm font-bold">Instagram publishing</h3>
@@ -322,21 +322,21 @@ export function PublishingPanel({
         <StatusBadge status={statusKey} label={statusText} />
       </header>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#2A3446] bg-[#161F2D]/70 px-3 py-2.5 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-app-line bg-app-surface/70 px-3 py-2.5 text-xs">
         <span className="flex min-w-0 items-center gap-2">
           <span
             className={`size-2 shrink-0 rounded-full ${connected ? "bg-emerald-400" : "bg-slate-500"}`}
           />
-          <span className="truncate font-semibold text-white">
+          <span className="truncate font-semibold text-hi">
             {data?.account ? `@${data.account}` : "No Instagram account"}
           </span>
         </span>
-        <span className="text-[#97A0B3] capitalize">
+        <span className="text-app-mist capitalize">
           {(data?.connection_status || "disconnected").replaceAll("_", " ")}
         </span>
       </div>
 
-      <div className="rounded-xl border border-[#2A3446] bg-[#161F2D]/70 px-3 py-2.5">
+      <div className="rounded-xl border border-app-line bg-app-surface/70 px-3 py-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
           <span className={labelText}>{offCalendar ? "Publishing time" : "Content calendar slot"}</span>
           {offCalendar && (
@@ -346,14 +346,14 @@ export function PublishingPanel({
           )}
         </div>
         <p className="mt-1.5 flex items-start gap-2 text-sm">
-          <CalendarClock className="mt-0.5 size-4 shrink-0 text-[#7FA0D6]" />
+          <CalendarClock className="mt-0.5 size-4 shrink-0 text-app-accent" />
           <span className="min-w-0 break-words">
             {(offCalendar ? job?.scheduled_at : calendarAt) ? (
               <>
-                {fmt((offCalendar ? job?.scheduled_at : calendarAt)!)} <span className="text-[#97A0B3]">· {zone}</span>
+                {fmt((offCalendar ? job?.scheduled_at : calendarAt)!)} <span className="text-app-mist">· {zone}</span>
               </>
             ) : (
-              <span className="text-[#97A0B3]">
+              <span className="text-app-mist">
                 No calendar slot yet. The team books one on the content calendar.
               </span>
             )}
@@ -380,21 +380,21 @@ export function PublishingPanel({
       )}
 
       {job && (
-        <div className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-3">
+        <div className="rounded-xl border border-app-line bg-app-base p-3">
           <div className="flex items-center justify-between gap-2">
             <p className={labelText}>Caption for client approval</p>
-            <p className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-[#97A0B3]">
+            <p className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-app-mist">
               {job.media_type.toLowerCase()} · v{job.version}
             </p>
           </div>
-          <p className="mt-1.5 whitespace-pre-wrap break-words text-sm text-[#E2E8F0]">
+          <p className="mt-1.5 whitespace-pre-wrap break-words text-sm text-app-ink-2">
             {job.caption || "No caption"}
           </p>
         </div>
       )}
       {job?.permalink && (
         <a
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#BCCCE6] underline-offset-2 hover:text-white hover:underline"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-app-accent-soft underline-offset-2 hover:text-hi hover:underline"
           href={job.permalink}
           target="_blank"
           rel="noreferrer"
@@ -412,7 +412,7 @@ export function PublishingPanel({
         </p>
       )}
       {message && (
-        <output className="block break-words rounded-xl border border-[#2A3446] bg-[#161F2D] p-3 text-sm text-[#E2E8F0]">
+        <output className="block break-words rounded-xl border border-app-line bg-app-surface p-3 text-sm text-app-ink-2">
           {message}
         </output>
       )}
@@ -431,8 +431,8 @@ export function PublishingPanel({
       )}
 
       {isClient && (
-        <div className="space-y-3 rounded-xl border border-[#2A3446] bg-[#161F2D]/60 p-3.5">
-          <p className="text-[11px] leading-relaxed text-[#97A0B3]">
+        <div className="space-y-3 rounded-xl border border-app-line bg-app-surface/60 p-3.5">
+          <p className="text-[11px] leading-relaxed text-app-mist">
             Approval locks the caption and media. Approved content is dispatched automatically at
             its scheduled time.
           </p>
@@ -555,13 +555,13 @@ export function PublishingPanel({
 
       {editing && manage && (
         <form
-          className="space-y-4 border-t border-[#2A3446] pt-4"
+          className="space-y-4 border-t border-app-line pt-4"
           onSubmit={(e) => {
             e.preventDefault();
             void perform("save");
           }}
         >
-          <p className="text-xs text-[#97A0B3]">
+          <p className="text-xs text-app-mist">
             Only needed to post away from the content calendar slot
             {calendarAt ? ` (${fmt(calendarAt)})` : ""}. Changes to the caption or media require the
             client to approve publishing details again.
@@ -628,7 +628,7 @@ export function PublishingPanel({
               value={form.caption}
               onChange={(e) => setForm({ ...form, caption: e.target.value })}
             />
-            <span className="mt-1 block text-right text-[10px] text-[#97A0B3]">
+            <span className="mt-1 block text-right text-[10px] text-app-mist">
               {form.caption.length}/2200
             </span>
           </label>
@@ -659,35 +659,35 @@ export function PublishingPanel({
       )}
 
       {job && (
-        <div className="border-t border-[#2A3446] pt-3">
+        <div className="border-t border-app-line pt-3">
           <button
             type="button"
             aria-expanded={showHistory}
-            className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-1 py-1.5 text-xs font-semibold text-[#97A0B3] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]"
+            className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-1 py-1.5 text-xs font-semibold text-app-mist transition-colors hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent"
             onClick={() => setShowHistory(!showHistory)}
           >
             <span className="inline-flex items-center gap-2">
-              <History className="size-3.5 text-[#7FA0D6]" /> Publishing history
+              <History className="size-3.5 text-app-accent" /> Publishing history
             </span>
             <ChevronDown
               className={`size-4 transition-transform ${showHistory ? "rotate-180" : ""}`}
             />
           </button>
           {showHistory && (
-            <ul className="mt-2 space-y-1.5 text-xs text-[#BCCCE6]">
+            <ul className="mt-2 space-y-1.5 text-xs text-app-accent-soft">
               {history.isPending && <li>Loading history…</li>}
               {history.isError && <li role="alert">{history.error.message}</li>}
-              {history.data?.length === 0 && <li className="text-[#97A0B3]">No history yet.</li>}
+              {history.data?.length === 0 && <li className="text-app-mist">No history yet.</li>}
               {history.data?.map((h, i) => (
                 <li
                   key={`${h.at}-${i}`}
-                  className="flex flex-wrap justify-between gap-2 rounded-lg bg-[#161F2D] px-3 py-2"
+                  className="flex flex-wrap justify-between gap-2 rounded-lg bg-app-surface px-3 py-2"
                 >
                   <span className="capitalize">
                     {h.action.replaceAll("_", " ")}
                     {h.details?.error_code ? ` · ${h.details.error_code}` : ""}
                   </span>
-                  <span className="text-[#97A0B3]">{new Date(h.at).toLocaleString()}</span>
+                  <span className="text-app-mist">{new Date(h.at).toLocaleString()}</span>
                 </li>
               ))}
             </ul>
@@ -705,11 +705,11 @@ export function PublishingControl({ deliverableId }: { deliverableId: string }) 
       <button
         type="button"
         aria-expanded={open}
-        className="inline-flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-[#2A3446] bg-[#161F2D] px-3 text-[11px] font-bold text-[#BCCCE6] transition-colors hover:border-[#7FA0D6]/50 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]"
+        className="inline-flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-app-line bg-app-surface px-3 text-[11px] font-bold text-app-accent-soft transition-colors hover:border-app-accent/50 hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent"
         onClick={() => setOpen(!open)}
       >
         <span className="inline-flex items-center gap-1.5">
-          <Instagram className="size-3.5 text-[#7FA0D6]" />
+          <Instagram className="size-3.5 text-app-accent" />
           {open ? "Hide Instagram schedule" : "Instagram schedule & status"}
         </span>
         <ChevronDown className={`size-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -779,15 +779,15 @@ export function PublishingQueue({
   const rows = query.data || [];
   const page = Math.floor(offset / 100) + 1;
   return (
-    <section className="min-w-0 space-y-4 rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 text-white sm:p-5">
+    <section className="min-w-0 space-y-4 rounded-2xl border border-app-line bg-app-surface p-4 text-hi sm:p-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-xl border border-[#2A3446] bg-[#0B111C] text-[#7FA0D6]">
+          <span className="flex size-9 items-center justify-center rounded-xl border border-app-line bg-app-base text-app-accent">
             <Instagram className="size-4" />
           </span>
           <div>
             <h2 className="text-base font-bold leading-tight">Instagram publishing queue</h2>
-            <p className="text-xs text-[#97A0B3]">
+            <p className="text-xs text-app-mist">
               Publishing times are separate from editorial dates. Only client-approved versions and
               captions can publish.
             </p>
@@ -795,7 +795,7 @@ export function PublishingQueue({
         </div>
         {connection.data && (
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="rounded-full border border-[#2A3446] bg-[#0B111C] px-3 py-1 font-semibold">
+            <span className="rounded-full border border-app-line bg-app-base px-3 py-1 font-semibold">
               {connection.data.username ? `@${connection.data.username}` : "No linked account"} ·{" "}
               <span className="capitalize">{connection.data.status.replaceAll("_", " ")}</span>
             </span>
@@ -866,7 +866,7 @@ export function PublishingQueue({
       </div>
 
       {query.isPending && (
-        <output className="flex items-center gap-2 text-sm text-[#97A0B3]">
+        <output className="flex items-center gap-2 text-sm text-app-mist">
           <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> Loading publishing
           jobs…
         </output>
@@ -887,10 +887,10 @@ export function PublishingQueue({
         </div>
       )}
       {!query.isPending && !query.isError && !rows.length && (
-        <div className="rounded-xl border border-dashed border-[#2A3446] p-8 text-center">
-          <CalendarClock className="mx-auto mb-2 size-6 text-[#97A0B3]" />
+        <div className="rounded-xl border border-dashed border-app-line p-8 text-center">
+          <CalendarClock className="mx-auto mb-2 size-6 text-app-mist" />
           <p className="text-sm font-semibold">No publishing jobs match</p>
-          <p className="mt-1 text-xs text-[#97A0B3]">
+          <p className="mt-1 text-xs text-app-mist">
             The team can plan publication from an uploaded deliverable.
           </p>
         </div>
@@ -901,18 +901,18 @@ export function PublishingQueue({
         {rows.map((j) => {
           const open = selected === j.id;
           return (
-            <li key={j.id} className="rounded-xl border border-[#2A3446] bg-[#0B111C]/60">
+            <li key={j.id} className="rounded-xl border border-app-line bg-app-base/60">
               <button
                 type="button"
                 aria-expanded={open}
-                className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl p-3.5 text-left transition-colors hover:bg-[#161F2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]"
+                className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl p-3.5 text-left transition-colors hover:bg-app-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent"
                 onClick={() => setSelected(open ? "" : j.id)}
               >
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-bold">
                     {j.client_name || "Client"} · {j.title || `Version ${j.version}`}
                   </span>
-                  <span className="mt-0.5 block text-xs text-[#97A0B3]">
+                  <span className="mt-0.5 block text-xs text-app-mist">
                     {j.scheduled_at
                       ? `${new Date(j.scheduled_at).toLocaleString(undefined, { timeZone: j.timezone })} (${j.timezone})`
                       : "Awaiting future schedule"}
@@ -921,7 +921,7 @@ export function PublishingQueue({
                 <span className="flex shrink-0 items-center gap-2.5">
                   <StatusBadge status={j.status} label={publishingLabel(j.status)} />
                   <ChevronDown
-                    className={`size-4 text-[#97A0B3] transition-transform ${open ? "rotate-180" : ""}`}
+                    className={`size-4 text-app-mist transition-transform ${open ? "rotate-180" : ""}`}
                   />
                 </span>
               </button>
@@ -937,7 +937,7 @@ export function PublishingQueue({
       </ul>
 
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs text-[#97A0B3]">Page {page}</span>
+        <span className="text-xs text-app-mist">Page {page}</span>
         <div className="flex gap-2">
           <button
             type="button"

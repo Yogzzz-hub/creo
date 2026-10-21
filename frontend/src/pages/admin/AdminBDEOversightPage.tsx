@@ -151,16 +151,16 @@ export function AdminBDEOversightPage() {
 
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-app-base flex flex-col">
       <AdminTopHeader activeTab="BDE Outreach" hideTitle />
-      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6 text-[#F8FAFC]">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6 text-app-ink">
 
         {/* ── DESKTOP/TABLET: Metric Cards (Hidden on phone) ── */}
         <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Metric 1: Clients Reached */}
-          <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-xs relative overflow-hidden group hover:border-[#7FA0D6]/40 transition-all">
+          <div className="p-5 rounded-2xl bg-app-surface border border-app-line shadow-xs relative overflow-hidden group hover:border-app-accent/40 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-xs font-semibold text-app-mist uppercase tracking-wider">
                 Clients Reached
               </span>
               <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
@@ -168,21 +168,21 @@ export function AdminBDEOversightPage() {
               </div>
             </div>
             <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-white">
+              <span className="text-2xl font-black text-hi">
                 {overview?.total_clients_reached ?? 0}
               </span>
-              <span className="text-xs text-[#97A0B3]">
+              <span className="text-xs text-app-mist">
                 / {overview?.total_leads ?? 0} total leads
               </span>
             </div>
             <div className="mt-3">
-              <div className="flex justify-between text-[11px] text-[#97A0B3] mb-1">
+              <div className="flex justify-between text-[11px] text-app-mist mb-1">
                 <span>Outreach Coverage</span>
-                <span className="font-bold text-[#7FA0D6]">{overview?.reach_rate ?? 0}%</span>
+                <span className="font-bold text-app-accent">{overview?.reach_rate ?? 0}%</span>
               </div>
-              <div className="w-full h-1.5 rounded-full bg-[#0B111C] overflow-hidden">
+              <div className="w-full h-1.5 rounded-full bg-app-base overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-blue-500 to-[#7FA0D6] rounded-full transition-all duration-700"
+                  className="h-full bg-gradient-to-r from-blue-500 to-app-accent rounded-full transition-all duration-700"
                   style={{ width: `${Math.min(100, overview?.reach_rate || 0)}%` }}
                 />
               </div>
@@ -190,9 +190,9 @@ export function AdminBDEOversightPage() {
           </div>
 
           {/* Metric 2: Total Outreach Touchpoints */}
-          <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-xs relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+          <div className="p-5 rounded-2xl bg-app-surface border border-app-line shadow-xs relative overflow-hidden group hover:border-emerald-500/40 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-xs font-semibold text-app-mist uppercase tracking-wider">
                 Total Touchpoints
               </span>
               <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -200,12 +200,12 @@ export function AdminBDEOversightPage() {
               </div>
             </div>
             <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-white">
+              <span className="text-2xl font-black text-hi">
                 {overview?.total_outreach_activities ?? 0}
               </span>
               <span className="text-xs text-emerald-400 font-semibold">interactions logged</span>
             </div>
-            <div className="mt-3 flex items-center gap-3 text-[11px] text-[#97A0B3]">
+            <div className="mt-3 flex items-center gap-3 text-[11px] text-app-mist">
               <span className="flex items-center gap-1">
                 <PhoneCall className="w-3 h-3 text-blue-400" /> {overview?.activity_breakdown?.call ?? 0} Calls
               </span>
@@ -219,9 +219,9 @@ export function AdminBDEOversightPage() {
           </div>
 
           {/* Metric 3: Active Pipeline Value */}
-          <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-xs relative overflow-hidden group hover:border-amber-500/40 transition-all">
+          <div className="p-5 rounded-2xl bg-app-surface border border-app-line shadow-xs relative overflow-hidden group hover:border-amber-500/40 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-xs font-semibold text-app-mist uppercase tracking-wider">
                 Active Pipeline Value
               </span>
               <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
@@ -233,18 +233,18 @@ export function AdminBDEOversightPage() {
                 {formatINR(overview?.active_pipeline_value ?? 0)}
               </span>
             </div>
-            <div className="mt-3 flex items-center justify-between text-[11px] text-[#97A0B3]">
+            <div className="mt-3 flex items-center justify-between text-[11px] text-app-mist">
               <span>In Negotiation / Proposal</span>
-              <span className="text-white font-semibold">
+              <span className="text-hi font-semibold">
                 {(overview?.total_leads ?? 0) - (overview?.converted_count ?? 0)} active deals
               </span>
             </div>
           </div>
 
           {/* Metric 4: Closed Revenue & Win Rate */}
-          <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-xs relative overflow-hidden group hover:border-purple-500/40 transition-all">
+          <div className="p-5 rounded-2xl bg-app-surface border border-app-line shadow-xs relative overflow-hidden group hover:border-purple-500/40 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-xs font-semibold text-app-mist uppercase tracking-wider">
                 Won Revenue
               </span>
               <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
@@ -255,11 +255,11 @@ export function AdminBDEOversightPage() {
               <span className="text-2xl font-black text-emerald-400">
                 {formatINR(overview?.closed_revenue ?? 0)}
               </span>
-              <span className="text-xs text-[#97A0B3]">
+              <span className="text-xs text-app-mist">
                 ({overview?.converted_count ?? 0} won)
               </span>
             </div>
-            <div className="mt-3 flex items-center justify-between text-[11px] text-[#97A0B3]">
+            <div className="mt-3 flex items-center justify-between text-[11px] text-app-mist">
               <span>Win Conversion Rate</span>
               <span className="font-bold text-emerald-400">
                 {overview?.conversion_rate ?? 0}%
@@ -272,14 +272,14 @@ export function AdminBDEOversightPage() {
       <div className="w-full">
         {/* BDE Representative Work Breakdown */}
         <div className="w-full flex flex-col">
-          <div className="p-4 sm:p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm flex-1 flex flex-col">
+          <div className="p-4 sm:p-5 rounded-2xl bg-app-surface border border-app-line shadow-sm flex-1 flex flex-col">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <Users className="w-4 h-4 text-[#7FA0D6]" />
+                <h2 className="text-base font-bold text-hi flex items-center gap-2">
+                  <Users className="w-4 h-4 text-app-accent" />
                   BDE Representative Work Breakdown
                 </h2>
-                <p className="text-xs text-[#97A0B3] mt-0.5">
+                <p className="text-xs text-app-mist mt-0.5">
                   Clients reached, call volume, meetings scheduled, and revenue closed per agent.
                 </p>
               </div>
@@ -287,23 +287,23 @@ export function AdminBDEOversightPage() {
                 <button
                   onClick={() => refetch()}
                   disabled={isLoading || isRefetching}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#202B3D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs font-semibold text-[#BCCCE6] hover:text-white transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-app-base hover:bg-app-line-soft border border-app-line hover:border-app-accent/40 text-xs font-semibold text-app-accent-soft hover:text-hi transition-all shadow-xs disabled:opacity-50 cursor-pointer"
                   title="Sync live BDE performance data"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 text-[#7FA0D6] ${isRefetching ? "animate-spin" : ""}`} />
+                  <RefreshCw className={`w-3.5 h-3.5 text-app-accent ${isRefetching ? "animate-spin" : ""}`} />
                   <span>{isRefetching ? "Syncing..." : "Sync Live Data"}</span>
                 </button>
-                <span className="text-xs font-bold px-2.5 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[#BCCCE6]">
+                <span className="text-xs font-bold px-2.5 py-1.5 rounded-xl bg-app-base border border-app-line text-app-accent-soft">
                   {reps.length} Active {reps.length === 1 ? "Agent" : "Agents"}
                 </span>
               </div>
             </div>
 
             {reps.length === 0 ? (
-              <div className="text-center py-10 bg-[#0B111C] rounded-xl border border-[#2A3446]">
-                <Users className="w-8 h-8 text-[#97A0B3] mx-auto mb-2 opacity-50" />
-                <p className="text-sm font-semibold text-white">No BDE Representatives Active</p>
-                <p className="text-xs text-[#97A0B3] mt-1">Assign leads to sales reps to monitor workload and client reach.</p>
+              <div className="text-center py-10 bg-app-base rounded-xl border border-app-line">
+                <Users className="w-8 h-8 text-app-mist mx-auto mb-2 opacity-50" />
+                <p className="text-sm font-semibold text-hi">No BDE Representatives Active</p>
+                <p className="text-xs text-app-mist mt-1">Assign leads to sales reps to monitor workload and client reach.</p>
               </div>
             ) : (
               <>
@@ -312,36 +312,36 @@ export function AdminBDEOversightPage() {
                   {reps.map((rep) => {
                     const reachPct = rep.total_assigned > 0 ? Math.round((rep.clients_reached / rep.total_assigned) * 100) : 0;
                     return (
-                      <div key={rep.bde_id} className="p-3 bg-[#0B111C] rounded-xl border border-[#2A3446] space-y-2.5">
+                      <div key={rep.bde_id} className="p-3 bg-app-base rounded-xl border border-app-line space-y-2.5">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#7FA0D6] to-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-app-accent to-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
                               {rep.avatar_initials || "BD"}
                             </div>
                             <div className="min-w-0">
-                              <p className="font-bold text-white text-xs truncate">{rep.name}</p>
-                              <p className="text-[10px] text-[#97A0B3] truncate">{rep.email}</p>
+                              <p className="font-bold text-hi text-xs truncate">{rep.name}</p>
+                              <p className="text-[10px] text-app-mist truncate">{rep.email}</p>
                             </div>
                           </div>
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
                             {rep.conversion_rate}% Win
                           </span>
                         </div>
-                        <div className="grid grid-cols-4 gap-1.5 pt-1 text-center text-[10px] border-t border-[#2A3446]/60">
-                          <div className="p-1 rounded bg-[#161F2D]">
-                            <span className="text-[#97A0B3] block">Reached</span>
-                            <span className="font-bold text-[#7FA0D6]">{rep.clients_reached}/{rep.total_assigned} ({reachPct}%)</span>
+                        <div className="grid grid-cols-4 gap-1.5 pt-1 text-center text-[10px] border-t border-app-line/60">
+                          <div className="p-1 rounded bg-app-surface">
+                            <span className="text-app-mist block">Reached</span>
+                            <span className="font-bold text-app-accent">{rep.clients_reached}/{rep.total_assigned} ({reachPct}%)</span>
                           </div>
-                          <div className="p-1 rounded bg-[#161F2D]">
-                            <span className="text-[#97A0B3] block">Calls</span>
+                          <div className="p-1 rounded bg-app-surface">
+                            <span className="text-app-mist block">Calls</span>
                             <span className="font-bold text-blue-400">{rep.calls_count}</span>
                           </div>
-                          <div className="p-1 rounded bg-[#161F2D]">
-                            <span className="text-[#97A0B3] block">Meets</span>
+                          <div className="p-1 rounded bg-app-surface">
+                            <span className="text-app-mist block">Meets</span>
                             <span className="font-bold text-purple-400">{rep.meetings_count}</span>
                           </div>
-                          <div className="p-1 rounded bg-[#161F2D]">
-                            <span className="text-[#97A0B3] block">Won</span>
+                          <div className="p-1 rounded bg-app-surface">
+                            <span className="text-app-mist block">Won</span>
                             <span className="font-bold text-emerald-400 truncate">{formatINR(rep.revenue_generated)}</span>
                           </div>
                         </div>
@@ -354,7 +354,7 @@ export function AdminBDEOversightPage() {
                 <div className="hidden sm:block overflow-x-auto">
                   <table className="min-w-[620px] w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-[#2A3446] text-[#97A0B3] text-[11px] uppercase tracking-wider font-semibold">
+                      <tr className="border-b border-app-line text-app-mist text-[11px] uppercase tracking-wider font-semibold">
                         <th className="pb-3 pl-2">Representative</th>
                         <th className="pb-3 text-center">Clients Reached</th>
                         <th className="pb-3 text-center">Calls</th>
@@ -371,26 +371,26 @@ export function AdminBDEOversightPage() {
                           <tr key={rep.bde_id} className="hover:bg-[#0B111C]/40 transition-colors group">
                             <td className="py-3.5 pl-2">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#7FA0D6] to-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
+                                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-app-accent to-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
                                   {rep.avatar_initials || "BD"}
                                 </div>
                                 <div>
-                                  <p className="font-bold text-white group-hover:text-[#7FA0D6] transition-colors">
+                                  <p className="font-bold text-hi group-hover:text-app-accent transition-colors">
                                     {rep.name}
                                   </p>
-                                  <p className="text-[11px] text-[#97A0B3]">{rep.email}</p>
+                                  <p className="text-[11px] text-app-mist">{rep.email}</p>
                                 </div>
                               </div>
                             </td>
                             <td className="py-3.5 text-center">
                               <div className="inline-flex flex-col items-center">
-                                <span className="font-bold text-white text-xs">
+                                <span className="font-bold text-hi text-xs">
                                   {rep.clients_reached}{" "}
-                                  <span className="text-[#97A0B3] font-normal text-[10px]">
+                                  <span className="text-app-mist font-normal text-[10px]">
                                     / {rep.total_assigned}
                                   </span>
                                 </span>
-                                <span className="text-[10px] text-[#7FA0D6] font-semibold">
+                                <span className="text-[10px] text-app-accent font-semibold">
                                   {reachPct}% reached
                                 </span>
                               </div>
@@ -426,14 +426,14 @@ export function AdminBDEOversightPage() {
 
 
           {/* ── High-Priority Deals in Flight (Fills the space & highlights active pipeline) ── */}
-          <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm space-y-3.5">
+          <div className="p-5 rounded-2xl bg-app-surface border border-app-line shadow-sm space-y-3.5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div className="min-w-0">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <h3 className="text-sm font-bold text-hi flex items-center gap-2">
                   <Flame className="w-4 h-4 text-amber-400 shrink-0" />
                   <span>Active Deals in Flight & Proposals Under Negotiation</span>
                 </h3>
-                <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                <p className="text-[11px] text-app-mist mt-0.5">
                   High-priority commercial opportunities actively progressing through pitch, proposal, and negotiation.
                 </p>
               </div>
@@ -443,7 +443,7 @@ export function AdminBDEOversightPage() {
             </div>
 
             {inFlightDeals.length === 0 ? (
-              <div className="p-6 bg-[#0B111C] rounded-xl border border-[#2A3446] text-center text-xs text-[#97A0B3]">
+              <div className="p-6 bg-app-base rounded-xl border border-app-line text-center text-xs text-app-mist">
                 No deals currently in proposal or negotiation stage.
               </div>
             ) : (
@@ -452,15 +452,15 @@ export function AdminBDEOversightPage() {
                   <div
                     key={deal.id}
                     onClick={() => setSelectedLeadModal(deal)}
-                    className="p-4 rounded-xl bg-[#0B111C] border border-[#2A3446] hover:border-amber-500/40 transition-all cursor-pointer group flex flex-col justify-between space-y-3"
+                    className="p-4 rounded-xl bg-app-base border border-app-line hover:border-amber-500/40 transition-all cursor-pointer group flex flex-col justify-between space-y-3"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <h4 className="text-xs font-bold text-white truncate group-hover:text-amber-400 transition-colors">
+                          <h4 className="text-xs font-bold text-hi truncate group-hover:text-amber-400 transition-colors">
                             {deal.company_name}
                           </h4>
-                          <p className="text-[11px] text-[#97A0B3] truncate">{deal.name}</p>
+                          <p className="text-[11px] text-app-mist truncate">{deal.name}</p>
                         </div>
                         {getPriorityBadge(deal.priority)}
                       </div>
@@ -473,14 +473,14 @@ export function AdminBDEOversightPage() {
                       </div>
                     </div>
 
-                    <div className="pt-2.5 border-t border-[#2A3446]/60 flex items-center justify-between text-[11px]">
-                      <div className="flex items-center gap-1.5 text-[#BCCCE6] truncate">
-                        <div className="w-5 h-5 rounded-full bg-[#161F2D] text-[9px] font-bold text-amber-400 flex items-center justify-center border border-[#2A3446]">
+                    <div className="pt-2.5 border-t border-app-line/60 flex items-center justify-between text-[11px]">
+                      <div className="flex items-center gap-1.5 text-app-accent-soft truncate">
+                        <div className="w-5 h-5 rounded-full bg-app-surface text-[9px] font-bold text-amber-400 flex items-center justify-center border border-app-line">
                           {(deal.assigned_bde_name || "BD").slice(0, 2).toUpperCase()}
                         </div>
                         <span className="truncate">{deal.assigned_bde_name || "Unassigned"}</span>
                       </div>
-                      <span className="text-[10px] text-[#7FA0D6] group-hover:underline flex items-center gap-0.5 shrink-0">
+                      <span className="text-[10px] text-app-accent group-hover:underline flex items-center gap-0.5 shrink-0">
                         Inspect <ArrowUpRight className="w-3 h-3" />
                       </span>
                     </div>
@@ -491,14 +491,14 @@ export function AdminBDEOversightPage() {
           </div>
 
           {/* ── Outreach Channels & Touchpoints Efficiency ── */}
-          <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm space-y-3.5">
+          <div className="p-5 rounded-2xl bg-app-surface border border-app-line shadow-sm space-y-3.5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div className="min-w-0">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <h3 className="text-sm font-bold text-hi flex items-center gap-2">
                   <Activity className="w-4 h-4 text-blue-400 shrink-0" />
                   <span>Outreach Channels & Touchpoint Engagement Breakdown</span>
                 </h3>
-                <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                <p className="text-[11px] text-app-mist mt-0.5">
                   Aggregate distribution of client interaction channels logged across active sales reps.
                 </p>
               </div>
@@ -508,13 +508,13 @@ export function AdminBDEOversightPage() {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-1">
+              <div className="p-3.5 rounded-xl bg-app-base border border-app-line space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold text-[#97A0B3]">Calls Logged</span>
+                  <span className="text-[10px] uppercase font-bold text-app-mist">Calls Logged</span>
                   <PhoneCall className="w-3.5 h-3.5 text-blue-400" />
                 </div>
-                <p className="text-lg font-black text-white">{channelMetrics.totalCalls}</p>
-                <div className="w-full bg-[#161F2D] h-1.5 rounded-full overflow-hidden mt-1">
+                <p className="text-lg font-black text-hi">{channelMetrics.totalCalls}</p>
+                <div className="w-full bg-app-surface h-1.5 rounded-full overflow-hidden mt-1">
                   <div
                     className="bg-blue-500 h-full rounded-full"
                     style={{
@@ -525,13 +525,13 @@ export function AdminBDEOversightPage() {
                 <span className="text-[9px] text-blue-400 font-semibold block pt-0.5">Direct outreach</span>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-1">
+              <div className="p-3.5 rounded-xl bg-app-base border border-app-line space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold text-[#97A0B3]">WhatsApp</span>
+                  <span className="text-[10px] uppercase font-bold text-app-mist">WhatsApp</span>
                   <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
                 </div>
-                <p className="text-lg font-black text-white">{channelMetrics.whatsappActivities}</p>
-                <div className="w-full bg-[#161F2D] h-1.5 rounded-full overflow-hidden mt-1">
+                <p className="text-lg font-black text-hi">{channelMetrics.whatsappActivities}</p>
+                <div className="w-full bg-app-surface h-1.5 rounded-full overflow-hidden mt-1">
                   <div
                     className="bg-emerald-500 h-full rounded-full"
                     style={{
@@ -542,13 +542,13 @@ export function AdminBDEOversightPage() {
                 <span className="text-[9px] text-emerald-400 font-semibold block pt-0.5">Quick responses</span>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-1">
+              <div className="p-3.5 rounded-xl bg-app-base border border-app-line space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold text-[#97A0B3]">Meetings Held</span>
+                  <span className="text-[10px] uppercase font-bold text-app-mist">Meetings Held</span>
                   <Calendar className="w-3.5 h-3.5 text-purple-400" />
                 </div>
-                <p className="text-lg font-black text-white">{channelMetrics.totalMeetings}</p>
-                <div className="w-full bg-[#161F2D] h-1.5 rounded-full overflow-hidden mt-1">
+                <p className="text-lg font-black text-hi">{channelMetrics.totalMeetings}</p>
+                <div className="w-full bg-app-surface h-1.5 rounded-full overflow-hidden mt-1">
                   <div
                     className="bg-purple-500 h-full rounded-full"
                     style={{
@@ -559,13 +559,13 @@ export function AdminBDEOversightPage() {
                 <span className="text-[9px] text-purple-400 font-semibold block pt-0.5">Client pitches</span>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-1">
+              <div className="p-3.5 rounded-xl bg-app-base border border-app-line space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold text-[#97A0B3]">Proposals Sent</span>
+                  <span className="text-[10px] uppercase font-bold text-app-mist">Proposals Sent</span>
                   <FileText className="w-3.5 h-3.5 text-amber-400" />
                 </div>
-                <p className="text-lg font-black text-white">{channelMetrics.totalProposals}</p>
-                <div className="w-full bg-[#161F2D] h-1.5 rounded-full overflow-hidden mt-1">
+                <p className="text-lg font-black text-hi">{channelMetrics.totalProposals}</p>
+                <div className="w-full bg-app-surface h-1.5 rounded-full overflow-hidden mt-1">
                   <div
                     className="bg-amber-500 h-full rounded-full"
                     style={{
@@ -579,14 +579,14 @@ export function AdminBDEOversightPage() {
           </div>
 
       {/* ── Client & Prospect Directory (Full Oversight Table) ── */}
-      <div className="p-5 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-sm space-y-4">
+      <div className="p-5 rounded-2xl bg-app-surface border border-app-line shadow-sm space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-[#7FA0D6]" />
+            <h2 className="text-base font-bold text-hi flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-app-accent" />
               Prospect Outreach Directory
             </h2>
-            <p className="text-xs text-[#97A0B3] mt-0.5">
+            <p className="text-xs text-app-mist mt-0.5">
               Inspect all client leads reached by BDEs, deal values, current stage, and touchpoints count.
             </p>
           </div>
@@ -595,13 +595,13 @@ export function AdminBDEOversightPage() {
           <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-2.5 w-full md:w-auto">
             {/* Search */}
             <div className="relative w-full sm:w-auto sm:min-w-[190px]">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#97A0B3]" />
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-app-mist" />
               <input
                 type="text"
                 placeholder="Search company or lead..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 h-8 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full pl-8 pr-3 py-1.5 h-8 rounded-xl bg-app-base border border-app-line text-xs text-hi placeholder-app-mist focus:outline-none focus:border-app-accent"
               />
             </div>
 
@@ -658,7 +658,7 @@ export function AdminBDEOversightPage() {
         <div className="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
           <table className="w-full min-w-[760px] text-left text-xs">
             <thead>
-              <tr className="border-b border-[#2A3446] text-[#97A0B3] text-[11px] uppercase tracking-wider font-semibold">
+              <tr className="border-b border-app-line text-app-mist text-[11px] uppercase tracking-wider font-semibold">
                 <th className="pb-3 pl-2 whitespace-nowrap min-w-[190px]">Prospect & Company</th>
                 <th className="pb-3 whitespace-nowrap min-w-[120px]">Assigned BDE</th>
                 <th className="pb-3 text-center whitespace-nowrap min-w-[85px]">Priority</th>
@@ -671,7 +671,7 @@ export function AdminBDEOversightPage() {
             <tbody className="divide-y divide-[#2A3446]/60">
               {filteredLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-[#97A0B3]">
+                  <td colSpan={7} className="py-10 text-center text-app-mist">
                     No prospects matching filters found.
                   </td>
                 </tr>
@@ -680,18 +680,18 @@ export function AdminBDEOversightPage() {
                   <tr
                     key={lead.id}
                     onClick={() => setSelectedLeadModal(lead)}
-                    className="hover:bg-[#0B111C]/60 transition-colors cursor-pointer group"
+                    className="hover:bg-app-base/60 transition-colors cursor-pointer group"
                   >
                     <td className="py-3.5 pl-2">
-                      <div className="font-bold text-white group-hover:text-[#7FA0D6] transition-colors">
+                      <div className="font-bold text-hi group-hover:text-app-accent transition-colors">
                         {lead.company_name}
                       </div>
-                      <div className="text-[11px] text-[#97A0B3] mt-0.5">
+                      <div className="text-[11px] text-app-mist mt-0.5">
                         {lead.name} {lead.phone ? `• ${lead.phone}` : ""}
                       </div>
                     </td>
-                    <td className="py-3.5 text-xs text-[#BCCCE6]">
-                      <span className="font-medium text-white">{lead.assigned_bde_name || "Unassigned"}</span>
+                    <td className="py-3.5 text-xs text-app-accent-soft">
+                      <span className="font-medium text-hi">{lead.assigned_bde_name || "Unassigned"}</span>
                     </td>
                     <td className="py-3.5 text-center">
                       {getPriorityBadge(lead.priority)}
@@ -703,11 +703,11 @@ export function AdminBDEOversightPage() {
                       {formatINR(lead.estimated_deal_value)}
                     </td>
                     <td className="py-3.5 text-center">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6]">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-app-base border border-app-line text-app-accent">
                         {lead.activities_count} logged
                       </span>
                     </td>
-                    <td className="py-3.5 text-right pr-2 text-[11px] text-[#97A0B3]">
+                    <td className="py-3.5 text-right pr-2 text-[11px] text-app-mist">
                       {lead.last_contacted_at
                         ? new Date(lead.last_contacted_at).toLocaleDateString()
                         : "Never"}
@@ -723,48 +723,48 @@ export function AdminBDEOversightPage() {
       {/* ── Client Details Modal for Admin Inspection ── */}
       {selectedLeadModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-lg rounded-2xl bg-[#161F2D] border border-[#2A3446] p-6 shadow-2xl space-y-4">
-            <div className="flex items-start justify-between border-b border-[#2A3446] pb-3">
+          <div className="w-full max-w-lg rounded-2xl bg-app-surface border border-app-line p-6 shadow-2xl space-y-4">
+            <div className="flex items-start justify-between border-b border-app-line pb-3">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <h3 className="text-lg font-bold text-hi flex items-center gap-2">
                   {selectedLeadModal.company_name}
                   {getPriorityBadge(selectedLeadModal.priority)}
                 </h3>
-                <p className="text-xs text-[#97A0B3] mt-0.5">
+                <p className="text-xs text-app-mist mt-0.5">
                   Contact: {selectedLeadModal.name} {selectedLeadModal.email ? `• ${selectedLeadModal.email}` : ""}
                 </p>
               </div>
               <button
                 onClick={() => setSelectedLeadModal(null)}
-                className="text-[#97A0B3] hover:text-white text-xs font-bold px-2 py-1 rounded-lg bg-[#0B111C] border border-[#2A3446]"
+                className="text-app-mist hover:text-hi text-xs font-bold px-2 py-1 rounded-lg bg-app-base border border-app-line"
               >
                 ✕ Close
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446]">
-                <span className="text-[#97A0B3]">Assigned BDE:</span>
-                <p className="font-bold text-white mt-1">{selectedLeadModal.assigned_bde_name || "Unassigned"}</p>
+              <div className="p-3 rounded-xl bg-app-base border border-app-line">
+                <span className="text-app-mist">Assigned BDE:</span>
+                <p className="font-bold text-hi mt-1">{selectedLeadModal.assigned_bde_name || "Unassigned"}</p>
               </div>
-              <div className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446]">
-                <span className="text-[#97A0B3]">Current Stage:</span>
+              <div className="p-3 rounded-xl bg-app-base border border-app-line">
+                <span className="text-app-mist">Current Stage:</span>
                 <div className="mt-1">{getStageBadge(selectedLeadModal.status)}</div>
               </div>
-              <div className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446]">
-                <span className="text-[#97A0B3]">Estimated Deal Value:</span>
+              <div className="p-3 rounded-xl bg-app-base border border-app-line">
+                <span className="text-app-mist">Estimated Deal Value:</span>
                 <p className="font-bold text-amber-400 mt-1">{formatINR(selectedLeadModal.estimated_deal_value)}</p>
               </div>
-              <div className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446]">
-                <span className="text-[#97A0B3]">Lead Source:</span>
-                <p className="font-bold text-white mt-1">{selectedLeadModal.lead_source || "Inbound"}</p>
+              <div className="p-3 rounded-xl bg-app-base border border-app-line">
+                <span className="text-app-mist">Lead Source:</span>
+                <p className="font-bold text-hi mt-1">{selectedLeadModal.lead_source || "Inbound"}</p>
               </div>
             </div>
 
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setSelectedLeadModal(null)}
-                className="px-4 py-2 rounded-xl bg-[#7FA0D6] text-white font-bold text-xs hover:bg-[#7FA0D6]/90 transition-colors"
+                className="px-4 py-2 rounded-xl bg-app-accent text-white font-bold text-xs hover:bg-app-accent/90 transition-colors"
               >
                 Done
               </button>

@@ -156,18 +156,18 @@ export function AdminSplitPaymentModal({
       onClick={onClose}
     >
       <div
-        className="bg-[#161F2D] border border-[#2A3446] rounded-3xl w-full max-w-2xl p-5 sm:p-6 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col"
+        className="bg-app-surface border border-app-line rounded-3xl w-full max-w-2xl p-5 sm:p-6 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between pb-3 border-b border-[#2A3446] shrink-0">
+        <div className="flex items-start justify-between pb-3 border-b border-app-line shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
+            <div className="w-8 h-8 rounded-xl bg-app-accent/15 border border-app-line flex items-center justify-center text-app-accent">
               <CreditCard className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Split Payment & Instalment Manager</h3>
-              <p className="text-xs text-[#97A0B3]">
+              <h3 className="text-base font-bold text-hi">Split Payment & Instalment Manager</h3>
+              <p className="text-xs text-app-mist">
                 {clientName ? `Client: ${clientName}` : "Divide service package into scheduled instalments"}
               </p>
             </div>
@@ -175,7 +175,7 @@ export function AdminSplitPaymentModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-7 h-7 rounded-lg border border-[#2A3446] bg-[#0B111C] flex items-center justify-center text-[#97A0B3] hover:text-white transition-colors cursor-pointer"
+            className="w-7 h-7 rounded-lg border border-app-line bg-app-base flex items-center justify-center text-app-mist hover:text-hi transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -197,46 +197,46 @@ export function AdminSplitPaymentModal({
         <div className="flex-1 overflow-y-auto space-y-5 pr-1 scrollbar-thin">
           {/* Active Package Status if already exists */}
           {clientSummary?.active_package && (
-            <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl p-4 space-y-3">
+            <div className="bg-app-base border border-app-line rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold text-white">Active Split Package</span>
-                  <p className="text-[11px] text-[#97A0B3]">{clientSummary.active_package.title}</p>
+                  <span className="text-xs font-bold text-hi">Active Split Package</span>
+                  <p className="text-[11px] text-app-mist">{clientSummary.active_package.title}</p>
                 </div>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                   {clientSummary.active_package.status}
                 </span>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#2A3446] text-xs">
+              <div className="grid grid-cols-3 gap-2 pt-1 border-t border-app-line text-xs">
                 <div>
-                  <span className="text-[10px] uppercase text-[#97A0B3] block">Total</span>
-                  <span className="font-bold text-white">₹{clientSummary.total_package_amount?.toLocaleString("en-IN")}</span>
+                  <span className="text-[10px] uppercase text-app-mist block">Total</span>
+                  <span className="font-bold text-hi">₹{clientSummary.total_package_amount?.toLocaleString("en-IN")}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase text-[#97A0B3] block">Paid</span>
+                  <span className="text-[10px] uppercase text-app-mist block">Paid</span>
                   <span className="font-bold text-emerald-400">₹{clientSummary.total_paid?.toLocaleString("en-IN")}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase text-[#97A0B3] block">Pending</span>
+                  <span className="text-[10px] uppercase text-app-mist block">Pending</span>
                   <span className="font-bold text-amber-300">₹{clientSummary.pending_balance?.toLocaleString("en-IN")}</span>
                 </div>
               </div>
 
               {/* Existing Instalments Actions */}
-              <div className="space-y-2 pt-2 border-t border-[#2A3446]">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
+              <div className="space-y-2 pt-2 border-t border-app-line">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-app-mist">
                   Instalment Tracking & Reminders
                 </span>
                 {clientSummary.instalments?.map((inst: any) => (
                   <div
                     key={inst.id}
-                    className="p-3 rounded-xl bg-[#161F2D] border border-[#2A3446] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                    className="p-3 rounded-xl bg-app-surface border border-app-line flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                   >
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-white">Instalment #{inst.instalment_number}</span>
-                        <span className="font-mono text-[#7FA0D6]">₹{inst.amount?.toLocaleString("en-IN")}</span>
+                        <span className="font-bold text-hi">Instalment #{inst.instalment_number}</span>
+                        <span className="font-mono text-app-accent">₹{inst.amount?.toLocaleString("en-IN")}</span>
                         <span
                           className={`px-2 py-0.2 rounded text-[10px] font-bold uppercase ${
                             inst.status === "paid" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
@@ -245,7 +245,7 @@ export function AdminSplitPaymentModal({
                           {inst.status}
                         </span>
                       </div>
-                      <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                      <p className="text-[11px] text-app-mist mt-0.5">
                         Due: {new Date(inst.due_date).toLocaleDateString()} {inst.notes ? ` · ${inst.notes}` : ""}
                       </p>
                     </div>
@@ -283,13 +283,13 @@ export function AdminSplitPaymentModal({
 
           {/* New Split Package Form */}
           <form onSubmit={handleCreatePackage} className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-app-mist">
               {clientSummary?.active_package ? "Configure New Split Package" : "Configure Agreed Service Package"}
             </h4>
 
             {!initialClientId && (
               <div>
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1">Select Client</label>
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1">Select Client</label>
                 <CustomSelect
                   value={selectedClientId}
                   onChange={setSelectedClientId}
@@ -309,34 +309,34 @@ export function AdminSplitPaymentModal({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1">Package Title</label>
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1">Package Title</label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. 20K Quarterly Production Package"
-                  className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full bg-app-base border border-app-line rounded-xl px-3 py-2 text-xs text-hi focus:outline-none focus:border-app-accent"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1">Total Agreed Amount (₹)</label>
+                <label className="block text-xs font-semibold text-app-ink-2 mb-1">Total Agreed Amount (₹)</label>
                 <input
                   type="number"
                   value={totalAmount}
                   onChange={(e) => setTotalAmount(Number(e.target.value))}
                   placeholder="20000"
-                  className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full bg-app-base border border-app-line rounded-xl px-3 py-2 text-xs text-hi font-mono focus:outline-none focus:border-app-accent"
                 />
               </div>
             </div>
 
             {/* Instalments Breakdown Editor */}
-            <div className="space-y-3 pt-2 border-t border-[#2A3446]">
+            <div className="space-y-3 pt-2 border-t border-app-line">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-semibold text-[#F1F5F9]">Divide into Instalments</span>
-                  <p className="text-[11px] text-[#97A0B3]">
+                  <span className="text-xs font-semibold text-app-ink-2">Divide into Instalments</span>
+                  <p className="text-[11px] text-app-mist">
                     Current Sum: ₹{currentSum.toLocaleString("en-IN")} of ₹{totalAmount.toLocaleString("en-IN")}
                   </p>
                 </div>
@@ -352,7 +352,7 @@ export function AdminSplitPaymentModal({
                       },
                     ])
                   }
-                  className="px-3 py-1 rounded-lg bg-[#7FA0D6] text-[#0B111C] hover:bg-[#BCCCE6] text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                  className="px-3 py-1 rounded-lg bg-app-accent text-app-base hover:bg-app-accent-soft text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add Instalment
                 </button>
@@ -362,9 +362,9 @@ export function AdminSplitPaymentModal({
                 {instalmentDrafts.map((draft, idx) => (
                   <div
                     key={idx}
-                    className="p-3 bg-[#0B111C] border border-[#2A3446] rounded-2xl flex flex-col sm:flex-row items-center gap-2.5"
+                    className="p-3 bg-app-base border border-app-line rounded-2xl flex flex-col sm:flex-row items-center gap-2.5"
                   >
-                    <span className="w-6 h-6 rounded-lg bg-[#161F2D] text-[#7FA0D6] flex items-center justify-center text-xs font-bold font-mono shrink-0">
+                    <span className="w-6 h-6 rounded-lg bg-app-surface text-app-accent flex items-center justify-center text-xs font-bold font-mono shrink-0">
                       #{idx + 1}
                     </span>
                     <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -380,7 +380,7 @@ export function AdminSplitPaymentModal({
                             setInstalmentDrafts(next);
                           }
                         }}
-                        className="bg-[#161F2D] border border-[#2A3446] rounded-xl px-2.5 py-1.5 text-xs text-white font-mono focus:border-[#7FA0D6] focus:outline-none"
+                        className="bg-app-surface border border-app-line rounded-xl px-2.5 py-1.5 text-xs text-hi font-mono focus:border-app-accent focus:outline-none"
                       />
                       <input
                         type="date"
@@ -393,7 +393,7 @@ export function AdminSplitPaymentModal({
                             setInstalmentDrafts(next);
                           }
                         }}
-                        className="bg-[#161F2D] border border-[#2A3446] rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-[#7FA0D6] focus:outline-none"
+                        className="bg-app-surface border border-app-line rounded-xl px-2.5 py-1.5 text-xs text-hi focus:border-app-accent focus:outline-none"
                       />
                       <input
                         type="text"
@@ -407,14 +407,14 @@ export function AdminSplitPaymentModal({
                             setInstalmentDrafts(next);
                           }
                         }}
-                        className="bg-[#161F2D] border border-[#2A3446] rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-[#7FA0D6] focus:outline-none"
+                        className="bg-app-surface border border-app-line rounded-xl px-2.5 py-1.5 text-xs text-hi focus:border-app-accent focus:outline-none"
                       />
                     </div>
                     {instalmentDrafts.length > 1 && (
                       <button
                         type="button"
                         onClick={() => setInstalmentDrafts(instalmentDrafts.filter((_, i) => i !== idx))}
-                        className="text-[#97A0B3] hover:text-rose-400 p-1.5 transition-colors cursor-pointer shrink-0"
+                        className="text-app-mist hover:text-rose-400 p-1.5 transition-colors cursor-pointer shrink-0"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -424,18 +424,18 @@ export function AdminSplitPaymentModal({
               </div>
             </div>
 
-            <div className="pt-3 border-t border-[#2A3446] flex items-center justify-end gap-3">
+            <div className="pt-3 border-t border-app-line flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-full border border-[#2A3446] bg-[#0B111C] text-xs font-semibold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-full border border-app-line bg-app-base text-xs font-semibold text-hi hover:bg-app-surface transition-colors cursor-pointer"
               >
                 Close
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting || Math.abs(currentSum - totalAmount) > 1}
-                className="px-5 py-2 rounded-full bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-5 py-2 rounded-full bg-app-accent-soft hover:bg-hi text-app-base text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>

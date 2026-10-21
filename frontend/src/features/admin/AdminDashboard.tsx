@@ -26,7 +26,7 @@ import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 
 
 function LoadingPanel({ label }: { label: string }) {
-  return <div role="status" className="min-h-48 rounded-3xl bg-[#161F2D] border border-[#2A3446] p-5 text-sm text-slate-400">{label}</div>;
+  return <div role="status" className="min-h-48 rounded-3xl bg-app-surface border border-app-line p-5 text-sm text-slate-400">{label}</div>;
 }
 
 export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) {
@@ -66,7 +66,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
   return (
     <div
       data-surface="ops"
-      className="w-full min-h-screen font-sans bg-[#0B111C] text-[#F1F5F9] flex flex-col"
+      className="w-full min-h-screen font-sans bg-app-base text-app-ink-2 flex flex-col"
     >
       {/* Top Header */}
       <AdminTopHeader
@@ -91,7 +91,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
               className="mb-3.5 p-2.5 rounded-xl text-xs font-medium flex items-center gap-2"
               style={{
                 background: message.type === "error" ? "#161F2D" : "#161F2D",
-                border: `1px solid ${message.type === "error" ? "#D8BF9B" : "#BCCCE6"}`,
+                border: `1px solid ${message.type === "error" ? "var(--app-warm)" : "var(--app-accent-soft)"}`,
                 color: message.type === "error" ? "#D8BF9B" : "#7FA0D6",
               }}
             >
@@ -119,7 +119,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
               transition={{ duration: 0.35, delay: 0.05, ease: "easeOut" }}
               className="flex flex-col h-full min-h-0 hover-card-innovative rounded-3xl"
             >
-              <Suspense fallback={<div role="status" className="min-h-64 rounded-3xl bg-[#161F2D] border border-[#2A3446] p-5 text-sm text-slate-400">Loading revenue chart?</div>}>{kpiQuery.data ? <RevenueEngineWidget kpis={kpis} clients={clients} /> : <LoadingPanel label={kpiQuery.isError ? "Revenue unavailable" : "Loading revenue?"} />}</Suspense>
+              <Suspense fallback={<div role="status" className="min-h-64 rounded-3xl bg-app-surface border border-app-line p-5 text-sm text-slate-400">Loading revenue chart?</div>}>{kpiQuery.data ? <RevenueEngineWidget kpis={kpis} clients={clients} /> : <LoadingPanel label={kpiQuery.isError ? "Revenue unavailable" : "Loading revenue?"} />}</Suspense>
             </motion.div>
           )}
 

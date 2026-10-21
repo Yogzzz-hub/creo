@@ -1,690 +1,453 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router";
-import { AnimatePresence, motion, useScroll } from "motion/react";
-import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, AlertCircle, ArrowRight, Layers, User, Database, ChevronDown, Zap, Loader2, Mail, Check, Layout, Clock } from "lucide-react";
-import { Instagram } from "../../ui/brand-icons";
-import { LandingPricingCards } from "../../components/public/LandingPricingCards";
-import { MobileLandingPage } from "../../components/public/MobileLandingPage";
-import { request } from "../../lib/http";
-import {
-  EASE_OUT_EXPO,
-  Magnetic,
-  Marquee,
-  Parallax,
-  Reveal,
-  ScrollDrawLine,
-  SplitText,
-  Stagger,
-  StaggerItem,
-  TiltCard,
-} from "../../components/motion";
-import { whenIdle } from "../../app/lazy-pages";
+import { useRef, useState } from "react";
+import { Link } from "react-router";
+import { AnimatePresence, type MotionValue, motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { ArrowDown, ArrowUpRight, Check, Plus, Zap } from "lucide-react";
+import { SectionHeading } from "../../components/public/PageBlocks";
+import { PortalDemo } from "../../components/public/PortalDemo";
+import { DISPLAY, PillLink, SampleCta } from "../../components/public/StagePieces";
+import { EASE_OUT_EXPO, Reveal } from "../../components/motion";
+import { ramp, ScrollFlipText } from "../../components/motion/ScrollFlipText";
+import { smoothScrollTo } from "../../components/motion/SmoothScroll";
+import { SCREEN_IMAGES, Stage3DRoot, useStageLayer } from "../../components/stage3d/registry";
 
-// three.js only loads on the landing page, after the hero text is on screen
-const HeroWaveScene = lazy(() => import("../../components/motion/HeroWaveScene"));
-
-const MARQUEE_ITEMS = [
-  "Reels 9:16",
-  "Carousels",
-  "Stories",
-  "Product shoots",
-  "Launch teasers",
-  "UGC edits",
-  "Brand DNA",
-  "Weekly batches",
-  "Skincare",
-  "Food & beverage",
-  "Activewear",
-  "Home & living",
+const PRINCIPLES = [
+  {
+    title: "Your Brand DNA, first",
+    body: "Day one, you upload your assets, fonts and guidelines. Your lead, editor and designer work from that Brand DNA, so every reel, carousel and story ships on-brand.",
+  },
+  {
+    title: "One pod, one portal",
+    body: "No cluttered email threads, no lost Slack files. Drafts arrive in your portal, organised by batch. Approve in one click, or decline with a note and the pod revises within your plan's quota.",
+  },
+  {
+    title: "The clock is public",
+    body: "Every batch is timestamped by our SLA service: 3 business days on Starter, 2 on Growth, 24 hours on Scale. Late batch? Next cycle credited.",
+  },
+  {
+    title: "Month-to-month, always",
+    body: "No long-term lock-in. Upgrade, pause renewal or cancel anytime. Your first batch lands within 7 days of signing up.",
+  },
 ];
 
-function CollageTile({
-  src,
-  alt,
-  aspect,
-  label,
-}: {
-  src: string;
-  alt: string;
-  aspect: string;
-  label?: string;
-}) {
-  return (
-    <TiltCard max={9} lift={30} glow="transparent" className={`relative ${aspect} rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926] shadow-[0_18px_40px_-18px_rgba(0,0,0,0.8)]`}>
-      <img
-        src={src}
-        alt={alt}
-        loading="eager"
-        className="w-full h-full object-cover block transition-transform duration-[900ms] ease-out group-hover/tilt:scale-[1.06]"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#050810]/55 via-transparent to-transparent" />
-      {label && (
-        <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 z-[2] bg-[#050810]/70 backdrop-blur-sm px-2.5 py-1 rounded-md text-[11px] font-medium text-white [transform:translateZ(30px)]">
-          {label}
-        </div>
-      )}
-    </TiltCard>
-  );
-}
+const POD = [
+  {
+    role: "Creative lead",
+    about: "Owns your Brand DNA and the content calendar, and is your single point of contact. Every brief starts and ends with them.",
+    image: SCREEN_IMAGES[0],
+  },
+  {
+    role: "Video editor",
+    about: "Cuts your reels, hooks and story sets, working from the Brand DNA so every edit looks and sounds like you.",
+    image: SCREEN_IMAGES[3],
+  },
+  {
+    role: "Designer",
+    about: "Builds carousels and statics on your brand system, ready for review in the same batch as the reels.",
+    image: SCREEN_IMAGES[4],
+  },
+  {
+    role: "You",
+    about: "Review every batch in the portal. Approve in one click, or decline with a note and the pod revises within your plan's quota.",
+    image: SCREEN_IMAGES[1],
+  },
+];
 
+const DROPS = [
+  {
+    label: "Formats",
+    title: "Reels, carousels and stories, batched and on-brand every week.",
+    cta: "See the work",
+    to: "/work",
+  },
+  {
+    label: "Portal",
+    title: "Every batch lands in one portal, ready for one-click approval.",
+    cta: "Explore the portal",
+    to: "/portal",
+  },
+];
+
+const INCLUDED = [
+  "A dedicated lead, editor and designer",
+  "Brand DNA onboarding",
+  "Weekly batches of reels, carousels and stories",
+  "One-click approvals in your portal",
+  "Revisions within your plan's quota",
+  "SLA-timed delivery; late batch credited",
+  "Month-to-month, cancel anytime",
+];
+
+const PLAN_ROWS = [
+  { name: "Starter", turnaround: "3 business days per batch" },
+  { name: "Growth", turnaround: "2 business days per batch" },
+  { name: "Scale", turnaround: "24-hour priority turnaround" },
+];
 
 const faqs = [
   {
-    category: "Migration & Tools",
-    tag: "MIGRATION & WORKFLOW",
     question: "How does CREO streamline content creation for D2C brands?",
-    icon: Layers,
     answer: "CREO connects content briefs directly to creative leads and client sign-offs. Your briefs trigger automated SLA revision tickets and real-time deliverables tracking—eliminating delays and fragmented communication.",
     extra: (
-      <div className="text-[#7FA0D6] bg-[#0A0F18] border border-[#2A3446] rounded-md px-3 py-1 text-xs inline-flex items-center gap-1.5 mt-3">
-        <Zap className="size-3.5 fill-current" />
+      <div className="text-site-ice bg-site-blue/10 border border-site-blue/30 rounded-full px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 mt-4">
+        <Zap className="size-3.5 fill-current text-site-blue-light" />
         Typical D2C brand onboarding completed in under 48 hours.
       </div>
     ),
   },
   {
-    category: "Deliverables & Formats",
-    tag: "CONTENT FORMATS",
     question: "What content deliverables are included in our monthly pod retainer?",
-    icon: Layout,
-    answer: "Depending on your plan tier (Starter, Growth, or Scale), your pod delivers a fixed monthly volume of high-converting 9:16 reels, static/carousel brand posts, and interactive story sets."
+    answer: "Depending on your plan tier (Starter, Growth, or Scale), your pod delivers a fixed monthly volume of high-converting 9:16 reels, static/carousel brand posts, and interactive story sets.",
   },
   {
-    category: "Turnaround & SLAs",
-    tag: "PRODUCTION SLAs",
     question: "What are the guaranteed turnaround times for content batches?",
-    icon: Clock,
-    answer: "Every deliverable batch is produced under strict SLA timelines: 3 business days for Starter, 2 business days for Growth, and 24-hour priority turnaround for Scale."
+    answer: "Every deliverable batch is produced under strict SLA timelines: 3 business days for Starter, 2 business days for Growth, and 24-hour priority turnaround for Scale.",
   },
   {
-    category: "Revisions & Approvals",
-    tag: "ONE-CLICK REVIEW",
     question: "How do revisions work inside the client portal?",
-    icon: User,
-    answer: "You review draft assets in your portal. If revisions are needed, click Decline, enter your feedback, and your pod will revise and resubmit within your plan's revision quota."
+    answer: "You review draft assets in your portal. If revisions are needed, click Decline, enter your feedback, and your pod will revise and resubmit within your plan's revision quota.",
   },
   {
-    category: "Flexibility & Terms",
-    tag: "MONTH-TO-MONTH",
     question: "Can we upgrade, pause, or cancel our retainer anytime?",
-    icon: Database,
-    answer: "Yes. All Creo retainers operate on a month-to-month basis with no long-term lock-in. You can upgrade, pause renewal, or cancel anytime."
-  }
+    answer: "Yes. All Creo retainers operate on a month-to-month basis with no long-term lock-in. You can upgrade, pause renewal, or cancel anytime.",
+  },
 ];
 
+
+/**
+ * Opening beat: the "c." mark on dark; scrolling swells its dot until it
+ * floods the screen in the brand colour, handing over to the 3D hero.
+ */
+function IntroMark({ progress }: { progress: MotionValue<number> }) {
+  // Function transforms throughout: see ScrollFlipText for why not array ranges
+  const dotScale = useTransform(progress, (v) => 170 ** ramp(v, 0, 0.12));
+  const glyphOpacity = useTransform(progress, (v) => 1 - ramp(v, 0, 0.045));
+  const layerOpacity = useTransform(progress, (v) => 1 - ramp(v, 0.12, 0.165));
+  return (
+    <motion.div
+      aria-hidden="true"
+      style={{ opacity: layerOpacity }}
+      className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+    >
+      <div className="flex items-end text-[var(--site-blue-deep)]">
+        <motion.svg aria-hidden="true" style={{ opacity: glyphOpacity }} viewBox="0 0 100 100" className="size-24 sm:size-28">
+          <path d="M70.6 25.5A32 32 0 1 0 70.6 74.5" fill="none" stroke="currentColor" strokeWidth="19" strokeLinecap="round" />
+        </motion.svg>
+        <motion.span style={{ scale: dotScale }} className="mb-3 -ml-1 block size-7 rounded-full bg-current" />
+      </div>
+      <motion.p
+        style={{ opacity: glyphOpacity }}
+        className="absolute bottom-10 flex items-center gap-2 text-sm font-semibold text-white/70"
+      >
+        <ArrowDown className="size-4 animate-bounce" />
+        Scroll to dive in
+      </motion.p>
+    </motion.div>
+  );
+}
+
 export function HomePage() {
-  const { hash } = useLocation();
-  useEffect(() => {
-    if (hash === "#faq") {
-      const frame = requestAnimationFrame(() => {
-        document.getElementById("faq")?.scrollIntoView({ behavior: "instant" });
-      });
-      return () => cancelAnimationFrame(frame);
-    }
-  }, [hash]);
-  const [sampleEmail, setSampleEmail] = useState("");
-  const [sampleHandle, setSampleHandle] = useState("");
-  const [sampleSubmitting, setSampleSubmitting] = useState(false);
-  const [sampleSuccess, setSampleSuccess] = useState(false);
-  const [sampleError, setSampleError] = useState<string | null>(null);
+  return (
+    <Stage3DRoot>
+      <HomeContent />
+    </Stage3DRoot>
+  );
+}
 
-  const { data: ledgerData } = useQuery<{ has_enough: boolean; items: any[] }>({
-    queryKey: ["public-ledger"],
-    queryFn: () => request<any>("/api/v1/public/ledger"),
-    staleTime: 60_000,
-  });
+function HomeContent() {
+  const reduce = useReducedMotion() ?? false;
 
+  const heroRef = useRef<HTMLElement>(null);
+  const heroViewRef = useRef<HTMLDivElement>(null);
+  const manifestoRef = useRef<HTMLElement>(null);
+  const manifestoViewRef = useRef<HTMLDivElement>(null);
+  const manifestoViewMobileRef = useRef<HTMLDivElement>(null);
+  const podRef = useRef<HTMLElement>(null);
+  const podViewRef = useRef<HTMLDivElement>(null);
+  const dropRef = useRef<HTMLElement>(null);
+  const dropViewRef = useRef<HTMLDivElement>(null);
+  const plansRef = useRef<HTMLElement>(null);
+  const plansViewRef = useRef<HTMLDivElement>(null);
+
+  useStageLayer({ kind: "heroDive", views: [heroViewRef], section: heroRef });
+  useStageLayer({ kind: "blocks", mode: "manifesto", views: [manifestoViewRef, manifestoViewMobileRef], section: manifestoRef });
+  useStageLayer({ kind: "bubble", views: [podViewRef], section: podRef });
+  useStageLayer({ kind: "mailbox", views: [dropViewRef], section: dropRef });
+  useStageLayer({ kind: "megaphone", views: [plansViewRef], section: plansRef });
+
+  const { scrollYProgress: heroProgress } = useScroll({ target: heroRef, offset: ["start start", "end end"] });
+  const subOpacity = useTransform(heroProgress, (v) => ramp(v, 0.88, 0.95));
+  const subY = useTransform(heroProgress, (v) => 24 * (1 - ramp(v, 0.88, 0.95)));
+
+  const [activeRole, setActiveRole] = useState(0);
+  const role = POD[activeRole] ?? POD[0];
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-  const [assets, setAssets] = useState([
-    { id: 1, name: "Brand Launch Teaser", type: "Reel 9:16", status: "awaiting" },
-    { id: 2, name: "Product Feature Breakdown", type: "Carousel 4 slides", status: "awaiting" },
-    { id: 3, name: "Serum launch countdown", type: "Story 3 frames", status: "approved" },
-  ]);
-
-  const updateStatus = (id: number, status: string) => {
-    setAssets(prev => prev.map(a => a.id === id ? { ...a, status } : a));
-  };
-
-  const approvedCount = assets.filter(a => a.status === "approved").length;
-  // Fetch the WebGL scene only once the page is idle so it never delays first paint
-  const [showScene, setShowScene] = useState(false);
-  useEffect(() => whenIdle(() => setShowScene(true)), []);
-  const processRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress: processProgress } = useScroll({
-    target: processRef,
-    offset: ["start 85%", "end 55%"],
-  });
-
-  const handleRequestSample = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!sampleEmail || !sampleEmail.includes("@")) {
-      setSampleError("Please enter a valid work email address.");
-      return;
-    }
-    if (!sampleHandle.trim()) {
-      setSampleError("Please enter your Instagram handle.");
-      return;
-    }
-    setSampleSubmitting(true);
-    setSampleError(null);
-    try {
-      await request("/api/v1/public/sample", {
-        method: "POST",
-        body: JSON.stringify({
-          email: sampleEmail.trim(),
-          instagram_handle: sampleHandle.trim(),
-        }),
-      });
-      setSampleSuccess(true);
-    } catch (err: unknown) {
-      setSampleError(err instanceof Error ? err.message : "Failed to submit sample request.");
-    } finally {
-      setSampleSubmitting(false);
-    }
-  };
 
   return (
     <>
-      {/* Mobile-only view (< md) */}
-      <div className="block md:hidden">
-        <MobileLandingPage />
-      </div>
-
-      {/* Desktop & tablet view (>= md) */}
-      <div className="hidden md:block w-full bg-[#050810] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#7FA0D6]/30">
-
-      {/* 1. Hero Section + Collage */}
-      <section className="relative isolate overflow-hidden creo-grain">
-        {/* Animated particle wave behind the hero */}
-        {showScene && (
-        <Suspense fallback={null}>
-          <HeroWaveScene className="absolute inset-x-0 bottom-0 h-[70%] -z-10 opacity-80 [mask-image:linear-gradient(to_top,#000_40%,transparent)] animate-page-in" />
-        </Suspense>
-        )}
-
-        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-8 pb-16 sm:pt-12 sm:pb-24 lg:pt-14 lg:pb-28">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-start">
-
-            {/* Left Hero Column */}
-            <div className="pr-0 lg:pr-12 relative z-10">
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
-                className="text-[11px] tracking-widest uppercase font-bold text-[#97A0B3] mb-5 flex items-center"
+      {/* 1. Hero — the mark floods the screen, a laptop opens and the camera dives into its screen */}
+      <section
+        ref={heroRef}
+        className="st-tone st-hero relative -mt-[76px] sm:-mt-[84px]"
+        style={{ height: reduce ? "100svh" : "460svh" }}
+      >
+        <div ref={heroViewRef} className="sticky top-0 flex h-[100svh] flex-col items-center justify-center overflow-hidden px-6 text-center">
+          {!reduce && <IntroMark progress={heroProgress} />}
+          <div className="relative">
+            <ScrollFlipText
+              as="h1"
+              text="Content that ships every week."
+              progress={heroProgress}
+              range={[0.8, 0.95]}
+              className={`creo-display block max-w-[14ch] text-[clamp(3rem,9vw,9rem)] leading-[0.92] ${DISPLAY}`}
+            />
+            <motion.div style={reduce ? undefined : { opacity: subOpacity, y: subY }} className="mt-8 flex flex-col items-center gap-8">
+              <p className="max-w-xl text-lg font-medium leading-relaxed text-site-mist sm:text-xl">
+                A creative pod for D2C brands: a lead, editor and designer who deliver reels, carousels and stories to a portal you approve in one click.
+              </p>
+              <button
+                type="button"
+                onClick={() => manifestoRef.current && smoothScrollTo(manifestoRef.current)}
+                aria-label="Scroll to how we work"
+                className="flex size-14 cursor-pointer items-center justify-center rounded-full bg-[#f5eee3] text-[#2b1e15] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)] transition-transform duration-200 hover:scale-105 active:scale-95"
               >
-                <span className="relative mr-2 flex size-2">
-                  <span className="absolute inset-0 rounded-full bg-[#7FA0D6] animate-ping opacity-50" />
-                  <span className="relative size-2 rounded-full bg-[#7FA0D6]" />
-                </span>
-                A CREATIVE POD FOR D2C BRANDS
-              </motion.div>
-
-              <h1 className="text-[clamp(2.25rem,10vw,3rem)] sm:text-6xl lg:text-7xl font-black tracking-tight leading-[0.98] sm:leading-[1.0] text-[#F8FAFC]">
-                <SplitText text="Content that" animateOnMount className="block" />
-                <SplitText text="ships every week." animateOnMount delay={0.12} className="block" />
-                <SplitText
-                  text="Proof you can"
-                  animateOnMount
-                  delay={0.24}
-                  className="block italic font-serif font-light pr-2"
-                />
-                <SplitText text="check." animateOnMount delay={0.36} className="block" wordClassName="text-[#BCCCE6]" />
-              </h1>
-
-              <Reveal delay={0.45} blur>
-                <p className="text-sm sm:text-base text-[#97A0B3] leading-relaxed max-w-md mt-6 mb-7">
-                  A dedicated lead, editor and designer learn your brand, then deliver reels, carousels and stories to a portal where you approve them in one click.
-                </p>
-              </Reveal>
-
-              <Reveal delay={0.55}>
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <Magnetic className="w-full sm:w-auto">
-                    <Link
-                      to="/signup?intent=sample"
-                      className="group relative overflow-hidden bg-[#BCCCE6] text-[#050810] font-bold text-sm px-7 py-3.5 rounded-full hover:bg-white transition-colors w-full sm:w-auto text-center shadow-md inline-flex items-center justify-center gap-2"
-                    >
-                      Get a free sample batch
-                      <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
-                    </Link>
-                  </Magnetic>
-                  <Link
-                    to="/portal"
-                    className="bg-[#121926]/80 backdrop-blur border border-[#222F44] text-[#F8FAFC] text-sm px-7 py-3.5 rounded-full hover:border-[#7FA0D6]/60 hover:bg-[#0B111C] transition-colors w-full sm:w-auto text-center"
-                  >
-                    Explore the portal first
-                  </Link>
-                </div>
-              </Reveal>
-
-              <Reveal delay={0.65}>
-                <div className="text-xs font-semibold text-[#97A0B3] mt-8 border-t border-[#222F44] pt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <span>Month-to-month</span>
-                  <span className="w-1 h-1 rounded-full bg-[#97A0B3]/50"></span>
-                  <span>First batch in 7 days</span>
-                  <span className="w-1 h-1 rounded-full bg-[#97A0B3]/50"></span>
-                  <span>Late batch? Next cycle credited</span>
-                </div>
-              </Reveal>
-            </div>
-
-            {/* Right 3-Column Asymmetric Media Collage — columns drift at different speeds */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, rotateX: 8 }}
-              animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-              transition={{ duration: 1.1, delay: 0.2, ease: EASE_OUT_EXPO }}
-              className="hero-collage grid grid-cols-3 gap-2 sm:gap-4 lg:h-[600px] [perspective:1200px]"
-            >
-              <Parallax offset={30} className="flex min-w-0 flex-col gap-2 sm:gap-4">
-                <CollageTile aspect="aspect-[9/16]" label="Reel · 9:16" alt="Athlete" src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80" />
-                <CollageTile aspect="aspect-[16/11]" alt="Sourdough" src="https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80" />
-              </Parallax>
-
-              <Parallax offset={-45} className="flex min-w-0 flex-col gap-2 sm:gap-4 pt-4 sm:pt-8">
-                <CollageTile aspect="aspect-[16/11]" alt="Interior" src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=80" />
-                <CollageTile aspect="aspect-[9/16]" label="Reel · 9:16" alt="Reel" src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80" />
-              </Parallax>
-
-              <Parallax offset={55} className="flex min-w-0 flex-col gap-2 sm:gap-4">
-                <CollageTile aspect="aspect-[9/14]" alt="Model" src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80" />
-                <CollageTile aspect="aspect-[4/5]" label="Carousel" alt="Serum" src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=800&q=80" />
-              </Parallax>
+                <ArrowDown className="size-5" />
+              </button>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* 1.5 What we ship — infinite marquee */}
-      <section aria-label="What we produce" className="border-y border-[#222F44] bg-[#0B111C]/80 py-5">
-        <Marquee speed={42}>
-          {MARQUEE_ITEMS.map((item) => (
-            <span key={item} className="flex items-center gap-10 whitespace-nowrap text-sm sm:text-base font-semibold tracking-tight text-[#97A0B3]">
-              {item}
-              <span className="size-1.5 rotate-45 bg-[#D8BF9B]/70" />
-            </span>
-          ))}
-        </Marquee>
-      </section>
-
-      {/* 2. The Studio Ledger Section */}
-      <section className="bg-[#0B111C] py-12 sm:py-16 border-y border-[#222F44]">
-        <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <Reveal>
-              <div className="text-[11px] tracking-widest uppercase font-bold text-[#7FA0D6] mb-4">
-                THE STUDIO LEDGER
-              </div>
-            </Reveal>
-            <SplitText
-              as="h2"
-              text="No star ratings. Just the clock."
-              accent={["Just", "the", "clock"]}
-              className="block text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-5"
-            />
-            <Reveal delay={0.15}>
-              <p className="text-sm sm:text-base text-[#97A0B3] leading-relaxed">
-                Every batch we ship is timestamped from the SLA service. Brands stay anonymous, the turnaround doesn't.
-              </p>
-            </Reveal>
-          </div>
-
-          <Reveal direction="up" blur className="max-w-4xl mx-auto">
-          <div className="backdrop-blur-md bg-[#161F2D]/70 border border-[#2A3446]/60 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="grid grid-cols-4 bg-[#0A0F18] border-b border-[#2A3446] p-4 sm:p-5 items-center">
-              <div className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider">Asset / Batch</div>
-              <div className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider">Milestone</div>
-              <div className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider">SLA Time</div>
-              <div className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider text-right">Status</div>
+      {/* 2. Manifesto — sticky title, blocks build a cube that turns into coins */}
+      <section ref={manifestoRef} className="st-tone st-base relative px-6 sm:px-8 lg:px-12">
+        <div className="mx-auto grid max-w-[1440px] gap-x-16 lg:grid-cols-2">
+          <div className="relative lg:sticky lg:top-0 lg:h-[100svh]">
+            <div ref={manifestoViewRef} className="pointer-events-none absolute inset-y-0 -left-6 -right-8 hidden lg:block" />
+            <div className="relative z-10 pt-28 lg:pt-[20svh]">
+              <ScrollFlipText
+                as="h2"
+                text="Built for brands, run by people."
+                className={`block max-w-xl text-[clamp(2.6rem,5vw,4.75rem)] leading-[1] ${DISPLAY}`}
+              />
             </div>
-
-            {ledgerData?.has_enough ? (
-              <Stagger className="divide-y divide-[#2A3446]" gap={0.07}>
-                {(ledgerData.items || []).map((row: any, i: number) => (
-                  <StaggerItem key={row.id || i} className="grid grid-cols-4 items-center p-4 sm:p-5 hover:bg-[#121926] transition-colors">
-                    <div className="text-sm font-semibold text-[#F8FAFC]">{row.file_type || "Content Batch"}</div>
-                    <div className="text-sm text-[#97A0B3]">Batch {i + 1}</div>
-                    <div className="text-sm font-mono text-[#F8FAFC]">SLA Verified</div>
-                    <div className="text-right">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-[#050810] border border-[#7FA0D6]/50 text-[#7FA0D6]">
-                        {row.status}
-                      </span>
-                    </div>
-                  </StaggerItem>
-                ))}
-              </Stagger>
-            ) : (
-              <div className="p-12 text-center font-mono text-2xl text-[#97A0B3]">
-                —
-              </div>
-            )}
+            <div ref={manifestoViewMobileRef} className="pointer-events-none h-[50svh] lg:hidden" />
           </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* 3. Horizontal 5-Step Process Rail — the connecting line draws as you scroll */}
-      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-12 sm:pt-16">
-        <div ref={processRef} className="relative py-8 border-b border-[#2A3446]/40">
-          <div className="absolute left-3.5 right-3.5 top-[3.05rem] hidden md:block h-px bg-[#2A3446]" />
-          <ScrollDrawLine
-            progress={processProgress}
-            className="absolute left-3.5 right-3.5 top-[3.05rem] hidden md:block h-px bg-gradient-to-r from-[#7FA0D6] via-[#BCCCE6] to-[#D8BF9B]"
-          />
-          <Stagger className="relative grid grid-cols-1 md:grid-cols-5 gap-6" gap={0.12}>
-            {[
-              { step: "01", time: "Day 1: Brand DNA", desc: "Upload your assets, fonts, and guidelines." },
-              { step: "02", time: "Days 2-3: Blueprint", desc: "We map out the content pillars and shot lists." },
-              { step: "03", time: "Days 4-6: Production", desc: "Our pod designs and edits your deliverables." },
-              { step: "04", time: "Day 7: Batch 01", desc: "You receive a secure link to approve or request changes." },
-              { step: "05", time: "Weekly: Publish & repeat", desc: "Consistent output that scales with your growth." }
-            ].map((item) => (
-              <StaggerItem key={item.step} className="flex flex-col group">
-                <div className="relative w-7 h-7 rounded-full border border-[#2A3446] bg-[#050810] text-[#7FA0D6] flex items-center justify-center text-xs font-bold mb-3 transition-all duration-300 group-hover:border-[#7FA0D6] group-hover:scale-110">
-                  {item.step}
-                </div>
-                <h4 className="text-sm font-bold text-[#F8FAFC] mb-1">{item.time}</h4>
-                <p className="text-[13px] text-[#97A0B3] leading-relaxed">{item.desc}</p>
-              </StaggerItem>
+          <div className="pb-24 lg:pt-[20svh] lg:pb-[35svh]">
+            {PRINCIPLES.map((p) => (
+              <Reveal key={p.title} className="flex flex-col justify-center py-10 lg:min-h-[75svh] lg:py-0">
+                <h3 className="text-3xl font-medium tracking-[-0.03em] text-site-ink sm:text-4xl">{p.title}</h3>
+                <p className="mt-6 max-w-md text-base leading-relaxed text-site-mist sm:text-lg">{p.body}</p>
+              </Reveal>
             ))}
-          </Stagger>
+          </div>
         </div>
       </section>
 
-      {/* 4. Interactive Approval Portal Layout */}
-      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 pb-12 sm:pb-16 pt-10">
-        <Reveal blur className="relative">
-          <div className="absolute -top-4 left-6 bg-[#0A0F18] border border-[#7FA0D6]/50 text-[#7FA0D6] text-[11px] font-bold px-4 py-1.5 rounded-full z-10 shadow-lg tracking-wider">
-            TRY IT — THIS PANEL WORKS
-          </div>
-
-          <div className="backdrop-blur-md bg-[#161F2D]/70 border border-[#2A3446]/60 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden">
-            <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-[#2A3446]">
-              <div className="font-black text-[#F8FAFC] text-lg">Batch 04</div>
-              <div className="text-xs font-bold text-[#97A0B3] flex items-center gap-3">
-                <span className="hidden sm:block w-24 h-1.5 rounded-full bg-[#2A3446] overflow-hidden">
-                  <motion.span
-                    className="block h-full rounded-full bg-[#7FA0D6]"
-                    animate={{ width: `${(approvedCount / 3) * 100}%` }}
-                    transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
-                  />
-                </span>
-                <span>
-                  <motion.span key={approvedCount} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="inline-block">
-                    {approvedCount}
-                  </motion.span>{" "}
-                  of 3 approved &bull; <span className="text-[#7FA0D6]">On track: 2 days early</span>
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
-              {assets.map((asset, idx) => (
-                <motion.div
-                  key={asset.id}
-                  layout
-                  whileHover={{ y: -4 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 24 }}
-                  className={`group bg-[#0A0F18] border rounded-xl overflow-hidden flex flex-col transition-colors duration-300 ${
-                    asset.status === "approved"
-                      ? "border-[#7FA0D6]/60 shadow-md"
-                      : asset.status === "revision"
-                        ? "border-[#D8BF9B]/50"
-                        : "border-[#2A3446]"
-                  }`}
-                >
-                  {/* Thumbnail */}
-                  <img
-                    src={idx === 0 ? "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80" : idx === 1 ? "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80" : "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=600&q=80"}
-                    alt={asset.name}
-                    loading="lazy"
-                    className="h-44 object-cover w-full transition-transform duration-700 group-hover:scale-105"
-                  />
-
-                  <div className="p-4 flex-1 flex flex-col">
-                    <div className="text-[11px] font-bold text-[#97A0B3] uppercase tracking-wider mb-1">
-                      {asset.type.replace(' ', ' • ')}
-                    </div>
-                    <div className="text-sm font-bold text-[#F8FAFC] mb-4 flex-1">{asset.name}</div>
-
-                    <div className="flex items-center justify-between mt-auto min-h-[34px]">
-                      <AnimatePresence mode="wait" initial={false}>
-                      <motion.div
-                        key={asset.status}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ duration: 0.22 }}
-                        className="w-full"
-                      >
-                      {asset.status === "awaiting" && (
-                        <div className="flex items-center gap-2 w-full">
-                          <button
-                            onClick={() => updateStatus(asset.id, "approved")}
-                            className="flex-1 bg-[#BCCCE6] text-[#050810] hover:bg-[#BCCCE6] font-semibold transition-all shadow-sm text-xs py-2 rounded-full flex items-center justify-center gap-1.5"
-                          >
-                            <CheckCircle2 className="size-3.5" /> Approve
-                          </button>
-                          <button
-                            onClick={() => updateStatus(asset.id, "revision")}
-                            className="flex-1 bg-transparent border border-[#2A3446] hover:bg-[#222F44] text-[#F8FAFC] font-bold text-xs py-2 rounded-full transition-colors"
-                          >
-                            Change
-                          </button>
-                        </div>
-                      )}
-
-                      {asset.status === "approved" && (
-                        <div className="flex items-center justify-between w-full">
-                          <div className="inline-flex items-center gap-1.5 text-[#7FA0D6] text-[10px] font-bold">
-                            <CheckCircle2 className="size-3.5" /> Approved (queued)
-                          </div>
-                          <button
-                            onClick={() => updateStatus(asset.id, "awaiting")}
-                            className="bg-[#161F2D] border border-[#2A3446] hover:bg-[#222F44] text-[#F8FAFC] text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors"
-                          >
-                            Undo
-                          </button>
-                        </div>
-                      )}
-
-                      {asset.status === "revision" && (
-                        <div className="flex items-center justify-between w-full">
-                          <div className="inline-flex items-center gap-1.5 text-[#D8BF9B] text-[10px] font-bold">
-                            <AlertCircle className="size-3.5" /> Revision requested
-                          </div>
-                          <button
-                            onClick={() => updateStatus(asset.id, "awaiting")}
-                            className="bg-[#161F2D] border border-[#2A3446] hover:bg-[#222F44] text-[#F8FAFC] text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors"
-                          >
-                            Undo
-                          </button>
-                        </div>
-                      )}
-                      </motion.div>
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                </motion.div>
+      {/* 3. The pod — who works on your brand, with a 3D speech bubble */}
+      <section ref={podRef} className="st-tone st-inverse relative overflow-hidden px-6 py-28 sm:px-8 lg:px-12 lg:py-36">
+        <div ref={podViewRef} className="pointer-events-none absolute right-[-12vw] top-[-2%] hidden h-[58%] w-[42vw] lg:block" />
+        <div className="relative mx-auto max-w-[1440px]">
+          <ScrollFlipText
+            as="h2"
+            text="Your pod"
+            className="block text-[clamp(4.5rem,14vw,13rem)] font-medium leading-[0.85] tracking-[-0.06em] text-[var(--tone-accent)]"
+          />
+          <div className="mt-14 grid items-start gap-12 lg:grid-cols-12">
+            <ul className="lg:col-span-4">
+              {POD.map((member, i) => (
+                <li key={member.role}>
+                  <button
+                    type="button"
+                    aria-pressed={activeRole === i}
+                    onClick={() => setActiveRole(i)}
+                    onMouseEnter={() => setActiveRole(i)}
+                    onFocus={() => setActiveRole(i)}
+                    className={`w-full cursor-pointer border-b-2 py-5 text-left text-3xl font-medium tracking-[-0.03em] transition-colors duration-300 sm:text-4xl ${
+                      activeRole === i ? "border-[var(--tone-accent)] text-site-ink" : "border-hi/10 text-site-mist hover:text-site-ink"
+                    }`}
+                  >
+                    {member.role}
+                  </button>
+                </li>
               ))}
-            </div>
-          </div>
-        </Reveal>
-      </section>
+            </ul>
 
-      {/* 5. Pricing Cards (Synchronized with Pricing Page) */}
-      <section className="bg-[#050810] py-12 sm:py-16">
-        <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12 max-w-2xl mx-auto">
-            <Reveal>
-              <div className="inline-flex items-center justify-center bg-[#121926] border border-[#222F44] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 rounded-full mb-4">
-                ⚡ PREDICTABLE AGENCY INFRASTRUCTURE
-              </div>
-            </Reveal>
-            <SplitText
-              as="h2"
-              text="Simple, transparent pricing that scales with your agency."
-              accent={["scales", "with", "your", "agency"]}
-              className="block text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-4"
-            />
-            <Reveal delay={0.15}>
-              <p className="text-sm sm:text-base text-[#97A0B3] leading-relaxed">
-                No hidden seat taxes or per-project gouging. Choose the operating tier that matches your studio cadence and reclaim your true profit margins.
-              </p>
-            </Reveal>
-          </div>
-
-          <LandingPricingCards />
-        </div>
-      </section>
-
-
-      {/* 5.5 FAQ Section */}
-      <section id="faq" className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16 scroll-mt-20">
-        <div className="text-center mb-12">
-          <SplitText
-            as="h2"
-            text="Common Questions"
-            accent={["Questions"]}
-            className="block text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-4"
-          />
-        </div>
-        <Stagger className="space-y-4" gap={0.09}>
-          {faqs.map((faq, idx) => {
-            const isOpen = openFaqIndex === idx;
-            const Icon = faq.icon;
-            return (
-              <StaggerItem
-                key={idx}
-                className={`backdrop-blur-md bg-[#161F2D]/70 border ${isOpen ? 'border-[#7FA0D6] shadow-sm' : 'border-[#2A3446]/60 hover:border-[#2A3446]'} rounded-2xl p-5 sm:p-6 transition-all`}
-              >
-                <button
-                  type="button"
-                  aria-expanded={isOpen}
-                  className="flex items-center justify-between w-full cursor-pointer text-left"
-                  onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                >
-                  <div className="flex items-center gap-4 pr-4">
-                    <div className="w-12 h-12 rounded-xl bg-[#0A0F18] border border-[#2A3446] flex items-center justify-center shrink-0 text-[#7FA0D6]">
-                      <Icon className="size-5" />
-                    </div>
-                    <span className="text-sm sm:text-base font-bold text-[#F8FAFC] leading-snug">
-                      {faq.question}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="hidden sm:inline-flex border border-[#2A3446] text-[#7FA0D6] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                      {faq.tag}
-                    </span>
-                    <motion.div
-                      animate={{ rotate: isOpen ? 180 : 0 }}
-                      transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
-                      className={`w-8 h-8 rounded-full border border-[#2A3446] flex items-center justify-center shrink-0 transition-colors ${isOpen ? 'bg-[#0A0F18] text-[#F8FAFC]' : 'text-[#97A0B3] hover:bg-[#0A0F18]'}`}
-                    >
-                      <ChevronDown className="size-4" />
-                    </motion.div>
-                  </div>
-                </button>
-
+            <div className="flex justify-center lg:col-span-4">
+              <div className="relative size-52 rotate-45 overflow-hidden rounded-[3rem] sm:size-64 sm:rounded-[3.5rem] lg:size-72">
                 <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.div
-                      key="answer"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.4, ease: EASE_OUT_EXPO }}
-                      className="overflow-hidden"
-                    >
-                      <div className="pl-0 sm:pl-16 pt-4">
-                        <p className="text-sm text-[#97A0B3] leading-relaxed">
-                          {faq.answer}
-                        </p>
-                        {faq.extra && faq.extra}
-                      </div>
-                    </motion.div>
-                  )}
+                  <motion.img
+                    key={role?.role}
+                    src={role?.image}
+                    alt=""
+                    initial={reduce ? false : { opacity: 0, scale: 1.15 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
+                    className="absolute inset-[-21%] size-[142%] max-w-none -rotate-45 object-cover"
+                  />
                 </AnimatePresence>
-              </StaggerItem>
-            );
-          })}
-        </Stagger>
-      </section>
-
-      {/* 6. "Try Us Before You Pay Us" Lead Capture Section */}
-      <section className="relative isolate overflow-hidden bg-[#0B111C] py-16 sm:py-24 border-y border-[#222F44] creo-grain">
-        <Reveal className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <SplitText
-            as="h2"
-            text="Try us before you pay us."
-            accent={["pay"]}
-            accentClassName="italic font-serif font-light text-[#BCCCE6]"
-            className="block text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-5"
-          />
-          <p className="text-sm sm:text-base text-[#97A0B3] leading-relaxed mb-10 max-w-xl mx-auto">
-            Drop your Instagram handle and email below. We'll send you a custom sample batch of reels and carousels for your brand, completely free. No credit card required.
-          </p>
-
-          {sampleSuccess ? (
-            <div className="p-4 sm:p-6 rounded-2xl bg-emerald-950/50 border border-emerald-800/80 text-center max-w-md mx-auto shadow-2xl">
-              <div className="size-12 rounded-full bg-emerald-500 text-[#0B111C] flex items-center justify-center mx-auto mb-3">
-                <Check className="size-6 stroke-[3]" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-1">Sample Batch Requested!</h3>
-              <p className="text-xs text-emerald-300 leading-relaxed">
-                We received your Instagram handle ({sampleHandle}) and email ({sampleEmail}). Our creative team will prepare your custom sample batch within 48 hours.
-              </p>
             </div>
-          ) : (
-            <form
-              onSubmit={handleRequestSample}
-              className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-3xl mx-auto backdrop-blur-md bg-[#161F2D]/50 p-3 rounded-2xl border border-[#2A3446]"
-            >
-              <div className="relative w-full sm:w-64">
-                <Instagram className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#97A0B3]" />
-                <input
-                  type="text"
-                  value={sampleHandle}
-                  onChange={(e) => setSampleHandle(e.target.value)}
-                  placeholder="@yourbrand"
-                  required
-                  className="bg-[#0A0F18] border border-[#2A3446] text-[#F8FAFC] rounded-xl pl-10 pr-4 py-3 text-sm focus:border-[#7FA0D6] focus:outline-none w-full transition-colors"
-                />
-              </div>
-              <div className="relative w-full sm:w-72">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#97A0B3]" />
-                <input
-                  type="email"
-                  value={sampleEmail}
-                  onChange={(e) => setSampleEmail(e.target.value)}
-                  placeholder="name@brand.com"
-                  required
-                  className="bg-[#0A0F18] border border-[#2A3446] text-[#F8FAFC] rounded-xl pl-10 pr-4 py-3 text-sm focus:border-[#7FA0D6] focus:outline-none w-full transition-colors"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={sampleSubmitting}
-                className="w-full sm:w-auto bg-[#BCCCE6] text-[#050810] hover:bg-white font-bold transition-all shadow-sm text-sm px-6 py-3 rounded-xl shrink-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                {sampleSubmitting ? <Loader2 className="size-4 animate-spin" /> : "Request Sample"}
-                <ArrowRight className="size-4" />
-              </button>
-            </form>
-          )}
 
-          {sampleError && (
-            <p className="text-xs text-rose-400 font-semibold mt-3">{sampleError}</p>
-          )}
-
-          <div className="text-xs font-semibold text-[#97A0B3] mt-6">
-            No commitment required. 48-hour sample turnaround for qualified D2C brands.
+            <div className="lg:col-span-4">
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-site-mist">About the role</p>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.p
+                  key={role?.role}
+                  initial={reduce ? false : { opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.35 }}
+                  className="mt-4 max-w-sm text-lg leading-relaxed text-site-ink"
+                >
+                  {role?.about}
+                </motion.p>
+              </AnimatePresence>
+            </div>
           </div>
-        </Reveal>
+        </div>
       </section>
 
-      </div>
+      {/* 4. Weekly drop — a mailbox raises its flag, the batch slides out */}
+      <section ref={dropRef} className="st-tone st-midnight relative overflow-hidden px-6 pt-28 pb-32 sm:px-8 lg:px-12 lg:pt-36">
+        <ScrollFlipText
+          as="h2"
+          text="Delivered every week"
+          className="relative z-10 block text-center text-[clamp(3rem,8vw,7.5rem)] font-medium leading-[0.95] tracking-[-0.05em] text-[var(--tone-accent)]"
+        />
+        <div className="relative mx-auto max-w-[1440px]">
+          <div ref={dropViewRef} className="pointer-events-none absolute -top-[4svh] left-1/2 h-[50svh] w-[min(1100px,120vw)] -translate-x-1/2 md:-top-[12svh] md:h-[82svh]" />
+          <div className="relative z-10 mx-auto grid max-w-5xl gap-14 pt-[48svh] md:grid-cols-2 md:gap-20 md:pt-[44svh]">
+            {DROPS.map((drop) => (
+              <Reveal key={drop.label}>
+                <p className="text-sm font-bold uppercase tracking-[0.18em] text-site-mist">{drop.label}</p>
+                <h3 className="mt-4 text-2xl font-medium leading-snug tracking-[-0.02em] text-site-ink sm:text-3xl">{drop.title}</h3>
+                <div className="mt-8">
+                  <PillLink to={drop.to}>{drop.cta}</PillLink>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Interactive approval portal */}
+      <section className="st-tone st-base px-6 py-20 sm:px-8 sm:py-28 lg:px-12">
+        <div className="mx-auto max-w-[1440px]">
+          <SectionHeading eyebrow="Interactive client portal" title="Review and approve in one click." accent={["one", "click."]}>
+            No cluttered email threads or lost Slack files. Everything arrives organized for rapid sign-off.
+          </SectionHeading>
+          <PortalDemo />
+        </div>
+      </section>
+
+      {/* 6. Plans — a megaphone beside what every plan includes */}
+      <section ref={plansRef} className="st-tone st-inverse relative overflow-hidden px-6 py-28 sm:px-8 lg:px-12 lg:py-36">
+        <div className="mx-auto max-w-[1440px]">
+          <ScrollFlipText
+            as="h2"
+            text="Plans that grow with you"
+            className={`block max-w-3xl text-[clamp(2.8rem,6.5vw,6rem)] leading-[0.95] ${DISPLAY}`}
+          />
+          <div className="mt-12 grid gap-12 lg:grid-cols-12 lg:items-start">
+            <div className="relative lg:col-span-7">
+              <div ref={plansViewRef} className="pointer-events-none relative h-[40svh] w-full lg:absolute lg:-left-[7vw] lg:-top-[6svh] lg:h-[60svh] lg:w-[58%]" />
+              <div className="lg:ml-[52%] lg:min-h-[50svh]">
+                <p className="text-sm font-bold uppercase tracking-[0.18em] text-site-mist">Every plan includes</p>
+                <ul className="mt-5 space-y-2.5">
+                  {INCLUDED.map((item) => (
+                    <li key={item} className="flex items-start gap-3 text-base text-site-ink">
+                      <Check className="mt-1 size-4 shrink-0 text-[var(--tone-accent)]" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div className="lg:col-span-5">
+              <ul className="border-t border-hi/15">
+                {PLAN_ROWS.map((plan) => (
+                  <li key={plan.name} className="border-b border-hi/15">
+                    <Link to="/pricing" className="group flex items-center justify-between gap-6 py-6">
+                      <span>
+                        <span className="block text-3xl font-medium tracking-[-0.03em] text-site-ink">{plan.name}</span>
+                        <span className="mt-1 block text-sm text-site-mist">{plan.turnaround}</span>
+                      </span>
+                      <ArrowUpRight className="size-6 text-site-ink transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-10">
+                <PillLink to="/pricing">Compare plans</PillLink>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 7. FAQ — plain ruled rows */}
+      <section className="st-tone st-base relative px-6 py-28 sm:px-8 sm:py-36 lg:px-12">
+        <div className="mx-auto grid max-w-[1440px] gap-12 lg:grid-cols-12">
+          <div className="lg:col-span-4">
+            <ScrollFlipText as="h2" text="Common questions." className={`block text-4xl leading-[0.95] sm:text-6xl ${DISPLAY}`} />
+            <Reveal delay={0.15}>
+              <p className="mt-6 max-w-sm text-lg leading-relaxed text-site-mist">
+                Everything you need to know about creative pods, turnaround SLAs, and deliverables.
+              </p>
+            </Reveal>
+          </div>
+
+          <div className="border-b border-hi/10 lg:col-span-8">
+            {faqs.map((faq, idx) => {
+              const isOpen = openFaqIndex === idx;
+              return (
+                <div key={faq.question} className="border-t border-hi/10">
+                  <h3>
+                    <button
+                      type="button"
+                      aria-expanded={isOpen}
+                      aria-controls={`faq-answer-${idx}`}
+                      onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                      className="group flex w-full cursor-pointer items-center justify-between gap-6 py-7 text-left"
+                    >
+                      <span className="text-xl font-medium leading-snug tracking-[-0.02em] text-site-ink transition-colors group-hover:text-site-blue-light sm:text-2xl">
+                        {faq.question}
+                      </span>
+                      <motion.span
+                        animate={{ rotate: isOpen ? 45 : 0 }}
+                        transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
+                        className={`flex size-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isOpen ? "border-[#d2965a] bg-[#d2965a] text-[var(--on-brand)]" : "border-hi/15 text-site-ink"}`}
+                      >
+                        <Plus className="size-5" />
+                      </motion.span>
+                    </button>
+                  </h3>
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        key="answer"
+                        id={`faq-answer-${idx}`}
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.45, ease: EASE_OUT_EXPO }}
+                        className="overflow-hidden"
+                      >
+                        <div className="max-w-2xl pb-8">
+                          <p className="text-base leading-relaxed text-site-mist sm:text-lg">{faq.answer}</p>
+                          {faq.extra}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <SampleCta />
     </>
   );
 }

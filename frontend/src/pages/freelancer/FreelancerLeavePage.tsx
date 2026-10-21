@@ -103,7 +103,7 @@ export function FreelancerLeavePage() {
   const totalPendingDays = pendingLeaves.reduce((acc, l) => acc + calcDays(l.start_date, l.end_date), 0);
 
   return (
-    <div className="min-h-screen bg-[#0B111C] text-slate-100 flex flex-col overflow-x-hidden">
+    <div className="min-h-screen bg-app-base text-slate-100 flex flex-col overflow-x-hidden">
       <AdminTopHeader activeTab="Time Off & Blackout" hideTitle />
 
       <main className="max-w-[1600px] w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 space-y-6 flex-1">
@@ -112,27 +112,27 @@ export function FreelancerLeavePage() {
           {/* Card 1: Upcoming Blackout Windows (aligns with Form - col-span-5) */}
           <motion.div
             whileHover={{ y: -2 }}
-            className="col-span-1 lg:col-span-5 bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/50 rounded-2xl p-3.5 sm:p-5 lg:p-6 transition-all shadow-xl flex flex-col justify-between"
+            className="col-span-1 lg:col-span-5 bg-app-surface border border-app-line hover:border-app-accent/50 rounded-2xl p-3.5 sm:p-5 lg:p-6 transition-all shadow-xl flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center justify-between mb-2 sm:mb-3">
-                <span className="text-[9px] sm:text-[10px] font-black text-[#97A0B3] uppercase tracking-wider leading-tight">
+                <span className="text-[9px] sm:text-[10px] font-black text-app-mist uppercase tracking-wider leading-tight">
                   UPCOMING BLACKOUT WINDOWS
                 </span>
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-app-accent/15 text-app-accent flex items-center justify-center shrink-0">
                   <Palmtree className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2">
-                <span className="text-lg sm:text-2xl lg:text-3xl font-black text-[#7FA0D6] tracking-tight">
+                <span className="text-lg sm:text-2xl lg:text-3xl font-black text-app-accent tracking-tight">
                   {activePeriods.length} Scheduled
                 </span>
-                <span className="text-[10px] sm:text-xs font-semibold text-[#97A0B3]">
+                <span className="text-[10px] sm:text-xs font-semibold text-app-mist">
                   ({totalApprovedDays} {totalApprovedDays === 1 ? "day" : "days"} total)
                 </span>
               </div>
             </div>
-            <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-[#2A3446] text-[10px] sm:text-xs font-bold text-[#7FA0D6] flex items-center gap-1.5 leading-snug">
+            <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-app-line text-[10px] sm:text-xs font-bold text-app-accent flex items-center gap-1.5 leading-snug">
               <CalendarCheck2 className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate sm:whitespace-normal">Out-of-office locked with Team Lead</span>
             </div>
@@ -141,11 +141,11 @@ export function FreelancerLeavePage() {
           {/* Card 2: Pending Coordination (aligns with History - col-span-7) */}
           <motion.div
             whileHover={{ y: -2 }}
-            className="col-span-1 lg:col-span-7 bg-[#161F2D] border border-[#2A3446] hover:border-amber-500/50 rounded-2xl p-3.5 sm:p-5 lg:p-6 transition-all shadow-xl flex flex-col justify-between"
+            className="col-span-1 lg:col-span-7 bg-app-surface border border-app-line hover:border-amber-500/50 rounded-2xl p-3.5 sm:p-5 lg:p-6 transition-all shadow-xl flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center justify-between mb-2 sm:mb-3">
-                <span className="text-[9px] sm:text-[10px] font-black text-[#97A0B3] uppercase tracking-wider leading-tight">
+                <span className="text-[9px] sm:text-[10px] font-black text-app-mist uppercase tracking-wider leading-tight">
                   PENDING COORDINATION
                 </span>
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
@@ -156,12 +156,12 @@ export function FreelancerLeavePage() {
                 <span className="text-lg sm:text-2xl lg:text-3xl font-black text-amber-400 tracking-tight">
                   {pendingLeaves.length} Under Review
                 </span>
-                <span className="text-[10px] sm:text-xs font-semibold text-[#97A0B3]">
+                <span className="text-[10px] sm:text-xs font-semibold text-app-mist">
                   ({totalPendingDays} {totalPendingDays === 1 ? "day" : "days"} requested)
                 </span>
               </div>
             </div>
-            <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-[#2A3446] text-[10px] sm:text-xs font-bold text-amber-400 flex items-center gap-1.5 leading-snug">
+            <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-app-line text-[10px] sm:text-xs font-bold text-amber-400 flex items-center gap-1.5 leading-snug">
               <AlertCircle className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate sm:whitespace-normal">Awaiting Team Lead & Admin coordination sign-off</span>
             </div>
@@ -206,16 +206,16 @@ export function FreelancerLeavePage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="lg:col-span-5 bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-4 sm:p-6 shadow-[0_0_20px_rgba(127,160,214,0.22)] hover:shadow-[0_0_30px_rgba(127,160,214,0.35)] transition-all flex flex-col justify-between"
+            className="lg:col-span-5 bg-app-surface border-2 border-app-accent rounded-2xl p-4 sm:p-6 shadow-[0_0_20px_rgba(127,160,214,0.22)] hover:shadow-[0_0_30px_rgba(127,160,214,0.35)] transition-all flex flex-col justify-between"
           >
             <div>
-              <div className="flex items-center gap-2.5 pb-4 border-b border-[#2A3446]">
-                <Palmtree className="w-5 h-5 text-[#7FA0D6]" />
+              <div className="flex items-center gap-2.5 pb-4 border-b border-app-line">
+                <Palmtree className="w-5 h-5 text-app-accent" />
                 <div>
-                  <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+                  <h2 className="text-sm font-bold text-hi uppercase tracking-wider">
                     Schedule Blackout Period
                   </h2>
-                  <p className="text-[11px] text-[#97A0B3]">Inform team leads of unavailable dates</p>
+                  <p className="text-[11px] text-app-mist">Inform team leads of unavailable dates</p>
                 </div>
               </div>
 
@@ -229,7 +229,7 @@ export function FreelancerLeavePage() {
               >
                 {/* Category */}
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1.5">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-app-mist mb-1.5">
                     Blackout Reason
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -245,8 +245,8 @@ export function FreelancerLeavePage() {
                         onClick={() => setCategory(cat)}
                         className={`px-2.5 sm:px-3 py-2 rounded-xl text-[11px] sm:text-xs font-semibold text-center transition-all cursor-pointer border ${
                           category === cat
-                            ? "bg-[#7FA0D6] text-[#0B111C] border-[#7FA0D6] font-bold shadow-md shadow-[#7FA0D6]/20"
-                            : "bg-[#0B111C] border-[#2A3446] text-[#97A0B3] hover:text-white hover:border-[#7FA0D6]/50"
+                            ? "bg-app-accent text-app-base border-app-accent font-bold shadow-md shadow-app-accent/20"
+                            : "bg-app-base border-app-line text-app-mist hover:text-hi hover:border-app-accent/50"
                         }`}
                       >
                         {cat}
@@ -258,7 +258,7 @@ export function FreelancerLeavePage() {
                 {/* Date Selection */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-app-mist mb-1">
                       Start Date
                     </label>
                     <input
@@ -267,11 +267,11 @@ export function FreelancerLeavePage() {
                       min={today}
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full bg-[#0B111C] border border-[#2A3446] focus:border-[#7FA0D6] rounded-xl px-3 py-2 text-xs text-white [color-scheme:dark] outline-none transition-colors"
+                      className="w-full bg-app-base border border-app-line focus:border-app-accent rounded-xl px-3 py-2 text-xs text-hi [color-scheme:dark] outline-none transition-colors"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-app-mist mb-1">
                       End Date
                     </label>
                     <input
@@ -280,16 +280,16 @@ export function FreelancerLeavePage() {
                       min={startDate || today}
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full bg-[#0B111C] border border-[#2A3446] focus:border-[#7FA0D6] rounded-xl px-3 py-2 text-xs text-white [color-scheme:dark] outline-none transition-colors"
+                      className="w-full bg-app-base border border-app-line focus:border-app-accent rounded-xl px-3 py-2 text-xs text-hi [color-scheme:dark] outline-none transition-colors"
                     />
                   </div>
                 </div>
 
                 {/* Duration */}
                 {startDate && endDate && (
-                  <div className="bg-[#0B111C] border border-[#7FA0D6]/40 rounded-xl px-3.5 py-2 flex items-center justify-between text-xs">
-                    <span className="text-[#97A0B3]">Unavailable Duration:</span>
-                    <span className="text-[#7FA0D6] font-bold font-mono">
+                  <div className="bg-app-base border border-app-accent/40 rounded-xl px-3.5 py-2 flex items-center justify-between text-xs">
+                    <span className="text-app-mist">Unavailable Duration:</span>
+                    <span className="text-app-accent font-bold font-mono">
                       {calcDays(startDate, endDate)} Day(s)
                     </span>
                   </div>
@@ -297,7 +297,7 @@ export function FreelancerLeavePage() {
 
                 {/* Notes for Project Leads */}
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-app-mist mb-1">
                     Notes for Project Leads
                   </label>
                   <textarea
@@ -307,7 +307,7 @@ export function FreelancerLeavePage() {
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     placeholder="E.g., will deliver all active drafts before departure; emergency contact if necessary..."
-                    className="w-full bg-[#0B111C] border border-[#2A3446] focus:border-[#7FA0D6] rounded-xl p-3 text-xs text-white placeholder:text-[#97A0B3]/50 outline-none transition-colors"
+                    className="w-full bg-app-base border border-app-line focus:border-app-accent rounded-xl p-3 text-xs text-hi placeholder:text-[#97A0B3]/50 outline-none transition-colors"
                   />
                 </div>
 
@@ -315,7 +315,7 @@ export function FreelancerLeavePage() {
                   type="submit"
                   {...btnTap}
                   disabled={submitMutation.isPending || !startDate || !endDate || !reason.trim()}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-[#7FA0D6] to-white text-[#0B111C] text-xs font-black shadow-lg shadow-[#7FA0D6]/20 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-app-accent to-hi text-app-base text-xs font-black shadow-lg shadow-app-accent/20 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>{submitMutation.isPending ? "Submitting..." : "Confirm Blackout Dates"}</span>
@@ -328,29 +328,29 @@ export function FreelancerLeavePage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="lg:col-span-7 bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-4 sm:p-6 shadow-[0_0_20px_rgba(127,160,214,0.22)] hover:shadow-[0_0_30px_rgba(127,160,214,0.35)] transition-all flex flex-col"
+            className="lg:col-span-7 bg-app-surface border-2 border-app-accent rounded-2xl p-4 sm:p-6 shadow-[0_0_20px_rgba(127,160,214,0.22)] hover:shadow-[0_0_30px_rgba(127,160,214,0.35)] transition-all flex flex-col"
           >
-            <div className="flex items-center justify-between pb-4 border-b border-[#2A3446]">
+            <div className="flex items-center justify-between pb-4 border-b border-app-line">
               <div className="flex items-center gap-2.5">
-                <Clock className="w-5 h-5 text-[#7FA0D6]" />
+                <Clock className="w-5 h-5 text-app-accent" />
                 <div>
-                  <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+                  <h2 className="text-sm font-bold text-hi uppercase tracking-wider">
                     Scheduled Blackout Windows
                   </h2>
-                  <p className="text-[11px] text-[#97A0B3]">{myLeaves.length} Total record(s)</p>
+                  <p className="text-[11px] text-app-mist">{myLeaves.length} Total record(s)</p>
                 </div>
               </div>
             </div>
 
             <div className="pt-4 flex-1 space-y-3 overflow-y-auto max-h-[580px] pr-1">
               {leavesQuery.isPending && (
-                <div className="py-12 text-center text-xs text-[#97A0B3]">Loading schedule...</div>
+                <div className="py-12 text-center text-xs text-app-mist">Loading schedule...</div>
               )}
 
               {!leavesQuery.isPending && myLeaves.length === 0 && (
-                <div className="py-16 text-center border border-dashed border-[#2A3446] rounded-2xl space-y-2">
+                <div className="py-16 text-center border border-dashed border-app-line rounded-2xl space-y-2">
                   <CalendarCheck2 className="w-8 h-8 text-[#97A0B3]/40 mx-auto" />
-                  <p className="text-xs font-bold text-[#97A0B3]">No blackout dates scheduled.</p>
+                  <p className="text-xs font-bold text-app-mist">No blackout dates scheduled.</p>
                   <p className="text-[11px] text-[#97A0B3]/60">You are currently marked as available for projects.</p>
                 </div>
               )}
@@ -364,15 +364,15 @@ export function FreelancerLeavePage() {
                   <motion.div
                     key={leave.id}
                     whileHover={{ scale: 1.01 }}
-                    className="bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/60 rounded-xl p-3.5 sm:p-4 space-y-3 transition-all"
+                    className="bg-app-base border border-app-line hover:border-app-accent/60 rounded-xl p-3.5 sm:p-4 space-y-3 transition-all"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                       <div className="flex items-center flex-wrap gap-2">
-                        <CalendarIcon className="w-4 h-4 text-[#7FA0D6] shrink-0" />
-                        <span className="text-xs font-bold text-white whitespace-nowrap">
-                          {leave.start_date} <ArrowRight className="w-3 h-3 inline mx-0.5 text-[#97A0B3]" /> {leave.end_date}
+                        <CalendarIcon className="w-4 h-4 text-app-accent shrink-0" />
+                        <span className="text-xs font-bold text-hi whitespace-nowrap">
+                          {leave.start_date} <ArrowRight className="w-3 h-3 inline mx-0.5 text-app-mist" /> {leave.end_date}
                         </span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/10 text-[#7FA0D6] border border-[#7FA0D6]/20 shrink-0 whitespace-nowrap">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-app-accent/10 text-app-accent border border-app-accent/20 shrink-0 whitespace-nowrap">
                           {days} Day{days > 1 ? "s" : ""}
                         </span>
                       </div>
@@ -392,11 +392,11 @@ export function FreelancerLeavePage() {
                       </div>
                     </div>
 
-                    <p className="text-xs text-[#97A0B3] leading-relaxed break-words">{leave.reason}</p>
+                    <p className="text-xs text-app-mist leading-relaxed break-words">{leave.reason}</p>
 
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#2A3446]/60 text-[11px]">
-                      <span className="text-[#97A0B3]/80">
-                        Reviewer: <span className="text-white font-medium">{leave.team_lead_name || "Creative Pod Lead"}</span>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-app-line/60 text-[11px]">
+                      <span className="text-app-mist/80">
+                        Reviewer: <span className="text-hi font-medium">{leave.team_lead_name || "Creative Pod Lead"}</span>
                       </span>
 
                       {leave.can_cancel && (

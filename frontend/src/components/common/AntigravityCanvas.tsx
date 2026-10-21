@@ -342,7 +342,7 @@ export function AntigravityBackground({ theme = "admin" }: AntigravityBackground
 /* ── Portal Wrapper ── */
 export function PortalWrapper({ children }: { children: React.ReactNode }) {
   return (
-    <div className="portal-dark relative min-h-screen w-full bg-[#0B111C] text-[#F1F5F9] overflow-x-hidden">
+    <div className="portal-dark relative min-h-screen w-full bg-app-base text-app-ink-2 overflow-x-hidden">
       <div className="relative z-10 w-full min-h-screen flex flex-col">
         {children}
       </div>

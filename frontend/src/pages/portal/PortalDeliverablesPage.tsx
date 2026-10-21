@@ -68,10 +68,10 @@ function isTall(item: DeliverableItem): boolean {
 function StatusBadge({ item }: { item: DeliverableItem }) {
   const tone =
     item.status === "pending_approval"
-      ? "bg-[#D8BF9B]/15 text-[#D8BF9B]"
+      ? "bg-app-warm/15 text-app-warm"
       : item.status === "revision_requested"
         ? "bg-amber-500/20 text-amber-300 border border-amber-500/35 font-bold"
-        : "bg-[#7FA0D6]/15 text-[#BCCCE6]";
+        : "bg-app-accent/15 text-app-accent-soft";
   const label =
     item.status === "pending_approval"
       ? "Needs you"
@@ -111,7 +111,7 @@ function useStableSrc(id: string, url: string | null) {
 function Thumbnail({ item }: { item: DeliverableItem }) {
   const { src, failed, onError } = useStableSrc(item.id, item.file_url);
   if (!src || failed) {
-    return item.is_video ? <Film className="w-5 h-5 text-[#97A0B3]" /> : <ImageIcon className="w-5 h-5 text-[#97A0B3]" />;
+    return item.is_video ? <Film className="w-5 h-5 text-app-mist" /> : <ImageIcon className="w-5 h-5 text-app-mist" />;
   }
   if (item.is_video) {
     return <video src={`${src}#t=0.5`} muted playsInline preload="metadata" onError={onError} className="w-full h-full object-cover" />;
@@ -131,17 +131,17 @@ function MediaPreview({ item, onRefresh }: { item: DeliverableItem; onRefresh: (
     : "aspect-[4/5] max-w-[380px] max-h-[38vh] md:max-h-none";
 
   return (
-    <div className={`relative w-full ${frame} bg-black rounded-[28px] overflow-hidden shadow-2xl border-4 border-[#161F2D] flex items-center justify-center`}>
+    <div className={`relative w-full ${frame} bg-black rounded-[28px] overflow-hidden shadow-2xl border-4 border-app-surface flex items-center justify-center`}>
       {!ready && src && !failed && (
-        <div className="absolute inset-0 animate-pulse bg-white/[0.04]" aria-hidden="true" />
+        <div className="absolute inset-0 animate-pulse bg-hi/[0.04]" aria-hidden="true" />
       )}
       {!src || failed ? (
         <div className="text-center p-6 space-y-3">
-          <p className="text-white text-sm font-semibold">Preview unavailable</p>
-          <p className="text-xs text-[#97A0B3]">The secure preview link may have expired.</p>
+          <p className="text-hi text-sm font-semibold">Preview unavailable</p>
+          <p className="text-xs text-app-mist">The secure preview link may have expired.</p>
           <button
             onClick={onRefresh}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#2A3446] text-xs font-bold text-white hover:bg-white/[0.04]"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-app-line text-xs font-bold text-hi hover:bg-hi/[0.04]"
           >
             <RefreshCw className="w-3.5 h-3.5" /> Reload preview
           </button>
@@ -182,7 +182,7 @@ function errorMessage(error: unknown, fallback: string): string {
 }
 
 function DeliverablesLoading() {
-  return <section role="status" aria-live="polite" className="space-y-5 animate-page-in"><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{[0, 1, 2].map(i => <div key={i} className="rounded-2xl p-5 bg-[#161F2D] border border-[#2A3446] space-y-4 motion-safe:animate-pulse"><div className="aspect-video rounded-xl bg-[#2A3446]" /><div className="h-4 w-2/3 rounded bg-[#2A3446]" /><div className="h-3 w-1/2 rounded bg-[#2A3446]" /></div>)}</div></section>;
+  return <section role="status" aria-live="polite" className="space-y-5 animate-page-in"><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{[0, 1, 2].map(i => <div key={i} className="rounded-2xl p-5 bg-app-surface border border-app-line space-y-4 motion-safe:animate-pulse"><div className="aspect-video rounded-xl bg-app-line" /><div className="h-4 w-2/3 rounded bg-app-line" /><div className="h-3 w-1/2 rounded bg-app-line" /></div>)}</div></section>;
 }
 
 export function PortalDeliverablesPage() {
@@ -422,7 +422,7 @@ export function PortalDeliverablesPage() {
 
   if (listQuery.isError) {
     return (
-      <div role="alert" className="p-6 text-white">
+      <div role="alert" className="p-6 text-hi">
         {listQuery.error.message || "Could not load deliverables."}{" "}
         <button className="underline" onClick={() => listQuery.refetch()}>Retry</button>
       </div>
@@ -454,11 +454,11 @@ export function PortalDeliverablesPage() {
           <button
             onClick={handleApproveAll}
             disabled={!!bulkProgress}
-            className="text-xs sm:text-[13px] text-[#97A0B3] hover:text-white transition-colors text-left sm:text-right disabled:opacity-60"
+            className="text-xs sm:text-[13px] text-app-mist hover:text-hi transition-colors text-left sm:text-right disabled:opacity-60"
           >
             {bulkProgress ?? (
               <>
-                Approve everything in one tap: <span className="font-bold text-white hover:underline">Approve all {pendingItems.length}</span>
+                Approve everything in one tap: <span className="font-bold text-hi hover:underline">Approve all {pendingItems.length}</span>
               </>
             )}
           </button>
@@ -467,7 +467,7 @@ export function PortalDeliverablesPage() {
 
       {deliverables.length === 0 ? (
         <div className="flex-1 flex items-center justify-center py-16 text-center">
-          <p className="text-sm text-[#97A0B3]">No assets to show</p>
+          <p className="text-sm text-app-mist">No assets to show</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2.5 sm:gap-3 flex-1 min-h-0 pb-2">
@@ -475,29 +475,29 @@ export function PortalDeliverablesPage() {
           <div className="flex md:hidden items-center gap-2 shrink-0">
             {/* Status Dropdown */}
             <div className="relative flex-1 min-w-0">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[#7FA0D6]">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-app-accent">
                 <FilterIcon className="size-3" />
               </div>
               <select
                 aria-label="Filter deliverables by status"
                 value={filter}
                 onChange={(e) => handleFilterChange(e.target.value as Filter)}
-                className="w-full appearance-none bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6] rounded-xl pl-7 pr-7 py-2 text-xs font-bold text-white focus:outline-none focus:ring-1 focus:ring-[#7FA0D6] transition-colors cursor-pointer truncate"
+                className="w-full appearance-none bg-app-surface border border-app-line hover:border-app-accent rounded-xl pl-7 pr-7 py-2 text-xs font-bold text-hi focus:outline-none focus:ring-1 focus:ring-app-accent transition-colors cursor-pointer truncate"
               >
-                <option value="needs_you" className="bg-[#161F2D] text-white">
+                <option value="needs_you" className="bg-app-surface text-hi">
                   Needs you ({deliverables.filter((d) => d.status === "pending_approval").length})
                 </option>
-                <option value="revision" className="bg-[#161F2D] text-white">
+                <option value="revision" className="bg-app-surface text-hi">
                   In revision ({deliverables.filter((d) => d.status === "revision_requested").length})
                 </option>
-                <option value="approved" className="bg-[#161F2D] text-white">
+                <option value="approved" className="bg-app-surface text-hi">
                   Approved ({deliverables.filter((d) => APPROVED_STATUSES.has(d.status)).length})
                 </option>
-                <option value="all" className="bg-[#161F2D] text-white">
+                <option value="all" className="bg-app-surface text-hi">
                   All ({deliverables.length})
                 </option>
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-[#7FA0D6]">
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-app-accent">
                 <ChevronDown className="size-3.5" />
               </div>
             </div>
@@ -508,24 +508,24 @@ export function PortalDeliverablesPage() {
                 aria-label="Filter deliverables by format"
                 value={formatFilter}
                 onChange={(e) => handleFormatChange(e.target.value as FormatFilter)}
-                className="w-full appearance-none bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6] rounded-xl px-3 pr-7 py-2 text-xs font-bold text-white focus:outline-none focus:ring-1 focus:ring-[#7FA0D6] transition-colors cursor-pointer truncate"
+                className="w-full appearance-none bg-app-surface border border-app-line hover:border-app-accent rounded-xl px-3 pr-7 py-2 text-xs font-bold text-hi focus:outline-none focus:ring-1 focus:ring-app-accent transition-colors cursor-pointer truncate"
               >
-                <option value="all" className="bg-[#161F2D] text-white">All Formats</option>
-                <option value="reel" className="bg-[#161F2D] text-white">Reels</option>
-                <option value="post" className="bg-[#161F2D] text-white">Posts</option>
-                <option value="story" className="bg-[#161F2D] text-white">Stories</option>
-                <option value="carousel" className="bg-[#161F2D] text-white">Carousels</option>
+                <option value="all" className="bg-app-surface text-hi">All Formats</option>
+                <option value="reel" className="bg-app-surface text-hi">Reels</option>
+                <option value="post" className="bg-app-surface text-hi">Posts</option>
+                <option value="story" className="bg-app-surface text-hi">Stories</option>
+                <option value="carousel" className="bg-app-surface text-hi">Carousels</option>
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-[#7FA0D6]">
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-app-accent">
                 <ChevronDown className="size-3.5" />
               </div>
             </div>
           </div>
 
           {/* Desktop Top Filter Bar (md: and up - unified single packed toolbar) */}
-          <div className="hidden md:flex items-center justify-between gap-3 p-1.5 bg-[#161F2D] border border-[#2A3446] rounded-xl shrink-0">
+          <div className="hidden md:flex items-center justify-between gap-3 p-1.5 bg-app-surface border border-app-line rounded-xl shrink-0">
             {/* Status Tabs (Left) */}
-            <div className="flex items-center gap-1 bg-[#0B111C]/60 p-1 rounded-lg border border-[#2A3446]" role="tablist" aria-label="Status filter">
+            <div className="flex items-center gap-1 bg-app-base/60 p-1 rounded-lg border border-app-line" role="tablist" aria-label="Status filter">
               {[
                 { key: "needs_you" as Filter, label: "Needs you", count: deliverables.filter((d) => d.status === "pending_approval").length },
                 { key: "revision" as Filter, label: "In revision", count: deliverables.filter((d) => d.status === "revision_requested").length },
@@ -542,12 +542,12 @@ export function PortalDeliverablesPage() {
                     onClick={() => handleFilterChange(tab.key)}
                     className={`py-1.5 px-3 rounded-md text-xs font-bold transition-all truncate flex items-center justify-center gap-1.5 cursor-pointer ${
                       isActive
-                        ? "bg-[#BCCCE6] text-[#0B111C] shadow-xs font-black"
-                        : "text-[#97A0B3] hover:text-white hover:bg-white/[0.04]"
+                        ? "bg-app-accent-soft text-app-base shadow-xs font-black"
+                        : "text-app-mist hover:text-hi hover:bg-hi/[0.04]"
                     }`}
                   >
                     <span>{tab.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none ${isActive ? "bg-[#0B111C]/20 text-[#0B111C]" : tab.key === "needs_you" && tab.count > 0 ? "bg-amber-500/20 text-amber-300" : "bg-[#0B111C] text-[#97A0B3]"}`}>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none ${isActive ? "bg-app-base/20 text-app-base" : tab.key === "needs_you" && tab.count > 0 ? "bg-amber-500/20 text-amber-300" : "bg-app-base text-app-mist"}`}>
                       {tab.count}
                     </span>
                   </button>
@@ -556,8 +556,8 @@ export function PortalDeliverablesPage() {
             </div>
 
             {/* Format Filter Segmented Bar (Right) */}
-            <div className="flex items-center gap-1 bg-[#0B111C]/60 p-1 rounded-lg border border-[#2A3446]">
-              <span className="text-[10px] font-bold text-[#97A0B3] px-1.5 uppercase tracking-wider">Format</span>
+            <div className="flex items-center gap-1 bg-app-base/60 p-1 rounded-lg border border-app-line">
+              <span className="text-[10px] font-bold text-app-mist px-1.5 uppercase tracking-wider">Format</span>
               {[
                 { key: "all" as FormatFilter, label: "All" },
                 { key: "reel" as FormatFilter, label: "Reels" },
@@ -573,8 +573,8 @@ export function PortalDeliverablesPage() {
                     onClick={() => handleFormatChange(fmt.key)}
                     className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all shrink-0 cursor-pointer ${
                       isFmtActive
-                        ? "bg-[#7FA0D6] text-[#0B111C] shadow-xs font-black"
-                        : "text-[#97A0B3] hover:text-white hover:bg-white/[0.04]"
+                        ? "bg-app-accent text-app-base shadow-xs font-black"
+                        : "text-app-mist hover:text-hi hover:bg-hi/[0.04]"
                     }`}
                   >
                     {fmt.label}
@@ -586,7 +586,7 @@ export function PortalDeliverablesPage() {
 
           {visible.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center py-16 text-center">
-              <p className="text-sm text-[#97A0B3]">No assets to show</p>
+              <p className="text-sm text-app-mist">No assets to show</p>
               {(filter !== "all" || formatFilter !== "all") && (
                 <button
                   type="button"
@@ -594,7 +594,7 @@ export function PortalDeliverablesPage() {
                     handleFilterChange("all");
                     setFormatFilter("all");
                   }}
-                  className="mt-2 text-xs font-bold text-[#7FA0D6] hover:underline cursor-pointer"
+                  className="mt-2 text-xs font-bold text-app-accent hover:underline cursor-pointer"
                 >
                   Clear filters
                 </button>
@@ -604,14 +604,14 @@ export function PortalDeliverablesPage() {
             <>
               {/* Mobile Master-Detail Switcher Bar (< lg) */}
               <div className="flex lg:hidden flex-col gap-2 shrink-0">
-            <div className="flex items-center gap-1.5 p-1 bg-[#161F2D] border border-[#2A3446] rounded-xl">
+            <div className="flex items-center gap-1.5 p-1 bg-app-surface border border-app-line rounded-xl">
               <button
                 type="button"
                 onClick={() => setMobileTab("list")}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   mobileTab === "list"
-                    ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm font-black"
-                    : "text-[#97A0B3] hover:text-white"
+                    ? "bg-app-accent-soft text-app-base shadow-sm font-black"
+                    : "text-app-mist hover:text-hi"
                 }`}
               >
                 <LayoutList className="size-3.5" />
@@ -622,8 +622,8 @@ export function PortalDeliverablesPage() {
                 onClick={() => setMobileTab("review")}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   mobileTab === "review"
-                    ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm font-black"
-                    : "text-[#97A0B3] hover:text-white"
+                    ? "bg-app-accent-soft text-app-base shadow-sm font-black"
+                    : "text-app-mist hover:text-hi"
                 }`}
               >
                 <PlayCircle className="size-3.5" />
@@ -633,7 +633,7 @@ export function PortalDeliverablesPage() {
 
             {/* When in mobile review mode, show compact horizontal thumbnail strip so user can flick between deliverables */}
             {mobileTab === "review" && (
-              <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide py-1.5 px-2 bg-[#0B111C]/60 rounded-xl border border-[#2A3446]">
+              <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide py-1.5 px-2 bg-app-base/60 rounded-xl border border-app-line">
                 {visible.map((d) => {
                   const isSel = selectedItem?.id === d.id;
                   return (
@@ -643,15 +643,15 @@ export function PortalDeliverablesPage() {
                       onClick={() => select(d.id)}
                       className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-xs shrink-0 cursor-pointer transition-all ${
                         isSel
-                          ? "bg-[#7FA0D6]/20 border-[#7FA0D6] text-white font-bold shadow-xs"
-                          : "bg-[#161F2D] border-[#2A3446] text-[#97A0B3] hover:text-white"
+                          ? "bg-app-accent/20 border-app-accent text-hi font-bold shadow-xs"
+                          : "bg-app-surface border-app-line text-app-mist hover:text-hi"
                       }`}
                     >
                       <span className="size-5 rounded bg-black overflow-hidden shrink-0 flex items-center justify-center">
                         <Thumbnail item={d} />
                       </span>
                       <span className="max-w-[110px] truncate">{d.title}</span>
-                      <span className="text-[10px] text-[#7FA0D6]">v{d.version}</span>
+                      <span className="text-[10px] text-app-accent">v{d.version}</span>
                     </button>
                   );
                 })}
@@ -661,43 +661,43 @@ export function PortalDeliverablesPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-4 flex-1 min-h-0">
             {/* Left Column: Batch List */}
-            <div className={`${mobileTab === "list" ? "flex" : "hidden lg:flex"} col-span-1 lg:col-span-3 bg-[#161F2D] rounded-2xl border border-[#2A3446] p-3 sm:p-4 flex flex-col overflow-hidden max-h-[520px] lg:max-h-none`}>
+            <div className={`${mobileTab === "list" ? "flex" : "hidden lg:flex"} col-span-1 lg:col-span-3 bg-app-surface rounded-2xl border border-app-line p-3 sm:p-4 flex flex-col overflow-hidden max-h-[520px] lg:max-h-none`}>
               {/* Column Header */}
-              <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-[#2A3446]">
-                <span className="text-xs font-bold text-white uppercase tracking-wider">
+              <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-app-line">
+                <span className="text-xs font-bold text-hi uppercase tracking-wider">
                   {filter === "needs_you" ? "Needs Review" : filter === "revision" ? "In Revision" : filter === "approved" ? "Approved Assets" : "Deliverables"}
                 </span>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6]">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-app-base border border-app-line text-app-accent">
                   {visible.length} {visible.length === 1 ? "item" : "items"}
                 </span>
               </div>
               <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-hide">
                 {filter === "deleted" ? (
                   deletedRecords.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-[#97A0B3]">
+                    <div className="p-4 text-center text-sm text-app-mist">
                       No retracted or archived deliverables on record.
                     </div>
                   ) : (
                     deletedRecords.map((del) => (
                       <div
                         key={del.id}
-                        className="w-full p-3 rounded-2xl border border-rose-500/20 bg-[#0B111C]/40 text-left space-y-2"
+                        className="w-full p-3 rounded-2xl border border-rose-500/20 bg-app-base/40 text-left space-y-2"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-white capitalize">{del.deliverable_type || "Asset"} · v{del.version}</span>
+                          <span className="text-xs font-bold text-hi capitalize">{del.deliverable_type || "Asset"} · v{del.version}</span>
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
                             Archived
                           </span>
                         </div>
-                        <div className="bg-[#161F2D] p-2.5 rounded-xl border border-[#2A3446]">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-0.5">
+                        <div className="bg-app-surface p-2.5 rounded-xl border border-app-line">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-app-mist mb-0.5">
                             Reason for Deletion / Withdrawal:
                           </p>
                           <p className="text-xs text-rose-200 leading-snug">
                             "{del.deletion_reason}"
                           </p>
                         </div>
-                        <div className="flex items-center justify-between text-[11px] text-[#97A0B3] pt-0.5">
+                        <div className="flex items-center justify-between text-[11px] text-app-mist pt-0.5">
                           <span>Retracted by Team Lead</span>
                           <span className="font-mono">{new Date(del.deleted_at).toLocaleDateString()}</span>
                         </div>
@@ -705,9 +705,9 @@ export function PortalDeliverablesPage() {
                     ))
                   )
                 ) : visible.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-[#97A0B3]">
+                  <div className="p-4 text-center text-sm text-app-mist">
                     No {FILTERS.find((f) => f.key === filter)?.label.toLowerCase()} deliverables match your filter.{" "}
-                    <button className="underline text-white cursor-pointer" onClick={() => handleFilterChange("all")}>Clear filter</button>
+                    <button className="underline text-hi cursor-pointer" onClick={() => handleFilterChange("all")}>Clear filter</button>
                   </div>
                 ) : (
                   visible.map((d) => {
@@ -718,16 +718,16 @@ export function PortalDeliverablesPage() {
                         onClick={() => select(d.id)}
                         className={`w-full flex items-center gap-3.5 p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                           isSelected
-                            ? "bg-[#0B111C] border-[#7FA0D6]/60 shadow-lg ring-1 ring-[#7FA0D6]/30"
-                            : "border-[#2A3446]/40 bg-transparent hover:border-[#2A3446] hover:bg-white/[0.02]"
+                            ? "bg-app-base border-app-accent/60 shadow-lg ring-1 ring-app-accent/30"
+                            : "border-[#2A3446]/40 bg-transparent hover:border-app-line hover:bg-hi/[0.02]"
                         }`}
                       >
-                        <div className="w-14 h-14 rounded-xl bg-black overflow-hidden shrink-0 border border-[#2A3446] flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-xl bg-black overflow-hidden shrink-0 border border-app-line flex items-center justify-center">
                           <Thumbnail item={d} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-[13px] font-bold truncate text-white">{d.title}</h4>
-                          <p className="text-xs text-[#97A0B3] truncate mb-2">{d.type_label} · v{d.version}</p>
+                          <h4 className="text-[13px] font-bold truncate text-hi">{d.title}</h4>
+                          <p className="text-xs text-app-mist truncate mb-2">{d.type_label} · v{d.version}</p>
                           <StatusBadge item={d} />
                         </div>
                       </button>
@@ -738,9 +738,9 @@ export function PortalDeliverablesPage() {
             </div>
 
             {/* Middle Column: Player */}
-            <div className={`${mobileTab === "review" ? "flex" : "hidden lg:flex"} col-span-1 lg:col-span-5 bg-[#161F2D] rounded-2xl border border-[#2A3446] flex flex-col relative overflow-hidden min-h-0 sm:min-h-[500px]`}>
+            <div className={`${mobileTab === "review" ? "flex" : "hidden lg:flex"} col-span-1 lg:col-span-5 bg-app-surface rounded-2xl border border-app-line flex flex-col relative overflow-hidden min-h-0 sm:min-h-[500px]`}>
               {versions.length > 1 && selectedItem && (
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex p-1 bg-[#0B111C]/80 backdrop-blur-md rounded-full border border-[#2A3446]">
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex p-1 bg-app-base/80 backdrop-blur-md rounded-full border border-app-line">
                   {[...versions].reverse().map((v) => {
                     const active = shownItem?.id === v.id;
                     return (
@@ -748,7 +748,7 @@ export function PortalDeliverablesPage() {
                         key={v.id}
                         onClick={() => setViewVersionId(v.id === selectedItem.id ? null : v.id)}
                         className={`px-3 sm:px-4 py-1 rounded-full text-[12px] sm:text-[13px] font-bold transition-all cursor-pointer ${
-                          active ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm font-black" : "text-[#97A0B3] hover:text-white"
+                          active ? "bg-app-accent-soft text-app-base shadow-sm font-black" : "text-app-mist hover:text-hi"
                         }`}
                       >
                         v{v.version}{v.id === selectedItem.id ? " · latest" : ""}
@@ -758,34 +758,34 @@ export function PortalDeliverablesPage() {
                 </div>
               )}
 
-              <div className="flex-1 flex items-center justify-center p-2.5 sm:p-5 pt-10 sm:pt-14 bg-[#0B111C]/30">
+              <div className="flex-1 flex items-center justify-center p-2.5 sm:p-5 pt-10 sm:pt-14 bg-app-base/30">
                 {shownItem ? (
                   <MediaPreview item={shownItem} onRefresh={refresh} />
                 ) : deliverableId && detailQuery.isLoading ? (
                   <CreoInlineLoader />
                 ) : (
-                  <div className="text-sm text-[#97A0B3] text-center px-4">
+                  <div className="text-sm text-app-mist text-center px-4">
                     {deliverableId ? "This deliverable isn't available. It may still be in production." : "Select an asset to view"}
                   </div>
                 )}
               </div>
 
-              <div className="h-[48px] sm:h-[52px] shrink-0 border-t border-[#2A3446] px-3.5 sm:px-5 flex items-center justify-between bg-[#0B111C]/30 gap-3">
-                <span className="text-xs sm:text-[13px] text-[#97A0B3] truncate">
+              <div className="h-[48px] sm:h-[52px] shrink-0 border-t border-app-line px-3.5 sm:px-5 flex items-center justify-between bg-app-base/30 gap-3">
+                <span className="text-xs sm:text-[13px] text-app-mist truncate">
                   {shownItem ? `${shownItem.type_label} · v${shownItem.version}${viewingOlder ? " · earlier version" : ""}` : "No asset selected"}
                 </span>
-                <span className="text-[11px] sm:text-xs font-medium text-[#97A0B3] tabular-nums shrink-0">
+                <span className="text-[11px] sm:text-xs font-medium text-app-mist tabular-nums shrink-0">
                   {shownItem?.created_at ? `Delivered ${new Date(shownItem.created_at).toLocaleDateString()}` : ""}
                 </span>
               </div>
             </div>
 
             {/* Right Column: Details & Actions */}
-            <div className={`${mobileTab === "review" ? "flex" : "hidden lg:flex"} col-span-1 lg:col-span-4 bg-[#161F2D] rounded-2xl border border-[#2A3446] p-3.5 sm:p-5 flex flex-col overflow-hidden pb-24 md:pb-5`}>
+            <div className={`${mobileTab === "review" ? "flex" : "hidden lg:flex"} col-span-1 lg:col-span-4 bg-app-surface rounded-2xl border border-app-line p-3.5 sm:p-5 flex flex-col overflow-hidden pb-24 md:pb-5`}>
               {shownItem ? (
                 <div className="flex-1 overflow-y-auto pr-1 scrollbar-hide space-y-3.5 sm:space-y-4">
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#97A0B3] mb-1.5">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-app-mist mb-1.5">
                       {shownItem.type_label} ·{" "}
                       {shownItem.scheduled_at
                         ? `Publishes ${new Date(shownItem.scheduled_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`
@@ -793,20 +793,20 @@ export function PortalDeliverablesPage() {
                           ? `Planned for ${new Date(shownItem.due_date).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`
                           : "In your content calendar"}
                     </p>
-                    <h2 className="text-xl sm:text-2xl font-normal text-white break-words">{shownItem.title}</h2>
+                    <h2 className="text-xl sm:text-2xl font-normal text-hi break-words">{shownItem.title}</h2>
 
                     {/* Instagram Publishing Panel (Collapsible Accordion on Mobile, Expanded on Desktop) */}
-                    <div className="mt-3 border border-[#2A3446] rounded-xl bg-[#0B111C]/40 overflow-hidden">
+                    <div className="mt-3 border border-app-line rounded-xl bg-app-base/40 overflow-hidden">
                       <button
                         type="button"
                         onClick={() => setMobilePublishingOpen((prev) => !prev)}
-                        className="w-full flex items-center justify-between p-3 text-left font-bold text-xs text-white hover:bg-[#161F2D] transition-colors md:cursor-default"
+                        className="w-full flex items-center justify-between p-3 text-left font-bold text-xs text-hi hover:bg-app-surface transition-colors md:cursor-default"
                       >
                         <span className="flex items-center gap-2">
-                          <Instagram className="size-4 text-[#7FA0D6]" />
+                          <Instagram className="size-4 text-app-accent" />
                           <span>Instagram Publishing</span>
                         </span>
-                        <span className="text-[#7FA0D6] md:hidden">
+                        <span className="text-app-accent md:hidden">
                           {mobilePublishingOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         </span>
                       </button>
@@ -820,7 +820,7 @@ export function PortalDeliverablesPage() {
                       <button
                         type="button"
                         onClick={() => setHistoryModalDeliverable({ id: shownItem.id, title: shownItem.title })}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-[#2A3446] bg-[#0B111C] hover:bg-[#161F2D] text-xs font-semibold text-[#7FA0D6] transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-app-line bg-app-base hover:bg-app-surface text-xs font-semibold text-app-accent transition-colors cursor-pointer"
                       >
                         <History className="w-3.5 h-3.5" />
                         Full History & Audio
@@ -829,32 +829,32 @@ export function PortalDeliverablesPage() {
                   </div>
 
                   {viewingOlder && (
-                    <div className="bg-[#0B111C]/50 rounded-xl p-3 sm:p-4 border border-[#2A3446] text-xs sm:text-[13px] text-[#97A0B3]">
+                    <div className="bg-app-base/50 rounded-xl p-3 sm:p-4 border border-app-line text-xs sm:text-[13px] text-app-mist">
                       You're viewing an earlier version.{" "}
-                      <button className="underline text-white cursor-pointer" onClick={() => setViewVersionId(null)}>Back to latest</button>
+                      <button className="underline text-hi cursor-pointer" onClick={() => setViewVersionId(null)}>Back to latest</button>
                     </div>
                   )}
 
                   {/* Revision Rounds (Collapsible on Mobile, Expanded on Desktop) */}
                   {allowed !== null && (
-                    <div className="border border-[#2A3446] rounded-xl bg-[#0B111C]/40 overflow-hidden">
+                    <div className="border border-app-line rounded-xl bg-app-base/40 overflow-hidden">
                       <button
                         type="button"
                         onClick={() => setMobileRevisionHistoryOpen((prev) => !prev)}
-                        className="w-full flex items-center justify-between p-3 text-left font-bold text-xs text-white hover:bg-[#161F2D] transition-colors md:cursor-default"
+                        className="w-full flex items-center justify-between p-3 text-left font-bold text-xs text-hi hover:bg-app-surface transition-colors md:cursor-default"
                       >
                         <span className="flex items-center gap-2">
-                          <History className="size-4 text-[#7FA0D6]" />
+                          <History className="size-4 text-app-accent" />
                           <span>Revision Rounds ({Math.min(used, allowed)} of {allowed} used)</span>
                         </span>
-                        <span className="text-[#7FA0D6] md:hidden">
+                        <span className="text-app-accent md:hidden">
                           {mobileRevisionHistoryOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         </span>
                       </button>
                       <div className={`${mobileRevisionHistoryOpen ? "block" : "hidden md:block"} p-3 pt-0 space-y-2`}>
                         <div className="h-1.5 w-full rounded-full flex gap-1">
                           {Array.from({ length: Math.max(allowed, 1) }).map((_, i) => (
-                            <div key={i} className={`h-full flex-1 rounded-full ${used > i ? "bg-[#7FA0D6]" : "bg-white/[0.08]"}`} />
+                            <div key={i} className={`h-full flex-1 rounded-full ${used > i ? "bg-app-accent" : "bg-hi/[0.08]"}`} />
                           ))}
                         </div>
                       </div>
@@ -864,20 +864,20 @@ export function PortalDeliverablesPage() {
                   {shownItem.rejection_comment && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between mb-1">
-                        <h4 className="text-xs sm:text-[13px] font-bold text-white flex items-center gap-1.5">
+                        <h4 className="text-xs sm:text-[13px] font-bold text-hi flex items-center gap-1.5">
                           <span className="size-1.5 rounded-full bg-amber-400" />
                           Your requested changes
                         </h4>
                         <button
                           type="button"
                           onClick={() => setHistoryModalDeliverable({ id: shownItem.id, title: shownItem.title || "Deliverable" })}
-                          className="text-xs text-[#7FA0D6] hover:underline flex items-center gap-1 cursor-pointer"
+                          className="text-xs text-app-accent hover:underline flex items-center gap-1 cursor-pointer"
                         >
                           <History className="w-3.5 h-3.5" />
                           Full History & Audio
                         </button>
                       </div>
-                      <p className="text-xs sm:text-[13px] text-[#97A0B3] leading-relaxed bg-[#0B111C]/50 rounded-xl p-3 sm:p-4 border border-[#2A3446] whitespace-pre-wrap">
+                      <p className="text-xs sm:text-[13px] text-app-mist leading-relaxed bg-app-base/50 rounded-xl p-3 sm:p-4 border border-app-line whitespace-pre-wrap">
                         {shownItem.rejection_comment}
                       </p>
                       {shownItem.voice_note_url && (
@@ -893,7 +893,7 @@ export function PortalDeliverablesPage() {
                   )}
 
                   {actionError && (
-                    <div role="alert" className="flex gap-2 text-xs sm:text-[13px] text-[#F1C9A5] bg-[#D8BF9B]/10 border border-[#D8BF9B]/30 rounded-xl p-3">
+                    <div role="alert" className="flex gap-2 text-xs sm:text-[13px] text-app-warm bg-app-warm/10 border border-app-warm/30 rounded-xl p-3">
                       <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                       <span>{actionError}</span>
                     </div>
@@ -901,9 +901,9 @@ export function PortalDeliverablesPage() {
 
                   {canDecide && (
                     <div className="pt-1 space-y-3">
-                      <h4 className="text-xs sm:text-[13px] font-bold text-white">Asking for a change?</h4>
+                      <h4 className="text-xs sm:text-[13px] font-bold text-hi">Asking for a change?</h4>
                       {lastRoundUsed ? (
-                        <p className="text-xs sm:text-[13px] text-[#97A0B3]">
+                        <p className="text-xs sm:text-[13px] text-app-mist">
                           All revision rounds included in your plan have been used for this piece.
                         </p>
                       ) : (
@@ -918,8 +918,8 @@ export function PortalDeliverablesPage() {
                                   onClick={() => setCommentText((prev) => (prev ? `${prev} · ${tag}` : tag))}
                                   className={`px-2.5 py-1 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
                                     isSelectedTag
-                                      ? "bg-[#7FA0D6]/20 border-[#7FA0D6]/50 text-[#BCCCE6] shadow-xs"
-                                      : "bg-white/[0.03] hover:bg-white/[0.08] border-[#2A3446] text-[#97A0B3] hover:text-white"
+                                      ? "bg-app-accent/20 border-app-accent/50 text-app-accent-soft shadow-xs"
+                                      : "bg-hi/[0.03] hover:bg-hi/[0.08] border-app-line text-app-mist hover:text-hi"
                                   }`}
                                 >
                                   {tag}
@@ -933,21 +933,21 @@ export function PortalDeliverablesPage() {
                             value={commentText}
                             onChange={(e) => setCommentText(e.target.value)}
                             placeholder="Tell your creative pod what to change…"
-                            className="w-full bg-[#0B111C]/50 border border-[#2A3446] rounded-xl p-3 text-xs sm:text-[13px] text-white placeholder:text-[#97A0B3] resize-none focus:outline-none focus:border-white/[0.2] transition-colors h-16 sm:h-18"
+                            className="w-full bg-app-base/50 border border-app-line rounded-xl p-3 text-xs sm:text-[13px] text-hi placeholder:text-app-mist resize-none focus:outline-none focus:border-hi/[0.2] transition-colors h-16 sm:h-18"
                           />
 
                           {/* Voice Note Feedback (Accordion on Mobile, Open on Desktop) */}
-                          <div className="border border-[#2A3446] rounded-xl bg-[#0B111C]/40 overflow-hidden">
+                          <div className="border border-app-line rounded-xl bg-app-base/40 overflow-hidden">
                             <button
                               type="button"
                               onClick={() => setMobileVoiceOpen((prev) => !prev)}
-                              className="w-full flex items-center justify-between p-2.5 text-left font-bold text-xs text-white hover:bg-[#161F2D] transition-colors md:cursor-default"
+                              className="w-full flex items-center justify-between p-2.5 text-left font-bold text-xs text-hi hover:bg-app-surface transition-colors md:cursor-default"
                             >
                               <span className="flex items-center gap-2">
-                                <Volume2 className="size-3.5 text-[#7FA0D6]" />
+                                <Volume2 className="size-3.5 text-app-accent" />
                                 <span>Voice Note Feedback {recordedAudio ? "• 1 Recorded" : ""}</span>
                               </span>
-                              <span className="flex items-center gap-1.5 text-xs text-[#7FA0D6] md:hidden">
+                              <span className="flex items-center gap-1.5 text-xs text-app-accent md:hidden">
                                 <span>{recordedAudio ? "Recorded" : "Record"}</span>
                                 {mobileVoiceOpen || recordedAudio ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                               </span>
@@ -963,7 +963,7 @@ export function PortalDeliverablesPage() {
                       )}
 
                       {/* Sticky Floating Bottom Bar for Primary Actions on Mobile, Inlined on Desktop */}
-                      <div className="fixed bottom-0 inset-x-0 z-40 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-[#0B111C]/95 backdrop-blur-md border-t border-white/10 flex items-center gap-2.5 md:static md:p-0 md:bg-transparent md:border-none md:shadow-none">
+                      <div className="fixed bottom-0 inset-x-0 z-40 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-app-base/95 backdrop-blur-md border-t border-hi/10 flex items-center gap-2.5 md:static md:p-0 md:bg-transparent md:border-none md:shadow-none">
                         {!lastRoundUsed && (
                           <button
                             onClick={async () => {
@@ -992,11 +992,11 @@ export function PortalDeliverablesPage() {
                               isUploadingVoice ||
                               (!commentText.trim() && !recordedAudio?.blob)
                             }
-                            className="flex-1 px-4 py-2.5 rounded-full border border-[#2A3446] bg-[#161F2D] md:bg-transparent text-xs sm:text-[13px] font-bold text-white hover:bg-[#0B111C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                            className="flex-1 px-4 py-2.5 rounded-full border border-app-line bg-app-surface md:bg-transparent text-xs sm:text-[13px] font-bold text-hi hover:bg-app-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                           >
                             {isUploadingVoice ? (
                               <>
-                                <Loader2 className="w-4 h-4 animate-spin text-[#7FA0D6]" />
+                                <Loader2 className="w-4 h-4 animate-spin text-app-accent" />
                                 Uploading...
                               </>
                             ) : requestChangesMutation.isPending ? (
@@ -1009,7 +1009,7 @@ export function PortalDeliverablesPage() {
                         <button
                           onClick={() => approveMutation.mutate(shownItem.id)}
                           disabled={approveMutation.isPending}
-                          className="flex-1 px-4 py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs sm:text-[13px] font-bold hover:bg-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-md"
+                          className="flex-1 px-4 py-2.5 rounded-full bg-app-accent-soft text-app-base text-xs sm:text-[13px] font-bold hover:bg-hi transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-md"
                         >
                           <Check className="w-4 h-4" />
                           {approveMutation.isPending ? "Approving..." : "Approve"}
@@ -1032,8 +1032,8 @@ export function PortalDeliverablesPage() {
 
                       {shownItem.voice_note_url && !shownItem.rejection_comment && (
                         <div>
-                          <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1.5 flex items-center gap-1.5">
-                            <Volume2 className="w-3.5 h-3.5 text-[#7FA0D6]" /> Attached Voice Note
+                          <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-app-mist mb-1.5 flex items-center gap-1.5">
+                            <Volume2 className="w-3.5 h-3.5 text-app-accent" /> Attached Voice Note
                           </p>
                           <VoicePlayer
                             audioUrl={shownItem.voice_note_url}
@@ -1043,7 +1043,7 @@ export function PortalDeliverablesPage() {
                         </div>
                       )}
 
-                      <div className="flex gap-2.5 items-start text-xs text-[#97A0B3] leading-relaxed pt-1">
+                      <div className="flex gap-2.5 items-start text-xs text-app-mist leading-relaxed pt-1">
                         <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                         <p>
                           Your creative pod has received your revision request and is currently producing the revised version. You will receive an instant notification once it passes quality assurance and is ready for your review.
@@ -1054,7 +1054,7 @@ export function PortalDeliverablesPage() {
 
                   {APPROVED_STATUSES.has(shownItem.status) && (
                     <div className="space-y-3">
-                      <p className="text-xs sm:text-[13px] text-[#97A0B3]">
+                      <p className="text-xs sm:text-[13px] text-app-mist">
                         Approved{shownItem.approved_at ? ` on ${new Date(shownItem.approved_at).toLocaleDateString()}` : ""}. The final file is ready to download.
                       </p>
                       {shownItem.file_url && (
@@ -1063,7 +1063,7 @@ export function PortalDeliverablesPage() {
                           download
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs sm:text-[13px] font-bold hover:bg-white transition-colors cursor-pointer shadow-sm"
+                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-app-accent-soft text-app-base text-xs sm:text-[13px] font-bold hover:bg-hi transition-colors cursor-pointer shadow-sm"
                         >
                           <Download className="w-4 h-4" /> Download final asset
                         </a>
@@ -1072,7 +1072,7 @@ export function PortalDeliverablesPage() {
                   )}
                 </div>
               ) : (
-                <div className="text-center py-10 text-sm text-[#97A0B3]">
+                <div className="text-center py-10 text-sm text-app-mist">
                   Select an asset to view details and decision actions.
                 </div>
               )}
@@ -1084,8 +1084,8 @@ export function PortalDeliverablesPage() {
       )}
 
       {toastMessage && (
-        <div role="status" className="fixed bottom-6 right-6 z-50 bg-[#161F2D] text-white px-5 py-3 rounded-xl shadow-2xl border border-white/[0.1] text-sm font-medium flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#BCCCE6]" />
+        <div role="status" className="fixed bottom-6 right-6 z-50 bg-app-surface text-hi px-5 py-3 rounded-xl shadow-2xl border border-hi/[0.1] text-sm font-medium flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-app-accent-soft" />
           {toastMessage}
         </div>
       )}

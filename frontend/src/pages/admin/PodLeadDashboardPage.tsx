@@ -197,13 +197,13 @@ export function PodLeadDashboardPage() {
       id: member.id,
       name: displayName,
       avatar: displayName.slice(0, 2).toUpperCase(),
-      avatarBg: "bg-[#7FA0D6]",
+      avatarBg: "bg-app-accent",
       role: memberRole(member),
       assignment: `${memberRole(member)} · ${podName} Active`,
       tasksCount: `${tasksCount} Tasks`,
       loadLabel: `${pct}% Load`,
       loadColor: pct > 80 ? "bg-rose-500" : pct > 50 ? "bg-amber-500" : "bg-emerald-500",
-      loadBadge: "bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30",
+      loadBadge: "bg-app-accent/15 text-app-accent border border-app-accent/30",
       loadPercent: pct,
     };
   });
@@ -237,13 +237,13 @@ export function PodLeadDashboardPage() {
   }
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
+    <div data-surface="ops" className="min-h-screen bg-app-base text-hi font-sans flex flex-col">
       <Dialog open={!!selectedMemberId} onOpenChange={open => { if (!open) setSelectedMemberId(null); }}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto bg-[#161F2D] text-white border-[#2A3446]">
+        <DialogContent className="max-h-[85vh] overflow-y-auto bg-app-surface text-hi border-app-line">
           <DialogTitle>{teamRoster.find(m => m.id === selectedMemberId)?.name} workload</DialogTitle>
           <DialogDescription>Current tasks assigned to this pod member.</DialogDescription>
-          <div className="space-y-3">{Object.values(data.tasks).flat().filter(t => t.assigned_to === selectedMemberId).map(t => <article key={t.id} className="rounded-xl border border-[#2A3446] p-3"><h3 className="font-semibold">{t.blueprint?.concept_name || t.deliverable_type}</h3><p className="text-sm text-[#97A0B3]">{t.client_name} / {t.status.replaceAll("_", " ")}</p><p className="text-xs text-[#97A0B3]">Due: {t.due_date || "No date set"}</p></article>)}
-          {!Object.values(data.tasks).flat().some(t => t.assigned_to === selectedMemberId) && <p className="text-sm text-[#97A0B3]">No tasks assigned.</p>}</div>
+          <div className="space-y-3">{Object.values(data.tasks).flat().filter(t => t.assigned_to === selectedMemberId).map(t => <article key={t.id} className="rounded-xl border border-app-line p-3"><h3 className="font-semibold">{t.blueprint?.concept_name || t.deliverable_type}</h3><p className="text-sm text-app-mist">{t.client_name} / {t.status.replaceAll("_", " ")}</p><p className="text-xs text-app-mist">Due: {t.due_date || "No date set"}</p></article>)}
+          {!Object.values(data.tasks).flat().some(t => t.assigned_to === selectedMemberId) && <p className="text-sm text-app-mist">No tasks assigned.</p>}</div>
         </DialogContent>
       </Dialog>
       {/* Top Header Navigation */}
@@ -271,15 +271,15 @@ export function PodLeadDashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
           <div className="flex items-center gap-2">
             <span className="size-2 sm:size-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/40 animate-pulse shrink-0" />
-            <span className="text-xs sm:text-sm font-bold text-white tracking-tight">
+            <span className="text-xs sm:text-sm font-bold text-hi tracking-tight">
               Active Shift • {leadName}
             </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             {isSuperOrAdmin && data?.available_pods && (
-              <div className="flex items-center gap-1 bg-[#161F2D] border border-[#2A3446]/80 rounded-xl px-2.5 py-1 shadow-2xs text-xs font-bold">
-                <span className="text-[#97A0B3]">Pod:</span>
+              <div className="flex items-center gap-1 bg-app-surface border border-app-line/80 rounded-xl px-2.5 py-1 shadow-2xs text-xs font-bold">
+                <span className="text-app-mist">Pod:</span>
                 {data.available_pods.map((p) => (
                   <button
                     key={p.id}
@@ -287,7 +287,7 @@ export function PodLeadDashboardPage() {
                     className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-all ${
                       (selectedPodKey === p.key || (!selectedPodKey && data.pod.id === p.id))
                         ? "bg-blue-600 text-white shadow-2xs"
-                        : "text-[#F1F5F9] hover:bg-[#161F2D]"
+                        : "text-app-ink-2 hover:bg-app-surface"
                     }`}
                   >
                     {p.letter}
@@ -298,14 +298,14 @@ export function PodLeadDashboardPage() {
 
             <button
               onClick={() => setStandupModalOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446]/80 hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-app-surface border border-app-line/80 hover:bg-app-base text-app-ink-2 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
-              <FileText className="size-3.5 text-[#97A0B3]" />
+              <FileText className="size-3.5 text-app-mist" />
               Log Standup
             </button>
             <button
               onClick={() => setAssignModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
             >
               <Plus className="size-3.5" />
               Assign Deliverable
@@ -320,29 +320,29 @@ export function PodLeadDashboardPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.05 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative overflow-hidden"
+            className="bg-app-surface rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-app-line/80 shadow-2xs flex flex-col justify-between hover-card-innovative overflow-hidden"
           >
             <div className="flex items-center justify-between mb-1 gap-1">
-              <span className="text-[8.5px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] truncate">
+              <span className="text-[8.5px] sm:text-[10px] font-bold uppercase tracking-wider text-app-mist truncate">
                 <span className="sm:hidden">Capacity</span>
                 <span className="hidden sm:inline">Active Pod Capacity</span>
               </span>
-              <div className="size-5 sm:size-7 rounded-md sm:rounded-lg bg-[#7FA0D6]/20 text-[#7FA0D6] flex items-center justify-center shrink-0">
+              <div className="size-5 sm:size-7 rounded-md sm:rounded-lg bg-app-accent/20 text-app-accent flex items-center justify-center shrink-0">
                 <Users className="size-2.5 sm:size-3.5" />
               </div>
             </div>
             <div>
               <div className="flex items-baseline gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
-                <span className="text-base sm:text-xl font-black text-white">
+                <span className="text-base sm:text-xl font-black text-hi">
                   {teamRoster.length > 0 ? teamRoster.length : (data?.members?.length || 0)}/{teamRoster.length > 0 ? teamRoster.length : (data?.members?.length || 4)}
                 </span>
-                <span className="text-[9px] sm:text-[11px] font-bold text-[#97A0B3] truncate">Active</span>
+                <span className="text-[9px] sm:text-[11px] font-bold text-app-mist truncate">Active</span>
               </div>
-              <div className="flex items-center justify-between text-[8px] sm:text-[11px] pt-1 sm:pt-1.5 border-t border-[#2A3446]/60">
+              <div className="flex items-center justify-between text-[8px] sm:text-[11px] pt-1 sm:pt-1.5 border-t border-app-line/60">
                 <span className="px-1 sm:px-1.5 py-0.2 rounded-full text-[7.5px] sm:text-[9px] font-bold bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 truncate">
                   ● 100% Flow
                 </span>
-                <span className="hidden sm:inline-block font-bold text-[#F1F5F9]">Bandwidth</span>
+                <span className="hidden sm:inline-block font-bold text-app-ink-2">Bandwidth</span>
               </div>
             </div>
           </motion.div>
@@ -352,10 +352,10 @@ export function PodLeadDashboardPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative overflow-hidden"
+            className="bg-app-surface rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-app-line/80 shadow-2xs flex flex-col justify-between hover-card-innovative overflow-hidden"
           >
             <div className="flex items-center justify-between mb-1 gap-1">
-              <span className="text-[8.5px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] truncate">
+              <span className="text-[8.5px] sm:text-[10px] font-bold uppercase tracking-wider text-app-mist truncate">
                 <span className="sm:hidden">Review</span>
                 <span className="hidden sm:inline">Today's Review Queue</span>
               </span>
@@ -365,16 +365,16 @@ export function PodLeadDashboardPage() {
             </div>
             <div>
               <div className="flex items-baseline gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
-                <span className="text-base sm:text-xl font-black text-white">
+                <span className="text-base sm:text-xl font-black text-hi">
                   {(data?.tasks?.internal_qa?.length) ?? deliverablesList.length}
                 </span>
-                <span className="text-[9px] sm:text-[11px] font-bold text-[#97A0B3] truncate">Pending</span>
+                <span className="text-[9px] sm:text-[11px] font-bold text-app-mist truncate">Pending</span>
               </div>
-              <div className="flex items-center justify-between text-[8px] sm:text-[11px] pt-1 sm:pt-1.5 border-t border-[#2A3446]/60">
+              <div className="flex items-center justify-between text-[8px] sm:text-[11px] pt-1 sm:pt-1.5 border-t border-app-line/60">
                 <span className="font-bold text-rose-400 flex items-center gap-0.5 truncate text-[7.5px] sm:text-[10px]">
                   ▲ {(data?.tasks?.internal_qa?.filter((t: any) => t.is_near_sla).length) || 0} Urgent
                 </span>
-                <span className="hidden sm:inline-block font-bold text-[#97A0B3]">
+                <span className="hidden sm:inline-block font-bold text-app-mist">
                   Avg: {(data as any)?.kpis?.avg_turnaround_hours ? `${Math.round((data as any).kpis.avg_turnaround_hours * 60)}m` : "38m"}
                 </span>
               </div>
@@ -386,10 +386,10 @@ export function PodLeadDashboardPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.15 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative overflow-hidden"
+            className="bg-app-surface rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-app-line/80 shadow-2xs flex flex-col justify-between hover-card-innovative overflow-hidden"
           >
             <div className="flex items-center justify-between mb-1 gap-1">
-              <span className="text-[8.5px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] truncate">
+              <span className="text-[8.5px] sm:text-[10px] font-bold uppercase tracking-wider text-app-mist truncate">
                 <span className="sm:hidden">Leaves</span>
                 <span className="hidden sm:inline">Pod Leave & Attendance</span>
               </span>
@@ -399,14 +399,14 @@ export function PodLeadDashboardPage() {
             </div>
             <div>
               <div className="flex items-baseline gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
-                <span className="text-base sm:text-xl font-black text-white">
+                <span className="text-base sm:text-xl font-black text-hi">
                   {pendingLeaveRequests.length}
                 </span>
-                <span className="text-[9px] sm:text-[11px] font-bold text-[#97A0B3] truncate">Requests</span>
+                <span className="text-[9px] sm:text-[11px] font-bold text-app-mist truncate">Requests</span>
               </div>
-              <div className="flex items-center justify-between text-[8px] sm:text-[11px] pt-1 sm:pt-1.5 border-t border-[#2A3446]/60">
-                <span className="font-bold text-[#F1F5F9] truncate text-[7.5px] sm:text-[10px]">1 Tomorrow</span>
-                <Link to="/lead/schedule" className="font-bold text-[#7FA0D6] hover:underline flex items-center gap-0.5 shrink-0">
+              <div className="flex items-center justify-between text-[8px] sm:text-[11px] pt-1 sm:pt-1.5 border-t border-app-line/60">
+                <span className="font-bold text-app-ink-2 truncate text-[7.5px] sm:text-[10px]">1 Tomorrow</span>
+                <Link to="/lead/schedule" className="font-bold text-app-accent hover:underline flex items-center gap-0.5 shrink-0">
                   <span className="hidden sm:inline">View</span> <ChevronRight className="size-2.5 sm:size-3" />
                 </Link>
               </div>
@@ -419,24 +419,24 @@ export function PodLeadDashboardPage() {
           {/* LEFT 2 COLUMNS */}
           <div className="lg:col-span-2 flex flex-col gap-3.5 sm:gap-4">
             {/* Section A: Pod Team Roster & Live Workload */}
-            <div id="roster" className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#2A3446] gap-2">
+            <div id="roster" className="bg-app-surface rounded-2xl p-4 sm:p-5 border border-app-line/80 shadow-2xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-app-line gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-7 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black text-xs">
+                  <div className="size-7 rounded-lg bg-app-accent/15 text-app-accent flex items-center justify-center font-black text-xs">
                     <Users className="size-3.5" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-black text-white">{podName} Team Roster & Live Workload</h2>
-                    <p className="text-[11px] text-[#97A0B3] font-medium">
+                    <h2 className="text-sm font-black text-hi">{podName} Team Roster & Live Workload</h2>
+                    <p className="text-[11px] text-app-mist font-medium">
                       {teamRoster.length} members in this pod
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="text-[#97A0B3] font-medium text-[11px]">Updated live</span>
+                  <span className="text-app-mist font-medium text-[11px]">Updated live</span>
                   <button
                     onClick={() => showToast("Workload balance algorithm analyzed. Current distributions optimal.", "success")}
-                    className="font-bold text-[#7FA0D6] hover:text-blue-800 flex items-center gap-1 cursor-pointer text-xs"
+                    className="font-bold text-app-accent hover:text-blue-800 flex items-center gap-1 cursor-pointer text-xs"
                   >
                     Balance Loads <ArrowLeftRight className="size-3" />
                   </button>
@@ -446,33 +446,33 @@ export function PodLeadDashboardPage() {
               {/* Roster Items */}
               <div className="space-y-1">
                 {teamRoster.map((member) => (
-                  <div key={member.name} className="py-3 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] items-center gap-3 hover:bg-[#0B111C]/50 px-2 rounded-xl transition-colors">
+                  <div key={member.name} className="py-3 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] items-center gap-3 hover:bg-app-base/50 px-2 rounded-xl transition-colors">
                     <div className="flex items-center gap-2.5 min-w-0 sm:min-w-[200px]">
-                      <div className={`size-8 rounded-xl ${member.avatarBg} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs`}>
+                      <div className={`size-8 rounded-xl ${member.avatarBg} text-hi font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs`}>
                         {member.avatar}
                       </div>
                       <div className="min-w-0">
                         <div className="flex flex-col items-start gap-1 min-w-0">
-                          <span className="text-xs font-black text-white">{member.name}</span>
-                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-[#161F2D] text-[#F1F5F9]">
+                          <span className="text-xs font-black text-hi">{member.name}</span>
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-app-surface text-app-ink-2">
                             {member.role}
                           </span>
                         </div>
-                        <p className="text-[10px] text-[#97A0B3] font-medium truncate max-w-full">
+                        <p className="text-[10px] text-app-mist font-medium truncate max-w-full">
                           {member.assignment}
                         </p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-[72px_112px_24px] items-center gap-3 justify-end">
-                      <span className="text-[11px] font-black text-white text-right">{member.tasksCount}</span>
+                      <span className="text-[11px] font-black text-hi text-right">{member.tasksCount}</span>
 
                       {/* Workload bar */}
                       <div className="w-28 flex flex-col gap-0.5 shrink-0">
-                        <div className="flex justify-between text-[9px] font-bold text-[#97A0B3]">
+                        <div className="flex justify-between text-[9px] font-bold text-app-mist">
                           <span>{member.loadLabel}</span>
                         </div>
-                        <div className="w-full h-1.5 bg-[#161F2D] rounded-full overflow-hidden">
+                        <div className="w-full h-1.5 bg-app-surface rounded-full overflow-hidden">
                           <div
                             className={`h-full ${member.loadColor} rounded-full transition-all`}
                             style={{ width: `${member.loadPercent}%` }}
@@ -480,14 +480,14 @@ export function PodLeadDashboardPage() {
                         </div>
                       </div>
 
-                      <button type="button" aria-label={`View ${member.name} workload`} onClick={() => setSelectedMemberId(member.id)} className="p-1 text-[#97A0B3] hover:text-white rounded-lg">
+                      <button type="button" aria-label={`View ${member.name} workload`} onClick={() => setSelectedMemberId(member.id)} className="p-1 text-app-mist hover:text-hi rounded-lg">
                         <ArrowRight className="size-3.5" />
                       </button>
                     </div>
                   </div>
                 ))}
                 {teamRoster.length === 0 && (
-                  <div className="py-6 text-center text-xs text-[#97A0B3]">
+                  <div className="py-6 text-center text-xs text-app-mist">
                     No specialists currently assigned to this pod.
                   </div>
                 )}
@@ -495,15 +495,15 @@ export function PodLeadDashboardPage() {
             </div>
 
             {/* Section B: Deliverables Pending Lead Sign-off */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs flex-1 flex flex-col gap-3.5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#2A3446] gap-2">
+            <div className="bg-app-surface rounded-2xl p-4 sm:p-5 border border-app-line/80 shadow-2xs flex-1 flex flex-col gap-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-app-line gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-7 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black">
+                  <div className="size-7 rounded-lg bg-app-accent/15 text-app-accent flex items-center justify-center font-black">
                     <CheckCircle2 className="size-3.5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-sm font-black text-white">Deliverables Pending Lead Sign-off</h2>
+                      <h2 className="text-sm font-black text-hi">Deliverables Pending Lead Sign-off</h2>
                       <span className={`px-2 py-0.2 rounded-full text-[9px] font-bold border ${
                         deliverablesList.length > 0
                           ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
@@ -512,7 +512,7 @@ export function PodLeadDashboardPage() {
                         {deliverablesList.length > 0 ? `${deliverablesList.length} Critical` : "0 Pending"}
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#97A0B3] font-medium">
+                    <p className="text-[11px] text-app-mist font-medium">
                       Quality rubric approval required before client sync
                     </p>
                   </div>
@@ -522,56 +522,56 @@ export function PodLeadDashboardPage() {
               {/* Deliverable Action Cards */}
               <div className="space-y-2.5 flex-1 flex flex-col">
                 {deliverablesList.length === 0 ? (
-                  <div className="bg-[#0B111C] border border-dashed border-[#2A3446] rounded-2xl p-6 text-center space-y-1.5 flex-1 flex flex-col items-center justify-center min-h-[140px]">
+                  <div className="bg-app-base border border-dashed border-app-line rounded-2xl p-6 text-center space-y-1.5 flex-1 flex flex-col items-center justify-center min-h-[140px]">
                     <CheckCircle2 className="size-6 text-emerald-500 mx-auto" />
-                    <p className="text-xs font-bold text-white">All deliverables signed off!</p>
-                    <p className="text-[10px] text-[#97A0B3]">Zero pending review items in today's QA queue.</p>
+                    <p className="text-xs font-bold text-hi">All deliverables signed off!</p>
+                    <p className="text-[10px] text-app-mist">Zero pending review items in today's QA queue.</p>
                   </div>
                 ) : (
                   deliverablesList.map((del) => (
                     <div
                       key={del.id}
-                      className="p-3.5 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:border-[#7FA0D6]/30 hover:shadow-2xs transition-all space-y-2.5"
+                      className="p-3.5 rounded-xl border border-app-line bg-app-base hover:border-app-accent/30 hover:shadow-2xs transition-all space-y-2.5"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-1.5">
                         <div className="flex items-center gap-1.5">
                           <span className={`px-2 py-0.2 rounded-full text-[9px] font-black tracking-wider border ${del.clientBadgeColor}`}>
                             {del.client}
                           </span>
-                          <span className="text-[11px] font-bold text-[#F1F5F9]">· {del.talent}</span>
+                          <span className="text-[11px] font-bold text-app-ink-2">· {del.talent}</span>
                         </div>
-                        <span className={`text-[11px] font-bold flex items-center gap-1 ${del.dueUrgent ? "text-amber-600" : "text-[#97A0B3]"}`}>
+                        <span className={`text-[11px] font-bold flex items-center gap-1 ${del.dueUrgent ? "text-amber-600" : "text-app-mist"}`}>
                           <Clock className="size-3" />
                           {del.due}
                         </span>
                       </div>
 
                       <div>
-                        <h3 className="text-xs font-black text-white">{del.title}</h3>
+                        <h3 className="text-xs font-black text-hi">{del.title}</h3>
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
                           {del.tags.map((tag: string) => (
-                            <span key={tag} className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446]/80 text-[10px] font-bold text-[#F1F5F9]">
+                            <span key={tag} className="px-2 py-0.5 rounded-md bg-app-surface border border-app-line/80 text-[10px] font-bold text-app-ink-2">
                               {tag}
                             </span>
                           ))}
                         </div>
-                        <p className="text-[11px] text-[#97A0B3] italic mt-1.5 font-medium">
+                        <p className="text-[11px] text-app-mist italic mt-1.5 font-medium">
                           "{del.notes}"
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2A3446]/60">
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-app-line/60">
                         <button
                           onClick={() => {
                             setRevisionModalItem({ id: del.id, title: del.title });
                           }}
-                          className="px-3 py-1.5 rounded-lg bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-[11px] font-bold transition-colors cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg bg-app-surface border border-app-line hover:bg-app-base text-app-ink-2 text-[11px] font-bold transition-colors cursor-pointer"
                         >
                           Request Revision
                         </button>
                         <button
                           onClick={() => handleApproveDeliverable(del)}
-                          className="px-3.5 py-1.5 rounded-lg bg-[#7FA0D6] hover:bg-blue-700 text-white text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
+                          className="px-3.5 py-1.5 rounded-lg bg-app-accent hover:bg-blue-700 text-white text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
                         >
                           <Check className="size-3" />
                           Approve & Send
@@ -588,7 +588,7 @@ export function PodLeadDashboardPage() {
           <div className="space-y-3.5 sm:space-y-4">
             {/* 1. Urgent Deliverable Alert (if any) */}
             {deliverablesList.some((d) => d.dueUrgent) && (
-              <div className="bg-gradient-to-br from-rose-950/40 via-red-950/20 to-[#161F2D] rounded-2xl p-4 border border-rose-500/30 shadow-2xs space-y-2.5">
+              <div className="bg-gradient-to-br from-rose-950/40 via-red-950/20 to-app-surface rounded-2xl p-4 border border-rose-500/30 shadow-2xs space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-rose-400 font-bold text-xs uppercase tracking-wider">
                     <ShieldAlert className="size-3.5 text-rose-400" />
@@ -600,18 +600,18 @@ export function PodLeadDashboardPage() {
                 </div>
 
                 <div>
-                  <span className="text-[11px] font-bold text-[#F1F5F9] block">{deliverablesList[0]?.title}</span>
+                  <span className="text-[11px] font-bold text-app-ink-2 block">{deliverablesList[0]?.title}</span>
                   <div className="text-xl font-black text-rose-500 tracking-tight mt-0.5">
                     {deliverablesList[0]?.due}
                   </div>
-                  <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed font-medium">
+                  <p className="text-[11px] text-app-ink-2 mt-1 leading-relaxed font-medium">
                     Review required for client delivery.
                   </p>
                 </div>
 
                 <Link
                   to="/lead/deliverables"
-                  className="w-full py-2 rounded-xl bg-[#0B111C] border border-rose-500/30 text-rose-400 hover:bg-rose-950/30 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors shadow-2xs"
+                  className="w-full py-2 rounded-xl bg-app-base border border-rose-500/30 text-rose-400 hover:bg-rose-950/30 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors shadow-2xs"
                 >
                   Jump to Deliverable <ArrowRight className="size-3" />
                 </Link>
@@ -619,10 +619,10 @@ export function PodLeadDashboardPage() {
             )}
 
             {/* 2. Leave & PTO Requests */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/80 shadow-2xs space-y-3">
+            <div className="bg-app-surface rounded-2xl p-4 border border-app-line/80 shadow-2xs space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-white font-black text-xs">
-                  <CalendarDays className="size-3.5 text-[#7FA0D6]" />
+                <div className="flex items-center gap-2 text-hi font-black text-xs">
+                  <CalendarDays className="size-3.5 text-app-accent" />
                   Leave & PTO Requests
                 </div>
                 {pendingLeaveRequests.length > 0 ? (
@@ -641,26 +641,26 @@ export function PodLeadDashboardPage() {
                   <div className="size-6 rounded-full bg-emerald-950/50 text-emerald-400 mx-auto flex items-center justify-center">
                     <Check className="size-3" />
                   </div>
-                  <p className="text-xs font-black text-white">All Leave Reviewed</p>
-                  <p className="text-[10px] text-[#97A0B3] font-medium">Coverage confirmed for upcoming PTO.</p>
+                  <p className="text-xs font-black text-hi">All Leave Reviewed</p>
+                  <p className="text-[10px] text-app-mist font-medium">Coverage confirmed for upcoming PTO.</p>
                 </div>
               ) : (
                 pendingLeaveRequests.map((leave) => (
-                  <div key={leave.id} className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-2">
+                  <div key={leave.id} className="p-3 rounded-xl bg-app-base border border-app-line space-y-2">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
                         <div className="size-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">
                           {leave.avatar}
                         </div>
                         <div>
-                          <h4 className="text-xs font-black text-white">{leave.name}</h4>
-                          <span className="text-[9px] text-[#97A0B3] font-bold">Leave request</span>
+                          <h4 className="text-xs font-black text-hi">{leave.name}</h4>
+                          <span className="text-[9px] text-app-mist font-bold">Leave request</span>
                         </div>
                       </div>
-                      <span className="text-[9px] font-bold text-[#97A0B3]">Pending approval</span>
+                      <span className="text-[9px] font-bold text-app-mist">Pending approval</span>
                     </div>
 
-                    <div className="text-[10px] text-[#F1F5F9] bg-[#161F2D] p-2 rounded-lg border border-[#2A3446] font-medium">
+                    <div className="text-[10px] text-app-ink-2 bg-app-surface p-2 rounded-lg border border-app-line font-medium">
                       "{leave.note}"
                     </div>
 
@@ -668,14 +668,14 @@ export function PodLeadDashboardPage() {
                       <button
                         type="button"
                         onClick={() => handleDeclineLeave(leave.id, leave.name)}
-                        className="flex-1 py-1.5 rounded-lg bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-[10px] font-bold transition-colors cursor-pointer"
+                        className="flex-1 py-1.5 rounded-lg bg-app-surface border border-app-line hover:bg-app-base text-app-ink-2 text-[10px] font-bold transition-colors cursor-pointer"
                       >
                         Decline
                       </button>
                       <button
                         type="button"
                         onClick={() => handleApproveLeave(leave.id, leave.name)}
-                        className="flex-1 py-1.5 rounded-lg bg-[#7FA0D6] hover:bg-blue-700 text-white text-[10px] font-bold transition-colors cursor-pointer shadow-2xs"
+                        className="flex-1 py-1.5 rounded-lg bg-app-accent hover:bg-blue-700 text-white text-[10px] font-bold transition-colors cursor-pointer shadow-2xs"
                       >
                         Approve Leave
                       </button>
@@ -686,28 +686,28 @@ export function PodLeadDashboardPage() {
             </div>
 
             {/* 3. Client Velocity Tracks */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/80 shadow-2xs space-y-2.5">
+            <div className="bg-app-surface rounded-2xl p-4 border border-app-line/80 shadow-2xs space-y-2.5">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-white font-black text-xs">
-                  <TrendingUp className="size-3.5 text-[#7FA0D6]" />
+                <div className="flex items-center gap-1.5 text-hi font-black text-xs">
+                  <TrendingUp className="size-3.5 text-app-accent" />
                   Client Velocity Tracks
                 </div>
-                <span className="text-[10px] font-bold text-[#97A0B3]">Sprint Pipeline</span>
+                <span className="text-[10px] font-bold text-app-mist">Sprint Pipeline</span>
               </div>
 
               <div className="space-y-2.5">
                 {(!data?.clients || data.clients.length === 0) ? (
-                  <div className="py-4 text-center text-xs text-[#97A0B3]">
+                  <div className="py-4 text-center text-xs text-app-mist">
                     No active clients assigned to pod
                   </div>
                 ) : (
                   data.clients.map((c) => (
                     <div key={c.id} className="space-y-1">
                       <div className="flex justify-between text-[11px] font-bold">
-                        <span className="text-[#F1F5F9]">{c.name}</span>
+                        <span className="text-app-ink-2">{c.name}</span>
                         <span className="text-emerald-400">On Track</span>
                       </div>
-                      <div className="h-1.5 w-full bg-[#161F2D] rounded-full overflow-hidden">
+                      <div className="h-1.5 w-full bg-app-surface rounded-full overflow-hidden">
                         <div className="h-full bg-emerald-500 rounded-full" style={{ width: "100%" }} />
                       </div>
                     </div>
@@ -715,40 +715,40 @@ export function PodLeadDashboardPage() {
                 )}
               </div>
 
-              <div className="pt-2 border-t border-[#2A3446] flex items-center justify-between text-[11px]">
-                <span className="font-bold text-[#97A0B3]">Target</span>
-                <span className="font-black text-white">40 Assets · 80%</span>
+              <div className="pt-2 border-t border-app-line flex items-center justify-between text-[11px]">
+                <span className="font-bold text-app-mist">Target</span>
+                <span className="font-black text-hi">40 Assets · 80%</span>
               </div>
             </div>
 
             {/* 4. Pod Quick Actions */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/80 shadow-2xs space-y-2.5">
+            <div className="bg-app-surface rounded-2xl p-4 border border-app-line/80 shadow-2xs space-y-2.5">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black text-white">Pod Quick Actions</h3>
-                <span className="text-[9px] font-bold text-[#97A0B3]">Ops Shortcuts</span>
+                <h3 className="text-xs font-black text-hi">Pod Quick Actions</h3>
+                <span className="text-[9px] font-bold text-app-mist">Ops Shortcuts</span>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setAssignModalOpen(true)}
-                  className="p-2.5 rounded-xl bg-[#0B111C] hover:bg-[#7FA0D6]/15/70 border border-[#2A3446] hover:border-[#7FA0D6]/30 text-left transition-all cursor-pointer group"
+                  className="p-2.5 rounded-xl bg-app-base hover:bg-app-accent/15/70 border border-app-line hover:border-app-accent/30 text-left transition-all cursor-pointer group"
                 >
-                  <div className="size-6 rounded-lg bg-[#7FA0D6]/20 text-[#7FA0D6] flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
+                  <div className="size-6 rounded-lg bg-app-accent/20 text-app-accent flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
                     <Plus className="size-3" />
                   </div>
-                  <span className="text-[11px] font-black text-white block">Assign Task</span>
-                  <span className="text-[9px] text-[#97A0B3] font-medium">Route to member</span>
+                  <span className="text-[11px] font-black text-hi block">Assign Task</span>
+                  <span className="text-[9px] text-app-mist font-medium">Route to member</span>
                 </button>
 
                 <button
                   onClick={handleExportWeeklyReport}
-                  className="p-2.5 rounded-xl bg-[#0B111C] hover:bg-emerald-500/15 border border-[#2A3446] hover:border-emerald-500/40 text-left transition-all cursor-pointer group"
+                  className="p-2.5 rounded-xl bg-app-base hover:bg-emerald-500/15 border border-app-line hover:border-emerald-500/40 text-left transition-all cursor-pointer group"
                 >
                   <div className="size-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
                     <FileText className="size-3" />
                   </div>
-                  <span className="text-[11px] font-black text-white block">Export CSV</span>
-                  <span className="text-[9px] text-[#97A0B3] font-medium">Weekly report</span>
+                  <span className="text-[11px] font-black text-hi block">Export CSV</span>
+                  <span className="text-[9px] text-app-mist font-medium">Weekly report</span>
                 </button>
               </div>
             </div>
@@ -759,27 +759,27 @@ export function PodLeadDashboardPage() {
       {/* Revision Modal */}
       {revisionModalItem && (
         <div className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4">
+          <div className="w-full max-w-lg bg-app-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-app-line space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-black text-white">Request Revision</h3>
-              <button onClick={() => setRevisionModalItem(null)} className="text-[#97A0B3] hover:text-[#F1F5F9]">
+              <h3 className="text-base font-black text-hi">Request Revision</h3>
+              <button onClick={() => setRevisionModalItem(null)} className="text-app-mist hover:text-app-ink-2">
                 <X className="size-5" />
               </button>
             </div>
-            <p className="text-xs text-[#97A0B3]">
-              Provide feedback for <span className="font-bold text-white">{revisionModalItem.title}</span>:
+            <p className="text-xs text-app-mist">
+              Provide feedback for <span className="font-bold text-hi">{revisionModalItem.title}</span>:
             </p>
             <textarea
               rows={4}
               value={revisionFeedback}
               onChange={(e) => setRevisionFeedback(e.target.value)}
               placeholder="Specify required corrections (e.g. contrast adjustment on slide 3, fix audio sync at 0:12)..."
-              className="w-full text-xs p-3.5 rounded-2xl border border-[#2A3446] bg-[#0B111C] focus:bg-[#161F2D] focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              className="w-full text-xs p-3.5 rounded-2xl border border-app-line bg-app-base focus:bg-app-surface focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
             />
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setRevisionModalItem(null)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition"
+                className="px-4 py-2 rounded-xl bg-app-surface text-app-ink-2 text-xs font-bold hover:bg-slate-200 transition"
               >
                 Cancel
               </button>
@@ -797,14 +797,14 @@ export function PodLeadDashboardPage() {
       {/* Daily Standup Modal */}
       {standupModalOpen && (
         <div className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4">
+          <div className="w-full max-w-lg bg-app-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-app-line space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-black text-white">Log {podName} Daily Standup</h3>
-              <button onClick={() => setStandupModalOpen(false)} className="text-[#97A0B3] hover:text-[#F1F5F9]">
+              <h3 className="text-base font-black text-hi">Log {podName} Daily Standup</h3>
+              <button onClick={() => setStandupModalOpen(false)} className="text-app-mist hover:text-app-ink-2">
                 <X className="size-5" />
               </button>
             </div>
-            <p className="text-xs text-[#97A0B3]">
+            <p className="text-xs text-app-mist">
               Record attendance notes, sprint blockers, and daily velocity commitments:
             </p>
             <textarea
@@ -812,12 +812,12 @@ export function PodLeadDashboardPage() {
               value={standupNote}
               onChange={(e) => setStandupNote(e.target.value)}
               placeholder="All pod members present. Active sprint tasks in production. No critical blockers."
-              className="w-full text-xs p-3.5 rounded-2xl border border-[#2A3446] bg-[#0B111C] focus:bg-[#161F2D] focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              className="w-full text-xs p-3.5 rounded-2xl border border-app-line bg-app-base focus:bg-app-surface focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
             />
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setStandupModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition"
+                className="px-4 py-2 rounded-xl bg-app-surface text-app-ink-2 text-xs font-bold hover:bg-slate-200 transition"
               >
                 Cancel
               </button>
@@ -839,31 +839,31 @@ export function PodLeadDashboardPage() {
       {/* Assign Task Modal */}
       {assignModalOpen && (
         <div className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4">
+          <div className="w-full max-w-lg bg-app-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-app-line space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-black text-white">Assign Deliverable / Task</h3>
-              <button onClick={() => setAssignModalOpen(false)} className="text-[#97A0B3] hover:text-[#F1F5F9]">
+              <h3 className="text-base font-black text-hi">Assign Deliverable / Task</h3>
+              <button onClick={() => setAssignModalOpen(false)} className="text-app-mist hover:text-app-ink-2">
                 <X className="size-5" />
               </button>
             </div>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Task Title</label>
+                <label className="font-bold text-app-ink-2 block mb-1">Task Title</label>
                 <input
                   type="text"
                   value={assignForm.title}
                   onChange={(e) => setAssignForm({ ...assignForm, title: e.target.value })}
                   placeholder="e.g. 3D Product Loop Animation (15s)"
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium"
+                  className="w-full p-2.5 rounded-xl border border-app-line bg-app-base font-medium"
                 />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Format</label>
+                  <label className="font-bold text-app-ink-2 block mb-1">Format</label>
                   <NativeSelect
                     value={assignForm.format}
                     onChange={(e) => setAssignForm({ ...assignForm, format: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium"
+                    className="w-full p-2.5 rounded-xl border border-app-line bg-app-base font-medium"
                   >
                     <option value="Reel">Reel</option>
                     <option value="Story">Story</option>
@@ -871,11 +871,11 @@ export function PodLeadDashboardPage() {
                   </NativeSelect>
                 </div>
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Client</label>
+                  <label className="font-bold text-app-ink-2 block mb-1">Client</label>
                   <NativeSelect
                     value={assignForm.client}
                     onChange={(e) => setAssignForm({ ...assignForm, client: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white"
+                    className="w-full p-2.5 rounded-xl border border-app-line bg-app-base font-medium text-hi"
                   >
                     {(!data?.clients || data.clients.length === 0) ? (
                       <option value="">No clients assigned</option>
@@ -887,11 +887,11 @@ export function PodLeadDashboardPage() {
                   </NativeSelect>
                 </div>
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Specialist</label>
+                  <label className="font-bold text-app-ink-2 block mb-1">Specialist</label>
                   <NativeSelect
                     value={assignForm.assignee}
                     onChange={(e) => setAssignForm({ ...assignForm, assignee: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white"
+                    className="w-full p-2.5 rounded-xl border border-app-line bg-app-base font-medium text-hi"
                   >
                     {(!data?.members || data.members.length === 0) ? (
                       <option value="">No specialists registered</option>
@@ -918,8 +918,8 @@ export function PodLeadDashboardPage() {
                 if (!qItem) return null;
                 const rem = Math.max(0, qItem.quota - qItem.used);
                 return (
-                  <div className="p-3 rounded-2xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-between text-xs">
-                    <span className="text-[#97A0B3] font-medium">Monthly Package Quota ({assignForm.format}s):</span>
+                  <div className="p-3 rounded-2xl bg-app-base border border-app-line flex items-center justify-between text-xs">
+                    <span className="text-app-mist font-medium">Monthly Package Quota ({assignForm.format}s):</span>
                     <span className={`font-bold ${rem > 0 ? "text-emerald-400" : "text-rose-400"}`}>
                       {qItem.used} / {qItem.quota} sent ({rem} remaining)
                     </span>
@@ -931,7 +931,7 @@ export function PodLeadDashboardPage() {
               <button
                 type="button"
                 onClick={() => setAssignModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-app-surface text-app-ink-2 text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
               >
                 Cancel
               </button>
