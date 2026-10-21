@@ -19,6 +19,9 @@ import {
   Loader2,
   Clock,
   Volume2,
+  ExternalLink,
+  FolderGit2,
+  Music,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams, useLocation } from "react-router";
@@ -274,6 +277,11 @@ export function MemberTaskBoardPage() {
   const [newTitle, setNewTitle] = useState("");
   const [newBrief, setNewBrief] = useState("");
   const [newDue, setNewDue] = useState("");
+  const [newRawFootageUrl, setNewRawFootageUrl] = useState("");
+  const [newTargetDuration, setNewTargetDuration] = useState("30-60s");
+  const [newAudioNotes, setNewAudioNotes] = useState("");
+  const [newHook, setNewHook] = useState("");
+  const [newReferenceUrl, setNewReferenceUrl] = useState("");
   const [startNow, setStartNow] = useState(false);
 
   useEffect(() => {
@@ -292,6 +300,11 @@ export function MemberTaskBoardPage() {
         title: newTitle.trim(),
         brief: newBrief.trim() || undefined,
         due_date: newDue || null,
+        raw_footage_url: newRawFootageUrl.trim() || undefined,
+        target_duration: newTargetDuration.trim() || undefined,
+        audio_notes: newAudioNotes.trim() || undefined,
+        hook: newHook.trim() || undefined,
+        reference_url: newReferenceUrl.trim() || undefined,
       });
       if (startNow) await startProductionTask(task.id);
       return task;
@@ -302,6 +315,11 @@ export function MemberTaskBoardPage() {
       setNewTitle("");
       setNewBrief("");
       setNewDue("");
+      setNewRawFootageUrl("");
+      setNewTargetDuration("30-60s");
+      setNewAudioNotes("");
+      setNewHook("");
+      setNewReferenceUrl("");
       showToast("Task added to the board.");
     },
     onError: (err: Error) => showToast(err.message || "Could not create the task.", "error"),
@@ -590,6 +608,33 @@ export function MemberTaskBoardPage() {
                       </div>
                       <h4 className="text-xs font-black text-white leading-snug">{taskTitle(task)}</h4>
                       {task.blueprint?.brief && <p className="text-[11px] text-[#97A0B3] line-clamp-2">{task.blueprint.brief}</p>}
+                      {(() => {
+                        const footage = task.blueprint?.raw_footage_url || task.blueprint?.drive_url || task.blueprint?.brief_url;
+                        const duration = task.blueprint?.target_duration;
+                        if (!footage && !duration) return null;
+                        return (
+                          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                            {footage && (
+                              <a
+                                href={footage}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-[10px] text-blue-300 hover:text-white font-bold bg-blue-500/15 hover:bg-blue-500/25 px-2 py-0.5 rounded border border-blue-500/30 transition-all"
+                              >
+                                <FolderGit2 className="size-2.5 text-blue-400" />
+                                <span>Drive Footage</span>
+                                <ExternalLink className="size-2" />
+                              </a>
+                            )}
+                            {duration && (
+                              <span className="text-[10px] text-purple-300 font-mono px-1.5 py-0.5 bg-[#0B111C] rounded border border-[#2A3446]">
+                                {duration}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                       <div className="flex items-center justify-between pt-1.5 border-t border-[#2A3446] text-[10px]">
                         <span className={due.urgent ? "text-rose-400 font-bold" : "text-[#97A0B3] font-medium"}>{due.text}</span>
                         <button
@@ -635,6 +680,33 @@ export function MemberTaskBoardPage() {
                       </div>
                       <h4 className="text-xs font-black text-white leading-snug">{taskTitle(task)}</h4>
                       <p className="text-[11px] text-[#97A0B3]">{formatLabel(task.deliverable_type)}{task.deliverable ? ` · last upload v${task.deliverable.version}` : ""}</p>
+                      {(() => {
+                        const footage = task.blueprint?.raw_footage_url || task.blueprint?.drive_url || task.blueprint?.brief_url;
+                        const duration = task.blueprint?.target_duration;
+                        if (!footage && !duration) return null;
+                        return (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {footage && (
+                              <a
+                                href={footage}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-[10px] text-blue-300 hover:text-white font-bold bg-blue-500/15 hover:bg-blue-500/25 px-2 py-0.5 rounded border border-blue-500/30 transition-all"
+                              >
+                                <FolderGit2 className="size-2.5 text-blue-400" />
+                                <span>Drive Footage</span>
+                                <ExternalLink className="size-2" />
+                              </a>
+                            )}
+                            {duration && (
+                              <span className="text-[10px] text-purple-300 font-mono px-1.5 py-0.5 bg-[#0B111C] rounded border border-[#2A3446]">
+                                {duration}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                       {feedback && (
                         <div className="p-2.5 rounded-xl bg-[#0B111C] border border-[#D8BF9B]/50 text-xs space-y-2">
                           <div className="flex items-center justify-between">
@@ -789,19 +861,83 @@ export function MemberTaskBoardPage() {
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-2 text-xs">
+            <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-3 text-xs">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-black text-[#7FA0D6] uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="size-3.5" /> Brief & spec
+                  <Sparkles className="size-3.5" /> Brief & Content Specs
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#161F2D] text-[#BCCCE6] border border-[#2A3446]">
                   {FORMAT_SPECS[uploadTask.deliverable_type] || "Match the planned format"}
                 </span>
               </div>
+
+              {/* Raw Footage / Drive link button for Team Member */}
+              {(() => {
+                const footage =
+                  uploadTask.blueprint?.raw_footage_url ||
+                  uploadTask.blueprint?.drive_url ||
+                  uploadTask.blueprint?.brief_url;
+                if (!footage) return null;
+                return (
+                  <a
+                    href={footage}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between p-3 rounded-xl bg-blue-950/40 border border-blue-500/40 hover:border-blue-400 text-white transition-all group shadow-sm"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <FolderGit2 className="size-4 text-blue-400 shrink-0" />
+                      <div className="min-w-0">
+                        <span className="text-xs font-bold text-white block">Raw Footage / Source Assets (Drive)</span>
+                        <p className="text-[10px] text-blue-300/80 truncate">Open Google Drive to download raw video clips & assets</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shrink-0 transition-all">
+                      <span>Open Drive</span>
+                      <ExternalLink className="size-3" />
+                    </div>
+                  </a>
+                );
+              })()}
+
               <p className="text-[#F1F5F9] leading-relaxed">
-                {uploadTask.blueprint?.brief || uploadTask.blueprint?.hook || uploadTask.blueprint?.objective ||
+                {uploadTask.blueprint?.brief || uploadTask.blueprint?.instructions || uploadTask.blueprint?.hook || uploadTask.blueprint?.objective ||
                   "Follow the client's Brand DNA and content plan for this slot."}
               </p>
+
+              {/* Extra specifications (Target Duration, Hook, Audio, Reference) */}
+              {(uploadTask.blueprint?.target_duration || uploadTask.blueprint?.audio_notes || uploadTask.blueprint?.hook || uploadTask.blueprint?.reference_url) && (
+                <div className="pt-2 border-t border-[#2A3446] space-y-1.5 text-[11px]">
+                  {uploadTask.blueprint?.hook && (
+                    <div className="flex items-start gap-1 text-amber-300">
+                      <Sparkles className="size-3 text-amber-400 shrink-0 mt-0.5" />
+                      <span><strong className="text-amber-400 font-bold">Hook:</strong> "{uploadTask.blueprint.hook}"</span>
+                    </div>
+                  )}
+                  {uploadTask.blueprint?.target_duration && (
+                    <div className="flex items-center gap-1 text-purple-300">
+                      <Clock className="size-3 text-purple-400 shrink-0" />
+                      <span><strong className="text-purple-400 font-bold">Target Length:</strong> {uploadTask.blueprint.target_duration}</span>
+                    </div>
+                  )}
+                  {uploadTask.blueprint?.audio_notes && (
+                    <div className="flex items-center gap-1 text-pink-300">
+                      <Music className="size-3 text-pink-400 shrink-0" />
+                      <span><strong className="text-pink-400 font-bold">Audio / Music:</strong> {uploadTask.blueprint.audio_notes}</span>
+                    </div>
+                  )}
+                  {uploadTask.blueprint?.reference_url && (
+                    <a
+                      href={uploadTask.blueprint.reference_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 font-bold pt-0.5"
+                    >
+                      <ExternalLink className="size-3" /> Open Reference Inspiration / Video
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
 
             {modalFeedback && (
@@ -1000,9 +1136,77 @@ export function MemberTaskBoardPage() {
                 <input id="task-due" type="date" value={newDue} onChange={(e) => setNewDue(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] font-bold" />
               </div>
             </div>
+
+            {/* Content Specifications (Raw Footage Drive link, Duration, Hook, Audio) */}
+            <div className="p-3.5 rounded-2xl bg-[#0B111C] border border-[#7FA0D6]/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-[11px] text-[#7FA0D6] flex items-center gap-1.5 uppercase tracking-wider">
+                  <FolderGit2 className="size-3.5 text-[#7FA0D6]" /> Raw Footage & Content Specs
+                </span>
+                <span className="text-[10px] text-emerald-400 font-semibold">Visible to Specialist</span>
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Raw Footage / Google Drive Link</label>
+                <input
+                  type="url"
+                  value={newRawFootageUrl}
+                  onChange={(e) => setNewRawFootageUrl(e.target.value)}
+                  placeholder="https://drive.google.com/drive/folders/..."
+                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white text-xs font-mono"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Target Duration</label>
+                  <input
+                    type="text"
+                    value={newTargetDuration}
+                    onChange={(e) => setNewTargetDuration(e.target.value)}
+                    placeholder="e.g. 30-60s or 15s"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white text-xs font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Hook / Concept</label>
+                  <input
+                    type="text"
+                    value={newHook}
+                    onChange={(e) => setNewHook(e.target.value)}
+                    placeholder="e.g. Stop doing this 1 thing..."
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Audio / Music Notes</label>
+                  <input
+                    type="text"
+                    value={newAudioNotes}
+                    onChange={(e) => setNewAudioNotes(e.target.value)}
+                    placeholder="e.g. Trending audio / Client VO in Drive"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Reference / Inspiration Link</label>
+                  <input
+                    type="url"
+                    value={newReferenceUrl}
+                    onChange={(e) => setNewReferenceUrl(e.target.value)}
+                    placeholder="https://instagram.com/reel/..."
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div>
-              <label htmlFor="task-brief" className="block font-bold text-[#F1F5F9] mb-1">Brief</label>
-              <textarea id="task-brief" rows={3} value={newBrief} onChange={(e) => setNewBrief(e.target.value)} placeholder="Hook, key message, references…" className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium resize-none" />
+              <label htmlFor="task-brief" className="block font-bold text-[#F1F5F9] mb-1">Creative Brief & Instructions</label>
+              <textarea id="task-brief" rows={2.5} value={newBrief} onChange={(e) => setNewBrief(e.target.value)} placeholder="Color grading LUT, fonts, cut directions, transitions…" className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium resize-none" />
             </div>
             <label className="flex items-center gap-2 font-bold text-[#F1F5F9]">
               <input type="checkbox" checked={startNow} onChange={(e) => setStartNow(e.target.checked)} className="size-4" />

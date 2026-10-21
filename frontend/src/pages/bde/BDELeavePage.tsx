@@ -90,6 +90,37 @@ export function BDELeavePage() {
 
   const today = new Date().toISOString().slice(0, 10);
 
+  // Format leave dates cleanly
+  const formatLeaveDate = (start: string, end: string) => {
+    const formatSingle = (dStr: string) => {
+      try {
+        const parts = dStr.split("-").map(Number);
+        const y = parts[0] ?? 2026;
+        const m = parts[1] ?? 1;
+        const d = parts[2] ?? 1;
+        const date = new Date(y, m - 1, d);
+        return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+      } catch {
+        return dStr;
+      }
+    };
+
+    if (!start) return { isRange: false, label: "" };
+    if (!end || start === end) {
+      return { isRange: false, label: formatSingle(start) };
+    }
+    return { isRange: true, startLabel: formatSingle(start), endLabel: formatSingle(end) };
+  };
+
+  const parseLeaveReason = (rawReason?: string) => {
+    if (!rawReason) return { category: null, note: "" };
+    const match = rawReason.match(/^\[(.*?)\]\s*(.*)$/s);
+    if (match && match[1] !== undefined) {
+      return { category: match[1], note: (match[2] ?? "").trim() };
+    }
+    return { category: null, note: rawReason.trim() };
+  };
+
   // Calculate day metrics
   const approvedLeaves = myLeaves.filter((l) => l.status === "approved");
   const pendingLeaves = myLeaves.filter((l) => l.status === "pending");
@@ -105,54 +136,54 @@ export function BDELeavePage() {
   const balanceDays = Math.max(0, totalAllowance - takenDays);
 
   return (
-    <div className="min-h-screen bg-[#0B111C] text-slate-100">
+    <div className="min-h-screen w-full bg-[#0B111C] text-slate-100">
       <AdminTopHeader activeTab="Leave & Time Off" hideTitle />
 
-      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-24 space-y-6">
-        {/* Metric Overview Strip */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <main className="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-24 space-y-6">
+        {/* Metric Overview Strip - Compact & Sleek */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           <motion.div
-            whileHover={{ y: -2 }}
-            className="bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-4 sm:p-5 shadow-[0_0_20px_rgba(127,160,214,0.22)] transition-all"
+            whileHover={{ y: -1 }}
+            className="bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/40 rounded-xl p-3 sm:p-3.5 shadow-sm transition-all"
           >
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] truncate block">
               Annual Paid Allowance
             </span>
-            <div className="text-2xl font-black text-white font-mono mt-1">{totalAllowance} Days</div>
-            <span className="text-[11px] text-[#97A0B3] mt-1 block">Full Calendar Year</span>
+            <div className="text-lg sm:text-xl font-black text-white font-mono mt-0.5">{totalAllowance} Days</div>
+            <span className="text-[10px] sm:text-[11px] text-[#97A0B3] mt-0.5 truncate block">Full Calendar Year</span>
           </motion.div>
 
           <motion.div
-            whileHover={{ y: -2 }}
-            className="bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-4 sm:p-5 shadow-[0_0_20px_rgba(127,160,214,0.22)] transition-all"
+            whileHover={{ y: -1 }}
+            className="bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/40 rounded-xl p-3 sm:p-3.5 shadow-sm transition-all"
           >
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] truncate block">
               Days Taken / Approved
             </span>
-            <div className="text-2xl font-black text-emerald-400 font-mono mt-1">{takenDays} Days</div>
-            <span className="text-[11px] text-emerald-400/80 mt-1 block font-medium">Approved time off</span>
+            <div className="text-lg sm:text-xl font-black text-emerald-400 font-mono mt-0.5">{takenDays} Days</div>
+            <span className="text-[10px] sm:text-[11px] text-emerald-400/80 mt-0.5 font-medium truncate block">Approved time off</span>
           </motion.div>
 
           <motion.div
-            whileHover={{ y: -2 }}
-            className="bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-4 sm:p-5 shadow-[0_0_20px_rgba(127,160,214,0.22)] transition-all"
+            whileHover={{ y: -1 }}
+            className="bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/40 rounded-xl p-3 sm:p-3.5 shadow-sm transition-all"
           >
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] truncate block">
               Under Review
             </span>
-            <div className="text-2xl font-black text-amber-400 font-mono mt-1">{pendingDays} Days</div>
-            <span className="text-[11px] text-amber-400/80 mt-1 block font-medium">{pendingLeaves.length} pending request(s)</span>
+            <div className="text-lg sm:text-xl font-black text-amber-400 font-mono mt-0.5">{pendingDays} Days</div>
+            <span className="text-[10px] sm:text-[11px] text-amber-400/80 mt-0.5 font-medium truncate block">{pendingLeaves.length} pending request(s)</span>
           </motion.div>
 
           <motion.div
-            whileHover={{ y: -2 }}
-            className="bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-4 sm:p-5 shadow-[0_0_20px_rgba(127,160,214,0.22)] transition-all"
+            whileHover={{ y: -1 }}
+            className="bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/40 rounded-xl p-3 sm:p-3.5 shadow-sm transition-all"
           >
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] truncate block">
               Available Balance
             </span>
-            <div className="text-2xl font-black text-[#7FA0D6] font-mono mt-1">{balanceDays} Days</div>
-            <span className="text-[11px] text-[#7FA0D6]/80 mt-1 block font-medium">Remaining available</span>
+            <div className="text-lg sm:text-xl font-black text-[#7FA0D6] font-mono mt-0.5">{balanceDays} Days</div>
+            <span className="text-[10px] sm:text-[11px] text-[#7FA0D6]/80 mt-0.5 font-medium truncate block">Remaining available</span>
           </motion.div>
         </div>
 
@@ -189,12 +220,12 @@ export function BDELeavePage() {
         </AnimatePresence>
 
         {/* 2-Column Responsive Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Apply Form */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="lg:col-span-5 bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-6 shadow-[0_0_20px_rgba(127,160,214,0.22)] hover:shadow-[0_0_30px_rgba(127,160,214,0.35)] transition-all flex flex-col justify-between"
+            className="lg:col-span-5 bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 shadow-sm hover:border-[#7FA0D6]/40 transition-all flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center gap-2.5 pb-4 border-b border-[#2A3446]">
@@ -316,11 +347,11 @@ export function BDELeavePage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="lg:col-span-7 bg-[#161F2D] border-2 border-[#7FA0D6] rounded-2xl p-6 shadow-[0_0_20px_rgba(127,160,214,0.22)] hover:shadow-[0_0_30px_rgba(127,160,214,0.35)] transition-all flex flex-col"
+            className="lg:col-span-7 bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 shadow-sm hover:border-[#7FA0D6]/40 transition-all flex flex-col"
           >
             <div className="flex items-center justify-between pb-4 border-b border-[#2A3446]">
               <div className="flex items-center gap-2.5">
-                <Clock className="w-5 h-5 text-[#7FA0D6]" />
+                <Clock className="w-5 h-5 text-[#7FA0D6] shrink-0" />
                 <div>
                   <h2 className="text-sm font-bold text-white uppercase tracking-wider">
                     My Leave Requests & Schedule
@@ -347,43 +378,79 @@ export function BDELeavePage() {
                 const days = calcDays(leave.start_date, leave.end_date);
                 const isPending = leave.status === "pending";
                 const isApproved = leave.status === "approved";
+                const dateInfo = formatLeaveDate(leave.start_date, leave.end_date);
+                const { category, note } = parseLeaveReason(leave.reason);
 
                 return (
                   <motion.div
                     key={leave.id}
-                    whileHover={{ scale: 1.01 }}
-                    className="bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/60 rounded-xl p-4 space-y-3 transition-all"
+                    whileHover={{ scale: 1.005 }}
+                    className="bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/50 rounded-xl p-4 sm:p-5 space-y-3.5 transition-all shadow-sm"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CalendarIcon className="w-4 h-4 text-[#7FA0D6]" />
-                        <span className="text-xs font-bold text-white">
-                          {leave.start_date} <ArrowRight className="w-3 h-3 inline mx-1 text-[#97A0B3]" /> {leave.end_date}
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/10 text-[#7FA0D6] border border-[#7FA0D6]/20">
-                          {days} Day{days > 1 ? "s" : ""}
-                        </span>
+                    {/* Header Row: Date & Badges */}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-[#7FA0D6]/10 border border-[#7FA0D6]/20 flex items-center justify-center shrink-0">
+                          <CalendarIcon className="w-4 h-4 text-[#7FA0D6]" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold text-white tracking-wide">
+                              {dateInfo.isRange ? (
+                                <>
+                                  {dateInfo.startLabel}
+                                  <ArrowRight className="w-3 h-3 inline mx-1.5 text-[#97A0B3]" />
+                                  {dateInfo.endLabel}
+                                </>
+                              ) : (
+                                dateInfo.label
+                              )}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/25 whitespace-nowrap">
+                              {days} {days === 1 ? "Day" : "Days"}
+                            </span>
+                          </div>
+                          {!dateInfo.isRange && (
+                            <span className="text-[10px] text-[#97A0B3] block">Single Day Schedule</span>
+                          )}
+                        </div>
                       </div>
 
-                      <span
-                        className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
-                          isPending
-                            ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                            : isApproved
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                            : "bg-rose-500/10 text-rose-400 border-rose-500/30"
-                        }`}
-                      >
-                        {leave.status}
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {category && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#161F2D] text-slate-300 border border-[#2A3446]">
+                            {category}
+                          </span>
+                        )}
+                        <span
+                          className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border tracking-wider ${
+                            isPending
+                              ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                              : isApproved
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                              : "bg-rose-500/10 text-rose-400 border-rose-500/30"
+                          }`}
+                        >
+                          {leave.status}
+                        </span>
+                      </div>
                     </div>
 
-                    <p className="text-xs text-[#97A0B3] leading-relaxed">{leave.reason}</p>
+                    {/* Handover Note / Reason */}
+                    {note ? (
+                      <p className="text-xs text-[#97A0B3] bg-[#161F2D]/50 border border-[#2A3446]/60 rounded-lg p-2.5 leading-relaxed break-words">
+                        {note}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-[#97A0B3]/50 italic">No additional handover notes.</p>
+                    )}
 
-                    <div className="flex items-center justify-between pt-2 border-t border-[#2A3446]/60 text-[11px]">
-                      <span className="text-[#97A0B3]/80">
-                        Reviewer: <span className="text-white font-medium">{leave.team_lead_name || "Agency Admin"}</span>
-                      </span>
+                    {/* Footer Row: Reviewer & Cancel Action */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-[#2A3446]/60 text-[11px]">
+                      <div className="flex items-center gap-1.5 text-[#97A0B3]">
+                        <span className="text-[#97A0B3]/70">Reviewer:</span>
+                        <span className="text-white font-semibold">{leave.team_lead_name || "Agency Admin"}</span>
+                      </div>
 
                       {leave.can_cancel && (
                         <motion.button

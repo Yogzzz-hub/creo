@@ -18,6 +18,8 @@ import {
   X,
   FileText,
   Search,
+  ExternalLink,
+  FolderGit2,
 } from "lucide-react";
 
 /** Backlog ages run into hundreds of hours, so show days past a day and keep hours below it. */
@@ -36,6 +38,9 @@ export function PodTaskBoardPage() {
   const [newCardTitle, setNewCardTitle] = useState("");
   const [newCardClient, setNewCardClient] = useState("");
   const [newCardAssignee, setNewCardAssignee] = useState("");
+  const [newCardRawFootageUrl, setNewCardRawFootageUrl] = useState("");
+  const [newCardDuration, setNewCardDuration] = useState("30-60s");
+  const [newCardBrief, setNewCardBrief] = useState("");
   const [rerouteTaskId, setRerouteTaskId] = useState("");
 
   const [rerouteModalOpen, setRerouteModalOpen] = useState(false);
@@ -123,11 +128,24 @@ export function PodTaskBoardPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => createPodTask({ client_id: newCardClient || data!.clients[0]!.id,
-      assignee_id: newCardAssignee || undefined, deliverable_type: newCardFormat, title: newCardTitle.trim() }),
+    mutationFn: () =>
+      createPodTask({
+        client_id: newCardClient || data!.clients[0]!.id,
+        assignee_id: newCardAssignee || undefined,
+        deliverable_type: newCardFormat,
+        title: newCardTitle.trim(),
+        brief: newCardBrief.trim() || undefined,
+        raw_footage_url: newCardRawFootageUrl.trim() || undefined,
+        target_duration: newCardDuration.trim() || undefined,
+      }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
-      setAssignModalOpen(false); setNewCardTitle(""); setNewCardAssignee("");
+      setAssignModalOpen(false);
+      setNewCardTitle("");
+      setNewCardAssignee("");
+      setNewCardRawFootageUrl("");
+      setNewCardDuration("30-60s");
+      setNewCardBrief("");
       showToast("Task saved to the sprint board.");
     },
     onError: (err: Error) => showToast(err.message, "error"),
@@ -403,6 +421,33 @@ export function PodTaskBoardPage() {
                     <h4 className="text-xs font-black text-white leading-snug">
                       {task.blueprint?.concept_name || `${task.client_name || "Sprint"} ${task.deliverable_type?.toUpperCase() || "Asset"}`}
                     </h4>
+                    {(() => {
+                      const footage = task.blueprint?.raw_footage_url || task.blueprint?.drive_url || task.blueprint?.brief_url;
+                      const duration = task.blueprint?.target_duration;
+                      if (!footage && !duration) return null;
+                      return (
+                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                          {footage && (
+                            <a
+                              href={footage}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[9.5px] text-blue-300 hover:text-white font-bold bg-blue-500/15 hover:bg-blue-500/25 px-1.5 py-0.5 rounded border border-blue-500/30 transition-all"
+                            >
+                              <FolderGit2 className="size-2.5 text-blue-400" />
+                              <span>Drive Footage</span>
+                              <ExternalLink className="size-2" />
+                            </a>
+                          )}
+                          {duration && (
+                            <span className="text-[9.5px] text-purple-300 font-mono px-1 py-0.2 bg-[#161F2D] rounded border border-[#2A3446]">
+                              {duration}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
                     <div className="flex items-center justify-between pt-1.5 border-t border-[#2A3446] text-[10.5px]">
                       <span className="px-1.5 py-0.2 rounded bg-[#7FA0D6]/15 text-[#7FA0D6] font-bold text-[9px] border border-[#7FA0D6]/30">
                         {task.deliverable_type?.toUpperCase() || "ASSET"}
@@ -459,6 +504,33 @@ export function PodTaskBoardPage() {
                       <h4 className="text-xs font-black text-white leading-snug">
                         {task.blueprint?.concept_name || `${task.client_name || "Sprint"} ${task.deliverable_type?.toUpperCase() || "Asset"}`}
                       </h4>
+                      {(() => {
+                        const footage = task.blueprint?.raw_footage_url || task.blueprint?.drive_url || task.blueprint?.brief_url;
+                        const duration = task.blueprint?.target_duration;
+                        if (!footage && !duration) return null;
+                        return (
+                          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                            {footage && (
+                              <a
+                                href={footage}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-[9.5px] text-blue-300 hover:text-white font-bold bg-blue-500/15 hover:bg-blue-500/25 px-1.5 py-0.5 rounded border border-blue-500/30 transition-all"
+                              >
+                                <FolderGit2 className="size-2.5 text-blue-400" />
+                                <span>Drive Footage</span>
+                                <ExternalLink className="size-2" />
+                              </a>
+                            )}
+                            {duration && (
+                              <span className="text-[9.5px] text-purple-300 font-mono px-1 py-0.2 bg-[#161F2D] rounded border border-[#2A3446]">
+                                {duration}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                       <p className="text-[9.5px] text-[#97A0B3] font-medium mt-0.5">{task.assignee_role || "Creative Execution"}</p>
                     </div>
                     <div className="flex items-center justify-between pt-1.5 border-t border-[#2A3446] text-[9.5px] font-bold text-[#F1F5F9]">
@@ -662,6 +734,44 @@ export function PodTaskBoardPage() {
                     <option key={m.id} value={memberValue(m)}>{memberLabel(m)}</option>
                   ))}
                 </NativeSelect>
+              </div>
+
+              {/* Content Specifications (Raw Footage Drive Link & Target Length) */}
+              <div className="p-3 rounded-2xl bg-[#0B111C] border border-blue-500/30 space-y-2.5">
+                <span className="font-extrabold text-[11px] text-blue-400 flex items-center gap-1.5 uppercase tracking-wider">
+                  <FolderGit2 className="size-3.5 text-blue-400" /> Raw Footage & Specifications
+                </span>
+                <div>
+                  <label className="font-bold text-[#F1F5F9] block mb-1">Raw Footage / Google Drive Link</label>
+                  <input
+                    type="url"
+                    value={newCardRawFootageUrl}
+                    onChange={(e) => setNewCardRawFootageUrl(e.target.value)}
+                    placeholder="https://drive.google.com/drive/folders/..."
+                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] font-mono text-white text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-[#F1F5F9] block mb-1">Target Duration / Length</label>
+                  <input
+                    type="text"
+                    value={newCardDuration}
+                    onChange={(e) => setNewCardDuration(e.target.value)}
+                    placeholder="e.g. 30-60s or 15s"
+                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white text-xs"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-[#F1F5F9] block mb-1">Brief & Notes</label>
+                <textarea
+                  rows={2}
+                  value={newCardBrief}
+                  onChange={(e) => setNewCardBrief(e.target.value)}
+                  placeholder="Hook, reference links, editing notes..."
+                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs resize-none"
+                />
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-3">

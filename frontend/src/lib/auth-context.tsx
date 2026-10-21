@@ -105,6 +105,7 @@ interface AuthContextType {
   forgotPassword: (email: string) => Promise<{ status: string; message: string }>;
   verifyResetOtp: (email: string, code: string) => Promise<PasswordResetVerification>;
   resetPassword: (resetToken: string, newPassword: string) => Promise<AuthUser>;
+  directResetPassword: (email: string, newPassword: string) => Promise<{ status: string; message: string }>;
   setMandatoryPassword: (newPassword: string) => Promise<void>;
   getGoogleAuthUrl: () => Promise<string>;
   /** Adopt a session the caller already obtained (e.g. the Google code exchange). */
@@ -303,6 +304,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return adoptSession(res);
   };
 
+  const directResetPassword = async (email: string, newPassword: string) => {
+    return await request<{ status: string; message: string }>("/api/v1/auth/direct-reset-password", {
+      method: "POST",
+      body: JSON.stringify({ email, new_password: newPassword }),
+    });
+  };
+
   const setMandatoryPassword = async (newPassword: string) => {
     const res = await request<SessionResponse & { status: string }>("/api/v1/auth/set-mandatory-password", {
       method: "POST",
@@ -386,6 +394,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         forgotPassword,
         verifyResetOtp,
         resetPassword,
+        directResetPassword,
         setMandatoryPassword,
         getGoogleAuthUrl,
         completeSignIn: adoptSession,

@@ -281,7 +281,16 @@ export function SlackChatPage() {
   const isWorkstation =
     location.pathname.startsWith("/workstation") ||
     location.pathname.startsWith("/member") ||
-    location.pathname === "/slack";
+    (location.pathname === "/slack" && !isBde && !isFreelancer && !isAdmin && !isTeamLead && !isClient);
+
+  const backUrl = useMemo(() => {
+    if (isBde) return "/bde";
+    if (isFreelancer) return "/freelancer/tasks";
+    if (isClient) return "/portal";
+    if (isAdmin || isTeamLead) return "/admin";
+    return "/workstation";
+  }, [isBde, isFreelancer, isClient, isAdmin, isTeamLead]);
+
   const locationState = location.state as { draft?: string; dm?: string; channel?: string; leadName?: string } | null;
   const urlDm = searchParams.get("dm");
   const urlChannel = searchParams.get("channel") || locationState?.channel || null;
@@ -339,19 +348,12 @@ export function SlackChatPage() {
       return list;
     }
 
-    // 3. ADMIN: All Leads Group + BDE Hub + Each Pod Group with members + Global agency channels
+    // 3. ADMIN: All Leads Group + Each Pod Group with members + Global agency channels
     if (isAdmin) {
       list.push({
         id: "all-pod-leads",
         label: "all-pod-leads",
         desc: "Leadership Council: Executive Admin & All Pod Leads",
-        isPodChannel: true,
-      });
-
-      list.push({
-        id: "bde-sales-hub",
-        label: "bde-sales-hub",
-        desc: "BDE Commercial Outreach & Pipeline Command (Sales Reps & Admin)",
         isPodChannel: true,
       });
 
@@ -546,8 +548,8 @@ export function SlackChatPage() {
       return [superAdmin, teamLeadSarah];
     }
     if (isBde) {
-      // BDE: ONLY CLIENTS, ADMIN, AND OTHER BDE MEMBERS
-      return [superAdmin, clientRep, bdeRep];
+      // BDE: ONLY THEIR LEADS/CLIENTS, ADMIN, AND OTHER BDE MEMBERS
+      return [superAdmin, bdeRep];
     }
     // ADMIN: ALL POD LEADS, ALL TEAM MEMBERS, BDEs, CLIENTS, FREELANCERS
     return [teamLeadSarah, teamLeadVikram, teamLeadRohan, memberRajini, memberChloe, bdeRep, clientRep, freelancerRep];
@@ -1329,7 +1331,7 @@ export function SlackChatPage() {
           <div className="h-14 px-4 bg-[#161F2D] border-b border-[#2A3446] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5 min-w-0">
               <Link
-                to={isWorkstation ? "/workstation" : isClient ? "/portal" : "/admin"}
+                to={backUrl}
                 className="p-1.5 rounded-lg hover:bg-white/10 text-[#97A0B3] hover:text-white transition-colors shrink-0"
                 aria-label="Back to dashboard"
                 title="Back to dashboard"

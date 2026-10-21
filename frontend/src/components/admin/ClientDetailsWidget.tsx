@@ -113,14 +113,14 @@ export function ClientDetailsWidget({ clients }: ClientDetailsWidgetProps) {
       </div>
 
       {/* Footer Navigation */}
-      <div className="pt-2 mt-1.5 border-t border-[#2A3446] flex items-center justify-between text-xs text-[#97A0B3] font-medium shrink-0" onClick={(e) => e.stopPropagation()}>
-        <span className="text-[11px] sm:text-xs">Capacity & subscription status synchronized</span>
+      <div className="pt-2.5 mt-2 border-t border-[#2A3446] shrink-0" onClick={(e) => e.stopPropagation()}>
         <Link
           to="/admin/clients"
           onClick={(e) => e.stopPropagation()}
-          className="text-[11px] sm:text-xs font-bold text-[#7FA0D6] hover:text-blue-300 hover:translate-x-0.5 transition-all flex items-center gap-0.5 cursor-pointer"
+          className="w-full min-h-[38px] py-2 px-3 bg-[#0B111C] hover:bg-[#161F2D] hover:border-[#7FA0D6]/60 hover:scale-[1.01] hover:text-[#7FA0D6] text-white rounded-xl text-xs font-bold border border-[#2A3446] transition-all duration-200 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          Open Client Roster &rarr;
+          <span>Open Client Roster</span>
+          <span>&rarr;</span>
         </Link>
       </div>
     </div>

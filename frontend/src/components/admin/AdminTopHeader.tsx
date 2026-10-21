@@ -103,6 +103,12 @@ export function AdminTopHeader({
       ? "Team Details"
       : location.pathname.includes("/lead/clients")
       ? "Client Details"
+      : location.pathname.startsWith("/freelancer/tasks")
+      ? "Assigned Workload"
+      : location.pathname.startsWith("/freelancer/leave")
+      ? "Time Off & Blackout"
+      : location.pathname.startsWith("/freelancer/settings")
+      ? "Profile & Settings"
       : location.pathname.includes("/admin/productivity")
       ? "Team Productivity & Efficiency"
       : location.pathname.includes("/admin/bde") || location.pathname.startsWith("/bde")
@@ -123,8 +129,6 @@ export function AdminTopHeader({
       ? "Production Task Queue"
       : location.pathname.includes("/admin/clients")
       ? "Client Details"
-      : location.pathname.includes("/admin/support/sla") || location.pathname.includes("/admin/sla")
-      ? "Performance Hub"
       : location.pathname.includes("/admin/support")
       ? "Support Tickets"
       : location.pathname.includes("/admin/announcements")
@@ -161,7 +165,7 @@ export function AdminTopHeader({
           <button
             type="button"
             onClick={toggleMobile}
-            className={`${location.pathname.startsWith("/portal") || isMemberRole ? "lg:hidden" : "md:hidden"} size-8 rounded-full flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] transition-all cursor-pointer border border-transparent hover:border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] shrink-0`}
+            className={`${location.pathname.startsWith("/portal") || isMemberRole || user?.role === "freelancer" || location.pathname.startsWith("/freelancer") ? "lg:hidden" : "md:hidden"} size-8 rounded-full flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] transition-all cursor-pointer border border-transparent hover:border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] shrink-0`}
             aria-expanded={mobileOpen}
             aria-label="Open navigation sidebar"
             title="Open navigation menu"
@@ -178,6 +182,8 @@ export function AdminTopHeader({
                 ? "/admin/pod-dashboard"
                 : isMemberRole
                 ? "/workstation"
+                : user?.role === "freelancer" || location.pathname.startsWith("/freelancer")
+                ? "/freelancer/tasks"
                 : "/portal"
             }
             className="md:hidden flex items-center gap-0.5 font-extrabold text-white text-sm sm:text-base tracking-tight shrink-0 px-0.5 hover:opacity-85 transition-opacity"

@@ -364,21 +364,19 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
 
       {/* Footer Meta Row */}
       <div
-        className="mt-3 pt-3 border-t border-[#2A3446] flex items-center justify-between text-[11px] text-[#97A0B3] font-medium"
+        className="mt-3 pt-2.5 border-t border-[#2A3446] shrink-0"
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="flex items-center gap-1 font-semibold text-[#F1F5F9]">
-          Total Tickets: <strong className="text-[#7FA0D6]">{tickets.length}</strong>
-        </span>
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             navigate("/admin/support");
           }}
-          className="text-[#7FA0D6] hover:text-blue-800 font-bold hover:underline cursor-pointer flex items-center gap-1"
+          className="w-full min-h-[38px] py-2 px-3 bg-[#0B111C] hover:bg-[#161F2D] hover:border-[#7FA0D6]/60 hover:scale-[1.01] hover:text-[#7FA0D6] text-white rounded-xl text-xs font-bold border border-[#2A3446] transition-all duration-200 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          View all {openCount} tickets &rarr;
+          <span>View Tickets</span>
+          <span>&rarr;</span>
         </button>
       </div>
 

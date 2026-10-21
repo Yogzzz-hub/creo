@@ -3585,14 +3585,17 @@ export function AdminDeliverablesPage() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
-  const handleApprove = async (id: string, _title: string) => {
+  const handleApprove = async (id: string, _title: string, publishNow: boolean = false) => {
     if (reviewBusy) return;
     setReviewBusy(true); setReviewError(null);
     try {
-      await request(`/api/v1/deliverables/${id}/qa-approve`, { method: "POST" });
+      const res = await request<{ status: string; message: string; is_published?: boolean }>(
+        `/api/v1/admin/calendar/events/${id}/approve-and-publish`,
+        { method: "POST", body: JSON.stringify({ publish_now: publishNow }) }
+      );
       await deliverablesQuery.refetch();
       setPreviewItem(null);
-      showToast("QA approved. The asset is now awaiting client review.");
+      showToast(res?.message || (publishNow ? "Deliverable approved and published!" : "Deliverable approved by Admin!"));
     } catch (error) { setReviewError(error instanceof Error ? error.message : "QA approval failed."); }
     finally { setReviewBusy(false); }
   };
@@ -3907,13 +3910,22 @@ export function AdminDeliverablesPage() {
 
                 {/* Action Buttons */}
                 <div className="flex items-center gap-2 pt-0.5">
-                  {item.status === "pending_qa" ? (
+                  {item.status === "pending_qa" || item.status === "pending_approval" ? (
                     <>
                       <button
                         type="button"
                         disabled={reviewBusy || !item.previewUrl}
-                        onClick={() => void handleApprove(item.id, item.title)}
-                        className="flex-1 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        onClick={() => void handleApprove(item.id, item.title, true)}
+                        className="flex-1 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1 shadow-md shadow-purple-500/20 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="Approve and Publish to Instagram"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-300 stroke-[2.5]" /> Publish
+                      </button>
+                      <button
+                        type="button"
+                        disabled={reviewBusy || !item.previewUrl}
+                        onClick={() => void handleApprove(item.id, item.title, false)}
+                        className="flex-1 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1 shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" /> Approve
                       </button>
@@ -3921,9 +3933,10 @@ export function AdminDeliverablesPage() {
                         type="button"
                         disabled={reviewBusy || !item.previewUrl}
                         onClick={() => handleDecline(item.id, item.title)}
-                        className="flex-1 py-2 sm:py-2.5 bg-[#0B111C] hover:bg-rose-500/15 border border-[#2A3446] hover:border-rose-500/40 text-[#F1F5F9] hover:text-rose-400 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="p-2 sm:p-2.5 bg-[#0B111C] hover:bg-rose-500/15 border border-[#2A3446] hover:border-rose-500/40 text-[#F1F5F9] hover:text-rose-400 rounded-xl text-xs font-bold transition-colors flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="Request Revision"
                       >
-                        <X className="w-3.5 h-3.5 stroke-[2.5]" /> Edit
+                        <X className="w-3.5 h-3.5 stroke-[2.5]" />
                       </button>
                     </>
                   ) : (
@@ -5514,7 +5527,6 @@ export { AdminCalendarPage } from "./AdminCalendarPage";
 
 export { AdminSupportTicketsPage, AdminSupportTicketsPage as AdminSupportPage } from "./AdminSupportTicketsPage";
 export { AdminTicketDetailPage } from "./AdminTicketDetailPage";
-export { AdminSLAPerformancePage } from "./AdminSLAPerformancePage";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 6. ADMIN TEAM MANAGEMENT PAGE (PODS & CAPACITY)
@@ -10388,6 +10400,8 @@ export function AdminRevenuePage() {
 // 9. ADMIN PLANS & PRICING TIERS PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export function AdminPlansPage() {
+  const { user } = useAuth();
+  const isBde = user?.role === "bde" || user?.role === "sales";
   const [searchParams] = useSearchParams();
   const queryNegId = searchParams.get("negId") || searchParams.get("id");
   const queryClientId = searchParams.get("clientId");
@@ -10977,7 +10991,14 @@ export function AdminPlansPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-white tracking-tight">Client Plan Negotiations</h3>
+                <h3 className="text-lg font-bold text-white tracking-tight">
+                  {isBde ? "My Contacted Clients · Plan Negotiations" : "Client Plan Negotiations"}
+                </h3>
+                {isBde && (
+                  <span className="px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 text-[10px] font-black uppercase tracking-wider">
+                    Assigned & Contacted
+                  </span>
+                )}
                 {pendingCount > 0 && (
                   <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black uppercase flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
@@ -10986,7 +11007,9 @@ export function AdminPlansPage() {
                 )}
               </div>
               <p className="text-xs text-[#97A0B3] mt-0.5">
-                Review custom retainer proposals, client discount counter-offers, and multi-month contract terms.
+                {isBde
+                  ? "Custom proposals and negotiation counter-offers for clients and leads contacted by or assigned to you. All other agency requests route to Admin."
+                  : "Review custom retainer proposals, client discount counter-offers, and multi-month contract terms across all agency clients."}
               </p>
             </div>
 
@@ -11036,7 +11059,11 @@ export function AdminPlansPage() {
           <div className="space-y-4">
             {filteredNegotiations.length === 0 ? (
               <div className="p-8 text-center text-[#97A0B3] bg-[#0B111C]/50 rounded-2xl border border-dashed border-[#2A3446]">
-                <p className="text-xs font-bold">No plan negotiations found in this filter.</p>
+                <p className="text-xs font-bold">
+                  {isBde
+                    ? "No proposals or negotiation requests found for your contacted clients. Unassigned requests are automatically routed to Admin."
+                    : "No plan negotiations found in this filter."}
+                </p>
               </div>
             ) : (
               filteredNegotiations.map((item) => {

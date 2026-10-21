@@ -8,22 +8,20 @@ import {
   CheckCircle2,
   AlertCircle,
   ExternalLink,
-  Shield,
   Sparkles,
   History,
   X,
   Send,
   Link as LinkIcon,
-  Filter,
-  Calculator,
   IndianRupee,
   Wallet,
   Play,
   FileUp,
-  SlidersHorizontal,
-  ChevronUp,
+  Film,
+  FolderGit2,
+  Music,
 } from "lucide-react";
-import { useAuth } from "../../lib/auth-context";
+import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import {
   fetchMyFreelancerTasks,
   submitFreelancerWork,
@@ -34,10 +32,9 @@ import {
 import { DeliverableHistoryModal } from "../../components/portal/DeliverableHistoryModal";
 
 export function FreelancerTasksPage() {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("pending");
   const [selectedTaskForSubmit, setSelectedTaskForSubmit] = useState<FreelancerAssignedTask | null>(null);
 
   // Submission State (File Upload or External Link)
@@ -50,28 +47,46 @@ export function FreelancerTasksPage() {
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [startingTaskId, setStartingTaskId] = useState<string | null>(null);
 
-  // Interactive Earnings Calculator State
-  const [showCalculator, setShowCalculator] = useState(true);
-  const [baseDeliverableRate, setBaseDeliverableRate] = useState<number>(4500);
-  const [projectedMonthlyUnits, setProjectedMonthlyUnits] = useState<number>(6);
-
   // History modal
   const [historyDeliverable, setHistoryDeliverable] = useState<{ id: string; title: string } | null>(null);
 
-  const { data: tasks, isLoading, refetch } = useQuery({
+  const { data: tasks, isLoading } = useQuery({
     queryKey: ["freelancer-my-tasks"],
     queryFn: () => fetchMyFreelancerTasks(),
   });
 
   const taskList = tasks || [];
 
+  const normalizeStatus = (status?: string): "pending" | "review" | "revision" | "completed" => {
+    const s = (status || "").toLowerCase().replace(/[\s_-]+/g, "_");
+    if (s === "approved" || s === "completed" || s === "ready_to_publish") return "completed";
+    if (s === "revision_requested" || s === "qa_rejected" || s === "revision") return "revision";
+    if (s === "internal_qa" || s === "pending_qa" || s === "in_review" || s === "ready_for_review" || s === "qa_review") return "review";
+    return "pending";
+  };
+
+  const tabCounts = useMemo(() => {
+    let pending = 0;
+    let review = 0;
+    let revision = 0;
+    let completed = 0;
+    taskList.forEach((t) => {
+      const s = normalizeStatus(t.status);
+      if (s === "pending") pending++;
+      else if (s === "review") review++;
+      else if (s === "revision") revision++;
+      else if (s === "completed") completed++;
+    });
+    return {
+      pending,
+      review,
+      revision,
+      completed,
+    };
+  }, [taskList]);
+
   const filteredTasks = taskList.filter((task) => {
-    if (filterStatus === "all") return true;
-    if (filterStatus === "pending") return task.status === "ASSIGNED" || task.status === "IN_PROGRESS";
-    if (filterStatus === "review") return task.status === "IN_REVIEW" || task.status === "READY FOR REVIEW" || task.status === "INTERNAL_QA";
-    if (filterStatus === "revision") return task.status === "REVISION_REQUESTED";
-    if (filterStatus === "completed") return task.status === "APPROVED" || task.status === "COMPLETED";
-    return true;
+    return normalizeStatus(task.status) === filterStatus;
   });
 
   // Calculate live financial & earnings stats
@@ -85,11 +100,11 @@ export function FreelancerTasksPage() {
 
     taskList.forEach((t) => {
       const fee = Number(t.milestone_fee ?? 4500);
-      const s = (t.status || "").toUpperCase();
-      if (s === "APPROVED" || s === "COMPLETED") {
+      const s = normalizeStatus(t.status);
+      if (s === "completed") {
         earnedSettled += fee;
         completedCount++;
-      } else if (s === "IN_REVIEW" || s === "READY FOR REVIEW" || s === "INTERNAL_QA") {
+      } else if (s === "review") {
         pendingReview += fee;
         reviewCount++;
       } else {
@@ -97,9 +112,6 @@ export function FreelancerTasksPage() {
         activeCount++;
       }
     });
-
-    const projectedMonthly = baseDeliverableRate * projectedMonthlyUnits;
-    const projectedWeekly = Math.round(projectedMonthly / 4);
 
     return {
       earnedSettled,
@@ -109,10 +121,8 @@ export function FreelancerTasksPage() {
       reviewCount,
       activeCount,
       totalPipeline: earnedSettled + pendingReview + activeInProgress,
-      projectedMonthly,
-      projectedWeekly,
     };
-  }, [taskList, baseDeliverableRate, projectedMonthlyUnits]);
+  }, [taskList]);
 
   const handleStartWork = async (task: FreelancerAssignedTask) => {
     setStartingTaskId(task.id);
@@ -145,7 +155,7 @@ export function FreelancerTasksPage() {
           selectedFile,
           submissionNotes.trim() || undefined
         );
-        setSubmitSuccess(`Content '${selectedFile.name}' uploaded and submitted for Team Lead QA!`);
+        setSubmitSuccess(`Content '${selectedFile.name}' uploaded and submitted to Admin for review & publishing!`);
         setSelectedTaskForSubmit(null);
         setSelectedFile(null);
         setSubmissionNotes("");
@@ -170,7 +180,7 @@ export function FreelancerTasksPage() {
           asset_url: assetUrl.trim(),
           submission_notes: submissionNotes.trim() || undefined,
         });
-        setSubmitSuccess("Deliverable cloud link submitted for Team Lead QA review!");
+        setSubmitSuccess("Deliverable cloud link submitted to Admin for review & publishing!");
         setSelectedTaskForSubmit(null);
         setAssetUrl("");
         setSubmissionNotes("");
@@ -185,139 +195,75 @@ export function FreelancerTasksPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const s = status.toUpperCase();
-    if (s === "APPROVED" || s === "COMPLETED") {
+    const s = normalizeStatus(status);
+    if (s === "completed") {
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 shrink-0">
           <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Approved
         </span>
       );
     }
-    if (s === "REVISION_REQUESTED") {
+    if (s === "revision") {
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1 shrink-0">
           <AlertCircle className="w-3 h-3 text-amber-400" /> Revision Requested
         </span>
       );
     }
-    if (s === "IN_REVIEW" || s === "READY FOR REVIEW" || s === "INTERNAL_QA") {
+    if (s === "review") {
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center gap-1">
+        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center gap-1 shrink-0">
           <Clock className="w-3 h-3 text-blue-400" /> In QA Review
         </span>
       );
     }
     return (
-      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/15 text-purple-300 border border-purple-500/30 flex items-center gap-1">
+      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/15 text-purple-300 border border-purple-500/30 flex items-center gap-1 shrink-0">
         <Sparkles className="w-3 h-3 text-purple-300" /> In Progress
       </span>
     );
   };
 
   return (
-    <div className="min-h-screen bg-[#0B111C] text-white p-4 sm:p-8 space-y-6">
-      {/* Header & Role Scoping Notification */}
-      <div className="bg-[#161F2D] rounded-3xl p-6 sm:p-8 border border-[#2A3446] shadow-xl relative overflow-hidden space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-purple-500/20 font-black">
-              <Briefcase className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                  Freelancer Workstation
-                </span>
-                <span className="text-xs text-[#97A0B3]">Signed in as {user?.email}</span>
-              </div>
-              <p className="text-xs text-[#BCCCE6] mt-0.5">
-                Work on assigned deliverables, upload completed video/graphics content, and track your milestone earnings.
-              </p>
-            </div>
+    <div className="min-h-screen bg-[#0B111C] text-white flex flex-col overflow-x-hidden">
+      <AdminTopHeader activeTab="Assigned Workload" hideTitle />
+
+      <div className="max-w-[1600px] w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 flex-1">
+
+        {submitSuccess && (
+          <div className="p-4 bg-emerald-500/15 border border-emerald-500/40 rounded-2xl text-xs font-bold text-emerald-300 flex items-center gap-2 animate-fade-in shadow-sm">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            {submitSuccess}
           </div>
+        )}
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <button
-              onClick={() => setShowCalculator(!showCalculator)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-xs font-bold text-purple-300 transition-all cursor-pointer"
-            >
-              <Calculator className="w-3.5 h-3.5" />
-              <span>{showCalculator ? "Hide Calculator" : "Earnings Calculator"}</span>
-            </button>
-            <button
-              onClick={() => refetch()}
-              className="px-3.5 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:text-white hover:border-[#7FA0D6] transition-all cursor-pointer"
-            >
-              Refresh Tasks
-            </button>
-          </div>
-        </div>
-
-        {/* Security & Access Restriction Callout */}
-        <div className="p-3 bg-purple-500/10 border border-purple-500/25 rounded-2xl flex items-center gap-2.5 text-xs text-purple-200">
-          <Shield className="w-4 h-4 text-purple-400 shrink-0" />
-          <span>
-            <strong>Role-Based Workspace Boundary:</strong> You are granted focused access exclusively to your assigned deliverables, creative briefs, and content upload pipeline. Internal agency financials and admin settings remain private.
-          </span>
-        </div>
-      </div>
-
-      {submitSuccess && (
-        <div className="p-4 bg-emerald-500/15 border border-emerald-500/40 rounded-2xl text-xs font-bold text-emerald-300 flex items-center gap-2 animate-fade-in shadow-sm">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          {submitSuccess}
-        </div>
-      )}
-
-      {/* ── MOBILE: COMPACT HORIZONTAL QUICK-STATS RIBBON (Replaces 4 massive stacked cards on phone) ── */}
-      <div className="sm:hidden flex items-center gap-2.5 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar snap-x overscroll-x-contain -mx-1 px-1">
-        <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
+      {/* ── MOBILE: 2 KPI CARDS (Earned & Expected Earnings) ── */}
+      <div className="sm:hidden grid grid-cols-2 gap-2">
+        <div className="p-2.5 bg-[#161F2D] border border-[#2A3446] rounded-xl space-y-0.5 shadow-xs">
           <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
             <span>Earned</span>
             <IndianRupee className="w-3.5 h-3.5 text-emerald-400" />
           </div>
-          <div className="text-xl font-black text-emerald-400">
+          <div className="text-lg font-black text-emerald-400 truncate">
             ₹{earnings.earnedSettled.toLocaleString("en-IN")}
           </div>
           <p className="text-[10px] text-emerald-400/80 font-bold truncate">{earnings.completedCount} approved</p>
         </div>
 
-        <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
+        <div className="p-2.5 bg-[#161F2D] border border-[#2A3446] rounded-xl space-y-0.5 shadow-xs">
           <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-            <span>In QA</span>
-            <Clock className="w-3.5 h-3.5 text-blue-400" />
-          </div>
-          <div className="text-xl font-black text-blue-400">
-            ₹{earnings.pendingReview.toLocaleString("en-IN")}
-          </div>
-          <p className="text-[10px] text-blue-400/80 font-bold truncate">{earnings.reviewCount} pending</p>
-        </div>
-
-        <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
-          <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-            <span>Workload</span>
-            <Briefcase className="w-3.5 h-3.5 text-purple-400" />
-          </div>
-          <div className="text-xl font-black text-purple-300">
-            ₹{earnings.activeInProgress.toLocaleString("en-IN")}
-          </div>
-          <p className="text-[10px] text-purple-400/80 font-bold truncate">{earnings.activeCount} in work</p>
-        </div>
-
-        <div className="min-w-[150px] shrink-0 p-3 bg-[#161F2D] border border-[#2A3446] rounded-2xl snap-start space-y-1 shadow-xs">
-          <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
-            <span>Target</span>
+            <span>Expected Earnings</span>
             <Wallet className="w-3.5 h-3.5 text-amber-400" />
           </div>
-          <div className="text-xl font-black text-amber-400">
-            ₹{earnings.projectedMonthly.toLocaleString("en-IN")}
+          <div className="text-lg font-black text-amber-400 truncate">
+            ₹{earnings.totalPipeline.toLocaleString("en-IN")}
           </div>
-          <p className="text-[10px] text-amber-400/80 font-bold truncate">~₹{earnings.projectedWeekly.toLocaleString("en-IN")}/wk</p>
+          <p className="text-[10px] text-amber-400/80 font-bold truncate">{taskList.length} total tasks</p>
         </div>
       </div>
 
-      {/* ── DESKTOP/TABLET: 4 Financial & Earnings Summary Cards (Hidden on phone) ── */}
-      <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ── DESKTOP/TABLET: 2 Financial & Earnings Summary Cards ── */}
+      <div className="hidden sm:grid sm:grid-cols-2 gap-4 w-full">
         {/* Card 1: Earned & Settled */}
         <div className="bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-emerald-500/30 transition-all shadow-xl flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
@@ -341,57 +287,11 @@ export function FreelancerTasksPage() {
           </div>
         </div>
 
-        {/* Card 2: In QA Review */}
-        <div className="bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-blue-500/30 transition-all shadow-xl flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
-              IN QA REVIEW
-            </span>
-            <div className="w-8 h-8 rounded-2xl bg-blue-500/15 text-blue-400 flex items-center justify-center">
-              <Clock className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-blue-400">
-              ₹{earnings.pendingReview.toLocaleString("en-IN")}
-            </span>
-            <span className="text-xs font-semibold text-[#97A0B3]">
-              ({earnings.reviewCount} pending)
-            </span>
-          </div>
-          <div className="mt-3 pt-3 border-t border-[#2A3446] text-xs font-bold text-blue-400 flex items-center gap-1">
-            <Sparkles className="w-3.5 h-3.5" /> Submitted to Team Lead
-          </div>
-        </div>
-
-        {/* Card 3: Active Workload Value */}
-        <div className="bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-purple-500/30 transition-all shadow-xl flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
-              ACTIVE WORKLOAD
-            </span>
-            <div className="w-8 h-8 rounded-2xl bg-purple-500/15 text-purple-400 flex items-center justify-center">
-              <Briefcase className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-purple-300">
-              ₹{earnings.activeInProgress.toLocaleString("en-IN")}
-            </span>
-            <span className="text-xs font-semibold text-[#97A0B3]">
-              ({earnings.activeCount} in work)
-            </span>
-          </div>
-          <div className="mt-3 pt-3 border-t border-[#2A3446] text-xs font-bold text-purple-400 flex items-center gap-1">
-            <Play className="w-3.5 h-3.5" /> Deliverables in production
-          </div>
-        </div>
-
-        {/* Card 4: Projected Monthly Target */}
+        {/* Card 2: Expected Earnings */}
         <div className="bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-amber-500/30 transition-all shadow-xl flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
-              PROJECTED MONTHLY
+              EXPECTED EARNINGS
             </span>
             <div className="w-8 h-8 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
               <Wallet className="w-4 h-4" />
@@ -399,172 +299,49 @@ export function FreelancerTasksPage() {
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-black text-amber-400">
-              ₹{earnings.projectedMonthly.toLocaleString("en-IN")}
+              ₹{earnings.totalPipeline.toLocaleString("en-IN")}
             </span>
             <span className="text-xs font-semibold text-[#97A0B3]">
-              (~₹{earnings.projectedWeekly.toLocaleString("en-IN")}/wk)
+              ({taskList.length} deliverables)
             </span>
           </div>
           <div className="mt-3 pt-3 border-t border-[#2A3446] text-xs font-bold text-amber-400 flex items-center gap-1">
-            <SlidersHorizontal className="w-3.5 h-3.5" /> Configured via calculator
+            <Wallet className="w-3.5 h-3.5" /> All assigned milestones
           </div>
         </div>
       </div>
 
-      {/* ── Interactive Earnings & Payout Calculator ── */}
-      {showCalculator && (
-        <div className="p-6 rounded-3xl bg-[#161F2D] border border-purple-500/30 shadow-xl space-y-4 animate-fade-in">
-          <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center font-black">
-                <Calculator className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <span>Interactive Freelance Earnings & Payout Calculator</span>
-                  <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-black uppercase">
-                    Live Simulator
-                  </span>
-                </h3>
-                <p className="text-[11px] text-[#97A0B3]">
-                  Calculate your projected take-home earnings by adjusting your deliverable unit rate and target monthly deliverables.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowCalculator(false)}
-              className="text-[#97A0B3] hover:text-white p-1"
-            >
-              <ChevronUp className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Control 1: Rate per deliverable */}
-            <div className="space-y-2 bg-[#0B111C] p-4 rounded-2xl border border-[#2A3446]">
-              <label className="text-xs font-bold text-white flex items-center justify-between">
-                <span>Base Rate per Deliverable (₹)</span>
-                <span className="text-purple-400 font-mono text-sm font-black">
-                  ₹{baseDeliverableRate.toLocaleString("en-IN")}
-                </span>
-              </label>
-              <input
-                type="range"
-                min="1000"
-                max="25000"
-                step="500"
-                value={baseDeliverableRate}
-                onChange={(e) => setBaseDeliverableRate(Number(e.target.value))}
-                className="w-full accent-purple-600 cursor-pointer"
-              />
-              <div className="flex items-center gap-1.5 pt-1">
-                {[3500, 4500, 6000, 8500, 12000].map((rate) => (
-                  <button
-                    key={rate}
-                    type="button"
-                    onClick={() => setBaseDeliverableRate(rate)}
-                    className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
-                      baseDeliverableRate === rate
-                        ? "bg-purple-600 text-white border-purple-500"
-                        : "bg-[#161F2D] text-[#97A0B3] border-[#2A3446] hover:text-white"
-                    }`}
-                  >
-                    ₹{(rate / 1000).toFixed(1)}k
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Control 2: Target Deliverables */}
-            <div className="space-y-2 bg-[#0B111C] p-4 rounded-2xl border border-[#2A3446]">
-              <label className="text-xs font-bold text-white flex items-center justify-between">
-                <span>Target Deliverables / Month</span>
-                <span className="text-purple-400 font-mono text-sm font-black">
-                  {projectedMonthlyUnits} units
-                </span>
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="25"
-                step="1"
-                value={projectedMonthlyUnits}
-                onChange={(e) => setProjectedMonthlyUnits(Number(e.target.value))}
-                className="w-full accent-purple-600 cursor-pointer"
-              />
-              <div className="flex items-center gap-1.5 pt-1">
-                {[3, 6, 8, 12, 16].map((units) => (
-                  <button
-                    key={units}
-                    type="button"
-                    onClick={() => setProjectedMonthlyUnits(units)}
-                    className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
-                      projectedMonthlyUnits === units
-                        ? "bg-purple-600 text-white border-purple-500"
-                        : "bg-[#161F2D] text-[#97A0B3] border-[#2A3446] hover:text-white"
-                    }`}
-                  >
-                    {units} / mo
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Output: Real-time projection summary */}
-            <div className="bg-gradient-to-br from-purple-900/30 to-indigo-900/30 border border-purple-500/30 p-4 rounded-2xl flex flex-col justify-between space-y-2">
-              <span className="text-[10px] font-black text-purple-300 uppercase tracking-wider">
-                Simulated Net Payout Projection
-              </span>
-              <div className="space-y-1">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-xs text-[#97A0B3]">Monthly Payout:</span>
-                  <span className="text-xl font-black text-emerald-400">
-                    ₹{(baseDeliverableRate * projectedMonthlyUnits).toLocaleString("en-IN")}
-                  </span>
-                </div>
-                <div className="flex items-baseline justify-between text-xs">
-                  <span className="text-[#97A0B3]">Weekly Velocity:</span>
-                  <span className="text-white font-bold">
-                    ₹{Math.round((baseDeliverableRate * projectedMonthlyUnits) / 4).toLocaleString("en-IN")}
-                  </span>
-                </div>
-              </div>
-              <div className="pt-2 border-t border-purple-500/20 text-[10px] text-purple-300 font-semibold flex items-center justify-between">
-                <span>100% Platform Direct Deposit</span>
-                <span className="text-emerald-400 font-bold">Zero Fee Deductions</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Filters Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#161F2D] p-3 rounded-2xl border border-[#2A3446]">
-        <div className="flex items-center gap-1.5 overflow-x-auto">
-          <Filter className="w-3.5 h-3.5 text-[#97A0B3] ml-2 mr-1" />
+      {/* Filters Bar: Full-Width Segmented Controls */}
+      <div className="bg-[#161F2D] p-1.5 sm:p-2 rounded-2xl border border-[#2A3446] w-full shadow-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 w-full">
           {[
-            { key: "all", label: "All Tasks" },
-            { key: "pending", label: "In Progress" },
-            { key: "review", label: "In QA Review" },
-            { key: "revision", label: "Revisions Needed" },
-            { key: "completed", label: "Approved & Paid" },
+            { key: "pending", label: "In Progress", count: tabCounts.pending },
+            { key: "review", label: "In QA Review", count: tabCounts.review },
+            { key: "revision", label: "Revisions Needed", count: tabCounts.revision },
+            { key: "completed", label: "Approved & Paid", count: tabCounts.completed },
           ].map((tab) => (
             <button
               key={tab.key}
               onClick={() => setFilterStatus(tab.key)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center flex items-center justify-center gap-2 ${
                 filterStatus === tab.key
                   ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
                   : "text-[#97A0B3] hover:text-white hover:bg-[#0B111C]"
               }`}
             >
-              {tab.label}
+              <span>{tab.label}</span>
+              <span
+                className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                  filterStatus === tab.key
+                    ? "bg-white/20 text-white font-black"
+                    : "bg-[#2A3446] text-[#97A0B3]"
+                }`}
+              >
+                {tab.count}
+              </span>
             </button>
           ))}
         </div>
-        <span className="text-xs text-[#97A0B3] pr-2">
-          Showing {filteredTasks.length} {filteredTasks.length === 1 ? "task" : "tasks"}
-        </span>
       </div>
 
       {/* Task Cards List */}
@@ -579,15 +356,16 @@ export function FreelancerTasksPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className={`grid grid-cols-1 ${filteredTasks.length > 1 ? "md:grid-cols-2" : ""} gap-4 w-full`}>
           {filteredTasks.map((task) => {
             const fee = Number(task.milestone_fee ?? 4500);
-            const isAssigned = (task.status || "").toUpperCase() === "ASSIGNED";
+            const normStatus = normalizeStatus(task.status);
+            const isAssigned = (task.status || "").toLowerCase() === "assigned" || (task.status || "").toLowerCase() === "backlog";
 
             return (
               <div
                 key={task.id}
-                className="bg-[#161F2D] rounded-3xl p-5 sm:p-6 border border-[#2A3446] shadow-lg hover:border-purple-500/40 transition-all flex flex-col justify-between space-y-4"
+                className="bg-[#161F2D] rounded-3xl p-4 sm:p-6 border border-[#2A3446] shadow-lg hover:border-purple-500/40 transition-all flex flex-col justify-between space-y-4"
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
@@ -600,40 +378,178 @@ export function FreelancerTasksPage() {
                     {getStatusBadge(task.status)}
                   </div>
 
-                  {/* Payout & Format Row */}
-                  <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                    <span className="px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold flex items-center gap-1">
-                      <IndianRupee className="w-3.5 h-3.5" /> Payout: ₹{fee.toLocaleString("en-IN")}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-lg bg-[#0B111C] border border-[#2A3446] font-mono text-purple-300">
-                      {task.format}
-                    </span>
-                    {task.due_date && (
-                      <span className="flex items-center gap-1 text-[#97A0B3]">
-                        <Calendar className="w-3 h-3 text-[#97A0B3]" /> Due: {task.due_date}
-                      </span>
-                    )}
-                  </div>
+                  {/* Content Specifications Chips */}
+                  {(() => {
+                    const footageUrl =
+                      task.raw_footage_url ||
+                      task.blueprint?.raw_footage_url ||
+                      task.blueprint?.drive_url ||
+                      task.brief_url;
+                    const duration = task.target_duration || task.blueprint?.target_duration;
+                    const hookText = task.hook || task.blueprint?.hook;
+                    const audio = task.audio_notes || task.blueprint?.audio_notes;
+                    const refLink = task.reference_url || task.blueprint?.reference_url;
 
-                  {task.description && (
-                    <div className="p-3 bg-[#0B111C] rounded-2xl text-xs text-[#F1F5F9] border border-[#2A3446] space-y-1">
-                      <span className="font-bold text-[#97A0B3] block text-[10px] uppercase">
-                        Creative Brief & Scope
-                      </span>
-                      <p className="line-clamp-3 text-xs leading-relaxed">{task.description}</p>
-                    </div>
-                  )}
+                    return (
+                      <div className="space-y-3">
+                        {/* Specifications Badges Row */}
+                        <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                          <span className="px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold flex items-center gap-1">
+                            <IndianRupee className="w-3.5 h-3.5" /> Payout: ₹{fee.toLocaleString("en-IN")}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-lg bg-[#0B111C] border border-[#2A3446] font-mono text-purple-300 flex items-center gap-1">
+                            <Film className="w-3 h-3 text-purple-400" />
+                            {task.format}
+                          </span>
+                          {duration && (
+                            <span className="px-2 py-0.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-blue-300 flex items-center gap-1 font-mono">
+                              <Clock className="w-3 h-3 text-blue-400" />
+                              Length: {duration}
+                            </span>
+                          )}
+                          {task.due_date && (
+                            <span className="flex items-center gap-1 text-[#97A0B3] bg-[#0B111C] px-2 py-0.5 rounded-lg border border-[#2A3446]">
+                              <Calendar className="w-3 h-3 text-[#97A0B3]" /> Due: {task.due_date}
+                            </span>
+                          )}
+                        </div>
 
-                  {task.brief_url && (
-                    <a
-                      href={task.brief_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-bold hover:underline"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" /> Open Reference Brief / Assets
-                    </a>
-                  )}
+                        {/* Raw Footage / Drive Link (PROMINENT FOR EDITOR) */}
+                        {footageUrl ? (
+                          <a
+                            href={footageUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-blue-900/40 via-[#13233c] to-indigo-900/30 border border-blue-500/40 hover:border-blue-400 text-white transition-all group shadow-md gap-2.5"
+                          >
+                            <div className="flex items-start sm:items-center gap-2.5 min-w-0">
+                              <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform mt-0.5 sm:mt-0">
+                                <FolderGit2 className="w-5 h-5" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                  <span className="text-xs font-black text-white truncate">
+                                    Raw Footage / Source Assets (Drive)
+                                  </span>
+                                  <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+                                    Ready to Edit
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-blue-200/80 truncate">
+                                  Click to open Google Drive folder and download videos to edit
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shrink-0 shadow-sm w-full sm:w-auto">
+                              <span>Open Drive</span>
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </div>
+                          </a>
+                        ) : (
+                          <div className="p-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[11px] text-[#97A0B3] flex items-center gap-2">
+                            <FolderGit2 className="w-4 h-4 text-amber-400 shrink-0" />
+                            <span>
+                              Raw Footage Drive link: <strong className="text-amber-300">Pending link from Admin / TL</strong>
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Creative Directives Box (Hook, Audio, References) */}
+                        {(hookText || audio || refLink) && (
+                          <div className="p-3 bg-[#0B111C] rounded-2xl border border-purple-500/20 text-xs space-y-2">
+                            {hookText && (
+                              <div className="flex items-start gap-1.5 text-amber-300">
+                                <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                                <div>
+                                  <strong className="text-[10px] uppercase tracking-wider text-amber-400 block font-black">
+                                    Hook / Concept Angle:
+                                  </strong>
+                                  <p className="text-white text-xs leading-snug font-medium">"{hookText}"</p>
+                                </div>
+                              </div>
+                            )}
+
+                            {audio && (
+                              <div className="flex items-start gap-1.5 text-pink-300 pt-1 border-t border-[#2A3446]/60">
+                                <Music className="w-3.5 h-3.5 text-pink-400 shrink-0 mt-0.5" />
+                                <div>
+                                  <strong className="text-[10px] uppercase tracking-wider text-pink-400 block font-black">
+                                    Audio & Sound Directions:
+                                  </strong>
+                                  <p className="text-[#F1F5F9] text-xs leading-snug">{audio}</p>
+                                </div>
+                              </div>
+                            )}
+
+                            {refLink && (
+                              <div className="pt-1 border-t border-[#2A3446]/60">
+                                <a
+                                  href={refLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-bold hover:underline"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" /> Open Reference Video / Inspiration
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Brief & Scope */}
+                        {task.description && (
+                          <div className="p-3 bg-[#0B111C] rounded-2xl text-xs text-[#F1F5F9] border border-[#2A3446] space-y-1">
+                            <span className="font-bold text-[#97A0B3] block text-[10px] uppercase">
+                              Creative Brief & Scope
+                            </span>
+                            <p className="line-clamp-4 text-xs leading-relaxed whitespace-pre-wrap">{task.description}</p>
+                          </div>
+                        )}
+
+                        {/* Submitted Deliverable Banner */}
+                        {((task.deliverables && task.deliverables.length > 0) || normStatus === "review") && (() => {
+                          const latest = task.deliverables && task.deliverables.length > 0
+                            ? task.deliverables[task.deliverables.length - 1]
+                            : null;
+                          const rawName = latest?.file_url ? latest.file_url.split("/").pop() : null;
+                          const displayFileName = rawName ? rawName.replace(/^[a-f0-9]{8}_/, "") : "Content submitted for review";
+                          const versionNum = latest?.version || 1;
+
+                          return (
+                            <div className="p-3 sm:p-3.5 bg-gradient-to-r from-blue-900/30 via-[#101b2e] to-purple-900/20 border border-blue-500/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                              <div className="flex items-start sm:items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                                  <CheckCircle2 className="w-4 h-4 text-blue-400" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                    <span className="text-xs font-bold text-white">v{versionNum} Submitted for QA Review</span>
+                                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/30 shrink-0">
+                                      In QA Review
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-[#97A0B3] truncate font-mono mt-0.5">
+                                    {displayFileName}
+                                  </p>
+                                </div>
+                              </div>
+                              {latest?.file_url && (
+                                <a
+                                  href={latest.file_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="w-full sm:w-auto justify-center px-3 py-1.5 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 border border-blue-500/40 cursor-pointer"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                                  <span>View Submitted File</span>
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Card Action Footer */}
@@ -661,22 +577,45 @@ export function FreelancerTasksPage() {
                       </button>
                     )}
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedTaskForSubmit(task);
-                        setSelectedFile(null);
-                        setAssetUrl("");
-                        setSubmissionNotes("");
-                        setSubmitError(null);
-                      }}
-                      className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
-                    >
-                      <UploadCloud className="w-3.5 h-3.5" />
-                      {task.status === "REVISION_REQUESTED"
-                        ? "Submit Revision"
-                        : "Upload Content & Submit"}
-                    </button>
+                    {normStatus === "completed" ? (
+                      <div className="px-3.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-1.5 shadow-xs">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Approved & Paid
+                      </div>
+                    ) : normStatus === "review" ? (
+                      <div className="flex items-center gap-2">
+                        <div className="px-3 py-1.5 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-bold flex items-center gap-1.5 shadow-xs">
+                          <Clock className="w-3.5 h-3.5 animate-pulse text-blue-400" /> Awaiting QA Sign-off
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedTaskForSubmit(task);
+                            setSelectedFile(null);
+                            setAssetUrl("");
+                            setSubmissionNotes("");
+                            setSubmitError(null);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-xs font-semibold text-[#97A0B3] hover:text-white flex items-center gap-1.5 cursor-pointer transition-all"
+                        >
+                          <UploadCloud className="w-3.5 h-3.5" /> Re-upload
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedTaskForSubmit(task);
+                          setSelectedFile(null);
+                          setAssetUrl("");
+                          setSubmissionNotes("");
+                          setSubmitError(null);
+                        }}
+                        className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
+                      >
+                        <UploadCloud className="w-3.5 h-3.5" />
+                        {normStatus === "revision" ? "Submit Revision" : "Upload Content & Submit"}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -859,7 +798,7 @@ export function FreelancerTasksPage() {
                   className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 font-bold text-white shadow-md flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  {submitBusy ? "Uploading & Submitting..." : "Submit to Team Lead"}
+                  {submitBusy ? "Uploading & Submitting..." : "Submit to Admin for Review & Publishing"}
                 </button>
               </div>
             </form>
@@ -876,6 +815,7 @@ export function FreelancerTasksPage() {
           deliverableTitle={historyDeliverable.title}
         />
       )}
+      </div>
     </div>
   );
 }

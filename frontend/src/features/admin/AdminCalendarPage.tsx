@@ -21,10 +21,12 @@ import {
   Eye,
   Check,
   Edit3,
+  PhoneCall,
 } from "lucide-react";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
+import { fetchBDECalendar } from "../../lib/bde-api";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { StoryApprovalModal } from "../../components/ops/StoryApprovalModal";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
@@ -124,11 +126,22 @@ export const FORMAT_CONFIG = {
     chipText: "text-emerald-300",
     color: "#10B981",
   },
+  followup: {
+    label: "Follow-Up",
+    icon: PhoneCall,
+    badgeBg: "bg-teal-500/20",
+    badgeText: "text-teal-300",
+    border: "border-teal-500/30",
+    chipBg: "bg-teal-500/15",
+    chipText: "text-teal-300",
+    color: "#14B8A6",
+  },
 };
 
 export function getFormatConfig(type?: string) {
   if (!type) return FORMAT_CONFIG.poster;
   const key = type.toLowerCase();
+  if (key.includes("follow") || key.includes("call") || key.includes("bde")) return FORMAT_CONFIG.followup;
   if (key.includes("reel") || key.includes("video")) return FORMAT_CONFIG.reel;
   if (key.includes("story")) return FORMAT_CONFIG.story;
   if (key.includes("carousel")) return FORMAT_CONFIG.carousel;
@@ -187,6 +200,15 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
     refetchInterval: 15_000,
   });
 
+  // 1b. Fetch BDE Scheduled Follow-ups
+  const bdeCalendarQuery = useQuery({
+    queryKey: ["bde-calendar", user?.id],
+    queryFn: fetchBDECalendar,
+    enabled: !!user?.id,
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+  });
+
   // 2. Fetch Client Roster for Admin Selection
   const clientsQuery = useQuery({
     queryKey: ["admin-client-roster", user?.id],
@@ -195,7 +217,42 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
     staleTime: 60_000,
   });
 
-  const events = calendarQuery.data ?? [];
+  const bdeEvents: CalendarEvent[] = useMemo(() => {
+    if (!bdeCalendarQuery.data) return [];
+    const allItems = [
+      ...(bdeCalendarQuery.data.overdue || []),
+      ...(bdeCalendarQuery.data.today || []),
+      ...(bdeCalendarQuery.data.upcoming || []),
+    ];
+    return allItems
+      .filter((item) => !!item.scheduled_time)
+      .map((item) => {
+        const d = new Date(item.scheduled_time!);
+        const y = d.getFullYear();
+        const m = d.getMonth() + 1;
+        const day = d.getDate();
+        const dateStr = `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+        return {
+          id: `bde-${item.id}`,
+          client_id: item.lead.id,
+          client_name: item.lead.company ? `${item.lead.name} (${item.lead.company})` : item.lead.name,
+          title: `Follow-Up: ${item.lead.name}`,
+          type: "Follow-Up",
+          status: item.is_overdue ? "overdue" : item.is_today ? "scheduled" : "scheduled",
+          date: dateStr,
+          day,
+          month: m,
+          year: y,
+          time: timeStr,
+          caption: item.lead.phone ? `Phone: ${item.lead.phone}` : "BDE Lead Call",
+        };
+      });
+  }, [bdeCalendarQuery.data]);
+
+  const rawEvents = calendarQuery.data ?? [];
+  const events = useMemo(() => [...rawEvents, ...bdeEvents], [rawEvents, bdeEvents]);
   const clientRoster = clientsQuery.data ?? [];
 
   // Mutations
@@ -244,6 +301,24 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["admin-calendar"] });
       setInspectEvent(null);
+    },
+  });
+
+  const approveAndPublishMutation = useMutation({
+    mutationFn: ({ id, publish_now }: { id: string; publish_now?: boolean }) =>
+      request<{ status: string; message: string; is_published: boolean }>(
+        `/api/v1/admin/calendar/events/${id}/approve-and-publish`,
+        {
+          method: "POST",
+          body: JSON.stringify({ publish_now: publish_now ?? true }),
+        }
+      ),
+    onSuccess: (data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["admin-calendar"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin-uploaded-deliverables"] });
+      if (inspectEvent && inspectEvent.id === variables.id) {
+        setInspectEvent((prev) => (prev ? { ...prev, status: data.is_published ? "published" : "approved" } : null));
+      }
     },
   });
 
@@ -916,18 +991,33 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                           </div>
 
                           <div className="flex items-center gap-1 shrink-0 ml-auto">
-                            {!isApproved && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  updateEventMutation.mutate({ id: event.id, status: "approved" });
-                                }}
-                                disabled={updateEventMutation.isPending}
-                                className="px-2 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 transition-all cursor-pointer inline-flex items-center gap-1"
-                              >
-                                <Check size={10} /> Approve
-                              </button>
+                            {!isApproved && event.status !== "published" && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    approveAndPublishMutation.mutate({ id: event.id, publish_now: true });
+                                  }}
+                                  disabled={approveAndPublishMutation.isPending}
+                                  className="px-2 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-xs transition-all cursor-pointer inline-flex items-center gap-1"
+                                  title="Approve deliverable and publish to Instagram/Queue"
+                                >
+                                  <Sparkles size={10} className="text-amber-300" />
+                                  {approveAndPublishMutation.isPending ? "Publishing..." : "Publish"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    approveAndPublishMutation.mutate({ id: event.id, publish_now: false });
+                                  }}
+                                  disabled={approveAndPublishMutation.isPending}
+                                  className="px-2 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 transition-all cursor-pointer inline-flex items-center gap-1"
+                                >
+                                  <Check size={10} /> Approve
+                                </button>
+                              </>
                             )}
                             <button
                               type="button"
@@ -1497,12 +1587,20 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                 <div>
                   <span className="text-[#97A0B3] font-bold block mb-0.5">Delivery Status</span>
                   <div className="capitalize font-black text-xs flex items-center gap-1.5">
-                    {inspectEvent.status === "approved" ? (
-                      <span className="text-emerald-400 flex items-center gap-1">
-                        <CheckCircle2 className="size-3.5" /> Approved
+                    {inspectEvent.status === "published" ? (
+                      <span className="text-purple-400 bg-purple-500/15 border border-purple-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <Sparkles className="size-3.5" /> Published
+                      </span>
+                    ) : inspectEvent.status === "approved" ? (
+                      <span className="text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <CheckCircle2 className="size-3.5" /> Approved / Ready to Publish
+                      </span>
+                    ) : inspectEvent.status === "pending_qa" ? (
+                      <span className="text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <Clock className="size-3.5" /> In QA Review (Freelancer Upload)
                       </span>
                     ) : (
-                      <span className="text-blue-400 flex items-center gap-1">
+                      <span className="text-blue-400 bg-blue-500/15 border border-blue-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
                         <Clock className="size-3.5" /> {inspectEvent.status.replaceAll("_", " ")}
                       </span>
                     )}
@@ -1544,14 +1642,23 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
 
               {/* Admin Actions Bar */}
               <div className="pt-2 border-t border-[#2A3446] space-y-3">
-                <span className="text-[#97A0B3] font-bold block text-[11px]">Admin Status Controls</span>
+                <span className="text-[#97A0B3] font-bold block text-[11px]">Admin Actions & Approval</span>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
-                    onClick={() => updateEventMutation.mutate({ id: inspectEvent.id, status: "approved" })}
-                    disabled={updateEventMutation.isPending || inspectEvent.status === "approved"}
+                    onClick={() => approveAndPublishMutation.mutate({ id: inspectEvent.id, publish_now: true })}
+                    disabled={approveAndPublishMutation.isPending || inspectEvent.status === "published"}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-black inline-flex items-center gap-1.5 transition-all shadow-md shadow-purple-500/25 cursor-pointer disabled:opacity-40"
+                  >
+                    <Sparkles size={14} className="text-amber-300" />
+                    {approveAndPublishMutation.isPending ? "Publishing..." : "Approve & Publish Now"}
+                  </button>
+
+                  <button
+                    onClick={() => approveAndPublishMutation.mutate({ id: inspectEvent.id, publish_now: false })}
+                    disabled={approveAndPublishMutation.isPending || inspectEvent.status === "approved" || inspectEvent.status === "published"}
                     className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-40"
                   >
-                    <CheckCircle2 size={13} /> Set Approved
+                    <CheckCircle2 size={13} /> Approve Deliverable
                   </button>
 
                   <button

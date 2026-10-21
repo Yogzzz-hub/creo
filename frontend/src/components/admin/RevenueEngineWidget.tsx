@@ -263,7 +263,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
         <Link
           to="/admin/plans"
           onClick={(e) => e.stopPropagation()}
-          className="min-w-0 min-h-[38px] py-2 px-2.5 bg-[#7FA0D6] hover:bg-[#97b7e8] hover:scale-[1.02] text-[#0B111C] rounded-xl text-[11px] font-extrabold border border-[#7FA0D6] transition-all duration-200 shadow-md flex items-center justify-center text-center leading-tight"
+          className="min-w-0 min-h-[38px] py-2 px-2.5 bg-[#0B111C] hover:bg-[#161F2D] hover:border-[#7FA0D6]/60 hover:scale-[1.02] hover:text-[#7FA0D6] text-white rounded-xl text-[11px] font-bold border border-[#2A3446] transition-all duration-200 shadow-md flex items-center justify-center text-center leading-tight"
         >
           <span>Plans & Negotiations</span>
         </Link>

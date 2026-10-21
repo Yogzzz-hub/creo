@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -21,7 +21,6 @@ import {
   Send,
   Building2,
   LifeBuoy,
-  ShieldCheck,
   ExternalLink,
   CheckSquare,
   CalendarCheck,
@@ -74,6 +73,16 @@ export function AdminSidebar() {
     (isSpecialist ||
       location.pathname.startsWith("/workstation") ||
       location.pathname.startsWith("/member"));
+
+  const navScrollRef = useRef<HTMLDivElement>(null);
+
+  // Restore sidebar scroll position across navigation
+  useEffect(() => {
+    const saved = sessionStorage.getItem("admin_sidebar_scroll");
+    if (saved && navScrollRef.current) {
+      navScrollRef.current.scrollTop = Number(saved);
+    }
+  }, [location.pathname]);
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -217,13 +226,6 @@ export function AdminSidebar() {
         location.pathname.startsWith("/admin/support/tickets")
       );
     }
-    if (href === "/admin/sla" || href === "/admin/support/sla") {
-      return (
-        location.pathname === "/admin/sla" ||
-        location.pathname === "/admin/support/sla" ||
-        location.pathname.startsWith("/admin/support/sla")
-      );
-    }
     if (location.pathname === href) return true;
     return location.pathname.startsWith(href + "/");
   };
@@ -253,14 +255,13 @@ export function AdminSidebar() {
         { label: "Productivity", href: "/admin/productivity", icon: TrendingUp },
         { label: "Leave Approvals", href: "/admin/leaves", icon: CalendarCheck },
         { label: "Client Directory", href: "/admin/clients", icon: Building2 },
-        { label: "Instagram Publishing", href: "/admin/publishing", icon: Send },
+        { label: "Instagram Connect", href: "/admin/publishing", icon: Send },
       ],
     },
     {
-      label: "OPERATIONS & SLA",
+      label: "OPERATIONS & SUPPORT",
       items: [
-        { label: "Slack Chat", href: "/slack", icon: MessageSquare, badge: "Chat" },
-        { label: "SLA Performance", href: "/admin/support/sla", icon: ShieldCheck },
+        { label: "Workspace Hub", href: "/slack", icon: MessageSquare, badge: "Chat" },
         { label: "Support Desk", href: "/admin/support", icon: LifeBuoy },
       ],
     },
@@ -290,14 +291,13 @@ export function AdminSidebar() {
       items: [
         { label: "Client Allocations", href: "/lead/clients", icon: Building2 },
         { label: "Leave & Schedule", href: "/lead/schedule", icon: CalendarCheck },
-        { label: "Instagram Publishing", href: "/admin/publishing", icon: Send },
+        { label: "Instagram Connect", href: "/admin/publishing", icon: Send },
       ],
     },
     {
-      label: "OPERATIONS & SLA",
+      label: "OPERATIONS & SUPPORT",
       items: [
-        { label: "Slack Chat", href: "/slack", icon: MessageSquare, badge: "Chat" },
-        { label: "SLA Performance", href: "/admin/sla", icon: ShieldCheck },
+        { label: "Workspace Hub", href: "/slack", icon: MessageSquare, badge: "Chat" },
         { label: "Support Desk", href: "/admin/support", icon: LifeBuoy },
       ],
     },
@@ -314,8 +314,6 @@ export function AdminSidebar() {
       label: "OVERVIEW",
       items: [
         { label: "Sales Funnel & Leads", href: "/bde", icon: Briefcase },
-        { label: "Follow-Up Agenda", href: "/bde?tab=calendar", icon: CalendarCheck },
-        { label: "Forecasting & Win/Loss", href: "/bde?tab=analytics", icon: TrendingUp },
         { label: "Leave & Time Off", href: "/bde/leave", icon: CalendarDays },
       ],
     },
@@ -323,7 +321,7 @@ export function AdminSidebar() {
       label: "COMMERCIALS",
       items: [
         { label: "Plans Catalog", href: "/admin/plans", icon: FileText },
-        { label: "Slack Chat", href: "/slack", icon: MessageSquare, badge: "Chat" },
+        { label: "Workspace Hub", href: "/slack", icon: MessageSquare, badge: "Chat" },
       ],
     },
     {
@@ -338,12 +336,14 @@ export function AdminSidebar() {
       items: [
         { label: "Assigned Workload", href: "/freelancer/tasks", icon: CheckSquare },
         { label: "Time Off & Blackout", href: "/freelancer/leave", icon: CalendarDays },
-        { label: "Slack Chat", href: "/slack", icon: MessageSquare, badge: "Chat" },
+        { label: "Workspace Hub", href: "/slack", icon: MessageSquare, badge: "Chat" },
       ],
     },
     {
       label: "ACCOUNT",
-      items: [],
+      items: [
+        { label: "Profile & Settings", href: "/freelancer/settings", icon: Settings },
+      ],
     },
   ];
 
@@ -360,7 +360,7 @@ export function AdminSidebar() {
     {
       label: "YOUR BRAND",
       items: [
-        { label: "Slack Chat", href: "/portal/slack", icon: MessageSquare, badge: "Chat" },
+        { label: "Workspace Hub", href: "/portal/slack", icon: MessageSquare, badge: "Chat" },
         { label: "Brand DNA", href: "/portal/brand", icon: Dna },
       ],
     },
@@ -433,6 +433,7 @@ export function AdminSidebar() {
 
       {/* Navigation Sidebar: Exact 280px width, sleek navy background, matches Client Portal */}
       <aside
+        data-sidebar="true"
         aria-label="Operations navigation sidebar"
         className={`fixed inset-y-0 left-0 z-[9999] lg:z-30 flex w-[280px] max-w-[85vw] flex-col bg-[#161F2D] border-r border-[#2A3446] shadow-2xl transition-transform duration-300 lg:translate-x-0 ${
           mobileOpen ? "translate-x-0 visible" : "-translate-x-full invisible lg:visible"
@@ -485,7 +486,14 @@ export function AdminSidebar() {
         )}
 
         {/* Scrollable Navigation - Exact view and item sizing */}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 space-y-5 text-left [scrollbar-width:thin] [scrollbar-color:#2A3446_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#2A3446] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#7FA0D6]/50">
+        <div
+          ref={navScrollRef}
+          data-sidebar="true"
+          onScroll={(e) => {
+            sessionStorage.setItem("admin_sidebar_scroll", String(e.currentTarget.scrollTop));
+          }}
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 space-y-5 text-left [scrollbar-width:thin] [scrollbar-color:#2A3446_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#2A3446] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#7FA0D6]/50"
+        >
           {currentNavSections.map((section, idx) => (
             <div key={section.label || `section-${idx}`} className="space-y-1.5">
               {section.label && (

@@ -42,6 +42,12 @@ export interface AssignFreelancerPayload {
   due_date?: string;
   priority?: string;
   milestone_fee?: number;
+  raw_footage_url?: string;
+  format?: string;
+  target_duration?: string;
+  audio_notes?: string;
+  reference_url?: string;
+  hook?: string;
 }
 
 export interface FreelancerAssignedTask {
@@ -55,6 +61,11 @@ export interface FreelancerAssignedTask {
   status: string;
   due_date?: string;
   brief_url?: string;
+  raw_footage_url?: string;
+  target_duration?: string;
+  audio_notes?: string;
+  reference_url?: string;
+  hook?: string;
   assigned_at?: string;
   deliverables?: any[];
   blueprint?: Record<string, any>;
@@ -154,7 +165,12 @@ export async function fetchMyFreelancerTasks(): Promise<FreelancerAssignedTask[]
     format: item.format || item.deliverable_type || "16:9 4K Video",
     status: item.status || "IN_PROGRESS",
     due_date: item.due_date || item.sla_due_at,
-    brief_url: item.brief_url || item.blueprint?.brief_url,
+    brief_url: item.brief_url || item.blueprint?.brief_url || item.raw_footage_url || item.blueprint?.raw_footage_url || item.blueprint?.drive_url,
+    raw_footage_url: item.raw_footage_url || item.blueprint?.raw_footage_url || item.blueprint?.drive_url || item.brief_url,
+    target_duration: item.target_duration || item.blueprint?.target_duration,
+    audio_notes: item.audio_notes || item.blueprint?.audio_notes,
+    reference_url: item.reference_url || item.blueprint?.reference_url,
+    hook: item.hook || item.blueprint?.hook,
     assigned_at: item.created_at,
     deliverables: item.deliverables || [],
     blueprint: item.blueprint,

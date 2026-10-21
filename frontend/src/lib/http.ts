@@ -109,6 +109,16 @@ async function performRequest<T>(path: string, options: RequestOptions = {}, ren
     headers.set("Authorization", `Bearer ${token}`);
   }
 
+  // Seamless CRM agency context
+  try {
+    const crmAgency = typeof window !== "undefined" ? sessionStorage.getItem("creo-crm-agency") : null;
+    if (crmAgency && !headers.has("X-CRM-Agency")) {
+      headers.set("X-CRM-Agency", crmAgency);
+    }
+  } catch {
+    // Ignore storage errors in restricted contexts
+  }
+
   const requestUrl = apiUrl(path);
 
   const controller = new AbortController();

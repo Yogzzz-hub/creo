@@ -69,9 +69,9 @@ async def actor_context(
         or (actor.token_version is not None and actor.token_version != user.token_version)
     ):
         raise Forbidden("An active CRM account in this agency is required.")
-    if actor.role == UserRole.SUPER_ADMIN:
-        from dataclasses import replace
+    from dataclasses import replace
 
+    if actor.role == UserRole.SUPER_ADMIN:
         selected = request.headers.get("X-CRM-Agency")
         if selected:
             try:
@@ -81,16 +81,35 @@ async def actor_context(
             if not await db.get(Agency, tenant_id):
                 raise NotFound("CRM agency not found.")
             actor = replace(actor, agency_id=tenant_id)
-        elif not actor.agency_id:
-            agencies = list(
-                (
-                    await db.execute(
-                        select(Agency.id).where(Agency.status.in_(["active", "trial"])).limit(2)
-                    )
-                ).scalars()
+
+    # Seamless access: if agency_id is not yet resolved, automatically pick the default active agency
+    if not actor.agency_id:
+        primary_agency_id = (
+            await db.execute(
+                select(Agency.id)
+                .where(Agency.status.in_(["active", "trial"]))
+                .order_by(Agency.created_at.asc())
+                .limit(1)
             )
-            if len(agencies) == 1:
-                actor = replace(actor, agency_id=agencies[0])
+        ).scalar_one_or_none()
+        if not primary_agency_id:
+            primary_agency_id = (
+                await db.execute(
+                    select(Agency.id).order_by(Agency.created_at.asc()).limit(1)
+                )
+            ).scalar_one_or_none()
+        if not primary_agency_id:
+            default_agency = Agency(name="Creo Agency", slug="creo-main", status="active")
+            db.add(default_agency)
+            await db.flush()
+            primary_agency_id = default_agency.id
+
+        if primary_agency_id:
+            actor = replace(actor, agency_id=primary_agency_id)
+            if user and not user.agency_id:
+                user.agency_id = primary_agency_id
+                await db.flush()
+
     scope(actor, Lead.agency_id, Lead.assigned_bde_id)
     return actor
 
@@ -125,6 +144,17 @@ async def agency_options(
 
 
 async def allowed_owner(db, actor, user_id):
+    if actor.role in {UserRole.ADMIN, UserRole.SUPER_ADMIN}:
+        stmt = select(User).where(
+            User.id == user_id,
+            User.agency_id == actor.agency_id,
+            User.account_status == AccountStatus.ACTIVE,
+        )
+        user = (await db.execute(stmt)).scalar_one_or_none()
+        if not user:
+            raise Forbidden("Assign a BDE within your reporting scope and agency.")
+        return user
+
     stmt = select(User).where(
         User.id == user_id,
         User.agency_id == actor.agency_id,
@@ -449,7 +479,15 @@ class LeadBody(Body):
 async def create_record(db, actor, body):
     owner = body.assigned_bde_id or actor.user_id
     await allowed_owner(db, actor, owner)
-    phone, email = service.normalized_contact(body.phone, str(body.email) if body.email else None)
+    phone_raw = (body.phone or "").strip()
+    if phone_raw and not phone_raw.startswith("+"):
+        import re
+        digits = re.sub(r"\D", "", phone_raw)
+        if len(digits) == 10:
+            phone_raw = f"+91{digits}"
+        elif len(digits) > 10:
+            phone_raw = f"+{digits}"
+    phone, email = service.normalized_contact(phone_raw or None, str(body.email) if body.email else None)
     # Agency lock serializes duplicate checks and writes across concurrent imports.
     await db.execute(select(Agency.id).where(Agency.id == actor.agency_id).with_for_update())
     if await service.duplicates(db, actor.agency_id, phone, email):

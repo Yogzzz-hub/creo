@@ -770,6 +770,19 @@ export async function revokeClientBypass(
 
 
 /** Create and assign in one transaction; never report success for a browser-only card. */
-export function createPodTask(input: { client_id: string; assignee_id?: string; deliverable_type: string; title: string; brief?: string }) {
+export function createPodTask(input: {
+  client_id: string;
+  assignee_id?: string;
+  deliverable_type: string;
+  title: string;
+  brief?: string;
+  due_date?: string | null;
+  raw_footage_url?: string;
+  format?: string;
+  target_duration?: string;
+  audio_notes?: string;
+  reference_url?: string;
+  hook?: string;
+}) {
   return request<{ id: string }>("/api/v1/tasks", { method: "POST", body: JSON.stringify(input) });
 }

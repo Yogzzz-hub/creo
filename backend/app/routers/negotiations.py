@@ -120,7 +120,13 @@ async def submit_negotiation(
     )
 
 
-get_commercial_actor = require_roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.SALES)
+get_commercial_actor = require_roles(
+    UserRole.ADMIN,
+    UserRole.SUPER_ADMIN,
+    UserRole.SALES,
+    UserRole.BDE,
+    UserRole.BDE_HEAD,
+)
 
 
 @router.patch("/{negotiation_id}/approve", response_model=dict[str, Any])
@@ -164,11 +170,46 @@ async def list_negotiations(
     actor: Actor = Depends(get_commercial_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Admin retrieves all custom plan negotiations."""
+    """Admin retrieves all custom plan negotiations, or scoped to BDE contacted clients."""
+    from sqlalchemy import or_
+
     query = select(PlanNegotiation).order_by(desc(PlanNegotiation.created_at))
 
     if actor.role != UserRole.SUPER_ADMIN:
         query = query.where(PlanNegotiation.agency_id == actor.agency_id)
+
+    # If actor is BDE: only return requests for clients they contact/manage; rest go to admin
+    if actor.role in {UserRole.BDE, UserRole.SALES}:
+        from app.models.bde import Lead
+        from app.models.work import ClientAssignment
+
+        assigned_client_ids = (
+            await db.execute(
+                select(ClientAssignment.client_id).where(ClientAssignment.user_id == actor.user_id)
+            )
+        ).scalars().all()
+
+        bde_leads = (
+            await db.execute(
+                select(Lead).where(Lead.assigned_bde_id == actor.user_id)
+            )
+        ).scalars().all()
+
+        lead_emails = {l.email.strip().lower() for l in bde_leads if l.email}
+        lead_phones = {l.phone.strip() for l in bde_leads if l.phone}
+        lead_names = {l.name.strip().lower() for l in bde_leads if l.name}
+
+        filters = [PlanNegotiation.reviewed_by == actor.user_id]
+        if assigned_client_ids:
+            filters.append(PlanNegotiation.client_id.in_(assigned_client_ids))
+        if lead_emails:
+            filters.append(func.lower(PlanNegotiation.client_email).in_(lead_emails))
+        if lead_phones:
+            filters.append(PlanNegotiation.phone_number.in_(lead_phones))
+        if lead_names:
+            filters.append(func.lower(PlanNegotiation.client_name).in_(lead_names))
+
+        query = query.where(or_(*filters))
 
     if negotiation_id:
         query = query.where(PlanNegotiation.id == negotiation_id)

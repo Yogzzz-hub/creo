@@ -47,6 +47,7 @@ TRANSITIONS: dict[str, set[str]] = {
     DeliverableStatus.PENDING_QA: {
         DeliverableStatus.QA_REJECTED,
         DeliverableStatus.PENDING_APPROVAL,
+        DeliverableStatus.APPROVED,
         DeliverableStatus.ARCHIVED,
     },
     DeliverableStatus.QA_REJECTED: {
@@ -104,8 +105,9 @@ _SYSTEM = {UserRole.ADMIN, UserRole.SUPER_ADMIN}
 ALLOWED_ACTORS: dict[tuple[str, str], set[UserRole]] = {
     # Staff submits to QA
     (DeliverableStatus.IN_PRODUCTION, DeliverableStatus.PENDING_QA): _STAFF_ROLES,
-    # Team lead QA approve/reject
+    # Team lead / Admin QA approve/reject or direct approval
     (DeliverableStatus.PENDING_QA, DeliverableStatus.PENDING_APPROVAL): _LEAD_PLUS,
+    (DeliverableStatus.PENDING_QA, DeliverableStatus.APPROVED): _LEAD_PLUS,
     (DeliverableStatus.PENDING_QA, DeliverableStatus.QA_REJECTED): _LEAD_PLUS,
     # Staff reworks after QA reject
     (DeliverableStatus.QA_REJECTED, DeliverableStatus.IN_PRODUCTION): _STAFF_ROLES,
@@ -409,8 +411,10 @@ async def sync_task_with_deliverable(
         task.status = TaskStatus.INTERNAL_QA
     elif to_str == DeliverableStatus.PENDING_APPROVAL.value:
         task.status = TaskStatus.CLIENT_REVIEW
-    elif to_str in (DeliverableStatus.APPROVED.value, DeliverableStatus.SCHEDULED.value, DeliverableStatus.PUBLISHED.value):
+    elif to_str in (DeliverableStatus.APPROVED.value, DeliverableStatus.SCHEDULED.value):
         task.status = TaskStatus.READY_TO_PUBLISH
+    elif to_str == DeliverableStatus.PUBLISHED.value:
+        task.status = TaskStatus.COMPLETED
     elif to_str == DeliverableStatus.REVISION_REQUESTED.value:
         task.status = TaskStatus.IN_PRODUCTION
         task.is_revision = True

@@ -189,19 +189,17 @@ async def create_lead(
     """Compatibility entrypoint; new leads share dedupe, ownership and task rules."""
     from app.routers.revenue_crm import LeadBody, create_record
 
-    if payload.status.lower() != "new":
-        raise HTTPException(
-            status_code=409,
-            detail="Create a new lead first, then use CRM qualification and stage controls.",
-        )
+    phone_val = (payload.phone or "").strip() or None
+    email_val = (payload.email or "").strip() or None
+
     lead = await create_record(
         db,
         actor,
         LeadBody(
-            name=payload.name,
-            company_name=payload.company_name,
-            email=payload.email,
-            phone=payload.phone,
+            name=payload.name.strip(),
+            company_name=payload.company_name.strip(),
+            email=email_val,
+            phone=phone_val,
             requirements=payload.requirements or "",
             estimated_deal_value=payload.estimated_deal_value,
             lead_source=payload.lead_source,
@@ -209,6 +207,49 @@ async def create_lead(
             due_at=payload.next_follow_up_at or datetime.now(UTC) + timedelta(days=1),
         ),
     )
+    if payload.priority:
+        lead.priority = payload.priority.lower()
+    if payload.status:
+        lead.status = payload.status.lower()
+
+    # Auto-link client User and ClientAssignment so BDE can chat with this lead in Workspace Hub
+    bde_owner_id = lead.assigned_bde_id or actor.user_id
+    from app.models.work import ClientAssignment
+    from app.models.enums import AccountStatus
+
+    clean_email = (email_val or "").strip().lower()
+    client_u = None
+    if clean_email:
+        client_u = (await db.execute(select(User).where(func.lower(User.email) == clean_email))).scalar_one_or_none()
+
+    if not client_u:
+        client_u = User(
+            agency_id=actor.agency_id,
+            auth_id=f"lead_{lead.id}",
+            email=clean_email or f"prospect_{lead.id}@creo.agency",
+            full_name=payload.name.strip(),
+            role=UserRole.CLIENT,
+            account_status=AccountStatus.ACTIVE,
+        )
+        db.add(client_u)
+        await db.flush()
+
+    ca_exists = (await db.execute(
+        select(ClientAssignment).where(
+            ClientAssignment.client_id == client_u.id,
+            ClientAssignment.user_id == bde_owner_id,
+        )
+    )).scalar_one_or_none()
+    if not ca_exists:
+        db.add(ClientAssignment(
+            agency_id=actor.agency_id,
+            client_id=client_u.id,
+            user_id=bde_owner_id,
+            role="bde",
+            craft_role="bde",
+            is_primary=True,
+        ))
+
     await db.commit()
     return {
         "status": "success",
@@ -285,14 +326,6 @@ async def update_lead(
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found.")
 
-    if (lead.metadata_extra or {}).get("created_by") and any(
-        getattr(payload, field) is not None
-        for field in ["status", "priority", "assigned_bde_id", "next_follow_up_at"]
-    ):
-        raise HTTPException(
-            status_code=409,
-            detail="Use the Revenue CRM stage, qualification, assignment and task controls for this lead.",
-        )
     old_status = lead.status
     if payload.name is not None:
         lead.name = payload.name.strip()
@@ -358,9 +391,11 @@ async def delete_lead(
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found.")
 
-    from app.services.crm_access import require_manager
+    if actor.role not in {UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.BDE_HEAD}:
+        if lead.assigned_bde_id != actor.user_id:
+            from app.services.crm_access import require_manager
+            require_manager(actor)
 
-    require_manager(actor)
     from app.models.revenue_crm import CRMTask, CRMMessage
     from app.services.revenue_crm import event
 
@@ -403,6 +438,8 @@ async def add_lead_activity(
 
     now = datetime.now(UTC)
     lead.last_contacted_at = now
+    if payload.scheduled_follow_up:
+        lead.next_follow_up_at = payload.scheduled_follow_up
 
     actor_user_id = None
     if actor.user_id:
@@ -557,6 +594,9 @@ async def get_bde_calendar(
                 "name": lead.name,
                 "company": lead.company_name,
                 "phone": lead.phone,
+                "email": lead.email,
+                "requirements": lead.requirements,
+                "estimated_deal_value": lead.estimated_deal_value,
                 "priority": lead.priority,
                 "status": lead.status,
             },

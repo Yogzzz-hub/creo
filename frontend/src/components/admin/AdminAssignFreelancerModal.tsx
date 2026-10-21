@@ -9,6 +9,12 @@ import {
   AlertCircle,
   IndianRupee,
   Sparkles,
+  Film,
+  FolderGit2,
+  Clock,
+  Music,
+  ExternalLink,
+  Info,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { assignFreelancerTask, FreelancerProfileItem } from "../../lib/freelancer-api";
@@ -22,6 +28,14 @@ interface AdminAssignFreelancerModalProps {
   onSuccess: () => void;
 }
 
+const FORMAT_OPTIONS = [
+  { label: "Reel (9:16 Vertical · 1080×1920)", value: "Reel (9:16)" },
+  { label: "Video (16:9 Landscape · 1920×1080)", value: "Video (16:9)" },
+  { label: "Carousel (4:5 Portrait / 1:1)", value: "Carousel (4:5 / 1:1)" },
+  { label: "Static Graphic (1:1 Square)", value: "Static Graphic (1:1)" },
+  { label: "Story (9:16 Vertical)", value: "Story (9:16)" },
+];
+
 export function AdminAssignFreelancerModal({
   isOpen,
   onClose,
@@ -31,6 +45,12 @@ export function AdminAssignFreelancerModal({
   const [assignmentMode, setAssignmentMode] = useState<"deliverable" | "custom">("deliverable");
   const [selectedDeliverableId, setSelectedDeliverableId] = useState<string>("");
   const [taskTitle, setTaskTitle] = useState("");
+  const [contentFormat, setContentFormat] = useState("Reel (9:16)");
+  const [rawFootageUrl, setRawFootageUrl] = useState("");
+  const [targetDuration, setTargetDuration] = useState("30-60s");
+  const [audioNotes, setAudioNotes] = useState("");
+  const [hook, setHook] = useState("");
+  const [referenceUrl, setReferenceUrl] = useState("");
   const [instructions, setInstructions] = useState("");
   const [priority, setPriority] = useState<"Normal" | "High" | "Urgent">("High");
   const [dueDate, setDueDate] = useState(
@@ -66,6 +86,17 @@ export function AdminAssignFreelancerModal({
       if (found.description || found.notes) {
         setInstructions(found.description || found.notes);
       }
+      if (found.format || found.deliverable_type) {
+        const fmt = String(found.format || found.deliverable_type).toLowerCase();
+        if (fmt.includes("reel")) setContentFormat("Reel (9:16)");
+        else if (fmt.includes("carousel")) setContentFormat("Carousel (4:5 / 1:1)");
+        else if (fmt.includes("post") || fmt.includes("graphic")) setContentFormat("Static Graphic (1:1)");
+        else if (fmt.includes("story")) setContentFormat("Story (9:16)");
+        else if (fmt.includes("video") || fmt.includes("16:9")) setContentFormat("Video (16:9)");
+      }
+      if (found.drive_url || found.raw_footage_url || found.brief_url) {
+        setRawFootageUrl(found.drive_url || found.raw_footage_url || found.brief_url);
+      }
     }
   };
 
@@ -81,6 +112,12 @@ export function AdminAssignFreelancerModal({
     try {
       const fullInstructions = [
         instructions.trim(),
+        `[Format: ${contentFormat}]`,
+        targetDuration ? `[Target Duration: ${targetDuration}]` : "",
+        rawFootageUrl ? `[Raw Footage Drive Link: ${rawFootageUrl.trim()}]` : "",
+        audioNotes ? `[Audio / Music: ${audioNotes.trim()}]` : "",
+        hook ? `[Hook / Concept: ${hook.trim()}]` : "",
+        referenceUrl ? `[Reference URL: ${referenceUrl.trim()}]` : "",
         `[Priority: ${priority}]`,
         taskCompensation ? `[Agreed Milestone Fee: ₹${taskCompensation.toLocaleString()}]` : "",
       ]
@@ -94,6 +131,12 @@ export function AdminAssignFreelancerModal({
         due_date: dueDate,
         priority,
         milestone_fee: taskCompensation,
+        raw_footage_url: rawFootageUrl.trim() || undefined,
+        format: contentFormat,
+        target_duration: targetDuration.trim() || undefined,
+        audio_notes: audioNotes.trim() || undefined,
+        reference_url: referenceUrl.trim() || undefined,
+        hook: hook.trim() || undefined,
       });
 
       onSuccess();
@@ -111,7 +154,7 @@ export function AdminAssignFreelancerModal({
       onClick={onClose}
     >
       <div
-        className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-5 text-white max-h-[92vh] overflow-y-auto my-auto"
+        className="bg-[#161F2D] rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-5 text-white max-h-[92vh] overflow-y-auto my-auto"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -124,7 +167,7 @@ export function AdminAssignFreelancerModal({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white">Assign Task / Deliverable</h3>
+                <h3 className="text-base font-bold text-white">Assign Task & Content Specs</h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   {freelancer.status}
                 </span>
@@ -217,13 +260,117 @@ export function AdminAssignFreelancerModal({
             />
           </div>
 
+          {/* ── Content Specifications Box ── */}
+          <div className="p-4 rounded-2xl bg-[#0B111C] border border-purple-500/30 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <span className="font-extrabold text-xs text-purple-300 flex items-center gap-1.5 uppercase tracking-wider">
+                <Film className="w-4 h-4 text-purple-400" /> Content & Technical Specifications
+              </span>
+              <span className="text-[10px] text-[#97A0B3] flex items-center gap-1">
+                <Info className="w-3 h-3" /> Visible to Assignee
+              </span>
+            </div>
+
+            {/* Content Format & Aspect Ratio */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Content Format & Ratio *</label>
+                <CustomSelect
+                  value={contentFormat}
+                  onChange={setContentFormat}
+                  ariaLabel="Content Format & Ratio"
+                  className="w-full"
+                  options={FORMAT_OPTIONS}
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Target Duration / Length</label>
+                <div className="relative">
+                  <Clock className="w-3.5 h-3.5 text-[#97A0B3] absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    value={targetDuration}
+                    onChange={(e) => setTargetDuration(e.target.value)}
+                    placeholder="e.g. 30-60s or 15-30s"
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white focus:outline-none focus:border-purple-400 text-xs font-medium"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Raw Footage / Google Drive Link (CRITICAL) */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="font-bold text-[#F1F5F9] flex items-center gap-1.5">
+                  <FolderGit2 className="w-3.5 h-3.5 text-blue-400" />
+                  Raw Footage / Google Drive Assets Link
+                </label>
+                <span className="text-[10px] text-emerald-400 font-semibold">1-Click Open for Worker</span>
+              </div>
+              <div className="relative">
+                <ExternalLink className="w-3.5 h-3.5 text-[#97A0B3] absolute left-3 top-3" />
+                <input
+                  type="url"
+                  value={rawFootageUrl}
+                  onChange={(e) => setRawFootageUrl(e.target.value)}
+                  placeholder="https://drive.google.com/drive/folders/..."
+                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white focus:outline-none focus:border-blue-400 text-xs font-mono"
+                />
+              </div>
+              <p className="text-[10px] text-[#97A0B3] mt-1">
+                Paste the Google Drive or cloud storage folder containing the raw videos/photos for the editor to download.
+              </p>
+            </div>
+
+            {/* Audio / Music & Hook Concepts */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-[#F1F5F9] mb-1 flex items-center gap-1">
+                  <Music className="w-3 h-3 text-pink-400" /> Audio / Music Instructions
+                </label>
+                <input
+                  type="text"
+                  value={audioNotes}
+                  onChange={(e) => setAudioNotes(e.target.value)}
+                  placeholder="e.g. Trending energetic reel audio / Voiceover in Drive"
+                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white focus:outline-none focus:border-purple-400 text-xs"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-[#F1F5F9] mb-1 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-amber-400" /> Hook / Concept
+                </label>
+                <input
+                  type="text"
+                  value={hook}
+                  onChange={(e) => setHook(e.target.value)}
+                  placeholder="e.g. First 2s hook: Stop making this mistake..."
+                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white focus:outline-none focus:border-purple-400 text-xs"
+                />
+              </div>
+            </div>
+
+            {/* Reference URL */}
+            <div>
+              <label className="block font-bold text-[#F1F5F9] mb-1">Inspiration / Reference Link (Optional)</label>
+              <input
+                type="url"
+                value={referenceUrl}
+                onChange={(e) => setReferenceUrl(e.target.value)}
+                placeholder="https://instagram.com/reel/... or YouTube reference"
+                className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white focus:outline-none focus:border-purple-400 text-xs"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block font-bold text-[#F1F5F9] mb-1">Execution Brief & Technical Instructions</label>
             <textarea
               rows={3}
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
-              placeholder="Include aspect ratio (9:16 / 16:9), reference links, Google Drive assets, color grading lut, audio sync specs..."
+              placeholder="Include color grading LUT, pacing, captions styling, brand font directions..."
               className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-purple-400 text-xs"
             />
           </div>

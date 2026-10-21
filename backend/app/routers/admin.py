@@ -28,7 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, selectinload
 
 from app.core.cache import invalidate_user_session
-from app.core.dashboard_cache import dashboard_cached
+from app.core.dashboard_cache import dashboard_cached, invalidate_dashboard_cache
 from app.core.errors import Conflict, Forbidden, NotFound
 from app.core.rbac import (
     Actor,
@@ -5067,6 +5067,7 @@ async def get_admin_calendar(
             Deliverable,
             Task.deliverable_type,
             ClientProfile.brand_summary,
+            Task.blueprint,
         )
         .join(User, User.id == ContentCalendar.client_id)
         .outerjoin(ClientProfile, ClientProfile.user_id == ContentCalendar.client_id)
@@ -5090,9 +5091,9 @@ async def get_admin_calendar(
     cal_rows = cal_res.fetchall()
 
     media_urls = await storage_service.resolve_media_urls([
-        d.file_url for _, _, _, d, _, _ in cal_rows if d
+        d.file_url for _, _, _, d, _, _, _ in cal_rows if d
     ])
-    for cal, email, company_name, d, deliv_type, brand_summary in cal_rows:
+    for cal, email, company_name, d, deliv_type, brand_summary, cal_task_bp in cal_rows:
         client_name = company_name or email.split("@")[0].capitalize()
         event_dt = cal.scheduled_time or datetime.combine(cal.publish_date, datetime.min.time().replace(hour=11), tzinfo=timezone.utc)
         
@@ -5125,16 +5126,11 @@ async def get_admin_calendar(
         status_str = "scheduled"
         file_url = None
         if d:
-            status_str = (
-                "approved"
-                if d.status.value == "approved"
-                else "scheduled"
-                if d.status.value in ["draft", "pending_approval"]
-                else d.status.value
-            )
+            status_str = d.status.value if hasattr(d.status, "value") else str(d.status)
             file_url = media_urls.get(d.file_url)
 
-        title = cal.caption or f"{format_label} · {client_name}"
+        task_title = (cal_task_bp or {}).get("title") if isinstance(cal_task_bp, dict) else None
+        title = cal.caption or (f"{task_title} · {client_name}" if task_title else f"{format_label} · {client_name}")
 
         bp = cal.blueprint or {}
         c_status = getattr(cal, "concept_status", "approved")
@@ -5143,6 +5139,7 @@ async def get_admin_calendar(
             "client_id": str(cal.client_id),
             "client_email": email,
             "deliverable_id": str(d.id) if d else None,
+            "task_id": str(d.task_id) if d and d.task_id else None,
             "client_name": client_name,
             "title": title,
             "type": format_label,
@@ -5161,7 +5158,7 @@ async def get_admin_calendar(
             "file_url": file_url,
             "file_type": d.file_type if d else ("video/mp4" if format_label == "Reel" else "image/jpeg"),
             "brand_summary": brand_summary,
-            "blueprint": cal.blueprint,
+            "blueprint": cal.blueprint or cal_task_bp,
             "selected_hook": cal.selected_hook,
             "is_locked": getattr(cal, "is_locked", False),
             "slot_kind": cal.slot_kind,
@@ -5176,6 +5173,8 @@ async def get_admin_calendar(
             Task.deliverable_type,
             User.email,
             ClientProfile.company_name,
+            Task.blueprint,
+            Task.id,
         )
         .join(User, User.id == Deliverable.client_id)
         .outerjoin(Task, Task.id == Deliverable.task_id)
@@ -5202,8 +5201,8 @@ async def get_admin_calendar(
     deliv_res = await db.execute(deliv_stmt)
     deliv_rows = deliv_res.fetchall()
 
-    media_urls = await storage_service.resolve_media_urls([d.file_url for d, _, _, _ in deliv_rows])
-    for d, deliv_type, email, company_name in deliv_rows:
+    media_urls = await storage_service.resolve_media_urls([d.file_url for d, _, _, _, _, _ in deliv_rows])
+    for d, deliv_type, email, company_name, task_bp, t_id in deliv_rows:
         client_name = company_name or email.split("@")[0].capitalize()
         event_date = d.scheduled_at or d.created_at
         format_label = "Reel"
@@ -5224,28 +5223,31 @@ async def get_admin_calendar(
         else:
             format_label = "Poster"
 
-        title = f"{format_label} · {client_name}"
+        task_title = (task_bp or {}).get("title") if isinstance(task_bp, dict) else None
+        title = f"{task_title} · {client_name}" if task_title else f"{format_label} · {client_name}"
+        status_val = d.status.value if hasattr(d.status, "value") else str(d.status)
 
         events.append({
             "id": str(d.id),
             "client_id": str(d.client_id),
             "client_email": email,
             "deliverable_id": str(d.id),
+            "task_id": str(t_id) if t_id else None,
             "client_name": client_name,
             "title": title,
             "type": format_label,
-            "status": "approved" if d.status.value == "approved" else "scheduled" if d.status.value in ["draft", "pending_approval"] else d.status.value,
+            "status": status_val,
             "date": event_date.strftime("%Y-%m-%d") if event_date else "",
             "day": event_date.day if event_date else 1,
             "month": event_date.month if event_date else 1,
             "year": event_date.year if event_date else 2026,
             "time": event_date.strftime("%I:%M %p") if event_date else "11:00 AM",
-            "caption": "",
+            "caption": (task_bp or {}).get("premise") or (task_bp or {}).get("description") or "",
             "file_url": media_urls.get(d.file_url),
             "file_type": d.file_type,
             "brand_summary": None,
-            "blueprint": None,
-            "selected_hook": None,
+            "blueprint": task_bp,
+            "selected_hook": (task_bp or {}).get("selected_hook"),
             "is_locked": False,
             "slot_kind": "reel" if format_label == "Reel" else "poster",
             "slot_strategy": "standalone",
@@ -5328,12 +5330,25 @@ async def admin_update_calendar_event(
         if entry.deliverable_id and payload.status:
             deliv = await db.get(Deliverable, entry.deliverable_id)
             if deliv:
+                from app.services import deliverable_state
                 if payload.status == "approved":
-                    deliv.status = DeliverableStatus.APPROVED
-                    deliv.approved_at = datetime.now(timezone.utc)
-                elif payload.status == "rejected":
-                    deliv.status = DeliverableStatus.REJECTED
-                    deliv.rejected_at = datetime.now(timezone.utc)
+                    try:
+                        await deliverable_state.transition(
+                            db, deliv, DeliverableStatus.APPROVED,
+                            actor_id=actor.user_id, actor_role=actor.role, reason="Admin calendar update", commit=False
+                        )
+                    except Exception:
+                        deliv.status = DeliverableStatus.APPROVED
+                        deliv.approved_at = datetime.now(timezone.utc)
+                elif payload.status in ("rejected", "qa_rejected"):
+                    try:
+                        await deliverable_state.transition(
+                            db, deliv, DeliverableStatus.QA_REJECTED,
+                            actor_id=actor.user_id, actor_role=actor.role, qa_notes="Rejected by admin", commit=False
+                        )
+                    except Exception:
+                        deliv.status = DeliverableStatus.REJECTED
+                        deliv.rejected_at = datetime.now(timezone.utc)
         await db.commit()
         return {"message": "Calendar event updated successfully", "id": str(entry.id)}
 
@@ -5342,16 +5357,176 @@ async def admin_update_calendar_event(
         if payload.publish_date is not None:
             deliv.scheduled_at = datetime.combine(payload.publish_date, datetime.min.time().replace(hour=11), tzinfo=timezone.utc)
         if payload.status is not None:
+            from app.services import deliverable_state
             if payload.status == "approved":
-                deliv.status = DeliverableStatus.APPROVED
-                deliv.approved_at = datetime.now(timezone.utc)
-            elif payload.status == "rejected":
-                deliv.status = DeliverableStatus.REJECTED
-                deliv.rejected_at = datetime.now(timezone.utc)
+                try:
+                    await deliverable_state.transition(
+                        db, deliv, DeliverableStatus.APPROVED,
+                        actor_id=actor.user_id, actor_role=actor.role, reason="Admin calendar update", commit=False
+                    )
+                except Exception:
+                    deliv.status = DeliverableStatus.APPROVED
+                    deliv.approved_at = datetime.now(timezone.utc)
+            elif payload.status in ("rejected", "qa_rejected"):
+                try:
+                    await deliverable_state.transition(
+                        db, deliv, DeliverableStatus.QA_REJECTED,
+                        actor_id=actor.user_id, actor_role=actor.role, qa_notes="Rejected by admin", commit=False
+                    )
+                except Exception:
+                    deliv.status = DeliverableStatus.REJECTED
+                    deliv.rejected_at = datetime.now(timezone.utc)
         await db.commit()
         return {"message": "Deliverable updated successfully", "id": str(deliv.id)}
 
     raise NotFound("Calendar entry not found")
+
+
+class AdminApprovePublishPayload(BaseModel):
+    publish_now: bool = True
+    scheduled_time: datetime | None = None
+    caption: str | None = None
+
+
+@router.post("/calendar/events/{event_id}/approve-and-publish")
+async def admin_approve_and_publish_event(
+    event_id: uuid.UUID,
+    payload: AdminApprovePublishPayload | None = None,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Admin directly approves deliverable and publishes or arms publishing pipeline."""
+    p_now = payload.publish_now if payload else True
+    caption = payload.caption if payload else None
+    sched_time = payload.scheduled_time if payload else None
+
+    deliv = await db.get(Deliverable, event_id)
+    cal_entry = None
+    if not deliv:
+        cal_entry = await db.get(ContentCalendar, event_id)
+        if cal_entry and cal_entry.deliverable_id:
+            deliv = await db.get(Deliverable, cal_entry.deliverable_id)
+
+    if not deliv and not cal_entry:
+        raise NotFound("Calendar entry or deliverable not found.")
+
+    from app.services import deliverable_state
+    now = datetime.now(timezone.utc)
+
+    if deliv:
+        from_status = deliv.status.value if hasattr(deliv.status, "value") else str(deliv.status)
+        if from_status in ("pending_qa", "pending_approval", "draft", "in_production"):
+            try:
+                await deliverable_state.transition(
+                    db, deliv, DeliverableStatus.APPROVED,
+                    actor_id=actor.user_id, actor_role=actor.role, reason="Admin direct approve & publish", commit=False
+                )
+            except Exception:
+                deliv.status = DeliverableStatus.APPROVED
+                deliv.approved_at = now
+        elif deliv.status != DeliverableStatus.APPROVED:
+            deliv.status = DeliverableStatus.APPROVED
+            deliv.approved_at = now
+
+        # Ensure task status is updated to ready_to_publish
+        if deliv.task_id:
+            task = await db.get(Task, deliv.task_id)
+            if task:
+                task.status = TaskStatus.READY_TO_PUBLISH
+
+    # Sync ContentCalendar entry
+    if not cal_entry and deliv:
+        cal_res = await db.execute(select(ContentCalendar).where(ContentCalendar.deliverable_id == deliv.id))
+        cal_entry = cal_res.scalar_one_or_none()
+
+    if cal_entry:
+        cal_entry.status = "approved"
+        cal_entry.concept_status = "approved"
+        if caption:
+            cal_entry.caption = caption
+        if sched_time:
+            cal_entry.scheduled_time = sched_time
+            cal_entry.publish_date = sched_time.date()
+    elif deliv:
+        fmt = "reel" if "video" in (deliv.file_type or "").lower() or "mp4" in (deliv.file_type or "").lower() else "poster"
+        pub_d = (sched_time or deliv.scheduled_at or now).date()
+        cal_entry = ContentCalendar(
+            agency_id=deliv.agency_id or actor.agency_id,
+            client_id=deliv.client_id,
+            deliverable_id=deliv.id,
+            publish_date=pub_d,
+            scheduled_time=sched_time or deliv.scheduled_at or now,
+            caption=caption or "Approved Deliverable",
+            status="approved",
+            slot_kind=fmt,
+            slot_strategy="anchor",
+            concept_status="approved",
+        )
+        db.add(cal_entry)
+        await db.flush()
+
+    is_published = False
+    if deliv and p_now:
+        # Check if Instagram is connected for client
+        profile = await db.get(ClientProfile, deliv.client_id)
+        if profile and profile.ig_connection_status == "connected" and profile.instagram_user_id:
+            try:
+                from app.models.publishing import PublishingJob
+                job = (await db.execute(select(PublishingJob).where(PublishingJob.deliverable_id == deliv.id))).scalar_one_or_none()
+                if not job:
+                    job = PublishingJob(
+                        agency_id=deliv.agency_id or actor.agency_id,
+                        client_id=deliv.client_id,
+                        deliverable_id=deliv.id,
+                        calendar_entry_id=cal_entry.id if cal_entry else None,
+                        caption=(cal_entry.caption if cal_entry else "") or "",
+                        media_type="REELS" if "reel" in (cal_entry.slot_kind if cal_entry else "") else "IMAGE",
+                        status="scheduled",
+                        scheduled_at=now,
+                        approved_by=actor.user_id,
+                        created_by=actor.user_id,
+                    )
+                    db.add(job)
+                else:
+                    job.status = "scheduled"
+                    job.scheduled_at = now
+                    job.approved_by = actor.user_id
+            except Exception:
+                pass
+
+        try:
+            await deliverable_state.transition(
+                db, deliv, DeliverableStatus.PUBLISHED,
+                actor_id=actor.user_id, actor_role=actor.role, reason="Admin direct publish", commit=False
+            )
+            if deliv.task_id:
+                t = await db.get(Task, deliv.task_id)
+                if t:
+                    t.status = TaskStatus.COMPLETED
+            if cal_entry:
+                cal_entry.status = "published"
+            is_published = True
+        except Exception:
+            pass
+
+    # Notify client
+    target_client_id = deliv.client_id if deliv else cal_entry.client_id if cal_entry else None
+    if target_client_id:
+        db.add(Notification(
+            agency_id=actor.agency_id,
+            user_id=target_client_id,
+            title="Deliverable Approved & Published" if is_published else "Deliverable Approved",
+            message=f"Admin approved '{caption or (cal_entry.caption if cal_entry else 'Deliverable')}'." + (" Published now!" if is_published else " Ready for publication."),
+            link="/portal/calendar",
+        ))
+
+    await db.commit()
+    return {
+        "status": "success",
+        "message": "Deliverable approved and published successfully!" if is_published else "Deliverable approved and queued for publishing!",
+        "deliverable_id": str(deliv.id) if deliv else None,
+        "is_published": is_published,
+    }
 
 
 @router.delete("/calendar/events/{event_id}")
@@ -5587,10 +5762,19 @@ async def get_pod_dashboard(
 
     # 5. Query tasks scoped to this pod
     now = datetime.now(timezone.utc)
-    task_filter = or_(
-        Task.assigned_to.in_(member_ids),
-        Task.client_id.in_(client_ids) if client_ids else False,
-    )
+    if actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
+        task_filter = True
+    else:
+        task_filter_conditions = []
+        if member_ids:
+            task_filter_conditions.append(Task.assigned_to.in_(member_ids))
+        if client_ids:
+            task_filter_conditions.append(Task.client_id.in_(client_ids))
+        # Include freelancer tasks and internal_qa deliverables for pod review
+        freelancer_sub = select(User.id).where(User.role == UserRole.FREELANCER)
+        task_filter_conditions.append(Task.assigned_to.in_(freelancer_sub))
+        task_filter_conditions.append(Task.status == TaskStatus.INTERNAL_QA)
+        task_filter = or_(*task_filter_conditions) if task_filter_conditions else True
     # One row per task version; ordering puts each task's newest live upload first.
     tasks_stmt = (
         select(Task, User, ClientProfile, Deliverable)
@@ -5879,15 +6063,60 @@ async def pod_task_reassign(
 from app.models.billing import PlanNegotiation  # noqa: E402
 
 
+CommercialActor = Depends(
+    require_roles(
+        UserRole.ADMIN,
+        UserRole.SUPER_ADMIN,
+        UserRole.BDE,
+        UserRole.BDE_HEAD,
+        UserRole.SALES,
+    )
+)
+
+
 @router.get("/negotiations", response_model=list[dict[str, Any]])
 async def list_plan_negotiations(
-    actor: Actor = AdminActor,
+    actor: Actor = CommercialActor,
     db: AsyncSession = Depends(get_db),
 ) -> list[dict[str, Any]]:
-    """List all plan negotiation requests for admin review."""
+    """List plan negotiation requests for admin review or filtered to BDE-contacted clients."""
     stmt = select(PlanNegotiation).order_by(PlanNegotiation.created_at.desc())
     if actor.role != UserRole.SUPER_ADMIN:
         stmt = stmt.where(PlanNegotiation.agency_id == actor.agency_id)
+
+    # Only show clients the BDE contacts/manages; all rest go to admin
+    if actor.role in {UserRole.BDE, UserRole.SALES}:
+        from app.models.bde import Lead
+        from app.models.work import ClientAssignment
+
+        assigned_client_ids = (
+            await db.execute(
+                select(ClientAssignment.client_id).where(ClientAssignment.user_id == actor.user_id)
+            )
+        ).scalars().all()
+
+        bde_leads = (
+            await db.execute(
+                select(Lead).where(Lead.assigned_bde_id == actor.user_id)
+            )
+        ).scalars().all()
+
+        lead_emails = {l.email.strip().lower() for l in bde_leads if l.email}
+        lead_phones = {l.phone.strip() for l in bde_leads if l.phone}
+        lead_names = {l.name.strip().lower() for l in bde_leads if l.name}
+
+        filters = [PlanNegotiation.reviewed_by == actor.user_id]
+        if assigned_client_ids:
+            filters.append(PlanNegotiation.client_id.in_(assigned_client_ids))
+        if lead_emails:
+            filters.append(func.lower(PlanNegotiation.client_email).in_(lead_emails))
+        if lead_phones:
+            filters.append(PlanNegotiation.phone_number.in_(lead_phones))
+        if lead_names:
+            filters.append(func.lower(PlanNegotiation.client_name).in_(lead_names))
+
+        stmt = stmt.where(or_(*filters))
+
     stmt = stmt.limit(200)
     res = await db.execute(stmt)
     rows = res.scalars().all()
@@ -5950,10 +6179,10 @@ class CreateNegotiationPayload(BaseModel):
 @router.post("/negotiations", response_model=dict[str, Any])
 async def create_plan_negotiation_by_admin(
     payload: CreateNegotiationPayload,
-    actor: Actor = AdminActor,
+    actor: Actor = CommercialActor,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Admin initiates a custom proposal/negotiation record and shares it via email."""
+    """Admin or BDE initiates a custom proposal/negotiation record and shares it via email."""
     client = await db.get(User, payload.client_id) if payload.client_id else None
     if not client and payload.client_email:
         client = (await db.execute(select(User).where(func.lower(User.email) == payload.client_email.strip().lower()))).scalar_one_or_none()
@@ -5990,6 +6219,7 @@ async def create_plan_negotiation_by_admin(
         status="Proposal Sent",
         counter_price=rate_val,
         agreed_amount=rate_val,
+        reviewed_by=actor.user_id,
     )
     db.add(neg)
     await db.commit()
@@ -6023,13 +6253,37 @@ async def create_plan_negotiation_by_admin(
 @router.post("/negotiations/{neg_id}/resend-email", response_model=dict[str, Any])
 async def resend_proposal_email(
     neg_id: uuid.UUID,
-    actor: Actor = AdminActor,
+    actor: Actor = CommercialActor,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Resend proposal email to the client email address."""
     neg = await db.get(PlanNegotiation, neg_id)
     if not neg:
         raise HTTPException(status_code=404, detail="Negotiation proposal not found")
+    if actor.agency_id and getattr(neg, "agency_id", None) and neg.agency_id != actor.agency_id:
+        raise HTTPException(status_code=403, detail="Negotiation belongs to another agency")
+
+    if actor.role in {UserRole.BDE, UserRole.SALES}:
+        is_owner = (neg.reviewed_by == actor.user_id)
+        if not is_owner and neg.client_id:
+            ca_stmt = select(ClientAssignment.id).where(
+                ClientAssignment.user_id == actor.user_id,
+                ClientAssignment.client_id == neg.client_id,
+            )
+            is_owner = bool((await db.execute(ca_stmt)).scalar_one_or_none())
+        if not is_owner:
+            lead_stmt = select(Lead.id).where(
+                Lead.assigned_bde_id == actor.user_id,
+                or_(
+                    func.lower(Lead.email) == (neg.client_email or "").strip().lower(),
+                    Lead.phone == (neg.phone_number or "").strip(),
+                    func.lower(Lead.name) == (neg.client_name or "").strip().lower(),
+                ),
+            )
+            is_owner = bool((await db.execute(lead_stmt)).scalar_one_or_none())
+        if not is_owner:
+            raise HTTPException(status_code=403, detail="You do not have permission to manage this proposal. It is routed to Admin.")
+
     if not neg.client_email or "@" not in neg.client_email:
         raise HTTPException(status_code=400, detail="Proposal does not have a valid recipient email address")
 
@@ -6090,7 +6344,7 @@ class NegotiationActionPayload(BaseModel):
 async def update_plan_negotiation(
     neg_id: uuid.UUID,
     payload: NegotiationActionPayload,
-    actor: Actor = AdminActor,
+    actor: Actor = CommercialActor,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Accept, decline, or counter-offer a plan negotiation."""
@@ -6099,6 +6353,27 @@ async def update_plan_negotiation(
         raise HTTPException(status_code=404, detail="Negotiation not found")
     if actor.agency_id and getattr(neg, "agency_id", None) and neg.agency_id != actor.agency_id:
         raise HTTPException(status_code=403, detail="Negotiation belongs to another agency")
+
+    if actor.role in {UserRole.BDE, UserRole.SALES}:
+        is_owner = (neg.reviewed_by == actor.user_id)
+        if not is_owner and neg.client_id:
+            ca_stmt = select(ClientAssignment.id).where(
+                ClientAssignment.user_id == actor.user_id,
+                ClientAssignment.client_id == neg.client_id,
+            )
+            is_owner = bool((await db.execute(ca_stmt)).scalar_one_or_none())
+        if not is_owner:
+            lead_stmt = select(Lead.id).where(
+                Lead.assigned_bde_id == actor.user_id,
+                or_(
+                    func.lower(Lead.email) == (neg.client_email or "").strip().lower(),
+                    Lead.phone == (neg.phone_number or "").strip(),
+                    func.lower(Lead.name) == (neg.client_name or "").strip().lower(),
+                ),
+            )
+            is_owner = bool((await db.execute(lead_stmt)).scalar_one_or_none())
+        if not is_owner:
+            raise HTTPException(status_code=403, detail="You do not have permission to manage this proposal. It is routed to Admin.")
 
     # Link client if missing
     if not neg.client_id and neg.client_email:
@@ -6925,6 +7200,12 @@ class AssignFreelancerRequest(BaseModel):
     due_date: date | None = None
     milestone_fee: float | None = None
     priority: str | None = None
+    raw_footage_url: str | None = None
+    format: str | None = None
+    target_duration: str | None = None
+    audio_notes: str | None = None
+    reference_url: str | None = None
+    hook: str | None = None
 
 
 class FreelancerSubmitWorkRequest(BaseModel):
@@ -7105,6 +7386,107 @@ async def update_freelancer_status(
     }
 
 
+@router.get("/admin/deliverables")
+async def list_admin_deliverables(
+    client_id: uuid.UUID | None = Query(None),
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = TeamLeadActor,
+) -> list[dict[str, Any]]:
+    """List active deliverables and deliverable tasks available for freelancer assignment."""
+    results: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+
+    # 1. Fetch Deliverables
+    deliv_stmt = select(Deliverable).where(Deliverable.is_archived.is_(False))
+    if client_id:
+        deliv_stmt = deliv_stmt.where(Deliverable.client_id == client_id)
+    deliv_stmt = deliv_stmt.order_by(Deliverable.created_at.desc()).limit(150)
+    deliverables = (await db.execute(deliv_stmt)).scalars().all()
+
+    for d in deliverables:
+        task = (await db.execute(select(Task).where(Task.id == d.task_id))).scalar_one_or_none() if d.task_id else None
+        client = (await db.execute(select(User).where(User.id == d.client_id))).scalar_one_or_none()
+        c_prof = (await db.execute(select(ClientProfile).where(ClientProfile.user_id == d.client_id))).scalar_one_or_none() if d.client_id else None
+        
+        client_name = (c_prof.company_name if (c_prof and c_prof.company_name) else (client.full_name if (client and client.full_name) else "Client"))
+        bp = dict(task.blueprint or {}) if task else {}
+        
+        deliv_type_str = task.deliverable_type.value if (task and hasattr(task.deliverable_type, "value")) else (str(task.deliverable_type) if task else (d.file_type or "Video"))
+        raw_format = bp.get("format") or deliv_type_str.capitalize()
+        status_str = d.status.value.replace("_", " ").title() if hasattr(d.status, "value") else str(d.status).title()
+        
+        title_base = bp.get("title") or f"{deliv_type_str.capitalize()} #{str(d.id)[:6]}"
+        display_title = f"{client_name} · {title_base}"
+
+        seen_ids.add(str(d.id))
+        if d.task_id:
+            seen_ids.add(str(d.task_id))
+
+        results.append({
+            "id": str(d.id),
+            "task_id": str(d.task_id) if d.task_id else None,
+            "client_id": str(d.client_id),
+            "client_name": client_name,
+            "title": display_title,
+            "concept_name": title_base,
+            "format": raw_format,
+            "deliverable_type": deliv_type_str,
+            "status": status_str,
+            "state": status_str,
+            "file_url": d.file_url or "",
+            "description": bp.get("instructions") or bp.get("brief") or "",
+            "notes": bp.get("instructions") or "",
+            "raw_footage_url": bp.get("raw_footage_url") or "",
+            "drive_url": bp.get("raw_footage_url") or "",
+        })
+
+    # 2. Also fetch Tasks that represent deliverables (e.g. reels, carousels, static posts, stories)
+    task_stmt = select(Task).where(
+        Task.status.in_([TaskStatus.BACKLOG, TaskStatus.IN_PRODUCTION, TaskStatus.INTERNAL_QA, TaskStatus.CLIENT_REVIEW])
+    )
+    if client_id:
+        task_stmt = task_stmt.where(Task.client_id == client_id)
+    task_stmt = task_stmt.order_by(Task.created_at.desc()).limit(150)
+    tasks = (await db.execute(task_stmt)).scalars().all()
+
+    for t in tasks:
+        if str(t.id) in seen_ids:
+            continue
+
+        client = (await db.execute(select(User).where(User.id == t.client_id))).scalar_one_or_none()
+        c_prof = (await db.execute(select(ClientProfile).where(ClientProfile.user_id == t.client_id))).scalar_one_or_none() if t.client_id else None
+        client_name = (c_prof.company_name if (c_prof and c_prof.company_name) else (client.full_name if (client and client.full_name) else "Client"))
+        
+        bp = dict(t.blueprint or {})
+        deliv_type_str = t.deliverable_type.value if hasattr(t.deliverable_type, "value") else str(t.deliverable_type)
+        raw_format = bp.get("format") or deliv_type_str.capitalize()
+        status_str = t.status.value.replace("_", " ").title() if hasattr(t.status, "value") else str(t.status).title()
+        
+        title_base = bp.get("title") or f"{deliv_type_str.capitalize()} Task #{str(t.id)[:6]}"
+        display_title = f"{client_name} · {title_base}"
+
+        seen_ids.add(str(t.id))
+        results.append({
+            "id": str(t.id),
+            "task_id": str(t.id),
+            "client_id": str(t.client_id),
+            "client_name": client_name,
+            "title": display_title,
+            "concept_name": title_base,
+            "format": raw_format,
+            "deliverable_type": deliv_type_str,
+            "status": status_str,
+            "state": status_str,
+            "file_url": "",
+            "description": bp.get("instructions") or bp.get("brief") or "",
+            "notes": bp.get("instructions") or "",
+            "raw_footage_url": bp.get("raw_footage_url") or "",
+            "drive_url": bp.get("raw_footage_url") or "",
+        })
+
+    return results
+
+
 @router.post("/freelancers/{freelancer_id}/assign")
 async def assign_freelancer_to_task(
     freelancer_id: uuid.UUID,
@@ -7128,6 +7510,32 @@ async def assign_freelancer_to_task(
     resolved_milestone_fee = payload.milestone_fee or (profile.hourly_rate * 4 if profile and profile.hourly_rate else 4500)
     resolved_priority = payload.priority or "High"
 
+    # Determine deliverable type if format given
+    resolved_deliv_type = DeliverableType.REEL
+    if payload.format:
+        fmt_lower = payload.format.lower()
+        if "carousel" in fmt_lower:
+            resolved_deliv_type = DeliverableType.CAROUSEL
+        elif "story" in fmt_lower:
+            resolved_deliv_type = DeliverableType.STORY
+        elif "post" in fmt_lower or "graphic" in fmt_lower:
+            resolved_deliv_type = DeliverableType.STATIC_POST
+        elif "shoot" in fmt_lower:
+            resolved_deliv_type = DeliverableType.SHOOT_DAY
+
+    spec_dict = {
+        k: v for k, v in {
+            "raw_footage_url": payload.raw_footage_url,
+            "drive_url": payload.raw_footage_url,
+            "brief_url": payload.raw_footage_url or payload.reference_url,
+            "format": payload.format,
+            "target_duration": payload.target_duration,
+            "audio_notes": payload.audio_notes,
+            "reference_url": payload.reference_url,
+            "hook": payload.hook,
+        }.items() if v is not None
+    }
+
     task = None
     task_title = payload.task_title or "Deliverable Task"
 
@@ -7148,6 +7556,7 @@ async def assign_freelancer_to_task(
         bp["specialty"] = profile.specialty if profile else "Creative Specialist"
         bp["milestone_fee"] = resolved_milestone_fee
         bp["priority"] = resolved_priority
+        bp.update(spec_dict)
         task.blueprint = bp
         if task.status == TaskStatus.BACKLOG:
             task.status = TaskStatus.IN_PRODUCTION
@@ -7155,13 +7564,58 @@ async def assign_freelancer_to_task(
 
     elif payload.deliverable_id:
         deliv = (await db.execute(select(Deliverable).where(Deliverable.id == payload.deliverable_id))).scalar_one_or_none()
-        if not deliv:
-            raise HTTPException(status_code=404, detail="Deliverable not found.")
-        
-        if deliv.task_id:
-            task = (await db.execute(select(Task).where(Task.id == deliv.task_id))).scalar_one_or_none()
-        
-        if task:
+        if deliv:
+            if deliv.task_id:
+                task = (await db.execute(select(Task).where(Task.id == deliv.task_id))).scalar_one_or_none()
+            
+            if task:
+                task.assigned_to = user.id
+                if payload.due_date:
+                    task.due_date = payload.due_date
+                bp = dict(task.blueprint or {})
+                if payload.instructions:
+                    bp["instructions"] = payload.instructions
+                bp["is_freelancer"] = True
+                bp["freelancer_id"] = str(user.id)
+                bp["freelancer_name"] = user.full_name
+                bp["freelancer_email"] = user.email
+                bp["specialty"] = profile.specialty if profile else "Creative Specialist"
+                bp["milestone_fee"] = resolved_milestone_fee
+                bp["priority"] = resolved_priority
+                bp.update(spec_dict)
+                task.blueprint = bp
+                if task.status == TaskStatus.BACKLOG:
+                    task.status = TaskStatus.IN_PRODUCTION
+                task_title = bp.get("title", task_title)
+            else:
+                base_bp = {
+                    "title": task_title,
+                    "instructions": payload.instructions or "",
+                    "is_freelancer": True,
+                    "freelancer_id": str(user.id),
+                    "freelancer_name": user.full_name,
+                    "freelancer_email": user.email,
+                    "specialty": profile.specialty if profile else "Creative Specialist",
+                    "milestone_fee": resolved_milestone_fee,
+                    "priority": resolved_priority,
+                }
+                base_bp.update(spec_dict)
+                task = Task(
+                    agency_id=deliv.agency_id or (actor.agency_id if actor else None),
+                    client_id=deliv.client_id,
+                    deliverable_type=resolved_deliv_type,
+                    status=TaskStatus.IN_PRODUCTION,
+                    assigned_to=user.id,
+                    due_date=payload.due_date,
+                    blueprint=base_bp,
+                )
+                db.add(task)
+                await db.flush()
+                deliv.task_id = task.id
+        else:
+            task = (await db.execute(select(Task).where(Task.id == payload.deliverable_id))).scalar_one_or_none()
+            if not task:
+                raise HTTPException(status_code=404, detail="Deliverable or Task not found.")
             task.assigned_to = user.id
             if payload.due_date:
                 task.due_date = payload.due_date
@@ -7175,33 +7629,11 @@ async def assign_freelancer_to_task(
             bp["specialty"] = profile.specialty if profile else "Creative Specialist"
             bp["milestone_fee"] = resolved_milestone_fee
             bp["priority"] = resolved_priority
+            bp.update(spec_dict)
             task.blueprint = bp
             if task.status == TaskStatus.BACKLOG:
                 task.status = TaskStatus.IN_PRODUCTION
             task_title = bp.get("title", task_title)
-        else:
-            task = Task(
-                agency_id=deliv.agency_id or (actor.agency_id if actor else None),
-                client_id=deliv.client_id,
-                deliverable_type=DeliverableType.REEL,
-                status=TaskStatus.IN_PRODUCTION,
-                assigned_to=user.id,
-                due_date=payload.due_date,
-                blueprint={
-                    "title": task_title,
-                    "instructions": payload.instructions or "",
-                    "is_freelancer": True,
-                    "freelancer_id": str(user.id),
-                    "freelancer_name": user.full_name,
-                    "freelancer_email": user.email,
-                    "specialty": profile.specialty if profile else "Creative Specialist",
-                    "milestone_fee": resolved_milestone_fee,
-                    "priority": resolved_priority,
-                },
-            )
-            db.add(task)
-            await db.flush()
-            deliv.task_id = task.id
 
     elif payload.task_title:
         target_client_id = payload.client_id
@@ -7214,24 +7646,26 @@ async def assign_freelancer_to_task(
         if not target_client_id:
             target_client_id = user.id
 
+        base_bp = {
+            "title": payload.task_title,
+            "instructions": payload.instructions or "",
+            "is_freelancer": True,
+            "freelancer_id": str(user.id),
+            "freelancer_name": user.full_name,
+            "freelancer_email": user.email,
+            "specialty": profile.specialty if profile else "Creative Specialist",
+            "milestone_fee": resolved_milestone_fee,
+            "priority": resolved_priority,
+        }
+        base_bp.update(spec_dict)
         task = Task(
             agency_id=actor.agency_id if actor else None,
             client_id=target_client_id,
-            deliverable_type=DeliverableType.REEL,
+            deliverable_type=resolved_deliv_type,
             status=TaskStatus.IN_PRODUCTION,
             assigned_to=user.id,
             due_date=payload.due_date,
-            blueprint={
-                "title": payload.task_title,
-                "instructions": payload.instructions or "",
-                "is_freelancer": True,
-                "freelancer_id": str(user.id),
-                "freelancer_name": user.full_name,
-                "freelancer_email": user.email,
-                "specialty": profile.specialty if profile else "Creative Specialist",
-                "milestone_fee": resolved_milestone_fee,
-                "priority": resolved_priority,
-            },
+            blueprint=base_bp,
         )
         db.add(task)
         await db.flush()
@@ -7285,10 +7719,19 @@ async def get_freelancer_my_tasks(
             select(Deliverable).where(Deliverable.task_id == task.id, Deliverable.is_archived.is_(False))
         )
         deliverables = d_res.scalars().all()
+        bp = task.blueprint or {}
 
         items.append({
             "id": str(task.id),
             "deliverable_type": task.deliverable_type.value if hasattr(task.deliverable_type, "value") else str(task.deliverable_type),
+            "format": bp.get("format") or (task.deliverable_type.value if hasattr(task.deliverable_type, "value") else str(task.deliverable_type)),
+            "raw_footage_url": bp.get("raw_footage_url") or bp.get("drive_url") or bp.get("brief_url"),
+            "target_duration": bp.get("target_duration"),
+            "audio_notes": bp.get("audio_notes"),
+            "reference_url": bp.get("reference_url"),
+            "hook": bp.get("hook"),
+            "brief_url": bp.get("raw_footage_url") or bp.get("drive_url") or bp.get("brief_url") or bp.get("reference_url"),
+            "milestone_fee": bp.get("milestone_fee"),
             "status": task.status.value if hasattr(task.status, "value") else str(task.status),
             "due_date": task.due_date.isoformat() if task.due_date else None,
             "sla_due_at": task.sla_due_at.isoformat() if task.sla_due_at else None,
@@ -7380,10 +7823,31 @@ async def freelancer_submit_work(
     except Exception:
         pass
 
+    # Notify Admin & Super Admin users
+    task_title = (task.blueprint or {}).get("title") if task.blueprint else "Deliverable Task"
+    client_res = await db.execute(select(User).where(User.id == task.client_id))
+    client_user = client_res.scalar_one_or_none()
+    client_name = client_user.full_name or client_user.email if client_user else "Client"
+
+    admin_stmt = select(User.id).where(
+        User.role.in_([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+        User.account_status == AccountStatus.ACTIVE,
+    )
+    admin_ids = (await db.execute(admin_stmt)).scalars().all()
+    for aid in admin_ids:
+        db.add(Notification(
+            agency_id=task.agency_id or actor.agency_id,
+            user_id=aid,
+            title="Freelancer Deliverable Submitted",
+            message=f"Freelancer submitted work for '{task_title}' ({client_name}). Ready for Admin review & publishing.",
+            link="/admin/calendar",
+        ))
+
     await db.commit()
+    await invalidate_dashboard_cache()
     return {
         "status": "success",
-        "message": "Work submitted successfully for Team Lead review.",
+        "message": "Work submitted successfully to Admin for review & publishing.",
         "deliverable_id": str(new_deliv.id),
         "version": new_deliv.version,
     }
@@ -7403,6 +7867,7 @@ async def freelancer_start_task(
         raise HTTPException(status_code=404, detail="Task not found.")
     task.status = TaskStatus.IN_PRODUCTION
     await db.commit()
+    await invalidate_dashboard_cache()
     return {"status": "success", "message": "Task marked as In Progress."}
 
 
@@ -7473,10 +7938,31 @@ async def freelancer_upload_content(
     except Exception:
         pass
 
+    # Notify Admin & Super Admin users
+    task_title = (task.blueprint or {}).get("title") if task.blueprint else "Deliverable Task"
+    client_res = await db.execute(select(User).where(User.id == task.client_id))
+    client_user = client_res.scalar_one_or_none()
+    client_name = client_user.full_name or client_user.email if client_user else "Client"
+
+    admin_stmt = select(User.id).where(
+        User.role.in_([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+        User.account_status == AccountStatus.ACTIVE,
+    )
+    admin_ids = (await db.execute(admin_stmt)).scalars().all()
+    for aid in admin_ids:
+        db.add(Notification(
+            agency_id=task.agency_id or actor.agency_id,
+            user_id=aid,
+            title="Freelancer Deliverable Submitted",
+            message=f"Freelancer uploaded '{file.filename}' for '{task_title}' ({client_name}). Ready for Admin review & publishing.",
+            link="/admin/calendar",
+        ))
+
     await db.commit()
+    await invalidate_dashboard_cache()
     return {
         "status": "success",
-        "message": f"'{file.filename}' uploaded and submitted for Team Lead QA review!",
+        "message": f"'{file.filename}' uploaded and submitted to Admin for review & publishing!",
         "file_url": file_url,
         "deliverable_id": str(new_deliv.id),
         "version": new_deliv.version,

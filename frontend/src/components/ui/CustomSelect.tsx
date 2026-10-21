@@ -55,7 +55,7 @@ export function CustomSelect({
         </SelectTrigger>
         <SelectContent
           align={alignRight ? "end" : "start"}
-          className="!rounded-2xl !bg-[#161F2D] !border-[#2A3446] shadow-2xl p-1.5"
+          className="!rounded-2xl !bg-[#161F2D] !border-[#2A3446] shadow-2xl p-1.5 backdrop-blur-md"
         >
           {options.map((option) => (
             <SelectItem
@@ -64,7 +64,7 @@ export function CustomSelect({
               disabled={option.disabled}
               className={
                 isSm
-                  ? "creo-select-item--sm !min-h-[32px] !py-1.5 !px-2.5 !pl-7 !text-xs !rounded-lg"
+                  ? "creo-select-item--sm !min-h-[32px] !py-1.5 !px-2.5 !pl-7 !text-xs !rounded-xl"
                   : "!rounded-xl !py-2 !px-3 !pl-8"
               }
             >
