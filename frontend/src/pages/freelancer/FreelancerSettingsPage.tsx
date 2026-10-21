@@ -99,7 +99,7 @@ export function FreelancerSettingsPage() {
     .toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#0B111C] text-white flex flex-col">
+    <div className="min-h-screen bg-app-base text-hi flex flex-col">
       <AdminTopHeader activeTab="Profile & Settings" hideTitle />
 
       <main className="max-w-[1400px] w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 flex-1">
@@ -123,25 +123,25 @@ export function FreelancerSettingsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* ── CARD 1: Profile Information ── */}
-          <div className="bg-[#161F2D] rounded-3xl p-5 sm:p-7 border border-[#2A3446] shadow-xl space-y-6">
-            <div className="flex items-center gap-4 pb-4 border-b border-[#2A3446]">
+          <div className="bg-app-surface rounded-3xl p-5 sm:p-7 border border-app-line shadow-xl space-y-6">
+            <div className="flex items-center gap-4 pb-4 border-b border-app-line">
               <div className="size-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
                 {initials}
               </div>
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-white">Freelancer Profile</h2>
+                <h2 className="text-base sm:text-lg font-bold text-hi">Freelancer Profile</h2>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
                     Contractor
                   </span>
-                  <span className="text-xs text-[#97A0B3]">{form.email}</span>
+                  <span className="text-xs text-app-mist">{form.email}</span>
                 </div>
               </div>
             </div>
 
             <form onSubmit={handleSave} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#97A0B3] flex items-center gap-1.5">
+                <label className="text-xs font-bold text-app-mist flex items-center gap-1.5">
                   <UserRound className="w-3.5 h-3.5 text-purple-400" />
                   <span>Full Name</span>
                 </label>
@@ -150,12 +150,12 @@ export function FreelancerSettingsPage() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="Your Full Name"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-xs font-medium placeholder:text-[#66738A] focus:outline-none focus:border-purple-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-app-base border border-app-line text-hi text-xs font-medium placeholder:text-[#66738A] focus:outline-none focus:border-purple-500 transition-colors"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#97A0B3] flex items-center gap-1.5">
+                <label className="text-xs font-bold text-app-mist flex items-center gap-1.5">
                   <Mail className="w-3.5 h-3.5 text-purple-400" />
                   <span>Email Address</span>
                 </label>
@@ -164,7 +164,7 @@ export function FreelancerSettingsPage() {
                   value={form.email}
                   readOnly
                   disabled
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B111C]/60 border border-[#2A3446]/60 text-[#97A0B3] text-xs font-medium cursor-not-allowed"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-app-base/60 border border-app-line/60 text-app-mist text-xs font-medium cursor-not-allowed"
                 />
                 <p className="text-[10px] text-[#66738A]">
                   Email is managed by platform administration. Contact executive support to change.
@@ -172,7 +172,7 @@ export function FreelancerSettingsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#97A0B3] flex items-center gap-1.5">
+                <label className="text-xs font-bold text-app-mist flex items-center gap-1.5">
                   <Phone className="w-3.5 h-3.5 text-purple-400" />
                   <span>Contact Phone</span>
                 </label>
@@ -181,7 +181,7 @@ export function FreelancerSettingsPage() {
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="+91 98765 43210"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white text-xs font-medium placeholder:text-[#66738A] focus:outline-none focus:border-purple-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-app-base border border-app-line text-hi text-xs font-medium placeholder:text-[#66738A] focus:outline-none focus:border-purple-500 transition-colors"
                 />
               </div>
 
@@ -209,23 +209,23 @@ export function FreelancerSettingsPage() {
 
           {/* ── CARD 2: Security & Password Reset ── */}
           <div className="space-y-6">
-            <div className="bg-[#161F2D] rounded-3xl p-5 sm:p-7 border border-[#2A3446] shadow-xl space-y-5">
-              <div className="flex items-center gap-3 pb-4 border-b border-[#2A3446]">
+            <div className="bg-app-surface rounded-3xl p-5 sm:p-7 border border-app-line shadow-xl space-y-5">
+              <div className="flex items-center gap-3 pb-4 border-b border-app-line">
                 <div className="size-10 rounded-2xl bg-purple-500/15 text-purple-400 flex items-center justify-center font-black">
                   <KeyRound className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-white">Password & Security</h2>
-                  <p className="text-xs text-[#97A0B3]">Manage your login credentials & account access</p>
+                  <h2 className="text-base font-bold text-hi">Password & Security</h2>
+                  <p className="text-xs text-app-mist">Manage your login credentials & account access</p>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-2">
+              <div className="p-4 rounded-2xl bg-app-base border border-app-line space-y-2">
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" />
                   <span>Secure Credential Management</span>
                 </div>
-                <p className="text-xs text-[#97A0B3] leading-relaxed">
+                <p className="text-xs text-app-mist leading-relaxed">
                   Reset your password or create a dedicated standalone password for direct sign-in. A secure one-time OTP verification code will be sent to your registered email address.
                 </p>
               </div>
@@ -234,7 +234,7 @@ export function FreelancerSettingsPage() {
                 <button
                   type="button"
                   onClick={() => setRecoveryOpen(true)}
-                  className="w-full py-3 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-200 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                  className="w-full py-3 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-200 hover:text-hi text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                 >
                   <Lock className="w-3.5 h-3.5 text-purple-400" />
                   <span>Reset or Change Password</span>
@@ -243,29 +243,29 @@ export function FreelancerSettingsPage() {
             </div>
 
             {/* ── CARD 3: Workspace & Financial Boundaries ── */}
-            <div className="bg-[#161F2D] rounded-3xl p-5 sm:p-7 border border-[#2A3446] shadow-xl space-y-4">
-              <div className="flex items-center gap-3 pb-3 border-b border-[#2A3446]">
+            <div className="bg-app-surface rounded-3xl p-5 sm:p-7 border border-app-line shadow-xl space-y-4">
+              <div className="flex items-center gap-3 pb-3 border-b border-app-line">
                 <div className="size-10 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-black">
                   <IndianRupee className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-white">Payout & Workspace Terms</h2>
-                  <p className="text-xs text-[#97A0B3]">Milestone settlement & contractor terms</p>
+                  <h2 className="text-base font-bold text-hi">Payout & Workspace Terms</h2>
+                  <p className="text-xs text-app-mist">Milestone settlement & contractor terms</p>
                 </div>
               </div>
 
-              <div className="space-y-2.5 text-xs text-[#97A0B3]">
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446]">
+              <div className="space-y-2.5 text-xs text-app-mist">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-app-base border border-app-line">
                   <span className="font-semibold">Payout Model</span>
-                  <span className="text-white font-bold">100% Milestone-based (₹ INR)</span>
+                  <span className="text-hi font-bold">100% Milestone-based (₹ INR)</span>
                 </div>
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446]">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-app-base border border-app-line">
                   <span className="font-semibold">Platform Fee Deduction</span>
                   <span className="text-emerald-400 font-bold">0% (Zero Fee Direct Payout)</span>
                 </div>
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446]">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-app-base border border-app-line">
                   <span className="font-semibold">Deliverable Submissions</span>
-                  <span className="text-white font-bold">Direct to Executive Admin</span>
+                  <span className="text-hi font-bold">Direct to Executive Admin</span>
                 </div>
               </div>
             </div>

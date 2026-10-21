@@ -62,8 +62,8 @@ export function DeliverableMedia({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-2.5">
           <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-bold text-white/90">
-              {isVideo ? <Film className="size-2.5 text-[#7FA0D6]" /> : <ImageIcon className="size-2.5 text-[#7FA0D6]" />}
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md border border-hi/10 text-[9px] font-bold text-hi/90">
+              {isVideo ? <Film className="size-2.5 text-app-accent" /> : <ImageIcon className="size-2.5 text-app-accent" />}
               {isVideo ? "Video Reel" : "Creative Asset"}
             </span>
             {url && (
@@ -76,7 +76,7 @@ export function DeliverableMedia({
                   setUseFragment(false);
                   onRefresh?.();
                 }}
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/60 hover:bg-black/90 text-[#97A0B3] hover:text-white text-[9px] font-medium transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/60 hover:bg-black/90 text-app-mist hover:text-hi text-[9px] font-medium transition-colors cursor-pointer"
                 title="Retry loading file"
               >
                 <RefreshCw className="size-2.5" />
@@ -86,7 +86,7 @@ export function DeliverableMedia({
         </div>
         {isVideo && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="size-9 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xl group-hover:scale-110 group-hover:bg-[#7FA0D6] group-hover:text-black transition-all">
+            <div className="size-9 rounded-full bg-black/60 backdrop-blur-md border border-hi/20 flex items-center justify-center text-hi shadow-xl group-hover:scale-110 group-hover:bg-app-accent group-hover:text-black transition-all">
               <Play className="size-4 ml-0.5 fill-current" />
             </div>
           </div>
@@ -101,7 +101,7 @@ export function DeliverableMedia({
     <div className={`relative flex items-center justify-center bg-black overflow-hidden ${className}`}>
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
-          <div className="size-5 rounded-full border-2 border-[#7FA0D6] border-t-transparent animate-spin" />
+          <div className="size-5 rounded-full border-2 border-app-accent border-t-transparent animate-spin" />
         </div>
       )}
       {isVideo ? (

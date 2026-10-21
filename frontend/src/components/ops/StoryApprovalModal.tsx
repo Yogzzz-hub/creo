@@ -200,20 +200,20 @@ export function StoryApprovalModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl max-h-[92vh] rounded-3xl bg-[#161F2D] border border-[#2A3446] text-white shadow-2xl overflow-y-auto flex flex-col relative m-auto animate-in zoom-in-95 duration-200"
+        className="w-full max-w-2xl max-h-[92vh] rounded-3xl bg-app-surface border border-app-line text-hi shadow-2xl overflow-y-auto flex flex-col relative m-auto animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-[#161F2D]/95 backdrop-blur-sm z-10 flex items-center justify-between p-4 sm:p-5 border-b border-[#2A3446]">
+        <div className="sticky top-0 bg-app-surface/95 backdrop-blur-sm z-10 flex items-center justify-between p-4 sm:p-5 border-b border-app-line">
           <div className="flex items-center gap-2.5">
-            <div className="size-9 rounded-xl bg-blue-500/15 text-[#7FA0D6] border border-blue-500/30 flex items-center justify-center">
+            <div className="size-9 rounded-xl bg-blue-500/15 text-app-accent border border-blue-500/30 flex items-center justify-center">
               <Sparkles className="size-4" />
             </div>
             <div>
-              <h3 className="text-base font-black text-white">
+              <h3 className="text-base font-black text-hi">
                 {initialSlot ? "Edit Story & Approval Request" : "New Story & Approval Request"}
               </h3>
-              <p className="text-xs text-[#97A0B3] font-medium">
+              <p className="text-xs text-app-mist font-medium">
                 Fill story details and outline what the team needs client approval on
               </p>
             </div>
@@ -222,7 +222,7 @@ export function StoryApprovalModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#97A0B3] hover:text-white hover:bg-[#2A3446] transition-colors cursor-pointer shrink-0"
+            className="p-1.5 rounded-lg text-app-mist hover:text-hi hover:bg-app-line transition-colors cursor-pointer shrink-0"
           >
             <X className="size-5" />
           </button>
@@ -255,7 +255,7 @@ export function StoryApprovalModal({
               <select
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
-                className="w-full text-xs p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full text-xs p-3 rounded-xl bg-app-base border border-app-line text-hi focus:outline-none focus:border-app-accent"
               >
                 <option value="">Select a client...</option>
                 {clientsData?.map((c) => (
@@ -266,9 +266,9 @@ export function StoryApprovalModal({
               </select>
             </div>
           ) : (
-            <div className="text-xs text-[#97A0B3] bg-[#0B111C] px-3.5 py-2.5 rounded-xl border border-[#2A3446] flex items-center justify-between">
+            <div className="text-xs text-app-mist bg-app-base px-3.5 py-2.5 rounded-xl border border-app-line flex items-center justify-between">
               <span>Client:</span>
-              <span className="font-bold text-white">{initialSlot.client_name || "Assigned Client"}</span>
+              <span className="font-bold text-hi">{initialSlot.client_name || "Assigned Client"}</span>
             </div>
           )}
 
@@ -283,7 +283,7 @@ export function StoryApprovalModal({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. 3 Quick Habits to Boost Daily Energy"
-                className="w-full text-xs p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white placeholder:text-slate-500 focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full text-xs p-3 rounded-xl bg-app-base border border-app-line text-hi placeholder:text-slate-500 focus:outline-none focus:border-app-accent"
               />
             </div>
 
@@ -292,7 +292,7 @@ export function StoryApprovalModal({
               <select
                 value={format}
                 onChange={(e) => setFormat(e.target.value)}
-                className="w-full text-xs p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full text-xs p-3 rounded-xl bg-app-base border border-app-line text-hi focus:outline-none focus:border-app-accent"
               >
                 {FORMAT_OPTIONS.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -313,7 +313,7 @@ export function StoryApprovalModal({
                 type="date"
                 value={publishDate}
                 onChange={(e) => setPublishDate(e.target.value)}
-                className="w-full text-xs p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full text-xs p-3 rounded-xl bg-app-base border border-app-line text-hi focus:outline-none focus:border-app-accent"
               />
             </div>
 
@@ -326,7 +326,7 @@ export function StoryApprovalModal({
                 value={scheduledTime}
                 onChange={(e) => setScheduledTime(e.target.value)}
                 placeholder="e.g. 19:30 or 11:00 AM"
-                className="w-full text-xs p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full text-xs p-3 rounded-xl bg-app-base border border-app-line text-hi focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -336,7 +336,7 @@ export function StoryApprovalModal({
             <label className="text-xs font-bold text-slate-300 block mb-1">
               What is this story about? (Story Outline / Script Direction) <span className="text-rose-400">*</span>
             </label>
-            <p className="text-[11px] text-[#97A0B3] mb-1.5">
+            <p className="text-[11px] text-app-mist mb-1.5">
               Explain the story narrative, scenes, key message, and call-to-action that the client will see.
             </p>
             <textarea
@@ -344,7 +344,7 @@ export function StoryApprovalModal({
               onChange={(e) => setStoryDescription(e.target.value)}
               placeholder="e.g. Fast-paced 20s reel opening with a bold contrast hook. Breakdown of 3 morning routines. Smooth transitions, clean on-screen captions, and a comment-driven CTA at the end."
               rows={4}
-              className="w-full text-xs p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white placeholder:text-slate-500 focus:outline-none focus:border-[#7FA0D6] leading-relaxed"
+              className="w-full text-xs p-3 rounded-xl bg-app-base border border-app-line text-hi placeholder:text-slate-500 focus:outline-none focus:border-app-accent leading-relaxed"
             />
           </div>
 
@@ -362,15 +362,15 @@ export function StoryApprovalModal({
                     onClick={() => setApprovalType(a.id)}
                     className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
                       isSelected
-                        ? "border-[#7FA0D6] bg-blue-500/15 text-white"
-                        : "border-[#2A3446] bg-[#0B111C] hover:border-[#7FA0D6]/40 text-slate-300"
+                        ? "border-app-accent bg-blue-500/15 text-hi"
+                        : "border-app-line bg-app-base hover:border-app-accent/40 text-slate-300"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-black">{a.label}</span>
-                      {isSelected && <Check className="size-3.5 text-[#7FA0D6]" />}
+                      {isSelected && <Check className="size-3.5 text-app-accent" />}
                     </div>
-                    <p className="text-[10px] text-[#97A0B3] leading-snug">{a.desc}</p>
+                    <p className="text-[10px] text-app-mist leading-snug">{a.desc}</p>
                   </div>
                 );
               })}
@@ -382,7 +382,7 @@ export function StoryApprovalModal({
             <label className="text-xs font-bold text-slate-300 block mb-1">
               Note for Client (Optional Context)
             </label>
-            <p className="text-[11px] text-[#97A0B3] mb-1.5">
+            <p className="text-[11px] text-app-mist mb-1.5">
               A brief friendly note displayed directly to the client next to the approval button.
             </p>
             <textarea
@@ -390,18 +390,18 @@ export function StoryApprovalModal({
               onChange={(e) => setTeamNotes(e.target.value)}
               placeholder="e.g. Hi team, we outlined this reel for your summer product drop. Please approve the story direction so we can begin video editing!"
               rows={2}
-              className="w-full text-xs p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white placeholder:text-slate-500 focus:outline-none focus:border-[#7FA0D6]"
+              className="w-full text-xs p-3 rounded-xl bg-app-base border border-app-line text-hi placeholder:text-slate-500 focus:outline-none focus:border-app-accent"
             />
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="sticky bottom-0 bg-[#161F2D]/95 backdrop-blur-sm p-4 sm:p-5 border-t border-[#2A3446] flex flex-wrap gap-2.5 justify-end">
+        <div className="sticky bottom-0 bg-app-surface/95 backdrop-blur-sm p-4 sm:p-5 border-t border-app-line flex flex-wrap gap-2.5 justify-end">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:bg-[#2A3446] text-slate-300 font-bold text-xs transition-colors cursor-pointer"
+            className="px-4 py-2.5 rounded-xl border border-app-line bg-app-base hover:bg-app-line text-slate-300 font-bold text-xs transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -410,7 +410,7 @@ export function StoryApprovalModal({
             type="button"
             onClick={() => handleSubmit(false)}
             disabled={isSubmitting}
-            className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] text-white font-bold text-xs transition-colors cursor-pointer disabled:opacity-50"
+            className="px-4 py-2.5 rounded-xl border border-app-line bg-app-surface hover:bg-app-line text-hi font-bold text-xs transition-colors cursor-pointer disabled:opacity-50"
           >
             Save as Draft
           </button>

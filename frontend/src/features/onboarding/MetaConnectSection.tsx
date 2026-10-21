@@ -112,14 +112,14 @@ export function MetaConnectSection({ userId, beforeConnect, onConnectingChange }
 
   return (
     <div className="space-y-6">
-      <div className="border-b border-[#2A3446] pb-4">
+      <div className="border-b border-app-line pb-4">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-bold text-white">Section H: Connect Meta</h2>
-          <span className="text-[11px] font-bold bg-[#D8BF9B]/20 text-[#D8BF9B] border border-[#D8BF9B]/30 px-2 py-0.5 rounded-full">
+          <h2 className="text-lg font-bold text-hi">Section H: Connect Meta</h2>
+          <span className="text-[11px] font-bold bg-app-warm/20 text-app-warm border border-app-warm/30 px-2 py-0.5 rounded-full">
             Optional
           </span>
         </div>
-        <p className="text-xs text-[#97A0B3] mt-1">
+        <p className="text-xs text-app-mist mt-1">
           Connect your Instagram Business or Creator account directly, or use Facebook with a linked
           Page. Your password stays with Instagram or Facebook. You can also connect later in Account settings.
         </p>
@@ -139,7 +139,7 @@ export function MetaConnectSection({ userId, beforeConnect, onConnectingChange }
       )}
 
       {status.isPending && (
-        <output className="text-xs text-[#97A0B3] flex items-center gap-2">
+        <output className="text-xs text-app-mist flex items-center gap-2">
           <Loader2 className="size-3.5 animate-spin" /> Checking connection…
         </output>
       )}
@@ -165,41 +165,41 @@ export function MetaConnectSection({ userId, beforeConnect, onConnectingChange }
             { provider: "instagram", title: "Instagram", subtitle: "Connect directly", description: "Connect your Business or Creator account. No Facebook Page needed.", label: "Connect Instagram", Icon: Instagram, badge: "Direct connection", color: "bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF]" },
             { provider: "facebook", title: "Facebook", subtitle: "Connect a linked Instagram account", description: "Sign in with Facebook and select the Page linked to your Instagram professional account.", label: "Connect with Facebook", Icon: Facebook, badge: "Via Facebook Page", color: "bg-[#1877F2]" },
           ] as const).map(({ provider, title, subtitle, description, label, Icon, badge, color }) => (
-            <section key={provider} className="flex flex-col rounded-2xl border border-[#2A3446] bg-[#0B111C] p-5 sm:p-6">
+            <section key={provider} className="flex flex-col rounded-2xl border border-app-line bg-app-base p-5 sm:p-6">
               <div className="flex items-start justify-between gap-3">
-                <span className={`inline-flex size-12 shrink-0 items-center justify-center rounded-2xl text-white ${color}`}>
+                <span className={`inline-flex size-12 shrink-0 items-center justify-center rounded-2xl text-hi ${color}`}>
                   <Icon className="size-6" aria-hidden="true" />
                 </span>
-                <span className="rounded-full border border-[#2A3446] px-3 py-1 text-[10px] font-semibold text-[#BCCCE6]">{badge}</span>
+                <span className="rounded-full border border-app-line px-3 py-1 text-[10px] font-semibold text-app-accent-soft">{badge}</span>
               </div>
-              <h3 className="mt-5 text-lg font-bold text-white">{title}</h3>
-              <p className="mt-1 text-xs font-semibold text-[#BCCCE6]">{subtitle}</p>
-              <p className="mt-3 flex-1 text-xs leading-relaxed text-[#97A0B3]">{description}</p>
+              <h3 className="mt-5 text-lg font-bold text-hi">{title}</h3>
+              <p className="mt-1 text-xs font-semibold text-app-accent-soft">{subtitle}</p>
+              <p className="mt-3 flex-1 text-xs leading-relaxed text-app-mist">{description}</p>
               <button type="button" disabled={busy !== null} onClick={() => void connect(provider)}
-                className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#BCCCE6] px-4 py-3 text-sm font-bold text-[#0B111C] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B111C] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-app-accent-soft px-4 py-3 text-sm font-bold text-app-base hover:bg-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent focus-visible:ring-offset-2 focus-visible:ring-offset-app-base disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                 {busy === "connect" && connectingProvider === provider ? <Icon className="size-5 animate-pulse motion-reduce:animate-none" aria-hidden="true" /> : <Icon className="size-4" aria-hidden="true" />}
                 {busy === "connect" && connectingProvider === provider ? "Opening authorization..." : label}
                 {connectingProvider !== provider && <ArrowUpRight className="size-4" aria-hidden="true" />}
               </button>
             </section>
           ))}
-          <p className="md:col-span-2 flex items-start justify-center gap-2 text-[11px] leading-relaxed text-[#97A0B3]">
-            <ShieldCheck className="size-4 shrink-0 text-[#7FA0D6]" aria-hidden="true" />
+          <p className="md:col-span-2 flex items-start justify-center gap-2 text-[11px] leading-relaxed text-app-mist">
+            <ShieldCheck className="size-4 shrink-0 text-app-accent" aria-hidden="true" />
             Your password stays with Instagram or Facebook. You choose what to share and can disconnect anytime.
           </p>
           {needsReconnect && <p role="alert" className="md:col-span-2 text-xs text-amber-300">{data.error || "Your connection expired. Choose a method above to reconnect."}</p>}
         </div>
       )}
       {data?.connected && (
-        <div className="rounded-2xl border border-[#2A3446] bg-[#0B111C] p-4 space-y-4">
+        <div className="rounded-2xl border border-app-line bg-app-base p-4 space-y-4">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-full bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] p-[2px]">
-              <div className="size-full rounded-full bg-[#0B111C] flex items-center justify-center">
-                <Instagram className="size-4 text-white" />
+              <div className="size-full rounded-full bg-app-base flex items-center justify-center">
+                <Instagram className="size-4 text-hi" />
               </div>
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-white truncate">
+              <p className="text-sm font-bold text-hi truncate">
                 @{(data.username || "").replace(/^@/, "")}
               </p>
               <p className="text-[11px] text-emerald-300 flex items-center gap-1">
@@ -214,7 +214,7 @@ export function MetaConnectSection({ userId, beforeConnect, onConnectingChange }
               type="button"
               disabled={busy !== null}
               onClick={() => void verify()}
-              className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#BCCCE6] hover:text-white hover:border-[#7FA0D6] disabled:opacity-50 cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-app-line text-xs font-bold text-app-accent-soft hover:text-hi hover:border-app-accent disabled:opacity-50 cursor-pointer"
             >
               {busy === "verify" ? "Verifying…" : "Verify connection"}
             </button>
@@ -222,7 +222,7 @@ export function MetaConnectSection({ userId, beforeConnect, onConnectingChange }
               type="button"
               disabled={busy !== null}
               onClick={() => void connect()}
-              className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#BCCCE6] hover:text-white hover:border-[#7FA0D6] disabled:opacity-50 cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-app-line text-xs font-bold text-app-accent-soft hover:text-hi hover:border-app-accent disabled:opacity-50 cursor-pointer"
             >
               {busy === "connect" ? "Redirecting…" : "Reconnect"}
             </button>

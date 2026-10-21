@@ -46,11 +46,11 @@ export function CustomSelect({
           aria-label={ariaLabel || "Select option"}
           className={`flex items-center gap-2 rounded-xl transition-all ${
             isSm
-              ? "creo-select-trigger--sm !min-h-[32px] !h-8 !px-3 !py-1 !text-xs !rounded-xl !bg-[#161F2D] !border-[#2A3446] hover:!border-[#7FA0D6]/60 text-white font-medium"
-              : "!rounded-xl !bg-[#161F2D] !border-[#2A3446] hover:!border-[#7FA0D6]/60 text-white font-medium"
+              ? "creo-select-trigger--sm !min-h-[32px] !h-8 !px-3 !py-1 !text-xs !rounded-xl !bg-[#161F2D] !border-[#2A3446] hover:!border-[#7FA0D6]/60 text-hi font-medium"
+              : "!rounded-xl !bg-[#161F2D] !border-[#2A3446] hover:!border-[#7FA0D6]/60 text-hi font-medium"
           } ${className}`}
         >
-          {icon && <span className="shrink-0 text-[#97A0B3]">{icon}</span>}
+          {icon && <span className="shrink-0 text-app-mist">{icon}</span>}
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent

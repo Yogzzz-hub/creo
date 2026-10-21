@@ -79,7 +79,7 @@ export function ComparePlansModal({
             email: user?.email || undefined,
           },
           theme: {
-            color: "#7FA0D6",
+            color: "#D2965A",
           },
         },
         async (response) => {
@@ -120,26 +120,26 @@ export function ComparePlansModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-5xl max-h-[90vh] rounded-3xl bg-[#161F2D] border border-[#2A3446] text-white shadow-2xl overflow-y-auto flex flex-col relative m-auto animate-in zoom-in-95 duration-200 p-6 sm:p-8 space-y-6"
+        className="w-full max-w-5xl max-h-[90vh] rounded-3xl bg-app-surface border border-app-line text-hi shadow-2xl overflow-y-auto flex flex-col relative m-auto animate-in zoom-in-95 duration-200 p-6 sm:p-8 space-y-6"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-[#2A3446]">
+        <div className="flex items-center justify-between pb-4 border-b border-app-line">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="size-2 rounded-full bg-[#7FA0D6]" />
-              <span className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">
+              <span className="size-2 rounded-full bg-app-accent" />
+              <span className="text-xs font-bold uppercase tracking-wider text-app-mist">
                 Plan Comparison & Upgrade
               </span>
             </div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">
+            <h2 className="text-2xl font-bold text-hi tracking-tight">
               Compare & Switch Plans
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="size-8 rounded-lg border border-[#2A3446] bg-[#0B111C] flex items-center justify-center text-[#97A0B3] hover:text-white transition-colors cursor-pointer"
+            className="size-8 rounded-lg border border-app-line bg-app-base flex items-center justify-center text-app-mist hover:text-hi transition-colors cursor-pointer"
           >
             <X className="size-4" />
           </button>
@@ -175,17 +175,17 @@ export function ComparePlansModal({
                   key={plan.id}
                   className={`rounded-2xl border p-6 flex flex-col justify-between transition-all ${
                     isCurrent
-                      ? "border-[#7FA0D6] bg-[#0B111C]/90 shadow-lg shadow-[#7FA0D6]/10 ring-1 ring-[#7FA0D6]"
+                      ? "border-app-accent bg-app-base/90 shadow-lg shadow-app-accent/10 ring-1 ring-app-accent"
                       : plan.is_recommended
-                      ? "border-[#7FA0D6]/60 bg-[#161F2D]"
-                      : "border-[#2A3446] bg-[#161F2D]/60 hover:border-[#7FA0D6]/40"
+                      ? "border-app-accent/60 bg-app-surface"
+                      : "border-app-line bg-app-surface/60 hover:border-app-accent/40"
                   }`}
                 >
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-bold text-white">{plan.display_name}</h3>
+                      <h3 className="text-lg font-bold text-hi">{plan.display_name}</h3>
                       {isCurrent ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[#7FA0D6]/20 text-[#BCCCE6] border border-[#7FA0D6]/40">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-app-accent/20 text-app-accent-soft border border-app-accent/40">
                           Current Plan
                         </span>
                       ) : plan.is_recommended ? (
@@ -196,34 +196,34 @@ export function ComparePlansModal({
                     </div>
 
                     <div>
-                      <span className="text-3xl font-extrabold text-white">
+                      <span className="text-3xl font-extrabold text-hi">
                         ₹{(plan.price_minor / 100).toLocaleString("en-IN")}
                       </span>
-                      <span className="text-xs text-[#97A0B3] font-medium"> / month</span>
+                      <span className="text-xs text-app-mist font-medium"> / month</span>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 py-3 border-y border-[#2A3446]/60 text-center">
-                      <div className="p-2 rounded-xl bg-[#0B111C]/60 border border-[#2A3446]">
-                        <span className="text-xs font-bold text-[#7FA0D6] block">
+                    <div className="grid grid-cols-3 gap-2 py-3 border-y border-app-line/60 text-center">
+                      <div className="p-2 rounded-xl bg-app-base/60 border border-app-line">
+                        <span className="text-xs font-bold text-app-accent block">
                           {plan.reel_quota}
                         </span>
-                        <span className="text-[10px] text-[#97A0B3]">Reels</span>
+                        <span className="text-[10px] text-app-mist">Reels</span>
                       </div>
-                      <div className="p-2 rounded-xl bg-[#0B111C]/60 border border-[#2A3446]">
-                        <span className="text-xs font-bold text-[#7FA0D6] block">
+                      <div className="p-2 rounded-xl bg-app-base/60 border border-app-line">
+                        <span className="text-xs font-bold text-app-accent block">
                           {plan.poster_quota}
                         </span>
-                        <span className="text-[10px] text-[#97A0B3]">Posts</span>
+                        <span className="text-[10px] text-app-mist">Posts</span>
                       </div>
-                      <div className="p-2 rounded-xl bg-[#0B111C]/60 border border-[#2A3446]">
-                        <span className="text-xs font-bold text-[#7FA0D6] block">
+                      <div className="p-2 rounded-xl bg-app-base/60 border border-app-line">
+                        <span className="text-xs font-bold text-app-accent block">
                           {plan.story_quota}
                         </span>
-                        <span className="text-[10px] text-[#97A0B3]">Stories</span>
+                        <span className="text-[10px] text-app-mist">Stories</span>
                       </div>
                     </div>
 
-                    <ul className="space-y-2 text-xs text-[#97A0B3] pt-1">
+                    <ul className="space-y-2 text-xs text-app-mist pt-1">
                       <li className="flex items-center gap-2">
                         <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
                         <span>{plan.revision_rounds} creative revision rounds</span>
@@ -239,7 +239,7 @@ export function ComparePlansModal({
 
                   <div className="pt-6">
                     {isCurrent ? (
-                      <div className="w-full py-2.5 rounded-full bg-[#2A3446]/50 text-center text-xs font-bold text-[#97A0B3]">
+                      <div className="w-full py-2.5 rounded-full bg-app-line/50 text-center text-xs font-bold text-app-mist">
                         Active Plan
                       </div>
                     ) : (
@@ -247,7 +247,7 @@ export function ComparePlansModal({
                         type="button"
                         onClick={() => handleSwitchPlan(plan)}
                         disabled={isBusy || !!processingPlanId}
-                        className="w-full py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] hover:bg-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                        className="w-full py-2.5 rounded-full bg-app-accent-soft text-app-base hover:bg-hi text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
                       >
                         {isBusy ? (
                           <Loader2 className="size-3.5 animate-spin" />
@@ -265,7 +265,7 @@ export function ComparePlansModal({
         )}
 
         {/* Footer actions */}
-        <div className="pt-4 border-t border-[#2A3446] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#97A0B3]">
+        <div className="pt-4 border-t border-app-line flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-app-mist">
           <p>
             Need custom creative volumes, multi-brand billing, or annual retainer discounts?
           </p>
@@ -275,9 +275,9 @@ export function ComparePlansModal({
               onClose();
               onOpenNegotiation("Custom Pricing / Retainer Discount");
             }}
-            className="px-4 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:bg-[#2A3446] text-white font-bold text-xs transition-colors cursor-pointer flex items-center gap-2 shrink-0"
+            className="px-4 py-2 rounded-xl border border-app-line bg-app-base hover:bg-app-line text-hi font-bold text-xs transition-colors cursor-pointer flex items-center gap-2 shrink-0"
           >
-            <PhoneCall className="size-3.5 text-[#7FA0D6]" />
+            <PhoneCall className="size-3.5 text-app-accent" />
             <span>Request Custom Quote & Call</span>
           </button>
         </div>

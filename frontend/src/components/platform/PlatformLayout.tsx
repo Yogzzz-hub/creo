@@ -14,10 +14,10 @@ function PlatformLayoutInner() {
   }, [pathname]);
 
   return (
-    <div className="portal-dark bento-theme min-h-screen w-full flex bg-[#0B111C] text-[#F8FAFC]">
+    <div className="portal-dark bento-theme min-h-screen w-full flex bg-app-base text-app-ink">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[999] focus:rounded-lg focus:bg-[#BCCCE6] focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-[#0B111C] focus:shadow-lg focus:outline-none"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[999] focus:rounded-lg focus:bg-app-accent-soft focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-app-base focus:shadow-lg focus:outline-none"
       >
         Skip to content
       </a>

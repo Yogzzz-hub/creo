@@ -70,11 +70,11 @@ interface TypeConfig {
 const DEFAULT_TYPE_CONFIG: TypeConfig = {
   label: "Poster",
   icon: ImageIcon,
-  badgeBg: "bg-[#7FA0D6]",
-  badgeText: "text-white",
+  badgeBg: "bg-app-accent",
+  badgeText: "text-hi",
   border: "border-blue-500/30",
-  softBg: "bg-blue-500/15 text-[#7FA0D6] hover:bg-blue-500/25 border border-blue-500/30",
-  pillBg: "bg-blue-500/15 text-[#7FA0D6] border border-blue-500/30",
+  softBg: "bg-blue-500/15 text-app-accent hover:bg-blue-500/25 border border-blue-500/30",
+  pillBg: "bg-blue-500/15 text-app-accent border border-blue-500/30",
 };
 
 const TYPE_CONFIG: Record<string, TypeConfig> = {
@@ -82,7 +82,7 @@ const TYPE_CONFIG: Record<string, TypeConfig> = {
     label: "Reel",
     icon: Film,
     badgeBg: "bg-purple-600",
-    badgeText: "text-white",
+    badgeText: "text-hi",
     border: "border-purple-500/30",
     softBg: "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 border border-purple-500/30",
     pillBg: "bg-purple-500/15 text-purple-400 border border-purple-500/30",
@@ -93,7 +93,7 @@ const TYPE_CONFIG: Record<string, TypeConfig> = {
     label: "Story",
     icon: Sparkles,
     badgeBg: "bg-amber-600",
-    badgeText: "text-white",
+    badgeText: "text-hi",
     border: "border-amber-500/30",
     softBg: "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/30",
     pillBg: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
@@ -102,7 +102,7 @@ const TYPE_CONFIG: Record<string, TypeConfig> = {
     label: "Carousel",
     icon: Layers,
     badgeBg: "bg-amber-600",
-    badgeText: "text-white",
+    badgeText: "text-hi",
     border: "border-amber-500/30",
     softBg: "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/30",
     pillBg: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
@@ -404,20 +404,20 @@ export function PortalCalendarPage() {
   }
 
   if (isEntriesError) {
-    return <div role="alert" className="p-6 text-white">Could not load your calendar. <button onClick={() => refetchEntries()} className="underline">Retry</button></div>;
+    return <div role="alert" className="p-6 text-hi">Could not load your calendar. <button onClick={() => refetchEntries()} className="underline">Retry</button></div>;
   }
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-3 md:gap-4 font-sans text-white">
+    <div className="flex w-full min-w-0 flex-col gap-3 md:gap-4 font-sans text-hi">
       {/* ── Bento Grid Layout ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 md:gap-4 items-stretch">
         
         {/* Left Column: Calendar View (xl:col-span-2) */}
-        <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-xl md:rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-3 sm:p-5 min-w-0 flex-col">
+        <div className="flex xl:col-span-2 bg-app-surface border border-app-line rounded-xl md:rounded-2xl shadow-[0_4px_24px_rgb(var(--shadow-rgb)/calc(0.2*var(--shadow-k)))] p-3 sm:p-5 min-w-0 flex-col">
           {/* Calendar Header */}
           <div className="flex items-center justify-between gap-2 mb-2 sm:mb-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2.5">
-              <h2 className="text-sm sm:text-lg md:text-[20px] font-black text-white tracking-tight leading-tight">
+              <h2 className="text-sm sm:text-lg md:text-[20px] font-black text-hi tracking-tight leading-tight">
                 {MONTH_NAMES[currentMonth]} {currentYear}
               </h2>
               <span className="text-[11px] sm:text-xs text-slate-400 font-medium">
@@ -427,14 +427,14 @@ export function PortalCalendarPage() {
             
             <div className="flex items-center gap-1 sm:gap-2">
               {/* Mobile View Toggle: Week vs Month (hidden on desktop) */}
-              <div className="md:hidden flex items-center bg-[#0B111C] p-0.5 rounded-full border border-[#2A3446]">
+              <div className="md:hidden flex items-center bg-app-base p-0.5 rounded-full border border-app-line">
                 <button
                   type="button"
                   onClick={() => setMobileView("week")}
                   className={`px-2 py-0.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
                     mobileView === "week"
-                      ? "bg-[#BCCCE6] text-[#0B111C] shadow-xs"
-                      : "text-[#97A0B3] hover:text-white"
+                      ? "bg-app-accent-soft text-app-base shadow-xs"
+                      : "text-app-mist hover:text-hi"
                   }`}
                 >
                   Week
@@ -444,8 +444,8 @@ export function PortalCalendarPage() {
                   onClick={() => setMobileView("month")}
                   className={`px-2 py-0.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
                     mobileView === "month"
-                      ? "bg-[#BCCCE6] text-[#0B111C] shadow-xs"
-                      : "text-[#97A0B3] hover:text-white"
+                      ? "bg-app-accent-soft text-app-base shadow-xs"
+                      : "text-app-mist hover:text-hi"
                   }`}
                 >
                   Month
@@ -453,18 +453,18 @@ export function PortalCalendarPage() {
               </div>
 
               {user?.role === "client" && (
-                <button type="button" disabled={isRebalancing} onClick={rebuildDraftSchedule} className="hidden sm:inline-flex rounded-full border border-[#2A3446] px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs disabled:opacity-60">
+                <button type="button" disabled={isRebalancing} onClick={rebuildDraftSchedule} className="hidden sm:inline-flex rounded-full border border-app-line px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs disabled:opacity-60">
                   {isRebalancing ? "Updating schedule…" : "Rebuild draft schedule"}
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => { setSelectedDate(today.getDate()); goToToday(); }}
-                className="px-2 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold text-slate-200 hover:text-white bg-[#0B111C]/80 hover:bg-[#0B111C] rounded-full border border-[#2A3446] shadow-2xs transition-all cursor-pointer"
+                className="px-2 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold text-slate-200 hover:text-hi bg-app-base/80 hover:bg-app-base rounded-full border border-app-line shadow-2xs transition-all cursor-pointer"
               >
                 Today
               </button>
-              <div className="flex items-center bg-[#0B111C]/80 border border-[#2A3446] rounded-full p-0.5 shadow-2xs">
+              <div className="flex items-center bg-app-base/80 border border-app-line rounded-full p-0.5 shadow-2xs">
                 <button
                   onClick={() => {
                     if (mobileView === "week") {
@@ -474,12 +474,12 @@ export function PortalCalendarPage() {
                       navigateMonth(-1);
                     }
                   }}
-                  className="p-1 sm:p-1.5 text-slate-400 hover:text-white rounded-full transition-all cursor-pointer"
+                  className="p-1 sm:p-1.5 text-slate-400 hover:text-hi rounded-full transition-all cursor-pointer"
                   aria-label="Previous"
                 >
                   <ChevronLeft className="size-3.5 sm:size-4" strokeWidth={2.5} />
                 </button>
-                <div className="w-[1px] h-3.5 sm:h-4 bg-[#2A3446] mx-0.5 sm:mx-1"></div>
+                <div className="w-[1px] h-3.5 sm:h-4 bg-app-line mx-0.5 sm:mx-1"></div>
                 <button
                   onClick={() => {
                     if (mobileView === "week") {
@@ -489,7 +489,7 @@ export function PortalCalendarPage() {
                       navigateMonth(1);
                     }
                   }}
-                  className="p-1 sm:p-1.5 text-slate-400 hover:text-white rounded-full transition-all cursor-pointer"
+                  className="p-1 sm:p-1.5 text-slate-400 hover:text-hi rounded-full transition-all cursor-pointer"
                   aria-label="Next"
                 >
                   <ChevronRight className="size-3.5 sm:size-4" strokeWidth={2.5} />
@@ -505,13 +505,13 @@ export function PortalCalendarPage() {
               const Icon = config.icon;
               const pluralLabel = count > 1 ? (kind === "story" ? "Stories" : `${config.label}s`) : config.label;
               return count > 0 ? (
-                <span key={kind} className="inline-flex items-center gap-1.5 rounded-lg border border-[#2A3446] bg-[#0B111C]/60 px-2 sm:px-2.5 py-0.5 sm:py-1 font-semibold text-slate-200 text-[11px] sm:text-xs shrink-0">
-                  <Icon className="size-3 sm:size-3.5 shrink-0 stroke-[2.2] text-[#7FA0D6]" />
+                <span key={kind} className="inline-flex items-center gap-1.5 rounded-lg border border-app-line bg-app-base/60 px-2 sm:px-2.5 py-0.5 sm:py-1 font-semibold text-slate-200 text-[11px] sm:text-xs shrink-0">
+                  <Icon className="size-3 sm:size-3.5 shrink-0 stroke-[2.2] text-app-accent" />
                   <span>{count} {pluralLabel}</span>
                 </span>
               ) : null;
             })}
-            <span className="px-2 py-0.5 sm:py-1 text-[11px] sm:text-xs text-[#97A0B3] shrink-0">{monthEntries.length} planned this month</span>
+            <span className="px-2 py-0.5 sm:py-1 text-[11px] sm:text-xs text-app-mist shrink-0">{monthEntries.length} planned this month</span>
           </div>
           {scheduleMessage && <p role="status" className="mb-2 sm:mb-3 text-xs sm:text-sm text-slate-300">{scheduleMessage}</p>}
 
@@ -532,14 +532,14 @@ export function PortalCalendarPage() {
                     }}
                     className={`rounded-xl py-2 px-0.5 text-center cursor-pointer flex flex-col items-center justify-between transition-all border ${
                       dayItem.isSelected
-                        ? "border-[#7FA0D6] bg-[#7FA0D6]/15 ring-1 ring-[#7FA0D6]/30 text-white font-black"
+                        ? "border-app-accent bg-app-accent/15 ring-1 ring-app-accent/30 text-hi font-black"
                         : dayItem.isToday
-                        ? "border-[#7FA0D6]/40 bg-[#161F2D] text-[#7FA0D6]"
-                        : "border-[#2A3446] bg-[#0B111C]/60 text-slate-300 hover:border-[#7FA0D6]/40"
+                        ? "border-app-accent/40 bg-app-surface text-app-accent"
+                        : "border-app-line bg-app-base/60 text-slate-300 hover:border-app-accent/40"
                     }`}
                   >
-                    <span className="text-[9px] font-bold text-[#97A0B3] uppercase tracking-wider">{dayItem.dayName}</span>
-                    <span className={`text-xs sm:text-sm font-black my-1 ${dayItem.isSelected ? "text-white" : dayItem.isToday ? "text-[#7FA0D6]" : "text-slate-200"}`}>
+                    <span className="text-[9px] font-bold text-app-mist uppercase tracking-wider">{dayItem.dayName}</span>
+                    <span className={`text-xs sm:text-sm font-black my-1 ${dayItem.isSelected ? "text-hi" : dayItem.isToday ? "text-app-accent" : "text-slate-200"}`}>
                       {dayItem.day}
                     </span>
                     {/* Colored indicator dots */}
@@ -559,7 +559,7 @@ export function PortalCalendarPage() {
             <div className="md:hidden flex flex-col">
               <div className="grid grid-cols-7 mb-1 text-center">
                 {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day: string) => (
-                  <div key={day} className="text-[9px] font-black text-[#97A0B3] uppercase tracking-wider">
+                  <div key={day} className="text-[9px] font-black text-app-mist uppercase tracking-wider">
                     {day}
                   </div>
                 ))}
@@ -581,10 +581,10 @@ export function PortalCalendarPage() {
                       onClick={() => setSelectedDate(day)}
                       className={`aspect-square rounded-lg p-1 transition-all cursor-pointer flex flex-col items-center justify-between border ${
                         isSelected
-                          ? "border-[#7FA0D6] bg-[#7FA0D6]/15 ring-1 ring-[#7FA0D6]/30 text-white font-bold"
+                          ? "border-app-accent bg-app-accent/15 ring-1 ring-app-accent/30 text-hi font-bold"
                           : isTodayCell
-                          ? "border-[#7FA0D6]/40 bg-[#161F2D] text-[#7FA0D6]"
-                          : "border-[#2A3446] bg-[#0B111C]/40 text-slate-300"
+                          ? "border-app-accent/40 bg-app-surface text-app-accent"
+                          : "border-app-line bg-app-base/40 text-slate-300"
                       }`}
                     >
                       <span className="text-[11px] font-bold leading-none">{day}</span>
@@ -605,7 +605,7 @@ export function PortalCalendarPage() {
             {/* Weekday Headers */}
             <div className="grid grid-cols-7 mb-1.5 sm:mb-2">
               {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day: string) => (
-                <div key={day} className="py-0.5 sm:py-1 text-center text-[10px] sm:text-xs font-black text-[#97A0B3] uppercase tracking-wider">
+                <div key={day} className="py-0.5 sm:py-1 text-center text-[10px] sm:text-xs font-black text-app-mist uppercase tracking-wider">
                   {day}
                 </div>
               ))}
@@ -631,14 +631,14 @@ export function PortalCalendarPage() {
                     onClick={() => setSelectedDate(day)}
                     className={`relative rounded-lg sm:rounded-xl p-1 sm:p-2 min-w-0 transition-all cursor-pointer min-h-[52px] sm:min-h-[80px] md:min-h-[110px] flex flex-col justify-between border group ${
                       isSelected 
-                        ? "border-blue-500 bg-[#7FA0D6]/15 ring-2 ring-blue-500/20 shadow-lg scale-[1.01] z-10"
+                        ? "border-blue-500 bg-app-accent/15 ring-2 ring-blue-500/20 shadow-lg scale-[1.01] z-10"
                         : isTodayCell
-                        ? "border-[#7FA0D6]/40 bg-[#161F2D] shadow-sm"
-                        : "border-[#2A3446] hover:border-[#7FA0D6]/40 bg-[#0B111C]/40 hover:bg-[#161F2D] shadow-xs"
+                        ? "border-app-accent/40 bg-app-surface shadow-sm"
+                        : "border-app-line hover:border-app-accent/40 bg-app-base/40 hover:bg-app-surface shadow-xs"
                     }`}
                   >
                     <span className={`text-xs sm:text-base md:text-lg font-black ${
-                      isSelected ? "text-white" : isTodayCell ? "text-[#7FA0D6]" : "text-slate-300 group-hover:text-white"
+                      isSelected ? "text-hi" : isTodayCell ? "text-app-accent" : "text-slate-300 group-hover:text-hi"
                     }`}>
                       {day}
                     </span>
@@ -655,10 +655,10 @@ export function PortalCalendarPage() {
                         return (
                           <span
                             key={kind}
-                            className="inline-flex items-center gap-0.5 sm:gap-1 rounded-md bg-blue-500/15 text-[#BCCCE6] px-1 sm:px-1.5 py-0.5 text-[8px] sm:text-[11px] font-bold leading-tight truncate hover:bg-blue-500/25 transition-colors border border-blue-500/20"
+                            className="inline-flex items-center gap-0.5 sm:gap-1 rounded-md bg-blue-500/15 text-app-accent-soft px-1 sm:px-1.5 py-0.5 text-[8px] sm:text-[11px] font-bold leading-tight truncate hover:bg-blue-500/25 transition-colors border border-blue-500/20"
                             title={`${count} ${pluralLabel}`}
                           >
-                            <Icon className="size-2 sm:size-3 shrink-0 stroke-[2.2] text-[#7FA0D6]" />
+                            <Icon className="size-2 sm:size-3 shrink-0 stroke-[2.2] text-app-accent" />
                             <span className="truncate">{count} <span className="hidden sm:inline">{pluralLabel}</span></span>
                           </span>
                         );
@@ -672,16 +672,16 @@ export function PortalCalendarPage() {
         </div>
 
         {/* Right Column: Dispatch Queue (xl:col-span-1) */}
-        <div className="xl:col-span-1 bg-[#161F2D] border border-[#2A3446] rounded-xl md:rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-3 sm:p-5 flex flex-col h-full min-w-0">
+        <div className="xl:col-span-1 bg-app-surface border border-app-line rounded-xl md:rounded-2xl shadow-[0_4px_24px_rgb(var(--shadow-rgb)/calc(0.2*var(--shadow-k)))] p-3 sm:p-5 flex flex-col h-full min-w-0">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg sm:text-[20px] font-black text-white tracking-tight">
+            <h3 className="text-lg sm:text-[20px] font-black text-hi tracking-tight">
               {selectedDate ? `Task Queue for ${selectedDate}th` : "Today's Dispatch Queue"}
             </h3>
             {(() => {
               const activeDay = selectedDate || (isCurrentMonth ? today.getDate() : 1);
               const tasks = getDayEntries(activeDay);
               return (
-                <span className="inline-flex items-center rounded-full bg-[#161F2D] border border-[#2A3446] px-2.5 py-0.5 text-[11px] font-bold text-[#7FA0D6]">
+                <span className="inline-flex items-center rounded-full bg-app-surface border border-app-line px-2.5 py-0.5 text-[11px] font-bold text-app-accent">
                   {tasks.length > 0 ? `${tasks.length} Active` : '0 Active'}
                 </span>
               );
@@ -693,11 +693,11 @@ export function PortalCalendarPage() {
             const tasks = getDayEntries(activeDay);
             return (
               <div className="flex flex-wrap items-center gap-2 mb-3 text-xs text-slate-300 min-h-[28px]" aria-label="Daily deliverables summary">
-                <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#2A3446] px-2.5 py-1 font-semibold text-[#7FA0D6] bg-[#0B111C]/60">
-                  <Sparkles className="size-3.5 shrink-0 stroke-[2.2] text-[#7FA0D6]" />
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-app-line px-2.5 py-1 font-semibold text-app-accent bg-app-base/60">
+                  <Sparkles className="size-3.5 shrink-0 stroke-[2.2] text-app-accent" />
                   <span>{tasks.length} {tasks.length === 1 ? 'Deliverable' : 'Deliverables'}</span>
                 </span>
-                <span className="px-2 py-1 text-[#97A0B3]">
+                <span className="px-2 py-1 text-app-mist">
                   {new Date(currentYear, currentMonth, activeDay).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
                 </span>
               </div>
@@ -711,12 +711,12 @@ export function PortalCalendarPage() {
               
               if (tasks.length === 0) {
                 return (
-                  <div className="flex flex-col items-center justify-center flex-1 min-h-[200px] h-full p-5 text-[#97A0B3] text-sm font-bold bg-[#0B111C]/60 rounded-xl border-2 border-dashed border-[#2A3446] text-center shadow-inner space-y-2">
-                    <div className="w-10 h-10 rounded-full bg-[#161F2D] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] mb-1">
+                  <div className="flex flex-col items-center justify-center flex-1 min-h-[200px] h-full p-5 text-app-mist text-sm font-bold bg-app-base/60 rounded-xl border-2 border-dashed border-app-line text-center shadow-inner space-y-2">
+                    <div className="w-10 h-10 rounded-full bg-app-surface border border-app-line flex items-center justify-center text-app-accent mb-1">
                       <Clock className="w-5 h-5" />
                     </div>
                     <span className="text-slate-200 font-bold">No deliverables scheduled.</span>
-                    <span className="text-xs text-[#97A0B3] font-normal max-w-[220px]">
+                    <span className="text-xs text-app-mist font-normal max-w-[220px]">
                       All clear for this date. Select another day to view or schedule content.
                     </span>
                   </div>
@@ -732,7 +732,7 @@ export function PortalCalendarPage() {
                   <div 
                     key={entry.id} 
                     onClick={() => openEntryModal(entry)}
-                    className="p-3.5 sm:p-4 rounded-xl border border-[#2A3446] hover:border-[#7FA0D6]/50 bg-[#0B111C]/70 hover:bg-[#0B111C] transition-all cursor-pointer shadow-xs group space-y-2.5"
+                    className="p-3.5 sm:p-4 rounded-xl border border-app-line hover:border-app-accent/50 bg-app-base/70 hover:bg-app-base transition-all cursor-pointer shadow-xs group space-y-2.5"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
@@ -741,35 +741,35 @@ export function PortalCalendarPage() {
                           const cfg = getTypeConfig(kind);
                           const CardIcon = cfg.icon;
                           return (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-500/15 text-[#BCCCE6] border border-blue-500/30 shrink-0">
-                              <CardIcon className="size-3 shrink-0 stroke-[2.2] text-[#7FA0D6]" />
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-500/15 text-app-accent-soft border border-blue-500/30 shrink-0">
+                              <CardIcon className="size-3 shrink-0 stroke-[2.2] text-app-accent" />
                               <span>{cfg.label}</span>
                             </span>
                           );
                         })()}
-                        <span className="text-[10px] font-black text-[#7FA0D6] uppercase tracking-wider truncate">
+                        <span className="text-[10px] font-black text-app-accent uppercase tracking-wider truncate">
                           {podLabel}
                         </span>
                       </div>
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border shrink-0 ${isApproved ? "bg-blue-600/30 text-[#BCCCE6] border-blue-500/30" : "bg-blue-950/80 text-blue-300 border-blue-700/50"}`}>
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border shrink-0 ${isApproved ? "bg-blue-600/30 text-app-accent-soft border-blue-500/30" : "bg-blue-950/80 text-blue-300 border-blue-700/50"}`}>
                          {statusLabel}
                       </span>
                     </div>
                     
-                    <h4 className="text-[14px] font-bold text-white leading-snug group-hover:text-[#7FA0D6] transition-colors">
+                    <h4 className="text-[14px] font-bold text-hi leading-snug group-hover:text-app-accent transition-colors">
                       {entry.topic}
                     </h4>
                     
-                    <div className="flex items-center justify-between pt-2 border-t border-[#2A3446]/60 mt-auto">
+                    <div className="flex items-center justify-between pt-2 border-t border-app-line/60 mt-auto">
                       <div className="flex items-center gap-2.5">
-                        <div className="size-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-[#7FA0D6]">
+                        <div className="size-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-app-accent">
                           CP
                         </div>
                         <span className="text-[12px] font-bold text-slate-300">
                           Creative Pod
                         </span>
                       </div>
-                      <span className="text-[11px] font-black text-[#7FA0D6]">
+                      <span className="text-[11px] font-black text-app-accent">
                         {entry.scheduled_time || "Scheduled"}
                       </span>
                     </div>
@@ -787,11 +787,11 @@ export function PortalCalendarPage() {
           onClick={() => setPreviewEntry(null)}
         >
           <div
-            className="w-full max-w-2xl max-h-[90vh] rounded-3xl bg-[#161F2D] border border-[#2A3446] text-white shadow-2xl overflow-y-auto flex flex-col relative m-auto animate-in zoom-in-95 duration-200"
+            className="w-full max-w-2xl max-h-[90vh] rounded-3xl bg-app-surface border border-app-line text-hi shadow-2xl overflow-y-auto flex flex-col relative m-auto animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="sticky top-0 bg-[#161F2D]/95 backdrop-blur-sm z-10 flex items-center justify-between p-4 sm:p-5 border-b border-[#2A3446]">
+            <div className="sticky top-0 bg-app-surface/95 backdrop-blur-sm z-10 flex items-center justify-between p-4 sm:p-5 border-b border-app-line">
               <div className="flex items-center gap-2.5 flex-wrap">
                 <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
                   getTypeConfig(previewEntry.type).pillBg
@@ -823,7 +823,7 @@ export function PortalCalendarPage() {
               <button
                 type="button"
                 onClick={() => setPreviewEntry(null)}
-                className="p-1 rounded-lg text-[#97A0B3] hover:text-white hover:bg-[#2A3446] transition-colors cursor-pointer shrink-0"
+                className="p-1 rounded-lg text-app-mist hover:text-hi hover:bg-app-line transition-colors cursor-pointer shrink-0"
               >
                 <X className="size-5" />
               </button>
@@ -869,18 +869,18 @@ export function PortalCalendarPage() {
 
               {/* Story Title & Date */}
               <div>
-                <h3 className="text-lg font-black text-white leading-snug">
+                <h3 className="text-lg font-black text-hi leading-snug">
                   {previewEntry.topic || previewEntry.title}
                 </h3>
-                <p className="text-xs text-[#97A0B3] mt-1.5 flex items-center gap-1.5 font-medium">
-                  <Clock className="size-3.5 text-[#7FA0D6]" />
+                <p className="text-xs text-app-mist mt-1.5 flex items-center gap-1.5 font-medium">
+                  <Clock className="size-3.5 text-app-accent" />
                   <span>Scheduled Publication: {previewEntry.date} · {previewEntry.scheduled_time || "11:00 AM"}</span>
                 </p>
               </div>
 
               {/* What this story is about */}
-              <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-2">
-                <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[#7FA0D6]">
+              <div className="p-4 rounded-2xl bg-app-base border border-app-line space-y-2">
+                <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-app-accent">
                   <Sparkles className="size-3.5" />
                   <span>Story Outline & Concept</span>
                 </div>
@@ -894,22 +894,22 @@ export function PortalCalendarPage() {
               </div>
 
               {/* Team Approval Request Box */}
-              <div className="p-4 rounded-2xl bg-[#7FA0D6]/10 border border-[#7FA0D6]/25 space-y-2.5">
+              <div className="p-4 rounded-2xl bg-app-accent/10 border border-app-accent/25 space-y-2.5">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <span className="size-2 rounded-full bg-[#7FA0D6] animate-pulse" />
-                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#7FA0D6]">
+                    <span className="size-2 rounded-full bg-app-accent animate-pulse" />
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-app-accent">
                       Approval Requested For
                     </span>
                   </div>
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/20 text-[#BCCCE6] border border-[#7FA0D6]/30">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-app-accent/20 text-app-accent-soft border border-app-accent/30">
                     {previewEntry.approval_type || (previewEntry.blueprint as any)?.approval_type || "Story Concept & Topic"}
                   </span>
                 </div>
 
                 {(previewEntry.team_notes || (previewEntry.blueprint as any)?.team_notes) ? (
-                  <div className="text-xs text-slate-300 bg-[#0B111C]/70 p-3 rounded-xl border border-[#2A3446] space-y-1">
-                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider block">
+                  <div className="text-xs text-slate-300 bg-app-base/70 p-3 rounded-xl border border-app-line space-y-1">
+                    <span className="text-[10px] font-bold text-app-mist uppercase tracking-wider block">
                       Note from your Creative Team
                     </span>
                     <p className="italic text-slate-200 leading-relaxed font-medium">
@@ -944,30 +944,30 @@ export function PortalCalendarPage() {
                     <button
                       type="button"
                       onClick={() => setRequestChangeOpen(!requestChangeOpen)}
-                      className="py-3 px-4 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:bg-[#2A3446] text-slate-200 font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      className="py-3 px-4 rounded-xl border border-app-line bg-app-base hover:bg-app-line text-slate-200 font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <MessageSquare className="size-4 text-[#7FA0D6]" />
+                      <MessageSquare className="size-4 text-app-accent" />
                       <span>Request Changes</span>
                     </button>
                   </div>
 
                   {requestChangeOpen && (
-                    <div className="p-4 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-3 animate-in fade-in duration-150">
-                      <label className="text-xs font-bold text-white block">
+                    <div className="p-4 rounded-xl bg-app-base border border-app-line space-y-3 animate-in fade-in duration-150">
+                      <label className="text-xs font-bold text-hi block">
                         What changes would you like the team to make?
                       </label>
                       <textarea
                         value={changeNotes}
                         onChange={(e) => setChangeNotes(e.target.value)}
                         placeholder="e.g. Can we focus on a different hook, or highlight our special offer more prominently?"
-                        className="w-full text-xs p-3 rounded-xl bg-[#161F2D] border border-[#2A3446] text-white placeholder:text-slate-500 focus:outline-none focus:border-[#7FA0D6]"
+                        className="w-full text-xs p-3 rounded-xl bg-app-surface border border-app-line text-hi placeholder:text-slate-500 focus:outline-none focus:border-app-accent"
                         rows={3}
                       />
                       <div className="flex justify-end gap-2">
                         <button
                           type="button"
                           onClick={() => setRequestChangeOpen(false)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-hi cursor-pointer"
                         >
                           Cancel
                         </button>
@@ -997,18 +997,18 @@ export function PortalCalendarPage() {
               )}
 
               {/* Action Buttons Footer */}
-              <div className="flex gap-3 pt-2 border-t border-[#2A3446]">
+              <div className="flex gap-3 pt-2 border-t border-app-line">
                 <Link
                   to={previewEntry.deliverable_id ? `/portal/deliverables/${previewEntry.deliverable_id}` : "/portal/deliverables"}
-                  className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/50 text-white font-bold text-xs transition-colors"
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-app-surface border border-app-line hover:border-app-accent/50 text-hi font-bold text-xs transition-colors"
                 >
                   <span>Deliverables Dock</span>
-                  <ExternalLink className="size-3.5 text-[#7FA0D6]" />
+                  <ExternalLink className="size-3.5 text-app-accent" />
                 </Link>
                 <button
                   type="button"
                   onClick={() => setPreviewEntry(null)}
-                  className="px-5 py-3 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:bg-[#2A3446] text-[#F1F5F9] font-bold text-xs transition-colors cursor-pointer"
+                  className="px-5 py-3 rounded-xl border border-app-line bg-app-base hover:bg-app-line text-app-ink-2 font-bold text-xs transition-colors cursor-pointer"
                 >
                   Close
                 </button>

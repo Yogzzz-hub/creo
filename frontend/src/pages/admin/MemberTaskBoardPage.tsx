@@ -405,14 +405,14 @@ export function MemberTaskBoardPage() {
       : review;
 
   const columnClass = (_column: Column) =>
-    "h-full flex flex-col min-h-0 bg-[#161F2D]/60 rounded-2xl p-3 border border-[#2A3446]/70 space-y-3";
+    "h-full flex flex-col min-h-0 bg-app-surface/60 rounded-2xl p-3 border border-app-line/70 space-y-3";
 
   const clientBadge = (task: PodTask) => (
-    <span className="text-[#7FA0D6]">{task.client_name.toUpperCase()}</span>
+    <span className="text-app-accent">{task.client_name.toUpperCase()}</span>
   );
 
   const emptyColumn = (text: string) => (
-    <div className="text-center py-8 px-4 text-xs text-[#97A0B3] font-medium bg-[#161F2D]/50 rounded-xl border border-dashed border-[#2A3446]">
+    <div className="text-center py-8 px-4 text-xs text-app-mist font-medium bg-app-surface/50 rounded-xl border border-dashed border-app-line">
       {text}
     </div>
   );
@@ -422,7 +422,7 @@ export function MemberTaskBoardPage() {
   const pickedMime = file ? uploadMimeType(file) : null;
 
   return (
-    <div data-surface="ops" className="flex-1 flex flex-col min-h-[calc(100vh-theme(spacing.16))] md:h-[calc(100vh-4rem)] bg-[#0B0F17] text-white font-sans md:overflow-hidden">
+    <div data-surface="ops" className="flex-1 flex flex-col min-h-[calc(100vh-theme(spacing.16))] md:h-[calc(100vh-4rem)] bg-[#0B0F17] text-hi font-sans md:overflow-hidden">
       <AdminTopHeader activeTab="My Tasks" />
 
       {/* ── MOBILE TASK BOARD VIEW (< md) ── */}
@@ -495,21 +495,21 @@ export function MemberTaskBoardPage() {
         )}
 
         {isAdmin && (
-          <div className="p-3 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs text-[#97A0B3]">
-            Admins review and assign work from the <Link to="/admin/deliverables" className="text-white underline">Deliverables</Link> and pod dashboards.
+          <div className="p-3 rounded-xl border border-app-line bg-app-surface text-xs text-app-mist">
+            Admins review and assign work from the <Link to="/admin/deliverables" className="text-hi underline">Deliverables</Link> and pod dashboards.
           </div>
         )}
 
         {/* Filter & action bar */}
-        <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#161F2D] sm:bg-transparent p-2.5 sm:p-0 rounded-2xl sm:rounded-none border sm:border-0 border-[#2A3446] w-full">
+        <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-app-surface sm:bg-transparent p-2.5 sm:p-0 rounded-2xl sm:rounded-none border sm:border-0 border-app-line w-full">
           <div className="relative flex-1 max-w-md w-full">
-            <Search className="size-3.5 text-[#97A0B3] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="size-3.5 text-app-mist absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter tasks by client, format or title..."
-              className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#0B111C] sm:bg-[#161F2D] border border-[#2A3446]/80 text-xs font-medium placeholder:text-[#97A0B3] focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full pl-8 pr-3 py-2 rounded-xl bg-app-base sm:bg-[#161F2D] border border-app-line/80 text-xs font-medium placeholder:text-app-mist focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
@@ -561,7 +561,7 @@ export function MemberTaskBoardPage() {
                     setCreateOpen(true);
                   }}
                   disabled={clients.length === 0}
-                  className="w-full sm:w-auto px-3 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs"
+                  className="w-full sm:w-auto px-3 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs"
                 >
                   <Plus className="size-3.5 shrink-0" />
                   <span className="truncate">Add Task</span>
@@ -581,7 +581,7 @@ export function MemberTaskBoardPage() {
             <p className="text-xs text-rose-400 font-medium">{(error as Error)?.message || "Failed to load tasks."}</p>
             <button
               onClick={() => refetch()}
-              className="px-3 py-1.5 rounded-lg bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-xs font-bold text-white transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-lg bg-app-surface hover:bg-app-line border border-app-line text-xs font-bold text-hi transition-colors cursor-pointer"
             >
               Retry
             </button>
@@ -598,16 +598,16 @@ export function MemberTaskBoardPage() {
                     <div
                       key={task.id}
                       id={`task-card-${task.id}`}
-                      className={`bg-[#161F2D] rounded-xl p-3.5 border space-y-3 transition-all ${
-                        targetedTaskId === task.id ? "ring-2 ring-[#7FA0D6] border-[#7FA0D6] shadow-lg shadow-blue-500/20" : "border-[#2A3446]/80"
+                      className={`bg-app-surface rounded-xl p-3.5 border space-y-3 transition-all ${
+                        targetedTaskId === task.id ? "ring-2 ring-app-accent border-app-accent shadow-lg shadow-blue-500/20" : "border-app-line/80"
                       }`}
                     >
                       <div className="flex items-center justify-between text-[10px] font-bold">
                         {clientBadge(task)}
-                        <span className="px-1.5 rounded bg-[#7FA0D6]/15 text-[#7FA0D6]">{formatLabel(task.deliverable_type)}</span>
+                        <span className="px-1.5 rounded bg-app-accent/15 text-app-accent">{formatLabel(task.deliverable_type)}</span>
                       </div>
-                      <h4 className="text-xs font-black text-white leading-snug">{taskTitle(task)}</h4>
-                      {task.blueprint?.brief && <p className="text-[11px] text-[#97A0B3] line-clamp-2">{task.blueprint.brief}</p>}
+                      <h4 className="text-xs font-black text-hi leading-snug">{taskTitle(task)}</h4>
+                      {task.blueprint?.brief && <p className="text-[11px] text-app-mist line-clamp-2">{task.blueprint.brief}</p>}
                       {(() => {
                         const footage = task.blueprint?.raw_footage_url || task.blueprint?.drive_url || task.blueprint?.brief_url;
                         const duration = task.blueprint?.target_duration;
@@ -620,7 +620,7 @@ export function MemberTaskBoardPage() {
                                 target="_blank"
                                 rel="noreferrer"
                                 onClick={(e) => e.stopPropagation()}
-                                className="inline-flex items-center gap-1 text-[10px] text-blue-300 hover:text-white font-bold bg-blue-500/15 hover:bg-blue-500/25 px-2 py-0.5 rounded border border-blue-500/30 transition-all"
+                                className="inline-flex items-center gap-1 text-[10px] text-blue-300 hover:text-hi font-bold bg-blue-500/15 hover:bg-blue-500/25 px-2 py-0.5 rounded border border-blue-500/30 transition-all"
                               >
                                 <FolderGit2 className="size-2.5 text-blue-400" />
                                 <span>Drive Footage</span>
@@ -628,19 +628,19 @@ export function MemberTaskBoardPage() {
                               </a>
                             )}
                             {duration && (
-                              <span className="text-[10px] text-purple-300 font-mono px-1.5 py-0.5 bg-[#0B111C] rounded border border-[#2A3446]">
+                              <span className="text-[10px] text-purple-300 font-mono px-1.5 py-0.5 bg-app-base rounded border border-app-line">
                                 {duration}
                               </span>
                             )}
                           </div>
                         );
                       })()}
-                      <div className="flex items-center justify-between pt-1.5 border-t border-[#2A3446] text-[10px]">
-                        <span className={due.urgent ? "text-rose-400 font-bold" : "text-[#97A0B3] font-medium"}>{due.text}</span>
+                      <div className="flex items-center justify-between pt-1.5 border-t border-app-line text-[10px]">
+                        <span className={due.urgent ? "text-rose-400 font-bold" : "text-app-mist font-medium"}>{due.text}</span>
                         <button
                           onClick={() => startMutation.mutate(task.id)}
                           disabled={startMutation.isPending}
-                          className="px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-[#7FA0D6] font-bold text-[10px] flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
+                          className="px-2 py-0.5 rounded-md bg-app-accent/15 hover:bg-app-accent/25 text-app-accent font-bold text-[10px] flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
                         >
                           <span>Start</span>
                           <ArrowRight className="size-2.5" />
@@ -664,22 +664,22 @@ export function MemberTaskBoardPage() {
                     <div
                       key={task.id}
                       id={`task-card-${task.id}`}
-                      className={`bg-[#161F2D] rounded-xl p-3.5 border space-y-3 transition-all ${
+                      className={`bg-app-surface rounded-xl p-3.5 border space-y-3 transition-all ${
                         targetedTaskId === task.id
-                          ? "ring-2 ring-[#7FA0D6] border-[#7FA0D6] shadow-lg shadow-blue-500/20"
+                          ? "ring-2 ring-app-accent border-app-accent shadow-lg shadow-blue-500/20"
                           : feedback
                           ? "border-amber-400/50"
-                          : "border-[#2A3446]/80"
+                          : "border-app-line/80"
                       }`}
                     >
                       <div className="flex items-center justify-between text-[10px] font-bold">
                         {clientBadge(task)}
-                        <span className={`px-1.5 rounded text-[9px] font-black ${due.urgent ? "bg-rose-500/15 text-rose-400 border border-rose-500/30" : "text-[#97A0B3]"}`}>
+                        <span className={`px-1.5 rounded text-[9px] font-black ${due.urgent ? "bg-rose-500/15 text-rose-400 border border-rose-500/30" : "text-app-mist"}`}>
                           {due.text}
                         </span>
                       </div>
-                      <h4 className="text-xs font-black text-white leading-snug">{taskTitle(task)}</h4>
-                      <p className="text-[11px] text-[#97A0B3]">{formatLabel(task.deliverable_type)}{task.deliverable ? ` · last upload v${task.deliverable.version}` : ""}</p>
+                      <h4 className="text-xs font-black text-hi leading-snug">{taskTitle(task)}</h4>
+                      <p className="text-[11px] text-app-mist">{formatLabel(task.deliverable_type)}{task.deliverable ? ` · last upload v${task.deliverable.version}` : ""}</p>
                       {(() => {
                         const footage = task.blueprint?.raw_footage_url || task.blueprint?.drive_url || task.blueprint?.brief_url;
                         const duration = task.blueprint?.target_duration;
@@ -692,7 +692,7 @@ export function MemberTaskBoardPage() {
                                 target="_blank"
                                 rel="noreferrer"
                                 onClick={(e) => e.stopPropagation()}
-                                className="inline-flex items-center gap-1 text-[10px] text-blue-300 hover:text-white font-bold bg-blue-500/15 hover:bg-blue-500/25 px-2 py-0.5 rounded border border-blue-500/30 transition-all"
+                                className="inline-flex items-center gap-1 text-[10px] text-blue-300 hover:text-hi font-bold bg-blue-500/15 hover:bg-blue-500/25 px-2 py-0.5 rounded border border-blue-500/30 transition-all"
                               >
                                 <FolderGit2 className="size-2.5 text-blue-400" />
                                 <span>Drive Footage</span>
@@ -700,7 +700,7 @@ export function MemberTaskBoardPage() {
                               </a>
                             )}
                             {duration && (
-                              <span className="text-[10px] text-purple-300 font-mono px-1.5 py-0.5 bg-[#0B111C] rounded border border-[#2A3446]">
+                              <span className="text-[10px] text-purple-300 font-mono px-1.5 py-0.5 bg-app-base rounded border border-app-line">
                                 {duration}
                               </span>
                             )}
@@ -708,17 +708,17 @@ export function MemberTaskBoardPage() {
                         );
                       })()}
                       {feedback && (
-                        <div className="p-2.5 rounded-xl bg-[#0B111C] border border-[#D8BF9B]/50 text-xs space-y-2">
+                        <div className="p-2.5 rounded-xl bg-app-base border border-app-warm/50 text-xs space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="font-bold text-[#D8BF9B] text-[10px] uppercase tracking-wider">{feedback.source} requested changes</span>
+                            <span className="font-bold text-app-warm text-[10px] uppercase tracking-wider">{feedback.source} requested changes</span>
                             {feedback.voice_note_url && (
-                              <span className="flex items-center gap-1 text-[10px] text-[#7FA0D6] font-semibold bg-[#7FA0D6]/10 px-1.5 py-0.5 rounded border border-[#7FA0D6]/30">
+                              <span className="flex items-center gap-1 text-[10px] text-app-accent font-semibold bg-app-accent/10 px-1.5 py-0.5 rounded border border-app-accent/30">
                                 <Volume2 className="size-2.5" /> Voice Note
                               </span>
                             )}
                           </div>
                           {feedback.text && (
-                            <p className="text-[11px] text-[#F1F5F9] leading-snug line-clamp-3">"{feedback.text}"</p>
+                            <p className="text-[11px] text-app-ink-2 leading-snug line-clamp-3">"{feedback.text}"</p>
                           )}
                           {feedback.voice_note_url && (
                             <div className="pt-1">
@@ -731,7 +731,7 @@ export function MemberTaskBoardPage() {
                           )}
                         </div>
                       )}
-                      <div className="pt-1.5 border-t border-[#2A3446]">
+                      <div className="pt-1.5 border-t border-app-line">
                         <button
                           onClick={() => openUpload(task)}
                           className="w-full py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95"
@@ -755,17 +755,17 @@ export function MemberTaskBoardPage() {
                   <div
                     key={task.id}
                     id={`task-card-${task.id}`}
-                    className={`bg-[#161F2D] rounded-xl p-3.5 border space-y-3 transition-all ${
-                      targetedTaskId === task.id ? "ring-2 ring-[#7FA0D6] border-[#7FA0D6] shadow-lg shadow-blue-500/20" : "border-[#2A3446]/80"
+                    className={`bg-app-surface rounded-xl p-3.5 border space-y-3 transition-all ${
+                      targetedTaskId === task.id ? "ring-2 ring-app-accent border-app-accent shadow-lg shadow-blue-500/20" : "border-app-line/80"
                     }`}
                   >
                     <div className="flex items-center justify-between text-[10px] font-bold">
                       {clientBadge(task)}
-                      <span className="px-1.5 rounded bg-[#7FA0D6]/15 text-[#7FA0D6] text-[9px]">With {leadName}</span>
+                      <span className="px-1.5 rounded bg-app-accent/15 text-app-accent text-[9px]">With {leadName}</span>
                     </div>
-                    <h4 className="text-xs font-black text-white leading-snug">{taskTitle(task)}</h4>
+                    <h4 className="text-xs font-black text-hi leading-snug">{taskTitle(task)}</h4>
                     {task.deliverable && (
-                      <div className="h-28 rounded-lg overflow-hidden border border-[#2A3446] bg-black">
+                      <div className="h-28 rounded-lg overflow-hidden border border-app-line bg-black">
                         <DeliverableMedia
                           url={task.deliverable.file_url}
                           isVideo={task.deliverable.is_video}
@@ -775,10 +775,10 @@ export function MemberTaskBoardPage() {
                         />
                       </div>
                     )}
-                    <div className="flex items-center justify-between text-[10px] text-[#97A0B3]">
+                    <div className="flex items-center justify-between text-[10px] text-app-mist">
                       <span>v{task.deliverable?.version ?? 1} · awaiting lead sign-off</span>
                       {data?.is_lead_view && (
-                        <Link to="/lead/deliverables" className="font-bold text-[#7FA0D6] flex items-center gap-0.5">
+                        <Link to="/lead/deliverables" className="font-bold text-app-accent flex items-center gap-0.5">
                           <Eye className="size-3" /> Review
                         </Link>
                       )}
@@ -796,7 +796,7 @@ export function MemberTaskBoardPage() {
                 {review.map((task) => {
                   const approved = task.status === "ready_to_publish" || task.status === "completed";
                   return (
-                    <div key={task.id} className="bg-[#161F2D] rounded-xl p-3.5 border border-[#2A3446]/80 space-y-3">
+                    <div key={task.id} className="bg-app-surface rounded-xl p-3.5 border border-app-line/80 space-y-3">
                       <div className="flex items-center justify-between text-[10px] font-bold">
                         {clientBadge(task)}
                         {approved ? (
@@ -804,13 +804,13 @@ export function MemberTaskBoardPage() {
                             <Check className="size-2.5" /> Client approved
                           </span>
                         ) : (
-                          <span className="px-1.5 rounded bg-[#D8BF9B]/15 text-[#D8BF9B] text-[9px] flex items-center gap-0.5">
+                          <span className="px-1.5 rounded bg-app-warm/15 text-app-warm text-[9px] flex items-center gap-0.5">
                             <Clock className="size-2.5" /> With client
                           </span>
                         )}
                       </div>
-                      <h4 className="text-xs font-black text-white leading-snug">{taskTitle(task)}</h4>
-                      <p className="text-[11px] text-[#97A0B3]">
+                      <h4 className="text-xs font-black text-hi leading-snug">{taskTitle(task)}</h4>
+                      <p className="text-[11px] text-app-mist">
                         {formatLabel(task.deliverable_type)} · v{task.deliverable?.version ?? 1}
                       </p>
                       {task.deliverable?.id && <PublishingControl deliverableId={task.deliverable.id} />}
@@ -834,20 +834,20 @@ export function MemberTaskBoardPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="upload-title"
-            className="w-full max-w-2xl bg-[#161F2D] rounded-3xl p-5 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 max-h-[92vh] overflow-y-auto"
+            className="w-full max-w-2xl bg-app-surface rounded-3xl p-5 sm:p-7 shadow-2xl border border-app-line space-y-4 max-h-[92vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between border-b border-[#2A3446] pb-3 gap-2">
+            <div className="flex items-start justify-between border-b border-app-line pb-3 gap-2">
               <div className="flex items-start gap-3">
-                <div className="size-10 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shrink-0 mt-0.5">
+                <div className="size-10 rounded-2xl bg-app-accent/15 text-app-accent flex items-center justify-center shrink-0 mt-0.5">
                   <ShieldCheck className="size-5" />
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-2 mb-1 text-[10px] font-black uppercase">
-                    <span className="px-2 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6]">{uploadTask.client_name}</span>
-                    <span className="px-2 py-0.5 rounded-full bg-[#0B111C] text-[#F1F5F9]">{formatLabel(uploadTask.deliverable_type)}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-app-accent/15 text-app-accent">{uploadTask.client_name}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-app-base text-app-ink-2">{formatLabel(uploadTask.deliverable_type)}</span>
                   </div>
-                  <h3 id="upload-title" className="text-base sm:text-lg font-black text-white leading-snug">{taskTitle(uploadTask)}</h3>
+                  <h3 id="upload-title" className="text-base sm:text-lg font-black text-hi leading-snug">{taskTitle(uploadTask)}</h3>
                 </div>
               </div>
               <button
@@ -855,18 +855,18 @@ export function MemberTaskBoardPage() {
                 onClick={() => setUploadTask(null)}
                 disabled={uploadMutation.isPending}
                 aria-label="Close"
-                className="size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] flex items-center justify-center cursor-pointer shrink-0"
+                className="size-8 rounded-full bg-app-base hover:bg-app-line border border-app-line text-app-mist flex items-center justify-center cursor-pointer shrink-0"
               >
                 <X className="size-4" />
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-3 text-xs">
+            <div className="p-4 rounded-2xl bg-app-base border border-app-line space-y-3 text-xs">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-black text-[#7FA0D6] uppercase tracking-wider flex items-center gap-1.5">
+                <span className="font-black text-app-accent uppercase tracking-wider flex items-center gap-1.5">
                   <Sparkles className="size-3.5" /> Brief & Content Specs
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#161F2D] text-[#BCCCE6] border border-[#2A3446]">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-app-surface text-app-accent-soft border border-app-line">
                   {FORMAT_SPECS[uploadTask.deliverable_type] || "Match the planned format"}
                 </span>
               </div>
@@ -883,12 +883,12 @@ export function MemberTaskBoardPage() {
                     href={footage}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center justify-between p-3 rounded-xl bg-blue-950/40 border border-blue-500/40 hover:border-blue-400 text-white transition-all group shadow-sm"
+                    className="flex items-center justify-between p-3 rounded-xl bg-blue-950/40 border border-blue-500/40 hover:border-blue-400 text-hi transition-all group shadow-sm"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <FolderGit2 className="size-4 text-blue-400 shrink-0" />
                       <div className="min-w-0">
-                        <span className="text-xs font-bold text-white block">Raw Footage / Source Assets (Drive)</span>
+                        <span className="text-xs font-bold text-hi block">Raw Footage / Source Assets (Drive)</span>
                         <p className="text-[10px] text-blue-300/80 truncate">Open Google Drive to download raw video clips & assets</p>
                       </div>
                     </div>
@@ -900,14 +900,14 @@ export function MemberTaskBoardPage() {
                 );
               })()}
 
-              <p className="text-[#F1F5F9] leading-relaxed">
+              <p className="text-app-ink-2 leading-relaxed">
                 {uploadTask.blueprint?.brief || uploadTask.blueprint?.instructions || uploadTask.blueprint?.hook || uploadTask.blueprint?.objective ||
                   "Follow the client's Brand DNA and content plan for this slot."}
               </p>
 
               {/* Extra specifications (Target Duration, Hook, Audio, Reference) */}
               {(uploadTask.blueprint?.target_duration || uploadTask.blueprint?.audio_notes || uploadTask.blueprint?.hook || uploadTask.blueprint?.reference_url) && (
-                <div className="pt-2 border-t border-[#2A3446] space-y-1.5 text-[11px]">
+                <div className="pt-2 border-t border-app-line space-y-1.5 text-[11px]">
                   {uploadTask.blueprint?.hook && (
                     <div className="flex items-start gap-1 text-amber-300">
                       <Sparkles className="size-3 text-amber-400 shrink-0 mt-0.5" />
@@ -941,17 +941,17 @@ export function MemberTaskBoardPage() {
             </div>
 
             {modalFeedback && (
-              <div className="p-3.5 rounded-2xl bg-[#0B111C] border border-[#D8BF9B]/50 space-y-2 text-xs">
+              <div className="p-3.5 rounded-2xl bg-app-base border border-app-warm/50 space-y-2 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-[#D8BF9B]">{modalFeedback.source} requested changes on v{uploadTask.deliverable?.version}</span>
+                  <span className="font-bold text-app-warm">{modalFeedback.source} requested changes on v{uploadTask.deliverable?.version}</span>
                   {modalFeedback.voice_note_url && (
-                    <span className="flex items-center gap-1 text-[10px] text-[#7FA0D6] font-semibold bg-[#7FA0D6]/10 px-2 py-0.5 rounded border border-[#7FA0D6]/30">
+                    <span className="flex items-center gap-1 text-[10px] text-app-accent font-semibold bg-app-accent/10 px-2 py-0.5 rounded border border-app-accent/30">
                       <Volume2 className="size-3" /> Voice Note Attached
                     </span>
                   )}
                 </div>
                 {modalFeedback.text && (
-                  <p className="text-[#F1F5F9] leading-relaxed whitespace-pre-wrap">{modalFeedback.text}</p>
+                  <p className="text-app-ink-2 leading-relaxed whitespace-pre-wrap">{modalFeedback.text}</p>
                 )}
                 {modalFeedback.voice_note_url && (
                   <div className="mt-2">
@@ -966,15 +966,15 @@ export function MemberTaskBoardPage() {
             )}
 
             {/* File picker */}
-            <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-3 text-xs">
+            <div className="p-4 rounded-2xl bg-app-base border border-app-line space-y-3 text-xs">
               <div className="flex items-center justify-between">
-                <label htmlFor="deliverable-file" className="font-black text-white flex items-center gap-1.5 uppercase text-[11px] tracking-wider">
-                  <Upload className="size-3.5 text-[#7FA0D6]" /> Final file
+                <label htmlFor="deliverable-file" className="font-black text-hi flex items-center gap-1.5 uppercase text-[11px] tracking-wider">
+                  <Upload className="size-3.5 text-app-accent" /> Final file
                 </label>
-                <span className="text-[10px] font-bold text-[#97A0B3]">Images ≤ 10 MB · Videos ≤ 500 MB</span>
+                <span className="text-[10px] font-bold text-app-mist">Images ≤ 10 MB · Videos ≤ 500 MB</span>
               </div>
               <label
-                className="relative block border-2 border-dashed border-[#2A3446] hover:border-[#7FA0D6] bg-[#161F2D]/60 rounded-2xl p-4 text-center transition-all cursor-pointer"
+                className="relative block border-2 border-dashed border-app-line hover:border-app-accent bg-app-surface/60 rounded-2xl p-4 text-center transition-all cursor-pointer"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
@@ -994,15 +994,15 @@ export function MemberTaskBoardPage() {
                     <div className="h-48 rounded-xl overflow-hidden bg-black">
                       <DeliverableMedia url={previewUrl} isVideo={!!pickedMime?.startsWith("video/")} title={file.name} className="w-full h-full" />
                     </div>
-                    <p className="font-bold text-white truncate">{file.name} · {(file.size / MB).toFixed(1)} MB</p>
-                    <p className="text-[10px] text-[#97A0B3]">Click or drop to replace</p>
+                    <p className="font-bold text-hi truncate">{file.name} · {(file.size / MB).toFixed(1)} MB</p>
+                    <p className="text-[10px] text-app-mist">Click or drop to replace</p>
                   </div>
                 ) : (
                   <div className="space-y-1.5 py-2">
-                    <div className="size-10 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center mx-auto">
+                    <div className="size-10 rounded-2xl bg-app-accent/15 text-app-accent flex items-center justify-center mx-auto">
                       <Upload className="size-5" />
                     </div>
-                    <div className="font-bold text-white">Drop the final MP4/MOV or PNG/JPG here, or click to browse</div>
+                    <div className="font-bold text-hi">Drop the final MP4/MOV or PNG/JPG here, or click to browse</div>
                   </div>
                 )}
               </label>
@@ -1010,57 +1010,57 @@ export function MemberTaskBoardPage() {
             </div>
 
             {/* Self-check */}
-            <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446]/80 space-y-2.5">
+            <div className="p-4 rounded-2xl bg-app-base border border-app-line/80 space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="font-black text-xs text-white uppercase tracking-wider">Self-check before QA</span>
-                <span className="text-xs font-bold text-[#7FA0D6]">{rubricPassed}/{RUBRIC.length}</span>
+                <span className="font-black text-xs text-hi uppercase tracking-wider">Self-check before QA</span>
+                <span className="text-xs font-bold text-app-accent">{rubricPassed}/{RUBRIC.length}</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 {RUBRIC.map((item) => (
-                  <label key={item.key} className="flex items-center gap-2.5 p-2 rounded-xl bg-[#161F2D] border border-[#2A3446]/80 cursor-pointer">
+                  <label key={item.key} className="flex items-center gap-2.5 p-2 rounded-xl bg-app-surface border border-app-line/80 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={!!rubric[item.key]}
                       onChange={(e) => setRubric((prev) => ({ ...prev, [item.key]: e.target.checked }))}
                       className="size-4 rounded cursor-pointer"
                     />
-                    <span className="font-semibold text-[#F1F5F9]">{item.label}</span>
+                    <span className="font-semibold text-app-ink-2">{item.label}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             <div className="space-y-1.5 text-xs">
-              <label htmlFor="specialist-notes" className="block font-bold text-[#F1F5F9]">Notes for {leadName}</label>
+              <label htmlFor="specialist-notes" className="block font-bold text-app-ink-2">Notes for {leadName}</label>
               <textarea
                 id="specialist-notes"
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder={modalFeedback ? "What did you change in this version?" : "Anything the lead should know before reviewing"}
-                className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="w-full px-3.5 py-2 rounded-xl border border-app-line bg-app-base text-xs font-medium resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
 
             {progress !== null && (
               <div className="space-y-1" aria-live="polite">
-                <div className="flex justify-between text-[10px] font-bold text-[#97A0B3]">
+                <div className="flex justify-between text-[10px] font-bold text-app-mist">
                   <span>Uploading…</span>
                   <span>{Math.round(progress * 100)}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-[#0B111C] rounded-full overflow-hidden">
+                <div className="w-full h-1.5 bg-app-base rounded-full overflow-hidden">
                   <div className="h-full bg-blue-600 rounded-full transition-all" style={{ width: `${Math.round(progress * 100)}%` }} />
                 </div>
               </div>
             )}
             {submitError && <p role="alert" className="text-xs font-bold text-rose-300">{submitError}</p>}
 
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446] text-xs">
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-3 border-t border-app-line text-xs">
               <button
                 type="button"
                 onClick={() => setUploadTask(null)}
                 disabled={uploadMutation.isPending}
-                className="w-full sm:w-auto px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2 rounded-xl border border-app-line font-bold text-app-ink-2 hover:bg-app-base cursor-pointer"
               >
                 Cancel
               </button>
@@ -1068,7 +1068,7 @@ export function MemberTaskBoardPage() {
                 type="button"
                 onClick={() => uploadMutation.mutate()}
                 disabled={!file || uploadMutation.isPending}
-                className="w-full sm:w-auto px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {uploadMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
                 <span>{uploadMutation.isPending ? "Uploading…" : "Submit to Pod Lead QA"}</span>
@@ -1092,38 +1092,38 @@ export function MemberTaskBoardPage() {
               e.preventDefault();
               if (newTitle.trim()) createMutation.mutate();
             }}
-            className="w-full max-w-xl bg-[#161F2D] rounded-3xl p-5 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 max-h-[90vh] overflow-y-auto text-xs"
+            className="w-full max-w-xl bg-app-surface rounded-3xl p-5 sm:p-7 shadow-2xl border border-app-line space-y-4 max-h-[90vh] overflow-y-auto text-xs"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 id="create-title" className="text-base font-black text-white">Add a production task</h3>
-              <button type="button" onClick={() => setCreateOpen(false)} aria-label="Close" className="size-8 rounded-full bg-[#0B111C] border border-[#2A3446] text-[#97A0B3] flex items-center justify-center">
+            <div className="flex items-center justify-between border-b border-app-line pb-3">
+              <h3 id="create-title" className="text-base font-black text-hi">Add a production task</h3>
+              <button type="button" onClick={() => setCreateOpen(false)} aria-label="Close" className="size-8 rounded-full bg-app-base border border-app-line text-app-mist flex items-center justify-center">
                 <X className="size-4" />
               </button>
             </div>
             <div>
-              <label htmlFor="task-title" className="block font-bold text-[#F1F5F9] mb-1">Title <span className="text-rose-500">*</span></label>
+              <label htmlFor="task-title" className="block font-bold text-app-ink-2 mb-1">Title <span className="text-rose-500">*</span></label>
               <input
                 id="task-title"
                 required
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="e.g. Diwali offer reel"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-semibold"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-app-line bg-app-base font-semibold"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label htmlFor="task-client" className="block font-bold text-[#F1F5F9] mb-1">Client</label>
-                <NativeSelect id="task-client" value={newClientId} onChange={(e) => setNewClientId(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C]">
+                <label htmlFor="task-client" className="block font-bold text-app-ink-2 mb-1">Client</label>
+                <NativeSelect id="task-client" value={newClientId} onChange={(e) => setNewClientId(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-app-line font-bold bg-app-base">
                   {clients.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </NativeSelect>
               </div>
               <div>
-                <label htmlFor="task-format" className="block font-bold text-[#F1F5F9] mb-1">Format</label>
-                <NativeSelect id="task-format" value={newType} onChange={(e) => setNewType(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C]">
+                <label htmlFor="task-format" className="block font-bold text-app-ink-2 mb-1">Format</label>
+                <NativeSelect id="task-format" value={newType} onChange={(e) => setNewType(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-app-line font-bold bg-app-base">
                   {availableFormats.map((fmt: string) => (
                     <option key={fmt} value={fmt}>
                       {formatLabel(fmt)}
@@ -1132,92 +1132,92 @@ export function MemberTaskBoardPage() {
                 </NativeSelect>
               </div>
               <div>
-                <label htmlFor="task-due" className="block font-bold text-[#F1F5F9] mb-1">Due date</label>
-                <input id="task-due" type="date" value={newDue} onChange={(e) => setNewDue(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] font-bold" />
+                <label htmlFor="task-due" className="block font-bold text-app-ink-2 mb-1">Due date</label>
+                <input id="task-due" type="date" value={newDue} onChange={(e) => setNewDue(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-base font-bold" />
               </div>
             </div>
 
             {/* Content Specifications (Raw Footage Drive link, Duration, Hook, Audio) */}
-            <div className="p-3.5 rounded-2xl bg-[#0B111C] border border-[#7FA0D6]/30 space-y-3">
+            <div className="p-3.5 rounded-2xl bg-app-base border border-app-accent/30 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="font-extrabold text-[11px] text-[#7FA0D6] flex items-center gap-1.5 uppercase tracking-wider">
-                  <FolderGit2 className="size-3.5 text-[#7FA0D6]" /> Raw Footage & Content Specs
+                <span className="font-extrabold text-[11px] text-app-accent flex items-center gap-1.5 uppercase tracking-wider">
+                  <FolderGit2 className="size-3.5 text-app-accent" /> Raw Footage & Content Specs
                 </span>
                 <span className="text-[10px] text-emerald-400 font-semibold">Visible to Specialist</span>
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Raw Footage / Google Drive Link</label>
+                <label className="block font-bold text-app-ink-2 mb-1">Raw Footage / Google Drive Link</label>
                 <input
                   type="url"
                   value={newRawFootageUrl}
                   onChange={(e) => setNewRawFootageUrl(e.target.value)}
                   placeholder="https://drive.google.com/drive/folders/..."
-                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white text-xs font-mono"
+                  className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-surface text-hi text-xs font-mono"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Target Duration</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Target Duration</label>
                   <input
                     type="text"
                     value={newTargetDuration}
                     onChange={(e) => setNewTargetDuration(e.target.value)}
                     placeholder="e.g. 30-60s or 15s"
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white text-xs font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-surface text-hi text-xs font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Hook / Concept</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Hook / Concept</label>
                   <input
                     type="text"
                     value={newHook}
                     onChange={(e) => setNewHook(e.target.value)}
                     placeholder="e.g. Stop doing this 1 thing..."
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white text-xs"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-surface text-hi text-xs"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Audio / Music Notes</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Audio / Music Notes</label>
                   <input
                     type="text"
                     value={newAudioNotes}
                     onChange={(e) => setNewAudioNotes(e.target.value)}
                     placeholder="e.g. Trending audio / Client VO in Drive"
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white text-xs"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-surface text-hi text-xs"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Reference / Inspiration Link</label>
+                  <label className="block font-bold text-app-ink-2 mb-1">Reference / Inspiration Link</label>
                   <input
                     type="url"
                     value={newReferenceUrl}
                     onChange={(e) => setNewReferenceUrl(e.target.value)}
                     placeholder="https://instagram.com/reel/..."
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-white text-xs"
+                    className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-surface text-hi text-xs"
                   />
                 </div>
               </div>
             </div>
 
             <div>
-              <label htmlFor="task-brief" className="block font-bold text-[#F1F5F9] mb-1">Creative Brief & Instructions</label>
-              <textarea id="task-brief" rows={2.5} value={newBrief} onChange={(e) => setNewBrief(e.target.value)} placeholder="Color grading LUT, fonts, cut directions, transitions…" className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium resize-none" />
+              <label htmlFor="task-brief" className="block font-bold text-app-ink-2 mb-1">Creative Brief & Instructions</label>
+              <textarea id="task-brief" rows={2.5} value={newBrief} onChange={(e) => setNewBrief(e.target.value)} placeholder="Color grading LUT, fonts, cut directions, transitions…" className="w-full px-3 py-2 rounded-xl border border-app-line bg-app-base font-medium resize-none" />
             </div>
-            <label className="flex items-center gap-2 font-bold text-[#F1F5F9]">
+            <label className="flex items-center gap-2 font-bold text-app-ink-2">
               <input type="checkbox" checked={startNow} onChange={(e) => setStartNow(e.target.checked)} className="size-4" />
               Start production now
             </label>
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
-              <button type="button" onClick={() => setCreateOpen(false)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9]">Cancel</button>
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-app-line">
+              <button type="button" onClick={() => setCreateOpen(false)} className="px-4 py-2 rounded-xl border border-app-line font-bold text-app-ink-2">Cancel</button>
               <button
                 type="submit"
                 disabled={!newTitle.trim() || createMutation.isPending}
-                className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold flex items-center gap-1.5 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold flex items-center gap-1.5 disabled:opacity-50"
               >
                 {createMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
                 Create task
@@ -1240,7 +1240,7 @@ function ColumnHeader({ dot, title, count }: { dot: string; title: string; count
           {title}
         </h3>
       </div>
-      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold tracking-wider bg-[#161F2D] text-slate-300 border border-[#2A3446] shrink-0">
+      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold tracking-wider bg-app-surface text-slate-300 border border-app-line shrink-0">
         {count}
       </span>
     </div>

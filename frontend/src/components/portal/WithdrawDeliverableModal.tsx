@@ -50,17 +50,17 @@ export function WithdrawDeliverableModal({
       onClick={onClose}
     >
       <div
-        className="bg-[#161F2D] border border-rose-500/30 rounded-3xl w-full max-w-lg p-5 sm:p-6 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200"
+        className="bg-app-surface border border-rose-500/30 rounded-3xl w-full max-w-lg p-5 sm:p-6 space-y-5 shadow-2xl relative animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between pb-3 border-b border-[#2A3446]">
+        <div className="flex items-start justify-between pb-3 border-b border-app-line">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
               <Archive className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Withdraw / Archive Deliverable</h3>
-              <p className="text-xs text-[#97A0B3] truncate max-w-sm">
+              <h3 className="text-base font-bold text-hi">Withdraw / Archive Deliverable</h3>
+              <p className="text-xs text-app-mist truncate max-w-sm">
                 {deliverableTitle || "Retract approved asset"}
               </p>
             </div>
@@ -68,7 +68,7 @@ export function WithdrawDeliverableModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-7 h-7 rounded-lg border border-[#2A3446] bg-[#0B111C] flex items-center justify-center text-[#97A0B3] hover:text-white transition-colors cursor-pointer"
+            className="w-7 h-7 rounded-lg border border-app-line bg-app-base flex items-center justify-center text-app-mist hover:text-hi transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -92,7 +92,7 @@ export function WithdrawDeliverableModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-[#F1F5F9] uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-app-ink-2 uppercase tracking-wider mb-1.5">
               Reason for Withdrawal / Deletion <span className="text-rose-400">*</span>
             </label>
             <textarea
@@ -104,16 +104,16 @@ export function WithdrawDeliverableModal({
                 if (error) setError(null);
               }}
               placeholder="e.g. Minor typo identified in hook caption; withdrawing for quick polish before client publishing..."
-              className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 text-xs text-white placeholder-[#97A0B3] focus:border-rose-400 focus:outline-none transition-colors"
+              className="w-full bg-app-base border border-app-line rounded-xl p-3 text-xs text-hi placeholder-app-mist focus:border-rose-400 focus:outline-none transition-colors"
             />
           </div>
 
-          <div className="pt-2 border-t border-[#2A3446] flex items-center justify-end gap-3">
+          <div className="pt-2 border-t border-app-line flex items-center justify-end gap-3">
             <button
               type="button"
               disabled={isSubmitting}
               onClick={onClose}
-              className="px-4 py-2 rounded-full border border-[#2A3446] bg-[#0B111C] text-xs font-semibold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-full border border-app-line bg-app-base text-xs font-semibold text-hi hover:bg-app-surface transition-colors cursor-pointer"
             >
               Cancel
             </button>

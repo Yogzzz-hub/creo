@@ -241,7 +241,7 @@ export function BDEDashboardPage() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#0B111C] flex flex-col">
+    <div className="w-full min-h-screen bg-app-base flex flex-col">
       <AdminTopHeader activeTab="BDE Workspace" hideTitle />
       <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 sm:pb-16 max-w-[1700px] w-full mx-auto space-y-6 animate-in fade-in duration-300">
 
@@ -249,62 +249,62 @@ export function BDEDashboardPage() {
             {/* KPI Cards Grid - Compact & Always Side-by-Side */}
             <div className="grid grid-cols-2 gap-3">
               {/* Pipeline Value */}
-              <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl px-3.5 py-2.5 shadow-sm hover:border-[#7FA0D6]/40 transition-colors">
+              <div className="bg-app-surface border border-app-line rounded-xl px-3.5 py-2.5 shadow-sm hover:border-app-accent/40 transition-colors">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] truncate">
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-app-mist truncate">
                     Pipeline Value
                   </span>
                   <div className="w-5.5 h-5.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
                     <DollarSign className="w-3 h-3" />
                   </div>
                 </div>
-                <div className="text-lg sm:text-xl font-extrabold text-white font-mono leading-tight">
+                <div className="text-lg sm:text-xl font-extrabold text-hi font-mono leading-tight">
                   ₹{displayPipelineValue >= 1000 ? `${(displayPipelineValue / 1000).toLocaleString()}k` : displayPipelineValue.toLocaleString()}
                 </div>
-                <p className="text-[10px] text-[#97A0B3] mt-0.5 truncate">Active opportunities in negotiation</p>
+                <p className="text-[10px] text-app-mist mt-0.5 truncate">Active opportunities in negotiation</p>
               </div>
 
               {/* Conversion Rate */}
-              <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl px-3.5 py-2.5 shadow-sm hover:border-[#7FA0D6]/40 transition-colors">
+              <div className="bg-app-surface border border-app-line rounded-xl px-3.5 py-2.5 shadow-sm hover:border-app-accent/40 transition-colors">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] truncate">
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-app-mist truncate">
                     Conversion Rate
                   </span>
                   <div className="w-5.5 h-5.5 rounded-md bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
                     <TrendingUp className="w-3 h-3" />
                   </div>
                 </div>
-                <div className="text-lg sm:text-xl font-extrabold text-white font-mono leading-tight">
+                <div className="text-lg sm:text-xl font-extrabold text-hi font-mono leading-tight">
                   {metrics ? `${metrics.conversion_rate}%` : "--"}
                 </div>
-                <p className="text-[10px] text-[#97A0B3] mt-0.5 truncate">
+                <p className="text-[10px] text-app-mist mt-0.5 truncate">
                   {metrics?.stages?.converted || 0} clients won of {metrics?.total_leads || 0} leads
                 </p>
               </div>
             </div>
 
             {/* Filter Bar & View Toggle */}
-            <div className="bg-[#161F2D]/80 backdrop-blur-sm border border-[#2A3446] rounded-xl px-3 py-2 shadow-md flex items-center justify-between gap-3">
+            <div className="bg-app-surface/80 backdrop-blur-sm border border-app-line rounded-xl px-3 py-2 shadow-md flex items-center justify-between gap-3">
               <div className="relative flex-1 max-w-md">
-                <Search className="w-3.5 h-3.5 text-[#97A0B3] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className="w-3.5 h-3.5 text-app-mist absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search prospects..."
-                  className="w-full bg-[#0B111C] border border-[#2A3446] rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-[#97A0B3]/80 focus:outline-none focus:border-[#7FA0D6] transition-colors"
+                  className="w-full bg-app-base border border-app-line rounded-lg pl-8 pr-3 py-1.5 text-xs text-hi placeholder:text-[#97A0B3]/80 focus:outline-none focus:border-app-accent transition-colors"
                 />
               </div>
 
               {/* View Mode Toggle: Task Queue vs Table */}
-              <div className="bg-[#0B111C] border border-[#2A3446] rounded-lg p-0.5 flex items-center gap-0.5 shrink-0">
+              <div className="bg-app-base border border-app-line rounded-lg p-0.5 flex items-center gap-0.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => setViewMode("queue")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                     viewMode === "queue"
-                      ? "bg-[#7FA0D6] text-[#0B111C] font-bold shadow-sm"
-                      : "text-[#97A0B3] hover:text-white"
+                      ? "bg-app-accent text-app-base font-bold shadow-sm"
+                      : "text-app-mist hover:text-hi"
                   }`}
                   title="Task Queue View"
                 >
@@ -316,8 +316,8 @@ export function BDEDashboardPage() {
                   onClick={() => setViewMode("table")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                     viewMode === "table"
-                      ? "bg-[#7FA0D6] text-[#0B111C] font-bold shadow-sm"
-                      : "text-[#97A0B3] hover:text-white"
+                      ? "bg-app-accent text-app-base font-bold shadow-sm"
+                      : "text-app-mist hover:text-hi"
                   }`}
                   title="Table View"
                 >
@@ -331,7 +331,7 @@ export function BDEDashboardPage() {
             {viewMode === "queue" ? (
               <div className="space-y-3">
                 {/* Mobile Stage Selector Tabs (2x2 Grid so all words are clearly visible without scrolling) */}
-                <div className="grid grid-cols-2 sm:hidden gap-1.5 p-1.5 bg-[#161F2D] border border-[#2A3446] rounded-xl shadow-sm">
+                <div className="grid grid-cols-2 sm:hidden gap-1.5 p-1.5 bg-app-surface border border-app-line rounded-xl shadow-sm">
                   {TASK_QUEUE_COLUMNS.map((col) => {
                     const count = leads.filter((l) => col.matchingStatuses.includes(l.status)).length;
                     const isActive = mobileColId === col.id;
@@ -342,8 +342,8 @@ export function BDEDashboardPage() {
                         onClick={() => setMobileColId(col.id)}
                         className={`py-2 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-between gap-1.5 cursor-pointer ${
                           isActive
-                            ? "bg-[#0B111C] text-white border border-[#7FA0D6]/60 shadow-sm"
-                            : "text-[#97A0B3] hover:text-white hover:bg-[#0B111C]/50"
+                            ? "bg-app-base text-hi border border-app-accent/60 shadow-sm"
+                            : "text-app-mist hover:text-hi hover:bg-app-base/50"
                         }`}
                       >
                         <div className="flex items-center gap-1.5 min-w-0">
@@ -352,7 +352,7 @@ export function BDEDashboardPage() {
                         </div>
                         <span
                           className={`text-[10px] font-extrabold px-1.5 py-0.5 leading-none rounded-full shrink-0 ${
-                            isActive ? col.countBg : "bg-[#2A3446]/60 text-[#97A0B3]"
+                            isActive ? col.countBg : "bg-[#2A3446]/60 text-app-mist"
                           }`}
                         >
                           {count}
@@ -389,19 +389,19 @@ export function BDEDashboardPage() {
                             handleMoveLead(droppedLeadId, col.id);
                           }
                         }}
-                        className={`w-full min-w-0 bg-[#161F2D] border rounded-2xl p-4 sm:p-5 shadow-xl flex-col space-y-4 transition-all duration-200 sm:min-h-[580px] sm:max-h-[calc(100vh-240px)] ${
+                        className={`w-full min-w-0 bg-app-surface border rounded-2xl p-4 sm:p-5 shadow-xl flex-col space-y-4 transition-all duration-200 sm:min-h-[580px] sm:max-h-[calc(100vh-240px)] ${
                           isVisibleOnMobile ? "flex" : "hidden sm:flex"
                         } ${
                           isDropTarget
-                            ? "border-[#7FA0D6] bg-[#161F2D]/95 ring-2 ring-[#7FA0D6]/50 shadow-[0_0_24px_rgba(127,160,214,0.2)]"
+                            ? "border-app-accent bg-app-surface/95 ring-2 ring-[#7FA0D6]/50 shadow-[0_0_24px_rgba(127,160,214,0.2)]"
                             : `${col.accentBorder}`
                         }`}
                       >
                       {/* Column Header (Matching Follow-Up Agenda Section Header) */}
-                      <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
+                      <div className="flex items-center justify-between pb-3 border-b border-app-line">
                         <div className="flex items-center gap-2">
                           <span className={`w-2.5 h-2.5 rounded-full ${col.dotColor} shrink-0`} />
-                          <h3 className="font-bold text-white text-xs tracking-wider uppercase">
+                          <h3 className="font-bold text-hi text-xs tracking-wider uppercase">
                             {col.title} ({colLeads.length})
                           </h3>
                         </div>
@@ -416,7 +416,7 @@ export function BDEDashboardPage() {
                             type="button"
                             onClick={() => openAddModal(col.defaultStatus)}
                             title={`Add client to ${col.title}`}
-                            className="px-2.5 py-1 rounded-lg bg-[#0B111C] hover:bg-[#7FA0D6] hover:text-[#0B111C] text-[#BCCCE6] border border-[#2A3446] hover:border-[#7FA0D6] transition-all cursor-pointer text-xs font-bold flex items-center gap-1"
+                            className="px-2.5 py-1 rounded-lg bg-app-base hover:bg-app-accent hover:text-app-base text-app-accent-soft border border-app-line hover:border-app-accent transition-all cursor-pointer text-xs font-bold flex items-center gap-1"
                           >
                             <Plus className="w-3.5 h-3.5" />
                             <span>Add</span>
@@ -427,13 +427,13 @@ export function BDEDashboardPage() {
                       {/* Cards List / Drop Area */}
                       <div className="space-y-3 flex-1 sm:overflow-y-auto sm:pr-0.5">
                         {leadsQuery.isLoading ? (
-                          <div className="py-10 text-center text-[#97A0B3] flex flex-col items-center justify-center gap-2">
-                            <RefreshCw className="w-4 h-4 animate-spin text-[#7FA0D6]" />
+                          <div className="py-10 text-center text-app-mist flex flex-col items-center justify-center gap-2">
+                            <RefreshCw className="w-4 h-4 animate-spin text-app-accent" />
                             <span className="text-xs">Loading {col.title}...</span>
                           </div>
                         ) : colLeads.length === 0 ? (
                           <div className="py-8 sm:py-16 text-center">
-                            <p className="text-xs text-[#97A0B3]">No clients in {col.title}.</p>
+                            <p className="text-xs text-app-mist">No clients in {col.title}.</p>
                             <p className="text-[11px] text-[#97A0B3]/60 mt-1">Tap "+ Add" to create a new client lead.</p>
                           </div>
                         ) : (
@@ -458,8 +458,8 @@ export function BDEDashboardPage() {
                                   setDraggingLeadId(null);
                                   setDragOverCol(null);
                                 }}
-                                className={`bg-[#0B111C] border border-[#2A3446] hover:border-[#7FA0D6]/80 rounded-xl p-3.5 shadow-md transition-all cursor-grab active:cursor-grabbing hover:shadow-lg space-y-2.5 ${
-                                  isBeingDragged ? "opacity-40 scale-[0.98] border-dashed border-[#7FA0D6]" : ""
+                                className={`bg-app-base border border-app-line hover:border-[#7FA0D6]/80 rounded-xl p-3.5 shadow-md transition-all cursor-grab active:cursor-grabbing hover:shadow-lg space-y-2.5 ${
+                                  isBeingDragged ? "opacity-40 scale-[0.98] border-dashed border-app-accent" : ""
                                 }`}
                               >
                                 {/* Row 1: Name and Priority (matching Follow-Up Agenda) */}
@@ -467,7 +467,7 @@ export function BDEDashboardPage() {
                                   <button
                                     type="button"
                                     onClick={() => setSelectedLeadDetailId(lead.id)}
-                                    className="text-xs font-bold text-white hover:text-[#7FA0D6] text-left truncate cursor-pointer"
+                                    className="text-xs font-bold text-hi hover:text-app-accent text-left truncate cursor-pointer"
                                   >
                                     {lead.name}
                                   </button>
@@ -495,7 +495,7 @@ export function BDEDashboardPage() {
                                 </div>
 
                                 {/* Row 2: Company and Stage / Deal Value */}
-                                <div className="flex items-center justify-between text-[11px] text-[#97A0B3]">
+                                <div className="flex items-center justify-between text-[11px] text-app-mist">
                                   <span className="truncate">{lead.company_name}</span>
                                   <span className="font-mono text-emerald-400 font-bold shrink-0">
                                     ₹{lead.estimated_deal_value.toLocaleString()}
@@ -504,23 +504,23 @@ export function BDEDashboardPage() {
 
                                 {/* Requirements Snippet */}
                                 {lead.requirements && (
-                                  <p className="text-[10px] text-[#97A0B3]/80 bg-[#161F2D]/60 rounded-lg p-2 leading-relaxed line-clamp-2">
+                                  <p className="text-[10px] text-app-mist/80 bg-app-surface/60 rounded-lg p-2 leading-relaxed line-clamp-2">
                                     {lead.requirements}
                                   </p>
                                 )}
 
                                 {/* Row 3: Follow-Up & Action buttons (Matching Follow-Up Agenda) */}
-                                <div className="flex items-center justify-between pt-1 border-t border-[#2A3446]/60 text-[11px]">
+                                <div className="flex items-center justify-between pt-1 border-t border-app-line/60 text-[11px]">
                                   <span
                                     className={`text-[11px] font-mono font-semibold flex items-center gap-1 ${
                                       isOverdue
                                         ? "text-rose-400"
                                         : isToday
                                         ? "text-amber-300"
-                                        : "text-[#BCCCE6]"
+                                        : "text-app-accent-soft"
                                     }`}
                                   >
-                                    <CalendarIcon className={`w-3 h-3 shrink-0 ${isOverdue ? "text-rose-400" : isToday ? "text-amber-400" : "text-[#7FA0D6]"}`} />
+                                    <CalendarIcon className={`w-3 h-3 shrink-0 ${isOverdue ? "text-rose-400" : isToday ? "text-amber-400" : "text-app-accent"}`} />
                                     <span>
                                       {nextFollowUp
                                         ? `${nextFollowUp.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${nextFollowUp.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`
@@ -544,7 +544,7 @@ export function BDEDashboardPage() {
                                       type="button"
                                       onClick={() => quickSchedule(lead, 3)}
                                       title="Reschedule +3 days"
-                                      className="px-2 py-1 rounded-md bg-[#161F2D] border border-[#2A3446] text-[#BCCCE6] hover:text-white transition-colors text-[10px] font-semibold cursor-pointer"
+                                      className="px-2 py-1 rounded-md bg-app-surface border border-app-line text-app-accent-soft hover:text-hi transition-colors text-[10px] font-semibold cursor-pointer"
                                     >
                                       +3d
                                     </button>
@@ -552,7 +552,7 @@ export function BDEDashboardPage() {
                                       type="button"
                                       onClick={() => setActiveActivityLead(lead)}
                                       title="Log activity"
-                                      className="px-2 py-1 rounded-md bg-[#7FA0D6]/20 border border-[#7FA0D6]/40 text-[#BCCCE6] hover:bg-[#7FA0D6]/30 hover:text-white transition-colors text-[10px] font-bold cursor-pointer"
+                                      className="px-2 py-1 rounded-md bg-app-accent/20 border border-app-accent/40 text-app-accent-soft hover:bg-[#7FA0D6]/30 hover:text-hi transition-colors text-[10px] font-bold cursor-pointer"
                                     >
                                       Log
                                     </button>
@@ -560,15 +560,15 @@ export function BDEDashboardPage() {
                                 </div>
 
                                 {/* Move Controls Dropdown */}
-                                <div className="flex items-center justify-between pt-2 border-t border-[#2A3446]/60 gap-2">
-                                  <span className="text-[10px] text-[#97A0B3] font-bold uppercase tracking-wider shrink-0">
+                                <div className="flex items-center justify-between pt-2 border-t border-app-line/60 gap-2">
+                                  <span className="text-[10px] text-app-mist font-bold uppercase tracking-wider shrink-0">
                                     Move:
                                   </span>
                                   <select
                                     value={col.id}
                                     onChange={(e) => handleMoveLead(lead.id, e.target.value as TaskQueueStage)}
                                     aria-label="Move lead stage"
-                                    className="w-full bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6] text-white text-[11px] font-semibold rounded-lg px-2 py-1 cursor-pointer outline-none transition-colors"
+                                    className="w-full bg-app-surface border border-app-line hover:border-app-accent text-hi text-[11px] font-semibold rounded-lg px-2 py-1 cursor-pointer outline-none transition-colors"
                                   >
                                     {TASK_QUEUE_COLUMNS.map((targetCol) => (
                                       <option key={targetCol.id} value={targetCol.id}>
@@ -587,9 +587,9 @@ export function BDEDashboardPage() {
                       <button
                         type="button"
                         onClick={() => openAddModal(col.defaultStatus)}
-                        className="w-full mt-auto py-2 px-3 rounded-xl border border-dashed border-[#2A3446] hover:border-[#7FA0D6]/60 hover:bg-[#7FA0D6]/10 text-[#97A0B3] hover:text-white transition-all text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="w-full mt-auto py-2 px-3 rounded-xl border border-dashed border-app-line hover:border-app-accent/60 hover:bg-app-accent/10 text-app-mist hover:text-hi transition-all text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <Plus className="w-3.5 h-3.5 text-[#7FA0D6]" />
+                        <Plus className="w-3.5 h-3.5 text-app-accent" />
                         <span>Add client to {col.title}</span>
                       </button>
                     </div>
@@ -599,10 +599,10 @@ export function BDEDashboardPage() {
             </div>
           ) : (
               /* Traditional Table View */
-              <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl shadow-xl overflow-hidden">
+              <div className="bg-app-surface border border-app-line rounded-2xl shadow-xl overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[#97A0B3] uppercase text-[10px] tracking-wider font-bold">
+                    <thead className="bg-app-base border-b border-app-line text-app-mist uppercase text-[10px] tracking-wider font-bold">
                       <tr>
                         <th className="py-3.5 px-4">Prospect & Company</th>
                         <th className="py-3.5 px-3">Priority</th>
@@ -616,17 +616,17 @@ export function BDEDashboardPage() {
                     <tbody className="divide-y divide-[#2A3446]/60">
                       {leadsQuery.isLoading ? (
                         <tr>
-                          <td colSpan={7} className="py-12 text-center text-[#97A0B3]">
+                          <td colSpan={7} className="py-12 text-center text-app-mist">
                             <div className="flex flex-col items-center justify-center gap-2">
-                              <RefreshCw className="w-5 h-5 animate-spin text-[#7FA0D6]" />
+                              <RefreshCw className="w-5 h-5 animate-spin text-app-accent" />
                               <span>Loading prospects...</span>
                             </div>
                           </td>
                         </tr>
                       ) : leads.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="py-12 text-center text-[#97A0B3]">
-                            <p className="text-sm font-semibold text-white">No prospective leads found</p>
+                          <td colSpan={7} className="py-12 text-center text-app-mist">
+                            <p className="text-sm font-semibold text-hi">No prospective leads found</p>
                             <p className="text-xs mt-1">Add a prospective client to start tracking follow-ups and conversions.</p>
                           </td>
                         </tr>
@@ -643,11 +643,11 @@ export function BDEDashboardPage() {
                               {/* Prospect & Company */}
                               <td className="py-3.5 px-4">
                                 <div>
-                                  <span className="font-bold text-white text-xs block">{lead.name}</span>
-                                  <span className="text-[11px] text-[#BCCCE6] font-medium block">
+                                  <span className="font-bold text-hi text-xs block">{lead.name}</span>
+                                  <span className="text-[11px] text-app-accent-soft font-medium block">
                                     {lead.company_name}
                                   </span>
-                                  <span className="text-[10px] text-[#97A0B3] mt-0.5 block">
+                                  <span className="text-[10px] text-app-mist mt-0.5 block">
                                     {lead.phone || lead.email || "No contact"}
                                   </span>
                                 </div>
@@ -687,7 +687,7 @@ export function BDEDashboardPage() {
                                       payload: { status: e.target.value as LeadStatus },
                                     })
                                   }
-                                  className="bg-[#0B111C] border border-[#2A3446] rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-[#7FA0D6] cursor-pointer"
+                                  className="bg-app-base border border-app-line rounded-lg px-2 py-1 text-xs text-hi focus:outline-none focus:border-app-accent cursor-pointer"
                                 >
                                   <option value="new">New</option>
                                   <option value="contacted">Contacted</option>
@@ -700,7 +700,7 @@ export function BDEDashboardPage() {
                               </td>
 
                               {/* Deal Value */}
-                              <td className="py-3.5 px-3 font-mono font-bold text-[#BCCCE6]">
+                              <td className="py-3.5 px-3 font-mono font-bold text-app-accent-soft">
                                 ₹{lead.estimated_deal_value.toLocaleString()}
                               </td>
 
@@ -714,7 +714,7 @@ export function BDEDashboardPage() {
                                           ? "text-rose-400"
                                           : isToday
                                           ? "text-amber-400"
-                                          : "text-[#BCCCE6]"
+                                          : "text-app-accent-soft"
                                       }`}
                                     >
                                       <Clock className="w-3 h-3 shrink-0" />
@@ -723,7 +723,7 @@ export function BDEDashboardPage() {
                                         day: "numeric",
                                       })}
                                     </span>
-                                    <span className="text-[10px] text-[#97A0B3]">
+                                    <span className="text-[10px] text-app-mist">
                                       {nextFollowUp.toLocaleTimeString("en-US", {
                                         hour: "2-digit",
                                         minute: "2-digit",
@@ -731,13 +731,13 @@ export function BDEDashboardPage() {
                                     </span>
                                   </div>
                                 ) : (
-                                  <span className="text-[#97A0B3] text-[11px]">None scheduled</span>
+                                  <span className="text-app-mist text-[11px]">None scheduled</span>
                                 )}
                               </td>
 
                               {/* Assigned BDE */}
-                              <td className="py-3.5 px-3 text-[#97A0B3]">
-                                <span className="text-white font-medium block">
+                              <td className="py-3.5 px-3 text-app-mist">
+                                <span className="text-hi font-medium block">
                                   {lead.assigned_bde_name || "Unassigned"}
                                 </span>
                               </td>
@@ -763,7 +763,7 @@ export function BDEDashboardPage() {
                                     type="button"
                                     onClick={() => quickSchedule(lead, 3)}
                                     title="Schedule follow-up in 3 days"
-                                    className="px-2 py-1 rounded-lg bg-[#161F2D] border border-[#2A3446] text-[#BCCCE6] hover:text-white transition-colors text-[11px] font-semibold cursor-pointer"
+                                    className="px-2 py-1 rounded-lg bg-app-surface border border-app-line text-app-accent-soft hover:text-hi transition-colors text-[11px] font-semibold cursor-pointer"
                                   >
                                     +3d
                                   </button>
@@ -772,7 +772,7 @@ export function BDEDashboardPage() {
                                   <button
                                     type="button"
                                     onClick={() => setActiveActivityLead(lead)}
-                                    className="px-2.5 py-1 rounded-lg bg-[#7FA0D6]/20 border border-[#7FA0D6]/40 text-[#BCCCE6] hover:bg-[#7FA0D6]/30 hover:text-white transition-colors text-[11px] font-bold cursor-pointer"
+                                    className="px-2.5 py-1 rounded-lg bg-app-accent/20 border border-app-accent/40 text-app-accent-soft hover:bg-[#7FA0D6]/30 hover:text-hi transition-colors text-[11px] font-bold cursor-pointer"
                                   >
                                     Log Call
                                   </button>
@@ -856,52 +856,52 @@ function LeadDetailModal({
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl w-full max-w-xl p-6 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+      <div className="bg-app-surface border border-app-line rounded-3xl w-full max-w-xl p-6 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between border-b border-app-line pb-3">
           <div>
-            <h3 className="text-base font-bold text-white">{lead?.name || "Lead Details"}</h3>
-            <p className="text-xs text-[#97A0B3]">{lead?.company_name}</p>
+            <h3 className="text-base font-bold text-hi">{lead?.name || "Lead Details"}</h3>
+            <p className="text-xs text-app-mist">{lead?.company_name}</p>
           </div>
-          <button type="button" onClick={onClose} className="text-[#97A0B3] hover:text-white cursor-pointer">
+          <button type="button" onClick={onClose} className="text-app-mist hover:text-hi cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {isLoading ? (
-          <div className="py-12 flex flex-col items-center justify-center gap-2 text-[#97A0B3]">
-            <RefreshCw className="w-5 h-5 animate-spin text-[#7FA0D6]" />
+          <div className="py-12 flex flex-col items-center justify-center gap-2 text-app-mist">
+            <RefreshCw className="w-5 h-5 animate-spin text-app-accent" />
             <span className="text-xs">Loading lead details...</span>
           </div>
         ) : !lead ? (
-          <div className="py-12 text-center text-xs text-[#97A0B3]">Lead not found.</div>
+          <div className="py-12 text-center text-xs text-app-mist">Lead not found.</div>
         ) : (
           <div className="space-y-4 text-xs">
             {/* Quick Metrics Header */}
-            <div className="grid grid-cols-3 gap-3 bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
+            <div className="grid grid-cols-3 gap-3 bg-app-base p-3 rounded-2xl border border-app-line">
               <div>
-                <span className="text-[10px] text-[#97A0B3] uppercase font-bold block">Status</span>
-                <span className="text-white font-bold capitalize">{lead.status}</span>
+                <span className="text-[10px] text-app-mist uppercase font-bold block">Status</span>
+                <span className="text-hi font-bold capitalize">{lead.status}</span>
               </div>
               <div>
-                <span className="text-[10px] text-[#97A0B3] uppercase font-bold block">Priority</span>
-                <span className="text-white font-bold capitalize">{lead.priority}</span>
+                <span className="text-[10px] text-app-mist uppercase font-bold block">Priority</span>
+                <span className="text-hi font-bold capitalize">{lead.priority}</span>
               </div>
               <div>
-                <span className="text-[10px] text-[#97A0B3] uppercase font-bold block">Deal Value</span>
+                <span className="text-[10px] text-app-mist uppercase font-bold block">Deal Value</span>
                 <span className="text-emerald-400 font-mono font-bold">₹{lead.estimated_deal_value.toLocaleString()}</span>
               </div>
             </div>
 
             {/* Contact Details */}
-            <div className="space-y-2 bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
-              <span className="text-[10px] text-[#97A0B3] uppercase font-bold block">Contact Information</span>
-              <div className="grid grid-cols-2 gap-2 text-white">
+            <div className="space-y-2 bg-app-base p-3 rounded-2xl border border-app-line">
+              <span className="text-[10px] text-app-mist uppercase font-bold block">Contact Information</span>
+              <div className="grid grid-cols-2 gap-2 text-hi">
                 <div>
-                  <span className="text-[#97A0B3] block text-[10px]">Phone:</span>
+                  <span className="text-app-mist block text-[10px]">Phone:</span>
                   <span>{lead.phone || "None"}</span>
                 </div>
                 <div>
-                  <span className="text-[#97A0B3] block text-[10px]">Email:</span>
+                  <span className="text-app-mist block text-[10px]">Email:</span>
                   <span className="truncate block">{lead.email || "None"}</span>
                 </div>
               </div>
@@ -909,15 +909,15 @@ function LeadDetailModal({
 
             {/* Requirements */}
             {lead.requirements && (
-              <div className="space-y-1 bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] text-[#97A0B3] uppercase font-bold block">Requirements</span>
-                <p className="text-white leading-relaxed">{lead.requirements}</p>
+              <div className="space-y-1 bg-app-base p-3 rounded-2xl border border-app-line">
+                <span className="text-[10px] text-app-mist uppercase font-bold block">Requirements</span>
+                <p className="text-hi leading-relaxed">{lead.requirements}</p>
               </div>
             )}
 
             {/* Next Follow-Up */}
-            <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446] flex items-center justify-between">
-              <span className="text-[10px] text-[#97A0B3] uppercase font-bold">Scheduled Follow-Up</span>
+            <div className="bg-app-base p-3 rounded-2xl border border-app-line flex items-center justify-between">
+              <span className="text-[10px] text-app-mist uppercase font-bold">Scheduled Follow-Up</span>
               <span className="text-amber-300 font-mono font-semibold">
                 {lead.next_follow_up_at
                   ? new Date(lead.next_follow_up_at).toLocaleString("en-US", {
@@ -931,7 +931,7 @@ function LeadDetailModal({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-between pt-3 border-t border-[#2A3446]">
+            <div className="flex items-center justify-between pt-3 border-t border-app-line">
               <button
                 type="button"
                 onClick={() => onDelete(lead)}
@@ -943,14 +943,14 @@ function LeadDetailModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-1.5 rounded-xl border border-[#2A3446] text-[#97A0B3] hover:text-white cursor-pointer"
+                  className="px-4 py-1.5 rounded-xl border border-app-line text-app-mist hover:text-hi cursor-pointer"
                 >
                   Close
                 </button>
                 <button
                   type="button"
                   onClick={() => onLogActivity(lead)}
-                  className="px-4 py-1.5 rounded-xl bg-[#7FA0D6] text-[#0B111C] font-bold hover:bg-white transition-all cursor-pointer"
+                  className="px-4 py-1.5 rounded-xl bg-app-accent text-app-base font-bold hover:bg-hi transition-all cursor-pointer"
                 >
                   Log Follow-Up / Call
                 </button>
@@ -1006,22 +1006,22 @@ function ActivityModal({
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl relative">
-        <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+      <div className="bg-app-surface border border-app-line rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl relative">
+        <div className="flex items-center justify-between border-b border-app-line pb-3">
           <div>
-            <h3 className="text-base font-bold text-white">Log Communication & Follow-Up</h3>
-            <p className="text-xs text-[#97A0B3]">
+            <h3 className="text-base font-bold text-hi">Log Communication & Follow-Up</h3>
+            <p className="text-xs text-app-mist">
               {lead.name} · {lead.company_name}
             </p>
           </div>
-          <button type="button" onClick={onClose} className="text-[#97A0B3] hover:text-white cursor-pointer">
+          <button type="button" onClick={onClose} className="text-app-mist hover:text-hi cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="block text-[#97A0B3] font-bold uppercase mb-1">Interaction Type</label>
+            <label className="block text-app-mist font-bold uppercase mb-1">Interaction Type</label>
             <div className="grid grid-cols-4 gap-2">
               {[
                 { type: "call", label: "Phone Call" },
@@ -1035,8 +1035,8 @@ function ActivityModal({
                   onClick={() => setActivityType(t.type)}
                   className={`py-2 px-3 rounded-xl border text-xs font-bold capitalize transition-colors cursor-pointer ${
                     activityType === t.type
-                      ? "bg-[#7FA0D6] text-[#0B111C] border-[#7FA0D6]"
-                      : "bg-[#0B111C] text-[#97A0B3] border-[#2A3446] hover:text-white"
+                      ? "bg-app-accent text-app-base border-app-accent"
+                      : "bg-app-base text-app-mist border-app-line hover:text-hi"
                   }`}
                 >
                   {t.label}
@@ -1046,50 +1046,50 @@ function ActivityModal({
           </div>
 
           <div>
-            <label className="block text-[#97A0B3] font-bold uppercase mb-1">Discussion Summary *</label>
+            <label className="block text-app-mist font-bold uppercase mb-1">Discussion Summary *</label>
             <textarea
               required
               rows={3}
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               placeholder="e.g. Spoke with client about quarterly brand campaign; they requested follow-up in 3 days."
-              className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 text-white focus:outline-none focus:border-[#7FA0D6]"
+              className="w-full bg-app-base border border-app-line rounded-xl p-3 text-hi focus:outline-none focus:border-app-accent"
             />
           </div>
 
           <div>
-            <label className="block text-[#97A0B3] font-bold uppercase mb-1">Outcome / Agreed Next Step</label>
+            <label className="block text-app-mist font-bold uppercase mb-1">Outcome / Agreed Next Step</label>
             <input
               type="text"
               value={outcome}
               onChange={(e) => setOutcome(e.target.value)}
               placeholder="e.g. Send updated pricing deck and proposal"
-              className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#7FA0D6]"
+              className="w-full bg-app-base border border-app-line rounded-xl px-3 py-2 text-hi focus:outline-none focus:border-app-accent"
             />
           </div>
 
           <div>
-            <label className="block text-[#97A0B3] font-bold uppercase mb-1">Schedule Next Follow-Up Date & Time</label>
+            <label className="block text-app-mist font-bold uppercase mb-1">Schedule Next Follow-Up Date & Time</label>
             <input
               type="datetime-local"
               value={followUpDate}
               onChange={(e) => setFollowUpDate(e.target.value)}
-              className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#7FA0D6]"
+              className="w-full bg-app-base border border-app-line rounded-xl px-3 py-2 text-hi focus:outline-none focus:border-app-accent"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2A3446]">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-app-line">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-full border border-[#2A3446] text-[#97A0B3] hover:text-white cursor-pointer"
+              className="px-4 py-2 rounded-full border border-app-line text-app-mist hover:text-hi cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !summary.trim()}
-              className="px-5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] font-bold hover:bg-white disabled:opacity-50 cursor-pointer"
+              className="px-5 py-2 rounded-full bg-app-accent-soft text-app-base font-bold hover:bg-hi disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? "Saving..." : "Save Activity"}
             </button>
@@ -1173,13 +1173,13 @@ function AddLeadModal({
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+      <div className="bg-app-surface border border-app-line rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between border-b border-app-line pb-3">
           <div>
-            <h3 className="text-base font-bold text-white">Add Prospective Client</h3>
-            <p className="text-xs text-[#97A0B3]">Create new lead record</p>
+            <h3 className="text-base font-bold text-hi">Add Prospective Client</h3>
+            <p className="text-xs text-app-mist">Create new lead record</p>
           </div>
-          <button type="button" onClick={onClose} className="text-[#97A0B3] hover:text-white cursor-pointer">
+          <button type="button" onClick={onClose} className="text-app-mist hover:text-hi cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -1193,7 +1193,7 @@ function AddLeadModal({
             <button
               type="button"
               onClick={() => setErrorMessage(null)}
-              className="text-rose-400 hover:text-white cursor-pointer"
+              className="text-rose-400 hover:text-hi cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -1203,7 +1203,7 @@ function AddLeadModal({
         <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[#97A0B3] font-bold uppercase mb-1">Contact Name *</label>
+              <label className="block text-app-mist font-bold uppercase mb-1">Contact Name *</label>
               <input
                 required
                 type="text"
@@ -1213,11 +1213,11 @@ function AddLeadModal({
                   if (errorMessage) setErrorMessage(null);
                 }}
                 placeholder="e.g. Rahul Sharma"
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full bg-app-base border border-app-line rounded-xl px-3 py-2 text-hi focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <label className="block text-[#97A0B3] font-bold uppercase mb-1">Company / Brand *</label>
+              <label className="block text-app-mist font-bold uppercase mb-1">Company / Brand *</label>
               <input
                 required
                 type="text"
@@ -1227,14 +1227,14 @@ function AddLeadModal({
                   if (errorMessage) setErrorMessage(null);
                 }}
                 placeholder="e.g. Acme Retail"
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full bg-app-base border border-app-line rounded-xl px-3 py-2 text-hi focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[#97A0B3] font-bold uppercase mb-1">Phone / WhatsApp</label>
+              <label className="block text-app-mist font-bold uppercase mb-1">Phone / WhatsApp</label>
               <input
                 type="text"
                 value={formData.phone}
@@ -1243,11 +1243,11 @@ function AddLeadModal({
                   if (errorMessage) setErrorMessage(null);
                 }}
                 placeholder="+91 98765 43210 (or 10 digits)"
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full bg-app-base border border-app-line rounded-xl px-3 py-2 text-hi focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <label className="block text-[#97A0B3] font-bold uppercase mb-1">Email Address</label>
+              <label className="block text-app-mist font-bold uppercase mb-1">Email Address</label>
               <input
                 type="email"
                 value={formData.email}
@@ -1256,14 +1256,14 @@ function AddLeadModal({
                   if (errorMessage) setErrorMessage(null);
                 }}
                 placeholder="contact@acme.com"
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full bg-app-base border border-app-line rounded-xl px-3 py-2 text-hi focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-[#97A0B3] font-bold uppercase mb-1">Queue Stage</label>
+              <label className="block text-app-mist font-bold uppercase mb-1">Queue Stage</label>
               <CustomSelect
                 value={formData.status || "contacted"}
                 onChange={(val) => setFormData({ ...formData, status: val as any })}
@@ -1279,7 +1279,7 @@ function AddLeadModal({
               />
             </div>
             <div>
-              <label className="block text-[#97A0B3] font-bold uppercase mb-1">Priority</label>
+              <label className="block text-app-mist font-bold uppercase mb-1">Priority</label>
               <CustomSelect
                 value={formData.priority || "warm"}
                 onChange={(val) => setFormData({ ...formData, priority: val as any })}
@@ -1293,7 +1293,7 @@ function AddLeadModal({
               />
             </div>
             <div>
-              <label className="block text-[#97A0B3] font-bold uppercase mb-1">Estimated Value (₹)</label>
+              <label className="block text-app-mist font-bold uppercase mb-1">Estimated Value (₹)</label>
               <input
                 type="number"
                 min="0"
@@ -1301,34 +1301,34 @@ function AddLeadModal({
                 value={formData.estimated_deal_value || ""}
                 onChange={(e) => setFormData({ ...formData, estimated_deal_value: Number(e.target.value) || 0 })}
                 placeholder="0"
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full bg-app-base border border-app-line rounded-xl px-3 py-2 text-hi focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-[#97A0B3] font-bold uppercase mb-1">Requirements & Brief</label>
+            <label className="block text-app-mist font-bold uppercase mb-1">Requirements & Brief</label>
             <textarea
               rows={3}
               value={formData.requirements}
               onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
               placeholder="e.g. 15 Instagram Reels per month + brand identity refresh."
-              className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 text-white focus:outline-none focus:border-[#7FA0D6]"
+              className="w-full bg-app-base border border-app-line rounded-xl p-3 text-hi focus:outline-none focus:border-app-accent"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2A3446]">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-app-line">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-full border border-[#2A3446] text-[#97A0B3] hover:text-white cursor-pointer"
+              className="px-4 py-2 rounded-full border border-app-line text-app-mist hover:text-hi cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !formData.name.trim() || !formData.company_name.trim()}
-              className="px-5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] font-bold hover:bg-white disabled:opacity-50 cursor-pointer transition-all"
+              className="px-5 py-2 rounded-full bg-app-accent-soft text-app-base font-bold hover:bg-hi disabled:opacity-50 cursor-pointer transition-all"
             >
               {isSubmitting ? "Creating..." : "Create Prospect"}
             </button>

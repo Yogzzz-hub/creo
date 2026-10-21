@@ -104,36 +104,36 @@ export function SplitPaymentCard() {
   };
 
   return (
-    <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl md:rounded-2xl p-3 sm:p-5 space-y-3.5">
+    <div className="bg-app-surface border border-app-line rounded-xl md:rounded-2xl p-3 sm:p-5 space-y-3.5">
       {/* Header */}
       <div
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="flex items-center justify-between cursor-pointer md:cursor-default select-none border-b border-[#2A3446] pb-3"
+        className="flex items-center justify-between cursor-pointer md:cursor-default select-none border-b border-app-line pb-3"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] shrink-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-app-accent/15 border border-app-line flex items-center justify-center text-app-accent shrink-0">
             <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="text-xs sm:text-base font-bold text-white truncate">{active_package.title || "Split Payment Package"}</h3>
+              <h3 className="text-xs sm:text-base font-bold text-hi truncate">{active_package.title || "Split Payment Package"}</h3>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shrink-0">
                 {active_package.status}
               </span>
             </div>
-            <p className="text-xs text-[#97A0B3] hidden sm:block">
+            <p className="text-xs text-app-mist hidden sm:block">
               {instalments.length} Agreed Instalments · Balance and automated deadline alerts
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {next_due_date && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-semibold text-[#BCCCE6]">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-app-base border border-app-line text-xs font-semibold text-app-accent-soft">
               <Clock className="w-3.5 h-3.5 text-amber-400" />
               <span>Next Due: {new Date(next_due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
             </div>
           )}
-          <span className="text-[#7FA0D6] md:hidden">
+          <span className="text-app-accent md:hidden">
             {mobileOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
           </span>
         </div>
@@ -148,46 +148,46 @@ export function SplitPaymentCard() {
 
       {/* 3 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-[#0B111C] border border-[#2A3446] rounded-xl p-3.5 space-y-1">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-[#97A0B3]">
+        <div className="bg-app-base border border-app-line rounded-xl p-3.5 space-y-1">
+          <span className="text-[10px] uppercase font-bold tracking-wider text-app-mist">
             Total Package Amount
           </span>
-          <p className="text-xl sm:text-2xl font-black text-white">
+          <p className="text-xl sm:text-2xl font-black text-hi">
             ₹{total_package_amount.toLocaleString("en-IN")}
           </p>
-          <p className="text-[11px] text-[#97A0B3]">Agreed service package</p>
+          <p className="text-[11px] text-app-mist">Agreed service package</p>
         </div>
 
-        <div className="bg-[#0B111C] border border-emerald-500/20 rounded-xl p-3.5 space-y-1">
+        <div className="bg-app-base border border-emerald-500/20 rounded-xl p-3.5 space-y-1">
           <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">
             Amount Paid
           </span>
           <p className="text-xl sm:text-2xl font-black text-emerald-400">
             ₹{total_paid.toLocaleString("en-IN")}
           </p>
-          <p className="text-[11px] text-[#97A0B3]">{pctPaid}% of total package cleared</p>
+          <p className="text-[11px] text-app-mist">{pctPaid}% of total package cleared</p>
         </div>
 
-        <div className="bg-[#0B111C] border border-amber-500/20 rounded-xl p-3.5 space-y-1">
+        <div className="bg-app-base border border-amber-500/20 rounded-xl p-3.5 space-y-1">
           <span className="text-[10px] uppercase font-bold tracking-wider text-amber-400">
             Pending Balance
           </span>
           <p className="text-xl sm:text-2xl font-black text-amber-300">
             ₹{pending_balance.toLocaleString("en-IN")}
           </p>
-          <p className="text-[11px] text-[#97A0B3]">Remaining to be collected</p>
+          <p className="text-[11px] text-app-mist">Remaining to be collected</p>
         </div>
       </div>
 
       {/* Progress Bar */}
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-xs text-[#97A0B3]">
-          <span className="font-semibold text-white">Package Payment Progress</span>
+        <div className="flex items-center justify-between text-xs text-app-mist">
+          <span className="font-semibold text-hi">Package Payment Progress</span>
           <span className="font-mono text-emerald-400 font-bold">{pctPaid}% Paid</span>
         </div>
-        <div className="w-full h-2 rounded-full bg-[#0B111C] overflow-hidden border border-[#2A3446]">
+        <div className="w-full h-2 rounded-full bg-app-base overflow-hidden border border-app-line">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-[#7FA0D6] transition-all duration-500"
+            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-app-accent transition-all duration-500"
             style={{ width: `${Math.min(pctPaid, 100)}%` }}
           />
         </div>
@@ -195,7 +195,7 @@ export function SplitPaymentCard() {
 
       {/* Instalments List */}
       <div className="space-y-2.5">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-app-mist">
           Instalments Schedule & Deadlines
         </h4>
         <div className="space-y-2.5">
@@ -210,10 +210,10 @@ export function SplitPaymentCard() {
                 key={inst.id}
                 className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                   isPaid
-                    ? "bg-[#0B111C]/60 border-emerald-500/30"
+                    ? "bg-app-base/60 border-emerald-500/30"
                     : isOverdue
                     ? "bg-rose-950/20 border-rose-500/40"
-                    : "bg-[#0B111C] border-[#2A3446]"
+                    : "bg-app-base border-app-line"
                 }`}
               >
                 <div className="flex items-start sm:items-center gap-3.5 min-w-0">
@@ -223,14 +223,14 @@ export function SplitPaymentCard() {
                         ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
                         : isOverdue
                         ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
-                        : "bg-[#161F2D] text-[#7FA0D6] border border-[#2A3446]"
+                        : "bg-app-surface text-app-accent border border-app-line"
                     }`}
                   >
                     #{inst.instalment_number}
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-bold text-white">
+                      <span className="text-sm font-bold text-hi">
                         ₹{inst.amount.toLocaleString("en-IN")}
                       </span>
                       <span
@@ -245,7 +245,7 @@ export function SplitPaymentCard() {
                         {inst.status}
                       </span>
                     </div>
-                    <p className="text-xs text-[#97A0B3] mt-0.5">
+                    <p className="text-xs text-app-mist mt-0.5">
                       {isPaid && inst.payment_date ? (
                         <>Paid on {new Date(inst.payment_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</>
                       ) : (
@@ -266,7 +266,7 @@ export function SplitPaymentCard() {
                       type="button"
                       disabled={isPaying}
                       onClick={() => handlePayInstalment(inst)}
-                      className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-[#9BB7E2] text-[#0B111C] text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      className="px-4 py-2 rounded-xl bg-app-accent hover:bg-app-accent text-app-base text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                     >
                       {isPaying ? (
                         <>
@@ -288,27 +288,27 @@ export function SplitPaymentCard() {
 
       {/* Payment History Log */}
       {payment_history && payment_history.length > 0 && (
-        <div className="pt-2 border-t border-[#2A3446] space-y-2">
+        <div className="pt-2 border-t border-app-line space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-app-mist">
               Instalment Payment History
             </h4>
-            <span className="text-[11px] text-[#97A0B3] font-mono">{payment_history.length} records</span>
+            <span className="text-[11px] text-app-mist font-mono">{payment_history.length} records</span>
           </div>
           <div className="space-y-1.5">
             {payment_history.map((hist, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs"
+                className="flex items-center justify-between p-2.5 rounded-xl bg-app-base border border-app-line text-xs"
               >
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span className="text-white font-medium">Instalment #{hist.instalment_number}</span>
-                  <span className="text-[#97A0B3]">· ₹{hist.amount.toLocaleString("en-IN")}</span>
+                  <span className="text-hi font-medium">Instalment #{hist.instalment_number}</span>
+                  <span className="text-app-mist">· ₹{hist.amount.toLocaleString("en-IN")}</span>
                 </div>
-                <div className="flex items-center gap-3 text-[#97A0B3] font-mono text-[11px]">
+                <div className="flex items-center gap-3 text-app-mist font-mono text-[11px]">
                   <span>{hist.payment_date ? new Date(hist.payment_date).toLocaleDateString() : "Recorded"}</span>
-                  <span className="px-2 py-0.5 rounded-md bg-[#161F2D] text-[#7FA0D6] border border-[#2A3446]">
+                  <span className="px-2 py-0.5 rounded-md bg-app-surface text-app-accent border border-app-line">
                     {hist.transaction_id ? hist.transaction_id.slice(0, 10) : "Verified"}
                   </span>
                 </div>

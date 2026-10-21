@@ -107,13 +107,13 @@ export function MemberMobileDashboard({
           <button
             type="button"
             onClick={toggleMobile}
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-300 hover:text-white bg-[#131B26] border border-white/10 hover:border-white/20 transition-colors cursor-pointer shrink-0"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-300 hover:text-hi bg-[#131B26] border border-hi/10 hover:border-white/20 transition-colors cursor-pointer shrink-0"
             aria-label="Open navigation sidebar"
             title="Open navigation menu"
           >
             <Menu className="w-4.5 h-4.5" />
           </button>
-          <div className="flex items-center tracking-tight font-bold text-lg text-white">
+          <div className="flex items-center tracking-tight font-bold text-lg text-hi">
             Creo<span className="text-sky-400">.</span>
           </div>
           <span className="text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-sky-400/15 text-sky-400 border border-sky-400/30">
@@ -125,7 +125,7 @@ export function MemberMobileDashboard({
           <button
             type="button"
             onClick={() => showToast("All pod notifications are up to date", "info")}
-            className="relative w-8 h-8 rounded-full flex items-center justify-center bg-[#131B26] border border-white/10 text-slate-300 hover:text-white hover:bg-[#172232] transition-colors cursor-pointer"
+            className="relative w-8 h-8 rounded-full flex items-center justify-center bg-[#131B26] border border-hi/10 text-slate-300 hover:text-hi hover:bg-[#172232] transition-colors cursor-pointer"
             aria-label="Notifications"
           >
             <Bell className="w-4 h-4" />
@@ -151,14 +151,14 @@ export function MemberMobileDashboard({
       {/* 2. High-Density Quick-Metrics Grid (2x2 Compact) */}
       <div className="grid grid-cols-2 gap-2.5">
         {/* Card A: Active Sprint Tasks */}
-        <div className="bg-[#131B26]/85 border border-white/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-3.5 flex flex-col justify-between">
+        <div className="bg-[#131B26]/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-3.5 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400">ACTIVE TASKS</span>
             <Zap className="text-sky-400 w-4 h-4" />
           </div>
           <div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-white tracking-tight">{metricActiveTasks.length}</span>
+              <span className="text-2xl font-bold text-hi tracking-tight">{metricActiveTasks.length}</span>
               <span className="text-xs text-slate-400 font-normal">in queue</span>
             </div>
             <p className="text-[11px] text-slate-400 truncate mt-0.5">
@@ -175,14 +175,14 @@ export function MemberMobileDashboard({
         </div>
 
         {/* Card B: Weekly Hours */}
-        <div className="bg-[#131B26]/85 border border-white/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-3.5 flex flex-col justify-between">
+        <div className="bg-[#131B26]/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-3.5 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400">WEEKLY HOURS</span>
             <Clock className="text-sky-400 w-4 h-4" />
           </div>
           <div>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-white tracking-tight">32.5</span>
+              <span className="text-2xl font-bold text-hi tracking-tight">32.5</span>
               <span className="text-xs text-slate-400 font-normal">/ 40h</span>
             </div>
             {/* Thin Linear Progress Bar */}
@@ -200,15 +200,15 @@ export function MemberMobileDashboard({
         </div>
 
         {/* Card C: Remaining PTO (Full width row) */}
-        <div className="col-span-2 bg-[#131B26]/85 border border-white/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-3 flex items-center justify-between">
+        <div className="col-span-2 bg-[#131B26]/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#172232] border border-white/10 flex items-center justify-center text-slate-300">
+            <div className="w-9 h-9 rounded-xl bg-[#172232] border border-hi/10 flex items-center justify-center text-slate-300">
               <Calendar className="w-4 h-4 text-sky-400" />
             </div>
             <div>
               <div className="text-[10px] font-bold tracking-wider uppercase text-slate-400">REMAINING PTO</div>
               <div className="flex items-baseline gap-2">
-                <span className="text-base font-bold text-white tracking-tight">14.5 Days</span>
+                <span className="text-base font-bold text-hi tracking-tight">14.5 Days</span>
                 <span className="text-[11px] text-slate-400">+1.5d/mo</span>
               </div>
             </div>
@@ -250,7 +250,7 @@ export function MemberMobileDashboard({
 
         <Link
           to="/slack"
-          className="shrink-0 flex items-center gap-1.5 bg-[#131B26]/80 border border-white/10 text-slate-300 text-xs font-medium px-3.5 py-2 rounded-xl hover:bg-[#172232] hover:text-white transition-all"
+          className="shrink-0 flex items-center gap-1.5 bg-[#131B26]/80 border border-hi/10 text-slate-300 text-xs font-medium px-3.5 py-2 rounded-xl hover:bg-[#172232] hover:text-hi transition-all"
         >
           <Hash className="w-4 h-4 text-[#E01E5A]" />
           <span>Slack Hub</span>
@@ -258,7 +258,7 @@ export function MemberMobileDashboard({
 
         <Link
           to="/workstation/schedule"
-          className="shrink-0 flex items-center gap-1.5 bg-[#131B26]/80 border border-white/10 text-slate-300 text-xs font-medium px-3.5 py-2 rounded-xl hover:bg-[#172232] hover:text-white transition-all"
+          className="shrink-0 flex items-center gap-1.5 bg-[#131B26]/80 border border-hi/10 text-slate-300 text-xs font-medium px-3.5 py-2 rounded-xl hover:bg-[#172232] hover:text-hi transition-all"
         >
           <Calendar className="w-4 h-4 text-sky-400" />
           <span>Schedule</span>
@@ -266,19 +266,19 @@ export function MemberMobileDashboard({
       </div>
 
       {/* 4. Assigned Sprint Deliverables (Primary Work Hub) */}
-      <div className="bg-[#131B26]/85 border border-white/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-4 space-y-3">
+      <div className="bg-[#131B26]/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-bold text-white tracking-tight">Assigned Deliverables</h2>
+            <h2 className="text-sm font-bold text-hi tracking-tight">Assigned Deliverables</h2>
             <p className="text-[11px] text-slate-400">{podName} deliverables pipeline</p>
           </div>
-          <div className="flex bg-[#070B12]/80 p-0.5 rounded-xl border border-white/10 text-[11px]">
+          <div className="flex bg-[#070B12]/80 p-0.5 rounded-xl border border-hi/10 text-[11px]">
             <button
               type="button"
               onClick={() => setDeliverablesScope("my")}
               className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                 deliverablesScope === "my"
-                  ? "bg-[#172232] text-white font-medium shadow-sm"
+                  ? "bg-[#172232] text-hi font-medium shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
@@ -289,7 +289,7 @@ export function MemberMobileDashboard({
               onClick={() => setDeliverablesScope("all")}
               className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                 deliverablesScope === "all"
-                  ? "bg-[#172232] text-white font-medium shadow-sm"
+                  ? "bg-[#172232] text-hi font-medium shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
@@ -305,7 +305,7 @@ export function MemberMobileDashboard({
             onClick={() => setDeliverablesTab("active")}
             className={`text-xs px-2.5 py-0.5 rounded-lg transition-all cursor-pointer ${
               deliverablesTab === "active"
-                ? "font-semibold bg-white/10 text-white border border-white/15"
+                ? "font-semibold bg-hi/10 text-hi border border-hi/15"
                 : "font-medium text-slate-400 hover:text-slate-300"
             }`}
           >
@@ -316,7 +316,7 @@ export function MemberMobileDashboard({
             onClick={() => setDeliverablesTab("archived")}
             className={`text-xs px-2.5 py-0.5 rounded-lg transition-all cursor-pointer ${
               deliverablesTab === "archived"
-                ? "font-semibold bg-white/10 text-white border border-white/15"
+                ? "font-semibold bg-hi/10 text-hi border border-hi/15"
                 : "font-medium text-slate-400 hover:text-slate-300"
             }`}
           >
@@ -327,10 +327,10 @@ export function MemberMobileDashboard({
         {/* Deliverables List or Empty State */}
         {currentTasks.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-700/80 bg-[#070B12]/40 p-6 flex flex-col items-center text-center">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-b from-[#172232] to-[#0E1420] border border-white/10 flex items-center justify-center text-sky-400 shadow-inner mb-3">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-b from-[#172232] to-[#0E1420] border border-hi/10 flex items-center justify-center text-sky-400 shadow-inner mb-3">
               <Sparkles className="w-6 h-6" />
             </div>
-            <h3 className="text-sm font-bold text-white mb-1">No active deliverables in production</h3>
+            <h3 className="text-sm font-bold text-hi mb-1">No active deliverables in production</h3>
             <p className="text-xs text-slate-400 max-w-[270px] leading-relaxed mb-4">
               You currently have no tasks in production or QA. Pull an assigned ticket or review upcoming deliverables.
             </p>
@@ -347,17 +347,17 @@ export function MemberMobileDashboard({
             {currentTasks.slice(0, 5).map((task) => (
               <div
                 key={task.id}
-                className="p-3 rounded-xl bg-[#070B12]/60 border border-white/10 space-y-2 hover:border-sky-400/30 transition-colors"
+                className="p-3 rounded-xl bg-[#070B12]/60 border border-hi/10 space-y-2 hover:border-sky-400/30 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider">
                     {task.client_name || "Client"}
                   </span>
-                  <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-[#172232] text-slate-300 border border-white/10">
+                  <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-[#172232] text-slate-300 border border-hi/10">
                     {task.deliverable_type?.replace(/_/g, " ") || "Concept"}
                   </span>
                 </div>
-                <div className="text-xs font-bold text-white line-clamp-1">
+                <div className="text-xs font-bold text-hi line-clamp-1">
                   {task.blueprint?.concept_name || task.blueprint?.title || "Production Deliverable"}
                 </div>
                 <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[11px] text-slate-400">
@@ -376,7 +376,7 @@ export function MemberMobileDashboard({
                     <button
                       type="button"
                       onClick={() => openPreviewModal(task)}
-                      className="p-1 rounded-lg bg-white/5 text-slate-300 hover:text-white cursor-pointer"
+                      className="p-1 rounded-lg bg-white/5 text-slate-300 hover:text-hi cursor-pointer"
                       title="Preview deliverable"
                       aria-label="Preview deliverable"
                     >
@@ -399,21 +399,21 @@ export function MemberMobileDashboard({
       </div>
 
       {/* 5. Tabbed Secondary Section (Lead Feedback & Team Sync) */}
-      <div className="bg-[#131B26]/85 border border-white/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-4 space-y-3.5">
+      <div className="bg-[#131B26]/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-4 space-y-3.5">
         {/* Segmented Tab Header */}
-        <div className="flex bg-[#070B12]/90 p-1 rounded-xl border border-white/10">
+        <div className="flex bg-[#070B12]/90 p-1 rounded-xl border border-hi/10">
           <button
             type="button"
             onClick={() => setMobileSecondaryTab("feedback")}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               mobileSecondaryTab === "feedback"
-                ? "bg-[#172232] text-white border border-white/10 shadow-sm"
+                ? "bg-[#172232] text-hi border border-hi/10 shadow-sm"
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
             <FileText className="w-3.5 h-3.5 text-sky-400" />
             <span>Lead Feedback</span>
-            <span className="text-[10px] bg-white/10 px-1.5 rounded-full text-slate-300">{allNotes.length}</span>
+            <span className="text-[10px] bg-hi/10 px-1.5 rounded-full text-slate-300">{allNotes.length}</span>
           </button>
 
           <button
@@ -421,7 +421,7 @@ export function MemberMobileDashboard({
             onClick={() => setMobileSecondaryTab("team")}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
               mobileSecondaryTab === "team"
-                ? "bg-[#172232] text-white border border-white/10 shadow-sm"
+                ? "bg-[#172232] text-hi border border-hi/10 shadow-sm"
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
@@ -446,18 +446,18 @@ export function MemberMobileDashboard({
                 <div className="w-8 h-8 rounded-full bg-[#172232] mx-auto flex items-center justify-center text-slate-300 mb-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 </div>
-                <div className="text-xs font-semibold text-white">No feedback or revision requests</div>
+                <div className="text-xs font-semibold text-hi">No feedback or revision requests</div>
                 <p className="text-[11px] text-slate-400 mt-0.5">Your pod lead has marked current deliverables as complete.</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {allNotes.slice(0, 3).map((note) => (
-                  <div key={note.id} className="p-3 bg-[#070B12]/60 rounded-xl border border-white/10 space-y-1">
+                  <div key={note.id} className="p-3 bg-[#070B12]/60 rounded-xl border border-hi/10 space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold text-sky-400">{note.author}</span>
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">{note.badge}</span>
                     </div>
-                    <p className="text-xs text-white leading-relaxed">{note.content}</p>
+                    <p className="text-xs text-hi leading-relaxed">{note.content}</p>
                   </div>
                 ))}
               </div>
@@ -476,12 +476,12 @@ export function MemberMobileDashboard({
                   onChange={(e) => setQuickReplyText(e.target.value)}
                   placeholder="Reply to Pod Beta Team via Slack..."
                   disabled={isSendingQuickReply}
-                  className="w-full bg-[#070B12]/80 border border-white/15 focus:border-sky-400 focus:outline-none rounded-xl py-2.5 pl-3 pr-20 text-xs text-white placeholder-slate-500 shadow-inner disabled:opacity-60"
+                  className="w-full bg-[#070B12]/80 border border-hi/15 focus:border-sky-400 focus:outline-none rounded-xl py-2.5 pl-3 pr-20 text-xs text-hi placeholder-slate-500 shadow-inner disabled:opacity-60"
                 />
                 <button
                   type="submit"
                   disabled={!quickReplyText.trim() || isSendingQuickReply}
-                  className="absolute right-1.5 bg-[#4A154B] hover:bg-[#611f69] disabled:opacity-50 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 border border-white/20 transition-all cursor-pointer"
+                  className="absolute right-1.5 bg-[#4A154B] hover:bg-[#611f69] disabled:opacity-50 text-hi text-xs font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 border border-hi/20 transition-all cursor-pointer"
                 >
                   {isSendingQuickReply ? (
                     <span>Sending...</span>

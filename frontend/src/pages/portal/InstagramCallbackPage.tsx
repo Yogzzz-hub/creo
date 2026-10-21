@@ -97,11 +97,11 @@ export function InstagramCallbackPage() {
   if (!callback.hasResponse) return <Navigate to={DEFAULT_RETURN} replace />;
 
   return (
-    <main className="min-h-screen bg-[#0B111C] text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-2xl border border-[#2A3446] bg-[#161F2D] p-6 space-y-4 text-center">
+    <main className="min-h-screen bg-app-base text-hi flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-2xl border border-app-line bg-app-surface p-6 space-y-4 text-center">
         <ProviderLogo aria-hidden="true" className={`size-12 mx-auto ${busy ? "animate-pulse motion-reduce:animate-none" : ""} ${providerLabel === "Instagram" ? "text-pink-400" : "text-blue-400"}`} />
         <h1 className="text-lg font-bold">Connecting {providerLabel}</h1>
-        {busy && <output className="block text-sm text-[#97A0B3]">Finishing authorization…</output>}
+        {busy && <output className="block text-sm text-app-mist">Finishing authorization…</output>}
         {done && (
           <output className="block text-sm text-emerald-300">
             Instagram connected. Taking you back…
@@ -113,7 +113,7 @@ export function InstagramCallbackPage() {
             <button
               type="button"
               onClick={() => navigate(returnPath.current, { replace: true })}
-              className="px-5 py-2 rounded-xl bg-[#BCCCE6] text-[#0B111C] text-xs font-bold hover:bg-white cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-app-accent-soft text-app-base text-xs font-bold hover:bg-hi cursor-pointer"
             >
               Go back
             </button>
@@ -128,7 +128,7 @@ export function InstagramCallbackPage() {
                 key={a.id}
                 disabled={busy}
                 onClick={() => void choose(a.id)}
-                className="block w-full text-left min-h-11 rounded-xl border border-[#2A3446] px-4 py-2 text-sm font-semibold hover:bg-[#2A3446] disabled:opacity-50 cursor-pointer"
+                className="block w-full text-left min-h-11 rounded-xl border border-app-line px-4 py-2 text-sm font-semibold hover:bg-app-line disabled:opacity-50 cursor-pointer"
               >
                 @{a.username} · {a.page_name}
               </button>

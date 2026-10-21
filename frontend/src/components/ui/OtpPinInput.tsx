@@ -110,14 +110,14 @@ export function OtpPinInput({
           const darkClasses = hasError
             ? "border-rose-500/70 bg-rose-950/20 text-rose-300 focus:ring-4 focus:ring-rose-500/20"
             : isFilled
-            ? "border-[#7FA0D6] bg-[#161F2D] text-[#F8FAFC] shadow-sm shadow-[#7FA0D6]/20"
-            : "border-[#2A3446] bg-[#0B111C] text-[#F8FAFC] hover:border-[#7FA0D6]/60 focus:border-[#BCCCE6] focus:bg-[#161F2D] focus:ring-4 focus:ring-[#BCCCE6]/20";
+            ? "border-app-accent bg-app-surface text-app-ink shadow-sm shadow-app-accent/20"
+            : "border-app-line bg-app-base text-app-ink hover:border-app-accent/60 focus:border-app-accent-soft focus:bg-app-surface focus:ring-4 focus:ring-app-accent-soft/20";
 
           const lightClasses = hasError
             ? "border-red-400 bg-red-50/50 text-red-600 focus:ring-4 focus:ring-red-100"
             : isFilled
-            ? "border-[#7FA0D6] bg-[#161F2D] text-[#0B111C] shadow-xs shadow-[#7FA0D6]/10"
-            : "border-slate-200 bg-slate-50/70 text-[#0B111C] hover:border-slate-300 focus:border-[#7FA0D6] focus:bg-white focus:ring-4 focus:ring-[#7FA0D6]/15";
+            ? "border-app-accent bg-app-surface text-app-base shadow-xs shadow-app-accent/10"
+            : "border-slate-200 bg-slate-50/70 text-app-base hover:border-slate-300 focus:border-app-accent focus:bg-hi focus:ring-4 focus:ring-app-accent/15";
 
           return (
             <input

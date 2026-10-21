@@ -75,7 +75,7 @@ export function PortalAnnouncements() {
         <button
           type="button"
           onClick={resetDismissed}
-          className="text-xs font-semibold text-[#7FA0D6] hover:underline cursor-pointer"
+          className="text-xs font-semibold text-app-accent hover:underline cursor-pointer"
         >
           View ({dismissedIds.length}) dismissed
         </button>
@@ -94,7 +94,7 @@ export function PortalAnnouncements() {
           icon: <Cpu className="size-4 text-indigo-600" />,
           badgeClass: "bg-indigo-50 text-indigo-700 border-indigo-200",
           cardBorder: "border-indigo-100",
-          cardBg: "from-indigo-50/40 via-white to-white",
+          cardBg: "from-indigo-50/40 via-hi to-hi",
           label: "System Upgrade",
         };
       case "maintenance":
@@ -102,16 +102,16 @@ export function PortalAnnouncements() {
           icon: <Wrench className="size-4 text-rose-600" />,
           badgeClass: "bg-rose-50 text-rose-700 border-rose-200",
           cardBorder: "border-rose-100",
-          cardBg: "from-rose-50/40 via-white to-white",
+          cardBg: "from-rose-50/40 via-hi to-hi",
           label: "Maintenance",
         };
       case "broadcast":
       default:
         return {
-          icon: <Megaphone className="size-4 text-[#7FA0D6]" />,
+          icon: <Megaphone className="size-4 text-app-accent" />,
           badgeClass: "bg-sky-50 text-sky-700 border-sky-200",
-          cardBorder: "border-[#BCCCE6]/70",
-          cardBg: "from-[#161F2D]/40 via-white to-white",
+          cardBorder: "border-app-accent-soft/70",
+          cardBg: "from-app-surface/40 via-hi to-hi",
           label: "Broadcast",
         };
     }
@@ -121,7 +121,7 @@ export function PortalAnnouncements() {
     <div className="space-y-3">
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <span className="flex h-2 w-2 rounded-full bg-[#7FA0D6] animate-ping" />
+          <span className="flex h-2 w-2 rounded-full bg-app-accent animate-ping" />
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Agency Updates & Technical Bulletins
           </h2>
@@ -133,7 +133,7 @@ export function PortalAnnouncements() {
           <button
             type="button"
             onClick={() => setShowAll(!showAll)}
-            className="text-[11px] font-semibold text-[#7FA0D6] hover:underline flex items-center gap-1 cursor-pointer"
+            className="text-[11px] font-semibold text-app-accent hover:underline flex items-center gap-1 cursor-pointer"
           >
             {showAll ? (
               <>
@@ -173,7 +173,7 @@ export function PortalAnnouncements() {
                     {item.target_departments?.map((dept) => (
                       <span
                         key={dept}
-                        className="inline-flex items-center gap-1 rounded-md bg-white border border-slate-200/80 px-2 py-0.5 text-[10px] font-medium text-slate-600 shadow-2xs"
+                        className="inline-flex items-center gap-1 rounded-md bg-hi border border-slate-200/80 px-2 py-0.5 text-[10px] font-medium text-slate-600 shadow-2xs"
                       >
                         <Tag className="size-2.5 text-slate-400" />
                         {dept}
@@ -194,7 +194,7 @@ export function PortalAnnouncements() {
                   )}
                 </div>
 
-                <h3 className="text-sm font-bold text-[#0B111C] tracking-tight leading-snug">
+                <h3 className="text-sm font-bold text-app-base tracking-tight leading-snug">
                   {item.title}
                 </h3>
                 <p className="mt-1.5 text-xs text-slate-600 leading-relaxed">

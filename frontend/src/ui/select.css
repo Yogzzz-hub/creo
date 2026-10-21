@@ -4,17 +4,17 @@
 }
 .creo-select-trigger {
   min-height: 40px; min-width: 0; max-width: 100%; gap: 10px;
-  border: 1px solid #2A3446; border-radius: 12px; background: #161F2D;
-  padding: 8px 12px; color: #F8FAFC; font-size: 13px; font-weight: 500;
+  border: 1px solid var(--app-line); border-radius: 12px; background: var(--app-surface);
+  padding: 8px 12px; color: var(--app-ink); font-size: 13px; font-weight: 500;
   text-align: left; transition: all 150ms ease;
 }
 .creo-select-trigger > span:first-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.creo-select-trigger > span:last-child { flex-shrink: 0; color: #97A0B3; }
-.creo-select-trigger:hover:not(:disabled) { border-color: #7FA0D6; background: #1E293B; }
+.creo-select-trigger > span:last-child { flex-shrink: 0; color: var(--app-mist); }
+.creo-select-trigger:hover:not(:disabled) { border-color: var(--app-accent); background: color-mix(in oklab, var(--app-line) 55%, var(--app-surface)); }
 .creo-select-trigger:focus-visible, .creo-select-trigger[data-state="open"] {
-  outline: none; border-color: #7FA0D6; box-shadow: 0 0 0 3px rgba(127, 160, 214, 0.25);
+  outline: none; border-color: var(--app-accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--app-accent) 25%, transparent);
 }
-.creo-select-trigger[aria-invalid="true"] { border-color: #D8BF9B; }
+.creo-select-trigger[aria-invalid="true"] { border-color: var(--app-warm); }
 .creo-select-trigger:disabled { opacity: .5; cursor: not-allowed; }
 
 /* Compact small trigger variant */
@@ -31,11 +31,11 @@
   width: max-content;
   max-width: min(calc(100vw - 24px), 380px);
   max-height: min(340px, var(--radix-select-content-available-height));
-  border: 1px solid #2A3446;
+  border: 1px solid var(--app-line);
   border-radius: 16px;
-  background: #161F2D;
-  color: #F8FAFC;
-  box-shadow: 0 20px 50px -4px rgba(5, 8, 16, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  background: var(--app-surface);
+  color: var(--app-ink);
+  box-shadow: 0 20px 50px -4px rgb(var(--shadow-rgb) / calc(0.95 * var(--shadow-k))), 0 0 0 1px color-mix(in oklab, var(--app-ink) 5%, transparent);
   overflow: hidden;
   backdrop-filter: blur(12px);
 }
@@ -47,12 +47,12 @@
   min-height: 38px; border-radius: 10px; padding: 8px 12px 8px 32px;
   font-size: 13px; font-weight: 500; line-height: 1.45; overflow-wrap: anywhere;
   cursor: pointer; outline: none; transition: background-color 100ms ease, color 100ms ease;
-  color: #BCCCE6;
+  color: var(--app-accent-soft);
 }
-.creo-select-item[data-highlighted] { background: #1E293B; color: #FFFFFF; }
-.creo-select-item[data-state="checked"] { background: rgba(127, 160, 214, 0.16); color: #7FA0D6; font-weight: 600; }
+.creo-select-item[data-highlighted] { background: var(--app-line); color: var(--app-ink); }
+.creo-select-item[data-state="checked"] { background: color-mix(in oklab, var(--app-accent) 16%, transparent); color: var(--app-accent); font-weight: 600; }
 .creo-select-item[data-disabled] { opacity: .4; cursor: not-allowed; }
-.creo-select-item svg { color: #7FA0D6; }
+.creo-select-item svg { color: var(--app-accent); }
 
 /* Compact small item variant */
 .creo-select-item--sm {

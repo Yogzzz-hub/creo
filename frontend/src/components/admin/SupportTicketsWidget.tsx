@@ -76,7 +76,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             title: st.title || st.subject || "Support Inquiry",
             client: clientName,
             clientInitials: clientName[0].toUpperCase(),
-            avatarBg: "bg-[#0B111C]",
+            avatarBg: "bg-app-base",
             priority,
             timeLog: st.created_at ? new Date(st.created_at).toLocaleDateString() : "Recently",
             agent: agentName,
@@ -99,7 +99,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             title: lt.issueTitle || lt.title || "Support Request",
             client: clientName,
             clientInitials: clientName[0].toUpperCase(),
-            avatarBg: lt.avatarBg || "bg-[#0B111C]",
+            avatarBg: lt.avatarBg || "bg-app-base",
             priority,
             timeLog: lt.timeLog || "Logged just now",
             agent: lt.agent || "Support Lead",
@@ -204,26 +204,26 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
       case "High":
         return "bg-amber-500/10 text-amber-300 border border-amber-500/20";
       case "Medium":
-        return "bg-blue-800/40 text-[#7FA0D6] border border-blue-700/40";
+        return "bg-blue-800/40 text-app-accent border border-blue-700/40";
       case "Normal":
       default:
-        return "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]";
+        return "bg-app-surface text-app-ink-2 border-app-line";
     }
   };
 
   return (
     <div
       onClick={() => navigate("/admin/support")}
-      className="bg-[#161F2D] rounded-2xl border border-[#2A3446] shadow-sm hover:border-[#7FA0D6]/50 transition-all p-4 sm:p-5 flex flex-col justify-between h-full font-sans cursor-pointer group hover-card-innovative"
+      className="bg-app-surface rounded-2xl border border-app-line shadow-sm hover:border-app-accent/50 transition-all p-4 sm:p-5 flex flex-col justify-between h-full font-sans cursor-pointer group hover-card-innovative"
     >
       <div>
         {/* Header Title Row */}
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <h2 className="text-[17px] font-black text-white group-hover:text-[#7FA0D6] transition-colors tracking-tight">
+            <h2 className="text-[17px] font-black text-hi group-hover:text-app-accent transition-colors tracking-tight">
               Support Tickets
             </h2>
-            <span className="text-[9px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 py-0.5 rounded-full border border-[#7FA0D6]/30 shadow-2xs">
+            <span className="text-[9px] font-bold text-app-accent bg-app-accent/15 px-2 py-0.5 rounded-full border border-app-accent/30 shadow-2xs">
               {openCount} Open
             </span>
           </div>
@@ -231,13 +231,13 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             {urgentCount} Urgent
           </span>
         </div>
-        <p className="text-[11px] text-[#97A0B3] font-medium mb-3">
+        <p className="text-[11px] text-app-mist font-medium mb-3">
           Client issues, incidents & resolution queue
         </p>
 
         {/* Tab Switcher Pills */}
         <div
-          className="flex items-center gap-1 bg-[#0B111C] border border-[#2A3446]/80 rounded-xl p-0.5 mb-3 w-max shadow-2xs"
+          className="flex items-center gap-1 bg-app-base border border-app-line/80 rounded-xl p-0.5 mb-3 w-max shadow-2xs"
           onClick={(e) => e.stopPropagation()}
         >
           <button
@@ -248,8 +248,8 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             }}
             className={`px-3 py-1 text-[11px] rounded-lg transition-all cursor-pointer ${
               activeTab === "open"
-                ? "font-bold text-[#7FA0D6] bg-[#161F2D] shadow-2xs"
-                : "font-semibold text-[#97A0B3] hover:text-[#F1F5F9]"
+                ? "font-bold text-app-accent bg-app-surface shadow-2xs"
+                : "font-semibold text-app-mist hover:text-app-ink-2"
             }`}
           >
             Open ({openCount})
@@ -262,8 +262,8 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             }}
             className={`px-3 py-1 text-[11px] rounded-lg transition-all cursor-pointer ${
               activeTab === "pending"
-                ? "font-bold text-[#7FA0D6] bg-[#161F2D] shadow-2xs"
-                : "font-semibold text-[#97A0B3] hover:text-[#F1F5F9]"
+                ? "font-bold text-app-accent bg-app-surface shadow-2xs"
+                : "font-semibold text-app-mist hover:text-app-ink-2"
             }`}
           >
             Pending ({pendingCount})
@@ -276,8 +276,8 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             }}
             className={`px-3 py-1 text-[11px] rounded-lg transition-all cursor-pointer ${
               activeTab === "resolved"
-                ? "font-bold text-[#7FA0D6] bg-[#161F2D] shadow-2xs"
-                : "font-semibold text-[#97A0B3] hover:text-[#F1F5F9]"
+                ? "font-bold text-app-accent bg-app-surface shadow-2xs"
+                : "font-semibold text-app-mist hover:text-app-ink-2"
             }`}
           >
             Resolved ({resolvedCount})
@@ -287,7 +287,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
         {/* Ticket List Container */}
         <div className="flex flex-col gap-2">
           {currentTabTickets.length === 0 ? (
-            <div className="py-6 text-center text-xs text-[#97A0B3] font-medium bg-[#0B111C]/60 rounded-xl border border-[#2A3446]">
+            <div className="py-6 text-center text-xs text-app-mist font-medium bg-app-base/60 rounded-xl border border-app-line">
               No tickets in {activeTab} status
             </div>
           ) : (
@@ -298,17 +298,17 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
                 e.stopPropagation();
                 navigate(`/admin/support/tickets/${t.id}`);
               }}
-              className="flex items-center justify-between p-2.5 sm:px-3 sm:py-2.5 rounded-xl border border-[#2A3446] hover:border-[#7FA0D6]/30 hover:shadow-2xs transition-all bg-[#161F2D] cursor-pointer group/item"
+              className="flex items-center justify-between p-2.5 sm:px-3 sm:py-2.5 rounded-xl border border-app-line hover:border-app-accent/30 hover:shadow-2xs transition-all bg-app-surface cursor-pointer group/item"
             >
               <div className="flex items-center gap-2.5 min-w-0 pr-2">
                 <div
-                  className={`size-7 rounded-lg text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs ${t.avatarBg}`}
+                  className={`size-7 rounded-lg text-hi font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs ${t.avatarBg}`}
                 >
                   {t.clientInitials}
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-xs font-bold text-white group-hover/item:text-[#7FA0D6] transition-colors truncate max-w-[160px] sm:max-w-[200px]">
+                    <span className="text-xs font-bold text-hi group-hover/item:text-app-accent transition-colors truncate max-w-[160px] sm:max-w-[200px]">
                       {t.title}
                     </span>
                     <span
@@ -319,14 +319,14 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
                       {t.priority}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-[10px] text-[#97A0B3] font-medium">
-                    <span className="text-[#F1F5F9] font-semibold">{t.client}</span>
+                  <div className="flex items-center gap-1 text-[10px] text-app-mist font-medium">
+                    <span className="text-app-ink-2 font-semibold">{t.client}</span>
                     <span className="text-slate-300">•</span>
-                    <span className={t.priority === "Urgent" ? "text-[#D8BF9B] font-bold" : "text-[#97A0B3]"}>
+                    <span className={t.priority === "Urgent" ? "text-app-warm font-bold" : "text-app-mist"}>
                       {t.timeLog}
                     </span>
                     <span className="text-slate-300">•</span>
-                    <span className="font-mono text-[#97A0B3]">#{t.id}</span>
+                    <span className="font-mono text-app-mist">#{t.id}</span>
                   </div>
                 </div>
               </div>
@@ -340,7 +340,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
                 }}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0 ${
                   t.status === "resolved"
-                    ? "bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-white"
+                    ? "bg-app-base hover:bg-app-line border border-app-line text-app-mist hover:text-hi"
                     : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20"
                 }`}
               >
@@ -364,7 +364,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
 
       {/* Footer Meta Row */}
       <div
-        className="mt-3 pt-2.5 border-t border-[#2A3446] shrink-0"
+        className="mt-3 pt-2.5 border-t border-app-line shrink-0"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -373,7 +373,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             e.stopPropagation();
             navigate("/admin/support");
           }}
-          className="w-full min-h-[38px] py-2 px-3 bg-[#0B111C] hover:bg-[#161F2D] hover:border-[#7FA0D6]/60 hover:scale-[1.01] hover:text-[#7FA0D6] text-white rounded-xl text-xs font-bold border border-[#2A3446] transition-all duration-200 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+          className="w-full min-h-[38px] py-2 px-3 bg-app-base hover:bg-app-surface hover:border-app-accent/60 hover:scale-[1.01] hover:text-app-accent text-hi rounded-xl text-xs font-bold border border-app-line transition-all duration-200 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <span>View Tickets</span>
           <span>&rarr;</span>
@@ -390,7 +390,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
           }}
         >
           <div
-            className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
+            className="relative w-full max-w-md rounded-3xl bg-app-surface p-6 sm:p-8 shadow-2xl border border-app-line flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -398,7 +398,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             <button
               type="button"
               onClick={() => setAlertModal(null)}
-              className="absolute top-4 right-4 size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-4 right-4 size-8 rounded-full bg-app-base hover:bg-app-line border border-app-line text-app-mist hover:text-hi flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Close modal"
             >
               <X className="size-4" />
@@ -407,8 +407,8 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             <div
               className={`size-16 rounded-3xl flex items-center justify-center mb-4 ring-8 shadow-inner ${
                 alertModal.type === "success"
-                  ? "bg-blue-950/30 text-[#BCCCE6] ring-blue-500/30"
-                  : "bg-[#7FA0D6]/15 text-[#7FA0D6] ring-blue-500/30"
+                  ? "bg-blue-950/30 text-app-accent-soft ring-blue-500/30"
+                  : "bg-app-accent/15 text-app-accent ring-blue-500/30"
               }`}
             >
               {alertModal.type === "success" ? (
@@ -418,11 +418,11 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
               )}
             </div>
 
-            <h3 className="text-xl font-black text-white tracking-tight">
+            <h3 className="text-xl font-black text-hi tracking-tight">
               {alertModal.title}
             </h3>
 
-            <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm text-center">
+            <p className="text-xs sm:text-sm text-app-ink-2 mt-2 leading-relaxed max-w-sm text-center">
               {alertModal.message}
             </p>
 
@@ -443,7 +443,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
                      setAlertModal(null);
                      navigate(`/admin/support/tickets/${id}`);
                   }}
-                  className="px-5 py-3 rounded-2xl bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#F1F5F9] hover:text-white font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-5 py-3 rounded-2xl bg-app-base hover:bg-app-line border border-app-line text-app-ink-2 hover:text-hi font-bold text-xs active:scale-95 transition-all cursor-pointer"
                 >
                   View Details
                 </button>

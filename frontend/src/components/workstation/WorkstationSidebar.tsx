@@ -220,7 +220,7 @@ export function WorkstationSidebar() {
           type="button"
           aria-label="Close navigation overlay"
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-[9998] bg-[#050810]/75 backdrop-blur-sm lg:hidden cursor-pointer"
+          className="fixed inset-0 z-[9998] bg-app-void/75 backdrop-blur-sm lg:hidden cursor-pointer"
         />
       )}
 
@@ -236,24 +236,24 @@ export function WorkstationSidebar() {
         {/* ========================================================================= */}
         {/* 1. DESKTOP SIDEBAR VIEW (lg:flex, hidden on mobile) - 100% UNCHANGED      */}
         {/* ========================================================================= */}
-        <div className="hidden lg:flex flex-col h-full w-full bg-[#161F2D]">
+        <div className="hidden lg:flex flex-col h-full w-full bg-app-surface">
           {/* Brand Header */}
-          <div className="p-4 sm:p-5 border-b border-[#2A3446] flex items-center justify-between bg-[#0B111C]/60 shrink-0">
+          <div className="p-4 sm:p-5 border-b border-app-line flex items-center justify-between bg-app-base/60 shrink-0">
             <div className="flex items-center gap-2.5">
-              <Link to="/workstation" className="text-xl font-black text-white tracking-tighter flex items-center">
-                creo<span className="text-[#7FA0D6] text-2xl leading-none">.</span>
+              <Link to="/workstation" className="text-xl font-black text-hi tracking-tighter flex items-center">
+                creo<span className="text-app-accent text-2xl leading-none">.</span>
               </Link>
-              <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+              <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-app-accent/15 text-app-accent border border-app-accent/30">
                 Team Member
               </span>
             </div>
           </div>
 
           {/* Scrollable Navigation */}
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-4 space-y-5 text-left [scrollbar-width:thin] [scrollbar-color:#2A3446_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#2A3446] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#7FA0D6]/50">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-4 space-y-5 text-left [scrollbar-width:thin] [scrollbar-color:#2A3446_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-app-line [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-app-accent/50">
             {SECTIONS.map((section) => (
               <div key={section.label} className="space-y-1.5">
-                <div className="px-3 pb-1 text-xs font-black uppercase tracking-wider text-[#7FA0D6]">
+                <div className="px-3 pb-1 text-xs font-black uppercase tracking-wider text-app-accent">
                   {section.label}
                 </div>
                 <div className="space-y-1">
@@ -266,14 +266,14 @@ export function WorkstationSidebar() {
                         to={item.href}
                         className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-bold transition-all ${
                           active
-                            ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm font-black"
-                            : "text-[#97A0B3] hover:text-white hover:bg-[#0B111C]/50"
+                            ? "bg-app-accent-soft text-app-base shadow-sm font-black"
+                            : "text-app-mist hover:text-hi hover:bg-app-base/50"
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <Icon
                             className={`w-[18px] h-[18px] shrink-0 ${
-                              active ? "text-[#0B111C]" : "text-[#7FA0D6]"
+                              active ? "text-app-base" : "text-app-accent"
                             }`}
                           />
                           <span className="truncate">{item.label}</span>
@@ -282,8 +282,8 @@ export function WorkstationSidebar() {
                           <span
                             className={`text-[11px] px-2 py-0.5 rounded-md font-black shrink-0 ${
                               active
-                                ? "bg-[#0B111C]/20 text-[#0B111C]"
-                                : "bg-[#7FA0D6]/20 text-[#7FA0D6]"
+                                ? "bg-app-base/20 text-app-base"
+                                : "bg-app-accent/20 text-app-accent"
                             }`}
                           >
                             {item.badge}
@@ -299,10 +299,10 @@ export function WorkstationSidebar() {
                       type="button"
                       onClick={handleLogout}
                       disabled={loggingOut}
-                      className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-bold text-[#97A0B3] hover:text-white hover:bg-[#0B111C]/50 transition-all cursor-pointer"
+                      className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-bold text-app-mist hover:text-hi hover:bg-app-base/50 transition-all cursor-pointer"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <LogOut className="w-[18px] h-[18px] shrink-0 text-[#7FA0D6]" />
+                        <LogOut className="w-[18px] h-[18px] shrink-0 text-app-accent" />
                         <span className="truncate">{loggingOut ? "Signing out..." : "Log out"}</span>
                       </div>
                     </button>
@@ -314,10 +314,10 @@ export function WorkstationSidebar() {
 
           {/* Admin Escape Hatch for staff / admin roles */}
           {(user?.role === "admin" || user?.role === "super_admin") && (
-            <div className="p-3 border-t border-[#2A3446] bg-[#0B111C]/80 shrink-0 text-left">
+            <div className="p-3 border-t border-app-line bg-app-base/80 shrink-0 text-left">
               <Link
                 to="/admin"
-                className="w-full flex items-center justify-between text-xs font-bold text-[#7FA0D6] hover:text-white px-3 py-2 rounded-xl bg-[#0B111C] border border-[#7FA0D6]/30 hover:border-[#7FA0D6]/60 transition-colors shadow-xs"
+                className="w-full flex items-center justify-between text-xs font-bold text-app-accent hover:text-hi px-3 py-2 rounded-xl bg-app-base border border-app-accent/30 hover:border-app-accent/60 transition-colors shadow-xs"
               >
                 <span>← Return to Admin Console</span>
                 <LayoutDashboard className="w-3.5 h-3.5" />
@@ -338,7 +338,7 @@ export function WorkstationSidebar() {
                 <Link
                   to="/workstation"
                   onClick={() => setMobileOpen(false)}
-                  className="text-2xl font-black text-white tracking-tight flex items-center"
+                  className="text-2xl font-black text-hi tracking-tight flex items-center"
                 >
                   Creo<span className="text-sky-400 text-3xl leading-none">.</span>
                 </Link>
@@ -349,7 +349,7 @@ export function WorkstationSidebar() {
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="size-9 rounded-xl bg-[#0D1522] border border-[#1A2638] flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="size-9 rounded-xl bg-[#0D1522] border border-[#1A2638] flex items-center justify-center text-slate-400 hover:text-hi transition-colors cursor-pointer"
                 aria-label="Close navigation sidebar"
               >
                 <X className="w-5 h-5" />
@@ -362,7 +362,7 @@ export function WorkstationSidebar() {
                 {userInitial}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-bold text-white tracking-tight truncate">
+                <div className="text-sm font-bold text-hi tracking-tight truncate">
                   {user?.full_name || "Rahim"} ({userRoleParens})
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-[#8FA5C2] mt-0.5">
@@ -383,8 +383,8 @@ export function WorkstationSidebar() {
                 onClick={() => setMobileOpen(false)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all ${
                   isOverviewActive
-                    ? "bg-[#131E30] border border-[#233650] text-white shadow-xs font-bold"
-                    : "text-slate-300 hover:text-white hover:bg-[#0D1522] font-semibold"
+                    ? "bg-[#131E30] border border-[#233650] text-hi shadow-xs font-bold"
+                    : "text-slate-300 hover:text-hi hover:bg-[#0D1522] font-semibold"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -404,8 +404,8 @@ export function WorkstationSidebar() {
                 onClick={() => setMobileOpen(false)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all ${
                   isTasksActive
-                    ? "bg-[#131E30] border border-[#233650] text-white shadow-xs font-bold"
-                    : "text-slate-300 hover:text-white hover:bg-[#0D1522] font-semibold"
+                    ? "bg-[#131E30] border border-[#233650] text-hi shadow-xs font-bold"
+                    : "text-slate-300 hover:text-hi hover:bg-[#0D1522] font-semibold"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -423,8 +423,8 @@ export function WorkstationSidebar() {
                 onClick={() => setMobileOpen(false)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all ${
                   isScheduleActive
-                    ? "bg-[#131E30] border border-[#233650] text-white shadow-xs font-bold"
-                    : "text-slate-300 hover:text-white hover:bg-[#0D1522] font-semibold"
+                    ? "bg-[#131E30] border border-[#233650] text-hi shadow-xs font-bold"
+                    : "text-slate-300 hover:text-hi hover:bg-[#0D1522] font-semibold"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -442,8 +442,8 @@ export function WorkstationSidebar() {
                 onClick={() => setMobileOpen(false)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all ${
                   isSlackActive
-                    ? "bg-[#131E30] border border-[#233650] text-white shadow-xs font-bold"
-                    : "text-slate-300 hover:text-white hover:bg-[#0D1522] font-semibold"
+                    ? "bg-[#131E30] border border-[#233650] text-hi shadow-xs font-bold"
+                    : "text-slate-300 hover:text-hi hover:bg-[#0D1522] font-semibold"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -461,8 +461,8 @@ export function WorkstationSidebar() {
                 onClick={() => setMobileOpen(false)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all ${
                   isPublishingActive
-                    ? "bg-[#131E30] border border-[#233650] text-white shadow-xs font-bold"
-                    : "text-slate-300 hover:text-white hover:bg-[#0D1522] font-semibold"
+                    ? "bg-[#131E30] border border-[#233650] text-hi shadow-xs font-bold"
+                    : "text-slate-300 hover:text-hi hover:bg-[#0D1522] font-semibold"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -480,8 +480,8 @@ export function WorkstationSidebar() {
                 onClick={() => setMobileOpen(false)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all ${
                   isSettingsActive
-                    ? "bg-[#131E30] border border-[#233650] text-white shadow-xs font-bold"
-                    : "text-slate-300 hover:text-white hover:bg-[#0D1522] font-semibold"
+                    ? "bg-[#131E30] border border-[#233650] text-hi shadow-xs font-bold"
+                    : "text-slate-300 hover:text-hi hover:bg-[#0D1522] font-semibold"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -497,7 +497,7 @@ export function WorkstationSidebar() {
                 <Link
                   to="/admin"
                   onClick={() => setMobileOpen(false)}
-                  className="w-full flex items-center justify-between text-xs font-bold text-[#7FA0D6] hover:text-white px-3 py-2 rounded-xl bg-[#0D1522] border border-[#7FA0D6]/30 hover:border-[#7FA0D6]/60 transition-colors shadow-xs"
+                  className="w-full flex items-center justify-between text-xs font-bold text-app-accent hover:text-hi px-3 py-2 rounded-xl bg-[#0D1522] border border-app-accent/30 hover:border-app-accent/60 transition-colors shadow-xs"
                 >
                   <span>← Return to Admin Console</span>
                   <LayoutDashboard className="w-3.5 h-3.5" />
@@ -516,7 +516,7 @@ export function WorkstationSidebar() {
               type="button"
               onClick={handleLogout}
               disabled={loggingOut}
-              className="w-full mt-3 py-3 rounded-2xl bg-[#0D1522] border border-[#1A2638] flex items-center justify-center gap-2.5 text-sm font-bold text-slate-200 hover:text-white hover:bg-[#131E30] transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full mt-3 py-3 rounded-2xl bg-[#0D1522] border border-[#1A2638] flex items-center justify-center gap-2.5 text-sm font-bold text-slate-200 hover:text-hi hover:bg-[#131E30] transition-colors cursor-pointer disabled:opacity-50"
             >
               <LogOut className="w-4 h-4 text-slate-400" />
               <span>{loggingOut ? "Signing out..." : "Sign Out Session"}</span>

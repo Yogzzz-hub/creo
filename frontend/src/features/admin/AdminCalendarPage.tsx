@@ -93,7 +93,7 @@ export const FORMAT_CONFIG = {
     badgeText: "text-blue-300",
     border: "border-blue-500/30",
     chipBg: "bg-blue-500/15",
-    chipText: "text-[#7FA0D6]",
+    chipText: "text-app-accent",
     color: "#3B82F6",
   },
   post: {
@@ -103,7 +103,7 @@ export const FORMAT_CONFIG = {
     badgeText: "text-blue-300",
     border: "border-blue-500/30",
     chipBg: "bg-blue-500/15",
-    chipText: "text-[#7FA0D6]",
+    chipText: "text-app-accent",
     color: "#3B82F6",
   },
   story: {
@@ -461,7 +461,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
   }, [events]);
 
   const content = (
-    <div className="flex flex-col gap-6 w-full max-w-[1440px] mx-auto text-white">
+    <div className="flex flex-col gap-6 w-full max-w-[1440px] mx-auto text-hi">
       {/* Top Admin Actions */}
       <div className="grid grid-cols-2 sm:flex sm:flex-row items-stretch sm:items-center sm:justify-end gap-2 sm:gap-2.5 w-full">
         <button
@@ -491,34 +491,34 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
 
       {/* Monthly Operational KPI Banner */}
       <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs font-bold text-[#97A0B3]">
+        <div className="bg-app-surface border border-app-line rounded-2xl p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-xs font-bold text-app-mist">
             <span>Scheduled Total</span>
-            <CalendarIcon className="size-4 text-[#7FA0D6]" />
+            <CalendarIcon className="size-4 text-app-accent" />
           </div>
-          <div className="mt-2 text-2xl font-black text-white">{monthlyMetrics.total}</div>
-          <span className="text-[11px] text-[#7FA0D6] font-semibold mt-0.5">Across all clients</span>
+          <div className="mt-2 text-2xl font-black text-hi">{monthlyMetrics.total}</div>
+          <span className="text-[11px] text-app-accent font-semibold mt-0.5">Across all clients</span>
         </div>
 
-        <div className="bg-[#161F2D] border border-purple-500/20 rounded-2xl p-4 flex flex-col justify-between">
+        <div className="bg-app-surface border border-purple-500/20 rounded-2xl p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs font-bold text-purple-300">
             <span>Reels</span>
             <Video className="size-4 text-purple-400" />
           </div>
-          <div className="mt-2 text-2xl font-black text-white">{monthlyMetrics.reels}</div>
+          <div className="mt-2 text-2xl font-black text-hi">{monthlyMetrics.reels}</div>
           <span className="text-[11px] text-purple-300/80 font-semibold mt-0.5">Short-form videos</span>
         </div>
 
-        <div className="bg-[#161F2D] border border-blue-500/20 rounded-2xl p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs font-bold text-[#7FA0D6]">
+        <div className="bg-app-surface border border-blue-500/20 rounded-2xl p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-xs font-bold text-app-accent">
             <span>Posts / Posters</span>
-            <ImageIcon className="size-4 text-[#7FA0D6]" />
+            <ImageIcon className="size-4 text-app-accent" />
           </div>
-          <div className="mt-2 text-2xl font-black text-white">{monthlyMetrics.posts}</div>
+          <div className="mt-2 text-2xl font-black text-hi">{monthlyMetrics.posts}</div>
           <span className="text-[11px] text-blue-300/80 font-semibold mt-0.5">Static graphics</span>
         </div>
 
-        <div className="bg-[#161F2D] border border-amber-500/20 rounded-2xl p-4 flex flex-col justify-between">
+        <div className="bg-app-surface border border-amber-500/20 rounded-2xl p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs font-bold text-amber-300">
             <span>Stories & Carousels</span>
             <div className="flex items-center gap-1">
@@ -526,25 +526,25 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               <Layers className="size-3.5 text-emerald-400" />
             </div>
           </div>
-          <div className="mt-2 text-2xl font-black text-white">{monthlyMetrics.stories + monthlyMetrics.carousels}</div>
+          <div className="mt-2 text-2xl font-black text-hi">{monthlyMetrics.stories + monthlyMetrics.carousels}</div>
           <span className="text-[11px] text-amber-300/80 font-semibold mt-0.5">
             {monthlyMetrics.stories} stories · {monthlyMetrics.carousels} carousels
           </span>
         </div>
 
-        <div className="col-span-2 sm:col-span-1 bg-[#161F2D] border border-emerald-500/20 rounded-2xl p-4 flex flex-col justify-between">
+        <div className="col-span-2 sm:col-span-1 bg-app-surface border border-emerald-500/20 rounded-2xl p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs font-bold text-emerald-300">
             <span>Approved Status</span>
             <CheckCircle2 className="size-4 text-emerald-400" />
           </div>
-          <div className="mt-2 text-2xl font-black text-white">{monthlyMetrics.approvalRate}%</div>
+          <div className="mt-2 text-2xl font-black text-hi">{monthlyMetrics.approvalRate}%</div>
           <span className="text-[11px] text-emerald-300/80 font-semibold mt-0.5">
             {monthlyMetrics.approved} of {monthlyMetrics.total} ready
           </span>
         </div>
       </div>
       {/* Filter and Control Bar */}
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-2.5 sm:p-3 flex flex-col gap-2.5 sm:gap-3">
+      <div className="bg-app-surface border border-app-line rounded-2xl p-2.5 sm:p-3 flex flex-col gap-2.5 sm:gap-3">
         {/* Format Filter Pills (3 Options Fitting Screen, Removed 'All') */}
         <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full">
           <button
@@ -553,7 +553,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             className={`w-full py-2 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer truncate ${
               formatFilter === "reel"
                 ? "bg-purple-600 text-white shadow-xs"
-                : "bg-purple-500/10 text-purple-300 hover:text-white border border-purple-500/20"
+                : "bg-purple-500/10 text-purple-300 hover:text-hi border border-purple-500/20"
             }`}
           >
             <Video className="size-3.5 text-purple-400 shrink-0" />
@@ -566,10 +566,10 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             className={`w-full py-2 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer truncate ${
               formatFilter === "poster"
                 ? "bg-blue-600 text-white shadow-xs"
-                : "bg-blue-500/10 text-[#7FA0D6] hover:text-white border border-blue-500/20"
+                : "bg-blue-500/10 text-app-accent hover:text-hi border border-blue-500/20"
             }`}
           >
-            <ImageIcon className="size-3.5 text-[#7FA0D6]" />
+            <ImageIcon className="size-3.5 text-app-accent" />
             <span className="truncate">Posts ({monthlyMetrics.posts})</span>
           </button>
 
@@ -579,7 +579,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             className={`w-full py-2 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer truncate ${
               formatFilter === "story"
                 ? "bg-amber-600 text-white shadow-xs"
-                : "bg-amber-500/10 text-amber-300 hover:text-white border border-amber-500/20"
+                : "bg-amber-500/10 text-amber-300 hover:text-hi border border-amber-500/20"
             }`}
           >
             <Sparkles className="size-3.5 text-amber-400 shrink-0" />
@@ -598,7 +598,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               <NativeSelect
                 value={selectedClient}
                 onChange={(e) => setSelectedClient(e.target.value)}
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full bg-app-base border border-app-line rounded-xl px-2.5 py-1.5 text-xs text-hi focus:outline-none focus:border-app-accent"
               >
                 <option value="all">All Clients ({uniqueClients.length})</option>
                 {uniqueClients.map((name) => (
@@ -614,7 +614,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               <NativeSelect
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#7FA0D6]"
+                className="w-full bg-app-base border border-app-line rounded-xl px-2.5 py-1.5 text-xs text-hi focus:outline-none focus:border-app-accent"
               >
                 <option value="all">All Statuses</option>
                 <option value="approved">Approved</option>
@@ -627,19 +627,19 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
 
           {/* Search Box */}
           <div className="relative w-full sm:w-[220px] sm:shrink-0">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#97A0B3]" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-app-mist" />
             <input
               type="text"
               placeholder="Search topic or hook..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl pl-8 pr-7 py-1.5 text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6]"
+              className="w-full bg-app-base border border-app-line rounded-xl pl-8 pr-7 py-1.5 text-xs text-hi placeholder-app-mist focus:outline-none focus:border-app-accent"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-hi"
               >
                 <X size={12} />
               </button>
@@ -649,7 +649,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
       </div>
 
       {calendarQuery.isPending && (
-        <div className="p-4 rounded-xl bg-[#161F2D] border border-[#2A3446] text-xs text-[#7FA0D6] flex items-center gap-2">
+        <div className="p-4 rounded-xl bg-app-surface border border-app-line text-xs text-app-accent flex items-center gap-2">
           <RefreshCw size={14} className="animate-spin" /> Loading content calendar from database...
         </div>
       )}
@@ -662,16 +662,16 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
       {/* Bento Grid Layout & View Switcher */}
       <div className="flex flex-col gap-4">
         {/* View Switcher Bar & Controls */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-sm">
+        <div className="bg-app-surface border border-app-line rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-sm">
           {/* View Segmented Tabs */}
-          <div className="flex items-center gap-1 p-1 bg-[#0B111C] border border-[#2A3446] rounded-xl self-start sm:self-auto">
+          <div className="flex items-center gap-1 p-1 bg-app-base border border-app-line rounded-xl self-start sm:self-auto">
             <button
               type="button"
               onClick={() => setCalendarView("month")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 calendarView === "month"
                   ? "bg-blue-600 text-white shadow-xs"
-                  : "text-[#97A0B3] hover:text-white"
+                  : "text-app-mist hover:text-hi"
               }`}
             >
               <CalendarIcon className="size-3.5" />
@@ -683,7 +683,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 calendarView === "week"
                   ? "bg-blue-600 text-white shadow-xs"
-                  : "text-[#97A0B3] hover:text-white"
+                  : "text-app-mist hover:text-hi"
               }`}
             >
               <CalendarDays className="size-3.5" />
@@ -695,7 +695,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 calendarView === "agenda"
                   ? "bg-blue-600 text-white shadow-xs"
-                  : "text-[#97A0B3] hover:text-white"
+                  : "text-app-mist hover:text-hi"
               }`}
             >
               <List className="size-3.5" />
@@ -705,7 +705,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
 
           {/* Month/Week Navigation */}
           <div className="flex items-center justify-between sm:justify-end gap-2.5">
-            <span className="text-xs font-bold text-[#97A0B3] hidden md:inline-block">
+            <span className="text-xs font-bold text-app-mist hidden md:inline-block">
               {visible.length} deliverables
             </span>
 
@@ -716,25 +716,25 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                 setMonth(new Date(now.getFullYear(), now.getMonth(), 1));
                 setSelectedDay(now.getDate());
               }}
-              className="px-3 py-1 text-xs font-bold text-slate-200 hover:text-white bg-[#0B111C] hover:bg-[#161F2D] rounded-xl border border-[#2A3446] transition-all cursor-pointer"
+              className="px-3 py-1 text-xs font-bold text-slate-200 hover:text-hi bg-app-base hover:bg-app-surface rounded-xl border border-app-line transition-all cursor-pointer"
             >
               Today
             </button>
 
-            <div className="flex items-center bg-[#0B111C] border border-[#2A3446] rounded-xl p-0.5">
+            <div className="flex items-center bg-app-base border border-app-line rounded-xl p-0.5">
               <button
                 type="button"
                 onClick={() => (calendarView === "week" ? moveWeek(-1) : moveMonth(-1))}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-all cursor-pointer"
+                className="p-1.5 text-slate-400 hover:text-hi rounded-lg transition-all cursor-pointer"
                 title={calendarView === "week" ? "Previous Week" : "Previous Month"}
               >
                 <ChevronLeft className="size-4" strokeWidth={2.5} />
               </button>
-              <div className="w-[1px] h-3.5 bg-[#2A3446] mx-0.5" />
+              <div className="w-[1px] h-3.5 bg-app-line mx-0.5" />
               <button
                 type="button"
                 onClick={() => (calendarView === "week" ? moveWeek(1) : moveMonth(1))}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-all cursor-pointer"
+                className="p-1.5 text-slate-400 hover:text-hi rounded-lg transition-all cursor-pointer"
                 title={calendarView === "week" ? "Next Week" : "Next Month"}
               >
                 <ChevronRight className="size-4" strokeWidth={2.5} />
@@ -747,13 +747,13 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
         {calendarView === "month" && (
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 items-start">
             {/* Left 2 Cols: Compact Responsive Calendar Grid */}
-            <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-2xl sm:rounded-[2rem] shadow-sm p-3.5 sm:p-6 lg:p-7 min-w-0 flex-col">
+            <div className="flex xl:col-span-2 bg-app-surface border border-app-line rounded-2xl sm:rounded-[2rem] shadow-sm p-3.5 sm:p-6 lg:p-7 min-w-0 flex-col">
               {/* Calendar Title */}
               <div className="flex items-center justify-between mb-3 sm:mb-5">
-                <h2 className="text-base sm:text-xl font-black text-white tracking-tight">
+                <h2 className="text-base sm:text-xl font-black text-hi tracking-tight">
                   {month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
                 </h2>
-                <span className="text-[11px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/10 px-2.5 py-0.5 rounded-full border border-[#7FA0D6]/20">
+                <span className="text-[11px] font-bold text-app-accent bg-app-accent/10 px-2.5 py-0.5 rounded-full border border-app-accent/20">
                   {visible.length} in month
                 </span>
               </div>
@@ -763,7 +763,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                 {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day) => (
                   <div
                     key={day}
-                    className="py-1 text-center text-[9px] sm:text-xs font-black text-[#97A0B3] uppercase tracking-wider"
+                    className="py-1 text-center text-[9px] sm:text-xs font-black text-app-mist uppercase tracking-wider"
                   >
                     {day}
                   </div>
@@ -804,10 +804,10 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                       aria-pressed={isSelected}
                       className={`relative rounded-xl p-1 sm:p-2 min-w-0 transition-all cursor-pointer min-h-[42px] sm:min-h-[105px] aspect-square sm:aspect-auto flex flex-col justify-between items-center sm:items-stretch border-2 group ${
                         isSelected
-                          ? "border-blue-500 bg-[#7FA0D6]/20 ring-2 ring-blue-500/25 shadow-md z-10"
+                          ? "border-blue-500 bg-app-accent/20 ring-2 ring-blue-500/25 shadow-md z-10"
                           : isToday
-                          ? "border-[#7FA0D6]/60 bg-[#161F2D] shadow-xs"
-                          : "border-[#2A3446] hover:border-[#7FA0D6]/40 bg-[#0B111C]/40 hover:bg-[#161F2D]"
+                          ? "border-app-accent/60 bg-app-surface shadow-xs"
+                          : "border-app-line hover:border-app-accent/40 bg-app-base/40 hover:bg-app-surface"
                       }`}
                     >
                       {/* Top row: day number & count */}
@@ -815,16 +815,16 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                         <span
                           className={`text-xs sm:text-base font-black ${
                             isSelected
-                              ? "text-white"
+                              ? "text-hi"
                               : isToday
-                              ? "text-[#7FA0D6]"
-                              : "text-slate-300 group-hover:text-white"
+                              ? "text-app-accent"
+                              : "text-slate-300 group-hover:text-hi"
                           }`}
                         >
                           {day}
                         </span>
                         {dayEvents.length > 0 && (
-                          <span className="text-[9px] font-bold text-[#97A0B3] hidden sm:inline-block">
+                          <span className="text-[9px] font-bold text-app-mist hidden sm:inline-block">
                             {dayEvents.length}
                           </span>
                         )}
@@ -881,10 +881,10 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             </div>
 
             {/* Right Column: Selected Day Event Rundown with Fixed Scroll Container */}
-            <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl sm:rounded-[2rem] shadow-sm p-4 sm:p-6 flex flex-col max-h-[580px] overflow-hidden">
-              <div className="flex items-start justify-between pb-3 mb-3 border-b border-[#2A3446]/60 shrink-0">
+            <div className="bg-app-surface border border-app-line rounded-2xl sm:rounded-[2rem] shadow-sm p-4 sm:p-6 flex flex-col max-h-[580px] overflow-hidden">
+              <div className="flex items-start justify-between pb-3 mb-3 border-b border-app-line/60 shrink-0">
                 <div className="flex flex-col gap-0.5">
-                  <h3 className="text-base sm:text-[17px] font-black text-white tracking-tight flex items-center gap-1.5">
+                  <h3 className="text-base sm:text-[17px] font-black text-hi tracking-tight flex items-center gap-1.5">
                     Events for {selectedDay}
                     {[1, 21, 31].includes(selectedDay)
                       ? "st"
@@ -894,7 +894,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                       ? "rd"
                       : "th"}
                   </h3>
-                  <p className="text-[11px] sm:text-xs text-[#97A0B3] font-medium">
+                  <p className="text-[11px] sm:text-xs text-app-mist font-medium">
                     {new Date(year, month.getMonth(), selectedDay).toLocaleDateString(undefined, {
                       weekday: "long",
                       month: "long",
@@ -903,16 +903,16 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                   </p>
                 </div>
 
-                <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black bg-blue-500/15 text-[#7FA0D6] border border-blue-500/30">
+                <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black bg-blue-500/15 text-app-accent border border-blue-500/30">
                   {selectedDayEvents.length} Item{selectedDayEvents.length !== 1 ? "s" : ""}
                 </span>
               </div>
 
               {/* Scrollable Events List in Fixed Container */}
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin scrollbar-thumb-[#2A3446] hover:scrollbar-thumb-[#7FA0D6]/40">
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin scrollbar-thumb-app-line hover:scrollbar-thumb-[#7FA0D6]/40">
                 {selectedDayEvents.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center min-h-[220px] p-6 text-[#97A0B3] text-xs sm:text-sm font-bold bg-[#0B111C]/60 rounded-2xl border-2 border-dashed border-[#2A3446] text-center">
-                    <CalendarIcon className="size-7 text-[#2A3446] mb-2.5" />
+                  <div className="flex flex-col items-center justify-center min-h-[220px] p-6 text-app-mist text-xs sm:text-sm font-bold bg-app-base/60 rounded-2xl border-2 border-dashed border-app-line text-center">
+                    <CalendarIcon className="size-7 text-app-line mb-2.5" />
                     No events scheduled for this day.
                     {canSchedulePublication && (
                       <button
@@ -938,7 +938,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                     return (
                       <div
                         key={event.id}
-                        className="group relative bg-[#0B111C] hover:bg-[#111A28] border border-[#2A3446] hover:border-[#7FA0D6]/40 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all overflow-hidden flex flex-col gap-2 shadow-xs"
+                        className="group relative bg-app-base hover:bg-app-bento border border-app-line hover:border-app-accent/40 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all overflow-hidden flex flex-col gap-2 shadow-xs"
                       >
                         {/* Top Row: Format Badge with Icon + Status */}
                         <div className="flex items-center justify-between gap-2">
@@ -959,15 +959,15 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                                 <Clock className="size-3" /> Scheduled
                               </span>
                             )}
-                            <span className="text-[10px] sm:text-[11px] font-bold text-[#7FA0D6] flex items-center gap-1">
-                              <Clock className="size-3 text-[#97A0B3]" />
+                            <span className="text-[10px] sm:text-[11px] font-bold text-app-accent flex items-center gap-1">
+                              <Clock className="size-3 text-app-mist" />
                               {event.time}
                             </span>
                           </div>
                         </div>
 
                         {/* Title / Topic */}
-                        <h4 className="text-xs sm:text-[13px] font-bold text-white leading-snug group-hover:text-[#7FA0D6] transition-colors line-clamp-2">
+                        <h4 className="text-xs sm:text-[13px] font-bold text-hi leading-snug group-hover:text-app-accent transition-colors line-clamp-2">
                           {event.title}
                         </h4>
 
@@ -980,7 +980,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                         )}
 
                         {/* Client info & Actions */}
-                        <div className="flex flex-wrap items-center justify-between gap-1.5 pt-2 border-t border-[#2A3446]/60 mt-0.5">
+                        <div className="flex flex-wrap items-center justify-between gap-1.5 pt-2 border-t border-app-line/60 mt-0.5">
                           <div className="flex items-center gap-1.5 min-w-0">
                             <div className="size-5 sm:size-6 rounded-full flex items-center justify-center text-[8.5px] sm:text-[9px] font-black text-white bg-blue-600 shrink-0">
                               {event.client_name.substring(0, 2).toUpperCase()}
@@ -1022,7 +1022,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                             <button
                               type="button"
                               onClick={() => setInspectEvent(event)}
-                              className="px-2 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-bold bg-[#161F2D] hover:bg-[#2A3446] text-[#7FA0D6] border border-[#2A3446] transition-all cursor-pointer inline-flex items-center gap-1"
+                              className="px-2 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-bold bg-app-surface hover:bg-app-line text-app-accent border border-app-line transition-all cursor-pointer inline-flex items-center gap-1"
                             >
                               <Eye size={10} /> Details
                             </button>
@@ -1032,7 +1032,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                                 setSelectedSlotForEdit(event);
                                 setStoryModalOpen(true);
                               }}
-                              className="px-2 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-bold bg-[#161F2D] hover:bg-[#2A3446] text-[#BCCCE6] border border-[#2A3446] transition-all cursor-pointer inline-flex items-center gap-1"
+                              className="px-2 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-bold bg-app-surface hover:bg-app-line text-app-accent-soft border border-app-line transition-all cursor-pointer inline-flex items-center gap-1"
                               title="Story & Approval"
                             >
                               <Edit3 size={10} /> Story
@@ -1054,17 +1054,17 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
           const lastDay = weekDays[6] ?? new Date();
 
           return (
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl sm:rounded-[2rem] shadow-sm p-4 sm:p-6 lg:p-7 flex flex-col gap-4">
+          <div className="bg-app-surface border border-app-line rounded-2xl sm:rounded-[2rem] shadow-sm p-4 sm:p-6 lg:p-7 flex flex-col gap-4">
             {/* Week Range Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#2A3446]/60">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-app-line/60">
               <div className="flex items-center gap-2">
-                <CalendarDays className="size-5 text-[#7FA0D6]" />
-                <h3 className="text-sm sm:text-base font-black text-white">
+                <CalendarDays className="size-5 text-app-accent" />
+                <h3 className="text-sm sm:text-base font-black text-hi">
                   Week of {firstDay.toLocaleDateString(undefined, { month: "short", day: "numeric" })} –{" "}
                   {lastDay.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                 </h3>
               </div>
-              <span className="text-xs font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-3 py-1 rounded-full border border-[#7FA0D6]/30">
+              <span className="text-xs font-bold text-app-accent bg-app-accent/15 px-3 py-1 rounded-full border border-app-accent/30">
                 {visible.filter((ev) => {
                   const evDate = new Date(ev.date);
                   return evDate >= firstDay && evDate <= lastDay;
@@ -1098,8 +1098,8 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                       isSelected
                         ? "bg-blue-600 text-white border-blue-400 shadow-md shadow-blue-500/25 scale-[1.03]"
                         : isToday
-                        ? "bg-[#0B111C] border-[#7FA0D6] text-white"
-                        : "bg-[#0B111C]/60 hover:bg-[#0B111C] border-[#2A3446] text-slate-300"
+                        ? "bg-app-base border-app-accent text-hi"
+                        : "bg-app-base/60 hover:bg-app-base border-app-line text-slate-300"
                     }`}
                   >
                     <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-wider opacity-80">
@@ -1110,8 +1110,8 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                       className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full mt-1 ${
                         count > 0
                           ? isSelected
-                            ? "bg-white/20 text-white"
-                            : "bg-[#7FA0D6]/20 text-[#7FA0D6]"
+                            ? "bg-hi/20 text-hi"
+                            : "bg-app-accent/20 text-app-accent"
                           : "opacity-40"
                       }`}
                     >
@@ -1123,9 +1123,9 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             </div>
 
             {/* Events for the Active Week Day */}
-            <div className="mt-2 bg-[#0B111C] rounded-2xl border border-[#2A3446] p-4 sm:p-5 flex flex-col">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#2A3446]">
-                <h4 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
+            <div className="mt-2 bg-app-base rounded-2xl border border-app-line p-4 sm:p-5 flex flex-col">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-app-line">
+                <h4 className="text-sm sm:text-base font-black text-hi flex items-center gap-2">
                   <span>
                     Deliverables on{" "}
                     {new Date(year, month.getMonth(), selectedDay).toLocaleDateString(undefined, {
@@ -1135,14 +1135,14 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                     })}
                   </span>
                 </h4>
-                <span className="text-xs font-bold text-[#97A0B3]">
+                <span className="text-xs font-bold text-app-mist">
                   {selectedDayEvents.length} Item{selectedDayEvents.length !== 1 ? "s" : ""}
                 </span>
               </div>
 
-              <div className="max-h-[440px] overflow-y-auto space-y-3 pr-1 scrollbar-thin scrollbar-thumb-[#2A3446]">
+              <div className="max-h-[440px] overflow-y-auto space-y-3 pr-1 scrollbar-thin scrollbar-thumb-app-line">
                 {selectedDayEvents.length === 0 ? (
-                  <div className="text-center py-8 text-xs text-[#97A0B3]">
+                  <div className="text-center py-8 text-xs text-app-mist">
                     No deliverables scheduled for this day.
                   </div>
                 ) : (
@@ -1153,7 +1153,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                     return (
                       <div
                         key={event.id}
-                        className="p-3 sm:p-4 rounded-xl bg-[#161F2D] border border-[#2A3446] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        className="p-3 sm:p-4 rounded-xl bg-app-surface border border-app-line flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                       >
                         <div className="flex items-start gap-3 min-w-0">
                           <div className={`p-2 rounded-xl shrink-0 ${cfg.badgeBg} ${cfg.badgeText}`}>
@@ -1161,14 +1161,14 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs sm:text-sm font-black text-white">{event.title}</span>
+                              <span className="text-xs sm:text-sm font-black text-hi">{event.title}</span>
                               <span
                                 className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${cfg.badgeBg} ${cfg.badgeText} ${cfg.border}`}
                               >
                                 {cfg.label}
                               </span>
                             </div>
-                            <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                            <p className="text-[11px] text-app-mist mt-0.5">
                               {event.client_name} · {event.time} · {isApproved ? "Approved" : "Scheduled"}
                             </p>
                           </div>
@@ -1187,7 +1187,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                           <button
                             type="button"
                             onClick={() => setInspectEvent(event)}
-                            className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[#0B111C] text-[#7FA0D6] border border-[#2A3446] cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg text-xs font-bold bg-app-base text-app-accent border border-app-line cursor-pointer"
                           >
                             Details
                           </button>
@@ -1197,7 +1197,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                               setSelectedSlotForEdit(event);
                               setStoryModalOpen(true);
                             }}
-                            className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[#0B111C] text-[#BCCCE6] border border-[#2A3446] cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg text-xs font-bold bg-app-base text-app-accent-soft border border-app-line cursor-pointer"
                           >
                             Story
                           </button>
@@ -1214,24 +1214,24 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
 
         {/* ── VIEW 3: AGENDA / SCHEDULE FEED VIEW ── */}
         {calendarView === "agenda" && (
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl sm:rounded-[2rem] shadow-sm p-4 sm:p-6 lg:p-7 flex flex-col">
-            <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#2A3446]">
+          <div className="bg-app-surface border border-app-line rounded-2xl sm:rounded-[2rem] shadow-sm p-4 sm:p-6 lg:p-7 flex flex-col">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-app-line">
               <div>
-                <h3 className="text-base sm:text-lg font-black text-white">
+                <h3 className="text-base sm:text-lg font-black text-hi">
                   Chronological Agenda · {month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
                 </h3>
-                <p className="text-xs text-[#97A0B3]">All scheduled creative posts and pipeline deliverables</p>
+                <p className="text-xs text-app-mist">All scheduled creative posts and pipeline deliverables</p>
               </div>
-              <span className="text-xs font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-3 py-1 rounded-full border border-[#7FA0D6]/30">
+              <span className="text-xs font-bold text-app-accent bg-app-accent/15 px-3 py-1 rounded-full border border-app-accent/30">
                 {visible.length} Total Deliverables
               </span>
             </div>
 
             {/* Scrollable Container with Fixed Height */}
-            <div className="max-h-[580px] overflow-y-auto space-y-4 pr-1 scrollbar-thin scrollbar-thumb-[#2A3446]">
+            <div className="max-h-[580px] overflow-y-auto space-y-4 pr-1 scrollbar-thin scrollbar-thumb-app-line">
               {agendaGrouped.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-[#97A0B3] text-sm bg-[#0B111C]/60 rounded-2xl border-2 border-dashed border-[#2A3446] text-center">
-                  <CalendarIcon className="size-8 text-[#2A3446] mb-2" />
+                <div className="flex flex-col items-center justify-center py-12 text-app-mist text-sm bg-app-base/60 rounded-2xl border-2 border-dashed border-app-line text-center">
+                  <CalendarIcon className="size-8 text-app-line mb-2" />
                   No deliverables scheduled for this month matching active filters.
                   {canSchedulePublication && (
                     <button
@@ -1254,9 +1254,9 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                   return (
                     <div key={group.dateStr} className="space-y-2">
                       {/* Date Group Header */}
-                      <div className="sticky top-0 z-10 flex items-center justify-between py-1.5 px-3 rounded-xl bg-[#0B111C]/95 backdrop-blur-md border border-[#2A3446]">
-                        <span className="text-xs font-black text-white flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${isToday ? "bg-blue-500 animate-pulse" : "bg-[#7FA0D6]"}`} />
+                      <div className="sticky top-0 z-10 flex items-center justify-between py-1.5 px-3 rounded-xl bg-app-base/95 backdrop-blur-md border border-app-line">
+                        <span className="text-xs font-black text-hi flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${isToday ? "bg-blue-500 animate-pulse" : "bg-app-accent"}`} />
                           {group.dateObj.toLocaleDateString(undefined, {
                             weekday: "short",
                             month: "short",
@@ -1268,7 +1268,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                             </span>
                           )}
                         </span>
-                        <span className="text-[11px] font-bold text-[#97A0B3]">
+                        <span className="text-[11px] font-bold text-app-mist">
                           {group.events.length} item{group.events.length !== 1 ? "s" : ""}
                         </span>
                       </div>
@@ -1283,7 +1283,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                           return (
                             <div
                               key={event.id}
-                              className="bg-[#0B111C] hover:bg-[#111A28] border border-[#2A3446] hover:border-[#7FA0D6]/40 rounded-xl p-3.5 flex flex-col justify-between gap-2.5 transition-all shadow-xs"
+                              className="bg-app-base hover:bg-app-bento border border-app-line hover:border-app-accent/40 rounded-xl p-3.5 flex flex-col justify-between gap-2.5 transition-all shadow-xs"
                             >
                               <div className="flex items-center justify-between gap-2">
                                 <span
@@ -1302,18 +1302,18 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                                       Scheduled
                                     </span>
                                   )}
-                                  <span className="text-[10px] font-bold text-[#97A0B3]">{event.time}</span>
+                                  <span className="text-[10px] font-bold text-app-mist">{event.time}</span>
                                 </div>
                               </div>
 
                               <div>
-                                <h4 className="text-xs sm:text-[13px] font-black text-white line-clamp-2">
+                                <h4 className="text-xs sm:text-[13px] font-black text-hi line-clamp-2">
                                   {event.title}
                                 </h4>
-                                <p className="text-[10.5px] text-[#97A0B3] mt-0.5 truncate">{event.client_name}</p>
+                                <p className="text-[10.5px] text-app-mist mt-0.5 truncate">{event.client_name}</p>
                               </div>
 
-                              <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-[#2A3446]/50">
+                              <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-app-line/50">
                                 {!isApproved && (
                                   <button
                                     type="button"
@@ -1326,7 +1326,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                                 <button
                                   type="button"
                                   onClick={() => setInspectEvent(event)}
-                                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-[#161F2D] text-[#7FA0D6] border border-[#2A3446] cursor-pointer"
+                                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-app-surface text-app-accent border border-app-line cursor-pointer"
                                 >
                                   Details
                                 </button>
@@ -1336,7 +1336,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                                     setSelectedSlotForEdit(event);
                                     setStoryModalOpen(true);
                                   }}
-                                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-[#161F2D] text-[#BCCCE6] border border-[#2A3446] cursor-pointer"
+                                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-app-surface text-app-accent-soft border border-app-line cursor-pointer"
                                 >
                                   Story
                                 </button>
@@ -1357,15 +1357,15 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
       {/* MODAL 1: Schedule Publication (Admin Need) */}
       {isScheduleOpen && canSchedulePublication && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl relative">
-            <div className="flex items-center justify-between pb-4 border-b border-[#2A3446] mb-5">
-              <h3 className="text-lg font-black text-white flex items-center gap-2">
-                <CalendarIcon className="size-5 text-[#7FA0D6]" />
+          <div className="bg-app-surface border border-app-line rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl relative">
+            <div className="flex items-center justify-between pb-4 border-b border-app-line mb-5">
+              <h3 className="text-lg font-black text-hi flex items-center gap-2">
+                <CalendarIcon className="size-5 text-app-accent" />
                 Schedule New Publication
               </h3>
               <button
                 onClick={() => setIsScheduleOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+                className="text-slate-400 hover:text-hi p-1 rounded-lg transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -1397,11 +1397,11 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             >
               {/* Client Select */}
               <div>
-                <label className="block text-[#97A0B3] font-bold mb-1.5">Client Profile</label>
+                <label className="block text-app-mist font-bold mb-1.5">Client Profile</label>
                 <NativeSelect
                   value={newClient}
                   onChange={(e) => setNewClient(e.target.value)}
-                  className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full bg-app-base border border-app-line rounded-xl px-3 py-2 text-hi focus:outline-none focus:border-app-accent"
                   required
                 >
                   <option value="">Select a client...</option>
@@ -1415,11 +1415,11 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
 
               {/* Format Type Selection Pills with Icons */}
               <div>
-                <label className="block text-[#97A0B3] font-bold mb-1.5">Deliverable Format</label>
+                <label className="block text-app-mist font-bold mb-1.5">Deliverable Format</label>
                 <div className="grid grid-cols-4 gap-2">
                   {[
                     { label: "Reel", icon: Video, color: "border-purple-500/40 text-purple-300 bg-purple-500/15" },
-                    { label: "Poster", icon: ImageIcon, color: "border-blue-500/40 text-[#7FA0D6] bg-blue-500/15" },
+                    { label: "Poster", icon: ImageIcon, color: "border-blue-500/40 text-app-accent bg-blue-500/15" },
                     { label: "Story", icon: Sparkles, color: "border-amber-500/40 text-amber-300 bg-amber-500/15" },
                     { label: "Carousel", icon: Layers, color: "border-emerald-500/40 text-emerald-300 bg-emerald-500/15" },
                   ].map((fmt) => {
@@ -1433,7 +1433,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                         className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                           isSelected
                             ? `${fmt.color} ring-2 ring-blue-500/40 font-black`
-                            : "bg-[#0B111C] border-[#2A3446] text-slate-400 hover:text-white"
+                            : "bg-app-base border-app-line text-slate-400 hover:text-hi"
                         }`}
                       >
                         <IconComp className="size-4 mb-1" />
@@ -1447,22 +1447,22 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               {/* Date & Time */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[#97A0B3] font-bold mb-1.5">Publish Date</label>
+                  <label className="block text-app-mist font-bold mb-1.5">Publish Date</label>
                   <input
                     type="date"
                     value={newDate}
                     onChange={(e) => setNewDate(e.target.value)}
-                    className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#7FA0D6]"
+                    className="w-full bg-app-base border border-app-line rounded-xl px-3 py-2 text-hi focus:outline-none focus:border-app-accent"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-[#97A0B3] font-bold mb-1.5">Publish Time</label>
+                  <label className="block text-app-mist font-bold mb-1.5">Publish Time</label>
                   <input
                     type="time"
                     value={newTime}
                     onChange={(e) => setNewTime(e.target.value)}
-                    className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#7FA0D6]"
+                    className="w-full bg-app-base border border-app-line rounded-xl px-3 py-2 text-hi focus:outline-none focus:border-app-accent"
                     required
                   />
                 </div>
@@ -1470,23 +1470,23 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
 
               {/* Caption / Topic */}
               <div>
-                <label className="block text-[#97A0B3] font-bold mb-1.5">Topic / Caption / Creative Concept</label>
+                <label className="block text-app-mist font-bold mb-1.5">Topic / Caption / Creative Concept</label>
                 <textarea
                   rows={3}
                   value={newCaption}
                   onChange={(e) => setNewCaption(e.target.value)}
                   placeholder="e.g. Authority reel breaking down enterprise operational bottlenecks with actionable tips..."
-                  className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl p-3 text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full bg-app-base border border-app-line rounded-xl p-3 text-hi placeholder-app-mist focus:outline-none focus:border-app-accent"
                 />
               </div>
 
               {/* Status Select */}
               <div>
-                <label className="block text-[#97A0B3] font-bold mb-1.5">Initial Status</label>
+                <label className="block text-app-mist font-bold mb-1.5">Initial Status</label>
                 <NativeSelect
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#7FA0D6]"
+                  className="w-full bg-app-base border border-app-line rounded-xl px-3 py-2 text-hi focus:outline-none focus:border-app-accent"
                 >
                   <option value="scheduled">Scheduled</option>
                   <option value="approved">Approved</option>
@@ -1494,11 +1494,11 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                 </NativeSelect>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2A3446]">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-app-line">
                 <button
                   type="button"
                   onClick={() => setIsScheduleOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:bg-[#161F2D] text-slate-300 text-xs font-bold transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-app-line bg-app-base hover:bg-app-surface text-slate-300 text-xs font-bold transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1519,9 +1519,9 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
       {/* MODAL 2: Event Details & Admin Management (Admin Need) */}
       {inspectEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-7 max-w-xl w-full shadow-2xl relative max-h-[90vh] flex flex-col">
+          <div className="bg-app-surface border border-app-line rounded-3xl p-6 sm:p-7 max-w-xl w-full shadow-2xl relative max-h-[90vh] flex flex-col">
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-[#2A3446] shrink-0">
+            <div className="flex items-center justify-between pb-4 border-b border-app-line shrink-0">
               <div className="flex items-center gap-2">
                 {(() => {
                   const cfg = getFormatConfig(inspectEvent.type);
@@ -1535,14 +1535,14 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                     </span>
                   );
                 })()}
-                <h3 className="text-base font-black text-white truncate max-w-[260px]">
+                <h3 className="text-base font-black text-hi truncate max-w-[260px]">
                   {inspectEvent.client_name}
                 </h3>
               </div>
 
               <button
                 onClick={() => setInspectEvent(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+                className="text-slate-400 hover:text-hi p-1 rounded-lg transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -1552,7 +1552,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-1 text-xs">
               {/* Media Preview if uploaded */}
               {inspectEvent.file_url ? (
-                <div className="rounded-2xl overflow-hidden border border-[#2A3446] bg-[#0B111C] p-2 flex flex-col items-center">
+                <div className="rounded-2xl overflow-hidden border border-app-line bg-app-base p-2 flex flex-col items-center">
                   {inspectEvent.file_type?.includes("video") || inspectEvent.type === "Reel" ? (
                     <video
                       controls
@@ -1568,24 +1568,24 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                   )}
                 </div>
               ) : (
-                <div className="p-3 rounded-xl bg-[#0B111C]/60 border border-[#2A3446] text-[#97A0B3] flex items-center gap-2">
-                  <Film className="size-4 text-[#7FA0D6]" />
+                <div className="p-3 rounded-xl bg-app-base/60 border border-app-line text-app-mist flex items-center gap-2">
+                  <Film className="size-4 text-app-accent" />
                   <span>Media asset queued in production pipeline (not uploaded yet).</span>
                 </div>
               )}
 
               {/* Date & Status Meta */}
-              <div className="grid grid-cols-2 gap-3 bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
+              <div className="grid grid-cols-2 gap-3 bg-app-base p-3 rounded-2xl border border-app-line">
                 <div>
-                  <span className="text-[#97A0B3] font-bold block mb-0.5">Scheduled Publish</span>
-                  <div className="text-white font-black text-xs flex items-center gap-1.5">
-                    <CalendarIcon className="size-3.5 text-[#7FA0D6]" />
+                  <span className="text-app-mist font-bold block mb-0.5">Scheduled Publish</span>
+                  <div className="text-hi font-black text-xs flex items-center gap-1.5">
+                    <CalendarIcon className="size-3.5 text-app-accent" />
                     {inspectEvent.date} · {inspectEvent.time}
                   </div>
                 </div>
 
                 <div>
-                  <span className="text-[#97A0B3] font-bold block mb-0.5">Delivery Status</span>
+                  <span className="text-app-mist font-bold block mb-0.5">Delivery Status</span>
                   <div className="capitalize font-black text-xs flex items-center gap-1.5">
                     {inspectEvent.status === "published" ? (
                       <span className="text-purple-400 bg-purple-500/15 border border-purple-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
@@ -1610,8 +1610,8 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
 
               {/* Title / Caption */}
               <div>
-                <label className="text-[#97A0B3] font-bold block mb-1">Caption / Premise</label>
-                <div className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-slate-200 leading-relaxed font-medium">
+                <label className="text-app-mist font-bold block mb-1">Caption / Premise</label>
+                <div className="p-3 rounded-xl bg-app-base border border-app-line text-slate-200 leading-relaxed font-medium">
                   {inspectEvent.caption || inspectEvent.title}
                 </div>
               </div>
@@ -1633,7 +1633,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                     "{inspectEvent.selected_hook?.text || inspectEvent.blueprint?.hooks?.[0]?.text}"
                   </p>
                   {inspectEvent.selected_hook?.rationale && (
-                    <p className="text-[#97A0B3] text-[11px] italic">
+                    <p className="text-app-mist text-[11px] italic">
                       Strategy: {inspectEvent.selected_hook.rationale}
                     </p>
                   )}
@@ -1641,8 +1641,8 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               )}
 
               {/* Admin Actions Bar */}
-              <div className="pt-2 border-t border-[#2A3446] space-y-3">
-                <span className="text-[#97A0B3] font-bold block text-[11px]">Admin Actions & Approval</span>
+              <div className="pt-2 border-t border-app-line space-y-3">
+                <span className="text-app-mist font-bold block text-[11px]">Admin Actions & Approval</span>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={() => approveAndPublishMutation.mutate({ id: inspectEvent.id, publish_now: true })}
@@ -1716,7 +1716,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
   }
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-slate-100 flex flex-col">
+    <div data-surface="ops" className="min-h-screen bg-app-base text-slate-100 flex flex-col">
       <AdminTopHeader activeTab="Calendar" />
       <Container className="flex-1 p-3.5 sm:px-6 lg:px-8 sm:py-6">{content}</Container>
     </div>

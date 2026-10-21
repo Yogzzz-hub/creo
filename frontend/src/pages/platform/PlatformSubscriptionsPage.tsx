@@ -29,7 +29,7 @@ interface SubscriptionItem {
   gateway_subscription_id?: string;
 }
 
-const DEFAULT_STATUS_CONFIG = { label: "Cancelled", cls: "bg-[#2A3446] text-[#97A0B3] border-[#2A3446]", icon: XCircle };
+const DEFAULT_STATUS_CONFIG = { label: "Cancelled", cls: "bg-app-line text-app-mist border-app-line", icon: XCircle };
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: React.ComponentType<{className?: string}> }> = {
   active: { label: "Active", cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30", icon: CheckCircle2 },
@@ -37,7 +37,7 @@ const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: React.Co
   trialing: { label: "Trialing", cls: "bg-amber-500/15 text-amber-400 border-amber-500/30", icon: Clock },
   past_due: { label: "Past Due", cls: "bg-rose-500/15 text-rose-400 border-rose-500/30", icon: AlertTriangle },
   grace_period: { label: "Grace Period", cls: "bg-orange-500/15 text-orange-400 border-orange-500/30", icon: PauseCircle },
-  suspended: { label: "Suspended", cls: "bg-[#2A3446] text-[#97A0B3] border-[#2A3446]", icon: XCircle },
+  suspended: { label: "Suspended", cls: "bg-app-line text-app-mist border-app-line", icon: XCircle },
   cancelled: DEFAULT_STATUS_CONFIG,
 };
 
@@ -81,8 +81,8 @@ export function PlatformSubscriptionsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
         <div>
-          <h1 className="text-2xl font-black text-white">SaaS Subscriptions</h1>
-          <p className="text-xs text-[#97A0B3]">
+          <h1 className="text-2xl font-black text-hi">SaaS Subscriptions</h1>
+          <p className="text-xs text-app-mist">
             Active recurring agency subscriptions to Creo SaaS · Real database records from Supabase
           </p>
         </div>
@@ -90,7 +90,7 @@ export function PlatformSubscriptionsPage() {
           <button
             type="button"
             onClick={() => void refetch()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:border-[#7FA0D6]/40 text-xs font-bold text-[#97A0B3] hover:text-white transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-app-surface border border-app-line hover:border-app-accent/40 text-xs font-bold text-app-mist hover:text-hi transition-all cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Refresh
@@ -100,38 +100,38 @@ export function PlatformSubscriptionsPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4">
-          <span className="text-[11px] font-black uppercase tracking-wider text-[#97A0B3]">Active Subscriptions</span>
-          <p className="text-2xl font-black text-white mt-1">{activeCount}</p>
+        <div className="bg-app-surface border border-app-line rounded-2xl p-4">
+          <span className="text-[11px] font-black uppercase tracking-wider text-app-mist">Active Subscriptions</span>
+          <p className="text-2xl font-black text-hi mt-1">{activeCount}</p>
           <p className="text-xs text-emerald-400 font-bold mt-0.5">100% active standing</p>
         </div>
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4">
-          <span className="text-[11px] font-black uppercase tracking-wider text-[#97A0B3]">Monthly Contract Value</span>
-          <p className="text-2xl font-black text-white mt-1">{fmt(totalMRR)}</p>
-          <p className="text-xs text-[#7FA0D6] font-bold mt-0.5">₹{(totalMRR * 12).toLocaleString()} ARR</p>
+        <div className="bg-app-surface border border-app-line rounded-2xl p-4">
+          <span className="text-[11px] font-black uppercase tracking-wider text-app-mist">Monthly Contract Value</span>
+          <p className="text-2xl font-black text-hi mt-1">{fmt(totalMRR)}</p>
+          <p className="text-xs text-app-accent font-bold mt-0.5">₹{(totalMRR * 12).toLocaleString()} ARR</p>
         </div>
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4">
-          <span className="text-[11px] font-black uppercase tracking-wider text-[#97A0B3]">Past Due / Dunning</span>
+        <div className="bg-app-surface border border-app-line rounded-2xl p-4">
+          <span className="text-[11px] font-black uppercase tracking-wider text-app-mist">Past Due / Dunning</span>
           <p className="text-2xl font-black text-emerald-400 mt-1">0</p>
           <p className="text-xs text-emerald-400 font-bold mt-0.5">Zero payment delays</p>
         </div>
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4">
-          <span className="text-[11px] font-black uppercase tracking-wider text-[#97A0B3]">Payment Gateway</span>
-          <p className="text-2xl font-black text-white mt-1">Razorpay</p>
-          <p className="text-xs text-[#97A0B3] font-bold mt-0.5">India Subscriptions Route</p>
+        <div className="bg-app-surface border border-app-line rounded-2xl p-4">
+          <span className="text-[11px] font-black uppercase tracking-wider text-app-mist">Payment Gateway</span>
+          <p className="text-2xl font-black text-hi mt-1">Razorpay</p>
+          <p className="text-xs text-app-mist font-bold mt-0.5">India Subscriptions Route</p>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <div className="bg-app-surface border border-app-line rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-app-mist" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search subscriptions by agency or plan..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6]"
+            className="w-full pl-10 pr-4 py-2 rounded-xl bg-app-base border border-app-line text-sm text-hi placeholder-app-mist focus:outline-none focus:border-app-accent"
           />
         </div>
 
@@ -139,7 +139,7 @@ export function PlatformSubscriptionsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="appearance-none pl-3 pr-8 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-bold text-white focus:outline-none focus:border-[#7FA0D6] cursor-pointer"
+            className="appearance-none pl-3 pr-8 py-2 rounded-xl bg-app-base border border-app-line text-xs font-bold text-hi focus:outline-none focus:border-app-accent cursor-pointer"
           >
             <option value="all">All States ({subscriptions.length})</option>
             <option value="active">Active</option>
@@ -148,36 +148,36 @@ export function PlatformSubscriptionsPage() {
             <option value="grace_period">Grace Period</option>
             <option value="cancelled">Cancelled</option>
           </select>
-          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#97A0B3] pointer-events-none" />
+          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-app-mist pointer-events-none" />
         </div>
       </div>
 
       {isLoading && (
-        <div className="p-12 text-center bg-[#161F2D] border border-[#2A3446] rounded-2xl">
+        <div className="p-12 text-center bg-app-surface border border-app-line rounded-2xl">
           <CreoInlineLoader label="Loading subscriptions from database..." />
         </div>
       )}
 
       {/* Table Card */}
-      <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl overflow-hidden">
+      <div className="bg-app-surface border border-app-line rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-[#2A3446]">
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Agency</th>
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">SaaS Plan</th>
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Amount</th>
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Status</th>
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Period End</th>
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Next Invoice</th>
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6]">Gateway</th>
-                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-[#7FA0D6] text-right">Action</th>
+              <tr className="border-b border-app-line">
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent">Agency</th>
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent">SaaS Plan</th>
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent">Amount</th>
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent">Status</th>
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent">Period End</th>
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent">Next Invoice</th>
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent">Gateway</th>
+                <th className="px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-app-accent text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A3446]">
+            <tbody className="divide-y divide-app-line">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-sm text-[#97A0B3]">
+                  <td colSpan={8} className="px-5 py-12 text-center text-sm text-app-mist">
                     No subscriptions found.
                   </td>
                 </tr>
@@ -186,31 +186,31 @@ export function PlatformSubscriptionsPage() {
                   <tr key={s.id} className="hover:bg-[#0B111C]/40 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-lg bg-[#0B111C] border border-[#2A3446] flex items-center justify-center text-xs font-black text-[#7FA0D6]">
+                        <div className="size-8 rounded-lg bg-app-base border border-app-line flex items-center justify-center text-xs font-black text-app-accent">
                           {s.agency.slice(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-[13px] font-bold text-white">{s.agency}</p>
-                          <p className="text-[11px] font-mono text-[#97A0B3]">{s.id.slice(0, 8)}</p>
+                          <p className="text-[13px] font-bold text-hi">{s.agency}</p>
+                          <p className="text-[11px] font-mono text-app-mist">{s.id.slice(0, 8)}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#7FA0D6]/10 text-[#BCCCE6] border border-[#7FA0D6]/20">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-app-accent/10 text-app-accent-soft border border-app-accent/20">
                         {s.plan}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-[13px] font-black text-white">{fmt(s.mrr)}</td>
+                    <td className="px-5 py-4 text-[13px] font-black text-hi">{fmt(s.mrr)}</td>
                     <td className="px-5 py-4">
                       <StatusBadge status={s.status} />
                     </td>
-                    <td className="px-5 py-4 text-[12px] text-[#97A0B3]">{s.period_end}</td>
-                    <td className="px-5 py-4 text-[12px] text-white font-medium">{s.next_payment}</td>
-                    <td className="px-5 py-4 text-[12px] text-[#7FA0D6] capitalize">{s.gateway}</td>
+                    <td className="px-5 py-4 text-[12px] text-app-mist">{s.period_end}</td>
+                    <td className="px-5 py-4 text-[12px] text-hi font-medium">{s.next_payment}</td>
+                    <td className="px-5 py-4 text-[12px] text-app-accent capitalize">{s.gateway}</td>
                     <td className="px-5 py-4 text-right">
                       <Link
                         to={`/platform/agencies/${s.agency_id}`}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-[#7FA0D6] hover:text-white transition-colors"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-app-accent hover:text-hi transition-colors"
                       >
                         Inspect
                         <ArrowUpRight className="w-3.5 h-3.5" />

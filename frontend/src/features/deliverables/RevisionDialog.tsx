@@ -306,7 +306,7 @@ export function RevisionDialog({
                         ? "var(--color-waiting)"
                         : "rgba(240, 162, 2, 0.3)",
                     border: "none",
-                    color: "#0B111C",
+                    color: "var(--app-base)",
                     fontWeight: 600,
                     borderRadius: 8,
                     fontSize: "0.875rem",
