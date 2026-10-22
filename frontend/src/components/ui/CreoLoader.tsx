@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 export interface CreoLoaderProps {
   /** First part of primary status text, defaults to "VERIFYING" */
   label?: string;
@@ -18,13 +20,14 @@ export interface CreoLoaderProps {
 }
 
 /**
- * CREO orbit loader: the one loading animation on every page, dashboard and the
- * apps' launch.
+ * CREO loader: the one loading animation on every page, dashboard and the apps'
+ * launch.
  *
- * A comet, masked to the ring, sweeps around the orbit while the brand dot
- * breathes at the centre and sends out pulse rings, the two together reading as
- * "c."; a satellite circles the inner track. Full-screen mode adds the bobbing
- * "creo." wordmark. Pure CSS so it can render before any animation library has
+ * The amber "c." mark from the landing page's opening (the same proportions as its
+ * 3D model, stage3d/models.ts createChromeMark). The arc is unmasked along its
+ * length until the "c" is drawn, the dot pops in and an amber flood swells out
+ * from the mark, as the landing mark floods the screen, then the arc is masked
+ * away again. Pure CSS and SVG so it can render before any animation library has
  * loaded; everything stops for reduced motion.
  *
  * It always uses the brand palette (amber on obsidian or ivory), whatever the
@@ -40,46 +43,53 @@ export function CreoLoader({
   showProgress = true,
   showSecondaryText = true,
 }: CreoLoaderProps) {
+  const size = fullScreen ? "creo-ld--full" : compact ? "creo-ld--compact" : "creo-ld--inline";
+  // One gradient per loader, laid across the whole mark (a per-shape gradient drops out on the
+  // scaled dot); a shared id would break when the first copy sits in a hidden element.
+  const amber = `creo-ld-amber-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const loaderContent = (
     <output
       aria-live="polite"
-      className={`creo-ld creo-loader-appear flex flex-col items-center justify-center select-none ${className}`}
+      className={`creo-ld ${size} creo-loader-appear flex flex-col items-center justify-center select-none ${className}`}
     >
-      {/* 1. Orbit */}
-      <div
-        className={`creo-ld-orbit ${fullScreen ? "" : compact ? "creo-ld-orbit--xs" : "creo-ld-orbit--sm"}`}
-        aria-hidden="true"
-      >
-        <span className="creo-ld-halo" />
-        <span className="creo-ld-ring" />
-        <span className="creo-ld-track" />
-        <span className="creo-ld-sat">
-          <i />
-        </span>
-        <span className="creo-ld-comet">
-          <i />
-        </span>
-        <span className="creo-ld-ping" />
-        <span className="creo-ld-ping creo-ld-ping--late" />
-        <span className="creo-ld-core" />
+      {/* 1. The "c." mark */}
+      <div className="creo-ld-mark" aria-hidden="true">
+        <span className="creo-ld-flood" />
+        <svg viewBox="-1.95 -1.8 4.3 3.6" className="creo-ld-svg" aria-hidden="true">
+          <defs>
+            <linearGradient
+              id={amber}
+              gradientUnits="userSpaceOnUse"
+              x1="-1.9"
+              y1="-1.8"
+              x2="2.3"
+              y2="1.8"
+            >
+              <stop offset="0" stopColor="#f0c48f" />
+              <stop offset="0.55" stopColor="#dda56c" />
+              <stop offset="1" stopColor="#b9783f" />
+            </linearGradient>
+          </defs>
+          <g transform="translate(-0.15 0)">
+            {/* The "c": a thick arc from 50° to 310°, opening to the right */}
+            <path
+              className="creo-ld-arc"
+              d="M 0.852 -1.015 A 1.325 1.325 0 1 0 0.852 1.015"
+              pathLength={1}
+              fill="none"
+              stroke={`url(#${amber})`}
+              strokeWidth={0.75}
+              strokeLinecap="round"
+            />
+            <circle className="creo-ld-dot" cx={1.95} cy={1.2} r={0.41} fill={`url(#${amber})`} />
+          </g>
+        </svg>
       </div>
 
-      {/* 2. Wordmark (full screen only) */}
-      {fullScreen && (
-        <div className="creo-ld-word" aria-hidden="true">
-          {["c", "r", "e", "o"].map((ch, i) => (
-            <span key={ch} className="creo-ld-letter" style={{ animationDelay: `${i * 0.09}s` }}>
-              {ch}
-            </span>
-          ))}
-          <span className="creo-ld-letter creo-ld-dot" style={{ animationDelay: "0.36s" }} />
-        </div>
-      )}
-
-      {/* 3. Status text */}
+      {/* 2. Status text */}
       {label && (
         <div
-          className={`${fullScreen ? "mt-6 text-[11.5px] sm:text-[12px] tracking-[0.3em]" : compact ? "mt-4 text-[10px] tracking-[0.24em]" : "mt-7 text-[11.5px] sm:text-[12px] tracking-[0.3em]"} flex items-center justify-center font-semibold uppercase leading-none`}
+          className={`${fullScreen ? "mt-8 text-[11.5px] sm:text-[12px] tracking-[0.3em]" : compact ? "mt-4 text-[10px] tracking-[0.24em]" : "mt-7 text-[11.5px] sm:text-[12px] tracking-[0.3em]"} flex items-center justify-center font-semibold uppercase leading-none`}
         >
           <span className="creo-ld-shine">{label}</span>
           {highlightWord && <span className="ml-2 text-site-blue-light">{highlightWord}</span>}
@@ -91,7 +101,7 @@ export function CreoLoader({
         </div>
       )}
 
-      {/* 4. Indeterminate progress */}
+      {/* 3. Indeterminate progress */}
       {showProgress && (
         <div
           className={`creo-ld-progress ${compact ? "creo-ld-progress--xs" : ""}`}
@@ -102,7 +112,7 @@ export function CreoLoader({
         </div>
       )}
 
-      {/* 5. Secondary text */}
+      {/* 4. Secondary text */}
       {showSecondaryText && secondaryText && !compact && (
         <div className="mt-[14px] text-[10px] font-medium uppercase tracking-[0.34em] text-site-mist opacity-75 leading-none">
           {secondaryText}
@@ -114,11 +124,11 @@ export function CreoLoader({
         .creo-ld, .creo-ld-screen {
           --site-bg: #0f0e0c; --site-deep: #171513; --site-ink: #f5eee3; --site-mist: #b9ad9c;
           --site-blue: #dda56c; --site-blue-deep: #d2965a; --site-blue-light: #e0ad7a;
-          --site-ice: #f5eee3; --site-sky: #4a5d82; --site-peri: #a9b8d4;
+          --site-ice: #f5eee3; --site-sky: #4a5d82;
         }
         :root[data-theme="light"] .creo-ld, :root[data-theme="light"] .creo-ld-screen {
           --site-bg: #f5eee3; --site-deep: #efe6d8; --site-ink: #2b1e15; --site-mist: #6e5f50;
-          --site-blue-light: #8a5a2b; --site-ice: #172338; --site-peri: #172338;
+          --site-blue-light: #8a5a2b; --site-ice: #172338;
         }
 
         /* Hold the loader back briefly so fast loads never flash it, then fade in */
@@ -128,65 +138,48 @@ export function CreoLoader({
         }
         .creo-loader-appear { animation: creoLoaderAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both; }
 
-        /* ── Orbit ── */
-        .creo-ld-orbit { position: relative; width: 132px; height: 132px; }
-        .creo-ld-orbit--sm { width: 92px; height: 92px; }
-        .creo-ld-orbit--xs { width: 56px; height: 56px; }
-        .creo-ld-orbit > span { position: absolute; border-radius: 9999px; }
+        /* ── The "c." mark ── */
+        .creo-ld-mark { position: relative; display: grid; place-items: center; }
+        .creo-ld--full .creo-ld-mark { width: 132px; }
+        .creo-ld--inline .creo-ld-mark { width: 92px; }
+        .creo-ld--compact .creo-ld-mark { width: 52px; }
+        .creo-ld-svg { position: relative; width: 100%; height: auto; overflow: visible; }
 
-        .creo-ld-halo {
-          inset: -40%;
-          background: radial-gradient(circle, color-mix(in oklab, var(--site-blue-deep) 22%, transparent) 0%, color-mix(in oklab, var(--site-blue-deep) 6%, transparent) 35%, transparent 65%);
-          animation: creoLdHalo 2.4s ease-in-out infinite;
+        /* The arc is unmasked along its length, holds, then masked away along it */
+        .creo-ld-arc {
+          /* Gaps longer than the arc and offsets just past its ends: no stray round cap */
+          stroke-dasharray: 1 2; stroke-dashoffset: 1.02;
+          animation: creoLdArc 2.6s infinite;
         }
-        .creo-ld-ring { inset: 0; border: 1px solid color-mix(in oklab, var(--site-blue) 20%, transparent); }
-        .creo-ld-track { inset: 17%; border: 1px dashed color-mix(in oklab, var(--site-ice) 16%, transparent); animation: creoLdSpin 9s linear infinite reverse; }
-
-        /* Comet: a conic tail masked to the ring, with a bright head at the leading edge */
-        .creo-ld-comet { inset: 0; animation: creoLdSpin 1.15s cubic-bezier(0.45, 0.1, 0.5, 0.9) infinite; filter: drop-shadow(0 0 6px color-mix(in oklab, var(--site-blue) 90%, transparent)); }
-        .creo-ld-comet i {
-          position: absolute; inset: 0; border-radius: 9999px;
-          background: conic-gradient(from 0deg, transparent 0 52%, color-mix(in oklab, var(--site-blue) 15%, transparent) 62%, var(--site-blue) 88%, var(--site-ice) 100%);
-          -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
-          mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+        @keyframes creoLdArc {
+          0% { stroke-dashoffset: 1.02; animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); }
+          36% { stroke-dashoffset: 0; }
+          70% { stroke-dashoffset: 0; animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); }
+          100% { stroke-dashoffset: -1.02; }
         }
-        .creo-ld-comet::after {
-          content: ""; position: absolute; top: -2px; left: 50%; width: 6px; height: 6px; margin-left: -3px;
-          border-radius: 9999px; background: #fff; box-shadow: 0 0 12px 4px color-mix(in oklab, var(--site-blue) 90%, transparent);
-        }
-
-        /* Satellite on the inner track */
-        .creo-ld-sat { inset: 17%; animation: creoLdSpin 3.2s linear infinite; }
-        .creo-ld-sat i {
-          position: absolute; top: -2.5px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px;
-          border-radius: 9999px; background: var(--site-ice); box-shadow: 0 0 8px 2px color-mix(in oklab, var(--site-ice) 70%, transparent);
-        }
-
-        /* Pulse rings and breathing core */
-        .creo-ld-ping {
-          left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px;
-          border: 1px solid color-mix(in oklab, var(--site-blue-light) 80%, transparent);
-          animation: creoLdPing 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-        }
-        .creo-ld-ping--late { animation-delay: 1.1s; }
-        .creo-ld-core {
-          left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px;
-          background: radial-gradient(circle at 35% 30%, var(--site-peri), var(--site-blue) 55%, var(--site-blue-deep));
-          box-shadow: 0 0 22px 6px color-mix(in oklab, var(--site-blue) 60%, transparent), 0 0 60px 10px color-mix(in oklab, var(--site-blue-deep) 25%, transparent);
-          animation: creoLdBreathe 2.2s ease-in-out infinite;
-        }
-        .creo-ld-orbit--sm .creo-ld-core { width: 12px; height: 12px; margin: -6px 0 0 -6px; }
-        .creo-ld-orbit--xs .creo-ld-core { width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; }
-
-        /* ── Wordmark ── */
-        .creo-ld-word {
-          margin-top: 30px; display: flex; align-items: baseline;
-          font-size: 30px; font-weight: 900; letter-spacing: -0.05em; line-height: 1; color: var(--site-ink);
-        }
-        .creo-ld-letter { display: inline-block; animation: creoLdWave 1.8s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
         .creo-ld-dot {
-          width: 0.3em; height: 0.3em; margin-left: 0.04em; border-radius: 9999px;
-          background: linear-gradient(135deg, var(--site-blue-light), var(--site-blue-deep)); box-shadow: 0 0 12px 2px color-mix(in oklab, var(--site-blue) 70%, transparent);
+          transform-box: fill-box; transform-origin: center; transform: scale(0);
+          animation: creoLdDot 2.6s infinite;
+        }
+        @keyframes creoLdDot {
+          0%, 30% { transform: scale(0); animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
+          42% { transform: scale(1); }
+          72% { transform: scale(1); animation-timing-function: cubic-bezier(0.7, 0, 0.84, 0); }
+          84%, 100% { transform: scale(0); }
+        }
+
+        /* The flood: amber swelling out from the mark as it completes */
+        .creo-ld-flood {
+          position: absolute; left: 50%; top: 50%; width: 100%; aspect-ratio: 1; border-radius: 9999px;
+          translate: -50% -50%; transform: scale(0.3); opacity: 0;
+          background: radial-gradient(circle, rgb(221 165 108 / 0.55) 0%, rgb(210 150 90 / 0.22) 45%, transparent 70%);
+          animation: creoLdFlood 2.6s infinite;
+        }
+        @keyframes creoLdFlood {
+          0%, 32% { transform: scale(0.3); opacity: 0; animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+          40% { opacity: 1; }
+          72% { transform: scale(2.2); opacity: 0; }
+          100% { transform: scale(2.2); opacity: 0; }
         }
 
         /* ── Text shimmer ── */
@@ -216,23 +209,6 @@ export function CreoLoader({
         .creo-dot-2 { animation: creoDotOpacity 1.4s ease-in-out 0.22s infinite; }
         .creo-dot-3 { animation: creoDotOpacity 1.4s ease-in-out 0.44s infinite; }
 
-        @keyframes creoLdSpin { to { transform: rotate(360deg); } }
-        @keyframes creoLdPing {
-          0% { transform: scale(1); opacity: 0.8; }
-          100% { transform: scale(5.2); opacity: 0; }
-        }
-        @keyframes creoLdBreathe {
-          0%, 100% { transform: scale(0.86); }
-          50% { transform: scale(1.12); }
-        }
-        @keyframes creoLdHalo {
-          0%, 100% { opacity: 0.6; transform: scale(0.94); }
-          50% { opacity: 1; transform: scale(1.04); }
-        }
-        @keyframes creoLdWave {
-          0%, 55%, 100% { transform: translateY(0); }
-          25% { transform: translateY(-7px); }
-        }
         @keyframes creoLdShine {
           from { background-position: 110% 0; }
           to { background-position: -110% 0; }
@@ -243,16 +219,12 @@ export function CreoLoader({
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .creo-loader-appear,
-          .creo-ld-orbit *,
-          .creo-ld-orbit > span,
-          .creo-ld-letter,
-          .creo-ld-shine,
-          .creo-ld-progress span,
-          .creo-dot-1, .creo-dot-2, .creo-dot-3 {
+          .creo-loader-appear, .creo-ld-arc, .creo-ld-dot, .creo-ld-flood, .creo-ld-shine,
+          .creo-ld-progress span, .creo-dot-1, .creo-dot-2, .creo-dot-3 {
             animation: none !important;
           }
-          .creo-ld-ping { display: none; }
+          .creo-ld-arc { stroke-dashoffset: 0; }
+          .creo-ld-dot { transform: none; }
           .creo-ld-progress span { left: 31%; }
         }
       `}</style>
@@ -289,7 +261,7 @@ export function CreoLoader({
   return loaderContent;
 }
 
-/** Orbit loader for content areas (keeps the surrounding layout visible); `compact` for tables, panels and modals. */
+/** Loader for content areas (keeps the surrounding layout visible); `compact` for tables, panels and modals. */
 export function CreoInlineLoader({
   label = "Loading",
   className = "",
