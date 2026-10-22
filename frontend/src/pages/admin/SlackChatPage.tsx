@@ -22,7 +22,7 @@ import {
   Users,
   Check,
 } from "lucide-react";
-import { request } from "../../lib/http";
+import { apiWebSocketUrl, request } from "../../lib/http";
 import { useSearchParams, useLocation, Link } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1047,9 +1047,7 @@ export function SlackChatPage() {
     let pingInterval: any = null;
 
     try {
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const host = window.location.host;
-      ws = new WebSocket(`${protocol}//${host}/api/v1/chat/ws/${user.id}`, ["creo-chat", token]);
+      ws = new WebSocket(apiWebSocketUrl(`/api/v1/chat/ws/${user.id}`), ["creo-chat", token]);
 
       ws.onopen = () => {
         pingInterval = setInterval(() => {

@@ -231,11 +231,12 @@ app.add_middleware(GZipMiddleware, minimum_size=1200, compresslevel=4)
 # Request ID tracking middleware
 app.add_middleware(RequestIdMiddleware)
 
-# CORS configuration (explicit origins + preview regex for Vercel, Cloudflare Pages/Workers, and Render)
+# CORS configuration (explicit origins + preview regex for Vercel, Cloudflare Pages/Workers, and Render,
+# plus the Capacitor apps: https://localhost on Android, capacitor://localhost on iOS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_origin_regex=r"^https:\/\/([a-zA-Z0-9\-_]+\.)*(vercel\.app|pages\.dev|workers\.dev|onrender\.com)$|^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_origin_regex=r"^https:\/\/([a-zA-Z0-9\-_]+\.)*(vercel\.app|pages\.dev|workers\.dev|onrender\.com)$|^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$|^(https|capacitor):\/\/localhost$",
     allow_credentials=True,
     max_age=3600,
     allow_methods=["*"],

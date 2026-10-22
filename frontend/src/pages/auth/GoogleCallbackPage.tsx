@@ -10,6 +10,7 @@ import { Stage3DRoot, useStageLayer } from "../../components/stage3d/registry";
 import { request } from "../../lib/http";
 import { GOOGLE_OAUTH_STATE_KEY, useAuth } from "../../lib/auth-context";
 import { setAuthToken } from "../../lib/auth-token";
+import { publicUrl } from "../../lib/native";
 import type { AuthUser, SessionResponse } from "../../lib/auth-context";
 import { getRoleHome } from "../../components/auth/ProtectedRoute";
 import { getPostLoginRedirect } from "../../lib/useRouteMemory";
@@ -89,7 +90,8 @@ export function GoogleCallbackPage() {
 
     const exchangeCode = async () => {
       try {
-        const redirectUri = window.location.origin + window.location.pathname;
+        // Google redirected to the website's copy of this page, also when the app started the sign-in.
+        const redirectUri = publicUrl(window.location.pathname);
         // The code is single-use, so a hung exchange is not worth waiting a full
         // minute on: fail fast and let the visitor start over.
         const res = await request<SessionResponse>(

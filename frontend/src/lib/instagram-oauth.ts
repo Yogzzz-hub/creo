@@ -1,8 +1,14 @@
+import { goToOAuthProvider } from "./app-oauth";
 import { request } from "./http";
+import { isNativeApp } from "./native";
 
 export const INSTAGRAM_ENDPOINT = "/api/v1/portal/integrations/instagram";
 const FLOW_KEY = "creo-instagram-oauth";
 const RETURN_KEY = "creo-instagram-return";
+
+// Android may stop the app while Meta is open in the system browser; keep the
+// flow where it survives the restart.
+const flowStorage = () => (isNativeApp ? localStorage : sessionStorage);
 
 export interface InstagramStatus {
   status: string;
@@ -47,17 +53,17 @@ export async function startMetaConnect(
     ),
     Promise.resolve().then(beforeRedirect),
   ]);
-  sessionStorage.setItem(
+  flowStorage().setItem(
     FLOW_KEY,
     JSON.stringify({ state: data.state, verifier: data.verifier, userId }),
   );
-  sessionStorage.setItem(RETURN_KEY, returnTo);
-  window.location.assign(data.url);
+  flowStorage().setItem(RETURN_KEY, returnTo);
+  await goToOAuthProvider(data.url);
 }
 
 export function takeSavedFlow(userId: string, state: string | null) {
-  const saved = sessionStorage.getItem(FLOW_KEY);
-  sessionStorage.removeItem(FLOW_KEY);
+  const saved = flowStorage().getItem(FLOW_KEY);
+  flowStorage().removeItem(FLOW_KEY);
   try {
     const flow = JSON.parse(saved || "null") as { state: string; verifier: string; userId: string };
     if (flow?.state !== state || flow?.userId !== userId) return null;
@@ -68,8 +74,8 @@ export function takeSavedFlow(userId: string, state: string | null) {
 }
 
 export function takeReturnPath(fallback: string): string {
-  const path = sessionStorage.getItem(RETURN_KEY);
-  sessionStorage.removeItem(RETURN_KEY);
+  const path = flowStorage().getItem(RETURN_KEY);
+  flowStorage().removeItem(RETURN_KEY);
   // Only ever return to a same-origin path.
   return path?.startsWith("/") && !path.startsWith("//") ? path : fallback;
 }

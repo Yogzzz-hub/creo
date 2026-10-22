@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { HttpError, SESSION_ENDED_CODES, request } from "./http";
 import { getAuthToken, setAuthToken, getRefreshToken, setRefreshToken, clearAuthToken, isTokenUnexpired } from "./auth-token";
+import { publicUrl } from "./native";
 
 import { queryClient } from "./query-client";
 
@@ -326,7 +327,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const fetchGoogleAuthUrl = async (): Promise<string> => {
-    const callbackUrl = window.location.origin + "/auth/google/callback";
+    // The app signs in through the website, which is where Google sends the code back.
+    const callbackUrl = publicUrl("/auth/google/callback");
     try {
       const res = await request<{ url: string; state: string }>(
         `/api/v1/auth/google/url?redirect_uri=${encodeURIComponent(callbackUrl)}`,

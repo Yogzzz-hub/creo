@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
+import { publicUrl } from "../../lib/native";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import {
   crmAgencyKey,
@@ -1018,7 +1019,7 @@ function RevenueCRMWorkspace() {
                               `proposals/${p.id}/action`,
                               { action: "share" },
                             );
-                            setShareLink(window.location.origin + r.share_path);
+                            setShareLink(publicUrl(r.share_path));
                           }, "Secure link created. No message was sent automatically.")
                         }
                       >

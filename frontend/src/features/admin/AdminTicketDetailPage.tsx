@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { request } from "../../lib/http";
+import { publicUrl } from "../../lib/native";
 import { useAuth } from "../../lib/auth-context";
 import {
   ArrowLeft,
@@ -708,7 +709,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                   <button
                     onClick={() => {
                       setMoreMenuOpen(false);
-                      navigator.clipboard?.writeText(window.location.href);
+                      navigator.clipboard?.writeText(publicUrl(window.location.pathname + window.location.search));
                       showToast("Ticket link copied to clipboard!", "success");
                     }}
                     className="w-full px-4 py-2.5 text-left text-xs font-bold text-app-ink-2 hover:bg-app-base flex items-center gap-2.5 transition-colors cursor-pointer"
