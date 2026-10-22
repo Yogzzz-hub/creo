@@ -5,6 +5,7 @@ import ReactDOM from "react-dom/client";
 import { App } from "./app/App";
 import { queryClient } from "./lib/query-client";
 import "./styles/tokens.css";
+import "./styles/brand-theme.css";
 
 window.addEventListener("vite:preloadError", (event) => {
   if (recoverStaleChunk((event as Event & { payload: unknown }).payload)) event.preventDefault();

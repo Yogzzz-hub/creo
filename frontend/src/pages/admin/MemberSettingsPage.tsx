@@ -135,7 +135,7 @@ export function MemberSettingsPage() {
         {/* Role Badge */}
         <div className="flex items-center justify-end gap-2 pb-2">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-app-surface border border-app-line text-app-accent">
-            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="size-2 rounded-full bg-emerald-500 animate-pulse text-app-on-accent!" />
             {formattedRole}
           </span>
         </div>
@@ -184,7 +184,7 @@ export function MemberSettingsPage() {
 
               {/* Profile Header Pill */}
               <div className="flex items-center gap-3.5 p-3 rounded-xl bg-app-base/80 border border-app-line/60">
-                <div className="size-12 min-w-12 rounded-xl bg-app-accent flex items-center justify-center text-white text-sm font-black shrink-0 overflow-hidden leading-none select-none text-center shadow-sm">
+                <div className="size-12 min-w-12 rounded-xl bg-app-accent flex items-center justify-center text-app-on-accent! text-sm font-black shrink-0 overflow-hidden leading-none select-none text-center shadow-sm">
                   {userInitials}
                 </div>
                 <div className="min-w-0">
@@ -208,7 +208,7 @@ export function MemberSettingsPage() {
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder="e.g. Elena Rostova"
-                    className="h-11 w-full rounded-xl border border-app-line bg-app-base px-3.5 text-xs sm:text-sm text-hi placeholder:text-[#66738A] outline-none transition focus:border-app-accent focus:ring-1 focus:ring-app-accent"
+                    className="h-11 w-full rounded-xl border border-app-line bg-app-base px-3.5 text-xs sm:text-sm text-hi placeholder:text-app-mist outline-none transition focus:border-app-accent focus:ring-1 focus:ring-app-accent"
                     required
                   />
                 </div>
@@ -216,7 +216,7 @@ export function MemberSettingsPage() {
                 <div>
                   <label className="block text-xs font-semibold text-app-mist mb-1.5 flex items-center justify-between">
                     <span>Phone Number</span>
-                    <span className="text-[10px] text-[#66738A]">Optional for emergency pod dispatch</span>
+                    <span className="text-[10px] text-app-mist">Optional for emergency pod dispatch</span>
                   </label>
                   <div className="relative">
                     <input
@@ -224,16 +224,16 @@ export function MemberSettingsPage() {
                       value={form.phone}
                       onChange={(e) => setForm({ ...form, phone: e.target.value })}
                       placeholder="+1 (555) 234-5678"
-                      className="h-11 w-full rounded-xl border border-app-line bg-app-base px-3.5 pl-9 text-xs sm:text-sm text-hi placeholder:text-[#66738A] outline-none transition focus:border-app-accent focus:ring-1 focus:ring-app-accent"
+                      className="h-11 w-full rounded-xl border border-app-line bg-app-base px-3.5 pl-9 text-xs sm:text-sm text-hi placeholder:text-app-mist outline-none transition focus:border-app-accent focus:ring-1 focus:ring-app-accent"
                     />
-                    <Phone className="size-4 text-[#66738A] absolute left-3 top-3.5" />
+                    <Phone className="size-4 text-app-mist absolute left-3 top-3.5" />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-app-mist mb-1.5 flex items-center justify-between">
                     <span>Work Email</span>
-                    <span className="text-[10px] text-[#66738A] flex items-center gap-1">
+                    <span className="text-[10px] text-app-mist flex items-center gap-1">
                       <Lock className="size-2.5" /> Read-only
                     </span>
                   </label>
@@ -245,9 +245,9 @@ export function MemberSettingsPage() {
                       disabled
                       className="h-11 w-full rounded-xl border border-app-line/60 bg-app-base/50 px-3.5 pl-9 text-xs sm:text-sm text-app-mist cursor-not-allowed outline-none"
                     />
-                    <Mail className="size-4 text-[#66738A] absolute left-3 top-3.5" />
+                    <Mail className="size-4 text-app-mist absolute left-3 top-3.5" />
                   </div>
-                  <p className="text-[10px] text-[#66738A] mt-1">
+                  <p className="text-[10px] text-app-mist mt-1">
                     Managed by Creo organization admin. Contact support to change your account email.
                   </p>
                 </div>
@@ -257,7 +257,7 @@ export function MemberSettingsPage() {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-app-accent hover:bg-[#6c8fc9] text-white text-xs font-bold transition-colors cursor-pointer shadow-sm disabled:opacity-50"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-app-accent hover:bg-app-accent text-app-on-accent! text-xs font-bold transition-colors cursor-pointer shadow-sm disabled:opacity-50"
                 >
                   {isSaving ? (
                     <>
@@ -304,7 +304,7 @@ export function MemberSettingsPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="size-10 min-w-10 rounded-xl bg-blue-600 flex items-center justify-center text-white text-xs font-black shrink-0 overflow-hidden leading-none select-none text-center">
+                  <div className="size-10 min-w-10 rounded-xl bg-blue-600 flex items-center justify-center text-app-on-accent! text-xs font-black shrink-0 overflow-hidden leading-none select-none text-center">
                     {getCleanInitials(podLead?.full_name, "PL")}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -326,7 +326,7 @@ export function MemberSettingsPage() {
             <div className="space-y-2.5 flex-1 flex flex-col my-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-app-mist">Pod Specialists & Peers</span>
-                <span className="text-[10px] text-[#66738A]">{members.length} Total Members</span>
+                <span className="text-[10px] text-app-mist">{members.length} Total Members</span>
               </div>
 
               <div className="space-y-2 flex-1 overflow-y-auto">
@@ -359,7 +359,7 @@ export function MemberSettingsPage() {
                     );
                   })
                 ) : (
-                  <div className="p-3 rounded-xl bg-app-base/40 border border-[#2A3446]/40 text-center text-xs text-app-mist">
+                  <div className="p-3 rounded-xl bg-app-base/40 border border-app-line/40 text-center text-xs text-app-mist">
                     No other specialists in this pod.
                   </div>
                 )}
@@ -379,7 +379,7 @@ export function MemberSettingsPage() {
                 href={STANDUP_MEETING_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3 py-1 rounded-lg bg-app-accent hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1 transition-colors shrink-0"
+                className="px-3 py-1 rounded-lg bg-app-accent hover:bg-blue-600 text-app-on-accent! text-xs font-bold flex items-center gap-1 transition-colors shrink-0"
               >
                 <span>Join</span>
                 <ExternalLink className="size-3" />

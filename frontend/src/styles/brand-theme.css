@@ -1,11 +1,13 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   Client portal theme — the public site's palette (obsidian, ivory, burnished
-   amber, midnight) mapped onto the app tokens every portal surface reads.
+   Brand theme — the public site's palette (obsidian, ivory, burnished amber,
+   midnight) mapped onto the app tokens every dashboard reads: client portal,
+   admin, pod and member workstations, platform, BDE, freelancer, onboarding.
 
-   PortalLayout puts .portal-theme on <html> while it is mounted, so dialogs
-   portalled to <body> pick it up too; the admin and team surfaces never set it
-   and keep their own palette. Tailwind's remapped colours (emerald, amber,
-   slate...) follow these tokens automatically (see tokens.css).
+   index.html puts .brand-theme on <html> before first paint, so every surface
+   and every dialog portalled to <body> picks it up. Tailwind's remapped colours
+   (emerald, amber, slate...) follow these tokens automatically (see tokens.css).
+   Text on an amber or terracotta fill uses --app-on-accent / --app-on-warm:
+   ivory on amber is only 2.2:1, so dark mode puts near-black on the fills.
 
      Burnished amber  #D2965A  accent fills, status, focus (7.5:1 on obsidian)
      Obsidian         #0F0E0C  page (dark)
@@ -15,7 +17,7 @@
      Terracotta       #D98A7A  warnings and declines (dark); #9A3F2F (light)
 ───────────────────────────────────────────────────────────────────────────── */
 
-:root.portal-theme {
+:root.brand-theme {
   --hi: #f7f1e8;
   --shadow-rgb: 0 0 0;
   --shadow-k: 1;
@@ -34,6 +36,8 @@
   --app-accent: #d2965a;
   --app-accent-soft: #f5eee3;
   --app-warm: #d98a7a;
+  --app-on-accent: #1a120c;
+  --app-on-warm: #1a120c;
 
   /* Loaders and shared pieces that read the site tokens */
   --site-bg: #0f0e0c;
@@ -59,10 +63,11 @@
   /* Fixed brand colours for the gold plan card and the pill arrow discs */
   --portal-amber: #d2965a;
   --portal-on-amber: #1a120c;
+  --portal-ivory: #f5eee3;
 }
 
 /* Light: ivory paper, espresso ink, bronze accent text */
-:root.portal-theme[data-theme="light"] {
+:root.brand-theme[data-theme="light"] {
   --hi: #2b1e15;
   --shadow-rgb: 60 40 20;
   --shadow-k: 0.3;
@@ -81,6 +86,8 @@
   --app-accent: #8a5a2b;
   --app-accent-soft: #2b1e15;
   --app-warm: #9a3f2f;
+  --app-on-accent: #fbf7f0;
+  --app-on-warm: #fbf7f0;
 
   --site-bg: #f5eee3;
   --site-abyss: #e9dfcf;
@@ -103,19 +110,19 @@
   --site-rose: #9a3f2f;
 }
 
-:root.portal-theme ::selection {
+:root.brand-theme ::selection {
   background: #d2965a;
   color: #1a120c;
 }
 
 /* Native controls follow the theme instead of the app's forced dark scheme */
-:root.portal-theme[data-theme="light"],
-:root.portal-theme[data-theme="light"] .bento-theme,
-:root.portal-theme[data-theme="light"] .bento-theme :is(input, select, textarea) {
+:root.brand-theme[data-theme="light"],
+:root.brand-theme[data-theme="light"] .bento-theme,
+:root.brand-theme[data-theme="light"] .bento-theme :is(input, select, textarea) {
   color-scheme: light !important;
 }
 
-:root.portal-theme .bento-theme :is(input, textarea)::placeholder {
+:root.brand-theme .bento-theme :is(input, textarea)::placeholder {
   color: color-mix(in oklab, var(--app-mist) 70%, transparent) !important;
 }
 

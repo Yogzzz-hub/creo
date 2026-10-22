@@ -187,7 +187,7 @@ export function SplitPaymentCard() {
         </div>
         <div className="w-full h-2 rounded-full bg-app-base overflow-hidden border border-app-line">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-app-accent transition-all duration-500"
+            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-app-accent transition-all duration-500 text-app-on-accent!"
             style={{ width: `${Math.min(pctPaid, 100)}%` }}
           />
         </div>

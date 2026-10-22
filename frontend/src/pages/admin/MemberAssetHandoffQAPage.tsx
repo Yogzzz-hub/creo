@@ -119,7 +119,7 @@ export function MemberAssetHandoffQAPage() {
             </button>
             <button
               onClick={() => setPackageModalOpen(true)}
-              className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 sm:gap-2 shadow-md shadow-blue-500/20 transition-all cursor-pointer"
+              className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! text-xs font-bold flex items-center justify-center gap-1.5 sm:gap-2 shadow-md shadow-blue-500/20 transition-all cursor-pointer"
             >
               <Plus className="size-3.5 sm:size-4" />
               <span>+ New Package</span>
@@ -230,7 +230,7 @@ export function MemberAssetHandoffQAPage() {
                   </div>
                   {/* Waveform graphic bar */}
                   <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden flex items-center px-1">
-                    <div className="h-1.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 rounded-full smooth-progress-fill w-[60%]" />
+                    <div className="h-1.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 rounded-full smooth-progress-fill w-[60%] text-app-on-accent!" />
                   </div>
                 </div>
               </div>
@@ -334,7 +334,7 @@ export function MemberAssetHandoffQAPage() {
                     <span className="text-[11px] text-app-mist font-mono">Held for v2</span>
                     <button
                       onClick={() => setResubmitModalOpen(true)}
-                      className="px-3 py-1 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold text-[11px] shadow-xs cursor-pointer"
+                      className="px-3 py-1 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold text-[11px] shadow-xs cursor-pointer"
                     >
                       Resubmit v2
                     </button>
@@ -386,7 +386,7 @@ export function MemberAssetHandoffQAPage() {
                       <td className="py-3 px-3 font-semibold text-hi">Client Workspace</td>
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-1.5">
-                          <div className="size-5 rounded bg-blue-600 text-white font-black text-[9px] flex items-center justify-center">
+                          <div className="size-5 rounded bg-blue-600 text-app-on-accent! font-black text-[9px] flex items-center justify-center">
                             ML
                           </div>
                           <span>Pod Lead</span>
@@ -425,7 +425,7 @@ export function MemberAssetHandoffQAPage() {
                       <td className="py-3 px-3 font-semibold text-hi">Client Retainer</td>
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-1.5">
-                          <div className="size-5 rounded bg-blue-600 text-white font-black text-[9px] flex items-center justify-center">
+                          <div className="size-5 rounded bg-blue-600 text-app-on-accent! font-black text-[9px] flex items-center justify-center">
                             ML
                           </div>
                           <span>Pod Lead</span>
@@ -440,7 +440,7 @@ export function MemberAssetHandoffQAPage() {
                       <td className="py-3 px-3 text-right">
                         <button
                           onClick={() => setResubmitModalOpen(true)}
-                          className="px-3 py-1 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold text-xs shadow-xs cursor-pointer"
+                          className="px-3 py-1 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold text-xs shadow-xs cursor-pointer"
                         >
                           Resubmit Revision v2
                         </button>
@@ -455,7 +455,7 @@ export function MemberAssetHandoffQAPage() {
                       <td className="py-3 px-3 font-semibold text-hi">Zenith Autonomous</td>
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-1.5">
-                          <div className="size-5 rounded bg-blue-600 text-white font-black text-[9px] flex items-center justify-center">
+                          <div className="size-5 rounded bg-blue-600 text-app-on-accent! font-black text-[9px] flex items-center justify-center">
                             ML
                           </div>
                           <span>Pod Lead</span>
@@ -585,7 +585,7 @@ export function MemberAssetHandoffQAPage() {
               {/* Reviewer Lead Pill */}
               <div className="p-3 rounded-2xl bg-app-base border border-app-line flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-8 rounded-xl bg-blue-600 text-white font-black text-xs flex items-center justify-center">
+                  <div className="size-8 rounded-xl bg-blue-600 text-app-on-accent! font-black text-xs flex items-center justify-center">
                     ML
                   </div>
                   <div>
@@ -625,7 +625,7 @@ export function MemberAssetHandoffQAPage() {
                 <button
                   type="button"
                   onClick={() => setHandoffConfirmModalOpen(true)}
-                  className="flex-1 py-2.5 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer text-center flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer text-center flex items-center justify-center gap-1.5"
                 >
                   <Send className="size-3.5" />
                   Send to Pod Lead for Sign-Off
@@ -674,7 +674,7 @@ export function MemberAssetHandoffQAPage() {
               <button
                 type="button"
                 onClick={handleSendToLeadForSignOff}
-                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold text-xs shadow-md shadow-blue-500/20 cursor-pointer"
               >
                 Confirm & Dispatch
               </button>
@@ -734,7 +734,7 @@ export function MemberAssetHandoffQAPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold shadow-xs cursor-pointer"
                 >
                   Submit Revision v2
                 </button>
@@ -786,7 +786,7 @@ export function MemberAssetHandoffQAPage() {
               <button
                 type="button"
                 onClick={() => setAuditLogModalOpen(false)}
-                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold cursor-pointer"
               >
                 Close Audit Logs
               </button>
@@ -853,7 +853,7 @@ export function MemberAssetHandoffQAPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold shadow-xs cursor-pointer"
                 >
                   Initialize Package
                 </button>
@@ -903,7 +903,7 @@ export function MemberAssetHandoffQAPage() {
               <button
                 type="button"
                 onClick={() => setSelectedAssetToView(null)}
-                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold cursor-pointer"
               >
                 Done
               </button>

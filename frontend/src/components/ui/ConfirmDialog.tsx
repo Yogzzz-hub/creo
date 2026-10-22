@@ -233,13 +233,13 @@ export function ConfirmDialog({
   const getConfirmButtonStyle = () => {
     switch (tone) {
       case "danger":
-        return "bg-rose-600 text-white enabled:hover:bg-rose-500 shadow-md shadow-rose-950/50";
+        return "bg-rose-600 text-app-on-warm! enabled:hover:bg-rose-500 shadow-md shadow-rose-950/50";
       case "warning":
-        return "bg-amber-600 text-white enabled:hover:bg-amber-500 shadow-md shadow-amber-950/50";
+        return "bg-amber-600 text-app-on-warm! enabled:hover:bg-amber-500 shadow-md shadow-amber-950/50";
       case "success":
-        return "bg-emerald-600 text-white enabled:hover:bg-emerald-500 shadow-md shadow-emerald-950/50";
+        return "bg-emerald-600 text-app-on-accent! enabled:hover:bg-emerald-500 shadow-md shadow-emerald-950/50";
       case "info":
-        return "bg-app-accent text-white enabled:hover:bg-[#7FA0D6]/90 shadow-md shadow-app-accent/20";
+        return "bg-app-accent text-app-on-accent! enabled:hover:bg-app-accent/90 shadow-md shadow-app-accent/20";
       default:
         return "bg-app-warm text-app-base enabled:hover:bg-app-warm shadow-md";
     }
@@ -317,12 +317,12 @@ export function ConfirmDialog({
                   <span
                     className={`size-1.5 rounded-full shrink-0 mt-1.5 ${
                       tone === "danger"
-                        ? "bg-rose-500"
+                        ? "bg-rose-500 text-app-on-warm!"
                         : tone === "warning"
-                        ? "bg-amber-500"
+                        ? "bg-amber-500 text-app-on-warm!"
                         : tone === "success"
-                        ? "bg-emerald-500"
-                        : "bg-app-accent"
+                        ? "bg-emerald-500 text-app-on-accent!"
+                        : "bg-app-accent text-app-on-accent!"
                     }`}
                   />
                   <span className="leading-snug">{detail}</span>

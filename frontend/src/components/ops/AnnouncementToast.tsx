@@ -240,7 +240,7 @@ export function AnnouncementToast({ bellRef, isClientPortal = false }: Announcem
           0% {
             opacity: 1;
             transform: translate(0, 0) scale(1);
-            box-shadow: 0 16px 36px -8px rgba(13, 33, 55, 0.16);
+            box-shadow: 0 16px 36px -8px rgb(var(--shadow-rgb) / calc(0.16 * var(--shadow-k)));
           }
           25% {
             opacity: 0.95;
@@ -320,11 +320,11 @@ export function AnnouncementToast({ bellRef, isClientPortal = false }: Announcem
       >
         <div
           style={{
-            background: "#FFFFFF",
+            background: "var(--app-accent-soft)",
             border: "1px solid var(--app-line)",
             borderRadius: 16,
             padding: "16px 18px",
-            boxShadow: "0 20px 40px -10px rgba(13, 33, 55, 0.14), 0 4px 12px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(43, 123, 196, 0.06)",
+            boxShadow: "0 20px 40px -10px rgb(var(--shadow-rgb) / calc(0.14 * var(--shadow-k))), 0 4px 12px rgb(var(--shadow-rgb) / calc(0.04 * var(--shadow-k))), 0 0 0 1px color-mix(in oklab, var(--app-accent) 6%, transparent)",
             fontFamily: "var(--font-body, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif)",
             position: "relative",
             overflow: "hidden",

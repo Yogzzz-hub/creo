@@ -43,12 +43,12 @@ import {
   type ProposalLine,
 } from "../../lib/revenue-crm";
 
-const panel = "min-w-0 rounded-2xl border border-app-line bg-[#131C2A]";
+const panel = "min-w-0 rounded-2xl border border-app-line bg-app-surface";
 const input =
-  "w-full min-w-0 min-h-11 rounded-xl border border-[#303D52] bg-app-base px-3 py-2 text-sm text-hi placeholder:text-[#6F7E96] focus:border-[#9EB8E1] focus:outline-none focus:ring-2 focus:ring-app-accent/20 [color-scheme:dark]";
+  "w-full min-w-0 min-h-11 rounded-xl border border-app-line bg-app-base px-3 py-2 text-sm text-hi placeholder:text-app-mist focus:border-app-accent focus:outline-none focus:ring-2 focus:ring-app-accent/20 [color-scheme:dark]";
 const buttonBase =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A9C4EE] disabled:cursor-not-allowed disabled:opacity-40";
-const button = `${buttonBase} border-[#34435C] bg-[#1B293D] text-[#D0DDF1] hover:bg-[#263952]`;
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent disabled:cursor-not-allowed disabled:opacity-40";
+const button = `${buttonBase} border-app-line bg-app-line-soft text-app-accent-soft hover:bg-app-line`;
 const primary = `${buttonBase} border-transparent bg-app-accent-soft text-app-base hover:bg-hi`;
 const stages = [
   "new",
@@ -113,9 +113,9 @@ function Badge({ children, status = "" }: { children: ReactNode; status?: string
 function Empty({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <div className="flex min-h-48 flex-col items-center justify-center gap-2 p-8 text-center">
-      <BriefcaseBusiness className="mb-1 size-7 text-[#6884AD]" />
+      <BriefcaseBusiness className="mb-1 size-7 text-app-mist" />
       <h3 className="font-semibold text-hi">{title}</h3>
-      <p className="max-w-sm text-sm leading-relaxed text-[#96A5BB]">{children}</p>
+      <p className="max-w-sm text-sm leading-relaxed text-app-mist">{children}</p>
     </div>
   );
 }
@@ -172,7 +172,7 @@ function Field({
           step={type === "number" ? "0.01" : undefined}
         />
       )}
-      {hint && <span className="block text-xs leading-relaxed text-[#8292AB]">{hint}</span>}
+      {hint && <span className="block text-xs leading-relaxed text-app-mist">{hint}</span>}
     </label>
   );
 }
@@ -234,10 +234,10 @@ function Modal({
         aria-label={title}
         className={`${panel} max-h-[92dvh] w-full overflow-y-auto shadow-2xl ${wide ? "max-w-4xl" : "max-w-xl"}`}
       >
-        <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-app-line bg-[#131C2A] p-5 sm:p-6">
+        <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-app-line bg-app-surface p-5 sm:p-6">
           <div>
             <h2 className="text-lg font-bold text-hi">{title}</h2>
-            {subtitle && <p className="mt-1 text-xs leading-relaxed text-[#96A5BB]">{subtitle}</p>}
+            {subtitle && <p className="mt-1 text-xs leading-relaxed text-app-mist">{subtitle}</p>}
           </div>
           <button
             type="button"
@@ -485,7 +485,7 @@ function RevenueCRMWorkspace() {
               key={id}
               to={`/bde/crm/${id}`}
               className={({ isActive }) =>
-                `inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition-colors ${isActive ? "bg-app-accent-soft text-app-base" : "text-[#96A5BB] hover:bg-[#1B293D] hover:text-hi"}`
+                `inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition-colors ${isActive ? "bg-app-accent-soft text-app-base" : "text-app-mist hover:bg-app-line-soft hover:text-hi"}`
               }
             >
               <Icon className="size-4" />
@@ -518,7 +518,7 @@ function RevenueCRMWorkspace() {
       {shareLink && (
         <div className={`${panel} space-y-3 p-4`}>
           <h2 className="font-semibold">Secure client proposal link</h2>
-          <p className="text-xs text-[#96A5BB]">
+          <p className="text-xs text-app-mist">
             Anyone with this link can view and decide on this exact version until its expiry. Share
             it through an authorized channel.
           </p>
@@ -547,7 +547,7 @@ function RevenueCRMWorkspace() {
         </div>
       )}
       {overview.isPending && (
-        <div role="status" className="flex items-center gap-2 text-sm text-[#96A5BB]">
+        <div role="status" className="flex items-center gap-2 text-sm text-app-mist">
           <Loader2 className="size-4 animate-spin" />
           Loading your revenue workspace...
         </div>
@@ -556,10 +556,10 @@ function RevenueCRMWorkspace() {
       {["overview", "reports"].includes(section) && stats && (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-[#96A5BB]">
+            <p className="text-xs text-app-mist">
               {label(stats.scope)} performance · Reporting timezone: {timezone}
             </p>
-            <label className="flex items-center gap-2 text-xs text-[#96A5BB]">
+            <label className="flex items-center gap-2 text-xs text-app-mist">
               Reporting month
               <input
                 type="month"
@@ -601,15 +601,15 @@ function RevenueCRMWorkspace() {
             ].map(({ title, value, detail: description, icon: Icon }) => (
               <article key={title} className={`${panel} flex flex-col p-4 sm:p-5`}>
                 <div className="mb-5 flex items-center justify-between gap-3">
-                  <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[#96A5BB]">
+                  <h2 className="text-[11px] font-semibold uppercase tracking-wide text-app-mist">
                     {title}
                   </h2>
-                  <Icon className="size-4 shrink-0 text-[#8FAEDC]" />
+                  <Icon className="size-4 shrink-0 text-app-accent" />
                 </div>
                 <p title={String(value)} className="overflow-x-auto whitespace-nowrap text-base font-bold tracking-tight tabular-nums sm:text-2xl">
                   {value}
                 </p>
-                <p className="mt-2 text-xs leading-relaxed text-[#8292AB]">{description}</p>
+                <p className="mt-2 text-xs leading-relaxed text-app-mist">{description}</p>
               </article>
             ))}
           </section>
@@ -617,7 +617,7 @@ function RevenueCRMWorkspace() {
             <section className={`${panel} p-5`}>
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="font-semibold">Your next moves</h2>
-                <Link to="/bde/crm/tasks" className="text-xs text-[#A7BFE4]">
+                <Link to="/bde/crm/tasks" className="text-xs text-app-accent">
                   All follow-ups <ArrowUpRight className="inline size-3" />
                 </Link>
               </div>
@@ -629,7 +629,7 @@ function RevenueCRMWorkspace() {
                 ].map(([title, value]) => (
                   <div key={title} className="rounded-xl border border-app-line bg-app-base p-3">
                     <p className="text-xl font-bold tabular-nums">{value}</p>
-                    <p className="mt-1 text-[11px] text-[#96A5BB]">{title}</p>
+                    <p className="mt-1 text-[11px] text-app-mist">{title}</p>
                   </div>
                 ))}
               </div>
@@ -640,7 +640,7 @@ function RevenueCRMWorkspace() {
                 >
                   <button className="min-w-0 text-left" onClick={() => setSelectedLead(t.lead_id)}>
                     <p className="text-sm font-semibold">{t.title}</p>
-                    <p className="mt-1 text-xs text-[#96A5BB]">
+                    <p className="mt-1 text-xs text-app-mist">
                       {t.company} · {crmDate(t.due_at, timezone)}
                     </p>
                   </button>
@@ -653,7 +653,7 @@ function RevenueCRMWorkspace() {
                 </div>
               ))}
               {!pendingTasks.length && (
-                <p className="py-5 text-sm text-[#96A5BB]">
+                <p className="py-5 text-sm text-app-mist">
                   Your follow-up queue is clear. Add a next action from a lead record.
                 </p>
               )}
@@ -663,39 +663,39 @@ function RevenueCRMWorkspace() {
               <div className="mt-5 space-y-5">
                 <div>
                   <div className="flex justify-between gap-3 text-sm">
-                    <span className="text-[#96A5BB]">Follow-ups completed on time</span>
+                    <span className="text-app-mist">Follow-ups completed on time</span>
                     <span>
                       {stats.summary.sla_due
                         ? `${Math.round((stats.summary.sla_on_time / stats.summary.sla_due) * 100)}%`
                         : "No due actions"}
                     </span>
                   </div>
-                  <p className="mt-1 text-[11px] text-[#8292AB]">
+                  <p className="mt-1 text-[11px] text-app-mist">
                     {stats.summary.sla_on_time} on time / {stats.summary.sla_due} due in this
                     reporting month
                   </p>
                 </div>
                 <div className="flex justify-between gap-3 text-sm">
-                  <span className="text-[#96A5BB]">Referrals sourced</span>
+                  <span className="text-app-mist">Referrals sourced</span>
                   <span>
                     {stats.summary.referrals}{" "}
-                    <span className="text-[#8292AB]">
+                    <span className="text-app-mist">
                       / {stats.summary.verified_referrals} verified
                     </span>
                   </span>
                 </div>
                 <div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-[#96A5BB]">Booked value target</span>
+                    <span className="text-app-mist">Booked value target</span>
                     <span>
                       {stats.summary.target_minor
                         ? money(stats.summary.target_minor)
                         : "Not configured"}
                     </span>
                   </div>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#28354B]">
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-app-line">
                     <div
-                      className="h-full rounded-full bg-[#9EB8E1]"
+                      className="h-full rounded-full bg-app-accent text-app-on-accent!"
                       style={{
                         width: `${stats.summary.target_minor ? Math.min(100, (stats.summary.booked_minor / stats.summary.target_minor) * 100) : 0}%`,
                       }}
@@ -709,14 +709,14 @@ function RevenueCRMWorkspace() {
             <section className={`${panel} overflow-hidden`}>
               <div className="border-b border-app-line p-5">
                 <h2 className="font-semibold">BDE team scorecard</h2>
-                <p className="mt-1 text-xs text-[#96A5BB]">
+                <p className="mt-1 text-xs text-app-mist">
                   Current assigned pipeline, wins in this month, and referrals credited to the
                   original BDE.
                 </p>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[620px] text-left text-sm">
-                  <thead className="bg-app-base text-xs text-[#96A5BB]">
+                  <thead className="bg-app-base text-xs text-app-mist">
                     <tr>
                       {["BDE", "Active", "Wins", "Booked", "Referrals", "Overdue"].map((h) => (
                         <th className="p-4 font-medium" key={h}>
@@ -763,7 +763,7 @@ function RevenueCRMWorkspace() {
                 </button>
               ))
             ) : (
-              <p className="text-sm text-[#96A5BB]">
+              <p className="text-sm text-app-mist">
                 Every active lead in your scope has an owner and a pending next action.
               </p>
             )}
@@ -775,7 +775,7 @@ function RevenueCRMWorkspace() {
         <>
           <div className="flex flex-wrap items-center gap-3">
             <label className="relative min-w-48 flex-1">
-              <Search className="absolute left-3 top-3.5 size-4 text-[#8292AB]" />
+              <Search className="absolute left-3 top-3.5 size-4 text-app-mist" />
               <input
                 className={`${input} pl-10`}
                 placeholder="Find a person, company, email or phone"
@@ -812,7 +812,7 @@ function RevenueCRMWorkspace() {
               Import CSV
             </button>
           </div>
-          <p className="text-xs text-[#8292AB]">
+          <p className="text-xs text-app-mist">
             Showing up to 100 matching leads. Filters are saved in this page URL.
           </p>
           {leadQuery.isPending ? (
@@ -828,7 +828,7 @@ function RevenueCRMWorkspace() {
               {stages
                 .filter((s) => !["nurture", "disqualified"].includes(s))
                 .map((s) => (
-                  <section key={s} className="w-72 shrink-0 rounded-2xl bg-[#101825] p-3">
+                  <section key={s} className="w-72 shrink-0 rounded-2xl bg-app-nested p-3">
                     <div className="mb-3 flex items-center justify-between">
                       <h2 className="text-xs font-semibold">{label(s)}</h2>
                       <Badge>{leads.filter((l) => l.status === s).length}</Badge>
@@ -872,7 +872,7 @@ function RevenueCRMWorkspace() {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app-line p-5">
             <div>
               <h2 className="font-semibold">Follow-up queue</h2>
-              <p className="mt-1 text-xs text-[#96A5BB]">
+              <p className="mt-1 text-xs text-app-mist">
                 Sorted by due time · {timezone} · resolve with an outcome and next step
               </p>
             </div>
@@ -909,7 +909,7 @@ function RevenueCRMWorkspace() {
                           : t.status}
                       </Badge>
                     </div>
-                    <p className="mt-2 text-xs text-[#96A5BB]">
+                    <p className="mt-2 text-xs text-app-mist">
                       {t.company} · {label(t.kind)} · {crmDate(t.due_at, timezone)}
                     </p>
                   </button>
@@ -933,7 +933,7 @@ function RevenueCRMWorkspace() {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app-line p-5">
             <div>
               <h2 className="font-semibold">Priced, reviewed, versioned</h2>
-              <p className="mt-1 text-xs text-[#96A5BB]">
+              <p className="mt-1 text-xs text-app-mist">
                 One-time and recurring charges stay separate. Issued versions cannot be edited.
               </p>
             </div>
@@ -954,11 +954,11 @@ function RevenueCRMWorkspace() {
                 <article key={p.id} className="space-y-4 p-5">
                   <div className="flex flex-wrap justify-between gap-3">
                     <div>
-                      <p className="text-[11px] text-[#8FAEDC]">
+                      <p className="text-[11px] text-app-accent">
                         {p.number} · v{p.version}
                       </p>
                       <h3 className="mt-1 font-semibold">{p.title}</h3>
-                      <p className="mt-1 text-xs text-[#96A5BB]">
+                      <p className="mt-1 text-xs text-app-mist">
                         {p.company} · Valid until {crmDate(p.valid_until, timezone)}
                       </p>
                     </div>
@@ -969,7 +969,7 @@ function RevenueCRMWorkspace() {
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(p.snapshot.totals).map(([billing, total]) => (
                       <span key={billing} className="rounded-lg bg-app-base px-3 py-2 text-xs">
-                        <span className="text-[#96A5BB]">{label(billing)} </span>
+                        <span className="text-app-mist">{label(billing)} </span>
                         {crmMoney(total.total, p.currency)}
                       </span>
                     ))}
@@ -1066,7 +1066,7 @@ function RevenueCRMWorkspace() {
           <div className="flex flex-wrap justify-between gap-3 border-b border-app-line p-5">
             <div>
               <h2 className="font-semibold">Relationships that grow with you</h2>
-              <p className="mt-1 text-xs text-[#96A5BB]">
+              <p className="mt-1 text-xs text-app-mist">
                 Original BDE attribution stays intact when lead ownership changes.
               </p>
             </div>
@@ -1089,10 +1089,10 @@ function RevenueCRMWorkspace() {
               >
                 <div>
                   <p className="font-semibold">{r.company}</p>
-                  <p className="mt-1 text-xs text-[#96A5BB]">
+                  <p className="mt-1 text-xs text-app-mist">
                     From {r.referrer} · {crmDate(r.acquired_at, timezone)}
                   </p>
-                  <p className="mt-1 text-xs text-[#8292AB]">
+                  <p className="mt-1 text-xs text-app-mist">
                     Sourced by{" "}
                     {team.data?.find((p) => p.id === r.acquired_by)?.name || "Original BDE"}
                   </p>
@@ -1131,7 +1131,7 @@ function RevenueCRMWorkspace() {
             <div className="flex flex-wrap justify-between gap-3 border-b border-app-line p-5">
               <div>
                 <h2 className="font-semibold">Conversation drafts</h2>
-                <p className="mt-1 text-xs text-[#96A5BB]">
+                <p className="mt-1 text-xs text-app-mist">
                   Drafts remain internal. Opt-out immediately suppresses pending drafts.
                 </p>
               </div>
@@ -1153,7 +1153,7 @@ function RevenueCRMWorkspace() {
                   </div>
                   <p className="whitespace-pre-wrap text-sm text-app-accent-soft">{m.body}</p>
                   {m.error && <p className="text-xs text-rose-300">{m.error}</p>}
-                  <p className="text-xs text-[#8292AB]">
+                  <p className="text-xs text-app-mist">
                     {m.status === "scheduled" && m.scheduled_at
                       ? `Scheduled: ${crmDate(m.scheduled_at, timezone)}`
                       : crmDate(m.created_at, timezone)}
@@ -1185,10 +1185,10 @@ function RevenueCRMWorkspace() {
           <section className={`${panel} space-y-4 p-5`}>
             <div>
               <h2 className="flex items-center gap-2 font-semibold">
-                <Sparkles className="size-4 text-[#8FAEDC]" />
+                <Sparkles className="size-4 text-app-accent" />
                 An assistant grounded in your CRM
               </h2>
-              <p className="mt-2 text-sm leading-relaxed text-[#96A5BB]">
+              <p className="mt-2 text-sm leading-relaxed text-app-mist">
                 Choose a lead and request a draft. Review the evidence and edit the suggestion
                 before using it.
               </p>
@@ -1213,10 +1213,10 @@ function RevenueCRMWorkspace() {
                   onChange={(e) => setAiDraft({ ...aiDraft, draft: e.target.value })}
                 />
                 <details>
-                  <summary className="cursor-pointer text-xs text-[#8FAEDC]">
+                  <summary className="cursor-pointer text-xs text-app-accent">
                     CRM evidence used
                   </summary>
-                  <pre className="mt-3 overflow-auto whitespace-pre-wrap break-words text-xs text-[#96A5BB]">
+                  <pre className="mt-3 overflow-auto whitespace-pre-wrap break-words text-xs text-app-mist">
                     {JSON.stringify(aiDraft.evidence, null, 2)}
                   </pre>
                 </details>
@@ -1236,7 +1236,7 @@ function RevenueCRMWorkspace() {
                   Set BDE target
                 </button>
               )}
-              <p className="mt-1 text-xs text-[#96A5BB]">
+              <p className="mt-1 text-xs text-app-mist">
                 Accepting a proposal never marks it paid. Each receipt needs its own reference.
               </p>
             </div>
@@ -1259,7 +1259,7 @@ function RevenueCRMWorkspace() {
               >
                 <div>
                   <p className="font-semibold">{e.company}</p>
-                  <p className="mt-1 text-xs text-[#96A5BB]">
+                  <p className="mt-1 text-xs text-app-mist">
                     {e.reference} · {crmDate(e.occurred_at, timezone)}
                   </p>
                 </div>
@@ -1285,7 +1285,7 @@ function RevenueCRMWorkspace() {
               <div className="flex flex-wrap justify-between gap-3 border-b border-app-line p-5">
                 <div>
                   <h2 className="font-semibold">Agency service catalog</h2>
-                  <p className="mt-1 text-xs text-[#96A5BB]">
+                  <p className="mt-1 text-xs text-app-mist">
                     Prices become snapshots when added to a proposal.
                   </p>
                 </div>
@@ -1306,7 +1306,7 @@ function RevenueCRMWorkspace() {
                   >
                     <div>
                       <p className="font-semibold">{s.title}</p>
-                      <p className="mt-1 text-xs text-[#96A5BB]">
+                      <p className="mt-1 text-xs text-app-mist">
                         {s.sku} · {label(s.billing)} · Floor {money(s.minimum_price)}
                       </p>
                     </div>
@@ -1378,18 +1378,18 @@ function RevenueCRMWorkspace() {
                 )}
                 <div>
                   <h3 className="mb-2 text-sm font-semibold">Requirements</h3>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#96A5BB]">
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-app-mist">
                     {detail.data.lead.requirements || "No requirements captured yet."}
                   </p>
                 </div>
                 <section>
                   <h3 className="mb-3 font-semibold">Activity timeline</h3>
-                  <div className="space-y-4 border-l border-[#34435C] pl-4">
+                  <div className="space-y-4 border-l border-app-line pl-4">
                     {detail.data.activities.map((a) => (
                       <article key={a.id}>
-                        <p className="text-sm text-[#D0DDF1]">{a.summary}</p>
-                        {a.outcome && <p className="mt-1 text-xs text-[#96A5BB]">{a.outcome}</p>}
-                        <p className="mt-1 text-[11px] text-[#6F85A4]">
+                        <p className="text-sm text-app-accent-soft">{a.summary}</p>
+                        {a.outcome && <p className="mt-1 text-xs text-app-mist">{a.outcome}</p>}
+                        <p className="mt-1 text-[11px] text-app-mist">
                           {label(a.activity_type)} · {crmDate(a.created_at, timezone)}
                         </p>
                       </article>
@@ -1465,14 +1465,14 @@ function LeadCard({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Badge status={lead.status}>{label(lead.status)}</Badge>
         <span
-          className={`text-[10px] font-bold uppercase ${lead.priority === "hot" ? "text-rose-300" : lead.priority === "warm" ? "text-amber-300" : "text-[#8FAEDC]"}`}
+          className={`text-[10px] font-bold uppercase ${lead.priority === "hot" ? "text-rose-300" : lead.priority === "warm" ? "text-amber-300" : "text-app-accent"}`}
         >
           {lead.priority}
         </span>
       </div>
       <div className="mt-4">
         <h3 className="break-words text-base font-semibold">{lead.company_name}</h3>
-        <p className="mt-1 text-xs text-[#96A5BB]">
+        <p className="mt-1 text-xs text-app-mist">
           {lead.name} ·{" "}
           {people.find((p) => p.id === lead.assigned_bde_id)?.name || "Unassigned BDE"}
         </p>
@@ -1484,12 +1484,12 @@ function LeadCard({
         <p className="truncate text-xs font-medium text-app-accent-soft">
           {lead.metadata_extra?.next_action || "Set a next action"}
         </p>
-        <p className="mt-1 text-[11px] text-[#8292AB]">
+        <p className="mt-1 text-[11px] text-app-mist">
           {crmDate(lead.next_follow_up_at, timezone)}
         </p>
       </div>
       {lead.metadata_extra?.qualification && (
-        <p className="mt-3 text-[11px] text-[#8FAEDC]">
+        <p className="mt-3 text-[11px] text-app-accent">
           Score {lead.metadata_extra.qualification.score}/100 ·{" "}
           {lead.metadata_extra.qualification.completeness}% evidence complete
         </p>
@@ -1499,7 +1499,7 @@ function LeadCard({
   return onClick ? (
     <button
       onClick={onClick}
-      className={`${panel} w-full p-5 text-left transition-colors hover:border-app-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8FAEDC]`}
+      className={`${panel} w-full p-5 text-left transition-colors hover:border-app-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent`}
     >
       {content}
     </button>
@@ -1525,7 +1525,7 @@ function IntegrationCards({
               <h2 className="text-sm font-semibold">{label(key)}</h2>
               <Badge status={value.status}>{label(value.status)}</Badge>
             </div>
-            <p className="text-xs leading-relaxed text-[#96A5BB]">{value.detail}</p>
+            <p className="text-xs leading-relaxed text-app-mist">{value.detail}</p>
           </article>
         ))}
     </div>
@@ -1957,7 +1957,7 @@ function CRMForm({
         )}
         {kind === "handoff" && (
           <>
-            <p className="text-sm text-[#96A5BB]">
+            <p className="text-sm text-app-mist">
               Confirm the lead as won first. Delivery receives the exact accepted scope and proposal
               version.
             </p>
@@ -1980,7 +1980,7 @@ function CRMForm({
         )}
         {kind === "message_schedule" && (
           <>
-            <p className="text-sm text-[#96A5BB]">
+            <p className="text-sm text-app-mist">
               This schedules a real provider send. Permission, quiet hours, frequency and template
               approval are rechecked when it runs.
             </p>
@@ -2012,7 +2012,7 @@ function CRMForm({
         )}
         {kind === "message" && (
           <>
-            <p className="text-sm leading-relaxed text-[#96A5BB]">
+            <p className="text-sm leading-relaxed text-app-mist">
               This saves an internal draft. Sending requires a connected official provider and
               permission checks.
             </p>
@@ -2054,7 +2054,7 @@ function CRMForm({
         )}
         {kind === "qualify" && (
           <>
-            <p className="text-sm leading-relaxed text-[#96A5BB]">
+            <p className="text-sm leading-relaxed text-app-mist">
               Enter a score from 0 to 100 for each known factor. Leave missing evidence blank;
               incomplete qualification stays Unknown.
             </p>
@@ -2132,7 +2132,7 @@ function CRMForm({
         )}
         {kind === "import" && (
           <>
-            <p className="text-sm leading-relaxed text-[#96A5BB]">
+            <p className="text-sm leading-relaxed text-app-mist">
               Paste CSV with name, company_name, email, phone columns. Preview checks format and
               duplicate contacts. No rows are saved until you confirm.
             </p>
@@ -2321,7 +2321,7 @@ function ProposalBuilder({
               className="space-y-3 rounded-xl border border-app-line bg-app-base p-4"
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-semibold text-[#8FAEDC]">Service {index + 1}</span>
+                <span className="text-xs font-semibold text-app-accent">Service {index + 1}</span>
                 {lines.length > 1 && (
                   <button
                     type="button"
@@ -2379,7 +2379,7 @@ function ProposalBuilder({
                 rows={2}
               />
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <label className="space-y-1 text-xs text-[#96A5BB]">
+                <label className="space-y-1 text-xs text-app-mist">
                   Quantity
                   <input
                     aria-label={`Quantity ${index + 1}`}
@@ -2392,7 +2392,7 @@ function ProposalBuilder({
                     onChange={(e) => edit(index, { quantity: e.target.value })}
                   />
                 </label>
-                <label className="space-y-1 text-xs text-[#96A5BB]">
+                <label className="space-y-1 text-xs text-app-mist">
                   Unit price ({currency})
                   <input
                     aria-label={`Unit price ${index + 1}`}
@@ -2409,7 +2409,7 @@ function ProposalBuilder({
                     }
                   />
                 </label>
-                <label className="space-y-1 text-xs text-[#96A5BB]">
+                <label className="space-y-1 text-xs text-app-mist">
                   Discount %
                   <input
                     aria-label={`Discount ${index + 1}`}
@@ -2426,7 +2426,7 @@ function ProposalBuilder({
                     }
                   />
                 </label>
-                <label className="space-y-1 text-xs text-[#96A5BB]">
+                <label className="space-y-1 text-xs text-app-mist">
                   Billing
                   <select
                     aria-label={`Billing ${index + 1}`}
@@ -2445,7 +2445,7 @@ function ProposalBuilder({
             </div>
           ))}
         </section>
-        <p className="text-xs leading-relaxed text-[#96A5BB]">
+        <p className="text-xs leading-relaxed text-app-mist">
           The server calculates exact discounts and taxes when saving. Review the saved preview
           before approval. Recurring charges are listed by period and are never silently added to
           one-time charges.
@@ -2468,11 +2468,11 @@ export function ProposalPreview({ proposal }: { proposal: CRMProposal }) {
   const data = proposal.snapshot;
   const brand = data.branding;
   return (
-    <article className="space-y-7 rounded-xl bg-[#F6F8FC] p-5 text-[#18243A] sm:p-9">
-      <header className="flex flex-wrap justify-between gap-4 border-b border-[#CBD5E6] pb-5">
+    <article className="space-y-7 rounded-xl bg-hi p-5 text-app-base sm:p-9">
+      <header className="flex flex-wrap justify-between gap-4 border-b border-app-accent-soft pb-5">
         <div>
           <p className="text-xl font-extrabold">{brand.agency_name || "Creo"}</p>
-          <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-[#53647E]">
+          <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-app-mist">
             {brand.address}
             <br />
             {brand.contact}
@@ -2480,7 +2480,7 @@ export function ProposalPreview({ proposal }: { proposal: CRMProposal }) {
             {brand.tax_id}
           </p>
         </div>
-        <div className="text-xs leading-relaxed text-[#53647E]">
+        <div className="text-xs leading-relaxed text-app-mist">
           <p>
             {proposal.number} · Version {proposal.version}
           </p>
@@ -2502,24 +2502,24 @@ export function ProposalPreview({ proposal }: { proposal: CRMProposal }) {
           text && (
             <section key={title}>
               <h3 className="mb-2 font-bold">{title}</h3>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#53647E]">{text}</p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-app-mist">{text}</p>
             </section>
           ),
       )}
       {Object.entries(data.totals).map(([billing, total]) => (
         <section key={billing}>
           <h3 className="mb-3 font-bold">{label(billing)} charges</h3>
-          <div className="divide-y divide-[#CBD5E6] border-y border-[#CBD5E6]">
+          <div className="divide-y divide-app-accent-soft border-y border-app-accent-soft">
             {data.items
               .filter((i) => i.billing === billing)
               .map((item, i) => (
                 <div key={i} className="flex items-start justify-between gap-4 py-3">
                   <div>
                     <p className="text-sm font-semibold">{item.title}</p>
-                    <p className="mt-1 whitespace-pre-wrap text-xs text-[#53647E]">
+                    <p className="mt-1 whitespace-pre-wrap text-xs text-app-mist">
                       {item.description}
                     </p>
-                    <p className="mt-1 text-xs text-[#53647E]">
+                    <p className="mt-1 text-xs text-app-mist">
                       {item.quantity} × {crmMoney(item.unit_price, proposal.currency)} ·{" "}
                       {item.discount_bps / 100}% discount
                     </p>
@@ -2530,7 +2530,7 @@ export function ProposalPreview({ proposal }: { proposal: CRMProposal }) {
                 </div>
               ))}
           </div>
-          <div className="ml-auto mt-3 max-w-xs space-y-1 text-xs text-[#53647E]">
+          <div className="ml-auto mt-3 max-w-xs space-y-1 text-xs text-app-mist">
             {[
               ["Subtotal", total.subtotal],
               ["Discount", total.discount],
@@ -2539,7 +2539,7 @@ export function ProposalPreview({ proposal }: { proposal: CRMProposal }) {
             ].map(([title, value]) => (
               <div className="flex justify-between gap-4" key={title}>
                 <span>{title}</span>
-                <span className={title === "Total" ? "text-base font-bold text-[#18243A]" : ""}>
+                <span className={title === "Total" ? "text-base font-bold text-app-base" : ""}>
                   {crmMoney(Number(value), proposal.currency)}
                 </span>
               </div>
@@ -2549,11 +2549,11 @@ export function ProposalPreview({ proposal }: { proposal: CRMProposal }) {
       ))}
       <section>
         <h3 className="mb-2 font-bold">Terms & acceptance</h3>
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#53647E]">
+        <p className="whitespace-pre-wrap text-sm leading-relaxed text-app-mist">
           {data.terms || "Terms to be agreed with the agency."}
         </p>
       </section>
-      <footer className="border-t border-[#CBD5E6] pt-4 text-xs text-[#53647E]">
+      <footer className="border-t border-app-accent-soft pt-4 text-xs text-app-mist">
         {brand.footer || "Confidential proposal. Prices apply to this version only."}
       </footer>
     </article>
@@ -2628,7 +2628,7 @@ function SettingsForm({
     <form onSubmit={submit} className={`${panel} space-y-5 p-5`}>
       <div>
         <h2 className="font-semibold">Agency letterhead & commercial policy</h2>
-        <p className="mt-1 text-xs text-[#96A5BB]">
+        <p className="mt-1 text-xs text-app-mist">
           New proposals snapshot this branding. Existing versions retain their issued details.
         </p>
       </div>
@@ -2772,7 +2772,7 @@ function CRMTeamSettings() {
           {accountNotice}
         </p>
       )}
-      <p className="text-xs text-[#96A5BB]">
+      <p className="text-xs text-app-mist">
         Uses Creo staff reporting lines. Only the selected head can see the BDE's assigned CRM
         records.
       </p>
@@ -2808,9 +2808,9 @@ function CRMTeamSettings() {
         {query.data?.map((p) => (
           <div key={p.id} className="flex justify-between gap-3 py-3 text-xs">
             <span>
-              {p.name} <span className="text-[#8292AB]">· {label(p.role)}</span>
+              {p.name} <span className="text-app-mist">· {label(p.role)}</span>
             </span>
-            <span className="text-[#96A5BB]">
+            <span className="text-app-mist">
               {query.data.find((h) => h.id === p.head_id)?.name || "No reporting head"}
             </span>
           </div>
@@ -2841,7 +2841,7 @@ function HandoffList({ timezone }: { timezone: string }) {
     <section className={panel}>
       <header className="border-b border-app-line p-5">
         <h2 className="font-semibold">Sales to delivery</h2>
-        <p className="mt-1 text-xs text-[#96A5BB]">
+        <p className="mt-1 text-xs text-app-mist">
           Create a handoff from an accepted proposal after confirming the deal as won.
         </p>
       </header>
@@ -2863,7 +2863,7 @@ function HandoffList({ timezone }: { timezone: string }) {
               <h3 className="font-semibold">{h.snapshot.lead.company}</h3>
               <Badge status={h.status}>{h.status}</Badge>
             </div>
-            <p className="text-xs text-[#96A5BB]">
+            <p className="text-xs text-app-mist">
               {h.snapshot.proposal.number} / v{h.snapshot.proposal.version} -{" "}
               {crmDate(h.created_at, timezone)}
             </p>
@@ -2948,13 +2948,13 @@ function DiscoveryPanel({
     <section className={`${panel} space-y-4 p-5`}>
       <div>
         <h2 className="font-semibold">Licensed lead finder</h2>
-        <p className="mt-1 text-xs leading-relaxed text-[#96A5BB]">
+        <p className="mt-1 text-xs leading-relaxed text-app-mist">
           Search an agency-authorized provider, verify source evidence, then review each import.
           Missing contacts stay unknown.
         </p>
       </div>
       {!configured && (
-        <p className="rounded-xl bg-app-base p-4 text-sm text-[#96A5BB]">
+        <p className="rounded-xl bg-app-base p-4 text-sm text-app-mist">
           A licensed provider must be connected by the agency administrator before discovery is
           available.
         </p>
@@ -2989,14 +2989,14 @@ function DiscoveryPanel({
             className="space-y-3 rounded-xl border border-app-line bg-app-base p-4"
           >
             <h3 className="font-semibold">{r.company_name}</h3>
-            <p className="text-xs text-[#96A5BB]">
+            <p className="text-xs text-app-mist">
               {r.industry} - {r.location}
             </p>
-            <p className="text-xs text-[#8292AB]">
+            <p className="text-xs text-app-mist">
               {r.provider} -{" "}
               {r.contact_verified ? "Provider-verified contact" : "Contact verification unknown"}
             </p>
-            <p className="text-xs text-[#96A5BB]">
+            <p className="text-xs text-app-mist">
               {r.phone || "Phone unknown"} - {r.email || "Email unknown"}
             </p>
             <button
@@ -3037,7 +3037,7 @@ function DiscoveryPanel({
             values={values}
             setValues={setValues}
           />
-          <p className="text-xs text-[#96A5BB]">
+          <p className="text-xs text-app-mist">
             This does not opt the contact into WhatsApp or email. Review the provider's storage
             rights and your agency's outreach permissions.
           </p>

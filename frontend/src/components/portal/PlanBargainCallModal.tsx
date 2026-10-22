@@ -299,7 +299,7 @@ export function PlanBargainCallModal({
                 href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors shadow-sm shrink-0"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-app-on-accent! text-xs font-bold transition-colors shadow-sm shrink-0"
               >
                 <span>Call Now</span>
                 <ArrowUpRight className="size-3" />

@@ -304,7 +304,7 @@ export function NotificationMenu({ placement = "header" }: { placement?: "header
                           <div className="flex items-center gap-1.5 shrink-0">
                             {!item.is_read && (
                               <>
-                                <span className="w-2 h-2 rounded-full bg-app-accent" />
+                                <span className="w-2 h-2 rounded-full bg-app-accent text-app-on-accent!" />
                                 <button
                                   type="button"
                                   title="Mark as read"

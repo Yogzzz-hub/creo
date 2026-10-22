@@ -139,7 +139,7 @@ export function CreoTopNavbar() {
               to="/portal"
               className={`transition-all px-4 py-2 text-[13px] font-semibold rounded-full ${
                 location.pathname === "/portal" || location.pathname === "/portal/"
-                  ? "bg-app-accent-soft text-app-base font-bold shadow-[0_2px_10px_rgba(188,204,230,0.25)]"
+                  ? "bg-app-accent-soft text-app-base font-bold shadow-[0_2px_10px_color-mix(in_oklab,var(--app-accent-soft)_25%,transparent)]"
                   : "text-app-mist hover:text-white hover:bg-app-surface hover:-translate-y-0.5 active:translate-y-0 transition-all"
               }`}
             >
@@ -149,7 +149,7 @@ export function CreoTopNavbar() {
               to="/portal/payments"
               className={`transition-all px-4 py-2 text-[13px] font-semibold rounded-full ${
                 location.pathname.includes("/payments")
-                  ? "bg-app-accent-soft text-app-base font-bold shadow-[0_2px_10px_rgba(188,204,230,0.25)]"
+                  ? "bg-app-accent-soft text-app-base font-bold shadow-[0_2px_10px_color-mix(in_oklab,var(--app-accent-soft)_25%,transparent)]"
                   : "text-app-mist hover:text-white hover:bg-app-surface hover:-translate-y-0.5 active:translate-y-0 transition-all"
               }`}
             >
@@ -165,7 +165,7 @@ export function CreoTopNavbar() {
               to="/portal/calendar"
               className={`transition-all px-4 py-2 text-[13px] font-semibold rounded-full ${
                 location.pathname.includes("/calendar")
-                  ? "bg-app-accent-soft text-app-base font-bold shadow-[0_2px_10px_rgba(188,204,230,0.25)]"
+                  ? "bg-app-accent-soft text-app-base font-bold shadow-[0_2px_10px_color-mix(in_oklab,var(--app-accent-soft)_25%,transparent)]"
                   : "text-app-mist hover:text-white hover:bg-app-surface hover:-translate-y-0.5 active:translate-y-0 transition-all"
               }`}
             >
@@ -175,7 +175,7 @@ export function CreoTopNavbar() {
               to="/portal/deliverables"
               className={`transition-all px-4 py-2 text-[13px] font-semibold rounded-full ${
                 location.pathname.includes("/deliverables")
-                  ? "bg-app-accent-soft text-app-base font-bold shadow-[0_2px_10px_rgba(188,204,230,0.25)]"
+                  ? "bg-app-accent-soft text-app-base font-bold shadow-[0_2px_10px_color-mix(in_oklab,var(--app-accent-soft)_25%,transparent)]"
                   : "text-app-mist hover:text-white hover:bg-app-surface hover:-translate-y-0.5 active:translate-y-0 transition-all"
               }`}
             >
@@ -185,7 +185,7 @@ export function CreoTopNavbar() {
               to="/portal/support"
               className={`transition-all px-4 py-2 text-[13px] font-semibold rounded-full ${
                 location.pathname.includes("/support")
-                  ? "bg-app-accent-soft text-app-base font-bold shadow-[0_2px_10px_rgba(188,204,230,0.25)]"
+                  ? "bg-app-accent-soft text-app-base font-bold shadow-[0_2px_10px_color-mix(in_oklab,var(--app-accent-soft)_25%,transparent)]"
                   : "text-app-mist hover:text-white hover:bg-app-surface hover:-translate-y-0.5 active:translate-y-0 transition-all"
               }`}
             >

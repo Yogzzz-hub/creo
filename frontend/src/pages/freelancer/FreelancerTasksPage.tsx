@@ -325,7 +325,7 @@ export function FreelancerTasksPage() {
               onClick={() => setFilterStatus(tab.key)}
               className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center flex items-center justify-center gap-2 ${
                 filterStatus === tab.key
-                  ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
+                  ? "bg-purple-600 text-app-on-accent! shadow-md shadow-purple-500/20"
                   : "text-app-mist hover:text-hi hover:bg-app-base"
               }`}
             >
@@ -420,7 +420,7 @@ export function FreelancerTasksPage() {
                             href={footageUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-blue-900/40 via-[#13233c] to-indigo-900/30 border border-blue-500/40 hover:border-blue-400 text-hi transition-all group shadow-md gap-2.5"
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-blue-900/40 via-app-surface to-indigo-900/30 border border-blue-500/40 hover:border-blue-400 text-hi transition-all group shadow-md gap-2.5"
                           >
                             <div className="flex items-start sm:items-center gap-2.5 min-w-0">
                               <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform mt-0.5 sm:mt-0">
@@ -440,7 +440,7 @@ export function FreelancerTasksPage() {
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shrink-0 shadow-sm w-full sm:w-auto">
+                            <div className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-app-on-accent! text-xs font-bold transition-all shrink-0 shadow-sm w-full sm:w-auto">
                               <span>Open Drive</span>
                               <ExternalLink className="w-3.5 h-3.5" />
                             </div>
@@ -516,7 +516,7 @@ export function FreelancerTasksPage() {
                           const versionNum = latest?.version || 1;
 
                           return (
-                            <div className="p-3 sm:p-3.5 bg-gradient-to-r from-blue-900/30 via-[#101b2e] to-purple-900/20 border border-blue-500/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                            <div className="p-3 sm:p-3.5 bg-gradient-to-r from-blue-900/30 via-app-surface to-purple-900/20 border border-blue-500/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
                               <div className="flex items-start sm:items-center gap-2.5 min-w-0">
                                 <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
                                   <CheckCircle2 className="w-4 h-4 text-blue-400" />
@@ -570,7 +570,7 @@ export function FreelancerTasksPage() {
                         type="button"
                         disabled={startingTaskId === task.id}
                         onClick={() => handleStartWork(task)}
-                        className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md flex items-center gap-1 cursor-pointer transition-all disabled:opacity-50"
+                        className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-app-on-accent! text-xs font-bold shadow-md flex items-center gap-1 cursor-pointer transition-all disabled:opacity-50"
                       >
                         <Play className="w-3.5 h-3.5" />
                         {startingTaskId === task.id ? "Starting..." : "Start Working"}
@@ -610,7 +610,7 @@ export function FreelancerTasksPage() {
                           setSubmissionNotes("");
                           setSubmitError(null);
                         }}
-                        className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
+                        className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-app-on-accent! text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
                       >
                         <UploadCloud className="w-3.5 h-3.5" />
                         {normStatus === "revision" ? "Submit Revision" : "Upload Content & Submit"}
@@ -654,7 +654,7 @@ export function FreelancerTasksPage() {
                 onClick={() => setSubmissionMode("file")}
                 className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   submissionMode === "file"
-                    ? "bg-purple-600 text-white shadow-md"
+                    ? "bg-purple-600 text-app-on-accent! shadow-md"
                     : "text-app-mist hover:text-hi"
                 }`}
               >
@@ -665,7 +665,7 @@ export function FreelancerTasksPage() {
                 onClick={() => setSubmissionMode("link")}
                 className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   submissionMode === "link"
-                    ? "bg-purple-600 text-white shadow-md"
+                    ? "bg-purple-600 text-app-on-accent! shadow-md"
                     : "text-app-mist hover:text-hi"
                 }`}
               >
@@ -795,7 +795,7 @@ export function FreelancerTasksPage() {
                 <button
                   type="submit"
                   disabled={submitBusy}
-                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 font-bold text-white shadow-md flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 font-bold text-app-on-accent! shadow-md flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5" />
                   {submitBusy ? "Uploading & Submitting..." : "Submit to Admin for Review & Publishing"}

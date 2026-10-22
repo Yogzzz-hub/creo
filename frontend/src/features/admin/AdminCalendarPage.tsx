@@ -481,7 +481,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               if (clientRoster.length > 0 && clientRoster[0]?.client_id) setNewClient(clientRoster[0].client_id);
               setIsScheduleOpen(true);
             }}
-            className="w-full sm:w-auto justify-center min-h-10 sm:min-h-9 px-2.5 sm:px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 sm:gap-1.5 transition-all shadow-md cursor-pointer hover:shadow-blue-500/20 active:scale-95 text-center"
+            className="w-full sm:w-auto justify-center min-h-10 sm:min-h-9 px-2.5 sm:px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-app-on-accent! text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 sm:gap-1.5 transition-all shadow-md cursor-pointer hover:shadow-blue-500/20 active:scale-95 text-center"
           >
             <Plus size={14} strokeWidth={2.5} className="shrink-0" />
             <span className="truncate sm:whitespace-nowrap">Schedule Publication</span>
@@ -552,7 +552,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             onClick={() => setFormatFilter(formatFilter === "reel" ? "all" : "reel")}
             className={`w-full py-2 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer truncate ${
               formatFilter === "reel"
-                ? "bg-purple-600 text-white shadow-xs"
+                ? "bg-purple-600 text-app-on-accent! shadow-xs"
                 : "bg-purple-500/10 text-purple-300 hover:text-hi border border-purple-500/20"
             }`}
           >
@@ -565,7 +565,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             onClick={() => setFormatFilter(formatFilter === "poster" ? "all" : "poster")}
             className={`w-full py-2 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer truncate ${
               formatFilter === "poster"
-                ? "bg-blue-600 text-white shadow-xs"
+                ? "bg-blue-600 text-app-on-accent! shadow-xs"
                 : "bg-blue-500/10 text-app-accent hover:text-hi border border-blue-500/20"
             }`}
           >
@@ -578,7 +578,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             onClick={() => setFormatFilter(formatFilter === "story" ? "all" : "story")}
             className={`w-full py-2 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer truncate ${
               formatFilter === "story"
-                ? "bg-amber-600 text-white shadow-xs"
+                ? "bg-amber-600 text-app-on-warm! shadow-xs"
                 : "bg-amber-500/10 text-amber-300 hover:text-hi border border-amber-500/20"
             }`}
           >
@@ -670,7 +670,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               onClick={() => setCalendarView("month")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 calendarView === "month"
-                  ? "bg-blue-600 text-white shadow-xs"
+                  ? "bg-blue-600 text-app-on-accent! shadow-xs"
                   : "text-app-mist hover:text-hi"
               }`}
             >
@@ -682,7 +682,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               onClick={() => setCalendarView("week")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 calendarView === "week"
-                  ? "bg-blue-600 text-white shadow-xs"
+                  ? "bg-blue-600 text-app-on-accent! shadow-xs"
                   : "text-app-mist hover:text-hi"
               }`}
             >
@@ -694,7 +694,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               onClick={() => setCalendarView("agenda")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 calendarView === "agenda"
-                  ? "bg-blue-600 text-white shadow-xs"
+                  ? "bg-blue-600 text-app-on-accent! shadow-xs"
                   : "text-app-mist hover:text-hi"
               }`}
             >
@@ -909,7 +909,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
               </div>
 
               {/* Scrollable Events List in Fixed Container */}
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin scrollbar-thumb-app-line hover:scrollbar-thumb-[#7FA0D6]/40">
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin scrollbar-thumb-app-line hover:scrollbar-thumb-app-accent/40">
                 {selectedDayEvents.length === 0 ? (
                   <div className="flex flex-col items-center justify-center min-h-[220px] p-6 text-app-mist text-xs sm:text-sm font-bold bg-app-base/60 rounded-2xl border-2 border-dashed border-app-line text-center">
                     <CalendarIcon className="size-7 text-app-line mb-2.5" />
@@ -923,7 +923,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                           setNewDate(`${year}-${mm}-${dd}`);
                           setIsScheduleOpen(true);
                         }}
-                        className="mt-3 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer"
+                        className="mt-3 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-app-on-accent! text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer"
                       >
                         <Plus size={13} /> Schedule for Day {selectedDay}
                       </button>
@@ -982,7 +982,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                         {/* Client info & Actions */}
                         <div className="flex flex-wrap items-center justify-between gap-1.5 pt-2 border-t border-app-line/60 mt-0.5">
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <div className="size-5 sm:size-6 rounded-full flex items-center justify-center text-[8.5px] sm:text-[9px] font-black text-white bg-blue-600 shrink-0">
+                            <div className="size-5 sm:size-6 rounded-full flex items-center justify-center text-[8.5px] sm:text-[9px] font-black text-app-on-accent! bg-blue-600 shrink-0">
                               {event.client_name.substring(0, 2).toUpperCase()}
                             </div>
                             <span className="text-[10px] sm:text-[11px] font-bold text-slate-300 truncate max-w-[130px] sm:max-w-[180px]">
@@ -1000,7 +1000,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                                     approveAndPublishMutation.mutate({ id: event.id, publish_now: true });
                                   }}
                                   disabled={approveAndPublishMutation.isPending}
-                                  className="px-2 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-xs transition-all cursor-pointer inline-flex items-center gap-1"
+                                  className="px-2 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-app-on-accent! shadow-xs transition-all cursor-pointer inline-flex items-center gap-1"
                                   title="Approve deliverable and publish to Instagram/Queue"
                                 >
                                   <Sparkles size={10} className="text-amber-300" />
@@ -1096,7 +1096,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                     }}
                     className={`flex flex-col items-center justify-center p-2 sm:p-3 rounded-xl sm:rounded-2xl border-2 transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-blue-600 text-white border-blue-400 shadow-md shadow-blue-500/25 scale-[1.03]"
+                        ? "bg-blue-600 text-app-on-accent! border-blue-400 shadow-md shadow-blue-500/25 scale-[1.03]"
                         : isToday
                         ? "bg-app-base border-app-accent text-hi"
                         : "bg-app-base/60 hover:bg-app-base border-app-line text-slate-300"
@@ -1237,7 +1237,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                     <button
                       type="button"
                       onClick={() => setIsScheduleOpen(true)}
-                      className="mt-3 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer"
+                      className="mt-3 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-app-on-accent! text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer"
                     >
                       <Plus size={14} /> Schedule New Publication
                     </button>
@@ -1505,7 +1505,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                 <button
                   type="submit"
                   disabled={createEventMutation.isPending}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-app-on-accent! text-xs font-bold transition-all shadow-md inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {createEventMutation.isPending && <RefreshCw size={13} className="animate-spin" />}
                   Schedule Event
@@ -1647,7 +1647,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                   <button
                     onClick={() => approveAndPublishMutation.mutate({ id: inspectEvent.id, publish_now: true })}
                     disabled={approveAndPublishMutation.isPending || inspectEvent.status === "published"}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-black inline-flex items-center gap-1.5 transition-all shadow-md shadow-purple-500/25 cursor-pointer disabled:opacity-40"
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-app-on-accent! font-black inline-flex items-center gap-1.5 transition-all shadow-md shadow-purple-500/25 cursor-pointer disabled:opacity-40"
                   >
                     <Sparkles size={14} className="text-amber-300" />
                     {approveAndPublishMutation.isPending ? "Publishing..." : "Approve & Publish Now"}
@@ -1656,7 +1656,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                   <button
                     onClick={() => approveAndPublishMutation.mutate({ id: inspectEvent.id, publish_now: false })}
                     disabled={approveAndPublishMutation.isPending || inspectEvent.status === "approved" || inspectEvent.status === "published"}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-40"
+                    className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-app-on-accent! font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-40"
                   >
                     <CheckCircle2 size={13} /> Approve Deliverable
                   </button>
@@ -1664,7 +1664,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
                   <button
                     onClick={() => updateEventMutation.mutate({ id: inspectEvent.id, status: "scheduled" })}
                     disabled={updateEventMutation.isPending || inspectEvent.status === "scheduled"}
-                    className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-40"
+                    className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-app-on-accent! font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-40"
                   >
                     <Clock size={13} /> Set Scheduled
                   </button>

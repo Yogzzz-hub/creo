@@ -144,7 +144,7 @@ export function PodDeliverablesReviewPage() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 bg-app-surface p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-app-line/80 shrink-0">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-app-accent animate-pulse" />
+              <span className="size-2 rounded-full bg-app-accent animate-pulse text-app-on-accent!" />
               <span className="text-xs font-black text-hi">{podName} · Lead QA</span>
             </div>
 
@@ -361,7 +361,7 @@ export function PodDeliverablesReviewPage() {
                       onClick={() => qaMutation.mutate({ deliverableId: deliverable.id, approve: true, notes: feedbackNote.trim() })}
                       disabled={qaMutation.isPending || !allChecked}
                       title={allChecked ? undefined : "Complete the checklist to approve"}
-                      className="px-6 py-2.5 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-6 py-2.5 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {qaMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
                       Approve & send to client

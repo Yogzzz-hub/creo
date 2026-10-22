@@ -206,7 +206,7 @@ export function FreelancerLeavePage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="lg:col-span-5 bg-app-surface border-2 border-app-accent rounded-2xl p-4 sm:p-6 shadow-[0_0_20px_rgba(127,160,214,0.22)] hover:shadow-[0_0_30px_rgba(127,160,214,0.35)] transition-all flex flex-col justify-between"
+            className="lg:col-span-5 bg-app-surface border-2 border-app-accent rounded-2xl p-4 sm:p-6 shadow-[0_0_20px_color-mix(in_oklab,var(--app-accent)_22%,transparent)] hover:shadow-[0_0_30px_color-mix(in_oklab,var(--app-accent)_35%,transparent)] transition-all flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center gap-2.5 pb-4 border-b border-app-line">
@@ -307,7 +307,7 @@ export function FreelancerLeavePage() {
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     placeholder="E.g., will deliver all active drafts before departure; emergency contact if necessary..."
-                    className="w-full bg-app-base border border-app-line focus:border-app-accent rounded-xl p-3 text-xs text-hi placeholder:text-[#97A0B3]/50 outline-none transition-colors"
+                    className="w-full bg-app-base border border-app-line focus:border-app-accent rounded-xl p-3 text-xs text-hi placeholder:text-app-mist/50 outline-none transition-colors"
                   />
                 </div>
 
@@ -328,7 +328,7 @@ export function FreelancerLeavePage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="lg:col-span-7 bg-app-surface border-2 border-app-accent rounded-2xl p-4 sm:p-6 shadow-[0_0_20px_rgba(127,160,214,0.22)] hover:shadow-[0_0_30px_rgba(127,160,214,0.35)] transition-all flex flex-col"
+            className="lg:col-span-7 bg-app-surface border-2 border-app-accent rounded-2xl p-4 sm:p-6 shadow-[0_0_20px_color-mix(in_oklab,var(--app-accent)_22%,transparent)] hover:shadow-[0_0_30px_color-mix(in_oklab,var(--app-accent)_35%,transparent)] transition-all flex flex-col"
           >
             <div className="flex items-center justify-between pb-4 border-b border-app-line">
               <div className="flex items-center gap-2.5">
@@ -349,9 +349,9 @@ export function FreelancerLeavePage() {
 
               {!leavesQuery.isPending && myLeaves.length === 0 && (
                 <div className="py-16 text-center border border-dashed border-app-line rounded-2xl space-y-2">
-                  <CalendarCheck2 className="w-8 h-8 text-[#97A0B3]/40 mx-auto" />
+                  <CalendarCheck2 className="w-8 h-8 text-app-mist/40 mx-auto" />
                   <p className="text-xs font-bold text-app-mist">No blackout dates scheduled.</p>
-                  <p className="text-[11px] text-[#97A0B3]/60">You are currently marked as available for projects.</p>
+                  <p className="text-[11px] text-app-mist/60">You are currently marked as available for projects.</p>
                 </div>
               )}
 

@@ -341,7 +341,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0 ${
                   t.status === "resolved"
                     ? "bg-app-base hover:bg-app-line border border-app-line text-app-mist hover:text-hi"
-                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20"
+                    : "bg-blue-600 hover:bg-blue-700 text-app-on-accent! shadow-blue-500/20"
                 }`}
               >
                 {t.status === "resolved" ? (
@@ -431,7 +431,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
                 type="button"
                 onClick={() => setAlertModal(null)}
                 autoFocus
-                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-app-on-accent! font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
               >
                 OK
               </button>

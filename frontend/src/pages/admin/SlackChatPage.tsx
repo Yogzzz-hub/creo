@@ -156,7 +156,7 @@ const SEED_WORKSPACE_MESSAGES: Record<string, ChatMessage[]> = {
       sender: "Creo Super Admin",
       role: "Super Admin",
       avatar: "SA",
-      avatarBg: "bg-amber-500",
+      avatarBg: "bg-amber-500 text-app-on-warm!",
       content: "👑 Leadership Council Hub: All Pod Leads please sync daily sprint velocity, member capacities, and client escalations here.",
       timestamp: "08:45 AM",
       reactions: [{ emoji: "🚀", count: 3, users: ["Lead"] }],
@@ -166,7 +166,7 @@ const SEED_WORKSPACE_MESSAGES: Record<string, ChatMessage[]> = {
       sender: "Sarah Connor (Lead - Pod B)",
       role: "Team Lead & Account Director",
       avatar: "SC",
-      avatarBg: "bg-app-accent",
+      avatarBg: "bg-app-accent text-app-on-accent!",
       content: "Pod Beta capacity report: 6 approved reel cuts in final color grade for client review by 3 PM.",
       timestamp: "09:05 AM",
       reactions: [{ emoji: "✅", count: 2, users: ["Admin"] }],
@@ -178,7 +178,7 @@ const SEED_WORKSPACE_MESSAGES: Record<string, ChatMessage[]> = {
       sender: "Sarah Connor (Lead - Pod B)",
       role: "Team Lead & Account Director",
       avatar: "SC",
-      avatarBg: "bg-app-accent",
+      avatarBg: "bg-app-accent text-app-on-accent!",
       content: "⚡ Pod Beta Standup: @David Kim focusing on 4K reel grading, @Elena Rostova finishing carousel slides. Admin is monitoring priority handoffs.",
       timestamp: "09:15 AM",
       reactions: [{ emoji: "🔥", count: 4, users: ["Team"] }],
@@ -188,7 +188,7 @@ const SEED_WORKSPACE_MESSAGES: Record<string, ChatMessage[]> = {
       sender: "David Kim (Editor - Pod B)",
       role: "Lead Video Editor",
       avatar: "DK",
-      avatarBg: "bg-app-accent",
+      avatarBg: "bg-app-accent text-app-on-accent!",
       content: "Sound design and kinetic subtitles rendered. Uploading master package now.",
       timestamp: "09:40 AM",
       reactions: [{ emoji: "👍", count: 2, users: ["Sarah Connor"] }],
@@ -200,7 +200,7 @@ const SEED_WORKSPACE_MESSAGES: Record<string, ChatMessage[]> = {
       sender: "Alex Rivera (Lead - Pod A)",
       role: "Team Lead & Account Director",
       avatar: "AR",
-      avatarBg: "bg-app-accent",
+      avatarBg: "bg-app-accent text-app-on-accent!",
       content: "Pod Alpha standup: Identity guidelines & typography tokens locked for enterprise client.",
       timestamp: "09:20 AM",
       reactions: [{ emoji: "✨", count: 2, users: ["Admin"] }],
@@ -212,7 +212,7 @@ const SEED_WORKSPACE_MESSAGES: Record<string, ChatMessage[]> = {
       sender: "Marcus Vance (Lead - Pod C)",
       role: "Team Lead & Account Director",
       avatar: "MV",
-      avatarBg: "bg-app-accent",
+      avatarBg: "bg-app-accent text-app-on-accent!",
       content: "Pod Gamma standup: 3D Blender sequences and octane lighting passes running on render farm.",
       timestamp: "09:30 AM",
       reactions: [{ emoji: "🎬", count: 3, users: ["Admin"] }],
@@ -224,7 +224,7 @@ const SEED_WORKSPACE_MESSAGES: Record<string, ChatMessage[]> = {
       sender: "Sarah Connor (Lead - Pod B)",
       role: "Pod Lead",
       avatar: "SC",
-      avatarBg: "bg-app-accent",
+      avatarBg: "bg-app-accent text-app-on-accent!",
       content: "👋 Good morning team! Standup update: All active client sprint deliverables are on track for today's review.",
       timestamp: "09:00 AM",
       reactions: [
@@ -237,7 +237,7 @@ const SEED_WORKSPACE_MESSAGES: Record<string, ChatMessage[]> = {
       sender: "Creo Super Admin",
       role: "Super Admin",
       avatar: "SA",
-      avatarBg: "bg-amber-500",
+      avatarBg: "bg-amber-500 text-app-on-warm!",
       content: "📢 Retainer & milestone review checkpoints are now active. Drop any priority requests directly in the channel or DM.",
       timestamp: "09:30 AM",
       reactions: [{ emoji: "✅", count: 4, users: ["Team Lead"] }],
@@ -250,7 +250,7 @@ const SEED_WORKSPACE_MESSAGES: Record<string, ChatMessage[]> = {
       sender: "Creo Super Admin",
       role: "Super Admin",
       avatar: "SA",
-      avatarBg: "bg-amber-500",
+      avatarBg: "bg-amber-500 text-app-on-warm!",
       content: "💼 BDE Growth & Pipeline Command: Welcome BDE sales specialists! Use this channel to coordinate high-value client deals, custom retainers, and cross-rep sales coverage.",
       timestamp: "09:00 AM",
       reactions: [{ emoji: "🚀", count: 3, users: ["Admin"] }],
@@ -923,7 +923,7 @@ export function SlackChatPage() {
           sender: senderName,
           role: senderRole,
           avatar: (senderName || "U").slice(0, 2).toUpperCase(),
-          avatarBg: isSelf ? "bg-app-accent" : (activeMode === "dm" && activeContact?.is_super_admin ? "bg-amber-500" : "bg-[#64748B]"),
+          avatarBg: isSelf ? "bg-app-accent text-app-on-accent!" : (activeMode === "dm" && activeContact?.is_super_admin ? "bg-amber-500 text-app-on-warm!" : "bg-app-line"),
           content: m.message,
           timestamp: m.created_at
             ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -1171,7 +1171,7 @@ export function SlackChatPage() {
           sender: currentPersona,
           role: isClient ? (user?.company_name || "Client") : "Specialist",
           avatar: currentPersona.slice(0, 2).toUpperCase(),
-          avatarBg: "bg-app-accent",
+          avatarBg: "bg-app-accent text-app-on-accent!",
           content: text || (fileToUpload?.name || "Attachment"),
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           attachment: fileToUpload ? {
@@ -1207,7 +1207,7 @@ export function SlackChatPage() {
           sender: currentPersona,
           role: isClient ? (user?.company_name || "Client") : "Specialist",
           avatar: currentPersona.slice(0, 2).toUpperCase(),
-          avatarBg: "bg-app-accent",
+          avatarBg: "bg-app-accent text-app-on-accent!",
           content: text || (fileToUpload?.name || "Attachment"),
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           attachment: fileToUpload ? {
@@ -1349,7 +1349,7 @@ export function SlackChatPage() {
                 <button
                   type="button"
                   onClick={openCreateGroupModal}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-app-accent hover:bg-[#688EC7] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer active:scale-95"
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-app-accent hover:bg-app-accent text-app-on-accent! text-xs font-semibold shadow-xs transition-all cursor-pointer active:scale-95"
                   title="Create Group (Team Leads & Admins only)"
                 >
                   <Plus className="size-3.5 stroke-[2.5]" />
@@ -1358,7 +1358,7 @@ export function SlackChatPage() {
               )}
 
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-app-accent/15 text-app-accent border border-app-accent/30 flex items-center gap-1">
-                <span className="size-1.5 rounded-full bg-app-accent animate-pulse" />
+                <span className="size-1.5 rounded-full bg-app-accent animate-pulse text-app-on-accent!" />
                 Live
               </span>
             </div>
@@ -1394,7 +1394,7 @@ export function SlackChatPage() {
                 onClick={() => setChatFilter("all")}
                 className={`px-3 py-1 rounded-xl text-[11px] font-medium transition-colors cursor-pointer shrink-0 ${
                   chatFilter === "all"
-                    ? "bg-app-accent text-white font-bold shadow-xs"
+                    ? "bg-app-accent text-app-on-accent! font-bold shadow-xs"
                     : "bg-app-base text-app-mist hover:text-hi border border-app-line"
                 }`}
               >
@@ -1406,7 +1406,7 @@ export function SlackChatPage() {
                   onClick={() => setChatFilter("pods")}
                   className={`px-3 py-1 rounded-xl text-[11px] font-medium transition-colors cursor-pointer shrink-0 ${
                     chatFilter === "pods"
-                      ? "bg-app-accent text-white font-bold shadow-xs"
+                      ? "bg-app-accent text-app-on-accent! font-bold shadow-xs"
                       : "bg-app-base text-app-mist hover:text-hi border border-app-line"
                   }`}
                 >
@@ -1418,7 +1418,7 @@ export function SlackChatPage() {
                 onClick={() => setChatFilter("dms")}
                 className={`px-3 py-1 rounded-xl text-[11px] font-medium transition-colors cursor-pointer shrink-0 ${
                   chatFilter === "dms"
-                    ? "bg-app-accent text-white font-bold shadow-xs"
+                    ? "bg-app-accent text-app-on-accent! font-bold shadow-xs"
                     : "bg-app-base text-app-mist hover:text-hi border border-app-line"
                 }`}
               >
@@ -1467,15 +1467,15 @@ export function SlackChatPage() {
                   key={channel.id}
                   onClick={() => handleSelectChat("channel", channel.id)}
                   className={`px-3.5 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
-                    isSelected ? "bg-app-accent/15 border-l-2 border-app-accent" : "hover:bg-[#1E293B]/40"
+                    isSelected ? "bg-app-accent/15 border-l-2 border-app-accent" : "hover:bg-app-line-soft/40"
                   }`}
                 >
                   <div className="relative shrink-0">
-                    <div className="size-11 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center text-white font-bold shadow-sm">
+                    <div className="size-11 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center text-app-on-accent! font-bold shadow-sm">
                       <Hash className="size-5" />
                     </div>
                     {(channel.isPodChannel || channel.is_pod_channel) && (
-                      <span className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full bg-app-accent border-2 border-app-surface flex items-center justify-center text-[8px] font-black text-white">
+                      <span className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full bg-app-accent border-2 border-app-surface flex items-center justify-center text-[8px] font-black text-app-on-accent!">
                         P
                       </span>
                     )}
@@ -1521,7 +1521,7 @@ export function SlackChatPage() {
                   key={contact.id}
                   onClick={() => handleSelectChat("dm", contact.id)}
                   className={`px-3.5 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
-                    isSelected ? "bg-app-accent/15 border-l-2 border-app-accent" : "hover:bg-[#1E293B]/40"
+                    isSelected ? "bg-app-accent/15 border-l-2 border-app-accent" : "hover:bg-app-line-soft/40"
                   }`}
                 >
                   <div className="relative shrink-0">
@@ -1534,7 +1534,7 @@ export function SlackChatPage() {
                     >
                       {isSA ? <Crown className="size-5" /> : initials}
                     </div>
-                    <span className="absolute bottom-0 right-0 size-3 rounded-full bg-emerald-400 border-2 border-app-surface" />
+                    <span className="absolute bottom-0 right-0 size-3 rounded-full bg-emerald-400 border-2 border-app-surface text-app-on-accent!" />
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -1578,7 +1578,7 @@ export function SlackChatPage() {
               <Shield className="size-3.5 text-app-accent" />
               Creo Ops Network Active
             </span>
-            <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="size-2 rounded-full bg-emerald-400 animate-pulse text-app-on-accent!" />
           </div>
         </aside>
 
@@ -1590,7 +1590,7 @@ export function SlackChatPage() {
             mobileView === "chat" ? "flex w-full" : "hidden md:flex"
           } flex-1 min-w-0 flex-col overflow-hidden h-full max-h-full min-h-0 relative bg-app-base`}
           style={{
-            backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(color-mix(in oklab, var(--hi) 4%, transparent) 1px, transparent 1px)",
             backgroundSize: "20px 20px",
           }}
         >
@@ -1610,7 +1610,7 @@ export function SlackChatPage() {
 
               {activeMode === "channel" ? (
                 <>
-                  <div className="size-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center text-white font-bold shadow-sm shrink-0">
+                  <div className="size-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center text-app-on-accent! font-bold shadow-sm shrink-0">
                     <Hash className="size-5" />
                   </div>
                   <div className="min-w-0">
@@ -1649,7 +1649,7 @@ export function SlackChatPage() {
                       )}
                     </div>
                     <p className="text-[11px] text-emerald-400 font-medium truncate mt-0.5 flex items-center gap-1.5">
-                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse text-app-on-accent!" />
                       <span>Online</span>
                       <span className="text-app-mist">•</span>
                       <span className="text-app-mist truncate">
@@ -1664,7 +1664,7 @@ export function SlackChatPage() {
             {/* Clean Status Badge - Call Buttons Removed Per Request */}
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
-                <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse text-app-on-accent!" />
                 <span>Active</span>
               </span>
             </div>
@@ -1709,7 +1709,7 @@ export function SlackChatPage() {
                       <div
                         className={`relative px-3.5 py-2 max-w-[85%] sm:max-w-[70%] md:max-w-[65%] shadow-md text-xs sm:text-sm leading-relaxed transition-all select-text ${
                           isUser
-                            ? "bg-[#1E3A8A] text-hi border border-blue-500/30 rounded-2xl rounded-tr-xs"
+                            ? "bg-app-line text-hi border border-blue-500/30 rounded-2xl rounded-tr-xs"
                             : "bg-app-surface text-app-ink-2 border border-app-line rounded-2xl rounded-tl-xs"
                         }`}
                       >
@@ -2016,7 +2016,7 @@ export function SlackChatPage() {
                 <button
                   type="submit"
                   disabled={(activeMode === "dm" && !activeContact) || (!messageText.trim() && !selectedFile) || isUploading}
-                  className="px-4 py-2.5 rounded-xl bg-app-accent hover:bg-blue-600 disabled:opacity-40 text-white font-bold text-xs shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5 shrink-0 transition-transform active:scale-95 cursor-pointer disabled:cursor-not-allowed"
+                  className="px-4 py-2.5 rounded-xl bg-app-accent hover:bg-blue-600 disabled:opacity-40 text-app-on-accent! font-bold text-xs shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5 shrink-0 transition-transform active:scale-95 cursor-pointer disabled:cursor-not-allowed"
                   title="Send message"
                 >
                   {isUploading ? (
@@ -2041,7 +2041,7 @@ export function SlackChatPage() {
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
           <div className="bg-app-surface border border-app-line rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh]">
             {/* Modal Header */}
-            <div className="px-5 py-4 border-b border-app-line flex items-center justify-between bg-[#111927]">
+            <div className="px-5 py-4 border-b border-app-line flex items-center justify-between bg-app-nested">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-xl bg-app-accent/20 border border-app-accent/40 flex items-center justify-center text-app-accent">
                   <Users className="size-5" />
@@ -2125,7 +2125,7 @@ export function SlackChatPage() {
                   type="button"
                   onClick={() => setNewGroupIsPod(!newGroupIsPod)}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    newGroupIsPod ? "bg-app-accent" : "bg-app-line"
+                    newGroupIsPod ? "bg-app-accent text-app-on-accent!" : "bg-app-line"
                   }`}
                 >
                   <span
@@ -2177,7 +2177,7 @@ export function SlackChatPage() {
                 </div>
 
                 {/* Scrollable Members List */}
-                <div className="max-h-48 overflow-y-auto divide-y divide-[#2A3446]/50 rounded-xl border border-app-line bg-app-base no-scrollbar">
+                <div className="max-h-48 overflow-y-auto divide-y divide-app-line/50 rounded-xl border border-app-line bg-app-base no-scrollbar">
                   {eligibleGroupMembers.length > 0 ? (
                     eligibleGroupMembers.map((member) => {
                       const isChecked = selectedMemberIds.includes(member.id);
@@ -2203,7 +2203,7 @@ export function SlackChatPage() {
                               className={`size-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
                                 isSA
                                   ? "bg-gradient-to-br from-amber-400 to-orange-500 text-amber-950"
-                                  : "bg-[#7FA0D6]/30 text-app-accent border border-app-accent/40"
+                                  : "bg-app-accent/30 text-app-accent border border-app-accent/40"
                               }`}
                             >
                               {isSA ? <Crown className="size-4" /> : initials}
@@ -2226,7 +2226,7 @@ export function SlackChatPage() {
                           <div
                             className={`size-5 rounded-md border flex items-center justify-center transition-colors shrink-0 ${
                               isChecked
-                                ? "bg-app-accent border-app-accent text-white"
+                                ? "bg-app-accent border-app-accent text-app-on-accent!"
                                 : "border-app-line bg-transparent text-transparent"
                             }`}
                           >
@@ -2259,7 +2259,7 @@ export function SlackChatPage() {
                 <button
                   type="submit"
                   disabled={isCreatingGroup || !newGroupName.trim()}
-                  className="px-4 py-2 rounded-xl bg-app-accent hover:bg-[#688EC7] disabled:opacity-50 text-white font-bold text-xs shadow-md shadow-blue-500/20 flex items-center gap-2 transition-transform active:scale-95 cursor-pointer disabled:cursor-not-allowed"
+                  className="px-4 py-2 rounded-xl bg-app-accent hover:bg-app-accent disabled:opacity-50 text-app-on-accent! font-bold text-xs shadow-md shadow-blue-500/20 flex items-center gap-2 transition-transform active:scale-95 cursor-pointer disabled:cursor-not-allowed"
                 >
                   {isCreatingGroup ? (
                     <>

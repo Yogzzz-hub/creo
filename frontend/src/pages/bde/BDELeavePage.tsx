@@ -183,7 +183,7 @@ export function BDELeavePage() {
               Available Balance
             </span>
             <div className="text-lg sm:text-xl font-black text-app-accent font-mono mt-0.5">{balanceDays} Days</div>
-            <span className="text-[10px] sm:text-[11px] text-[#7FA0D6]/80 mt-0.5 font-medium truncate block">Remaining available</span>
+            <span className="text-[10px] sm:text-[11px] text-app-accent/80 mt-0.5 font-medium truncate block">Remaining available</span>
           </motion.div>
         </div>
 
@@ -326,7 +326,7 @@ export function BDELeavePage() {
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     placeholder="Provide context on active prospect negotiations, emergency coverage, and client touchpoints..."
-                    className="w-full bg-app-base border border-app-line focus:border-app-accent rounded-xl p-3 text-xs text-hi placeholder:text-[#97A0B3]/50 outline-none transition-colors"
+                    className="w-full bg-app-base border border-app-line focus:border-app-accent rounded-xl p-3 text-xs text-hi placeholder:text-app-mist/50 outline-none transition-colors"
                   />
                 </div>
 
@@ -368,9 +368,9 @@ export function BDELeavePage() {
 
               {!leavesQuery.isPending && myLeaves.length === 0 && (
                 <div className="py-16 text-center border border-dashed border-app-line rounded-2xl space-y-2">
-                  <UserCheck className="w-8 h-8 text-[#97A0B3]/40 mx-auto" />
+                  <UserCheck className="w-8 h-8 text-app-mist/40 mx-auto" />
                   <p className="text-xs font-bold text-app-mist">No leave requests submitted yet.</p>
-                  <p className="text-[11px] text-[#97A0B3]/60">Use the form on the left to schedule time off.</p>
+                  <p className="text-[11px] text-app-mist/60">Use the form on the left to schedule time off.</p>
                 </div>
               )}
 

@@ -91,7 +91,7 @@ export function PlatformSecurityPage() {
           onClick={() => setActiveTab("Audit")}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "Audit"
-              ? "bg-gradient-to-r from-app-accent to-[#4F70A6] text-black shadow-md"
+              ? "bg-gradient-to-r from-app-accent to-app-accent text-black shadow-md"
               : "text-app-mist hover:text-hi"
           }`}
         >
@@ -102,7 +102,7 @@ export function PlatformSecurityPage() {
           onClick={() => setActiveTab("Flags")}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "Flags"
-              ? "bg-gradient-to-r from-app-accent to-[#4F70A6] text-black shadow-md"
+              ? "bg-gradient-to-r from-app-accent to-app-accent text-black shadow-md"
               : "text-app-mist hover:text-hi"
           }`}
         >
@@ -134,7 +134,7 @@ export function PlatformSecurityPage() {
           </div>
           <div className="flex items-center gap-3 text-xs text-app-mist">
             <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-              <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> Live Now
+              <span className="size-2 rounded-full bg-emerald-400 animate-pulse text-app-on-accent!" /> Live Now
             </span>
             <span>Local session</span>
           </div>
@@ -165,7 +165,7 @@ export function PlatformSecurityPage() {
                   </tr>
                 ) : (
                   auditLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-[#0B111C]/40 transition-colors">
+                    <tr key={log.id} className="hover:bg-app-base/40 transition-colors">
                       <td className="px-5 py-3.5 text-[11px] font-mono text-app-mist whitespace-nowrap">{log.time}</td>
                       <td className="px-5 py-3.5 text-[12px] font-bold text-hi">{log.actor}</td>
                       <td className="px-5 py-3.5">
@@ -217,7 +217,7 @@ export function PlatformSecurityPage() {
                     disabled={flagMutation.isPending}
                     onClick={() => flagMutation.mutate({ flagId: flag.id, enabled: !isEnabled })}
                     className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer shrink-0 ${
-                      isEnabled ? "bg-emerald-500" : "bg-app-line"
+                      isEnabled ? "bg-emerald-500 text-app-on-accent!" : "bg-app-line"
                     }`}
                   >
                     <span

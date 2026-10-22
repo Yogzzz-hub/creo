@@ -158,7 +158,7 @@ export function PlatformPlansPage() {
                 <button
                   type="button"
                   onClick={() => setEditingPlan(p)}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-app-base hover:bg-gradient-to-r hover:from-[#7FA0D6] hover:to-[#4F70A6] hover:text-black border border-app-line hover:border-transparent text-xs font-black text-hi transition-all cursor-pointer shadow-sm"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-app-base hover:bg-gradient-to-r hover:from-app-accent hover:to-app-accent hover:text-black border border-app-line hover:border-transparent text-xs font-black text-hi transition-all cursor-pointer shadow-sm"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   Edit Tier Configuration
@@ -351,7 +351,7 @@ function EditPlanModal({ plan, isPending, onClose, onSave }: EditPlanModalProps)
             <button
               type="submit"
               disabled={isPending}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-app-accent hover:bg-[#688EC9] text-xs font-black text-black transition-all cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-app-accent hover:bg-app-accent text-xs font-black text-black transition-all cursor-pointer disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               {isPending ? "Saving..." : "Save Changes"}

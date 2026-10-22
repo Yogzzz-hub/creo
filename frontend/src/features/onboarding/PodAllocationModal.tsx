@@ -124,7 +124,7 @@ export function PodAllocationModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[rgba(5,8,16,0.85)] backdrop-blur-md"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[color-mix(in_oklab,var(--app-void)_85%,transparent)] backdrop-blur-md"
         >
           <motion.div
             initial={reduce ? false : { opacity: 0, y: 24, scale: 0.97 }}
@@ -155,7 +155,7 @@ export function PodAllocationModal({
                         initial={{ scale: 0.4, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ type: "spring", stiffness: 380, damping: 18 }}
-                        className="flex size-9 items-center justify-center rounded-full bg-app-accent text-app-base shadow-[0_0_24px_rgba(127,160,214,0.6)]"
+                        className="flex size-9 items-center justify-center rounded-full bg-app-accent text-app-base shadow-[0_0_24px_color-mix(in_oklab,var(--app-accent)_60%,transparent)]"
                       >
                         <Check className="size-5" strokeWidth={3} />
                       </motion.span>
@@ -233,7 +233,7 @@ export function PodAllocationModal({
                     </div>
                     <div className="relative h-2 overflow-hidden rounded-full bg-app-base ring-1 ring-app-line">
                       <motion.div
-                        className="h-full rounded-full bg-gradient-to-r from-app-accent to-app-accent-soft shadow-[0_0_16px_rgba(127,160,214,0.7)]"
+                        className="h-full rounded-full bg-gradient-to-r from-app-accent to-app-accent-soft shadow-[0_0_16px_color-mix(in_oklab,var(--app-accent)_70%,transparent)]"
                         animate={{ width: `${progress}%` }}
                         transition={{ ease: "easeOut", duration: 0.3 }}
                       />
@@ -248,7 +248,7 @@ export function PodAllocationModal({
                           <li key={p.label} className="flex flex-col gap-1.5">
                             <span
                               className={`h-1 rounded-full transition-colors duration-500 ${
-                                done ? "bg-app-accent" : current ? "bg-app-accent-soft/60" : "bg-app-line"
+                                done ? "bg-app-accent text-app-on-accent!" : current ? "bg-app-accent-soft/60" : "bg-app-line"
                               }`}
                             />
                             <span

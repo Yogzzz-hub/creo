@@ -205,7 +205,7 @@ Authorized by: Creo SaaS Platform Administration
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-app-base border border-app-line text-xs font-bold text-app-accent">
-              <span className="size-2 rounded-full bg-app-accent animate-pulse" />
+              <span className="size-2 rounded-full bg-app-accent animate-pulse text-app-on-accent!" />
               Current MRR: {fmt(mrr)}/mo
             </span>
           </div>
@@ -226,8 +226,8 @@ Authorized by: Creo SaaS Platform Administration
                     style={{ height: `${heightPercent}%` }}
                     className={`w-full rounded-t-xl transition-all duration-500 ${
                       isCurrent
-                        ? "bg-gradient-to-t from-[#4F70A6] to-app-accent shadow-lg shadow-app-accent/20"
-                        : "bg-[#2A3446]/60"
+                        ? "bg-gradient-to-t from-app-accent to-app-accent shadow-lg shadow-app-accent/20"
+                        : "bg-app-line/60"
                     }`}
                   />
                 </div>
@@ -304,7 +304,7 @@ Authorized by: Creo SaaS Platform Administration
               </thead>
               <tbody className="divide-y divide-app-line/40">
                 {filteredPayments.map((p) => (
-                  <tr key={p.id} className="hover:bg-[#0B111C]/40 transition-colors">
+                  <tr key={p.id} className="hover:bg-app-base/40 transition-colors">
                     <td className="py-3.5 px-4 font-mono font-bold text-hi">
                       {p.provider_event_id}
                     </td>
@@ -351,7 +351,7 @@ Authorized by: Creo SaaS Platform Administration
               </thead>
               <tbody className="divide-y divide-app-line/40">
                 {filteredInvoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-[#0B111C]/40 transition-colors">
+                  <tr key={inv.id} className="hover:bg-app-base/40 transition-colors">
                     <td className="py-3.5 px-4 font-mono font-bold text-hi flex items-center gap-2">
                       <FileText className="w-3.5 h-3.5 text-app-accent" />
                       {inv.id}

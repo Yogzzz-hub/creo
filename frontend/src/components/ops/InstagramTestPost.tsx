@@ -59,7 +59,7 @@ export function InstagramTestPost() {
   }
 
   return <section className="rounded-3xl border border-app-line bg-app-surface p-5 sm:p-7">
-    <div className="flex items-center gap-3 mb-6"><div className="rounded-2xl bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600 p-3"><Instagram className="size-6 text-hi" /></div><div><h1 className="text-xl font-bold">Instagram test publish</h1><p className="text-sm text-app-mist">Select a connected client and publish this sample to their Instagram feed.</p></div></div>
+    <div className="flex items-center gap-3 mb-6"><div className="rounded-2xl bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600 p-3 text-app-on-warm!"><Instagram className="size-6 text-hi" /></div><div><h1 className="text-xl font-bold">Instagram test publish</h1><p className="text-sm text-app-mist">Select a connected client and publish this sample to their Instagram feed.</p></div></div>
     {clients.isPending ? <CreoInlineLoader label="Loading connected clients" /> : clients.isError ? <div role="alert" className="text-app-warm">{clients.error.message}<button onClick={() => void clients.refetch()} className="ml-3 underline">Retry</button></div> : <div className="grid gap-6 sm:grid-cols-[220px_1fr]">
       <img src="/assets/portfolio/botanical_serum.jpg" alt="Sample product photo that will be published" className="aspect-square w-full max-w-[220px] rounded-2xl object-cover border border-app-line" />
       <div className="space-y-4">

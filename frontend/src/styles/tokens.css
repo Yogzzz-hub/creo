@@ -42,6 +42,8 @@
   --color-app-accent: var(--app-accent);
   --color-app-accent-soft: var(--app-accent-soft);
   --color-app-warm: var(--app-warm);
+  --color-app-on-accent: var(--app-on-accent, #fff);
+  --color-app-on-warm: var(--app-on-warm, #fff);
 
   --color-site-bg: var(--site-bg);
   --color-site-abyss: var(--site-abyss);
@@ -429,9 +431,9 @@ body {
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    rgba(226, 232, 240, 0.75) 0%,
-    rgba(241, 245, 249, 0.95) 50%,
-    rgba(226, 232, 240, 0.75) 100%
+    color-mix(in oklab, var(--app-ink-2) 75%, transparent) 0%,
+    color-mix(in oklab, var(--app-ink-2) 95%, transparent) 50%,
+    color-mix(in oklab, var(--app-ink-2) 75%, transparent) 100%
   );
   background-size: 200% 100%;
   animation: shimmerPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -445,8 +447,8 @@ body {
 
 .card-interactive:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 24px -6px rgba(13, 33, 55, 0.08), 0 4px 8px -2px rgba(13, 33, 55, 0.04);
-  border-color: rgba(43, 123, 196, 0.35);
+  box-shadow: 0 12px 24px -6px rgb(var(--shadow-rgb) / calc(0.08 * var(--shadow-k))), 0 4px 8px -2px rgb(var(--shadow-rgb) / calc(0.04 * var(--shadow-k)));
+  border-color: color-mix(in oklab, var(--app-accent) 35%, transparent);
 }
 
 @keyframes pageFadeIn {
@@ -477,15 +479,15 @@ body {
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.12);
+  background: color-mix(in oklab, var(--hi) 12%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid color-mix(in oklab, var(--hi) 22%, transparent);
 }
 
 .glass-card:hover {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.38);
+  background: color-mix(in oklab, var(--hi) 22%, transparent);
+  border-color: color-mix(in oklab, var(--hi) 38%, transparent);
 }
 
 @keyframes float {
@@ -533,13 +535,13 @@ body {
 
 @keyframes radarPulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--hi) 50%, transparent);
   }
   70% {
-    box-shadow: 0 0 0 14px rgba(255, 255, 255, 0);
+    box-shadow: 0 0 0 14px color-mix(in oklab, var(--hi) 0%, transparent);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--hi) 0%, transparent);
   }
 }
 
@@ -586,7 +588,7 @@ body {
   background: linear-gradient(
     60deg,
     transparent 35%,
-    rgba(255, 255, 255, 0.45) 50%,
+    color-mix(in oklab, var(--hi) 45%, transparent) 50%,
     transparent 65%
   );
   transform: translateX(-100%);
@@ -785,30 +787,30 @@ aside .scrollbar-thin,
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   KPI CARDS OUTLINE: Dark Blue default (#1E3A8A), Light Blue on hover (#60A5FA)
+   KPI CARDS OUTLINE: theme line by default, brand accent on hover
 ───────────────────────────────────────────────────────────────────────────── */
 .kpi-card,
 [data-kpi-card="true"] {
   border-width: 2px !important;
-  border-color: #1E3A8A !important;
+  border-color: var(--app-line) !important;
   transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, transform 0.2s ease !important;
 }
 
 .kpi-card:hover,
 [data-kpi-card="true"]:hover {
-  border-color: #60A5FA !important;
-  box-shadow: 0 4px 20px rgba(96, 165, 250, 0.18) !important;
+  border-color: var(--app-accent) !important;
+  box-shadow: 0 4px 20px color-mix(in oklab, var(--app-accent) 18%, transparent) !important;
 }
 
 
 
 /* Appended from Dashboard template */
 .card-surface {
-  @apply bg-white rounded-[32px] shadow-[0_2px_12px_rgba(0,0,0,0.03)] border-0 relative overflow-hidden;
+  @apply bg-white rounded-[32px] shadow-[0_2px_12px_rgb(var(--shadow-rgb)/calc(0.03_*_var(--shadow-k)))] border-0 relative overflow-hidden;
 }
 
 .card-interactive {
-  @apply transition-all duration-300 ease-out hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 hover:border-slate-200;
+  @apply transition-all duration-300 ease-out hover:shadow-[0_8px_24px_rgb(var(--shadow-rgb)/calc(0.06_*_var(--shadow-k)))] hover:-translate-y-0.5 hover:border-slate-200;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -847,7 +849,7 @@ select option,
 .bento-theme textarea::placeholder,
 .onboarding-dark-canvas input::placeholder,
 .onboarding-dark-canvas textarea::placeholder {
-  color: #64748B !important;
+  color: color-mix(in oklab, var(--app-mist) 70%, transparent) !important;
 }
 
 .bento-theme input:focus,
@@ -930,7 +932,7 @@ html.lenis body {
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Browser Autofill / Autocomplete Reset
-   Eliminates Chrome/Safari/Edge grayish-blue background shade (#e8f0fe or rgba(70,90,126,0.4))
+   Eliminates Chrome/Safari/Edge grayish-blue background shade (#e8f0fe or color-mix(in oklab, var(--app-mist) 40%, transparent))
 ───────────────────────────────────────────────────────────────────────────── */
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 
@@ -996,7 +998,7 @@ select:-moz-autofill {
 ───────────────────────────────────────────────────────────────────────────── */
 .razorpay-container {
   color-scheme: light !important;
-  background: rgba(5, 8, 16, 0.82) !important;
+  background: color-mix(in oklab, var(--app-void) 82%, transparent) !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
 }
@@ -1012,7 +1014,7 @@ iframe[id*="razorpay"] {
 }
 
 .razorpay-backdrop {
-  background: rgba(5, 8, 16, 0.82) !important;
+  background: color-mix(in oklab, var(--app-void) 82%, transparent) !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
 }
@@ -1354,7 +1356,7 @@ button, input, select, textarea, nav, aside, header, [data-surface] {
 /* Razorpay Checkout Modal Dark Theme & Floating Fix */
 .razorpay-container {
   color-scheme: light !important;
-  background: rgba(5, 8, 16, 0.82) !important;
+  background: color-mix(in oklab, var(--app-void) 82%, transparent) !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
 }
@@ -1368,7 +1370,7 @@ iframe[id*="razorpay"] {
   background-color: transparent !important;
 }
 .razorpay-backdrop {
-  background: rgba(5, 8, 16, 0.82) !important;
+  background: color-mix(in oklab, var(--app-void) 82%, transparent) !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
 }
@@ -1376,7 +1378,7 @@ iframe[id*="razorpay"] {
 /* Sleek Dark Mode Scrollbar for Kanban lanes & scroll panels */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #2A3446 transparent;
+  scrollbar-color: var(--app-line) transparent;
 }
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
@@ -1386,11 +1388,11 @@ iframe[id*="razorpay"] {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #2A3446;
+  background: var(--app-line);
   border-radius: 9999px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #7FA0D6;
+  background: var(--app-accent);
 }
 
 /* ==========================================================================
@@ -1411,22 +1413,22 @@ iframe[id*="razorpay"] {
 
 @keyframes subtleGlowPulse {
   0%, 100% {
-    box-shadow: 0 0 15px rgba(127, 160, 214, 0.08);
+    box-shadow: 0 0 15px color-mix(in oklab, var(--app-accent) 8%, transparent);
   }
   50% {
-    box-shadow: 0 0 25px rgba(127, 160, 214, 0.18);
+    box-shadow: 0 0 25px color-mix(in oklab, var(--app-accent) 18%, transparent);
   }
 }
 
 @keyframes borderShimmer {
   0% {
-    border-color: rgba(42, 52, 70, 0.9);
+    border-color: color-mix(in oklab, var(--app-mist) 90%, transparent);
   }
   50% {
-    border-color: rgba(127, 160, 214, 0.35);
+    border-color: color-mix(in oklab, var(--app-accent) 35%, transparent);
   }
   100% {
-    border-color: rgba(42, 52, 70, 0.9);
+    border-color: color-mix(in oklab, var(--app-mist) 90%, transparent);
   }
 }
 
@@ -1446,10 +1448,10 @@ iframe[id*="razorpay"] {
 
 .hover-card-innovative:hover {
   transform: translateY(-2.5px);
-  border-color: rgba(127, 160, 214, 0.45) !important;
-  box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.6),
-              0 0 20px rgba(127, 160, 214, 0.12),
-              0 0 0 1px rgba(127, 160, 214, 0.22);
+  border-color: color-mix(in oklab, var(--app-accent) 45%, transparent) !important;
+  box-shadow: 0 12px 30px -8px rgb(var(--shadow-rgb) / calc(0.6 * var(--shadow-k))),
+              0 0 20px color-mix(in oklab, var(--app-accent) 12%, transparent),
+              0 0 0 1px color-mix(in oklab, var(--app-accent) 22%, transparent);
 }
 
 /* Global Container Hover Highlights across Admin, Client Portal & Workstation */
@@ -1458,8 +1460,8 @@ iframe[id*="razorpay"] {
 [data-surface="ops"] .bg-\[\#131C2A\],
 .portal-card,
 .workstation-card,
-div[class*="rounded-2xl"][class*="border-[#2A3446]"]:not(input):not(textarea):not(button):not(select),
-div[class*="rounded-3xl"][class*="border-[#2A3446]"]:not(input):not(textarea):not(button):not(select) {
+div[class*="rounded-2xl"][class*="border-app-line"]:not(input):not(textarea):not(button):not(select),
+div[class*="rounded-3xl"][class*="border-app-line"]:not(input):not(textarea):not(button):not(select) {
   transition: border-color 0.25s ease,
               box-shadow 0.25s ease,
               transform 0.25s ease;
@@ -1467,11 +1469,11 @@ div[class*="rounded-3xl"][class*="border-[#2A3446]"]:not(input):not(textarea):no
 
 @media (hover: hover) {
   /* Highlight on hover for rounded dashboard containers */
-  div[class*="rounded-2xl"][class*="border-[#2A3446]"]:not(input):not(textarea):not(button):not(select):hover,
-  div[class*="rounded-3xl"][class*="border-[#2A3446]"]:not(input):not(textarea):not(button):not(select):hover {
-    border-color: rgba(127, 160, 214, 0.4);
-    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5),
-                0 0 16px rgba(127, 160, 214, 0.08);
+  div[class*="rounded-2xl"][class*="border-app-line"]:not(input):not(textarea):not(button):not(select):hover,
+  div[class*="rounded-3xl"][class*="border-app-line"]:not(input):not(textarea):not(button):not(select):hover {
+    border-color: color-mix(in oklab, var(--app-accent) 40%, transparent);
+    box-shadow: 0 8px 24px -6px rgb(var(--shadow-rgb) / calc(0.5 * var(--shadow-k))),
+                0 0 16px color-mix(in oklab, var(--app-accent) 8%, transparent);
   }
 
   /* Table Rows Interactive Hover */
@@ -1479,7 +1481,7 @@ div[class*="rounded-3xl"][class*="border-[#2A3446]"]:not(input):not(textarea):no
     transition: background-color 0.18s ease, transform 0.18s ease;
   }
   tbody tr:hover {
-    background-color: rgba(22, 31, 45, 0.75);
+    background-color: color-mix(in oklab, var(--app-void) 75%, transparent);
   }
   
   /* Mini badge / chip hover micro-effects */
@@ -1508,16 +1510,16 @@ div[class*="rounded-3xl"][class*="border-[#2A3446]"]:not(input):not(textarea):no
 }
 .circle-bg {
   fill: none;
-  stroke: #2A3446;
+  stroke: var(--app-line);
   stroke-width: 3.5;
 }
 .circle {
   fill: none;
   stroke-width: 3.5;
   stroke-linecap: round;
-  stroke: #7FA0D6;
+  stroke: var(--app-accent);
   stroke-dasharray: 78, 100;
-  filter: drop-shadow(0 0 4px rgba(127, 160, 214, 0.45));
+  filter: drop-shadow(0 0 4px color-mix(in oklab, var(--app-accent) 45%, transparent));
 }
 @keyframes creo-mobile-marquee {
   0% { transform: translateX(0%); }
@@ -1529,16 +1531,16 @@ div[class*="rounded-3xl"][class*="border-[#2A3446]"]:not(input):not(textarea):no
   animation: creo-mobile-marquee 16s linear infinite;
 }
 .shadow-glow-cyan {
-  box-shadow: 0 0 20px -2px rgba(127, 160, 214, 0.35);
+  box-shadow: 0 0 20px -2px color-mix(in oklab, var(--app-accent) 35%, transparent);
 }
 .shadow-glow-pill {
-  box-shadow: 0 0 14px -1px rgba(127, 160, 214, 0.45);
+  box-shadow: 0 0 14px -1px color-mix(in oklab, var(--app-accent) 45%, transparent);
 }
 .shadow-dock-shadow {
-  box-shadow: 0 -8px 24px 0 rgba(0, 0, 0, 0.65);
+  box-shadow: 0 -8px 24px 0 rgb(var(--shadow-rgb) / calc(0.65 * var(--shadow-k)));
 }
 .shadow-stack-card {
-  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 12px 30px -4px rgb(var(--shadow-rgb) / calc(0.85 * var(--shadow-k)));
 }
 .font-plus-jakarta {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;

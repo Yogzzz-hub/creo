@@ -158,7 +158,7 @@ export function PlatformDashboardPage() {
           </button>
           <Link
             to="/platform/agencies"
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer shadow-lg shadow-app-accent/10"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-app-accent to-app-accent text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer shadow-lg shadow-app-accent/10"
           >
             <Building2 className="w-3.5 h-3.5" />
             View Agencies
@@ -249,7 +249,7 @@ export function PlatformDashboardPage() {
             </div>
           </div>
           <span className="text-xs font-mono font-bold text-emerald-400 flex items-center gap-1.5 self-start sm:self-auto">
-            <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> 5 Providers Connected
+            <span className="size-2 rounded-full bg-emerald-400 animate-pulse text-app-on-accent!" /> 5 Providers Connected
           </span>
         </div>
 
@@ -298,9 +298,9 @@ export function PlatformDashboardPage() {
                     <div
                       className={`h-full rounded-full transition-all ${
                         item.percentage > 80
-                          ? "bg-rose-500"
+                          ? "bg-rose-500 text-app-on-warm!"
                           : item.percentage > 50
-                          ? "bg-amber-500"
+                          ? "bg-amber-500 text-app-on-warm!"
                           : "bg-gradient-to-r from-app-accent to-emerald-400"
                       }`}
                       style={{ width: `${Math.min(item.percentage, 100)}%` }}
@@ -357,7 +357,7 @@ export function PlatformDashboardPage() {
                   </tr>
                 ) : (
                   agencies.map((a) => (
-                    <tr key={a.id} className="hover:bg-[#0B111C]/40 transition-colors">
+                    <tr key={a.id} className="hover:bg-app-base/40 transition-colors">
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-2.5">
                           <div className="size-8 rounded-lg bg-app-base border border-app-line flex items-center justify-center text-xs font-black text-app-accent">

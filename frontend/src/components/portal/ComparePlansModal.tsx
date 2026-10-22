@@ -127,7 +127,7 @@ export function ComparePlansModal({
         <div className="flex items-center justify-between pb-4 border-b border-app-line">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="size-2 rounded-full bg-app-accent" />
+              <span className="size-2 rounded-full bg-app-accent text-app-on-accent!" />
               <span className="text-xs font-bold uppercase tracking-wider text-app-mist">
                 Plan Comparison & Upgrade
               </span>

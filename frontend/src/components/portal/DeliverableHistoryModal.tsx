@@ -150,7 +150,7 @@ export function DeliverableHistoryModal({
               <p className="text-xs">Entries will appear as team leads and clients review, approve, or revise this asset.</p>
             </div>
           ) : (
-            <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#2A3446]">
+            <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-app-line">
               {history.map((entry) => {
                 const config = getActionConfig(entry.action);
                 const IconComponent = config.icon;
@@ -168,8 +168,8 @@ export function DeliverableHistoryModal({
                 return (
                   <div key={entry.id} className="relative group">
                     {/* Timeline Node */}
-                    <div className="absolute -left-[27px] top-1 w-5 h-5 rounded-full bg-app-base border-2 border-app-line group-hover:border-[#7FA0D6] flex items-center justify-center transition-colors">
-                      <div className="w-2 h-2 rounded-full bg-app-accent" />
+                    <div className="absolute -left-[27px] top-1 w-5 h-5 rounded-full bg-app-base border-2 border-app-line group-hover:border-app-accent flex items-center justify-center transition-colors">
+                      <div className="w-2 h-2 rounded-full bg-app-accent text-app-on-accent!" />
                     </div>
 
                     {/* Entry Card */}

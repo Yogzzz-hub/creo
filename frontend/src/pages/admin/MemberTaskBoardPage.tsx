@@ -422,7 +422,7 @@ export function MemberTaskBoardPage() {
   const pickedMime = file ? uploadMimeType(file) : null;
 
   return (
-    <div data-surface="ops" className="flex-1 flex flex-col min-h-[calc(100vh-theme(spacing.16))] md:h-[calc(100vh-4rem)] bg-[#0B0F17] text-hi font-sans md:overflow-hidden">
+    <div data-surface="ops" className="flex-1 flex flex-col min-h-[calc(100vh-theme(spacing.16))] md:h-[calc(100vh-4rem)] bg-app-base text-hi font-sans md:overflow-hidden">
       <AdminTopHeader activeTab="My Tasks" />
 
       {/* ── MOBILE TASK BOARD VIEW (< md) ── */}
@@ -509,7 +509,7 @@ export function MemberTaskBoardPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter tasks by client, format or title..."
-              className="w-full pl-8 pr-3 py-2 rounded-xl bg-app-base sm:bg-[#161F2D] border border-app-line/80 text-xs font-medium placeholder:text-app-mist focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full pl-8 pr-3 py-2 rounded-xl bg-app-base sm:bg-app-surface border border-app-line/80 text-xs font-medium placeholder:text-app-mist focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
@@ -561,7 +561,7 @@ export function MemberTaskBoardPage() {
                     setCreateOpen(true);
                   }}
                   disabled={clients.length === 0}
-                  className="w-full sm:w-auto px-3 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs"
+                  className="w-full sm:w-auto px-3 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs"
                 >
                   <Plus className="size-3.5 shrink-0" />
                   <span className="truncate">Add Task</span>
@@ -655,7 +655,7 @@ export function MemberTaskBoardPage() {
 
             {/* 2. In production */}
             <div className={columnClass("production")}>
-              <ColumnHeader dot="bg-sky-400 animate-pulse" title="IN PRODUCTION" count={production.length} />
+              <ColumnHeader dot="bg-sky-400 animate-pulse text-app-on-accent!" title="IN PRODUCTION" count={production.length} />
               <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar min-h-0">
                 {production.map((task) => {
                   const due = dueText(task);
@@ -734,7 +734,7 @@ export function MemberTaskBoardPage() {
                       <div className="pt-1.5 border-t border-app-line">
                         <button
                           onClick={() => openUpload(task)}
-                          className="w-full py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95"
+                          className="w-full py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-app-on-accent! font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95"
                         >
                           <Upload className="size-3" />
                           <span>{task.deliverable ? "Upload revision & submit" : "Upload & submit to QA"}</span>
@@ -749,7 +749,7 @@ export function MemberTaskBoardPage() {
 
             {/* 3. Lead QA */}
             <div className={columnClass("qa")}>
-              <ColumnHeader dot="bg-amber-400" title="SUBMITTED FOR QA" count={qa.length} />
+              <ColumnHeader dot="bg-amber-400 text-app-on-warm!" title="SUBMITTED FOR QA" count={qa.length} />
               <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar min-h-0">
                 {qa.map((task) => (
                   <div
@@ -791,7 +791,7 @@ export function MemberTaskBoardPage() {
 
             {/* 4. Client review & approved */}
             <div className={columnClass("review")}>
-              <ColumnHeader dot="bg-emerald-400" title="CLIENT REVIEW & APPROVED" count={review.length} />
+              <ColumnHeader dot="bg-emerald-400 text-app-on-accent!" title="CLIENT REVIEW & APPROVED" count={review.length} />
               <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar min-h-0">
                 {review.map((task) => {
                   const approved = task.status === "ready_to_publish" || task.status === "completed";
@@ -892,7 +892,7 @@ export function MemberTaskBoardPage() {
                         <p className="text-[10px] text-blue-300/80 truncate">Open Google Drive to download raw video clips & assets</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shrink-0 transition-all">
+                    <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-app-on-accent! text-xs font-bold shrink-0 transition-all">
                       <span>Open Drive</span>
                       <ExternalLink className="size-3" />
                     </div>
@@ -1049,7 +1049,7 @@ export function MemberTaskBoardPage() {
                   <span>{Math.round(progress * 100)}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-app-base rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-600 rounded-full transition-all" style={{ width: `${Math.round(progress * 100)}%` }} />
+                  <div className="h-full bg-blue-600 rounded-full transition-all text-app-on-accent!" style={{ width: `${Math.round(progress * 100)}%` }} />
                 </div>
               </div>
             )}
@@ -1068,7 +1068,7 @@ export function MemberTaskBoardPage() {
                 type="button"
                 onClick={() => uploadMutation.mutate()}
                 disabled={!file || uploadMutation.isPending}
-                className="w-full sm:w-auto px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {uploadMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
                 <span>{uploadMutation.isPending ? "Uploading…" : "Submit to Pod Lead QA"}</span>
@@ -1217,7 +1217,7 @@ export function MemberTaskBoardPage() {
               <button
                 type="submit"
                 disabled={!newTitle.trim() || createMutation.isPending}
-                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold flex items-center gap-1.5 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold flex items-center gap-1.5 disabled:opacity-50"
               >
                 {createMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
                 Create task

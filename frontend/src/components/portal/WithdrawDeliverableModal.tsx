@@ -120,7 +120,7 @@ export function WithdrawDeliverableModal({
             <button
               type="submit"
               disabled={isSubmitting || !reason.trim()}
-              className="px-5 py-2 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-5 py-2 rounded-full bg-rose-600 hover:bg-rose-500 text-app-on-warm! text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

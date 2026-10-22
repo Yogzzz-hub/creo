@@ -275,7 +275,7 @@ export function VoiceFeedbackRecorder({
                 type="button"
                 onClick={startRecording}
                 disabled={requesting}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-app-accent/20 border border-app-accent/40 text-app-accent-soft hover:bg-[#7FA0D6]/30 hover:text-hi transition-all text-xs font-semibold cursor-pointer group disabled:opacity-50"
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-app-accent/20 border border-app-accent/40 text-app-accent-soft hover:bg-app-accent/30 hover:text-hi transition-all text-xs font-semibold cursor-pointer group disabled:opacity-50"
               >
                 <Mic className="w-4 h-4 text-app-accent group-hover:scale-110 transition-transform" />
                 <span>{requesting ? "Waiting for microphone…" : "Record Voice Note"}</span>
@@ -294,7 +294,7 @@ export function VoiceFeedbackRecorder({
           ) : (
             <div className="flex items-center justify-between w-full bg-app-surface border border-red-500/40 rounded-xl px-4 py-2.5 animate-pulse">
               <div className="flex items-center gap-3">
-                <span className="w-3 h-3 rounded-full bg-red-500 animate-ping" />
+                <span className="w-3 h-3 rounded-full bg-red-500 animate-ping text-app-on-warm!" />
                 <span className="text-xs font-mono font-bold text-red-400">
                   Recording... {formatTime(recordingDuration)} / {formatTime(maxDurationSeconds)}
                 </span>
@@ -302,7 +302,7 @@ export function VoiceFeedbackRecorder({
               <button
                 type="button"
                 onClick={stopRecording}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-red-500 text-app-on-warm! text-xs font-bold hover:bg-red-600 transition-colors cursor-pointer"
               >
                 <Square className="w-3.5 h-3.5 fill-current" />
                 <span>Stop & Review</span>
@@ -357,7 +357,7 @@ export function VoiceFeedbackRecorder({
                 }}
               >
                 <div
-                  className="bg-app-accent h-full rounded-full transition-all"
+                  className="bg-app-accent h-full rounded-full transition-all text-app-on-accent!"
                   style={{
                     width: `${recordingDuration > 0 ? (playbackTime / recordingDuration) * 100 : 0}%`,
                   }}

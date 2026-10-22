@@ -200,7 +200,7 @@ export function AdminAssignFreelancerModal({
             onClick={() => setAssignmentMode("deliverable")}
             className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               assignmentMode === "deliverable"
-                ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                ? "bg-purple-600 text-app-on-accent! shadow-md shadow-purple-600/30"
                 : "text-app-mist hover:text-hi"
             }`}
           >
@@ -214,7 +214,7 @@ export function AdminAssignFreelancerModal({
             }}
             className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               assignmentMode === "custom"
-                ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                ? "bg-purple-600 text-app-on-accent! shadow-md shadow-purple-600/30"
                 : "text-app-mist hover:text-hi"
             }`}
           >
@@ -477,7 +477,7 @@ export function AdminAssignFreelancerModal({
             <button
               type="submit"
               disabled={busy}
-              className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 font-bold text-white shadow-lg shadow-purple-600/25 flex items-center gap-2 disabled:opacity-50 transition-all cursor-pointer active:scale-95"
+              className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 font-bold text-app-on-accent! shadow-lg shadow-purple-600/25 flex items-center gap-2 disabled:opacity-50 transition-all cursor-pointer active:scale-95"
             >
               <Send className="w-4 h-4" />
               {busy ? "Dispatching Assignment..." : "Dispatch Task to Freelancer"}

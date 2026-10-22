@@ -502,7 +502,7 @@ export function AdminClientsPage() {
 
     const existing = existingKey ? mergedClientsData[existingKey] : undefined;
 
-    const CANONICAL_PALETTE = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"];
+    const CANONICAL_PALETTE = ["#0F0E0C", "#D2965A", "#172338", "#F5EEE3"];
     const CANONICAL_ROLES = [
       "Primary Brand",
       "Accent / Secondary",
@@ -526,7 +526,7 @@ export function AdminClientsPage() {
       });
     }
 
-    const finalScHexes: string[] = [0, 1, 2, 3].map((i) => extractedScList[i] || CANONICAL_PALETTE[i] || "#161F2D");
+    const finalScHexes: string[] = [0, 1, 2, 3].map((i) => extractedScList[i] || CANONICAL_PALETTE[i] || "#0F0E0C");
     if (extractedScList.length > 4) {
       for (let i = 4; i < extractedScList.length; i++) {
         if (extractedScList[i]) {
@@ -537,7 +537,7 @@ export function AdminClientsPage() {
 
     const resolvedColors = finalScHexes.map((hex, idx) => ({
       name: CANONICAL_ROLES[idx] || `Accent Tone ${idx + 1}`,
-      hex: hex || "#161F2D",
+      hex: hex || "#0F0E0C",
     }));
 
     const clientStatus =
@@ -754,7 +754,7 @@ export function AdminClientsPage() {
   };
 
   const realColors = useMemo(() => {
-    const CANONICAL_PALETTE = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"];
+    const CANONICAL_PALETTE = ["#0F0E0C", "#D2965A", "#172338", "#F5EEE3"];
     const CANONICAL_ROLES = [
       "Primary Brand",
       "Accent / Secondary",
@@ -780,7 +780,7 @@ export function AdminClientsPage() {
     }
 
     // Always pad to 4 tokens minimum to match Client Portal tokens
-    const finalHexes: string[] = [0, 1, 2, 3].map((i) => extractedList[i] || CANONICAL_PALETTE[i] || "#161F2D");
+    const finalHexes: string[] = [0, 1, 2, 3].map((i) => extractedList[i] || CANONICAL_PALETTE[i] || "#0F0E0C");
     if (extractedList.length > 4) {
       for (let i = 4; i < extractedList.length; i++) {
         if (extractedList[i]) {
@@ -791,7 +791,7 @@ export function AdminClientsPage() {
 
     return finalHexes.map((hex, idx) => ({
       name: CANONICAL_ROLES[idx] || `Accent Tone ${idx + 1}`,
-      hex: hex || "#161F2D",
+      hex: hex || "#0F0E0C",
     }));
   }, [liveBrandProfile, activeClient]);
 
@@ -1061,7 +1061,7 @@ export function AdminClientsPage() {
               </div>
               <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
                 <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20 shrink-0">
-                  <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="size-2 rounded-full bg-emerald-500 animate-pulse text-app-on-accent!" />
                   {rosterQuery.isPending ? "Loading clients…" : `${clientList.filter(c => c.lifecycleStatus === "onboarded").length} Active · ${clientList.length} Total Clients`}
                 </span>
                 <div className="flex items-center gap-1.5">
@@ -1094,7 +1094,7 @@ export function AdminClientsPage() {
                 <button
                   type="button"
                   onClick={() => setIsOnboardClientModalOpen(true)}
-                  className="flex-1 sm:flex-initial justify-center px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer transition-all active:scale-95"
+                  className="flex-1 sm:flex-initial justify-center px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-app-on-accent! text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer transition-all active:scale-95"
                 >
                   <Plus className="w-4 h-4 shrink-0" /> Onboard Client
                 </button>
@@ -1127,7 +1127,7 @@ export function AdminClientsPage() {
                 <p className="text-sm text-app-mist">{clientList.length ? "Try another search or change the status filter." : "Onboard your first client to get started."}</p>
               </div>
             ) : (
-            <div className="max-h-[calc(100vh-270px)] lg:max-h-none lg:min-h-[700px] overflow-y-auto lg:overflow-visible overscroll-contain pr-1 sm:pr-2.5 lg:pr-0 scrollbar-thin scrollbar-thumb-app-line hover:scrollbar-thumb-[#7FA0D6]/40 scrollbar-track-transparent">
+            <div className="max-h-[calc(100vh-270px)] lg:max-h-none lg:min-h-[700px] overflow-y-auto lg:overflow-visible overscroll-contain pr-1 sm:pr-2.5 lg:pr-0 scrollbar-thin scrollbar-thumb-app-line hover:scrollbar-thumb-app-accent/40 scrollbar-track-transparent">
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-5 pb-6 lg:pb-12">
                 {filteredClientList.map((client) => {
                   const isNotPaidNotOnboarded = client.lifecycleStatus === "not_paid_not_onboarded";
@@ -1143,7 +1143,7 @@ export function AdminClientsPage() {
                       <div className="space-y-2 sm:space-y-3.5">
                         {/* Top Header: Avatar + Title */}
                         <div className="flex items-start gap-1.5 sm:gap-2.5 min-w-0">
-                          <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#121A26] to-app-base border border-app-line text-white font-black text-xs sm:text-base flex items-center justify-center shadow-xs shrink-0 mt-0.5">
+                          <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-app-nested to-app-base border border-app-line text-white font-black text-xs sm:text-base flex items-center justify-center shadow-xs shrink-0 mt-0.5">
                             {client.initials}
                           </div>
                           <div className="min-w-0 flex-1">
@@ -1176,7 +1176,7 @@ export function AdminClientsPage() {
                               {client.pod?.name || (isPaidNotOnboarded ? "Pending Intake" : "None")}
                             </span>
                           </div>
-                          <div className="flex items-center justify-between gap-1 text-[10.5px] sm:text-xs pt-1 border-t border-[#2A3446]/40">
+                          <div className="flex items-center justify-between gap-1 text-[10.5px] sm:text-xs pt-1 border-t border-app-line/40">
                             <span className="text-[9.5px] font-semibold text-app-mist shrink-0">Contact</span>
                             <span className="font-medium text-[10px] sm:text-[11px] text-app-ink-2 break-words [overflow-wrap:anywhere] text-right leading-tight" title={client.contact?.name || client.name}>
                               {client.contact?.name || client.name}
@@ -1231,7 +1231,7 @@ export function AdminClientsPage() {
                         </div>
 
                         {/* Action buttons row */}
-                        <div className="flex items-center gap-1 pt-1 border-t border-[#2A3446]/40">
+                        <div className="flex items-center gap-1 pt-1 border-t border-app-line/40">
                           {isNotPaidNotOnboarded ? (
                             <button
                               type="button"
@@ -1301,7 +1301,7 @@ export function AdminClientsPage() {
             <button
               type="button"
               onClick={() => setSelectedClientId(null)}
-              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! text-xs font-bold transition-all cursor-pointer"
             >
               Back to Client Roster
             </button>
@@ -1362,7 +1362,7 @@ export function AdminClientsPage() {
                 </div>
                 {/* Mobile version of Live Client badge */}
                 <span className="sm:hidden px-2.5 py-1 rounded-full text-[10px] font-bold bg-app-surface text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 text-app-on-accent!" />
                   Live Client • v2.4
                 </span>
               </div>
@@ -1402,7 +1402,7 @@ export function AdminClientsPage() {
                   <span>Split Payment</span>
                 </button>
                 <span className="hidden sm:flex justify-center px-3 py-2 rounded-full text-xs font-bold bg-app-surface text-hi border border-app-line items-center gap-1.5 shadow-2xs whitespace-nowrap">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0 text-app-on-accent!" />
                   Live Client • v2.4
                 </span>
               </div>
@@ -1436,7 +1436,7 @@ export function AdminClientsPage() {
                 </div>
                 <Link
                   to={`/admin/plans?negId=${activeClientPendingNeg.id}&clientId=${activeClient?.id}`}
-                  className="w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shrink-0 shadow-md transition-all active:scale-95"
+                  className="w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-app-on-accent! font-bold text-xs flex items-center justify-center gap-1.5 shrink-0 shadow-md transition-all active:scale-95"
                 >
                   Review &amp; Accept Retainer <ArrowUpRight className="w-4 h-4" />
                 </Link>
@@ -1563,7 +1563,7 @@ export function AdminClientsPage() {
                             UNPAID
                           </span>
                           <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black tracking-wider items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 text-app-on-warm!" />
                             user not paid and not onboarded yet
                           </span>
                         </>
@@ -1573,7 +1573,7 @@ export function AdminClientsPage() {
                             {activeClient?.tierBadge || "PAID PLAN"}
                           </span>
                           <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 text-[10px] font-black tracking-wider items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse text-app-on-accent!" />
                             user paid but not onboarded
                           </span>
                         </>
@@ -1584,7 +1584,7 @@ export function AdminClientsPage() {
                             {activeClient?.tierBadge || "ACTIVE"}
                           </span>
                           <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 text-app-on-accent!" />
                             {activeClient?.status || "ACTIVE"}
                           </span>
                         </>
@@ -1647,7 +1647,7 @@ export function AdminClientsPage() {
                 onClick={() => setClientDetailTab("overview")}
                 className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   clientDetailTab === "overview"
-                    ? "bg-app-accent text-white shadow-sm"
+                    ? "bg-app-accent text-app-on-accent! shadow-sm"
                     : "text-app-mist hover:text-hi"
                 }`}
               >
@@ -1659,7 +1659,7 @@ export function AdminClientsPage() {
                 onClick={() => setClientDetailTab("deliverables")}
                 className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer relative ${
                   clientDetailTab === "deliverables"
-                    ? "bg-app-accent text-white shadow-sm"
+                    ? "bg-app-accent text-app-on-accent! shadow-sm"
                     : "text-app-mist hover:text-hi"
                 }`}
               >
@@ -1680,7 +1680,7 @@ export function AdminClientsPage() {
                 onClick={() => setClientDetailTab("brand_pod")}
                 className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   clientDetailTab === "brand_pod"
-                    ? "bg-app-accent text-white shadow-sm"
+                    ? "bg-app-accent text-app-on-accent! shadow-sm"
                     : "text-app-mist hover:text-hi"
                 }`}
               >
@@ -1722,7 +1722,7 @@ export function AdminClientsPage() {
                   </div>
 
                   <div className="flex items-center gap-3 sm:gap-3.5">
-                    <div className="size-10 sm:size-12 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-sm sm:text-base flex items-center justify-center shadow-md shrink-0">
+                    <div className="size-10 sm:size-12 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-app-on-accent! font-black text-sm sm:text-base flex items-center justify-center shadow-md shrink-0">
                       {displayInitials[0] || "C"}
                     </div>
                     <div className="min-w-0">
@@ -1868,7 +1868,7 @@ export function AdminClientsPage() {
                       </div>
                       <div className="w-full bg-app-surface rounded-full h-2 sm:h-2.5 overflow-hidden">
                         <div
-                          className="bg-app-accent h-full rounded-full transition-all"
+                          className="bg-app-accent h-full rounded-full transition-all text-app-on-accent!"
                           style={{
                             width: `${Math.min(
                               (((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100),
@@ -2098,7 +2098,7 @@ export function AdminClientsPage() {
                   {/* Social Channel */}
                   <div className="p-3.5 bg-app-base/80 rounded-2xl border border-app-line flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center shadow-xs">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-app-on-warm! flex items-center justify-center shadow-xs">
                         <Instagram className="w-5 h-5" />
                       </div>
                       <div>
@@ -2221,7 +2221,7 @@ export function AdminClientsPage() {
                       </span>
                       <div className="p-3 bg-app-base/70 rounded-2xl flex items-center justify-between border border-app-line">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
+                          <div className="w-10 h-10 rounded-full bg-blue-600 text-app-on-accent! font-bold text-sm flex items-center justify-center shadow-xs">
                             {activeClient?.pod?.leadAvatar || "CD"}
                           </div>
                           <div>
@@ -2273,7 +2273,7 @@ export function AdminClientsPage() {
                       </div>
                       <div className="w-full bg-app-surface rounded-full h-2 overflow-hidden">
                         <div
-                          className="bg-app-accent h-full rounded-full transition-all"
+                          className="bg-app-accent h-full rounded-full transition-all text-app-on-accent!"
                           style={{ width: `${activeClient?.pod?.bandwidthPercent ?? 80}%` }}
                         />
                       </div>
@@ -2422,7 +2422,7 @@ export function AdminClientsPage() {
                               <button
                                 type="button"
                                 onClick={() => handleApproveDeliverable(deliv.id, deliv.title)}
-                                className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
+                                className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
                               >
                                 <Check className="w-3.5 h-3.5 stroke-[3]" /> Approve
                               </button>
@@ -2480,7 +2480,7 @@ export function AdminClientsPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleApproveDeliverable(deliv.id, deliv.title)}
-                                  className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
+                                  className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
                                 >
                                   <Check className="w-3.5 h-3.5 stroke-[3]" /> Approve
                                 </button>
@@ -2593,7 +2593,7 @@ export function AdminClientsPage() {
                     handleApproveDeliverable(previewDeliverable?.id, previewDeliverable?.title || "Asset");
                     setPreviewDeliverable(null);
                   }}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! text-xs font-bold cursor-pointer"
                 >
                   Approve Deliverable
                 </button>
@@ -2639,7 +2639,7 @@ export function AdminClientsPage() {
                   type="button"
                   disabled={removingClient}
                   onClick={() => { if (activeClient) void offboardClient(activeClient.id, activeClient.name); }}
-                  className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-app-on-warm! text-xs font-bold shadow-md cursor-pointer"
                 >
                   {removingClient ? "Removing…" : "Confirm Cancellation"}
                 </button>
@@ -2861,7 +2861,7 @@ export function AdminClientsPage() {
                   <button
                     type="submit"
                     disabled={isOnboardingClient}
-                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white text-xs font-bold shadow-md shadow-blue-600/20 cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
+                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-app-on-accent! text-xs font-bold shadow-md shadow-blue-600/20 cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
                   >
                     {isOnboardingClient ? (
                       <>
@@ -2955,7 +2955,7 @@ export function AdminClientsPage() {
                 <button
                   type="button"
                   onClick={() => setClientProvisionedCreds(null)}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! text-xs font-bold cursor-pointer"
                 >
                   Done
                 </button>
@@ -3157,7 +3157,7 @@ export function AdminClientsPage() {
                   <button
                     type="submit"
                     disabled={isOnboardingClientMember}
-                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
+                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! text-xs font-bold shadow-sm cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
                   >
                     {isOnboardingClientMember ? (
                       <>
@@ -3251,7 +3251,7 @@ export function AdminClientsPage() {
                 <button
                   type="button"
                   onClick={() => setClientMemberProvisionedCreds(null)}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! text-xs font-bold cursor-pointer"
                 >
                   Done
                 </button>
@@ -3310,7 +3310,7 @@ export function AdminClientsPage() {
                       const client = clientList.find(client => client.name === clientToRemoveInput || client.id === clientToRemoveInput);
                       if (client) void offboardClient(client.id, client.name);
                     }}
-                    className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md cursor-pointer"
+                    className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-app-on-warm! text-xs font-bold shadow-md cursor-pointer"
                   >
                     Remove Client
                   </button>
@@ -3418,7 +3418,7 @@ export function AdminClientsPage() {
                               type="button"
                               disabled={processingPaymentId === req.id}
                               onClick={() => void handleApprovePayment(req)}
-                              className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+                              className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-app-on-accent! text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
                             >
                               <Check className="w-3.5 h-3.5 stroke-[3]" />
                               {processingPaymentId === req.id ? "Approving..." : "Approve & Bypass Step 3"}
@@ -3520,7 +3520,7 @@ export function AdminClientsPage() {
                   <button
                     type="submit"
                     disabled={directBypassBusy}
-                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all disabled:opacity-50"
+                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-app-on-accent! text-xs font-bold shadow-md cursor-pointer transition-all disabled:opacity-50"
                   >
                     {directBypassBusy ? "Bypassing..." : "Confirm & Bypass"}
                   </button>
@@ -3810,7 +3810,7 @@ export function AdminDeliverablesPage() {
             </p>
           </div>
         ) : (
-        <div className="sm:max-h-[calc(100vh-270px)] lg:max-h-none lg:min-h-[700px] sm:overflow-y-auto lg:overflow-visible sm:overscroll-contain pr-1 sm:pr-2.5 lg:pr-0 scrollbar-thin scrollbar-thumb-app-line hover:scrollbar-thumb-[#7FA0D6]/40 scrollbar-track-transparent">
+        <div className="sm:max-h-[calc(100vh-270px)] lg:max-h-none lg:min-h-[700px] sm:overflow-y-auto lg:overflow-visible sm:overscroll-contain pr-1 sm:pr-2.5 lg:pr-0 scrollbar-thin scrollbar-thumb-app-line hover:scrollbar-thumb-app-accent/40 scrollbar-track-transparent">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 sm:gap-4 lg:gap-5 pb-6 lg:pb-12">
           {filteredDeliverables.map((item) => (
             <div
@@ -3871,7 +3871,7 @@ export function AdminDeliverablesPage() {
               {/* Card Meta & Actions */}
               <div className="p-3.5 sm:p-5 pt-2.5 sm:pt-4 space-y-2.5 sm:space-y-3.5">
                 {/* Pod & Retainer Info */}
-                <div className="flex items-center justify-between text-xs pt-1.5 border-t border-[#2A3446]/40">
+                <div className="flex items-center justify-between text-xs pt-1.5 border-t border-app-line/40">
                   <div className="flex items-center gap-1.5 truncate mr-1">
                     <span className="font-bold text-app-mist text-[10px] uppercase">
                       Pod:
@@ -3916,7 +3916,7 @@ export function AdminDeliverablesPage() {
                         type="button"
                         disabled={reviewBusy || !item.previewUrl}
                         onClick={() => void handleApprove(item.id, item.title, true)}
-                        className="flex-1 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1 shadow-md shadow-purple-500/20 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="flex-1 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-app-on-accent! rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1 shadow-md shadow-purple-500/20 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                         title="Approve and Publish to Instagram"
                       >
                         <Sparkles className="w-3.5 h-3.5 text-amber-300 stroke-[2.5]" /> Publish
@@ -3925,7 +3925,7 @@ export function AdminDeliverablesPage() {
                         type="button"
                         disabled={reviewBusy || !item.previewUrl}
                         onClick={() => void handleApprove(item.id, item.title, false)}
-                        className="flex-1 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1 shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="flex-1 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-app-on-accent! rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1 shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" /> Approve
                       </button>
@@ -4024,7 +4024,7 @@ export function AdminDeliverablesPage() {
                     handleApprove(previewItem.id, previewItem.title);
                     setPreviewItem(null);
                   }}
-                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black cursor-pointer shadow-sm"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-app-on-accent! text-xs font-black cursor-pointer shadow-sm"
                 >
                   ✓ Approve Asset
                 </button>
@@ -4089,7 +4089,7 @@ export function AdminDeliverablesPage() {
                 <button
                   type="button"
                   onClick={() => setCommentModalItem(null)}
-                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer"
+                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-app-on-accent! rounded-xl text-xs font-bold cursor-pointer"
                 >
                   Close Notes
                 </button>
@@ -4237,11 +4237,11 @@ export function AdminTasksPage() {
       client: "Ryze Mushroom Coffee",
       clientPill: "bg-app-accent/15 text-app-accent border-app-accent/30",
       priority: "Urgent" as const,
-      priorityPill: "bg-rose-600 text-white font-black",
+      priorityPill: "bg-rose-600 text-app-on-warm! font-black",
       title: "3D Product Render & Motion Hook (15s Reel)",
       type: "3D Render / Blender",
       avatar: "VM",
-      avatarBg: "bg-blue-600",
+      avatarBg: "bg-blue-600 text-app-on-accent!",
       assigneeName: "Vikram Malhotra",
       isFreelancer: false,
       sp: 8,
@@ -4259,7 +4259,7 @@ export function AdminTasksPage() {
       title: "DTC Ad Hook Variations (15s Reel Clips)",
       type: "Performance Editing",
       avatar: "SC",
-      avatarBg: "bg-purple-600",
+      avatarBg: "bg-purple-600 text-app-on-accent!",
       assigneeName: "Sarah Connor",
       isFreelancer: false,
       sp: 5,
@@ -4277,7 +4277,7 @@ export function AdminTasksPage() {
       title: "Instagram Story Templates (1080x1920 Figma Kit)",
       type: "Visual Design",
       avatar: "ER",
-      avatarBg: "bg-emerald-600",
+      avatarBg: "bg-emerald-600 text-app-on-accent!",
       assigneeName: "Elena Rostova",
       isFreelancer: false,
       sp: 3,
@@ -4295,7 +4295,7 @@ export function AdminTasksPage() {
       title: "Brand Guidelines & Color Palette Audit (v2.0)",
       type: "Brand Strategy",
       avatar: "MB",
-      avatarBg: "bg-amber-600",
+      avatarBg: "bg-amber-600 text-app-on-warm!",
       assigneeName: "Marcus Brody",
       isFreelancer: false,
       sp: 4,
@@ -4363,7 +4363,7 @@ export function AdminTasksPage() {
 
       const priorityPill =
         priority === "Urgent"
-          ? "bg-rose-600 text-white font-black"
+          ? "bg-rose-600 text-app-on-warm! font-black"
           : priority === "High"
           ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
           : "bg-app-surface text-app-ink-2 border-app-line";
@@ -4398,7 +4398,7 @@ export function AdminTasksPage() {
         title,
         type: t.deliverable_type ? String(t.deliverable_type).replace(/_/g, " ").toUpperCase() : "VIDEO PRODUCTION",
         avatar: initials,
-        avatarBg: isFreelancer ? "bg-gradient-to-tr from-purple-600 to-indigo-600" : "bg-blue-600",
+        avatarBg: isFreelancer ? "bg-gradient-to-tr from-purple-600 to-indigo-600 text-app-on-accent!" : "bg-blue-600 text-app-on-accent!",
         assigneeName: resolvedAssigneeName,
         assigneeEmail: freelancerEmail || t.assignee_email,
         isFreelancer,
@@ -4568,7 +4568,7 @@ export function AdminTasksPage() {
               <button
                 type="button"
                 onClick={() => setIsAssignPickerOpen(true)}
-                className="w-full sm:w-auto justify-center px-3 sm:px-3.5 py-2.5 sm:py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer transition-all active:scale-95 truncate"
+                className="w-full sm:w-auto justify-center px-3 sm:px-3.5 py-2.5 sm:py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-app-on-accent! text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer transition-all active:scale-95 truncate"
               >
                 <UserCheck className="w-4 h-4 stroke-[2.5] shrink-0" />
                 <span className="truncate">Assign Freelancer</span>
@@ -4578,7 +4578,7 @@ export function AdminTasksPage() {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="w-full sm:w-auto justify-center px-3 sm:px-3.5 py-2.5 sm:py-2 rounded-xl bg-app-accent hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors active:scale-95 truncate"
+                className="w-full sm:w-auto justify-center px-3 sm:px-3.5 py-2.5 sm:py-2 rounded-xl bg-app-accent hover:bg-blue-600 text-app-on-accent! text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors active:scale-95 truncate"
               >
                 <Plus className="w-4 h-4 stroke-[3] shrink-0" />
                 <span className="truncate">Create Task</span>
@@ -4664,7 +4664,7 @@ export function AdminTasksPage() {
           </div>
 
           {/* Status & Reset Row */}
-          <div className="flex items-center justify-between text-xs pt-1 px-1 border-t border-[#2A3446]/40">
+          <div className="flex items-center justify-between text-xs pt-1 px-1 border-t border-app-line/40">
             <span className="text-xs font-semibold text-app-mist">
               Showing <span className="text-hi font-bold">{filteredTasks.length}</span> {filteredTasks.length === 1 ? "task" : "tasks"}
             </span>
@@ -4691,10 +4691,10 @@ export function AdminTasksPage() {
         {/* Freelancer Operations KPI Strip (Visible when Freelancers tab or Table view active) */}
         {(assigneeTypeFilter === "freelancers" || viewMode === "freelancer_roster") && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
-            <div className="bg-gradient-to-br from-app-surface to-[#121A26] rounded-2xl p-4 border border-purple-500/20 shadow-lg">
+            <div className="bg-gradient-to-br from-app-surface to-app-nested rounded-2xl p-4 border border-purple-500/20 shadow-lg">
               <div className="flex items-center justify-between text-app-mist text-xs">
                 <span>Active Outsourced</span>
-                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse text-app-on-accent!" />
               </div>
               <div className="text-2xl font-black text-hi mt-1.5 flex items-center gap-2">
                 <span>{freelancerTasks.length}</span>
@@ -4703,10 +4703,10 @@ export function AdminTasksPage() {
               <p className="text-[10px] text-app-mist mt-1">Assigned to verified creators</p>
             </div>
 
-            <div className="bg-gradient-to-br from-app-surface to-[#121A26] rounded-2xl p-4 border border-blue-500/20 shadow-lg">
+            <div className="bg-gradient-to-br from-app-surface to-app-nested rounded-2xl p-4 border border-blue-500/20 shadow-lg">
               <div className="flex items-center justify-between text-app-mist text-xs">
                 <span>In Process / WIP</span>
-                <span className="w-2 h-2 rounded-full bg-blue-400" />
+                <span className="w-2 h-2 rounded-full bg-blue-400 text-app-on-accent!" />
               </div>
               <div className="text-2xl font-black text-hi mt-1.5 flex items-center gap-2">
                 <span>{inProductionFreelancersCount}</span>
@@ -4715,10 +4715,10 @@ export function AdminTasksPage() {
               <p className="text-[10px] text-app-mist mt-1">Specialists actively producing</p>
             </div>
 
-            <div className="bg-gradient-to-br from-app-surface to-[#121A26] rounded-2xl p-4 border border-amber-500/20 shadow-lg">
+            <div className="bg-gradient-to-br from-app-surface to-app-nested rounded-2xl p-4 border border-amber-500/20 shadow-lg">
               <div className="flex items-center justify-between text-app-mist text-xs">
                 <span>Awaiting TL Review</span>
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span className="w-2 h-2 rounded-full bg-amber-400 text-app-on-warm!" />
               </div>
               <div className="text-2xl font-black text-hi mt-1.5 flex items-center gap-2">
                 <span>{underReviewFreelancersCount}</span>
@@ -4727,7 +4727,7 @@ export function AdminTasksPage() {
               <p className="text-[10px] text-app-mist mt-1">Work submitted by freelancers</p>
             </div>
 
-            <div className="bg-gradient-to-br from-app-surface to-[#121A26] rounded-2xl p-4 border border-emerald-500/20 shadow-lg">
+            <div className="bg-gradient-to-br from-app-surface to-app-nested rounded-2xl p-4 border border-emerald-500/20 shadow-lg">
               <div className="flex items-center justify-between text-app-mist text-xs">
                 <span>Committed Budget</span>
                 <IndianRupee className="w-3.5 h-3.5 text-emerald-400" />
@@ -4757,7 +4757,7 @@ export function AdminTasksPage() {
                   onClick={() => setMobileKanbanCol(col.id as any)}
                   className={`w-full py-2 px-1 rounded-xl text-[11px] min-[380px]:text-xs font-bold text-center justify-center transition-all cursor-pointer flex items-center truncate ${
                     mobileKanbanCol === col.id
-                      ? "bg-app-accent text-white shadow-sm font-extrabold"
+                      ? "bg-app-accent text-app-on-accent! shadow-sm font-extrabold"
                       : "bg-app-surface text-app-mist border border-app-line hover:text-hi"
                   }`}
                 >
@@ -4801,7 +4801,7 @@ export function AdminTasksPage() {
                           <button
                             type="button"
                             onClick={() => handleLoadMore("todo")}
-                            className="w-full py-2 px-3 rounded-xl bg-app-base/90 hover:bg-[#1a2536] border border-app-line text-xs font-bold text-app-accent flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                            className="w-full py-2 px-3 rounded-xl bg-app-base/90 hover:bg-app-surface border border-app-line text-xs font-bold text-app-accent flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
                           >
                             <ChevronDown className="w-3.5 h-3.5" />
                             <span>Load 12 More ({todoTasks.length - (columnLimits.todo || 12)} remaining)</span>
@@ -4826,7 +4826,7 @@ export function AdminTasksPage() {
               }`}>
                 <div className="p-4 bg-app-surface/95 backdrop-blur-md border-b border-app-line/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse text-app-on-accent!" />
                     <h3 className="text-xs font-black text-hi tracking-wider uppercase">
                       IN PRODUCTION
                     </h3>
@@ -4852,7 +4852,7 @@ export function AdminTasksPage() {
                           <button
                             type="button"
                             onClick={() => handleLoadMore("in_progress")}
-                            className="w-full py-2 px-3 rounded-xl bg-app-base/90 hover:bg-[#1a2536] border border-app-line text-xs font-bold text-app-accent flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                            className="w-full py-2 px-3 rounded-xl bg-app-base/90 hover:bg-app-surface border border-app-line text-xs font-bold text-app-accent flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
                           >
                             <ChevronDown className="w-3.5 h-3.5" />
                             <span>Load 12 More ({inProgressTasks.length - (columnLimits.in_progress || 12)} remaining)</span>
@@ -4877,7 +4877,7 @@ export function AdminTasksPage() {
               }`}>
                 <div className="p-4 bg-app-surface/95 backdrop-blur-md border-b border-app-line/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 text-app-on-warm!" />
                     <h3 className="text-xs font-black text-hi tracking-wider uppercase">
                       QA &amp; REVIEW
                     </h3>
@@ -4903,7 +4903,7 @@ export function AdminTasksPage() {
                           <button
                             type="button"
                             onClick={() => handleLoadMore("under_review")}
-                            className="w-full py-2 px-3 rounded-xl bg-app-base/90 hover:bg-[#1a2536] border border-app-line text-xs font-bold text-app-accent flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                            className="w-full py-2 px-3 rounded-xl bg-app-base/90 hover:bg-app-surface border border-app-line text-xs font-bold text-app-accent flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
                           >
                             <ChevronDown className="w-3.5 h-3.5" />
                             <span>Load 12 More ({underReviewTasks.length - (columnLimits.under_review || 12)} remaining)</span>
@@ -4928,7 +4928,7 @@ export function AdminTasksPage() {
               }`}>
                 <div className="p-4 bg-app-surface/95 backdrop-blur-md border-b border-app-line/70 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 text-app-on-accent!" />
                     <h3 className="text-xs font-black text-hi tracking-wider uppercase">
                       APPROVED / DONE
                     </h3>
@@ -4954,7 +4954,7 @@ export function AdminTasksPage() {
                           <button
                             type="button"
                             onClick={() => handleLoadMore("approved")}
-                            className="w-full py-2 px-3 rounded-xl bg-app-base/90 hover:bg-[#1a2536] border border-app-line text-xs font-bold text-app-accent flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                            className="w-full py-2 px-3 rounded-xl bg-app-base/90 hover:bg-app-surface border border-app-line text-xs font-bold text-app-accent flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
                           >
                             <ChevronDown className="w-3.5 h-3.5" />
                             <span>Load 12 More ({approvedTasks.length - (columnLimits.approved || 12)} remaining)</span>
@@ -4993,7 +4993,7 @@ export function AdminTasksPage() {
               <button
                 type="button"
                 onClick={() => setIsAssignPickerOpen(true)}
-                className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow-md shadow-purple-600/30"
+                className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-app-on-accent! text-xs font-bold flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow-md shadow-purple-600/30"
               >
                 <Plus className="w-3.5 h-3.5" /> Assign Another Task
               </button>
@@ -5011,7 +5011,7 @@ export function AdminTasksPage() {
                 <button
                   type="button"
                   onClick={() => setIsAssignPickerOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-app-on-accent! text-xs font-bold cursor-pointer"
                 >
                   Assign Freelancer Task Now
                 </button>
@@ -5030,9 +5030,9 @@ export function AdminTasksPage() {
                       <th className="py-3 px-3 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#2A3446]/50">
+                  <tbody className="divide-y divide-app-line/50">
                     {freelancerTasks.map((t) => (
-                      <tr key={t.id} className="hover:bg-[#0B111C]/40 transition-colors">
+                      <tr key={t.id} className="hover:bg-app-base/40 transition-colors">
                         <td className="py-3.5 px-3">
                           <div className="font-bold text-hi">{t.title}</div>
                           <div className="text-[10px] text-app-accent uppercase tracking-wider font-mono mt-0.5">
@@ -5046,7 +5046,7 @@ export function AdminTasksPage() {
                         </td>
                         <td className="py-3.5 px-3">
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-bold text-[10px] flex items-center justify-center">
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-app-on-accent! font-bold text-[10px] flex items-center justify-center">
                               {t.avatar}
                             </div>
                             <div>
@@ -5058,12 +5058,12 @@ export function AdminTasksPage() {
                         <td className="py-3.5 px-3">
                           {t.rawStatus === "in_production" ? (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse text-app-on-accent!" />
                               In Process (Editing)
                             </span>
                           ) : t.rawStatus === "internal_qa" || t.column === "under_review" ? (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 text-app-on-warm!" />
                               Submitted for QA Review
                             </span>
                           ) : t.rawStatus === "ready_to_publish" || t.column === "approved" ? (
@@ -5311,7 +5311,7 @@ export function AdminTasksPage() {
                       className="p-3 rounded-2xl bg-app-base hover:bg-purple-950/40 border border-app-line hover:border-purple-500/50 cursor-pointer transition-all flex items-center justify-between group"
                     >
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-app-on-accent! font-bold text-xs flex items-center justify-center">
                           {f.full_name.slice(0, 2).toUpperCase()}
                         </div>
                         <div>
@@ -5444,7 +5444,7 @@ export function AdminTasksPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm cursor-pointer"
+                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! text-xs font-bold shadow-sm cursor-pointer"
                   >
                     Create Task
                   </button>
@@ -5468,7 +5468,7 @@ function TaskCard({ task, onSelect }: { task: any; onSelect: () => void }) {
       onClick={onSelect}
       className={`rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 border transition-all cursor-pointer shadow-xs hover:shadow-xl hover:-translate-y-0.5 flex flex-col justify-between gap-2 ${
         task.isFreelancer
-          ? "bg-gradient-to-br from-[#181C2E] to-app-surface border-purple-500/40 hover:border-purple-400"
+          ? "bg-gradient-to-br from-app-surface to-app-surface border-purple-500/40 hover:border-purple-400"
           : "bg-app-surface border-app-line/70 hover:border-app-accent/60"
       }`}
     >
@@ -5947,9 +5947,9 @@ export function AdminTeamManagementPage() {
   useEffect(() => {
     const rawPods = podData?.available_pods || [];
     const basePods = (rawPods.length > 0 ? rawPods : [
-      { id: "pod-alpha", key: "alpha", letter: "A", name: "Pod Alpha", lead_name: "Vikram Malhotra", color: "bg-blue-600", textColor: "text-blue-500", badgeColor: "bg-blue-500/15 text-app-accent" },
-      { id: "pod-beta", key: "beta", letter: "B", name: "Pod Beta", lead_name: "Sarah Connor", color: "bg-[#0EA5E9]", textColor: "text-sky-400", badgeColor: "bg-sky-500/15 text-sky-300" },
-      { id: "pod-gamma", key: "gamma", letter: "C", name: "Pod Gamma", lead_name: "Rohan Mehta", color: "bg-[#6366F1]", textColor: "text-indigo-400", badgeColor: "bg-indigo-500/15 text-indigo-300" },
+      { id: "pod-alpha", key: "alpha", letter: "A", name: "Pod Alpha", lead_name: "Vikram Malhotra", color: "bg-blue-600 text-app-on-accent!", textColor: "text-blue-500", badgeColor: "bg-blue-500/15 text-app-accent" },
+      { id: "pod-beta", key: "beta", letter: "B", name: "Pod Beta", lead_name: "Sarah Connor", color: "bg-app-accent text-app-on-accent!", textColor: "text-sky-400", badgeColor: "bg-sky-500/15 text-sky-300" },
+      { id: "pod-gamma", key: "gamma", letter: "C", name: "Pod Gamma", lead_name: "Rohan Mehta", color: "bg-app-accent text-app-on-accent!", textColor: "text-indigo-400", badgeColor: "bg-indigo-500/15 text-indigo-300" },
     ]).map((p: any) => {
       const isCurrent = p.id === (podData?.pod?.id || activePodId);
       const stats = isCurrent && podData?.pod?.stats ? podData.pod.stats : null;
@@ -5974,7 +5974,7 @@ export function AdminTeamManagementPage() {
         pendingReview: stats?.internal_qa ?? 0,
         allocatedHours: podMembers.reduce((acc, m) => acc + Math.round((m.allocatedPct / 100) * 40), 0),
         totalHours: (podMembers.length || 3) * 40,
-        color: p.color || (normalizedPodId === "pod-a" ? "bg-blue-600" : normalizedPodId === "pod-b" ? "bg-sky-600" : "bg-indigo-600"),
+        color: p.color || (normalizedPodId === "pod-a" ? "bg-blue-600 text-app-on-accent!" : normalizedPodId === "pod-b" ? "bg-sky-600 text-app-on-accent!" : "bg-indigo-600 text-app-on-accent!"),
         textColor: p.textColor || "text-blue-500",
         pillBg: p.badgeColor || "bg-blue-500/15 text-app-accent",
         squadLoad: stats?.total_wip ? Math.min(100, stats.total_wip * 15) : Math.round(podMembers.reduce((acc, m) => acc + m.allocatedPct, 0) / (podMembers.length || 1)),
@@ -6003,7 +6003,7 @@ export function AdminTeamManagementPage() {
         pendingReview: 1,
         allocatedHours: 25,
         totalHours: 40,
-        color: "bg-amber-600",
+        color: "bg-amber-600 text-app-on-warm!",
         textColor: "text-amber-500",
         pillBg: "bg-amber-500/15 text-amber-300",
         squadLoad: 40,
@@ -6448,7 +6448,7 @@ export function AdminTeamManagementPage() {
             onClick={() => setTeamTab("internal")}
             className={`w-full sm:w-auto px-1.5 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 text-center truncate ${
               teamTab === "internal"
-                ? "bg-app-accent text-white shadow-md"
+                ? "bg-app-accent text-app-on-accent! shadow-md"
                 : "text-app-mist hover:text-hi hover:bg-app-surface"
             }`}
           >
@@ -6466,7 +6466,7 @@ export function AdminTeamManagementPage() {
             }}
             className={`w-full sm:w-auto px-1.5 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 text-center truncate ${
               teamTab === "bde"
-                ? "bg-amber-600 text-white shadow-md shadow-amber-600/25"
+                ? "bg-amber-600 text-app-on-warm! shadow-md shadow-amber-600/25"
                 : "text-app-mist hover:text-hi hover:bg-app-surface"
             }`}
           >
@@ -6484,7 +6484,7 @@ export function AdminTeamManagementPage() {
             }}
             className={`w-full sm:w-auto px-1.5 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-2 text-center truncate ${
               teamTab === "freelancers"
-                ? "bg-purple-600 text-white shadow-md"
+                ? "bg-purple-600 text-app-on-accent! shadow-md"
                 : "text-app-mist hover:text-hi hover:bg-app-surface"
             }`}
           >
@@ -6512,7 +6512,7 @@ export function AdminTeamManagementPage() {
               <button
                 type="button"
                 onClick={handleOpenOnboardBde}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/20 cursor-pointer transition-all shrink-0"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-app-on-warm! text-xs font-bold shadow-md shadow-amber-500/20 cursor-pointer transition-all shrink-0"
               >
                 <UserCheck className="w-4 h-4" /> <span>Onboard BDE</span>
               </button>
@@ -6623,7 +6623,7 @@ export function AdminTeamManagementPage() {
                 <button
                   type="button"
                   onClick={handleOpenOnboardBde}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all shadow-md shadow-amber-600/20 cursor-pointer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-app-on-warm! text-xs font-bold transition-all shadow-md shadow-amber-600/20 cursor-pointer"
                 >
                   <UserCheck className="w-4 h-4" /> Onboard First BDE
                 </button>
@@ -6652,8 +6652,8 @@ export function AdminTeamManagementPage() {
                           <div className="flex items-center gap-3 min-w-0">
                             <div className={`w-11 h-11 rounded-2xl text-white font-black text-sm flex items-center justify-center shrink-0 shadow-md ${
                               isBdeActive
-                                ? "bg-gradient-to-br from-amber-500 to-amber-700 shadow-amber-500/20"
-                                : "bg-gradient-to-br from-rose-600 to-slate-800 shadow-rose-500/20"
+                                ? "bg-gradient-to-br from-amber-500 to-amber-700 shadow-amber-500/20 text-app-on-warm!"
+                                : "bg-gradient-to-br from-rose-600 to-slate-800 shadow-rose-500/20 text-app-on-warm!"
                             }`}>
                               {(bde.full_name || bde.name || "BDE")
                                 .split(" ")
@@ -6698,7 +6698,7 @@ export function AdminTeamManagementPage() {
                           </div>
                           <div className="w-full h-2 rounded-full bg-app-surface overflow-hidden">
                             <div
-                              className="h-full rounded-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-500"
+                              className="h-full rounded-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-500 text-app-on-warm!"
                               style={{ width: `${achievedPct}%` }}
                             />
                           </div>
@@ -6800,7 +6800,7 @@ export function AdminTeamManagementPage() {
               <button
                 type="button"
                 onClick={() => setIsAddFreelancerOpen(true)}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md shadow-purple-500/20 cursor-pointer transition-all shrink-0"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-app-on-accent! text-xs font-bold shadow-md shadow-purple-500/20 cursor-pointer transition-all shrink-0"
               >
                 <Plus className="w-4 h-4" /> <span>Onboard Freelancer</span>
               </button>
@@ -6892,7 +6892,7 @@ export function AdminTeamManagementPage() {
                 <button
                   type="button"
                   onClick={() => freelancersQuery.refetch()}
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-app-on-accent! text-xs font-bold cursor-pointer"
                 >
                   Retry Loading
                 </button>
@@ -7011,7 +7011,7 @@ export function AdminTeamManagementPage() {
                       <button
                         type="button"
                         onClick={() => setAssignFreelancerTarget(freelancer)}
-                        className="px-3 py-1 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all flex items-center gap-1"
+                        className="px-3 py-1 rounded-xl bg-purple-600 hover:bg-purple-500 text-app-on-accent! text-xs font-bold shadow-md cursor-pointer transition-all flex items-center gap-1"
                       >
                         <Send className="w-3 h-3" /> Assign Task
                       </button>
@@ -7039,7 +7039,7 @@ export function AdminTeamManagementPage() {
               <button
                 type="button"
                 onClick={() => setIsAddMemberOpen(true)}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-app-accent hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-app-accent hover:bg-blue-600 text-app-on-accent! text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
               >
                 <Plus className="w-4 h-4 shrink-0" /> <span>Add Team Member</span>
               </button>
@@ -7095,7 +7095,7 @@ export function AdminTeamManagementPage() {
                     </div>
                     <div className="mt-4 pt-3 border-t border-app-line flex items-center gap-2">
                       <div className="flex-1 bg-app-base rounded-full h-2 overflow-hidden border border-app-line">
-                        <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${avgCapacityPct}%` }} />
+                        <div className="bg-emerald-500 h-full rounded-full text-app-on-accent!" style={{ width: `${avgCapacityPct}%` }} />
                       </div>
                       <span className="text-xs font-bold text-emerald-400">
                         {avgCapacityPct > 90 ? "High Load" : "Healthy"}
@@ -7132,7 +7132,7 @@ export function AdminTeamManagementPage() {
                   <h3 className="text-base sm:text-lg font-bold text-hi tracking-tight">Team Pods & Operational Squads</h3>
                 </div>
                 <span className="self-start sm:self-auto px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Sprint Cycle 08 • 4 Days Remaining
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse text-app-on-accent!" /> Sprint Cycle 08 • 4 Days Remaining
                 </span>
               </div>
 
@@ -7146,7 +7146,7 @@ export function AdminTeamManagementPage() {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${pod.color} text-hi font-black text-base sm:text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0`}>
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${pod.color} text-app-on-accent! font-black text-base sm:text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0`}>
                           {pod.letter}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -7163,12 +7163,12 @@ export function AdminTeamManagementPage() {
                       {/* Live Presence / On Leave Badge */}
                       {pod.onLeaveCount > 0 ? (
                         <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9.5px] sm:text-[10px] font-extrabold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1 shadow-xs shrink-0">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse text-app-on-warm!" />
                           <span>{pod.onLeaveCount} Leave</span>
                         </span>
                       ) : (
                         <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9.5px] sm:text-[10px] font-extrabold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 shadow-xs shrink-0">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 text-app-on-accent!" />
                           <span>{pod.membersCount} Present</span>
                         </span>
                       )}
@@ -7177,7 +7177,7 @@ export function AdminTeamManagementPage() {
                     {/* Lead Info & Member Stack */}
                     <div className="p-2.5 sm:p-3.5 bg-app-base/70 rounded-xl sm:rounded-2xl flex items-center justify-between gap-2 border border-app-line">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${pod.color} text-hi font-bold text-xs flex items-center justify-center shrink-0`}>
+                        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${pod.color} text-app-on-accent! font-bold text-xs flex items-center justify-center shrink-0`}>
                           {pod.lead[0]}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -7268,7 +7268,7 @@ export function AdminTeamManagementPage() {
                 <button
                   type="button"
                   onClick={() => setIsAddMemberOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+                  className="px-4 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all"
                 >
                   + Add Team Member
                 </button>
@@ -7284,7 +7284,7 @@ export function AdminTeamManagementPage() {
                       {activePod?.name}
                     </span>
                     <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold text-xs flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse text-app-on-accent!" />
                       High Velocity
                     </span>
                   </div>
@@ -7295,19 +7295,19 @@ export function AdminTeamManagementPage() {
 
                   {/* Clean 3-column stats with responsive card pills on mobile & vertical dividers on desktop */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 pt-3 border-t border-app-line/60">
-                    <div className="p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-app-base/60 sm:bg-transparent border border-[#2A3446]/40 sm:border-0 flex flex-col justify-center">
+                    <div className="p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-app-base/60 sm:bg-transparent border border-app-line/40 sm:border-0 flex flex-col justify-center">
                       <span className="text-[10px] uppercase text-app-mist font-extrabold tracking-wider">POD LEAD</span>
                       <span className="text-hi font-bold text-xs sm:text-sm truncate">{activePod?.lead}</span>
                     </div>
 
-                    <div className="p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-app-base/60 sm:bg-transparent border border-[#2A3446]/40 sm:border-0 sm:border-l sm:border-[#2A3446] sm:pl-4 flex flex-col justify-center">
+                    <div className="p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-app-base/60 sm:bg-transparent border border-app-line/40 sm:border-0 sm:border-l sm:border-app-line sm:pl-4 flex flex-col justify-center">
                       <span className="text-[10px] uppercase text-app-mist font-extrabold tracking-wider">MEMBERS</span>
                       <span className="text-hi font-bold text-xs sm:text-sm">
                         {filteredMembers.length} Members ({activePod?.presentCount ?? filteredMembers.filter(m => m.status !== "On Leave").length} Present{activePod?.onLeaveCount ? `, ${activePod.onLeaveCount} away` : ""})
                       </span>
                     </div>
 
-                    <div className="p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-app-base/60 sm:bg-transparent border border-[#2A3446]/40 sm:border-0 sm:border-l sm:border-[#2A3446] sm:pl-4 flex flex-col justify-center">
+                    <div className="p-2.5 sm:p-0 rounded-xl sm:rounded-none bg-app-base/60 sm:bg-transparent border border-app-line/40 sm:border-0 sm:border-l sm:border-app-line sm:pl-4 flex flex-col justify-center">
                       <span className="text-[10px] uppercase text-app-mist font-extrabold tracking-wider">VELOCITY</span>
                       <span className="text-emerald-400 font-bold text-xs sm:text-sm">{activePod?.velocityPct}% Sprint Delivery</span>
                     </div>
@@ -7366,7 +7366,7 @@ export function AdminTeamManagementPage() {
                 <button
                   type="button"
                   onClick={() => setIsAddMemberOpen(true)}
-                  className="w-full sm:w-auto justify-center px-3.5 py-2.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95 shrink-0"
+                  className="w-full sm:w-auto justify-center px-3.5 py-2.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95 shrink-0"
                 >
                   <Plus className="w-4 h-4 shrink-0" /> Add Member to {activePod?.name}
                 </button>
@@ -7426,12 +7426,12 @@ export function AdminTeamManagementPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <div className="relative">
-                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-base flex items-center justify-center shadow-md">
+                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-app-on-accent! font-black text-base flex items-center justify-center shadow-md">
                             {member.name[0]}
                           </div>
                           <span
-                            className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full ring-2 ring-[#161F2D] ${
-                              member.status === "On Leave" ? "bg-amber-400" : "bg-emerald-500"
+                            className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full ring-2 ring-app-surface ${
+                              member.status === "On Leave" ? "bg-amber-400 text-app-on-warm!" : "bg-emerald-500 text-app-on-accent!"
                             }`}
                             title={member.status === "On Leave" ? "On Approved Leave Today" : "Present & Active"}
                           />
@@ -7502,7 +7502,7 @@ export function AdminTeamManagementPage() {
                       <div className="w-full bg-app-base rounded-full h-2 overflow-hidden border border-app-line">
                         <div
                           className={`h-full rounded-full ${
-                            member.allocatedPct >= 90 ? "bg-rose-500" : member.allocatedPct >= 70 ? "bg-blue-600" : "bg-emerald-500"
+                            member.allocatedPct >= 90 ? "bg-rose-500 text-app-on-warm!" : member.allocatedPct >= 70 ? "bg-blue-600 text-app-on-accent!" : "bg-emerald-500 text-app-on-accent!"
                           }`}
                           style={{ width: `${member.allocatedPct}%` }}
                         />
@@ -7512,7 +7512,7 @@ export function AdminTeamManagementPage() {
                     <div className="flex items-center justify-between text-xs font-bold pt-1">
                       {member.status === "On Leave" ? (
                         <span className="text-amber-400 flex items-center gap-1.5 text-[11px]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" /> On Leave Today
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse text-app-on-warm!" /> On Leave Today
                         </span>
                       ) : member.status === "Fully Booked" ? (
                         <span className="text-rose-400 flex items-center gap-1 text-[11px]">
@@ -7593,7 +7593,7 @@ export function AdminTeamManagementPage() {
               {/* Specialist Profile Banner */}
               <div className="bg-app-base border border-app-line/90 rounded-2xl p-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-11 rounded-2xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">
+                  <div className="size-11 rounded-2xl bg-blue-600 text-app-on-accent! font-black text-sm flex items-center justify-center shadow-xs shrink-0">
                     {assignModalMember.name.split(" ").map((n) => n[0]).join("")}
                   </div>
                   <div className="min-w-0">
@@ -7679,7 +7679,7 @@ export function AdminTeamManagementPage() {
                           onClick={() => setAssignForm({ ...assignForm, allocationIncrease: pct })}
                           className={`py-1.5 text-center text-xs font-bold rounded-lg border transition-all cursor-pointer ${
                             assignForm.allocationIncrease === pct
-                              ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                              ? "bg-blue-600 text-app-on-accent! border-blue-600 shadow-2xs"
                               : "bg-app-base text-app-ink-2 border-app-line hover:bg-app-surface"
                           }`}
                         >
@@ -7723,7 +7723,7 @@ export function AdminTeamManagementPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-app-on-accent! text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
                   >
                     Confirm & Assign Work
                   </button>
@@ -7750,7 +7750,7 @@ export function AdminTeamManagementPage() {
               {/* Header */}
               <div className="flex items-center justify-between border-b border-app-line pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="size-12 rounded-2xl bg-rose-500 text-white font-black text-base flex items-center justify-center shadow-md">
+                  <div className="size-12 rounded-2xl bg-rose-500 text-app-on-warm! font-black text-base flex items-center justify-center shadow-md">
                     {scheduleModalMember.name.split(" ").map((n) => n[0]).join("")}
                   </div>
                   <div>
@@ -7878,7 +7878,7 @@ export function AdminTeamManagementPage() {
                   type="button"
                   onClick={() => setSuccessPopup(null)}
                   autoFocus
-                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-app-on-accent! font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
                 >
                   OK
                 </button>
@@ -8128,7 +8128,7 @@ export function AdminTeamManagementPage() {
                   <button
                     type="submit"
                     disabled={isCreatingMember}
-                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-app-on-accent! text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                   >
                     {isCreatingMember ? "Adding..." : "Add Specialist"}
                   </button>
@@ -8301,7 +8301,7 @@ export function AdminTeamManagementPage() {
                 <button
                   type="button"
                   onClick={() => setProvisionedCredentials(null)}
-                  className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold cursor-pointer transition-colors"
+                  className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-app-on-accent! text-xs font-bold cursor-pointer transition-colors"
                 >
                   Done
                 </button>
@@ -8441,7 +8441,7 @@ export function AdminTeamManagementPage() {
                   <button
                     type="submit"
                     disabled={isUpdatingCredentials}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-app-on-accent! text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                   >
                     {isUpdatingCredentials ? "Updating..." : "Save & Assign Credentials"}
                   </button>
@@ -8659,7 +8659,7 @@ export function AdminTeamManagementPage() {
                   <button
                     type="submit"
                     disabled={isOnboardingBde}
-                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-app-on-warm! text-xs font-bold shadow-md shadow-amber-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                   >
                     {isOnboardingBde ? "Onboarding..." : "Onboard BDE"}
                   </button>
@@ -8793,7 +8793,7 @@ export function AdminTeamManagementPage() {
                   <button
                     type="submit"
                     disabled={isUpdatingCreds}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-app-on-warm! text-xs font-bold shadow-md shadow-amber-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                   >
                     {isUpdatingCreds ? "Updating & Sending..." : "Save Password & Send Email"}
                   </button>
@@ -8941,7 +8941,7 @@ export function AdminTeamManagementPage() {
                 <button
                   type="button"
                   onClick={() => setBdeProvisionedCreds(null)}
-                  className="py-2.5 px-5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold cursor-pointer transition-colors"
+                  className="py-2.5 px-5 rounded-xl bg-amber-600 hover:bg-amber-500 text-app-on-warm! text-xs font-bold cursor-pointer transition-colors"
                 >
                   Done
                 </button>
@@ -9218,7 +9218,7 @@ export function AdminLeaveApprovalsPage() {
           <button
             type="button"
             onClick={() => setIsApplyModalOpen(true)}
-            className="w-full sm:w-auto justify-center px-2.5 sm:px-4 py-2.5 sm:py-2 rounded-xl bg-app-accent hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all active:scale-95 truncate text-center"
+            className="w-full sm:w-auto justify-center px-2.5 sm:px-4 py-2.5 sm:py-2 rounded-xl bg-app-accent hover:bg-blue-600 text-app-on-accent! text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all active:scale-95 truncate text-center"
           >
             <Plus className="w-4 h-4 shrink-0" />
             <span className="truncate">Apply for Time Off</span>
@@ -9247,7 +9247,7 @@ export function AdminLeaveApprovalsPage() {
 
             <div className="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-app-line flex items-center justify-between gap-1 text-[9px] sm:text-xs font-semibold">
               <span className="flex items-center gap-1 text-emerald-400 truncate">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0 text-app-on-accent!" />
                 <span className="truncate">{inOfficePct}% In-Office</span>
               </span>
               <span className="text-app-mist text-[9px] sm:text-[10px] font-medium shrink-0 hidden xs:inline">
@@ -9278,7 +9278,7 @@ export function AdminLeaveApprovalsPage() {
               {actualOnLeaveToday.length > 0 ? (
                 <div className="flex items-center justify-between gap-1 text-[9px] sm:text-xs">
                   <span className="flex items-center gap-1 text-amber-300 font-bold truncate">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0 text-app-on-warm!" />
                     <span className="truncate">{actualOnLeaveToday.map((m) => m.employee_name || m.user_name || "Specialist").join(", ")}</span>
                   </span>
                   <span className="text-amber-400 text-[9px] sm:text-[10px] font-bold shrink-0">{actualOnLeaveToday.length} away</span>
@@ -9320,7 +9320,7 @@ export function AdminLeaveApprovalsPage() {
           </div>
 
           {/* Mobile View: Compact, Neat Record Cards (Zero horizontal scroll, 60% less height) */}
-          <div className="block md:hidden divide-y divide-[#2A3446]/60">
+          <div className="block md:hidden divide-y divide-app-line/60">
             {filteredRequests.length === 0 ? (
               <div className="p-8 text-center text-app-mist text-xs">
                 No leave applications found for this filter tab.
@@ -9356,17 +9356,17 @@ export function AdminLeaveApprovalsPage() {
                 const { category, notes, tagType } = parseLeaveReason(lr.reason);
 
                 return (
-                  <div key={lr.id} className="p-3.5 space-y-2 hover:bg-[#0B111C]/40 transition-colors">
+                  <div key={lr.id} className="p-3.5 space-y-2 hover:bg-app-base/40 transition-colors">
                     {/* Header Row: Specialist + Status */}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className="relative shrink-0">
-                          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#1E293B] to-[#334155] border border-app-line text-white font-extrabold text-[11px] flex items-center justify-center shadow-xs">
+                          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-app-line-soft to-app-line border border-app-line text-white font-extrabold text-[11px] flex items-center justify-center shadow-xs">
                             {empName.slice(0, 2).toUpperCase()}
                           </div>
                           <span
-                            className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-[#161F2D] ${
-                              isAwayToday ? "bg-amber-400" : "bg-emerald-400"
+                            className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-app-surface ${
+                              isAwayToday ? "bg-amber-400 text-app-on-warm!" : "bg-emerald-400 text-app-on-accent!"
                             }`}
                           />
                         </div>
@@ -9400,10 +9400,10 @@ export function AdminLeaveApprovalsPage() {
                         <span
                           className={`w-1.5 h-1.5 rounded-full ${
                             lr.status === "approved"
-                              ? "bg-emerald-400"
+                              ? "bg-emerald-400 text-app-on-accent!"
                               : lr.status === "rejected"
-                              ? "bg-rose-400"
-                              : "bg-amber-400"
+                              ? "bg-rose-400 text-app-on-warm!"
+                              : "bg-amber-400 text-app-on-warm!"
                           }`}
                         />
                         {lr.status}
@@ -9461,7 +9461,7 @@ export function AdminLeaveApprovalsPage() {
                         <button
                           type="button"
                           onClick={() => handleAction(lr.id, "approved")}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-app-on-accent! font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1"
                         >
                           <Check className="w-3.5 h-3.5" /> Approve
                         </button>
@@ -9499,7 +9499,7 @@ export function AdminLeaveApprovalsPage() {
                   <th className="px-4 py-3 text-right">Action / Approver</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#2A3446]/60 font-medium">
+              <tbody className="divide-y divide-app-line/60 font-medium">
                 {filteredRequests.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-10 text-center text-app-mist text-xs">
@@ -9537,17 +9537,17 @@ export function AdminLeaveApprovalsPage() {
                     const daysCount = calculateDays(lr.start_date, lr.end_date);
 
                     return (
-                      <tr key={lr.id} className="hover:bg-[#0B111C]/40 transition-colors">
+                      <tr key={lr.id} className="hover:bg-app-base/40 transition-colors">
                         {/* 1. Specialist & Team */}
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <div className="relative shrink-0">
-                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1E293B] to-[#334155] border border-app-line text-white font-extrabold text-xs flex items-center justify-center shadow-xs">
+                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-app-line-soft to-app-line border border-app-line text-white font-extrabold text-xs flex items-center justify-center shadow-xs">
                                 {empName.slice(0, 2).toUpperCase()}
                               </div>
                               <span
-                                className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-[#161F2D] ${
-                                  isAwayToday ? "bg-amber-400" : "bg-emerald-400"
+                                className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-app-surface ${
+                                  isAwayToday ? "bg-amber-400 text-app-on-warm!" : "bg-emerald-400 text-app-on-accent!"
                                 }`}
                                 title={isAwayToday ? "On Leave Today" : "Active Member"}
                               />
@@ -9665,10 +9665,10 @@ export function AdminLeaveApprovalsPage() {
                             <span
                               className={`w-1.5 h-1.5 rounded-full ${
                                 lr.status === "approved"
-                                  ? "bg-emerald-400"
+                                  ? "bg-emerald-400 text-app-on-accent!"
                                   : lr.status === "rejected"
-                                  ? "bg-rose-400"
-                                  : "bg-amber-400"
+                                  ? "bg-rose-400 text-app-on-warm!"
+                                  : "bg-amber-400 text-app-on-warm!"
                               }`}
                             />
                             {lr.status}
@@ -9682,7 +9682,7 @@ export function AdminLeaveApprovalsPage() {
                               <button
                                 type="button"
                                 onClick={() => handleAction(lr.id, "approved")}
-                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-app-on-accent! font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1"
                               >
                                 <Check className="w-3.5 h-3.5" /> Approve
                               </button>
@@ -9772,7 +9772,7 @@ export function AdminLeaveApprovalsPage() {
                     value={applyReason}
                     onChange={(e) => setApplyReason(e.target.value)}
                     placeholder="e.g. [Casual Leave] Personal errands or family function..."
-                    className="w-full px-3 py-2.5 rounded-xl bg-app-base border border-app-line text-xs text-hi focus:outline-none focus:border-app-accent resize-none placeholder:text-[#97A0B3]/50"
+                    className="w-full px-3 py-2.5 rounded-xl bg-app-base border border-app-line text-xs text-hi focus:outline-none focus:border-app-accent resize-none placeholder:text-app-mist/50"
                   />
                 </div>
 
@@ -9787,7 +9787,7 @@ export function AdminLeaveApprovalsPage() {
                   <button
                     type="submit"
                     disabled={isSubmittingApply || !applyReason.trim()}
-                    className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-50 transition-all flex items-center gap-1.5"
+                    className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-600 text-app-on-accent! text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-50 transition-all flex items-center gap-1.5"
                   >
                     {isSubmittingApply ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                     <span>{isSubmittingApply ? "Submitting..." : "Submit Application"}</span>
@@ -9881,7 +9881,7 @@ export function AdminRevenuePage() {
     else if (status === "Pending") badgeClass = "bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold";
 
     // Dynamic avatar color
-    const colors = ["bg-blue-600", "bg-emerald-600", "bg-purple-600", "bg-amber-600", "bg-app-accent"];
+    const colors = ["bg-blue-600 text-app-on-accent!", "bg-emerald-600 text-app-on-accent!", "bg-purple-600 text-app-on-accent!", "bg-amber-600 text-app-on-warm!", "bg-app-accent text-app-on-accent!"];
     const avatarBg = `${colors[idx % colors.length]} text-hi font-black`;
     
     return {
@@ -10018,7 +10018,7 @@ export function AdminRevenuePage() {
               <button
                 type="button"
                 onClick={() => setIsCreateInvoiceOpen(true)}
-                className="w-full sm:w-auto justify-center px-3.5 py-2.5 sm:py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all active:scale-95 truncate"
+                className="w-full sm:w-auto justify-center px-3.5 py-2.5 sm:py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all active:scale-95 truncate"
               >
                 <Plus className="w-4 h-4 shrink-0" />
                 <span className="truncate">Create Invoice</span>
@@ -10042,12 +10042,12 @@ export function AdminRevenuePage() {
 
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-bold">
                   <span className="flex items-center gap-1.5 text-app-accent text-[11px] sm:text-xs">
-                    <span className="w-2 h-2 rounded-full bg-app-accent" /> Actual Inflow
+                    <span className="w-2 h-2 rounded-full bg-app-accent text-app-on-accent!" /> Actual Inflow
                   </span>
                   <span className="flex items-center gap-1.5 text-app-mist text-[11px] sm:text-xs hidden sm:flex">
                     <span className="w-2 h-2 rounded-full bg-app-line" /> Target Baseline
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black bg-app-accent text-white shadow-md" title="Monthly Recurring Revenue">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black bg-app-accent text-app-on-accent! shadow-md" title="Monthly Recurring Revenue">
                     ₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"} Current MRR
                   </span>
                 </div>
@@ -10068,7 +10068,7 @@ export function AdminRevenuePage() {
                         <stop offset="100%" stopColor="var(--app-line)" stopOpacity={0.35} />
                       </linearGradient>
                       <linearGradient id="revenueBarGradPeak" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#FFFFFF" stopOpacity={1} />
+                        <stop offset="0%" stopColor="var(--hi)" stopOpacity={1} />
                         <stop offset="35%" stopColor="var(--app-accent-soft)" stopOpacity={1} />
                         <stop offset="100%" stopColor="var(--app-accent)" stopOpacity={0.85} />
                       </linearGradient>
@@ -10099,7 +10099,7 @@ export function AdminRevenuePage() {
                     />
                     <Tooltip
                       formatter={(val: any) => [`₹${(Number(val) / 100).toLocaleString('en-IN')}`, "Revenue"]}
-                      contentStyle={{ backgroundColor: "var(--app-base)", borderRadius: "12px", border: "1px solid var(--app-line)", color: "var(--app-ink-2)", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}
+                      contentStyle={{ backgroundColor: "var(--app-base)", borderRadius: "12px", border: "1px solid var(--app-line)", color: "var(--app-ink-2)", boxShadow: "0 10px 25px rgb(var(--shadow-rgb) / calc(0.5 * var(--shadow-k)))" }}
                       itemStyle={{ color: "var(--app-accent)", fontWeight: "bold" }}
                       labelStyle={{ color: "var(--app-mist)", fontSize: "11px", fontWeight: "bold" }}
                       cursor={false}
@@ -10196,7 +10196,7 @@ export function AdminRevenuePage() {
               </div>
 
               {/* Transactions Table: Responsive scroll container on mobile & desktop */}
-              <div className="rounded-2xl border border-app-line bg-app-base/40 overflow-x-auto max-h-[420px] sm:max-h-[480px] overflow-y-auto overscroll-contain pr-0.5 scrollbar-thin scrollbar-thumb-app-line hover:scrollbar-thumb-[#7FA0D6]/40 scrollbar-track-transparent">
+              <div className="rounded-2xl border border-app-line bg-app-base/40 overflow-x-auto max-h-[420px] sm:max-h-[480px] overflow-y-auto overscroll-contain pr-0.5 scrollbar-thin scrollbar-thumb-app-line hover:scrollbar-thumb-app-accent/40 scrollbar-track-transparent">
                 <table className="w-full text-left text-xs text-hi min-w-[700px]">
                   <thead className="bg-app-base border-b border-app-line text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-app-mist sticky top-0 z-10">
                     <tr>
@@ -10252,7 +10252,7 @@ export function AdminRevenuePage() {
 
                           <td className="px-4 py-3.5 text-center">
                             <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border inline-flex items-center gap-1.5 ${tx.badgeClass}`}>
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 text-app-on-accent!" />
                               {tx.status}
                             </span>
                           </td>
@@ -10359,7 +10359,7 @@ export function AdminRevenuePage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-app-accent text-white font-bold hover:bg-blue-700 shadow-sm"
+                  className="px-4 py-2 rounded-xl bg-app-accent text-app-on-accent! font-bold hover:bg-blue-700 shadow-sm"
                 >
                   Generate Invoice
                 </button>
@@ -11001,7 +11001,7 @@ export function AdminPlansPage() {
                 )}
                 {pendingCount > 0 && (
                   <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black uppercase flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse text-app-on-warm!" />
                     {pendingCount} Action Required
                   </span>
                 )}
@@ -11016,7 +11016,7 @@ export function AdminPlansPage() {
             <button
               type="button"
               onClick={() => setIsNewProposalOpen(true)}
-              className="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors active:scale-95"
+              className="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors active:scale-95"
             >
               <Plus className="w-4 h-4 shrink-0" /> Initiate Custom Proposal
             </button>
@@ -11086,7 +11086,7 @@ export function AdminPlansPage() {
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                       {/* Client Info */}
                       <div className="flex items-center gap-3.5">
-                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-sm flex items-center justify-center shadow-md shrink-0">
+                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-app-on-accent! font-black text-sm flex items-center justify-center shadow-md shrink-0">
                           {item.clientLogo}
                         </div>
                         <div>
@@ -11183,8 +11183,8 @@ export function AdminPlansPage() {
                               : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
                           }`}
                         >
-                          {item.status === "Pending Review" && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
-                          {item.status === "Proposal Sent" && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />}
+                          {item.status === "Pending Review" && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse text-app-on-warm!" />}
+                          {item.status === "Proposal Sent" && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse text-app-on-accent!" />}
                           {item.status}
                         </span>
 
@@ -11194,7 +11194,7 @@ export function AdminPlansPage() {
                             <button
                               type="button"
                               onClick={() => handleOpenAcceptModal(item)}
-                              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-app-on-accent! font-black text-xs shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
                             >
                               <Check className="w-3.5 h-3.5 stroke-[3]" /> ACCEPT
                             </button>
@@ -11401,7 +11401,7 @@ export function AdminPlansPage() {
                 <button
                   type="submit"
                   disabled={isSubmittingAccept}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-lg shadow-emerald-600/30 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-app-on-accent! font-black text-xs shadow-lg shadow-emerald-600/30 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
                 >
                   {isSubmittingAccept ? (
                     <span>Applying Retainer...</span>
@@ -11458,7 +11458,7 @@ export function AdminPlansPage() {
                 <button type="button" onClick={() => setEditingPlan(null)} className="px-4 py-2 rounded-xl border border-app-line font-bold text-app-ink-2 hover:bg-app-base cursor-pointer">
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer">
+                <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-app-on-accent! font-bold hover:bg-blue-700 cursor-pointer">
                   Save Changes
                 </button>
               </div>
@@ -11501,7 +11501,7 @@ export function AdminPlansPage() {
                 <button type="button" onClick={() => setDeclineModalItem(null)} className="px-4 py-2 rounded-xl border border-app-line font-bold text-app-ink-2 hover:bg-app-base cursor-pointer">
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-2 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 cursor-pointer">
+                <button type="submit" className="px-4 py-2 rounded-xl bg-rose-600 text-app-on-warm! font-bold hover:bg-rose-700 cursor-pointer">
                   Confirm Decline
                 </button>
               </div>
@@ -11609,7 +11609,7 @@ export function AdminPlansPage() {
                 <button
                   type="submit"
                   disabled={isSubmittingCounter}
-                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs shadow-lg shadow-purple-600/30 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-app-on-accent! font-black text-xs shadow-lg shadow-purple-600/30 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
                 >
                   {isSubmittingCounter ? "Submitting Counter..." : `Submit Counter Offer (₹${Number(counterPriceInput || 0).toLocaleString('en-IN')})`}
                 </button>
@@ -11737,7 +11737,7 @@ export function AdminPlansPage() {
                 <button
                   type="submit"
                   disabled={isSubmittingProposal}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/25 cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-app-on-accent! font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/25 cursor-pointer disabled:opacity-50 transition-all active:scale-95"
                 >
                   {isSubmittingProposal ? (
                     <>

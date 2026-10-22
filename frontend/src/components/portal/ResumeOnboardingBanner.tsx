@@ -23,9 +23,9 @@ function StepSegments({ completed, current }: { completed: number; current: numb
           key={s.step}
           className={`h-1.5 flex-1 rounded-full transition-colors duration-500 ${
             s.step <= completed
-              ? "bg-app-accent"
+              ? "bg-app-accent text-app-on-accent!"
               : s.step === current
-                ? "bg-app-warm"
+                ? "bg-app-warm text-app-on-warm!"
                 : "bg-app-line"
           }`}
         />
@@ -103,7 +103,7 @@ export function ResumeOnboardingBanner({
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0 max-w-2xl flex-1">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-app-warm/30 bg-app-warm/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-app-warm">
-              <span className="size-1.5 animate-pulse rounded-full bg-app-warm" />
+              <span className="size-1.5 animate-pulse rounded-full bg-app-warm text-app-on-warm!" />
               Setup incomplete · {progressLabel}
             </span>
             <h2 className="mt-3 text-xl font-bold tracking-tight text-app-ink sm:text-2xl">

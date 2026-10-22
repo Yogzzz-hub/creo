@@ -231,7 +231,7 @@ export function WorkstationSidebar() {
           mobileOpen
             ? "translate-x-0 visible pointer-events-auto"
             : "-translate-x-full invisible lg:visible pointer-events-none lg:pointer-events-auto"
-        } bg-[#070B13] border-r border-[#1A2638] lg:bg-[#161F2D] lg:border-[#2A3446] max-h-screen`}
+        } bg-app-void border-r border-app-line-soft lg:bg-app-surface lg:border-app-line max-h-screen`}
       >
         {/* ========================================================================= */}
         {/* 1. DESKTOP SIDEBAR VIEW (lg:flex, hidden on mobile) - 100% UNCHANGED      */}
@@ -329,7 +329,7 @@ export function WorkstationSidebar() {
         {/* ========================================================================= */}
         {/* 2. MOBILE DRAWER SIDEBAR VIEW (lg:hidden) - EXACT REFERENCE DESIGN        */}
         {/* ========================================================================= */}
-        <div className="lg:hidden flex flex-col h-full max-h-screen w-full bg-[#070B13] text-left overflow-y-auto overscroll-contain [scrollbar-width:thin] [-webkit-overflow-scrolling:touch]">
+        <div className="lg:hidden flex flex-col h-full max-h-screen w-full bg-app-void text-left overflow-y-auto overscroll-contain [scrollbar-width:thin] [-webkit-overflow-scrolling:touch]">
           <div className="p-4 flex-1 flex flex-col justify-between min-h-full space-y-4">
             <div className="space-y-4">
             {/* Top Brand Header & Close Button */}
@@ -342,14 +342,14 @@ export function WorkstationSidebar() {
                 >
                   Creo<span className="text-sky-400 text-3xl leading-none">.</span>
                 </Link>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#111A29] text-[#7E93AE] border border-[#1E2D42]">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-app-nested text-app-mist border border-app-line-soft">
                   MEMBER
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="size-9 rounded-xl bg-[#0D1522] border border-[#1A2638] flex items-center justify-center text-slate-400 hover:text-hi transition-colors cursor-pointer"
+                className="size-9 rounded-xl bg-app-nested border border-app-line-soft flex items-center justify-center text-slate-400 hover:text-hi transition-colors cursor-pointer"
                 aria-label="Close navigation sidebar"
               >
                 <X className="w-5 h-5" />
@@ -357,19 +357,19 @@ export function WorkstationSidebar() {
             </div>
 
             {/* Profile Card */}
-            <div className="rounded-2xl bg-[#0D1522] border border-[#1A2638] p-3.5 flex items-center gap-3.5">
-              <div className="size-12 rounded-full bg-[#182539] border border-[#263A56] flex items-center justify-center text-base font-bold text-[#8FA5C2] shrink-0">
+            <div className="rounded-2xl bg-app-nested border border-app-line-soft p-3.5 flex items-center gap-3.5">
+              <div className="size-12 rounded-full bg-app-surface border border-app-line flex items-center justify-center text-base font-bold text-app-mist shrink-0">
                 {userInitial}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-bold text-hi tracking-tight truncate">
                   {user?.full_name || "Rahim"} ({userRoleParens})
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-[#8FA5C2] mt-0.5">
-                  <span className="size-2 rounded-full bg-sky-400 shadow-[0_0_6px_#38BDF8]" />
+                <div className="flex items-center gap-1.5 text-xs text-app-mist mt-0.5">
+                  <span className="size-2 rounded-full bg-sky-400 shadow-[0_0_6px_#38BDF8] text-app-on-accent!" />
                   <span className="truncate">Active in {podName}</span>
                 </div>
-                <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-[#0A101A] border border-[#1A2638] text-[10px] font-semibold text-[#8FA5C2]">
+                <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-app-base border border-app-line-soft text-[10px] font-semibold text-app-mist">
                   {userRoleBadge} • {podName}
                 </div>
               </div>
@@ -383,14 +383,14 @@ export function WorkstationSidebar() {
                 onClick={() => setMobileOpen(false)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all ${
                   isOverviewActive
-                    ? "bg-[#131E30] border border-[#233650] text-hi shadow-xs font-bold"
-                    : "text-slate-300 hover:text-hi hover:bg-[#0D1522] font-semibold"
+                    ? "bg-app-surface border border-app-line text-hi shadow-xs font-bold"
+                    : "text-slate-300 hover:text-hi hover:bg-app-nested font-semibold"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <span
                     className={`size-2 rounded-full ${
-                      isOverviewActive ? "bg-sky-400 shadow-[0_0_8px_#38BDF8]" : "bg-transparent"
+                      isOverviewActive ? "bg-sky-400 shadow-[0_0_8px_#38BDF8] text-app-on-accent!" : "bg-transparent"
                     }`}
                   />
                   <span className="text-sm">Workstation Overview</span>
@@ -404,15 +404,15 @@ export function WorkstationSidebar() {
                 onClick={() => setMobileOpen(false)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all ${
                   isTasksActive
-                    ? "bg-[#131E30] border border-[#233650] text-hi shadow-xs font-bold"
-                    : "text-slate-300 hover:text-hi hover:bg-[#0D1522] font-semibold"
+                    ? "bg-app-surface border border-app-line text-hi shadow-xs font-bold"
+                    : "text-slate-300 hover:text-hi hover:bg-app-nested font-semibold"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <CheckCircle2 className="w-4.5 h-4.5 text-slate-400 shrink-0" />
                   <span className="text-sm">My Tasks</span>
                 </div>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#131E30] border border-[#233650] text-[11px] font-semibold text-[#8FA5C2]">
+                <span className="px-2.5 py-0.5 rounded-full bg-app-surface border border-app-line text-[11px] font-semibold text-app-mist">
                   {dueTodayCount > 0 ? `${dueTodayCount} Due Today` : "3 Due Today"}
                 </span>
               </Link>
@@ -423,8 +423,8 @@ export function WorkstationSidebar() {
                 onClick={() => setMobileOpen(false)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all ${
                   isScheduleActive
-                    ? "bg-[#131E30] border border-[#233650] text-hi shadow-xs font-bold"
-                    : "text-slate-300 hover:text-hi hover:bg-[#0D1522] font-semibold"
+                    ? "bg-app-surface border border-app-line text-hi shadow-xs font-bold"
+                    : "text-slate-300 hover:text-hi hover:bg-app-nested font-semibold"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -442,12 +442,12 @@ export function WorkstationSidebar() {
                 onClick={() => setMobileOpen(false)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all ${
                   isSlackActive
-                    ? "bg-[#131E30] border border-[#233650] text-hi shadow-xs font-bold"
-                    : "text-slate-300 hover:text-hi hover:bg-[#0D1522] font-semibold"
+                    ? "bg-app-surface border border-app-line text-hi shadow-xs font-bold"
+                    : "text-slate-300 hover:text-hi hover:bg-app-nested font-semibold"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <MessageSquare className="w-4.5 h-4.5 text-[#E879F9] shrink-0" />
+                  <MessageSquare className="w-4.5 h-4.5 text-app-accent shrink-0" />
                   <span className="text-sm">Slack Workspace Hub</span>
                 </div>
                 <span className="text-xs font-medium text-slate-400">
@@ -461,8 +461,8 @@ export function WorkstationSidebar() {
                 onClick={() => setMobileOpen(false)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all ${
                   isPublishingActive
-                    ? "bg-[#131E30] border border-[#233650] text-hi shadow-xs font-bold"
-                    : "text-slate-300 hover:text-hi hover:bg-[#0D1522] font-semibold"
+                    ? "bg-app-surface border border-app-line text-hi shadow-xs font-bold"
+                    : "text-slate-300 hover:text-hi hover:bg-app-nested font-semibold"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -480,8 +480,8 @@ export function WorkstationSidebar() {
                 onClick={() => setMobileOpen(false)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all ${
                   isSettingsActive
-                    ? "bg-[#131E30] border border-[#233650] text-hi shadow-xs font-bold"
-                    : "text-slate-300 hover:text-hi hover:bg-[#0D1522] font-semibold"
+                    ? "bg-app-surface border border-app-line text-hi shadow-xs font-bold"
+                    : "text-slate-300 hover:text-hi hover:bg-app-nested font-semibold"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -497,7 +497,7 @@ export function WorkstationSidebar() {
                 <Link
                   to="/admin"
                   onClick={() => setMobileOpen(false)}
-                  className="w-full flex items-center justify-between text-xs font-bold text-app-accent hover:text-hi px-3 py-2 rounded-xl bg-[#0D1522] border border-app-accent/30 hover:border-app-accent/60 transition-colors shadow-xs"
+                  className="w-full flex items-center justify-between text-xs font-bold text-app-accent hover:text-hi px-3 py-2 rounded-xl bg-app-nested border border-app-accent/30 hover:border-app-accent/60 transition-colors shadow-xs"
                 >
                   <span>← Return to Admin Console</span>
                   <LayoutDashboard className="w-3.5 h-3.5" />
@@ -516,7 +516,7 @@ export function WorkstationSidebar() {
               type="button"
               onClick={handleLogout}
               disabled={loggingOut}
-              className="w-full mt-3 py-3 rounded-2xl bg-[#0D1522] border border-[#1A2638] flex items-center justify-center gap-2.5 text-sm font-bold text-slate-200 hover:text-hi hover:bg-[#131E30] transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full mt-3 py-3 rounded-2xl bg-app-nested border border-app-line-soft flex items-center justify-center gap-2.5 text-sm font-bold text-slate-200 hover:text-hi hover:bg-app-surface transition-colors cursor-pointer disabled:opacity-50"
             >
               <LogOut className="w-4 h-4 text-slate-400" />
               <span>{loggingOut ? "Signing out..." : "Sign Out Session"}</span>

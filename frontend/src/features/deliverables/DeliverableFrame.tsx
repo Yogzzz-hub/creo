@@ -48,7 +48,7 @@ export function DeliverableFrame({
     <motion.button
       type="button"
       layout={!shouldReduceMotion}
-      whileHover={{ scale: 1.02, y: -4, boxShadow: "0 10px 25px rgba(13, 33, 55, 0.1)" }}
+      whileHover={{ scale: 1.02, y: -4, boxShadow: "0 10px 25px rgb(var(--shadow-rgb) / calc(0.1 * var(--shadow-k)))" }}
       transition={
         shouldReduceMotion ? { duration: 0 } : { type: "spring", stiffness: 350, damping: 28 }
       }
@@ -69,8 +69,8 @@ export function DeliverableFrame({
         cursor: "pointer",
         border: isSelected ? "2px solid var(--color-motion)" : "1px solid var(--color-hairline)",
         boxShadow: isSelected
-          ? "0 0 0 2px rgba(43, 123, 196, 0.4), 0 8px 24px rgba(13, 33, 55, 0.12)"
-          : "0 2px 8px rgba(13, 33, 55, 0.06)",
+          ? "0 0 0 2px color-mix(in oklab, var(--app-accent) 40%, transparent), 0 8px 24px rgb(var(--shadow-rgb) / calc(0.12 * var(--shadow-k)))"
+          : "0 2px 8px rgb(var(--shadow-rgb) / calc(0.06 * var(--shadow-k)))",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
@@ -141,7 +141,7 @@ export function DeliverableFrame({
               alignItems: "center",
               justifyContent: "center",
               background:
-                "linear-gradient(180deg, rgba(23,27,34,0.4) 0%, rgba(14,17,22,0.95) 100%)",
+                "linear-gradient(180deg, color-mix(in oklab, var(--app-void) 40%, transparent) 0%, color-mix(in oklab, var(--app-void) 95%, transparent) 100%)",
               padding: "1rem",
               textAlign: "center",
               boxSizing: "border-box",
@@ -159,9 +159,9 @@ export function DeliverableFrame({
                   width: 48,
                   height: 48,
                   borderRadius: "50%",
-                  backgroundColor: "rgba(255, 255, 255, 0.15)",
+                  backgroundColor: "color-mix(in oklab, var(--hi) 15%, transparent)",
                   backdropFilter: "blur(4px)",
-                  border: "1px solid rgba(255, 255, 255, 0.25)",
+                  border: "1px solid color-mix(in oklab, var(--hi) 25%, transparent)",
                   color: "white",
                   display: "flex",
                   alignItems: "center",
@@ -208,7 +208,7 @@ export function DeliverableFrame({
             right: 10,
             padding: "3px 8px",
             borderRadius: 4,
-            backgroundColor: "rgba(14, 17, 22, 0.8)",
+            backgroundColor: "color-mix(in oklab, var(--app-void) 80%, transparent)",
             backdropFilter: "blur(4px)",
             border: "1px solid var(--color-hairline)",
             fontSize: "0.6875rem",
@@ -233,7 +233,7 @@ export function DeliverableFrame({
               left: 10,
               padding: "2px 6px",
               borderRadius: 4,
-              backgroundColor: "rgba(14, 17, 22, 0.85)",
+              backgroundColor: "color-mix(in oklab, var(--app-void) 85%, transparent)",
               border: "1px solid var(--color-hairline)",
               fontSize: "0.6875rem",
               color: "var(--color-ink-muted)",

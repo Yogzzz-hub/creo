@@ -9,7 +9,6 @@ import { CreoInlineLoader } from "../ui/CreoLoader";
 import { ResumeOnboardingBanner } from "./ResumeOnboardingBanner";
 import { PortalPageHeader } from "./PortalPieces";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
-import "../../styles/portal-theme.css";
 
 /**
  * Display headers for the pages that don't open with their own. Home and Plan &
@@ -76,12 +75,6 @@ export function PortalLayout() {
   // Only an unlocked chat uses a fixed-height viewport; locked pages scroll normally.
   const isSlack = pathname.startsWith("/portal/slack") && gate.isComplete;
   const pageHeader = isSlack ? undefined : headerFor(pathname);
-
-  // The portal palette lives on <html> so dialogs portalled to <body> share it
-  useLayoutEffect(() => {
-    document.documentElement.classList.add("portal-theme");
-    return () => document.documentElement.classList.remove("portal-theme");
-  }, []);
 
   return (
     <AdminSidebarProvider>

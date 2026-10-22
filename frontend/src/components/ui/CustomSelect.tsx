@@ -46,8 +46,8 @@ export function CustomSelect({
           aria-label={ariaLabel || "Select option"}
           className={`flex items-center gap-2 rounded-xl transition-all ${
             isSm
-              ? "creo-select-trigger--sm !min-h-[32px] !h-8 !px-3 !py-1 !text-xs !rounded-xl !bg-[#161F2D] !border-[#2A3446] hover:!border-[#7FA0D6]/60 text-hi font-medium"
-              : "!rounded-xl !bg-[#161F2D] !border-[#2A3446] hover:!border-[#7FA0D6]/60 text-hi font-medium"
+              ? "creo-select-trigger--sm !min-h-[32px] !h-8 !px-3 !py-1 !text-xs !rounded-xl !bg-app-surface !border-app-line hover:!border-app-accent/60 text-hi font-medium"
+              : "!rounded-xl !bg-app-surface !border-app-line hover:!border-app-accent/60 text-hi font-medium"
           } ${className}`}
         >
           {icon && <span className="shrink-0 text-app-mist">{icon}</span>}
@@ -55,7 +55,7 @@ export function CustomSelect({
         </SelectTrigger>
         <SelectContent
           align={alignRight ? "end" : "start"}
-          className="!rounded-2xl !bg-[#161F2D] !border-[#2A3446] shadow-2xl p-1.5 backdrop-blur-md"
+          className="!rounded-2xl !bg-app-surface !border-app-line shadow-2xl p-1.5 backdrop-blur-md"
         >
           {options.map((option) => (
             <SelectItem

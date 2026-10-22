@@ -12,7 +12,7 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
   return (
     <div
       onClick={() => navigate("/admin/calendar")}
-      className="bg-app-surface rounded-3xl border border-app-line shadow-xl hover:border-app-accent/60 hover:shadow-[0_0_25px_rgba(127,160,214,0.15)] transition-all duration-300 p-4 sm:p-5 flex flex-col justify-between w-full h-full font-sans cursor-pointer group hover-card-innovative overflow-hidden text-hi"
+      className="bg-app-surface rounded-3xl border border-app-line shadow-xl hover:border-app-accent/60 hover:shadow-[0_0_25px_color-mix(in_oklab,var(--app-accent)_15%,transparent)] transition-all duration-300 p-4 sm:p-5 flex flex-col justify-between w-full h-full font-sans cursor-pointer group hover-card-innovative overflow-hidden text-hi"
     >
       {/* Header Row */}
       <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-app-line/80 shrink-0 gap-2">
@@ -34,7 +34,7 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
         <Link
           to="/admin/deliverables"
           onClick={(e) => e.stopPropagation()}
-          className="bg-app-base hover:bg-app-surface border border-app-line hover:border-app-accent/60 hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(127,160,214,0.18)] rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between h-full transition-all duration-200 group/box cursor-pointer shadow-md overflow-hidden"
+          className="bg-app-base hover:bg-app-surface border border-app-line hover:border-app-accent/60 hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_0_20px_color-mix(in_oklab,var(--app-accent)_18%,transparent)] rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between h-full transition-all duration-200 group/box cursor-pointer shadow-md overflow-hidden"
         >
           <div className="flex items-center justify-between gap-1 w-full">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
@@ -61,7 +61,7 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
         <Link
           to="/admin/calendar"
           onClick={(e) => e.stopPropagation()}
-          className="bg-app-base hover:bg-app-surface border border-app-line hover:border-app-accent/60 hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(127,160,214,0.18)] rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between h-full transition-all duration-200 group/box cursor-pointer shadow-md overflow-hidden"
+          className="bg-app-base hover:bg-app-surface border border-app-line hover:border-app-accent/60 hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_0_20px_color-mix(in_oklab,var(--app-accent)_18%,transparent)] rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between h-full transition-all duration-200 group/box cursor-pointer shadow-md overflow-hidden"
         >
           <div className="flex items-center justify-between gap-1 w-full">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
@@ -88,7 +88,7 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
         <Link
           to="/admin/tasks"
           onClick={(e) => e.stopPropagation()}
-          className="bg-app-base hover:bg-app-surface border border-app-line hover:border-app-accent/60 hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(127,160,214,0.18)] rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between h-full transition-all duration-200 group/box cursor-pointer shadow-md overflow-hidden"
+          className="bg-app-base hover:bg-app-surface border border-app-line hover:border-app-accent/60 hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_0_20px_color-mix(in_oklab,var(--app-accent)_18%,transparent)] rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between h-full transition-all duration-200 group/box cursor-pointer shadow-md overflow-hidden"
         >
           <div className="flex items-center justify-between gap-1 w-full">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
@@ -115,7 +115,7 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
         <Link
           to="/slack"
           onClick={(e) => e.stopPropagation()}
-          className="bg-app-base hover:bg-app-surface border border-app-line hover:border-app-accent/60 hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(127,160,214,0.18)] rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between h-full transition-all duration-200 group/box cursor-pointer shadow-md overflow-hidden"
+          className="bg-app-base hover:bg-app-surface border border-app-line hover:border-app-accent/60 hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_0_20px_color-mix(in_oklab,var(--app-accent)_18%,transparent)] rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between h-full transition-all duration-200 group/box cursor-pointer shadow-md overflow-hidden"
         >
           <div className="flex items-center justify-between gap-1 w-full">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">

@@ -148,7 +148,7 @@ export function ContactSheet({ clientId }: ContactSheetProps) {
             maxWidth: "1200px",
             margin: "0 auto 1.5rem",
             padding: "1rem",
-            backgroundColor: "rgba(229, 72, 77, 0.1)",
+            backgroundColor: "color-mix(in oklab, var(--app-warm) 10%, transparent)",
             border: "1px solid var(--color-blocked)",
             borderRadius: 8,
             color: "var(--color-blocked)",
