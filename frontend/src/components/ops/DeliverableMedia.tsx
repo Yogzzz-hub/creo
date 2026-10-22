@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Film, ImageIcon, RefreshCw, Play } from "lucide-react";
+import { CreoLoader } from "../ui/CreoLoader";
 
 const FALLBACK_POSTERS = [
   "/assets/deliverables/astra_living_reel.jpg",
@@ -101,7 +102,7 @@ export function DeliverableMedia({
     <div className={`relative flex items-center justify-center bg-black overflow-hidden ${className}`}>
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
-          <div className="size-5 rounded-full border-2 border-app-accent border-t-transparent animate-spin" />
+          <CreoLoader label="" fullScreen={false} compact showProgress={false} />
         </div>
       )}
       {isVideo ? (

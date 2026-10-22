@@ -816,7 +816,7 @@ function RevenueCRMWorkspace() {
             Showing up to 100 matching leads. Filters are saved in this page URL.
           </p>
           {leadQuery.isPending ? (
-            <Empty title="Loading leads..." />
+            <CreoInlineLoader compact label="Loading leads" />
           ) : !leads.length ? (
             <div className={panel}>
               <Empty title="Your next opportunity starts here">
@@ -882,7 +882,7 @@ function RevenueCRMWorkspace() {
             </button>
           </div>
           {taskQuery.isPending ? (
-            <Empty title="Loading follow-ups..." />
+            <CreoInlineLoader compact label="Loading follow-ups" />
           ) : !taskQuery.data?.length ? (
             <Empty title="No follow-ups yet">
               Create a lead or schedule a next action to build your queue.
@@ -943,7 +943,7 @@ function RevenueCRMWorkspace() {
             </button>
           </div>
           {proposalQuery.isPending ? (
-            <Empty title="Loading proposals..." />
+            <CreoInlineLoader compact label="Loading proposals" />
           ) : !proposalQuery.data?.length ? (
             <Empty title="A clearer proposal, a better conversation">
               Build a proposal from a CRM lead and your agency service catalog.
@@ -1076,7 +1076,7 @@ function RevenueCRMWorkspace() {
             </button>
           </div>
           {referralQuery.isPending ? (
-            <Empty title="Loading referrals..." />
+            <CreoInlineLoader compact label="Loading referrals" />
           ) : !referralQuery.data?.length ? (
             <Empty title="No referrals registered">
               Link a referred lead and record who introduced the business.
@@ -1332,7 +1332,7 @@ function RevenueCRMWorkspace() {
           wide
         >
           {detail.isPending ? (
-            <Empty title="Loading lead..." />
+            <CreoInlineLoader compact label="Loading lead" />
           ) : detail.isError ? (
             <p role="alert" className="text-rose-300">
               {detail.error.message}
@@ -2566,7 +2566,7 @@ function CRMSettings({ onSaved }: { onSaved: () => void }) {
     queryKey: ["crm", crmAgencyKey(), "settings", user?.id],
     queryFn: () => crmGet<Record<string, string | number>>("settings"),
   });
-  if (query.isPending) return <Empty title="Loading agency settings..." />;
+  if (query.isPending) return <CreoInlineLoader compact label="Loading agency settings" />;
   if (query.isError)
     return (
       <p role="alert" className="text-rose-300">
@@ -2851,7 +2851,7 @@ function HandoffList({ timezone }: { timezone: string }) {
         </p>
       )}
       {query.isPending ? (
-        <Empty title="Loading handoffs..." />
+        <CreoInlineLoader compact label="Loading handoffs" />
       ) : !query.data?.length ? (
         <Empty title="No delivery handoffs yet">
           Accepted scope, client promises and the exact proposal version will appear here.
