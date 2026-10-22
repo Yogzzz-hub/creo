@@ -125,7 +125,7 @@ export function FreelancerSettingsPage() {
           {/* ── CARD 1: Profile Information ── */}
           <div className="bg-app-surface rounded-3xl p-5 sm:p-7 border border-app-line shadow-xl space-y-6">
             <div className="flex items-center gap-4 pb-4 border-b border-app-line">
-              <div className="size-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
+              <div className="size-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-app-on-accent! font-black text-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
                 {initials}
               </div>
               <div>
@@ -150,7 +150,7 @@ export function FreelancerSettingsPage() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="Your Full Name"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-app-base border border-app-line text-hi text-xs font-medium placeholder:text-[#66738A] focus:outline-none focus:border-purple-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-app-base border border-app-line text-hi text-xs font-medium placeholder:text-app-mist focus:outline-none focus:border-purple-500 transition-colors"
                 />
               </div>
 
@@ -166,7 +166,7 @@ export function FreelancerSettingsPage() {
                   disabled
                   className="w-full px-3.5 py-2.5 rounded-xl bg-app-base/60 border border-app-line/60 text-app-mist text-xs font-medium cursor-not-allowed"
                 />
-                <p className="text-[10px] text-[#66738A]">
+                <p className="text-[10px] text-app-mist">
                   Email is managed by platform administration. Contact executive support to change.
                 </p>
               </div>
@@ -181,7 +181,7 @@ export function FreelancerSettingsPage() {
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="+91 98765 43210"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-app-base border border-app-line text-hi text-xs font-medium placeholder:text-[#66738A] focus:outline-none focus:border-purple-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-app-base border border-app-line text-hi text-xs font-medium placeholder:text-app-mist focus:outline-none focus:border-purple-500 transition-colors"
                 />
               </div>
 
@@ -189,7 +189,7 @@ export function FreelancerSettingsPage() {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md shadow-purple-500/20 flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-app-on-accent! text-xs font-bold shadow-md shadow-purple-500/20 flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {isSaving ? (
                     <>

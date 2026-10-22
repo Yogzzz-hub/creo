@@ -2057,7 +2057,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
 
               {secA.brand_logo_url ? (
                 <div className="bg-app-base border border-app-line rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-5">
-                  <div className="w-40 h-28 rounded-xl border border-app-line bg-[radial-gradient(#2A3446_1px,transparent_1px)] [background-size:12px_12px] bg-[#0E1524] flex items-center justify-center p-3 overflow-hidden shadow-inner shrink-0">
+                  <div className="w-40 h-28 rounded-xl border border-app-line bg-[radial-gradient(#2A3446_1px,transparent_1px)] [background-size:12px_12px] bg-app-nested flex items-center justify-center p-3 overflow-hidden shadow-inner shrink-0">
                     <img
                       src={apiUrl(secA.brand_logo_url)}
                       alt="Brand Logo Preview"
@@ -2340,8 +2340,8 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono mb-2.5">
                 <div className="flex items-center gap-2 text-app-accent uppercase tracking-wider font-semibold">
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-app-accent opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-app-accent"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-app-accent opacity-75 text-app-on-accent!"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-app-accent text-app-on-accent!"></span>
                   </span>
                   <Sliders className="w-3.5 h-3.5" />
                   <span>Live Voice Synthesizer Preview</span>
@@ -2352,7 +2352,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                   {(secC.voice_words || []).map((w: string) => (
                     <span
                       key={w}
-                      className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-app-accent/20 text-app-accent border border-app-accent/40 uppercase tracking-wider shadow-[0_0_8px_rgba(127,160,214,0.2)]"
+                      className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-app-accent/20 text-app-accent border border-app-accent/40 uppercase tracking-wider shadow-[0_0_8px_color-mix(in_oklab,var(--app-accent)_20%,transparent)]"
                     >
                       ✦ {w}
                     </span>
@@ -2486,7 +2486,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                       }}
                       className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer transform active:scale-95 hover:scale-[1.02] ${
                         isSelected
-                          ? "bg-app-accent text-app-base border-app-accent shadow-[0_0_12px_rgba(127,160,214,0.45)] ring-1 ring-app-accent"
+                          ? "bg-app-accent text-app-base border-app-accent shadow-[0_0_12px_color-mix(in_oklab,var(--app-accent)_45%,transparent)] ring-1 ring-app-accent"
                           : "bg-app-base text-app-accent-soft border-app-line hover:border-app-accent/60 hover:text-hi"
                       }`}
                     >
@@ -2531,7 +2531,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                       }}
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer transform active:scale-95 hover:scale-[1.02] ${
                         isSelected
-                          ? "bg-rose-600 text-white border-rose-500 shadow-[0_0_12px_rgba(225,29,72,0.4)] ring-1 ring-rose-400"
+                          ? "bg-rose-600 text-app-on-warm! border-rose-500 shadow-[0_0_12px_color-mix(in_oklab,var(--app-warm)_40%,transparent)] ring-1 ring-rose-400"
                           : "bg-app-surface text-rose-200 border-rose-900/50 hover:border-rose-700 hover:text-rose-100"
                       }`}
                     >
@@ -2704,8 +2704,8 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono mb-2.5">
                   <div className="flex items-center gap-2 text-app-accent uppercase tracking-wider font-semibold">
                     <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-app-accent opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-app-accent"></span>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-app-accent opacity-75 text-app-on-accent!"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-app-accent text-app-on-accent!"></span>
                     </span>
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Live Visual Direction & Style Preview</span>
@@ -2718,7 +2718,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                       return (
                         <span
                           key={vVal}
-                          className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-app-accent/20 text-app-accent border border-app-accent/40 uppercase tracking-wider shadow-[0_0_8px_rgba(127,160,214,0.2)]"
+                          className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-app-accent/20 text-app-accent border border-app-accent/40 uppercase tracking-wider shadow-[0_0_8px_color-mix(in_oklab,var(--app-accent)_20%,transparent)]"
                         >
                           ✦ {opt?.label || vVal}
                         </span>
@@ -2813,7 +2813,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
                       }}
                       className={`p-3 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer transform active:scale-95 hover:scale-[1.02] ${
                         isSelected
-                          ? "bg-app-accent text-app-base border-app-accent shadow-[0_0_12px_rgba(127,160,214,0.45)] ring-1 ring-app-accent"
+                          ? "bg-app-accent text-app-base border-app-accent shadow-[0_0_12px_color-mix(in_oklab,var(--app-accent)_45%,transparent)] ring-1 ring-app-accent"
                           : "bg-app-base text-app-accent-soft border-app-line hover:border-app-accent/60 hover:text-hi"
                       }`}
                     >

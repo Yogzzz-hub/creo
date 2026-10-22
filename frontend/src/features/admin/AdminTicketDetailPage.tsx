@@ -193,7 +193,7 @@ export function AdminTicketDetailPage() {
               author: senderName,
               role: senderRole,
               avatar: getInitials(senderName),
-              avatarBg: "bg-blue-600",
+              avatarBg: "bg-blue-600 text-app-on-accent!",
               timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
               text: m.message,
               isInternal: false,
@@ -313,7 +313,7 @@ export function AdminTicketDetailPage() {
       author: "Core Infrastructure Desk",
       role: "Incident SRE Bridge",
       avatar: "🚨",
-      avatarBg: "bg-rose-700",
+      avatarBg: "bg-rose-700 text-app-on-warm!",
       timestamp: "Just now",
       text: `🚨 ESCALATED TO CORE (${escalatePriority} Incident #INC-9204)\nTarget: ${escalateTarget}\nSummary: ${escalateNotes}\n${notifyPagerDuty ? "✓ PagerDuty On-Call engineer alerted via automated bridge." : ""}`,
       isSystemAudit: true,
@@ -342,7 +342,7 @@ export function AdminTicketDetailPage() {
       author: "Creo System Audit",
       role: "Status Update",
       avatar: nextState ? "✅" : "⚠️",
-      avatarBg: nextState ? "bg-emerald-700" : "bg-blue-700",
+      avatarBg: nextState ? "bg-emerald-700 text-app-on-accent!" : "bg-blue-700 text-app-on-accent!",
       timestamp: "Just now",
       text: nextState
         ? `✅ Ticket marked as RESOLVED by Lead Admin. All SHA256 checksums verified.`
@@ -394,7 +394,7 @@ export function AdminTicketDetailPage() {
       author: selectedLead.name,
       role: `${selectedLead.role} • ${selectedLead.pod}`,
       avatar: selectedLead.initials,
-      avatarBg: activeTab === "internal" ? "bg-amber-600" : "bg-blue-600",
+      avatarBg: activeTab === "internal" ? "bg-amber-600 text-app-on-warm!" : "bg-blue-600 text-app-on-accent!",
       timestamp: "Just now",
       text: replyText.trim() + (attachedFiles.length > 0 ? `\n\n📎 Attached: ${attachedFiles.join(", ")}` : ""),
       isInternal: activeTab === "internal",
@@ -577,12 +577,12 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                 <span className={`size-1.5 rounded-full ${isResolved ? "bg-app-accent-soft" : "bg-app-accent-soft animate-pulse"}`} />
                 {isResolved ? "RESOLVED" : "OPEN"}
               </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-600 text-white shadow-xs">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-600 text-app-on-accent! shadow-xs">
                 <Zap className="size-3" />
                 {isEscalated ? "P0 (CRITICAL BLOCKER)" : (ticketData?.priority || "URGENT")}
               </span>
               {isEscalated && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-blue-700 text-white shadow-xs animate-pulse">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-blue-700 text-app-on-accent! shadow-xs animate-pulse">
                   <AlertTriangle className="size-3" />
                   CORE ESCALATED (#INC-9204)
                 </span>
@@ -638,7 +638,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                   <button
                     type="button"
                     onClick={handleToggleResolve}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-sm transition-all cursor-pointer bg-emerald-600 hover:bg-emerald-700"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-app-on-accent! shadow-sm transition-all cursor-pointer bg-emerald-600 hover:bg-emerald-700"
                   >
                     <CheckCircle2 className="size-3.5" />
                     Mark as Resolved
@@ -648,7 +648,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                     <button
                       type="button"
                       onClick={handleCloseTicket}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-sm transition-all cursor-pointer bg-blue-600 hover:bg-blue-700"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-app-on-accent! shadow-sm transition-all cursor-pointer bg-blue-600 hover:bg-blue-700"
                     >
                       Close Ticket
                     </button>
@@ -1047,7 +1047,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                   <button
                     type="button"
                     onClick={handleSendMessage}
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! font-bold text-xs shadow-sm transition-all cursor-pointer"
                   >
                     <Send className="size-3.5" />
                     {activeTab === "internal" ? "Post Internal Note" : "Send Reply & Keep Open"}
@@ -1075,7 +1075,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
 
               {/* Brand Summary */}
               <div className="flex items-center gap-3 bg-app-accent/15/60 p-3.5 rounded-xl border border-app-accent/30">
-                <div className="size-11 rounded-xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">
+                <div className="size-11 rounded-xl bg-blue-600 text-app-on-accent! font-black text-sm flex items-center justify-center shadow-xs shrink-0">
                   {(ticketData?.client || "CW").slice(0, 2).toUpperCase()}
                 </div>
                 <div>
@@ -1143,7 +1143,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                 <div className="flex items-center justify-between">
                   <span className="text-app-mist">Assigned Specialist</span>
                   <span className="font-bold text-hi flex items-center gap-1.5">
-                    <span className="size-5 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center">
+                    <span className="size-5 rounded-full bg-blue-600 text-app-on-accent! text-[9px] font-bold flex items-center justify-center">
                       {selectedLead.initials}
                     </span>
                     {selectedLead.name}
@@ -1288,7 +1288,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
               <button
                 type="button"
                 onClick={handleConfirmReassign}
-                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all"
               >
                 Confirm Reassignment
               </button>
@@ -1338,8 +1338,8 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                       className={`py-2 px-3 rounded-xl font-bold border text-center cursor-pointer transition-all ${
                         escalatePriority === p
                           ? p === "P0"
-                            ? "bg-rose-600 text-white border-rose-600 shadow-xs"
-                            : "bg-blue-600 text-white border-blue-600 shadow-xs"
+                            ? "bg-rose-600 text-app-on-warm! border-rose-600 shadow-xs"
+                            : "bg-blue-600 text-app-on-accent! border-blue-600 shadow-xs"
                           : "bg-app-surface border-app-line text-app-ink-2 hover:bg-app-base"
                       }`}
                     >
@@ -1398,7 +1398,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
               <button
                 type="button"
                 onClick={handleConfirmEscalate}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/20 cursor-pointer transition-all flex items-center gap-1.5"
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-app-on-warm! text-xs font-bold shadow-md shadow-rose-600/20 cursor-pointer transition-all flex items-center gap-1.5"
               >
                 <AlertTriangle className="size-3.5" />
                 Dispatch Escalation

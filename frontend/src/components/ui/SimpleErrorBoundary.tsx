@@ -60,7 +60,7 @@ export class SimpleErrorBoundary extends Component<Props, State> {
                 this.setState({ hasError: false, error: null });
                 window.location.reload();
               }}
-              className="px-4 py-2.5 rounded-xl bg-app-accent hover:bg-blue-600 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-md transition-all active:scale-95"
+              className="px-4 py-2.5 rounded-xl bg-app-accent hover:bg-blue-600 text-app-on-accent! font-bold text-xs flex items-center gap-2 cursor-pointer shadow-md transition-all active:scale-95"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Reload Section</span>

@@ -40,7 +40,7 @@ export function VoicePlayer({ audioUrl, durationSeconds, authorName }: VoicePlay
   const totalDuration = durationSeconds || (audioRef.current?.duration ? Math.floor(audioRef.current.duration) : 0);
 
   return (
-    <div className="bg-[#121927] border border-app-line rounded-xl p-3 flex flex-col gap-2 shadow-inner">
+    <div className="bg-app-nested border border-app-line rounded-xl p-3 flex flex-col gap-2 shadow-inner">
       <audio
         ref={audioRef}
         src={audioUrl}
@@ -57,7 +57,7 @@ export function VoicePlayer({ audioUrl, durationSeconds, authorName }: VoicePlay
         <button
           type="button"
           onClick={handleRateChange}
-          className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#1B2537] text-app-accent-soft border border-app-line hover:text-hi transition-colors cursor-pointer"
+          className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-app-line-soft text-app-accent-soft border border-app-line hover:text-hi transition-colors cursor-pointer"
         >
           {playbackRate}x
         </button>
@@ -90,7 +90,7 @@ export function VoicePlayer({ audioUrl, durationSeconds, authorName }: VoicePlay
             }}
           >
             <div
-              className="bg-app-accent h-full rounded-full transition-all"
+              className="bg-app-accent h-full rounded-full transition-all text-app-on-accent!"
               style={{
                 width: `${totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0}%`,
               }}

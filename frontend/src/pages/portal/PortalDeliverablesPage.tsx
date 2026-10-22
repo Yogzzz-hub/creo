@@ -719,7 +719,7 @@ export function PortalDeliverablesPage() {
                         className={`w-full flex items-center gap-3.5 p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                           isSelected
                             ? "bg-app-base border-app-accent/60 shadow-lg ring-1 ring-app-accent/30"
-                            : "border-[#2A3446]/40 bg-transparent hover:border-app-line hover:bg-hi/[0.02]"
+                            : "border-app-line/40 bg-transparent hover:border-app-line hover:bg-hi/[0.02]"
                         }`}
                       >
                         <div className="w-14 h-14 rounded-xl bg-black overflow-hidden shrink-0 border border-app-line flex items-center justify-center">
@@ -810,7 +810,7 @@ export function PortalDeliverablesPage() {
                           {mobilePublishingOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         </span>
                       </button>
-                      <div className={`${mobilePublishingOpen ? "block" : "hidden md:block"} p-3 pt-0 border-t border-[#2A3446]/40 md:border-t-0`}>
+                      <div className={`${mobilePublishingOpen ? "block" : "hidden md:block"} p-3 pt-0 border-t border-app-line/40 md:border-t-0`}>
                         <PublishingPanel key={shownItem.id} deliverableId={shownItem.id} onReview={setPublishingReview} />
                       </div>
                     </div>
@@ -865,7 +865,7 @@ export function PortalDeliverablesPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between mb-1">
                         <h4 className="text-xs sm:text-[13px] font-bold text-hi flex items-center gap-1.5">
-                          <span className="size-1.5 rounded-full bg-amber-400" />
+                          <span className="size-1.5 rounded-full bg-amber-400 text-app-on-warm!" />
                           Your requested changes
                         </h4>
                         <button
@@ -1022,7 +1022,7 @@ export function PortalDeliverablesPage() {
                     <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3.5 sm:p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="flex size-2 rounded-full bg-amber-400 animate-ping" />
+                          <span className="flex size-2 rounded-full bg-amber-400 animate-ping text-app-on-warm!" />
                           <h4 className="text-xs sm:text-sm font-bold text-amber-300">Revision Requested</h4>
                         </div>
                         <span className="text-[10px] sm:text-[11px] font-mono font-bold text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">

@@ -419,7 +419,7 @@ export function StoryApprovalModal({
             type="button"
             onClick={() => handleSubmit(true)}
             disabled={isSubmitting}
-            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {isSubmitting ? (
               <Loader2 className="size-4 animate-spin" />

@@ -307,7 +307,7 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                     onClick={() => setRateType("hourly")}
                     className={`px-2 py-0.5 rounded-md font-bold transition-all ${
                       rateType === "hourly"
-                        ? "bg-purple-600 text-white"
+                        ? "bg-purple-600 text-app-on-accent!"
                         : "text-app-mist hover:text-hi"
                     }`}
                   >
@@ -318,7 +318,7 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                     onClick={() => setRateType("fixed")}
                     className={`px-2 py-0.5 rounded-md font-bold transition-all ${
                       rateType === "fixed"
-                        ? "bg-purple-600 text-white"
+                        ? "bg-purple-600 text-app-on-accent!"
                         : "text-app-mist hover:text-hi"
                     }`}
                   >
@@ -387,7 +387,7 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
                     onClick={() => toggleSkill(skill)}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-purple-600 text-white shadow-sm shadow-purple-500/20"
+                        ? "bg-purple-600 text-app-on-accent! shadow-sm shadow-purple-500/20"
                         : "bg-app-surface text-app-mist hover:text-hi border border-app-line"
                     }`}
                   >
@@ -497,7 +497,7 @@ export function AdminFreelancerModal({ isOpen, onClose, onSuccess }: AdminFreela
             <button
               type="submit"
               disabled={busy}
-              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 font-bold text-white shadow-lg shadow-purple-600/25 flex items-center gap-1.5 disabled:opacity-50 transition-all cursor-pointer active:scale-95 text-xs"
+              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 font-bold text-app-on-accent! shadow-lg shadow-purple-600/25 flex items-center gap-1.5 disabled:opacity-50 transition-all cursor-pointer active:scale-95 text-xs"
             >
               <Sparkles className="w-3.5 h-3.5" />
               {busy ? "Onboarding..." : "Onboard Freelancer"}

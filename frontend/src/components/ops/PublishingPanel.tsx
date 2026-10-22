@@ -60,7 +60,7 @@ const labelText = "block text-[11px] font-bold uppercase tracking-wider text-app
 // so rows of actions always line up. `flex-1` makes a row share its width evenly.
 const btnBase =
   "inline-flex min-h-10 flex-1 basis-36 items-center justify-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition-colors cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent disabled:cursor-not-allowed disabled:opacity-50";
-const button = `${btnBase} border-app-line bg-app-surface text-app-accent-soft enabled:hover:border-[#7FA0D6]/50 enabled:hover:text-hi`;
+const button = `${btnBase} border-app-line bg-app-surface text-app-accent-soft enabled:hover:border-app-accent/50 enabled:hover:text-hi`;
 const buttonPrimary = `${btnBase} border-transparent bg-app-accent-soft text-app-base enabled:hover:bg-hi`;
 const buttonDanger = `${btnBase} border-rose-500/30 bg-rose-500/10 text-rose-300 enabled:hover:border-rose-400/60 enabled:hover:text-rose-200`;
 const linkButton = `${button} no-underline`;
@@ -81,7 +81,7 @@ function StatusBadge({ status, label }: { status: string; label: string }) {
   return (
     <span
       className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-        STATUS_TONE[status] || "bg-[#2A3446]/40 text-app-accent-soft border-app-line"
+        STATUS_TONE[status] || "bg-app-line/40 text-app-accent-soft border-app-line"
       }`}
     >
       {label}

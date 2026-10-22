@@ -55,7 +55,7 @@ export function PortalBottomNav() {
                   />
                 </div>
                 {isActive && (
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full bg-app-accent" />
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full bg-app-accent text-app-on-accent!" />
                 )}
               </div>
               <span className="text-[9.5px] sm:text-[10px] mt-0.5 tracking-tight line-clamp-1">

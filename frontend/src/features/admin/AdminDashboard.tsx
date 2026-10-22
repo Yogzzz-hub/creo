@@ -90,9 +90,9 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
               exit={{ opacity: 0, y: -10 }}
               className="mb-3.5 p-2.5 rounded-xl text-xs font-medium flex items-center gap-2"
               style={{
-                background: message.type === "error" ? "#161F2D" : "#161F2D",
+                background: "var(--app-surface)",
                 border: `1px solid ${message.type === "error" ? "var(--app-warm)" : "var(--app-accent-soft)"}`,
-                color: message.type === "error" ? "#D8BF9B" : "#7FA0D6",
+                color: message.type === "error" ? "var(--app-warm)" : "var(--app-accent)",
               }}
             >
               {message.type === "error" ? (

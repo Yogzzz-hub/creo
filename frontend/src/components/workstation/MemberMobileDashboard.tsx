@@ -102,12 +102,12 @@ export function MemberMobileDashboard({
   return (
     <div className="md:hidden pb-12 space-y-3 max-w-[430px] mx-auto text-slate-100">
       {/* Sticky Top Header */}
-      <header className="sticky top-0 z-40 w-[calc(100%+1.75rem)] -mx-3.5 bg-[#0B0F17]/90 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-40 w-[calc(100%+1.75rem)] -mx-3.5 bg-app-base/90 backdrop-blur-xl border-b border-white/[0.06] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={toggleMobile}
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-300 hover:text-hi bg-[#131B26] border border-hi/10 hover:border-white/20 transition-colors cursor-pointer shrink-0"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-300 hover:text-hi bg-app-nested border border-hi/10 hover:border-white/20 transition-colors cursor-pointer shrink-0"
             aria-label="Open navigation sidebar"
             title="Open navigation menu"
           >
@@ -125,11 +125,11 @@ export function MemberMobileDashboard({
           <button
             type="button"
             onClick={() => showToast("All pod notifications are up to date", "info")}
-            className="relative w-8 h-8 rounded-full flex items-center justify-center bg-[#131B26] border border-hi/10 text-slate-300 hover:text-hi hover:bg-[#172232] transition-colors cursor-pointer"
+            className="relative w-8 h-8 rounded-full flex items-center justify-center bg-app-nested border border-hi/10 text-slate-300 hover:text-hi hover:bg-app-surface transition-colors cursor-pointer"
             aria-label="Notifications"
           >
             <Bell className="w-4 h-4" />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_6px_#38BDF8]"></span>
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_6px_#38BDF8] text-app-on-accent!"></span>
           </button>
 
           <Link
@@ -139,10 +139,10 @@ export function MemberMobileDashboard({
             title={user?.full_name || "Profile Settings"}
           >
             <div className="relative">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-md">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-app-on-accent! shadow-md">
                 {userInitials}
               </div>
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#0B0F17]"></span>
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-app-base text-app-on-accent!"></span>
             </div>
           </Link>
         </div>
@@ -151,7 +151,7 @@ export function MemberMobileDashboard({
       {/* 2. High-Density Quick-Metrics Grid (2x2 Compact) */}
       <div className="grid grid-cols-2 gap-2.5">
         {/* Card A: Active Sprint Tasks */}
-        <div className="bg-[#131B26]/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-3.5 flex flex-col justify-between">
+        <div className="bg-app-nested/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_color-mix(in_oklab,var(--hi)_5%,transparent)] rounded-2xl p-3.5 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400">ACTIVE TASKS</span>
             <Zap className="text-sky-400 w-4 h-4" />
@@ -175,7 +175,7 @@ export function MemberMobileDashboard({
         </div>
 
         {/* Card B: Weekly Hours */}
-        <div className="bg-[#131B26]/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-3.5 flex flex-col justify-between">
+        <div className="bg-app-nested/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_color-mix(in_oklab,var(--hi)_5%,transparent)] rounded-2xl p-3.5 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400">WEEKLY HOURS</span>
             <Clock className="text-sky-400 w-4 h-4" />
@@ -188,7 +188,7 @@ export function MemberMobileDashboard({
             {/* Thin Linear Progress Bar */}
             <div className="w-full bg-slate-800/80 rounded-full h-1.5 my-1.5 overflow-hidden border border-white/5">
               <div
-                className="bg-gradient-to-r from-sky-400 to-blue-500 h-full rounded-full transition-all duration-700"
+                className="bg-gradient-to-r from-sky-400 to-blue-500 h-full rounded-full transition-all duration-700 text-app-on-accent!"
                 style={{ width: "81%" }}
               />
             </div>
@@ -200,9 +200,9 @@ export function MemberMobileDashboard({
         </div>
 
         {/* Card C: Remaining PTO (Full width row) */}
-        <div className="col-span-2 bg-[#131B26]/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-3 flex items-center justify-between">
+        <div className="col-span-2 bg-app-nested/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_color-mix(in_oklab,var(--hi)_5%,transparent)] rounded-2xl p-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#172232] border border-hi/10 flex items-center justify-center text-slate-300">
+            <div className="w-9 h-9 rounded-xl bg-app-surface border border-hi/10 flex items-center justify-center text-slate-300">
               <Calendar className="w-4 h-4 text-sky-400" />
             </div>
             <div>
@@ -230,7 +230,7 @@ export function MemberMobileDashboard({
       <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5 -mx-3.5 px-3.5">
         <Link
           to="/workstation/tasks"
-          className="shrink-0 flex items-center gap-1.5 bg-sky-400 text-slate-950 font-semibold text-xs px-3.5 py-2 rounded-xl shadow-[0_2px_10px_rgba(56,189,248,0.25)] hover:bg-sky-300 active:scale-95 transition-all"
+          className="shrink-0 flex items-center gap-1.5 bg-sky-400 text-slate-950 font-semibold text-xs px-3.5 py-2 rounded-xl shadow-[0_2px_10px_color-mix(in_oklab,var(--app-accent)_25%,transparent)] hover:bg-sky-300 active:scale-95 transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Browse Tasks</span>
@@ -239,18 +239,18 @@ export function MemberMobileDashboard({
         <button
           type="button"
           onClick={() => setZoomModalOpen(true)}
-          className="shrink-0 flex items-center gap-1.5 bg-[#131B26]/90 border border-sky-400/30 text-sky-400 text-xs font-medium px-3.5 py-2 rounded-xl hover:bg-[#172232] transition-all cursor-pointer"
+          className="shrink-0 flex items-center gap-1.5 bg-app-nested/90 border border-sky-400/30 text-sky-400 text-xs font-medium px-3.5 py-2 rounded-xl hover:bg-app-surface transition-all cursor-pointer"
         >
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-400"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75 text-app-on-accent!"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-400 text-app-on-accent!"></span>
           </span>
           <span>Standup: In 25m</span>
         </button>
 
         <Link
           to="/slack"
-          className="shrink-0 flex items-center gap-1.5 bg-[#131B26]/80 border border-hi/10 text-slate-300 text-xs font-medium px-3.5 py-2 rounded-xl hover:bg-[#172232] hover:text-hi transition-all"
+          className="shrink-0 flex items-center gap-1.5 bg-app-nested/80 border border-hi/10 text-slate-300 text-xs font-medium px-3.5 py-2 rounded-xl hover:bg-app-surface hover:text-hi transition-all"
         >
           <Hash className="w-4 h-4 text-[#E01E5A]" />
           <span>Slack Hub</span>
@@ -258,7 +258,7 @@ export function MemberMobileDashboard({
 
         <Link
           to="/workstation/schedule"
-          className="shrink-0 flex items-center gap-1.5 bg-[#131B26]/80 border border-hi/10 text-slate-300 text-xs font-medium px-3.5 py-2 rounded-xl hover:bg-[#172232] hover:text-hi transition-all"
+          className="shrink-0 flex items-center gap-1.5 bg-app-nested/80 border border-hi/10 text-slate-300 text-xs font-medium px-3.5 py-2 rounded-xl hover:bg-app-surface hover:text-hi transition-all"
         >
           <Calendar className="w-4 h-4 text-sky-400" />
           <span>Schedule</span>
@@ -266,19 +266,19 @@ export function MemberMobileDashboard({
       </div>
 
       {/* 4. Assigned Sprint Deliverables (Primary Work Hub) */}
-      <div className="bg-[#131B26]/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-4 space-y-3">
+      <div className="bg-app-nested/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_color-mix(in_oklab,var(--hi)_5%,transparent)] rounded-2xl p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm font-bold text-hi tracking-tight">Assigned Deliverables</h2>
             <p className="text-[11px] text-slate-400">{podName} deliverables pipeline</p>
           </div>
-          <div className="flex bg-[#070B12]/80 p-0.5 rounded-xl border border-hi/10 text-[11px]">
+          <div className="flex bg-app-void/80 p-0.5 rounded-xl border border-hi/10 text-[11px]">
             <button
               type="button"
               onClick={() => setDeliverablesScope("my")}
               className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                 deliverablesScope === "my"
-                  ? "bg-[#172232] text-hi font-medium shadow-sm"
+                  ? "bg-app-surface text-hi font-medium shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
@@ -289,7 +289,7 @@ export function MemberMobileDashboard({
               onClick={() => setDeliverablesScope("all")}
               className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                 deliverablesScope === "all"
-                  ? "bg-[#172232] text-hi font-medium shadow-sm"
+                  ? "bg-app-surface text-hi font-medium shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
@@ -326,8 +326,8 @@ export function MemberMobileDashboard({
 
         {/* Deliverables List or Empty State */}
         {currentTasks.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-700/80 bg-[#070B12]/40 p-6 flex flex-col items-center text-center">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-b from-[#172232] to-[#0E1420] border border-hi/10 flex items-center justify-center text-sky-400 shadow-inner mb-3">
+          <div className="rounded-xl border border-dashed border-slate-700/80 bg-app-void/40 p-6 flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-b from-app-surface to-app-nested border border-hi/10 flex items-center justify-center text-sky-400 shadow-inner mb-3">
               <Sparkles className="w-6 h-6" />
             </div>
             <h3 className="text-sm font-bold text-hi mb-1">No active deliverables in production</h3>
@@ -347,13 +347,13 @@ export function MemberMobileDashboard({
             {currentTasks.slice(0, 5).map((task) => (
               <div
                 key={task.id}
-                className="p-3 rounded-xl bg-[#070B12]/60 border border-hi/10 space-y-2 hover:border-sky-400/30 transition-colors"
+                className="p-3 rounded-xl bg-app-void/60 border border-hi/10 space-y-2 hover:border-sky-400/30 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider">
                     {task.client_name || "Client"}
                   </span>
-                  <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-[#172232] text-slate-300 border border-hi/10">
+                  <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-app-surface text-slate-300 border border-hi/10">
                     {task.deliverable_type?.replace(/_/g, " ") || "Concept"}
                   </span>
                 </div>
@@ -399,15 +399,15 @@ export function MemberMobileDashboard({
       </div>
 
       {/* 5. Tabbed Secondary Section (Lead Feedback & Team Sync) */}
-      <div className="bg-[#131B26]/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] rounded-2xl p-4 space-y-3.5">
+      <div className="bg-app-nested/85 border border-hi/[0.08] backdrop-blur-md shadow-[inset_0_1px_0_0_color-mix(in_oklab,var(--hi)_5%,transparent)] rounded-2xl p-4 space-y-3.5">
         {/* Segmented Tab Header */}
-        <div className="flex bg-[#070B12]/90 p-1 rounded-xl border border-hi/10">
+        <div className="flex bg-app-void/90 p-1 rounded-xl border border-hi/10">
           <button
             type="button"
             onClick={() => setMobileSecondaryTab("feedback")}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               mobileSecondaryTab === "feedback"
-                ? "bg-[#172232] text-hi border border-hi/10 shadow-sm"
+                ? "bg-app-surface text-hi border border-hi/10 shadow-sm"
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
@@ -421,13 +421,13 @@ export function MemberMobileDashboard({
             onClick={() => setMobileSecondaryTab("team")}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
               mobileSecondaryTab === "team"
-                ? "bg-[#172232] text-hi border border-hi/10 shadow-sm"
+                ? "bg-app-surface text-hi border border-hi/10 shadow-sm"
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
             <Users className="w-3.5 h-3.5" />
             <span>Pod Team Sync</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block text-app-on-accent!"></span>
           </button>
         </div>
 
@@ -437,13 +437,13 @@ export function MemberMobileDashboard({
             <div className="flex items-center justify-between text-xs text-slate-400 px-0.5">
               <span>Revision Requests</span>
               <span className="flex items-center gap-1 text-[11px] text-emerald-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Up to date
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 text-app-on-accent!"></span> Up to date
               </span>
             </div>
 
             {allNotes.length === 0 ? (
-              <div className="bg-[#070B12]/50 rounded-xl border border-white/[0.06] p-4 text-center">
-                <div className="w-8 h-8 rounded-full bg-[#172232] mx-auto flex items-center justify-center text-slate-300 mb-2">
+              <div className="bg-app-void/50 rounded-xl border border-white/[0.06] p-4 text-center">
+                <div className="w-8 h-8 rounded-full bg-app-surface mx-auto flex items-center justify-center text-slate-300 mb-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 </div>
                 <div className="text-xs font-semibold text-hi">No feedback or revision requests</div>
@@ -452,7 +452,7 @@ export function MemberMobileDashboard({
             ) : (
               <div className="space-y-2">
                 {allNotes.slice(0, 3).map((note) => (
-                  <div key={note.id} className="p-3 bg-[#070B12]/60 rounded-xl border border-hi/10 space-y-1">
+                  <div key={note.id} className="p-3 bg-app-void/60 rounded-xl border border-hi/10 space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold text-sky-400">{note.author}</span>
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">{note.badge}</span>
@@ -476,7 +476,7 @@ export function MemberMobileDashboard({
                   onChange={(e) => setQuickReplyText(e.target.value)}
                   placeholder="Reply to Pod Beta Team via Slack..."
                   disabled={isSendingQuickReply}
-                  className="w-full bg-[#070B12]/80 border border-hi/15 focus:border-sky-400 focus:outline-none rounded-xl py-2.5 pl-3 pr-20 text-xs text-hi placeholder-slate-500 shadow-inner disabled:opacity-60"
+                  className="w-full bg-app-void/80 border border-hi/15 focus:border-sky-400 focus:outline-none rounded-xl py-2.5 pl-3 pr-20 text-xs text-hi placeholder-slate-500 shadow-inner disabled:opacity-60"
                 />
                 <button
                   type="submit"
@@ -506,25 +506,25 @@ export function MemberMobileDashboard({
               <button
                 type="button"
                 onClick={() => setZoomModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all shadow-sm cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-500 active:scale-95 text-app-on-accent! text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all shadow-sm cursor-pointer"
               >
                 Join Call
               </button>
             </div>
 
-            <div className="flex items-center justify-between bg-[#070B12]/60 rounded-xl p-2.5 border border-white/5">
+            <div className="flex items-center justify-between bg-app-void/60 rounded-xl p-2.5 border border-white/5">
               <div className="flex items-center -space-x-1.5 overflow-hidden">
                 {members.slice(0, 4).map((m: any, idx: number) => (
                   <div
                     key={m.id || idx}
-                    className="w-6 h-6 rounded-full bg-indigo-500 text-white text-[9px] font-bold flex items-center justify-center border border-[#0B0F17]"
+                    className="w-6 h-6 rounded-full bg-indigo-500 text-app-on-accent! text-[9px] font-bold flex items-center justify-center border border-app-base"
                     title={m.full_name}
                   >
                     {m.full_name?.slice(0, 2).toUpperCase() || "CP"}
                   </div>
                 ))}
                 {members.length > 4 && (
-                  <div className="w-6 h-6 rounded-full bg-[#1E2D42] text-slate-300 text-[9px] font-medium flex items-center justify-center border border-[#0B0F17]">
+                  <div className="w-6 h-6 rounded-full bg-app-line-soft text-slate-300 text-[9px] font-medium flex items-center justify-center border border-app-base">
                     +{members.length - 4}
                   </div>
                 )}

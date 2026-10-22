@@ -535,7 +535,7 @@ export function PortalBrandDNAPage() {
                         onClick={() => toggleVoiceWord(word)}
                         className={`px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${
                           active
-                            ? "bg-app-accent text-white shadow-xs"
+                            ? "bg-app-accent text-app-on-accent! shadow-xs"
                             : "bg-app-base border border-app-line text-app-mist hover:text-hi"
                         }`}
                       >
@@ -932,7 +932,7 @@ export function PortalBrandDNAPage() {
                     </span>
                   </div>
                   <div className="bg-app-base border border-app-line rounded-xl p-2.5 md:p-3 flex items-center gap-3 md:gap-4">
-                    <div className="w-16 md:w-20 h-12 md:h-14 rounded-lg border border-app-line bg-[radial-gradient(#2A3446_1px,transparent_1px)] [background-size:8px_8px] bg-[#0E1524] flex items-center justify-center p-2 shrink-0">
+                    <div className="w-16 md:w-20 h-12 md:h-14 rounded-lg border border-app-line bg-[radial-gradient(#2A3446_1px,transparent_1px)] [background-size:8px_8px] bg-app-nested flex items-center justify-center p-2 shrink-0">
                       <img
                         src={resolveAssetUrl(logoData?.brand_logo_url || profile?.brand_logo_url)}
                         alt="Brand Logo"
@@ -992,7 +992,7 @@ export function PortalBrandDNAPage() {
                 <ul className="space-y-1.5 md:space-y-2">
                   {doList.map((item: string, i: number) => (
                     <li key={i} className="flex items-start gap-2 text-xs text-hi/90 leading-snug">
-                      <span className="size-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                      <span className="size-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0 text-app-on-accent!" />
                       <span>{item}</span>
                     </li>
                   ))}
@@ -1008,7 +1008,7 @@ export function PortalBrandDNAPage() {
                 <ul className="space-y-1.5 md:space-y-2">
                   {dontList.map((item: string, i: number) => (
                     <li key={i} className="flex items-start gap-2 text-xs text-hi/90 leading-snug">
-                      <span className="size-1.5 rounded-full bg-rose-400 mt-1.5 shrink-0" />
+                      <span className="size-1.5 rounded-full bg-rose-400 mt-1.5 shrink-0 text-app-on-warm!" />
                       <span>{item}</span>
                     </li>
                   ))}

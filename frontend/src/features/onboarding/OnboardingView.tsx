@@ -45,7 +45,7 @@ function ProgressStepper({
 
           {/* Completed track line */}
           <div
-            className="absolute left-[10%] h-[2px] rounded-full transition-all duration-500 bg-app-accent top-1/2 -translate-y-1/2"
+            className="absolute left-[10%] h-[2px] rounded-full transition-all duration-500 bg-app-accent top-1/2 -translate-y-1/2 text-app-on-accent!"
             aria-hidden="true"
             style={{
               width: `${Math.max(0, Math.min(1, (maxUnlockedStep - 1) / (STAGES.length - 1))) * 80}%`,

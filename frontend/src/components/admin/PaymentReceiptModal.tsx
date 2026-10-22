@@ -91,7 +91,7 @@ export function PaymentReceiptModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-[#121A26] border border-app-line rounded-3xl w-full max-w-xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden font-sans text-app-ink print:border-none print:shadow-none print:max-h-none print:w-full">
+      <div className="bg-app-nested border border-app-line rounded-3xl w-full max-w-xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden font-sans text-app-ink print:border-none print:shadow-none print:max-h-none print:w-full">
         {/* Top Header Bar */}
         <div className="px-6 py-4 border-b border-app-line flex items-center justify-between bg-app-base/80 shrink-0 print:hidden">
           <div className="flex items-center gap-2.5">
@@ -135,7 +135,7 @@ export function PaymentReceiptModal({
         <div className="p-6 sm:p-8 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
           {/* Status Checkmark & Thanks Badge */}
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+            <div className="w-5 h-5 rounded-full bg-emerald-500 text-app-on-accent! flex items-center justify-center shrink-0 shadow-sm">
               <Check className="w-3.5 h-3.5 stroke-[3]" />
             </div>
             <span className="text-emerald-400 font-extrabold text-xs uppercase tracking-wider">
@@ -184,7 +184,7 @@ export function PaymentReceiptModal({
                   <th className="py-3 px-4 text-right">Price</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#2A3446]/70">
+              <tbody className="divide-y divide-app-line/70">
                 <tr className="hover:bg-hi/[0.02] transition-colors">
                   <td className="py-4 px-4 align-top">
                     <p className="font-black text-hi text-[13px] tracking-tight">{receipt.scope}</p>
@@ -295,7 +295,7 @@ export function PaymentReceiptModal({
             <button
               type="button"
               onClick={handleDownloadPDF}
-              className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-app-accent hover:bg-blue-600 text-xs font-bold text-white transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-app-accent hover:bg-blue-600 text-xs font-bold text-app-on-accent! transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download PDF</span>

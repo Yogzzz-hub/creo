@@ -196,7 +196,7 @@ export function PlatformSidebar() {
                           {item.badge}
                         </span>
                       ) : (
-                        !active && <ChevronRight className="w-3.5 h-3.5 shrink-0 text-[#4A5568] opacity-0 group-hover:opacity-100" />
+                        !active && <ChevronRight className="w-3.5 h-3.5 shrink-0 text-app-mist opacity-0 group-hover:opacity-100" />
                       )}
                     </Link>
                   );
@@ -225,8 +225,8 @@ export function PlatformSidebar() {
         {/* Platform Version Footer */}
         <div className="p-3.5 border-t border-app-line bg-app-base/80 shrink-0">
           <div className="flex items-center justify-between px-3 py-1.5">
-            <span className="text-[10px] text-[#4A5568] font-medium">Creo Platform</span>
-            <span className="text-[10px] text-[#4A5568] font-mono">v2.4.0</span>
+            <span className="text-[10px] text-app-mist font-medium">Creo Platform</span>
+            <span className="text-[10px] text-app-mist font-mono">v2.4.0</span>
           </div>
         </div>
       </aside>

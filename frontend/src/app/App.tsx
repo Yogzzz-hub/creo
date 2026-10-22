@@ -198,7 +198,7 @@ class OnboardingErrorBoundary extends Component<
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="px-5 py-2.5 rounded-xl bg-app-accent text-white font-semibold text-xs hover:bg-app-accent transition-colors"
+            className="px-5 py-2.5 rounded-xl bg-app-accent text-app-on-accent! font-semibold text-xs hover:bg-app-accent transition-colors"
           >
             Reload Onboarding
           </button>
@@ -277,7 +277,7 @@ function HealthPage() {
           <div className="flex justify-between items-center border-b border-app-surface py-2">
             <span className="text-app-mist font-medium">API Service</span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse text-app-on-accent!" />
               {data?.status || (isLoading ? "Checking..." : "Error")}
             </span>
           </div>
@@ -294,7 +294,7 @@ function HealthPage() {
         <div className="flex gap-3 pt-2">
           <Link
             to="/"
-            className="flex-1 text-center rounded-xl bg-app-accent py-2.5 text-xs font-bold text-white hover:bg-app-accent transition-colors shadow-xs"
+            className="flex-1 text-center rounded-xl bg-app-accent py-2.5 text-xs font-bold text-app-on-accent! hover:bg-app-accent transition-colors shadow-xs"
           >
             Landing Page
           </Link>

@@ -182,7 +182,7 @@ export function AdminBDEOversightPage() {
               </div>
               <div className="w-full h-1.5 rounded-full bg-app-base overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-blue-500 to-app-accent rounded-full transition-all duration-700"
+                  className="h-full bg-gradient-to-r from-blue-500 to-app-accent rounded-full transition-all duration-700 text-app-on-accent!"
                   style={{ width: `${Math.min(100, overview?.reach_rate || 0)}%` }}
                 />
               </div>
@@ -364,11 +364,11 @@ export function AdminBDEOversightPage() {
                         <th className="pb-3 text-right pr-2">Win Rate</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#2A3446]/60">
+                    <tbody className="divide-y divide-app-line/60">
                       {reps.map((rep) => {
                         const reachPct = rep.total_assigned > 0 ? Math.round((rep.clients_reached / rep.total_assigned) * 100) : 0;
                         return (
-                          <tr key={rep.bde_id} className="hover:bg-[#0B111C]/40 transition-colors group">
+                          <tr key={rep.bde_id} className="hover:bg-app-base/40 transition-colors group">
                             <td className="py-3.5 pl-2">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-app-accent to-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
@@ -516,7 +516,7 @@ export function AdminBDEOversightPage() {
                 <p className="text-lg font-black text-hi">{channelMetrics.totalCalls}</p>
                 <div className="w-full bg-app-surface h-1.5 rounded-full overflow-hidden mt-1">
                   <div
-                    className="bg-blue-500 h-full rounded-full"
+                    className="bg-blue-500 h-full rounded-full text-app-on-accent!"
                     style={{
                       width: `${Math.min(100, Math.round((channelMetrics.totalCalls / Math.max(1, channelMetrics.totalTouchpoints)) * 100))}%`,
                     }}
@@ -533,7 +533,7 @@ export function AdminBDEOversightPage() {
                 <p className="text-lg font-black text-hi">{channelMetrics.whatsappActivities}</p>
                 <div className="w-full bg-app-surface h-1.5 rounded-full overflow-hidden mt-1">
                   <div
-                    className="bg-emerald-500 h-full rounded-full"
+                    className="bg-emerald-500 h-full rounded-full text-app-on-accent!"
                     style={{
                       width: `${Math.min(100, Math.round((channelMetrics.whatsappActivities / Math.max(1, channelMetrics.totalTouchpoints)) * 100))}%`,
                     }}
@@ -550,7 +550,7 @@ export function AdminBDEOversightPage() {
                 <p className="text-lg font-black text-hi">{channelMetrics.totalMeetings}</p>
                 <div className="w-full bg-app-surface h-1.5 rounded-full overflow-hidden mt-1">
                   <div
-                    className="bg-purple-500 h-full rounded-full"
+                    className="bg-purple-500 h-full rounded-full text-app-on-accent!"
                     style={{
                       width: `${Math.min(100, Math.round((channelMetrics.totalMeetings / Math.max(1, channelMetrics.totalTouchpoints)) * 100))}%`,
                     }}
@@ -567,7 +567,7 @@ export function AdminBDEOversightPage() {
                 <p className="text-lg font-black text-hi">{channelMetrics.totalProposals}</p>
                 <div className="w-full bg-app-surface h-1.5 rounded-full overflow-hidden mt-1">
                   <div
-                    className="bg-amber-500 h-full rounded-full"
+                    className="bg-amber-500 h-full rounded-full text-app-on-warm!"
                     style={{
                       width: `${Math.min(100, Math.round((channelMetrics.totalProposals / Math.max(1, channelMetrics.totalTouchpoints)) * 100))}%`,
                     }}
@@ -668,7 +668,7 @@ export function AdminBDEOversightPage() {
                 <th className="pb-3 text-right pr-2 whitespace-nowrap min-w-[100px]">Last Contacted</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A3446]/60">
+            <tbody className="divide-y divide-app-line/60">
               {filteredLeads.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-10 text-center text-app-mist">
@@ -764,7 +764,7 @@ export function AdminBDEOversightPage() {
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setSelectedLeadModal(null)}
-                className="px-4 py-2 rounded-xl bg-app-accent text-white font-bold text-xs hover:bg-app-accent/90 transition-colors"
+                className="px-4 py-2 rounded-xl bg-app-accent text-app-on-accent! font-bold text-xs hover:bg-app-accent/90 transition-colors"
               >
                 Done
               </button>

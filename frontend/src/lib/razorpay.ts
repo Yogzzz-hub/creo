@@ -89,7 +89,7 @@ export async function openRazorpayCheckout(
     const container = document.querySelector(".razorpay-container") as HTMLElement | null;
     if (container) {
       container.style.setProperty("color-scheme", "light", "important");
-      container.style.setProperty("background", "rgba(5, 8, 16, 0.82)", "important");
+      container.style.setProperty("background", "color-mix(in oklab, var(--app-void) 82%, transparent)", "important");
       container.style.setProperty("backdrop-filter", "blur(8px)", "important");
       container.style.setProperty("-webkit-backdrop-filter", "blur(8px)", "important");
     }
@@ -135,10 +135,10 @@ export async function openRazorpayCheckout(
 
   const rzp = new Razorpay({
     ...checkoutOptions,
-    backdrop_color: checkoutOptions.backdrop_color || "rgba(5, 8, 16, 0.82)",
+    backdrop_color: checkoutOptions.backdrop_color || "color-mix(in oklab, var(--app-void) 82%, transparent)",
     theme: {
-      color: "#7FA0D6",
-      backdrop_color: "rgba(5, 8, 16, 0.82)",
+      color: "#D2965A",
+      backdrop_color: "color-mix(in oklab, var(--app-void) 82%, transparent)",
       ...checkoutOptions.theme,
     },
     modal: {

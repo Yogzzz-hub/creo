@@ -101,7 +101,7 @@ export function ClientTicketDetailPage() {
             author: "Sushmitaa",
             role: "Client",
             avatar: "S",
-            avatarBg: "bg-app-accent",
+            avatarBg: "bg-app-accent text-app-on-accent!",
             timestamp: "Yesterday at 4:15 PM",
             text: "I've not received my deliverables which was scheduled yesterday",
           },
@@ -110,7 +110,7 @@ export function ClientTicketDetailPage() {
             author: "Pod Lead",
             role: "Pod Lead",
             avatar: "PL",
-            avatarBg: "bg-emerald-600",
+            avatarBg: "bg-emerald-600 text-app-on-accent!",
             timestamp: "Yesterday at 4:48 PM",
             text: "Hi Sushmitaa, we apologize for the short delay! The final 4K color grade has been expedited and is now ready in your Deliverables tab.",
           },
@@ -143,7 +143,7 @@ export function ClientTicketDetailPage() {
               author: senderName,
               role: isUser ? "Client" : "Creative Pod",
               avatar: getInitials(senderName),
-              avatarBg: isUser ? "bg-app-accent" : "bg-emerald-600",
+              avatarBg: isUser ? "bg-app-accent text-app-on-accent!" : "bg-emerald-600 text-app-on-accent!",
               timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
               text: m.message,
             };
@@ -156,7 +156,7 @@ export function ClientTicketDetailPage() {
               author: user?.full_name || "You",
               role: "Client",
               avatar: getInitials(user?.full_name || "Client"),
-              avatarBg: "bg-app-accent",
+              avatarBg: "bg-app-accent text-app-on-accent!",
               timestamp: data.created_at ? new Date(data.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "Recently",
               text: data.description,
             });
@@ -192,7 +192,7 @@ export function ClientTicketDetailPage() {
                     author: user?.full_name || "You",
                     role: "Client",
                     avatar: getInitials(user?.full_name || "Client"),
-                    avatarBg: "bg-app-accent",
+                    avatarBg: "bg-app-accent text-app-on-accent!",
                     timestamp: found.timeLog || "Recently",
                     text: found.issueDesc || found.description,
                   },
@@ -224,7 +224,7 @@ export function ClientTicketDetailPage() {
         author: user?.full_name || "You",
         role: "Client",
         avatar: getInitials(user?.full_name || "Client"),
-        avatarBg: "bg-app-accent",
+        avatarBg: "bg-app-accent text-app-on-accent!",
         timestamp: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
         text: followUpText.trim(),
       };
@@ -238,7 +238,7 @@ export function ClientTicketDetailPage() {
         author: user?.full_name || "You",
         role: "Client",
         avatar: getInitials(user?.full_name || "Client"),
-        avatarBg: "bg-app-accent",
+        avatarBg: "bg-app-accent text-app-on-accent!",
         timestamp: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
         text: followUpText.trim(),
       };
@@ -295,8 +295,8 @@ export function ClientTicketDetailPage() {
             <div
               className={`size-12 sm:size-14 rounded-2xl flex items-center justify-center shrink-0 border ${
                 isSolved
-                  ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_24px_rgba(16,185,129,0.25)]"
-                  : "bg-blue-500/20 text-app-accent border-blue-500/30 shadow-[0_0_24px_rgba(210,150,90,0.2)]"
+                  ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_24px_color-mix(in_oklab,var(--app-accent)_25%,transparent)]"
+                  : "bg-blue-500/20 text-app-accent border-blue-500/30 shadow-[0_0_24px_color-mix(in_oklab,var(--app-warm)_20%,transparent)]"
               }`}
             >
               {isSolved ? (
@@ -374,7 +374,7 @@ export function ClientTicketDetailPage() {
               className={`size-6 rounded-full flex items-center justify-center text-xs font-black mb-1 ${
                 isSolved
                   ? "bg-emerald-500 text-app-base"
-                  : "bg-blue-500 text-white animate-pulse"
+                  : "bg-blue-500 text-app-on-accent! animate-pulse"
               }`}
             >
               {isSolved ? "✓" : "2"}

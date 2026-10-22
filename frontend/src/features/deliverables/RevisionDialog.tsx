@@ -66,7 +66,7 @@ export function RevisionDialog({
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            backgroundColor: "color-mix(in oklab, var(--app-void) 75%, transparent)",
             backdropFilter: "blur(4px)",
             zIndex: 150,
           }}
@@ -85,7 +85,7 @@ export function RevisionDialog({
             maxWidth: "500px",
             color: "var(--color-ink-text)",
             fontFamily: "var(--font-body)",
-            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.6)",
+            boxShadow: "0 20px 40px rgb(var(--shadow-rgb) / calc(0.6 * var(--shadow-k)))",
             zIndex: 151,
           }}
         >
@@ -136,8 +136,8 @@ export function RevisionDialog({
                   display: "flex",
                   gap: 12,
                   padding: "1rem",
-                  backgroundColor: "rgba(240, 162, 2, 0.08)",
-                  border: "1px solid rgba(240, 162, 2, 0.25)",
+                  backgroundColor: "color-mix(in oklab, var(--app-warm) 8%, transparent)",
+                  border: "1px solid color-mix(in oklab, var(--app-warm) 25%, transparent)",
                   borderRadius: 8,
                 }}
               >
@@ -304,7 +304,7 @@ export function RevisionDialog({
                     background:
                       (comment.trim() || recordedAudio?.blob) && !isSubmitting && !isUploadingAudio
                         ? "var(--color-waiting)"
-                        : "rgba(240, 162, 2, 0.3)",
+                        : "color-mix(in oklab, var(--app-warm) 30%, transparent)",
                     border: "none",
                     color: "var(--app-base)",
                     fontWeight: 600,

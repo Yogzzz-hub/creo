@@ -108,7 +108,7 @@ export function PlatformFinancePage() {
             onClick={() => setActiveTab(tab)}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === tab
-                ? "bg-gradient-to-r from-app-accent to-[#4F70A6] text-black shadow-md"
+                ? "bg-gradient-to-r from-app-accent to-app-accent text-black shadow-md"
                 : "text-app-mist hover:text-hi"
             }`}
           >
@@ -180,7 +180,7 @@ export function PlatformFinancePage() {
                   <div key={m.month} className="flex-1 flex flex-col items-center gap-2 group">
                     <div className="w-full bg-app-base rounded-lg h-32 flex items-end p-1 border border-app-line">
                       <div
-                        className="w-full rounded-md bg-gradient-to-t from-[#4F70A6] to-app-accent group-hover:brightness-110 transition-all"
+                        className="w-full rounded-md bg-gradient-to-t from-app-accent to-app-accent group-hover:brightness-110 transition-all"
                         style={{ height: `${Math.max(heightPct, 8)}%` }}
                       />
                     </div>
@@ -234,7 +234,7 @@ export function PlatformFinancePage() {
                     const cfg = STATUS_INV[inv.status] ?? DEFAULT_STATUS_INV;
                     const Icon = cfg.icon;
                     return (
-                      <tr key={inv.id} className="hover:bg-[#0B111C]/40 transition-colors">
+                      <tr key={inv.id} className="hover:bg-app-base/40 transition-colors">
                         <td className="px-5 py-4 text-[12px] font-mono font-bold text-app-accent">{inv.id}</td>
                         <td className="px-5 py-4 text-[13px] font-bold text-hi">{inv.agency}</td>
                         <td className="px-5 py-4 text-[12px] text-app-accent-soft">{inv.plan}</td>

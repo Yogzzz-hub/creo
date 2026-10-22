@@ -431,7 +431,7 @@ export function PortalDashboardPage() {
                 </p>
                 <Link
                   to={gate.isPaid ? "/portal/payments" : gate.resume.route}
-                  className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--portal-on-amber)] px-5 text-sm font-semibold text-[#f5eee3]"
+                  className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--portal-on-amber)] px-5 text-sm font-semibold text-[var(--portal-ivory)]"
                 >
                   {gate.isPaid ? "View plan & billing" : "Choose a plan"}
                   <ArrowRight className="size-4" />
@@ -505,7 +505,7 @@ export function PortalDashboardPage() {
               </div>
               {dashboard?.instagram_connected && dashboard?.instagram_username && (
                 <span className="mt-1 inline-flex shrink-0 items-center gap-1.5 rounded-full border border-app-accent/40 px-2.5 py-1 text-[11px] font-semibold text-app-accent">
-                  <span className="size-1.5 animate-pulse rounded-full bg-app-accent" />
+                  <span className="size-1.5 animate-pulse rounded-full bg-app-accent text-app-on-accent!" />
                   Synced
                 </span>
               )}

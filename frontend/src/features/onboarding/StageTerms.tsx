@@ -250,7 +250,7 @@ export function StageTerms({
                 )}
                 <div role="progressbar" aria-label="Agreement reading progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={scrollProgress} className="w-24 sm:w-28 h-2 bg-app-base border border-app-line rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-app-accent transition-all duration-200"
+                    className="h-full bg-app-accent transition-all duration-200 text-app-on-accent!"
                     style={{ width: `${scrollProgress}%` }}
                   />
                 </div>

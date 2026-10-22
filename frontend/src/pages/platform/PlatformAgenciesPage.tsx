@@ -229,7 +229,7 @@ export function PlatformAgenciesPage() {
           <button
             type="button"
             onClick={() => setShowProvisionModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer shadow-lg shadow-app-accent/10"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-app-accent to-app-accent text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer shadow-lg shadow-app-accent/10"
           >
             <Plus className="w-3.5 h-3.5" />
             Provision Agency
@@ -299,7 +299,7 @@ export function PlatformAgenciesPage() {
                 </tr>
               ) : (
                 filtered.map((a) => (
-                  <tr key={a.id} className="hover:bg-[#0B111C]/40 transition-colors">
+                  <tr key={a.id} className="hover:bg-app-base/40 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="size-9 rounded-xl bg-app-base border border-app-line flex items-center justify-center text-xs font-black text-app-accent">
@@ -453,7 +453,7 @@ export function PlatformAgenciesPage() {
                 type="button"
                 disabled={provisionMutation.isPending || !provisionName || !provisionEmail || !provisionPassword}
                 onClick={() => provisionMutation.mutate()}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-app-accent text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
               >
                 {provisionMutation.isPending ? "Provisioning..." : "Provision Agency"}
               </button>
@@ -659,7 +659,7 @@ export function PlatformAgencyDetailPage() {
                 setCustomStaffLimit(agency.max_staff || 15);
                 setShowNegotiateModal(true);
               }}
-              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1.5 shadow-md shadow-app-accent/10"
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-app-accent to-app-accent text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1.5 shadow-md shadow-app-accent/10"
             >
               <Sliders className="w-3.5 h-3.5" />
               Change / Negotiate Plan
@@ -803,7 +803,7 @@ export function PlatformAgencyDetailPage() {
           onClick={() => setActiveTab("Plan")}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "Plan"
-              ? "bg-gradient-to-r from-app-accent to-[#4F70A6] text-black shadow-md font-black"
+              ? "bg-gradient-to-r from-app-accent to-app-accent text-black shadow-md font-black"
               : "text-app-mist hover:text-hi"
           }`}
         >
@@ -814,7 +814,7 @@ export function PlatformAgencyDetailPage() {
           onClick={() => setActiveTab("Teams")}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "Teams"
-              ? "bg-gradient-to-r from-app-accent to-[#4F70A6] text-black shadow-md font-black"
+              ? "bg-gradient-to-r from-app-accent to-app-accent text-black shadow-md font-black"
               : "text-app-mist hover:text-hi"
           }`}
         >
@@ -825,7 +825,7 @@ export function PlatformAgencyDetailPage() {
           onClick={() => setActiveTab("Packages")}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "Packages"
-              ? "bg-gradient-to-r from-app-accent to-[#4F70A6] text-black shadow-md font-black"
+              ? "bg-gradient-to-r from-app-accent to-app-accent text-black shadow-md font-black"
               : "text-app-mist hover:text-hi"
           }`}
         >
@@ -836,7 +836,7 @@ export function PlatformAgencyDetailPage() {
           onClick={() => setActiveTab("Clients")}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "Clients"
-              ? "bg-gradient-to-r from-app-accent to-[#4F70A6] text-black shadow-md font-black"
+              ? "bg-gradient-to-r from-app-accent to-app-accent text-black shadow-md font-black"
               : "text-app-mist hover:text-hi"
           }`}
         >
@@ -847,7 +847,7 @@ export function PlatformAgencyDetailPage() {
           onClick={() => setActiveTab("Support")}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "Support"
-              ? "bg-gradient-to-r from-app-accent to-[#4F70A6] text-black shadow-md font-black"
+              ? "bg-gradient-to-r from-app-accent to-app-accent text-black shadow-md font-black"
               : "text-app-mist hover:text-hi"
           }`}
         >
@@ -979,7 +979,7 @@ export function PlatformAgencyDetailPage() {
                     </tr>
                   ) : (
                     filteredStaff.map((s) => (
-                      <tr key={s.id} className="hover:bg-[#0B111C]/40 transition-colors">
+                      <tr key={s.id} className="hover:bg-app-base/40 transition-colors">
                         <td className="px-4 py-3 text-xs font-bold text-hi">{s.name}</td>
                         <td className="px-4 py-3 text-xs text-app-accent-soft font-mono">{s.email}</td>
                         <td className="px-4 py-3">
@@ -1127,7 +1127,7 @@ export function PlatformAgencyDetailPage() {
                   </tr>
                 ) : (
                   filteredClients.map((c) => (
-                    <tr key={c.id} className="hover:bg-[#0B111C]/40 transition-colors">
+                    <tr key={c.id} className="hover:bg-app-base/40 transition-colors">
                       <td className="px-4 py-3 text-xs font-bold text-hi">{c.name}</td>
                       <td className="px-4 py-3 text-xs text-app-accent-soft font-mono">{c.email}</td>
                       <td className="px-4 py-3">
@@ -1156,7 +1156,7 @@ export function PlatformAgencyDetailPage() {
             <button
               type="button"
               onClick={() => setShowSupportModal(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1.5"
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-app-accent to-app-accent text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1.5"
             >
               <LifeBuoy className="w-3.5 h-3.5" />
               Dispatch Assistance
@@ -1260,7 +1260,7 @@ export function PlatformAgencyDetailPage() {
                 type="button"
                 disabled={slugMutation.isPending || !newSlug}
                 onClick={() => slugMutation.mutate()}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-app-accent text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
               >
                 {slugMutation.isPending ? "Saving..." : "Save Vanity Link"}
               </button>
@@ -1359,7 +1359,7 @@ export function PlatformAgencyDetailPage() {
                 type="button"
                 disabled={negotiateMutation.isPending}
                 onClick={() => negotiateMutation.mutate()}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-app-accent text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
               >
                 {negotiateMutation.isPending ? "Applying..." : "Save Negotiated Plan"}
               </button>
@@ -1435,7 +1435,7 @@ export function PlatformAgencyDetailPage() {
                 type="button"
                 disabled={supportMutation.isPending || !supportTitle || !supportDesc}
                 onClick={() => supportMutation.mutate()}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-app-accent text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
               >
                 {supportMutation.isPending ? "Dispatching..." : "Dispatch Assistance"}
               </button>
@@ -1620,7 +1620,7 @@ function EditClientPackageModal({ plan, isPending, onClose, onSave }: EditClient
             <button
               type="submit"
               disabled={isPending}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-gradient-to-r from-app-accent to-app-accent text-black text-xs font-black hover:opacity-90 disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5" />
               {isPending ? "Saving..." : "Save Package"}

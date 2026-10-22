@@ -183,7 +183,7 @@ export function PlatformSubscriptionsPage() {
                 </tr>
               ) : (
                 filtered.map((s) => (
-                  <tr key={s.id} className="hover:bg-[#0B111C]/40 transition-colors">
+                  <tr key={s.id} className="hover:bg-app-base/40 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="size-8 rounded-lg bg-app-base border border-app-line flex items-center justify-center text-xs font-black text-app-accent">

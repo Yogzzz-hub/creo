@@ -70,7 +70,7 @@ interface TypeConfig {
 const DEFAULT_TYPE_CONFIG: TypeConfig = {
   label: "Poster",
   icon: ImageIcon,
-  badgeBg: "bg-app-accent",
+  badgeBg: "bg-app-accent text-app-on-accent!",
   badgeText: "text-hi",
   border: "border-blue-500/30",
   softBg: "bg-blue-500/15 text-app-accent hover:bg-blue-500/25 border border-blue-500/30",
@@ -81,7 +81,7 @@ const TYPE_CONFIG: Record<string, TypeConfig> = {
   reel: {
     label: "Reel",
     icon: Film,
-    badgeBg: "bg-purple-600",
+    badgeBg: "bg-purple-600 text-app-on-accent!",
     badgeText: "text-hi",
     border: "border-purple-500/30",
     softBg: "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 border border-purple-500/30",
@@ -92,7 +92,7 @@ const TYPE_CONFIG: Record<string, TypeConfig> = {
   story: {
     label: "Story",
     icon: Sparkles,
-    badgeBg: "bg-amber-600",
+    badgeBg: "bg-amber-600 text-app-on-warm!",
     badgeText: "text-hi",
     border: "border-amber-500/30",
     softBg: "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/30",
@@ -101,7 +101,7 @@ const TYPE_CONFIG: Record<string, TypeConfig> = {
   carousel: {
     label: "Carousel",
     icon: Layers,
-    badgeBg: "bg-amber-600",
+    badgeBg: "bg-amber-600 text-app-on-warm!",
     badgeText: "text-hi",
     border: "border-amber-500/30",
     softBg: "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/30",
@@ -386,10 +386,10 @@ export function PortalCalendarPage() {
 
   const getDotColor = (kind?: string) => {
     const k = (kind || "").toLowerCase();
-    if (k.includes("reel")) return "bg-purple-500";
-    if (k.includes("story") || k.includes("carousel")) return "bg-amber-400";
-    if (k.includes("shoot") || k.includes("approved")) return "bg-emerald-400";
-    return "bg-blue-400";
+    if (k.includes("reel")) return "bg-purple-500 text-app-on-accent!";
+    if (k.includes("story") || k.includes("carousel")) return "bg-amber-400 text-app-on-warm!";
+    if (k.includes("shoot") || k.includes("approved")) return "bg-emerald-400 text-app-on-accent!";
+    return "bg-blue-400 text-app-on-accent!";
   };
 
   if (isSubLoading || isEntriesLoading) {
@@ -762,7 +762,7 @@ export function PortalCalendarPage() {
                     
                     <div className="flex items-center justify-between pt-2 border-t border-app-line/60 mt-auto">
                       <div className="flex items-center gap-2.5">
-                        <div className="size-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-app-accent">
+                        <div className="size-7 rounded-full flex items-center justify-center text-[10px] font-bold text-app-on-accent! bg-app-accent">
                           CP
                         </div>
                         <span className="text-[12px] font-bold text-slate-300">
@@ -814,7 +814,7 @@ export function PortalCalendarPage() {
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold bg-sky-500/15 text-sky-400 border border-sky-500/30">
-                    <span className="size-1.5 rounded-full bg-sky-400 animate-ping" />
+                    <span className="size-1.5 rounded-full bg-sky-400 animate-ping text-app-on-accent!" />
                     Pending Your Approval
                   </span>
                 )}
@@ -897,7 +897,7 @@ export function PortalCalendarPage() {
               <div className="p-4 rounded-2xl bg-app-accent/10 border border-app-accent/25 space-y-2.5">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <span className="size-2 rounded-full bg-app-accent animate-pulse" />
+                    <span className="size-2 rounded-full bg-app-accent animate-pulse text-app-on-accent!" />
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-app-accent">
                       Approval Requested For
                     </span>
@@ -931,7 +931,7 @@ export function PortalCalendarPage() {
                       type="button"
                       onClick={handleApproveConcept}
                       disabled={isConceptSubmitting}
-                      className="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-app-on-accent! font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {isConceptSubmitting ? (
                         <Loader2 className="size-4 animate-spin" />
@@ -975,7 +975,7 @@ export function PortalCalendarPage() {
                           type="button"
                           onClick={handleRequestChanges}
                           disabled={isSubmittingChange || !changeNotes.trim()}
-                          className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                          className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-app-on-accent! text-xs font-bold disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                         >
                           {isSubmittingChange && <Loader2 className="size-3.5 animate-spin" />}
                           <span>Send Feedback to Team</span>

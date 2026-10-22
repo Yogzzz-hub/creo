@@ -221,7 +221,7 @@ export function AdminClientBrandPage() {
         ? "paid_not_onboarded"
         : "not_paid_not_onboarded";
 
-  const CANONICAL_PALETTE = ["#161F2D", "#7FA0D6", "#3E5A74", "#BCCCE6"];
+  const CANONICAL_PALETTE = ["#0F0E0C", "#D2965A", "#172338", "#F5EEE3"];
   const rawPalette: any[] = Array.isArray(dna.palette) && dna.palette.length > 0
     ? dna.palette
     : Array.isArray(visualDir.primary_colors) && visualDir.primary_colors.length > 0
@@ -237,7 +237,7 @@ export function AdminClientBrandPage() {
       }
     });
   }
-  const palette: string[] = [0, 1, 2, 3].map((i) => extractedPalette[i] || CANONICAL_PALETTE[i] || "#161F2D");
+  const palette: string[] = [0, 1, 2, 3].map((i) => extractedPalette[i] || CANONICAL_PALETTE[i] || "#0F0E0C");
   if (extractedPalette.length > 4) {
     for (let i = 4; i < extractedPalette.length; i++) {
       if (extractedPalette[i]) {
@@ -320,7 +320,7 @@ export function AdminClientBrandPage() {
 
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
               {/* Avatar with authentic initials */}
-              <div className="size-16 sm:size-20 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 border border-blue-400/30 flex items-center justify-center text-2xl sm:text-3xl font-black text-white shadow-lg shadow-blue-900/40 shrink-0">
+              <div className="size-16 sm:size-20 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 border border-blue-400/30 flex items-center justify-center text-2xl sm:text-3xl font-black text-app-on-accent! shadow-lg shadow-blue-900/40 shrink-0">
                 {initials}
               </div>
 
@@ -766,7 +766,7 @@ export function AdminClientBrandPage() {
                       </p>
                       <div className="w-full h-1.5 bg-app-base border border-app-line rounded-full mt-1.5 overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-blue-500 to-app-accent rounded-full transition-all"
+                          className="h-full bg-gradient-to-r from-blue-500 to-app-accent rounded-full transition-all text-app-on-accent!"
                           style={{
                             width: `${Math.min(100, q.quota > 0 ? (q.used / q.quota) * 100 : 0)}%`,
                           }}

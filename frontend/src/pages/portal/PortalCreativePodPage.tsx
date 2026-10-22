@@ -121,11 +121,11 @@ export function PortalCreativePodPage() {
   // Avatar color palette
   const AVATAR_COLORS = [
     "bg-gradient-to-br from-pink-500 to-orange-400",
-    "bg-app-accent",
-    "bg-app-accent",
-    "bg-app-warm",
-    "bg-app-warm",
-    "bg-app-accent",
+    "bg-app-accent text-app-on-accent!",
+    "bg-app-accent text-app-on-accent!",
+    "bg-app-warm text-app-on-warm!",
+    "bg-app-warm text-app-on-warm!",
+    "bg-app-accent text-app-on-accent!",
   ];
 
   if (!gate.isReady || (gate.isComplete && isLoading)) {
@@ -244,7 +244,7 @@ export function PortalCreativePodPage() {
           
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-app-accent/10 border border-app-accent/20 text-app-accent text-[11px] font-bold mb-2.5">
-              <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="size-2 rounded-full bg-emerald-400 animate-pulse text-app-on-accent!" />
               Real-Time Collaboration Hub
             </div>
             <h3 className="text-lg sm:text-xl font-black text-hi tracking-tight mb-1.5">

@@ -228,7 +228,7 @@ export function AdminProductivityDashboardPage() {
             <div className="bg-app-base/80 border border-app-line rounded-xl p-3 space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-rose-400">
                 <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] sm:text-[11px]">
-                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse text-app-on-warm!" />
                   Overloaded Specialists (&ge; 85%)
                 </span>
                 <span className="text-[10px] font-bold text-rose-300 bg-rose-500/15 px-2 py-0.5 rounded-full border border-rose-500/30">
@@ -242,7 +242,7 @@ export function AdminProductivityDashboardPage() {
                   {overloadedList.map((spec) => (
                     <div
                       key={spec.id}
-                      className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-lg bg-app-surface/60 border border-[#2A3446]/40"
+                      className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-lg bg-app-surface/60 border border-app-line/40"
                     >
                       <span className="font-semibold text-hi truncate max-w-[140px] sm:max-w-none">{spec.name}</span>
                       <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30 shrink-0">
@@ -258,7 +258,7 @@ export function AdminProductivityDashboardPage() {
             <div className="bg-app-base/80 border border-app-line rounded-xl p-3 space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-emerald-400">
                 <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] sm:text-[11px]">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 text-app-on-accent!" />
                   Available for Reallocation (&le; 50%)
                 </span>
                 <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
@@ -274,7 +274,7 @@ export function AdminProductivityDashboardPage() {
                       key={spec.id}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-app-surface/80 border border-app-line text-app-accent-soft hover:text-hi transition-colors"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 text-app-on-accent!" />
                       <span className="truncate max-w-[130px] font-semibold">{spec.name}</span>
                       <span className="text-[10px] text-app-mist font-mono">({spec.tasks_pending ?? 0} WIP)</span>
                     </span>
@@ -417,7 +417,7 @@ export function AdminProductivityDashboardPage() {
                 <th className="py-3.5 px-4 text-center">Workload & Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A3446]/60">
+            <tbody className="divide-y divide-app-line/60">
               {isLoading ? (
                 <tr>
                   <td colSpan={9} className="py-12 text-center text-app-mist">
@@ -435,7 +435,7 @@ export function AdminProductivityDashboardPage() {
                 </tr>
               ) : (
                 specialists.map((spec) => (
-                  <tr key={spec.id} className="hover:bg-[#1E293B]/40 transition-colors">
+                  <tr key={spec.id} className="hover:bg-app-line-soft/40 transition-colors">
                     {/* Specialist Info */}
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-2.5">
@@ -525,10 +525,10 @@ export function AdminProductivityDashboardPage() {
                           <div
                             className={`h-full rounded-full ${
                               spec.allocated_workload_pct >= 85
-                                ? "bg-rose-500"
+                                ? "bg-rose-500 text-app-on-warm!"
                                 : spec.allocated_workload_pct >= 50
-                                ? "bg-emerald-400"
-                                : "bg-blue-400"
+                                ? "bg-emerald-400 text-app-on-accent!"
+                                : "bg-blue-400 text-app-on-accent!"
                             }`}
                             style={{ width: `${Math.min(100, spec.allocated_workload_pct)}%` }}
                           />

@@ -51,7 +51,7 @@ export const TASK_QUEUE_COLUMNS: QueueColumnDef[] = [
     title: "Contacted",
     defaultStatus: "contacted",
     matchingStatuses: ["new", "contacted", "meeting_scheduled"],
-    dotColor: "bg-blue-400",
+    dotColor: "bg-blue-400 text-app-on-accent!",
     badgeBg: "bg-blue-500/15",
     badgeText: "text-blue-300",
     accentBorder: "border-blue-500/30",
@@ -62,7 +62,7 @@ export const TASK_QUEUE_COLUMNS: QueueColumnDef[] = [
     title: "In Negotiation",
     defaultStatus: "negotiation",
     matchingStatuses: ["proposal_sent", "negotiation"],
-    dotColor: "bg-amber-400",
+    dotColor: "bg-amber-400 text-app-on-warm!",
     badgeBg: "bg-amber-500/15",
     badgeText: "text-amber-300",
     accentBorder: "border-amber-500/30",
@@ -73,7 +73,7 @@ export const TASK_QUEUE_COLUMNS: QueueColumnDef[] = [
     title: "Won",
     defaultStatus: "converted",
     matchingStatuses: ["converted"],
-    dotColor: "bg-emerald-400",
+    dotColor: "bg-emerald-400 text-app-on-accent!",
     badgeBg: "bg-emerald-500/15",
     badgeText: "text-emerald-300",
     accentBorder: "border-emerald-500/30",
@@ -84,7 +84,7 @@ export const TASK_QUEUE_COLUMNS: QueueColumnDef[] = [
     title: "Lost",
     defaultStatus: "lost",
     matchingStatuses: ["lost"],
-    dotColor: "bg-rose-400",
+    dotColor: "bg-rose-400 text-app-on-warm!",
     badgeBg: "bg-rose-500/15",
     badgeText: "text-rose-300",
     accentBorder: "border-rose-500/30",
@@ -292,7 +292,7 @@ export function BDEDashboardPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search prospects..."
-                  className="w-full bg-app-base border border-app-line rounded-lg pl-8 pr-3 py-1.5 text-xs text-hi placeholder:text-[#97A0B3]/80 focus:outline-none focus:border-app-accent transition-colors"
+                  className="w-full bg-app-base border border-app-line rounded-lg pl-8 pr-3 py-1.5 text-xs text-hi placeholder:text-app-mist/80 focus:outline-none focus:border-app-accent transition-colors"
                 />
               </div>
 
@@ -352,7 +352,7 @@ export function BDEDashboardPage() {
                         </div>
                         <span
                           className={`text-[10px] font-extrabold px-1.5 py-0.5 leading-none rounded-full shrink-0 ${
-                            isActive ? col.countBg : "bg-[#2A3446]/60 text-app-mist"
+                            isActive ? col.countBg : "bg-app-line/60 text-app-mist"
                           }`}
                         >
                           {count}
@@ -393,7 +393,7 @@ export function BDEDashboardPage() {
                           isVisibleOnMobile ? "flex" : "hidden sm:flex"
                         } ${
                           isDropTarget
-                            ? "border-app-accent bg-app-surface/95 ring-2 ring-[#7FA0D6]/50 shadow-[0_0_24px_rgba(127,160,214,0.2)]"
+                            ? "border-app-accent bg-app-surface/95 ring-2 ring-app-accent/50 shadow-[0_0_24px_color-mix(in_oklab,var(--app-accent)_20%,transparent)]"
                             : `${col.accentBorder}`
                         }`}
                       >
@@ -434,7 +434,7 @@ export function BDEDashboardPage() {
                         ) : colLeads.length === 0 ? (
                           <div className="py-8 sm:py-16 text-center">
                             <p className="text-xs text-app-mist">No clients in {col.title}.</p>
-                            <p className="text-[11px] text-[#97A0B3]/60 mt-1">Tap "+ Add" to create a new client lead.</p>
+                            <p className="text-[11px] text-app-mist/60 mt-1">Tap "+ Add" to create a new client lead.</p>
                           </div>
                         ) : (
                           colLeads.map((lead) => {
@@ -458,7 +458,7 @@ export function BDEDashboardPage() {
                                   setDraggingLeadId(null);
                                   setDragOverCol(null);
                                 }}
-                                className={`bg-app-base border border-app-line hover:border-[#7FA0D6]/80 rounded-xl p-3.5 shadow-md transition-all cursor-grab active:cursor-grabbing hover:shadow-lg space-y-2.5 ${
+                                className={`bg-app-base border border-app-line hover:border-app-accent/80 rounded-xl p-3.5 shadow-md transition-all cursor-grab active:cursor-grabbing hover:shadow-lg space-y-2.5 ${
                                   isBeingDragged ? "opacity-40 scale-[0.98] border-dashed border-app-accent" : ""
                                 }`}
                               >
@@ -487,7 +487,7 @@ export function BDEDashboardPage() {
                                       type="button"
                                       onClick={(e) => handleDeleteLead(e, lead)}
                                       title="Delete lead"
-                                      className="text-[#97A0B3]/40 hover:text-rose-400 p-0.5 rounded cursor-pointer transition-colors"
+                                      className="text-app-mist/40 hover:text-rose-400 p-0.5 rounded cursor-pointer transition-colors"
                                     >
                                       <Trash2 className="w-3 h-3" />
                                     </button>
@@ -552,7 +552,7 @@ export function BDEDashboardPage() {
                                       type="button"
                                       onClick={() => setActiveActivityLead(lead)}
                                       title="Log activity"
-                                      className="px-2 py-1 rounded-md bg-app-accent/20 border border-app-accent/40 text-app-accent-soft hover:bg-[#7FA0D6]/30 hover:text-hi transition-colors text-[10px] font-bold cursor-pointer"
+                                      className="px-2 py-1 rounded-md bg-app-accent/20 border border-app-accent/40 text-app-accent-soft hover:bg-app-accent/30 hover:text-hi transition-colors text-[10px] font-bold cursor-pointer"
                                     >
                                       Log
                                     </button>
@@ -613,7 +613,7 @@ export function BDEDashboardPage() {
                         <th className="py-3.5 px-4 text-right">Quick Outreach & Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#2A3446]/60">
+                    <tbody className="divide-y divide-app-line/60">
                       {leadsQuery.isLoading ? (
                         <tr>
                           <td colSpan={7} className="py-12 text-center text-app-mist">
@@ -639,7 +639,7 @@ export function BDEDashboardPage() {
                             nextFollowUp.toDateString() === new Date().toDateString();
 
                           return (
-                            <tr key={lead.id} className="hover:bg-[#1E293B]/40 transition-colors">
+                            <tr key={lead.id} className="hover:bg-app-line-soft/40 transition-colors">
                               {/* Prospect & Company */}
                               <td className="py-3.5 px-4">
                                 <div>
@@ -772,7 +772,7 @@ export function BDEDashboardPage() {
                                   <button
                                     type="button"
                                     onClick={() => setActiveActivityLead(lead)}
-                                    className="px-2.5 py-1 rounded-lg bg-app-accent/20 border border-app-accent/40 text-app-accent-soft hover:bg-[#7FA0D6]/30 hover:text-hi transition-colors text-[11px] font-bold cursor-pointer"
+                                    className="px-2.5 py-1 rounded-lg bg-app-accent/20 border border-app-accent/40 text-app-accent-soft hover:bg-app-accent/30 hover:text-hi transition-colors text-[11px] font-bold cursor-pointer"
                                   >
                                     Log Call
                                   </button>
@@ -1268,7 +1268,7 @@ function AddLeadModal({
                 value={formData.status || "contacted"}
                 onChange={(val) => setFormData({ ...formData, status: val as any })}
                 ariaLabel="Select Queue Stage"
-                className="w-full !rounded-xl !bg-[#0B111C] !border-[#2A3446]"
+                className="w-full !rounded-xl !bg-app-base !border-app-line"
                 options={[
                   { value: "contacted", label: "Contacted" },
                   { value: "meeting_scheduled", label: "Interested" },
@@ -1284,7 +1284,7 @@ function AddLeadModal({
                 value={formData.priority || "warm"}
                 onChange={(val) => setFormData({ ...formData, priority: val as any })}
                 ariaLabel="Select Priority"
-                className="w-full !rounded-xl !bg-[#0B111C] !border-[#2A3446]"
+                className="w-full !rounded-xl !bg-app-base !border-app-line"
                 options={[
                   { value: "hot", label: "🔥 Hot Lead" },
                   { value: "warm", label: "☀️ Warm Lead" },

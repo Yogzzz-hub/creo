@@ -69,7 +69,7 @@ export function SelectItem({ className, children, ...props }: RadixSelect.Select
   return (
     <RadixSelect.Item
       className={clsx(
-        "creo-select-item relative flex min-h-[38px] w-full cursor-pointer select-none items-center rounded-xl py-1.5 pl-8 pr-3 text-sm text-app-accent-soft outline-hidden hover:bg-app-line-soft hover:text-hi focus:bg-[#1E293B] focus:text-white data-[highlighted]:bg-[#1E293B] data-[highlighted]:text-white data-[state=checked]:bg-[#7FA0D6]/15 data-[state=checked]:text-[#7FA0D6] data-[state=checked]:font-semibold data-[disabled]:pointer-events-none data-[disabled]:opacity-40 transition-colors",
+        "creo-select-item relative flex min-h-[38px] w-full cursor-pointer select-none items-center rounded-xl py-1.5 pl-8 pr-3 text-sm text-app-accent-soft outline-hidden hover:bg-app-line-soft hover:text-hi focus:bg-app-line-soft focus:text-white data-[highlighted]:bg-app-line-soft data-[highlighted]:text-white data-[state=checked]:bg-app-accent/15 data-[state=checked]:text-app-accent data-[state=checked]:font-semibold data-[disabled]:pointer-events-none data-[disabled]:opacity-40 transition-colors",
         className,
       )}
       {...props}

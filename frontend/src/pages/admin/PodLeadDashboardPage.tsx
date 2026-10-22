@@ -197,12 +197,12 @@ export function PodLeadDashboardPage() {
       id: member.id,
       name: displayName,
       avatar: displayName.slice(0, 2).toUpperCase(),
-      avatarBg: "bg-app-accent",
+      avatarBg: "bg-app-accent text-app-on-accent!",
       role: memberRole(member),
       assignment: `${memberRole(member)} · ${podName} Active`,
       tasksCount: `${tasksCount} Tasks`,
       loadLabel: `${pct}% Load`,
-      loadColor: pct > 80 ? "bg-rose-500" : pct > 50 ? "bg-amber-500" : "bg-emerald-500",
+      loadColor: pct > 80 ? "bg-rose-500 text-app-on-warm!" : pct > 50 ? "bg-amber-500 text-app-on-warm!" : "bg-emerald-500 text-app-on-accent!",
       loadBadge: "bg-app-accent/15 text-app-accent border border-app-accent/30",
       loadPercent: pct,
     };
@@ -270,7 +270,7 @@ export function PodLeadDashboardPage() {
         {/* Top Controls & Pod Selector */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
           <div className="flex items-center gap-2">
-            <span className="size-2 sm:size-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/40 animate-pulse shrink-0" />
+            <span className="size-2 sm:size-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/40 animate-pulse shrink-0 text-app-on-accent!" />
             <span className="text-xs sm:text-sm font-bold text-hi tracking-tight">
               Active Shift • {leadName}
             </span>
@@ -286,7 +286,7 @@ export function PodLeadDashboardPage() {
                     onClick={() => setSelectedPodKey(p.key)}
                     className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-all ${
                       (selectedPodKey === p.key || (!selectedPodKey && data.pod.id === p.id))
-                        ? "bg-blue-600 text-white shadow-2xs"
+                        ? "bg-blue-600 text-app-on-accent! shadow-2xs"
                         : "text-app-ink-2 hover:bg-app-surface"
                     }`}
                   >
@@ -305,7 +305,7 @@ export function PodLeadDashboardPage() {
             </button>
             <button
               onClick={() => setAssignModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
             >
               <Plus className="size-3.5" />
               Assign Deliverable
@@ -571,7 +571,7 @@ export function PodLeadDashboardPage() {
                         </button>
                         <button
                           onClick={() => handleApproveDeliverable(del)}
-                          className="px-3.5 py-1.5 rounded-lg bg-app-accent hover:bg-blue-700 text-white text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
+                          className="px-3.5 py-1.5 rounded-lg bg-app-accent hover:bg-blue-700 text-app-on-accent! text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
                         >
                           <Check className="size-3" />
                           Approve & Send
@@ -594,7 +594,7 @@ export function PodLeadDashboardPage() {
                     <ShieldAlert className="size-3.5 text-rose-400" />
                     Urgent Deliverable
                   </div>
-                  <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-rose-600 text-white uppercase tracking-wider">
+                  <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-rose-600 text-app-on-warm! uppercase tracking-wider">
                     Critical
                   </span>
                 </div>
@@ -649,7 +649,7 @@ export function PodLeadDashboardPage() {
                   <div key={leave.id} className="p-3 rounded-xl bg-app-base border border-app-line space-y-2">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="size-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">
+                        <div className="size-7 rounded-lg bg-indigo-600 text-app-on-accent! font-bold text-xs flex items-center justify-center">
                           {leave.avatar}
                         </div>
                         <div>
@@ -675,7 +675,7 @@ export function PodLeadDashboardPage() {
                       <button
                         type="button"
                         onClick={() => handleApproveLeave(leave.id, leave.name)}
-                        className="flex-1 py-1.5 rounded-lg bg-app-accent hover:bg-blue-700 text-white text-[10px] font-bold transition-colors cursor-pointer shadow-2xs"
+                        className="flex-1 py-1.5 rounded-lg bg-app-accent hover:bg-blue-700 text-app-on-accent! text-[10px] font-bold transition-colors cursor-pointer shadow-2xs"
                       >
                         Approve Leave
                       </button>
@@ -708,7 +708,7 @@ export function PodLeadDashboardPage() {
                         <span className="text-emerald-400">On Track</span>
                       </div>
                       <div className="h-1.5 w-full bg-app-surface rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: "100%" }} />
+                        <div className="h-full bg-emerald-500 rounded-full text-app-on-accent!" style={{ width: "100%" }} />
                       </div>
                     </div>
                   ))
@@ -785,7 +785,7 @@ export function PodLeadDashboardPage() {
               </button>
               <button
                 onClick={handleConfirmRevision}
-                className="px-5 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition"
+                className="px-5 py-2 rounded-xl bg-rose-600 text-app-on-warm! text-xs font-bold hover:bg-rose-700 transition"
               >
                 Send Revision to Specialist
               </button>
@@ -827,7 +827,7 @@ export function PodLeadDashboardPage() {
                   setStandupModalOpen(false);
                   setStandupNote("");
                 }}
-                className="px-5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition"
+                className="px-5 py-2 rounded-xl bg-blue-600 text-app-on-accent! text-xs font-bold hover:bg-blue-700 transition"
               >
                 Save Standup Record
               </button>
@@ -939,7 +939,7 @@ export function PodLeadDashboardPage() {
                 type="button"
                 onClick={handleDispatchTask}
                 disabled={dispatchMutation.isPending || !assignForm.title.trim() || !data.clients.length || !data.members.length}
-                className="px-5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition cursor-pointer shadow-md shadow-blue-500/20"
+                className="px-5 py-2 rounded-xl bg-blue-600 text-app-on-accent! text-xs font-bold hover:bg-blue-700 transition cursor-pointer shadow-md shadow-blue-500/20"
               >
                 {dispatchMutation.isPending ? "Saving task..." : "Dispatch Task"}
               </button>

@@ -174,7 +174,7 @@ export function PortalHeader() {
             onClick={() => navigate("/admin/clients")}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold hover:bg-indigo-100 transition-colors shadow-2xs cursor-pointer"
           >
-            <span className="size-2 rounded-full bg-indigo-500 animate-pulse" />
+            <span className="size-2 rounded-full bg-indigo-500 animate-pulse text-app-on-accent!" />
             Switch to Admin Ops ↗
           </button>
         )}
@@ -193,7 +193,7 @@ export function PortalHeader() {
           >
             <Bell className="size-5" />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-black text-white shadow-xs">
+              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-black text-app-on-warm! shadow-xs">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
@@ -244,7 +244,7 @@ export function PortalHeader() {
                           {n.title}
                         </p>
                         {!n.is_read && (
-                          <span className="size-2 rounded-full bg-app-accent shrink-0" />
+                          <span className="size-2 rounded-full bg-app-accent shrink-0 text-app-on-accent!" />
                         )}
                       </div>
                       <p className="text-slate-600 text-[11px] leading-relaxed line-clamp-2">
@@ -271,7 +271,7 @@ export function PortalHeader() {
               setDropdownOpen(!dropdownOpen);
               setNotificationOpen(false);
             }}
-            className="flex size-9 items-center justify-center rounded-full bg-app-accent text-white text-sm font-semibold outline-hidden focus-visible:ring-2 focus-visible:ring-app-accent focus-visible:ring-offset-2 cursor-pointer shadow-xs"
+            className="flex size-9 items-center justify-center rounded-full bg-app-accent text-app-on-accent! text-sm font-semibold outline-hidden focus-visible:ring-2 focus-visible:ring-app-accent focus-visible:ring-offset-2 cursor-pointer shadow-xs"
           >
             {initial}
           </button>
@@ -280,7 +280,7 @@ export function PortalHeader() {
             <div className="absolute right-0 mt-2 w-64 rounded-xl border border-app-line/70 bg-app-surface p-2 shadow-lg z-50 text-app-ink-2">
               <div className="px-3 py-2 border-b border-border mb-1">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-app-accent text-white text-xs font-semibold">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-app-accent text-app-on-accent! text-xs font-semibold">
                     {initial}
                   </div>
                   <div className="truncate">

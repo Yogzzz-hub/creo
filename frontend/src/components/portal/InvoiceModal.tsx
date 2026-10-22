@@ -33,7 +33,7 @@ export function InvoiceModal({
     <div
       className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-[fadeIn_0.2s_ease-out]"
       style={{
-        backgroundColor: "rgba(10, 22, 40, 0.65)",
+        backgroundColor: "color-mix(in oklab, var(--app-void) 65%, transparent)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
       }}

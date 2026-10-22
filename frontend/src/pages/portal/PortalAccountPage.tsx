@@ -299,7 +299,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           ) : isIgConnected ? (
             <span
               className={`size-1.5 rounded-full ${
-                activeTab === "integrations" ? "bg-emerald-600" : "bg-emerald-400 animate-pulse"
+                activeTab === "integrations" ? "bg-emerald-600 text-app-on-accent!" : "bg-emerald-400 animate-pulse text-app-on-accent!"
               }`}
             />
           ) : null}
@@ -353,7 +353,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
             ) : isIgConnected ? (
               <span
                 className={`size-2 rounded-full ml-0.5 ${
-                  activeTab === "integrations" ? "bg-emerald-600" : "bg-emerald-400 animate-pulse"
+                  activeTab === "integrations" ? "bg-emerald-600 text-app-on-accent!" : "bg-emerald-400 animate-pulse text-app-on-accent!"
                 }`}
               />
             ) : (
@@ -416,7 +416,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           <p className="text-sm text-rose-200">{query.error.message}</p>
           <button
             onClick={() => void query.refetch()}
-            className="px-4 py-2 rounded-xl bg-rose-500 text-white font-bold text-xs hover:bg-rose-600 transition-colors"
+            className="px-4 py-2 rounded-xl bg-rose-500 text-app-on-warm! font-bold text-xs hover:bg-rose-600 transition-colors"
           >
             Retry Loading
           </button>
@@ -890,7 +890,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
               <button
                 type="button"
                 onClick={() => setErrorMessage("")}
-                className="w-full py-2.5 rounded-full bg-rose-500 text-white font-bold text-xs hover:bg-rose-600 transition-all shadow-sm active:scale-95 cursor-pointer"
+                className="w-full py-2.5 rounded-full bg-rose-500 text-app-on-warm! font-bold text-xs hover:bg-rose-600 transition-all shadow-sm active:scale-95 cursor-pointer"
               >
                 Dismiss
               </button>
@@ -933,7 +933,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                   type="button"
                   disabled={isDisconnectingIg}
                   onClick={() => void handleDisconnectInstagram()}
-                  className="flex-1 py-2.5 rounded-full bg-rose-500 text-white font-bold text-xs hover:bg-rose-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                  className="flex-1 py-2.5 rounded-full bg-rose-500 text-app-on-warm! font-bold text-xs hover:bg-rose-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isDisconnectingIg ? <Loader2 className="size-4 animate-spin" /> : "Disconnect"}
                 </button>

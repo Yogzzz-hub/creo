@@ -373,7 +373,7 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
             email: user?.email || undefined,
           },
           theme: {
-            color: "#7FA0D6",
+            color: "#D2965A",
           },
         },
         async (response) => {

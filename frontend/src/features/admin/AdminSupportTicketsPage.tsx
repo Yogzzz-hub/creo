@@ -508,7 +508,7 @@ export function AdminSupportTicketsPage() {
                         className={`px-3 py-1.5 rounded-xl text-white text-[11px] font-bold transition-all cursor-pointer shadow-xs active:scale-95 ${
                           t.status === "Resolved"
                             ? "bg-app-surface hover:bg-app-line border border-app-line text-app-ink-2"
-                            : "bg-app-accent hover:bg-blue-600 text-white"
+                            : "bg-app-accent hover:bg-blue-600 text-app-on-accent!"
                         }`}
                       >
                         {t.primaryAction}
@@ -670,7 +670,7 @@ export function AdminSupportTicketsPage() {
                             className={`px-3 py-1 rounded-xl text-white text-[11px] font-bold transition-all shadow-2xs active:scale-95 cursor-pointer ${
                               t.status === "Resolved"
                                 ? "bg-slate-700 hover:bg-slate-800"
-                                : "bg-blue-600 hover:bg-blue-700"
+                                : "bg-blue-600 hover:bg-blue-700 text-app-on-accent!"
                             }`}
                           >
                             {t.primaryAction}
@@ -772,7 +772,7 @@ export function AdminSupportTicketsPage() {
                 type="button"
                 onClick={() => setAlertModal(null)}
                 autoFocus
-                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-app-on-accent! font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
               >
                 OK
               </button>

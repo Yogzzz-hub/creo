@@ -233,7 +233,7 @@ export function MemberOverviewPage() {
           badge: t.blueprint?.concept_name || t.deliverable_type?.toUpperCase() || "Revision Required",
           badgeColor: "bg-amber-500/15 text-amber-300 border border-amber-500/30",
           content: comment,
-          avatarBg: "bg-blue-600",
+          avatarBg: "bg-blue-600 text-app-on-accent!",
           avatar: cleanLeadInitials,
         });
       }
@@ -339,7 +339,7 @@ export function MemberOverviewPage() {
           sender: currentPersona,
           role: "Specialist",
           avatar: currentPersona.slice(0, 2).toUpperCase(),
-          avatarBg: "bg-app-accent",
+          avatarBg: "bg-app-accent text-app-on-accent!",
           content: trimmed,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           reactions: [],
@@ -605,7 +605,7 @@ export function MemberOverviewPage() {
                   </div>
                   {/* Progress bar */}
                   <div className="w-full h-1.5 bg-app-surface rounded-full overflow-hidden my-1">
-                    <div className="h-full bg-blue-600 rounded-full w-[81%] transition-all duration-700" />
+                    <div className="h-full bg-blue-600 rounded-full w-[81%] transition-all duration-700 text-app-on-accent!" />
                   </div>
                   <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1 border-t border-app-line">
                     <span className="font-bold text-emerald-600">81% target</span>
@@ -660,7 +660,7 @@ export function MemberOverviewPage() {
                 <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
                   <Link
                     to="/workstation/tasks"
-                    className="px-4 py-2 rounded-xl bg-app-accent hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+                    className="px-4 py-2 rounded-xl bg-app-accent hover:bg-blue-600 text-app-on-accent! text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
                   >
                     <span>Browse Task Queue</span>
                     <ArrowRight className="size-3" />
@@ -680,7 +680,7 @@ export function MemberOverviewPage() {
                 <div className="bg-app-surface rounded-2xl p-4 sm:p-5 border border-app-line/80 shadow-2xs space-y-3.5 flex-1 flex flex-col justify-between">
                   <div className="flex items-center justify-between pb-3 border-b border-app-line">
                     <div className="flex items-center gap-2">
-                      <span className="size-1.5 rounded-full bg-blue-600 animate-pulse" />
+                      <span className="size-1.5 rounded-full bg-blue-600 animate-pulse text-app-on-accent!" />
                       <h2 className="text-sm font-black text-hi">
                         Today's Priority Focus & Production Queue
                       </h2>
@@ -761,7 +761,7 @@ export function MemberOverviewPage() {
                     <div className="p-3.5 rounded-xl bg-app-base/80 border border-app-line/70 space-y-2.5 hover:border-app-accent/30 transition-all">
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                         <div className="flex items-start gap-2.5">
-                          <div className="size-10 rounded-lg bg-gradient-to-br from-indigo-700 to-indigo-900 overflow-hidden shrink-0 relative flex items-center justify-center text-white font-mono text-[8px] font-bold">
+                          <div className="size-10 rounded-lg bg-gradient-to-br from-indigo-700 to-indigo-900 overflow-hidden shrink-0 relative flex items-center justify-center text-app-on-accent! font-mono text-[8px] font-bold">
                             {secondaryTask.deliverable_type?.slice(0, 4) || "P2"}
                           </div>
                           <div>
@@ -793,7 +793,7 @@ export function MemberOverviewPage() {
                         </button>
                         <button
                           onClick={() => openUploadModal(secondaryTask)}
-                          className="px-3.5 py-1.5 rounded-lg bg-app-accent hover:bg-blue-700 text-white text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer ml-auto"
+                          className="px-3.5 py-1.5 rounded-lg bg-app-accent hover:bg-blue-700 text-app-on-accent! text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer ml-auto"
                         >
                           <Send className="size-3" />
                           Submit for QA
@@ -830,7 +830,7 @@ export function MemberOverviewPage() {
                         });
                       }
                     }}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-app-base hover:bg-[#162338] border border-app-line text-app-accent hover:text-hi text-[10px] font-bold transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-app-base hover:bg-app-surface border border-app-line text-app-accent hover:text-hi text-[10px] font-bold transition-colors cursor-pointer"
                     title="Open Pod Beta Team in Slack"
                   >
                     <MessageSquare className="size-2.5" />
@@ -865,7 +865,7 @@ export function MemberOverviewPage() {
                         }
                       }}
                       className={`p-2.5 rounded-xl bg-app-base/80 border border-app-line/60 space-y-1.5 text-xs transition-all ${
-                        note.taskId ? "cursor-pointer hover:border-app-accent/60 hover:bg-[#111927] group" : ""
+                        note.taskId ? "cursor-pointer hover:border-app-accent/60 hover:bg-app-nested group" : ""
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -940,7 +940,7 @@ export function MemberOverviewPage() {
                     type="submit"
                     disabled={!quickReplyText.trim() || isSendingQuickReply}
                     title="Send to Pod Beta Team via Slack"
-                    className="h-7 px-2.5 rounded-lg bg-app-accent hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 text-white flex items-center gap-1 text-[11px] font-bold transition-all shadow-2xs cursor-pointer shrink-0"
+                    className="h-7 px-2.5 rounded-lg bg-app-accent hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 text-app-on-accent! flex items-center gap-1 text-[11px] font-bold transition-all shadow-2xs cursor-pointer shrink-0"
                   >
                     {isSendingQuickReply ? (
                       <>
@@ -1049,7 +1049,7 @@ export function MemberOverviewPage() {
                         <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
                           <Link
                             to="/workstation/tasks"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-2xs"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-app-on-accent! text-xs font-bold transition-all shadow-2xs"
                           >
                             <span>Production Tasks</span>
                             <ArrowRight className="size-3" />
@@ -1088,7 +1088,7 @@ export function MemberOverviewPage() {
                             <span className="font-bold text-[10px]">
                               {isAssignedToCurrentUser(t) ? (
                                 <span className="text-emerald-400 flex items-center gap-1">
-                                  <span className="size-1.5 rounded-full bg-emerald-400" />
+                                  <span className="size-1.5 rounded-full bg-emerald-400 text-app-on-accent!" />
                                   {t.assignee?.full_name || t.assignee_name || "You"} (You)
                                 </span>
                               ) : (
@@ -1155,7 +1155,7 @@ export function MemberOverviewPage() {
                               <td className="py-2.5 px-2.5 text-xs">
                                 {isAssignedToCurrentUser(t) ? (
                                   <span className="text-emerald-400 font-bold flex items-center gap-1.5">
-                                    <span className="size-1.5 rounded-full bg-emerald-400" />
+                                    <span className="size-1.5 rounded-full bg-emerald-400 text-app-on-accent!" />
                                     {t.assignee?.full_name || t.assignee_name || "You"} (You)
                                   </span>
                                 ) : (
@@ -1222,7 +1222,7 @@ export function MemberOverviewPage() {
                 </div>
                 <button
                   onClick={() => setZoomModalOpen(true)}
-                  className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] shadow-2xs cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-app-on-accent! font-bold text-[11px] shadow-2xs cursor-pointer"
                 >
                   Join
                 </button>
@@ -1234,7 +1234,7 @@ export function MemberOverviewPage() {
                   members.map((m) => (
                     <div key={m.id} className="flex items-center justify-between p-1.5 rounded-lg hover:bg-app-base transition-colors">
                       <div className="flex items-center gap-2">
-                        <div className="size-6 rounded-md bg-app-accent text-white font-black text-[9px] flex items-center justify-center">
+                        <div className="size-6 rounded-md bg-app-accent text-app-on-accent! font-black text-[9px] flex items-center justify-center">
                           {m.full_name?.slice(0, 2).toUpperCase() || "CP"}
                         </div>
                         <div>
@@ -1242,13 +1242,13 @@ export function MemberOverviewPage() {
                           <span className="text-[9px] text-app-mist">{m.role || "Pod Specialist"} • Active</span>
                         </div>
                       </div>
-                      <span className="size-1.5 rounded-full bg-emerald-500" />
+                      <span className="size-1.5 rounded-full bg-emerald-500 text-app-on-accent!" />
                     </div>
                   ))
                 ) : (
                   <div className="flex items-center justify-between p-1.5 rounded-lg hover:bg-app-base transition-colors">
                     <div className="flex items-center gap-2">
-                      <div className="size-6 rounded-md bg-app-accent text-white font-black text-[9px] flex items-center justify-center">
+                      <div className="size-6 rounded-md bg-app-accent text-app-on-accent! font-black text-[9px] flex items-center justify-center">
                         {leadName.slice(0, 2).toUpperCase()}
                       </div>
                       <div>
@@ -1347,7 +1347,7 @@ export function MemberOverviewPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold shadow-xs cursor-pointer"
                 >
                   Confirm & Save Hours
                 </button>
@@ -1526,7 +1526,7 @@ export function MemberOverviewPage() {
                   </div>
                   <div className="w-full h-1.5 bg-app-base rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-200 rounded-full"
+                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-200 rounded-full text-app-on-accent!"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
@@ -1545,7 +1545,7 @@ export function MemberOverviewPage() {
                 <button
                   type="submit"
                   disabled={isUploading || !uploadFile || !selectedTaskId}
-                  className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                 >
                   {isUploading ? (
                     <>
@@ -1622,7 +1622,7 @@ export function MemberOverviewPage() {
                 <button
                   type="button"
                   onClick={() => setPreviewModalOpen(false)}
-                  className="px-4 py-1.5 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold text-xs cursor-pointer"
+                  className="px-4 py-1.5 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold text-xs cursor-pointer"
                 >
                   Close Preview
                 </button>
@@ -1680,7 +1680,7 @@ export function MemberOverviewPage() {
               <button
                 type="button"
                 onClick={() => setInspectModalOpen(false)}
-                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold cursor-pointer"
               >
                 Close Inspector
               </button>
@@ -1720,7 +1720,7 @@ export function MemberOverviewPage() {
               <button
                 type="button"
                 onClick={handleConfirmHandoff}
-                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold text-xs shadow-md shadow-blue-500/20 cursor-pointer"
               >
                 Confirm & Handoff
               </button>
@@ -1760,7 +1760,7 @@ export function MemberOverviewPage() {
                 onClick={() => setMeetingPlatform("meet")}
                 className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   meetingPlatform === "meet"
-                    ? "bg-emerald-600 text-white shadow-sm"
+                    ? "bg-emerald-600 text-app-on-accent! shadow-sm"
                     : "text-app-mist hover:text-hi"
                 }`}
               >
@@ -1772,7 +1772,7 @@ export function MemberOverviewPage() {
                 onClick={() => setMeetingPlatform("zoom")}
                 className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   meetingPlatform === "zoom"
-                    ? "bg-blue-600 text-white shadow-sm"
+                    ? "bg-blue-600 text-app-on-accent! shadow-sm"
                     : "text-app-mist hover:text-hi"
                 }`}
               >
@@ -1900,7 +1900,7 @@ export function MemberOverviewPage() {
                   <button
                     type="button"
                     onClick={() => handleSaveMeetingConfig(customMeetCode, customMeetUrl, customZoomUrl)}
-                    className="px-3 py-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer"
+                    className="px-3 py-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! font-bold text-xs cursor-pointer"
                   >
                     Save Changes
                   </button>
@@ -1941,7 +1941,7 @@ export function MemberOverviewPage() {
                     setZoomModalOpen(false);
                     showToast(`Redirecting to Google Meet...`, "info");
                   }}
-                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 cursor-pointer transition-colors flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-app-on-accent! font-bold text-xs shadow-md shadow-emerald-600/20 cursor-pointer transition-colors flex items-center gap-1.5"
                 >
                   <Video className="size-3.5" />
                   <span>Redirect to Google Meet</span>
@@ -1954,7 +1954,7 @@ export function MemberOverviewPage() {
                     setZoomModalOpen(false);
                     showToast(`Redirecting to Zoom join portal...`, "info");
                   }}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 cursor-pointer transition-colors flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-app-on-accent! font-bold text-xs shadow-md shadow-blue-600/20 cursor-pointer transition-colors flex items-center gap-1.5"
                 >
                   <ExternalLink className="size-3.5" />
                   <span>Redirect to Zoom</span>

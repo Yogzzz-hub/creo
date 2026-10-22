@@ -36,7 +36,7 @@ function CustomTooltip({ active, payload, label }: any) {
     <div className="bg-app-base/95 backdrop-blur-md text-hi px-3.5 py-2.5 rounded-2xl shadow-2xl text-xs border border-app-line space-y-1 animate-fade-in z-50">
       <p className="text-[10px] text-app-mist font-bold uppercase tracking-wider">{label}</p>
       <div className="flex items-center gap-2">
-        <span className="w-2.5 h-2.5 rounded-full bg-app-accent shadow-xs" />
+        <span className="w-2.5 h-2.5 rounded-full bg-app-accent shadow-xs text-app-on-accent!" />
         <span className="text-sm font-black text-hi">₹{(value / 100).toLocaleString("en-IN")}</span>
       </div>
     </div>
@@ -98,7 +98,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
   return (
     <div
       onClick={() => navigate("/admin/revenue")}
-      className="bg-app-surface rounded-3xl border border-app-line shadow-xl hover:border-app-accent/60 hover:shadow-[0_0_25px_rgba(127,160,214,0.15)] transition-all duration-300 p-4 sm:p-5 flex flex-col justify-between w-full h-full font-sans cursor-pointer group hover-card-innovative overflow-hidden relative"
+      className="bg-app-surface rounded-3xl border border-app-line shadow-xl hover:border-app-accent/60 hover:shadow-[0_0_25px_color-mix(in_oklab,var(--app-accent)_15%,transparent)] transition-all duration-300 p-4 sm:p-5 flex flex-col justify-between w-full h-full font-sans cursor-pointer group hover-card-innovative overflow-hidden relative"
     >
       {/* Header Row */}
       <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-app-line/80 shrink-0 gap-2 sm:gap-3">
@@ -180,7 +180,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
                     <stop offset="100%" stopColor="var(--app-line)" stopOpacity={0.35} />
                   </linearGradient>
                   <linearGradient id="barGradientPeak" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity={1} />
+                    <stop offset="0%" stopColor="var(--hi)" stopOpacity={1} />
                     <stop offset="35%" stopColor="var(--app-accent-soft)" stopOpacity={1} />
                     <stop offset="100%" stopColor="var(--app-accent)" stopOpacity={0.85} />
                   </linearGradient>

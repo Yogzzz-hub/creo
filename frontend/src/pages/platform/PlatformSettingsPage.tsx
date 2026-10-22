@@ -209,7 +209,7 @@ export function PlatformSettingsPage() {
           type="button"
           disabled={saveMutation.isPending}
           onClick={() => saveMutation.mutate()}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-app-accent to-[#4F70A6] text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer shadow-lg shadow-app-accent/10 disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-app-accent to-app-accent text-black text-xs font-black hover:opacity-90 transition-opacity cursor-pointer shadow-lg shadow-app-accent/10 disabled:opacity-50"
         >
           <Save className="w-3.5 h-3.5" />
           {saveMutation.isPending ? "Saving..." : "Save Platform Configurations"}

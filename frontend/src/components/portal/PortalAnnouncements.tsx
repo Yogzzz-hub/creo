@@ -121,7 +121,7 @@ export function PortalAnnouncements() {
     <div className="space-y-3">
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <span className="flex h-2 w-2 rounded-full bg-app-accent animate-ping" />
+          <span className="flex h-2 w-2 rounded-full bg-app-accent animate-ping text-app-on-accent!" />
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Agency Updates & Technical Bulletins
           </h2>

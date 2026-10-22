@@ -196,7 +196,7 @@ export function AdminTopHeader({
           {/* Active Page Title with subtle breadcrumb separator */}
           {!hideTitle && resolvedTitle && (
             <>
-              <span className="text-[#3A4659] text-xs font-semibold select-none shrink-0" aria-hidden="true">
+              <span className="text-app-base text-xs font-semibold select-none shrink-0" aria-hidden="true">
                 /
               </span>
               <h1 className="text-xs sm:text-sm font-bold text-white/95 tracking-tight truncate max-w-[120px] xs:max-w-[190px] sm:max-w-xs md:max-w-md">

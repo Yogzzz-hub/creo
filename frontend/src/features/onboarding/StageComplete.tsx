@@ -75,7 +75,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
           initial={reduce ? false : { scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 320, damping: 18, delay: 0.1 }}
-          className="relative mx-auto flex size-14 items-center justify-center rounded-full bg-app-accent text-app-base shadow-[0_0_32px_rgba(127,160,214,0.55)]"
+          className="relative mx-auto flex size-14 items-center justify-center rounded-full bg-app-accent text-app-base shadow-[0_0_32px_color-mix(in_oklab,var(--app-accent)_55%,transparent)]"
         >
           <Check className="size-7" strokeWidth={3} />
         </motion.div>
@@ -159,7 +159,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
         <button
           type="button"
           onClick={onLaunchPortal}
-          className="group inline-flex items-center gap-2 rounded-xl bg-app-accent-soft px-7 py-3.5 text-sm font-bold text-app-base shadow-[0_12px_30px_-12px_rgba(188,204,230,0.6)] transition-colors hover:bg-hi"
+          className="group inline-flex items-center gap-2 rounded-xl bg-app-accent-soft px-7 py-3.5 text-sm font-bold text-app-base shadow-[0_12px_30px_-12px_color-mix(in_oklab,var(--app-accent-soft)_60%,transparent)] transition-colors hover:bg-hi"
         >
           Launch my portal
           <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />

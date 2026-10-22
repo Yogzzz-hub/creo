@@ -41,7 +41,7 @@ export function MemberSchedulePTOPage() {
             <label className="block text-sm">Start date<input required type="date" min={today} value={startDate} onChange={(event) => setStartDate(event.target.value)} className="mt-2 block w-full min-w-0 min-h-11 rounded-xl bg-slate-900 border border-slate-700 px-3 [color-scheme:dark]" /></label>
             <label className="block text-sm">End date<input required type="date" min={startDate || today} value={endDate} onChange={(event) => setEndDate(event.target.value)} className="mt-2 block w-full min-w-0 min-h-11 rounded-xl bg-slate-900 border border-slate-700 px-3 [color-scheme:dark]" /></label>
             <label className="block text-sm">Reason and handover notes<textarea required maxLength={2000} value={reason} onChange={(event) => setReason(event.target.value)} rows={4} className="mt-2 block w-full rounded-xl bg-slate-900 border border-slate-700 p-3" /></label>
-            <button disabled={submit.isPending || !reason.trim()} className="min-h-11 w-full rounded-xl bg-blue-500 px-4 font-medium disabled:opacity-50">{submit.isPending ? "Submitting..." : "Submit for approval"}</button>
+            <button disabled={submit.isPending || !reason.trim()} className="min-h-11 w-full rounded-xl bg-blue-500 px-4 font-medium disabled:opacity-50 text-app-on-accent!">{submit.isPending ? "Submitting..." : "Submit for approval"}</button>
           </form>
         </section>
         <section className="min-w-0 rounded-2xl border border-slate-800 bg-app-surface p-4 sm:p-5"><h2 className="text-lg font-semibold mb-4">My leave requests</h2>

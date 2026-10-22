@@ -97,15 +97,15 @@ export function MemberMobileTaskBoard({
   const { toggleMobile } = useAdminSidebar();
 
   return (
-    <div className="md:hidden w-full max-w-[430px] mx-auto min-h-screen bg-[#0B0F17] flex flex-col relative pb-12 text-slate-100 shadow-2xl">
+    <div className="md:hidden w-full max-w-[430px] mx-auto min-h-screen bg-app-base flex flex-col relative pb-12 text-slate-100 shadow-2xl">
       {/* BEGIN: MobileTopBar */}
-      <header className="sticky top-0 z-40 bg-[#0B0F17]/90 backdrop-blur-md px-4 py-3 border-b border-[#2A3446]/40 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-app-base/90 backdrop-blur-md px-4 py-3 border-b border-app-line/40 flex items-center justify-between">
         {/* App Brand & Role Pill */}
         <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={toggleMobile}
-            className="size-8 rounded-xl bg-[#131C2B] border border-app-line flex items-center justify-center text-slate-300 hover:text-hi transition cursor-pointer shrink-0"
+            className="size-8 rounded-xl bg-app-surface border border-app-line flex items-center justify-center text-slate-300 hover:text-hi transition cursor-pointer shrink-0"
             aria-label="Open navigation sidebar"
             title="Open navigation menu"
           >
@@ -126,7 +126,7 @@ export function MemberMobileTaskBoard({
             aria-label="Notifications"
             type="button"
             onClick={() => showToast("All task notifications are up to date")}
-            className="size-8 rounded-full bg-[#131C2B] border border-app-line flex items-center justify-center text-slate-300 hover:text-hi transition cursor-pointer"
+            className="size-8 rounded-full bg-app-surface border border-app-line flex items-center justify-center text-slate-300 hover:text-hi transition cursor-pointer"
           >
             <Bell className="size-4" />
           </button>
@@ -141,7 +141,7 @@ export function MemberMobileTaskBoard({
             <div className="size-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-semibold text-slate-200">
               {userInitials}
             </div>
-            <span className="absolute bottom-0 right-0 size-2.5 bg-emerald-500 border-2 border-[#0B0F17] rounded-full"></span>
+            <span className="absolute bottom-0 right-0 size-2.5 bg-emerald-500 border-2 border-app-base rounded-full text-app-on-accent!"></span>
           </Link>
         </div>
       </header>
@@ -201,7 +201,7 @@ export function MemberMobileTaskBoard({
                 value={selectedClient}
                 onChange={(e) => setSelectedClient(e.target.value)}
                 aria-label="Filter by client"
-                className="w-full bg-[#0F1726] border border-app-line rounded-xl py-2 pl-3 pr-7 text-xs font-medium text-slate-200 hover:border-slate-500 transition appearance-none cursor-pointer truncate focus:outline-none focus:border-sky-500"
+                className="w-full bg-app-nested border border-app-line rounded-xl py-2 pl-3 pr-7 text-xs font-medium text-slate-200 hover:border-slate-500 transition appearance-none cursor-pointer truncate focus:outline-none focus:border-sky-500"
               >
                 <option value="all">All Clients ({tasks.length})</option>
                 {availableClients.map((client) => {
@@ -224,7 +224,7 @@ export function MemberMobileTaskBoard({
                 value={urgencyFilter}
                 onChange={(e) => setUrgencyFilter(e.target.value)}
                 aria-label="Filter by urgency"
-                className="w-full bg-[#0F1726] border border-app-line rounded-xl py-2 pl-3 pr-7 text-xs font-medium text-slate-200 hover:border-slate-500 transition appearance-none cursor-pointer truncate focus:outline-none focus:border-sky-500"
+                className="w-full bg-app-nested border border-app-line rounded-xl py-2 pl-3 pr-7 text-xs font-medium text-slate-200 hover:border-slate-500 transition appearance-none cursor-pointer truncate focus:outline-none focus:border-sky-500"
               >
                 <option value="All">All Urgency</option>
                 <option value="High">Due soon / revisions</option>
@@ -243,7 +243,7 @@ export function MemberMobileTaskBoard({
                 setCreateOpen(true);
               }}
               disabled={clients.length === 0}
-              className="w-full bg-[#38BDF8] hover:bg-[#0ea5e9] active:scale-[0.98] text-slate-950 font-semibold text-xs py-2.5 px-3 rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+              className="w-full bg-app-accent hover:bg-app-accent active:scale-[0.98] text-slate-950 font-semibold text-xs py-2.5 px-3 rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-50"
             >
               <Plus className="size-3.5 stroke-[2.5]" />
               <span>Add Task</span>
@@ -272,7 +272,7 @@ export function MemberMobileTaskBoard({
                 onClick={() => setMobileKanbanTab(key)}
                 className={`whitespace-nowrap transition cursor-pointer ${
                   isActive
-                    ? "bg-[#dce6f2] text-slate-950 font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-sm"
+                    ? "bg-app-accent-soft text-slate-950 font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-sm"
                     : "text-slate-400 hover:text-slate-200 font-medium text-xs px-3 py-1.5"
                 }`}
               >
@@ -285,7 +285,7 @@ export function MemberMobileTaskBoard({
 
         {/* BEGIN: KanbanColumnContainer */}
         <section
-          className="border border-app-line bg-[#111724]/70 rounded-2xl p-3.5 flex flex-col gap-3"
+          className="border border-app-line bg-app-nested/70 rounded-2xl p-3.5 flex flex-col gap-3"
           data-purpose="kanban-column"
         >
           {/* Column Header */}
@@ -294,12 +294,12 @@ export function MemberMobileTaskBoard({
               <span
                 className={`size-2 rounded-full ${
                   mobileKanbanTab === "assigned"
-                    ? "bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.6)]"
+                    ? "bg-sky-400 shadow-[0_0_8px_color-mix(in_oklab,var(--app-accent)_60%,transparent)] text-app-on-accent!"
                     : mobileKanbanTab === "production"
-                    ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)] animate-pulse"
+                    ? "bg-amber-400 shadow-[0_0_8px_color-mix(in_oklab,var(--app-warm)_60%,transparent)] animate-pulse text-app-on-warm!"
                     : mobileKanbanTab === "qa"
-                    ? "bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.6)]"
-                    : "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]"
+                    ? "bg-indigo-400 shadow-[0_0_8px_color-mix(in_oklab,var(--app-accent)_60%,transparent)] text-app-on-accent!"
+                    : "bg-emerald-400 shadow-[0_0_8px_color-mix(in_oklab,var(--app-accent)_60%,transparent)] text-app-on-accent!"
                 }`}
               />
               <h2 className="text-[11px] font-bold tracking-wider text-slate-300 uppercase">
@@ -330,10 +330,10 @@ export function MemberMobileTaskBoard({
                 <article
                   key={task.id}
                   id={`mobile-task-card-${task.id}`}
-                  className={`bg-[#131B28] border rounded-xl p-3.5 shadow-sm hover:border-slate-600 transition flex flex-col justify-between ${
+                  className={`bg-app-surface border rounded-xl p-3.5 shadow-sm hover:border-slate-600 transition flex flex-col justify-between ${
                     isTargeted
                       ? "ring-2 ring-sky-400 border-sky-400 shadow-lg shadow-sky-500/20"
-                      : "border-[#243044]"
+                      : "border-app-line"
                   }`}
                   data-purpose="task-card"
                 >
@@ -474,7 +474,7 @@ export function MemberMobileTaskBoard({
             })}
 
             {currentMobileTasks.length === 0 && (
-              <div className="text-center py-10 px-4 text-xs text-slate-400 font-medium bg-[#131B28]/50 rounded-xl border border-dashed border-[#243044]">
+              <div className="text-center py-10 px-4 text-xs text-slate-400 font-medium bg-app-surface/50 rounded-xl border border-dashed border-app-line">
                 {mobileKanbanTab === "assigned"
                   ? "No queued tasks"
                   : mobileKanbanTab === "production"

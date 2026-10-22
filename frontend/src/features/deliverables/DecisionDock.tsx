@@ -38,12 +38,12 @@ export function DecisionDock({
         transform: "translateX(-50%)",
         width: "90vw",
         maxWidth: "760px",
-        backgroundColor: "rgba(23, 27, 34, 0.95)",
+        backgroundColor: "color-mix(in oklab, var(--app-void) 95%, transparent)",
         backdropFilter: "blur(16px)",
         border: "1px solid var(--color-hairline)",
         borderRadius: 14,
         padding: "1rem 1.5rem",
-        boxShadow: "0 12px 36px rgba(0, 0, 0, 0.7)",
+        boxShadow: "0 12px 36px rgb(var(--shadow-rgb) / calc(0.7 * var(--shadow-k)))",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -117,9 +117,9 @@ export function DecisionDock({
               fontWeight: 600,
               fontSize: "0.875rem",
               padding: "8px 16px",
-              backgroundColor: "rgba(35, 162, 109, 0.1)",
+              backgroundColor: "color-mix(in oklab, var(--app-accent) 10%, transparent)",
               borderRadius: 8,
-              border: "1px solid rgba(35, 162, 109, 0.25)",
+              border: "1px solid color-mix(in oklab, var(--app-accent) 25%, transparent)",
             }}
           >
             <Check size={16} />
@@ -156,8 +156,8 @@ export function DecisionDock({
               style={{
                 padding: "8px 14px",
                 borderRadius: 8,
-                backgroundColor: "rgba(43, 123, 196, 0.15)",
-                border: "1px solid rgba(43, 123, 196, 0.4)",
+                backgroundColor: "color-mix(in oklab, var(--app-accent) 15%, transparent)",
+                border: "1px solid color-mix(in oklab, var(--app-accent) 40%, transparent)",
                 color: "var(--app-accent-soft)",
                 fontWeight: 500,
                 fontSize: "0.875rem",
@@ -188,7 +188,7 @@ export function DecisionDock({
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
-                boxShadow: "0 2px 10px rgba(35, 162, 109, 0.3)",
+                boxShadow: "0 2px 10px color-mix(in oklab, var(--app-accent) 30%, transparent)",
               }}
             >
               {isApproving ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <CheckCircle2 size={16} />}

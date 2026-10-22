@@ -109,9 +109,9 @@ export function PortalPaymentsPage() {
 
   const usage = (subData as any)?.quotas || (subData as any)?.usage || {};
   const usageBars = [
-    { label: "Reels", current: usage.reel?.used || 0, max: usage.reel?.quota ?? (subData as any)?.plan?.reel_quota ?? 0, color: "bg-app-accent" },
-    { label: "Posts", current: (usage.static_post?.used ?? usage.poster?.used) || 0, max: (usage.static_post?.quota ?? usage.poster?.quota) ?? (subData as any)?.plan?.poster_quota ?? 0, color: "bg-app-accent" },
-    { label: "Stories", current: (usage.story?.used ?? usage.carousel?.used) || 0, max: (usage.story?.quota ?? usage.carousel?.quota) ?? (subData as any)?.plan?.story_quota ?? 0, color: "bg-app-accent" }
+    { label: "Reels", current: usage.reel?.used || 0, max: usage.reel?.quota ?? (subData as any)?.plan?.reel_quota ?? 0, color: "bg-app-accent text-app-on-accent!" },
+    { label: "Posts", current: (usage.static_post?.used ?? usage.poster?.used) || 0, max: (usage.static_post?.quota ?? usage.poster?.quota) ?? (subData as any)?.plan?.poster_quota ?? 0, color: "bg-app-accent text-app-on-accent!" },
+    { label: "Stories", current: (usage.story?.used ?? usage.carousel?.used) || 0, max: (usage.story?.quota ?? usage.carousel?.quota) ?? (subData as any)?.plan?.story_quota ?? 0, color: "bg-app-accent text-app-on-accent!" }
   ];
 
   const totalMax = usageBars.reduce((sum, item) => sum + item.max, 0);
@@ -398,7 +398,7 @@ export function PortalPaymentsPage() {
 
               <div className="p-3.5 rounded-xl bg-app-base/80 border border-app-line space-y-2 text-xs">
                 <p className="text-hi font-semibold flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-app-accent" />
+                  <span className="size-2 rounded-full bg-app-accent text-app-on-accent!" />
                   What unlocks with an active retainer:
                 </p>
                 <ul className="space-y-1.5 text-app-mist pl-4 list-disc">
@@ -479,7 +479,7 @@ export function PortalPaymentsPage() {
                       <span className="text-[10px] font-bold text-app-mist uppercase tracking-wider">{item.label}</span>
                       <div className="text-xs font-black text-hi my-0.5">{item.current}/{item.max}</div>
                       <div className="h-1 bg-hi/[0.06] rounded-full overflow-hidden my-1">
-                        <div className="h-full bg-app-accent rounded-full" style={{ width: `${pct}%` }} />
+                        <div className="h-full bg-app-accent rounded-full text-app-on-accent!" style={{ width: `${pct}%` }} />
                       </div>
                       <span className="text-[9px] text-emerald-400 font-semibold">{Math.max(0, item.max - item.current)} left</span>
                     </div>

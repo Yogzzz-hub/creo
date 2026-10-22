@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en" class="dark brand-theme">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
-    <meta name="theme-color" content="#050810" />
+    <meta name="theme-color" content="#0f0e0c" />
     <!-- Apply the saved theme before first paint (see src/lib/theme.tsx) -->
     <script>
       try {
@@ -15,7 +15,7 @@
           r.classList.remove("dark");
           r.style.colorScheme = "light";
           document.querySelector('meta[name="color-scheme"]').content = "light";
-          document.querySelector('meta[name="theme-color"]').content = "#eceadf";
+          document.querySelector('meta[name="theme-color"]').content = "#f5eee3";
         } else {
           document.documentElement.dataset.theme = "dark";
         }

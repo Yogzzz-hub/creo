@@ -204,7 +204,7 @@ export function PodTaskBoardPage() {
         {/* 1. Quick Actions Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-app-surface p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-app-line/80 shadow-2xs">
           <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="size-2 rounded-full bg-emerald-500 animate-pulse text-app-on-accent!" />
             <span className="text-xs font-bold text-app-ink-2">{podName} Sprint Workflow · Lead {leadName}</span>
           </div>
 
@@ -218,7 +218,7 @@ export function PodTaskBoardPage() {
             </button>
             <button
               onClick={() => setAssignModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-app-accent hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
               <Plus className="size-3.5" />
               Assign New Task
@@ -477,7 +477,7 @@ export function PodTaskBoardPage() {
           >
             <div className="flex items-center justify-between px-1 shrink-0">
               <div className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-app-accent animate-pulse" />
+                <span className="size-2 rounded-full bg-app-accent animate-pulse text-app-on-accent!" />
                 <h3 className="text-xs font-black uppercase tracking-wider text-app-accent">In Progress</h3>
               </div>
               <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-app-accent/15 text-app-accent border border-app-accent/30">
@@ -553,7 +553,7 @@ export function PodTaskBoardPage() {
           >
             <div className="flex items-center justify-between px-1 shrink-0">
               <div className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-amber-400 animate-ping" />
+                <span className="size-2 rounded-full bg-amber-400 animate-ping text-app-on-warm!" />
                 <h3 className="text-xs font-black uppercase tracking-wider text-amber-400">Lead QA Review</h3>
               </div>
               <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-500/15 text-amber-400 border border-amber-500/30">
@@ -591,7 +591,7 @@ export function PodTaskBoardPage() {
                         onClick={() => {
                           qaMutation.mutate({ taskId: task.id, decision: "approve", comment: "Direct QA sign-off from Task Board." });
                         }}
-                        className="flex-1 py-1 rounded-lg bg-app-accent hover:bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center gap-1 shadow-xs cursor-pointer transition-colors"
+                        className="flex-1 py-1 rounded-lg bg-app-accent hover:bg-blue-600 text-app-on-accent! text-[10px] font-bold flex items-center justify-center gap-1 shadow-xs cursor-pointer transition-colors"
                       >
                         <Check className="size-3" /> Sign-off
                       </button>
@@ -610,7 +610,7 @@ export function PodTaskBoardPage() {
           >
             <div className="flex items-center justify-between px-1 shrink-0">
               <div className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-emerald-400" />
+                <span className="size-2 rounded-full bg-emerald-400 text-app-on-accent!" />
                 <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400">Dispatched</h3>
               </div>
               <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
@@ -784,7 +784,7 @@ export function PodTaskBoardPage() {
               <button
                 onClick={() => createMutation.mutate()}
                 disabled={createMutation.isPending || !newCardTitle.trim() || !data?.clients.length}
-                className="px-5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition"
+                className="px-5 py-2 rounded-xl bg-blue-600 text-app-on-accent! text-xs font-bold hover:bg-blue-700 transition"
               >
                 {createMutation.isPending ? "Saving..." : "Add Card"}
               </button>
@@ -883,7 +883,7 @@ export function PodTaskBoardPage() {
                   setRerouteModalOpen(false);
                   setRerouteTaskId("");
                 }}
-                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-600 text-white text-xs font-bold transition shadow-md shadow-blue-500/20"
+                className="px-5 py-2 rounded-xl bg-app-accent hover:bg-blue-600 text-app-on-accent! text-xs font-bold transition shadow-md shadow-blue-500/20"
               >
                 Re-route Task Now
               </button>

@@ -264,7 +264,7 @@ export function AdminSplitPaymentModal({
                           <button
                             type="button"
                             onClick={() => handleMarkPaid(inst.id)}
-                            className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                            className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-app-on-accent! text-[11px] font-bold flex items-center gap-1 cursor-pointer"
                           >
                             <CheckCircle2 className="w-3 h-3" /> Mark Paid
                           </button>
