@@ -10,6 +10,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Link, useParams, useSearchParams, Navigate, useNavigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "../../lib/http";
+import { publicUrl } from "../../lib/native";
 import {
   fetchClientRoster,
   fetchPlanNegotiations,
@@ -8928,7 +8929,7 @@ export function AdminTeamManagementPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    const text = `Creo BDE Login Credentials:\nName: ${bdeProvisionedCreds.full_name}\nEmail: ${bdeProvisionedCreds.email}\nPassword: ${bdeProvisionedCreds.password}\nPortal: ${window.location.origin}/login`;
+                    const text = `Creo BDE Login Credentials:\nName: ${bdeProvisionedCreds.full_name}\nEmail: ${bdeProvisionedCreds.email}\nPassword: ${bdeProvisionedCreds.password}\nPortal: ${publicUrl("/login")}`;
                     navigator.clipboard.writeText(text);
                     setBdeCopiedKey("all");
                     setTimeout(() => setBdeCopiedKey(null), 2000);

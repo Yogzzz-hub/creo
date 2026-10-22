@@ -9,6 +9,7 @@ import type { HealthResponse } from "../types/api";
 
 // Public Layout & Landing Page (other pages are split into their own chunks)
 import { PublicLayout } from "../components/public/PublicLayout";
+import { NativeShell } from "./NativeShell";
 
 import {
   AboutPage,
@@ -558,6 +559,7 @@ export function App() {
     <AuthProvider>
       <ConfirmProvider>
         <BrowserRouter>
+          <NativeShell />
           <ScrollToTop />
           <RoutePrefetcher />
           <Suspense fallback={<RouteLoading />}>

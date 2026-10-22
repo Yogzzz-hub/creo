@@ -20,6 +20,7 @@ import { ScrollFlipText } from "../../components/motion/ScrollFlipText";
 import { DISPLAY } from "../../components/public/StagePieces";
 import { Stage3DRoot, useStageLayer } from "../../components/stage3d/registry";
 import { ThemeToggle } from "../../components/ui/ThemeToggle";
+import { goToOAuthProvider } from "../../lib/app-oauth";
 import { useAuth } from "../../lib/auth-context";
 import { HttpError } from "../../lib/http";
 import { whenIdle } from "../../app/lazy-pages";
@@ -311,7 +312,7 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
       setLoading(true);
       const url = await getGoogleAuthUrl();
       if (url) {
-        window.location.href = url;
+        await goToOAuthProvider(url);
       } else {
         navigate("/auth/callback/google");
       }

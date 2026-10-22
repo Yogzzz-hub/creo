@@ -25,6 +25,7 @@ import {
 import { Link, useParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { request } from "../../lib/http";
+import { publicUrl } from "../../lib/native";
 import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 export interface ClientPlanItem {
@@ -620,8 +621,8 @@ export function PlatformAgencyDetailPage() {
   const clientPlans = agency.client_plans ?? [];
   const supportTickets = agency.support_tickets ?? [];
 
-  const onboardingUrl = `${window.location.origin}/onboarding?agency=${agency.slug}`;
-  const pricingUrl = `${window.location.origin}/pricing?agency=${agency.slug}`;
+  const onboardingUrl = publicUrl(`/onboarding?agency=${agency.slug}`);
+  const pricingUrl = publicUrl(`/pricing?agency=${agency.slug}`);
 
   return (
     <div className="space-y-6 pb-8">

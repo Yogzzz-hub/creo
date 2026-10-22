@@ -5,6 +5,7 @@
 
 import type { ApiErrorResponse } from "../types/api";
 import { getAuthToken, setAuthToken, getRefreshToken, clearAuthToken, isTokenUnexpired } from "./auth-token";
+import { NATIVE_API_URL, PUBLIC_WEB_ORIGIN, isNativeApp } from "./native";
 
 export class HttpError extends Error {
   readonly code: string;
@@ -37,13 +38,24 @@ export function apiUrl(path: string): string {
   // Pages/Vercel and explicit API overrides keep their original routing.
   const isPagesDev = typeof window !== "undefined" && window.location.hostname.endsWith(".pages.dev");
 
-  const apiBase = (
-    import.meta.env.VITE_API_URL ||
-    (isPagesDev
-      ? "https://creo-api-singapore.onrender.com"
-      : (isLocalhost ? "http://localhost:8000" : ""))
-  ).replace(/\/$/, "");
+  // The apps serve this page from localhost on the device, so they call the website's
+  // API proxy (the same route the website uses) rather than VITE_API_URL's dev server.
+  const apiBase = isNativeApp
+    ? NATIVE_API_URL || PUBLIC_WEB_ORIGIN
+    : (
+      import.meta.env.VITE_API_URL ||
+      (isPagesDev
+        ? "https://creo-api-singapore.onrender.com"
+        : (isLocalhost ? "http://localhost:8000" : ""))
+    ).replace(/\/$/, "");
   return path.startsWith("/api") && apiBase ? `${apiBase}${path}` : path;
+}
+
+/** WebSocket URL for an API path: the page's own host on the web, the API base in the app. */
+export function apiWebSocketUrl(path: string): string {
+  if (isNativeApp) return apiUrl(path).replace(/^http/, "ws");
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${protocol}//${window.location.host}${path}`;
 }
 
 /** RequestInit plus an optional per-call timeout (ms) overriding the GET/write defaults. */

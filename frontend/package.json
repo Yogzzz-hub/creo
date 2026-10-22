@@ -9,7 +9,12 @@
     "preview": "vite preview",
     "check": "biome check .",
     "lint": "biome lint .",
-    "format": "biome format --write ."
+    "format": "biome format --write .",
+    "cap:sync": "npm run build && cap sync",
+    "cap:android": "npm run cap:sync && cap open android",
+    "cap:ios": "npm run cap:sync && cap open ios",
+    "cap:run:android": "npm run cap:sync && cap run android",
+    "cap:assets": "npx --yes @capacitor/assets@3.0.5 generate --android --ios --assetPath resources --iconBackgroundColor \"#161929\" --iconBackgroundColorDark \"#161929\" --splashBackgroundColor \"#0F0E0C\" --splashBackgroundColorDark \"#0F0E0C\""
   },
   "allowScripts": {
     "@biomejs/biome": true,
@@ -17,6 +22,12 @@
     "esbuild": true
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/browser": "^8.0.5",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/ios": "^8.5.3",
+    "@capacitor/splash-screen": "^8.0.2",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/utilities": "^3.2.2",
     "@radix-ui/react-avatar": "^1.2.6",
@@ -45,6 +56,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
+    "@capacitor/cli": "^8.5.3",
     "@types/node": "^22.13.4",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",

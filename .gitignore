@@ -6,7 +6,7 @@ client_secret*.json
 *.pem
 *.key
 *.cert
-creo/
+/creo/
 
 # Python
 __pycache__/
