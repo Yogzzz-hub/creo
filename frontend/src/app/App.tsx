@@ -9,7 +9,8 @@ import type { HealthResponse } from "../types/api";
 
 // Public Layout & Landing Page (other pages are split into their own chunks)
 import { PublicLayout } from "../components/public/PublicLayout";
-import { NativeShell } from "./NativeShell";
+import { AppLaunch, NativeShell } from "./NativeShell";
+import { isNativeApp } from "../lib/native";
 
 import {
   AboutPage,
@@ -171,6 +172,9 @@ const AdminBDEOversightPage = lazyModule(() =>
 const PlatformLayout = lazyModule(() =>
   import("../components/platform/PlatformLayout").then((m) => ({ default: m.PlatformLayout }))
 );
+
+// Marketing pages the apps leave out (see the public routes below).
+const MARKETING_PATHS = ["/work", "/pricing", "/portfolio", "/clients", "/about", "/faq"];
 
 function RouteLoading() {
   return <CreoLoadingScreen label="Loading Creo..." />;
@@ -571,18 +575,33 @@ export function App() {
               <Route path="/leaves" element={<LeaveUniversalRedirect />} />
               <Route path="/schedule" element={<ScheduleUniversalRedirect />} />
 
-              {/* 1. Public Marketing Pages (Open to All) */}
-              <Route element={<PublicLayout />}>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/work" element={<PortfolioPage />} />
-                <Route path="/pricing" element={<PricingPage />} />
-                <Route path="/portfolio" element={<PortfolioPage />} />
-                <Route path="/clients" element={<ClientsPage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/faq" element={<FaqPage />} />
-                <Route path="/terms" element={<TermsPage />} />
-                <Route path="/privacy" element={<PrivacyPage />} />
-              </Route>
+              {/* 1. Public Marketing Pages (Open to All). The apps skip the marketing site:
+                  they open on the brand intro (NativeShell) over sign-in, which sends a
+                  signed-in user on to their workspace. Terms and privacy stay reachable. */}
+              {isNativeApp ? (
+                <>
+                  <Route path="/" element={<AppLaunch />} />
+                  {MARKETING_PATHS.map((path) => (
+                    <Route key={path} path={path} element={<Navigate to="/login" replace />} />
+                  ))}
+                  <Route element={<PublicLayout />}>
+                    <Route path="/terms" element={<TermsPage />} />
+                    <Route path="/privacy" element={<PrivacyPage />} />
+                  </Route>
+                </>
+              ) : (
+                <Route element={<PublicLayout />}>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/work" element={<PortfolioPage />} />
+                  <Route path="/pricing" element={<PricingPage />} />
+                  <Route path="/portfolio" element={<PortfolioPage />} />
+                  <Route path="/clients" element={<ClientsPage />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/faq" element={<FaqPage />} />
+                  <Route path="/terms" element={<TermsPage />} />
+                  <Route path="/privacy" element={<PrivacyPage />} />
+                </Route>
+              )}
 
               {/* 2. Authentication Flow (Public Only - redirect to role home if authenticated) */}
               <Route

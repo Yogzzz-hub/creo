@@ -1,6 +1,6 @@
 import { SystemBars, SystemBarsStyle, registerPlugin } from "@capacitor/core";
-import { useEffect, useRef } from "react";
-import { useNavigate } from "react-router";
+import { Suspense, lazy, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Navigate, useNavigate } from "react-router";
 import { takeOAuthReturn } from "../lib/app-oauth";
 import { isNativeApp } from "../lib/native";
 
@@ -9,15 +9,51 @@ const SystemChrome = registerPlugin<{ setBackgroundColor(options: { color: strin
 
 const HANDLED_LAUNCH_KEY = "creo-handled-launch-url";
 
+const AppIntro = lazy(() => import("./AppIntro"));
+
+// The apps open on "/" with the website's brand intro. The page underneath mounts only
+// once its curtain starts to lift (as on the website), so the intro runs smoothly.
+const PLAY_INTRO =
+  isNativeApp && window.location.pathname === "/" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Never keep the app behind the intro if it cannot load or its animation stalls.
+const INTRO_FAILSAFE_MS = 6000;
+let introLifted = !PLAY_INTRO;
+const liftListeners = new Set<() => void>();
+function liftIntro() {
+  if (introLifted) return;
+  introLifted = true;
+  for (const listener of liftListeners) listener();
+}
+function subscribeToLift(listener: () => void) {
+  liftListeners.add(listener);
+  return () => liftListeners.delete(listener);
+}
+
+/** The apps' "/" (App.tsx): waits for the intro, then sign-in, which forwards a signed-in user to their workspace. */
+export function AppLaunch() {
+  const lifted = useSyncExternalStore(subscribeToLift, () => introLifted);
+  return lifted ? <Navigate to="/login" replace /> : null;
+}
+
 /**
- * Wires the native app shell to the web app: OAuth return links, the Android back
- * button and system bars that follow the theme. Renders nothing and does nothing on
- * the website.
+ * Wires the native app shell to the web app: the launch intro, OAuth return links,
+ * the Android back button and system bars that follow the theme. Renders nothing and
+ * does nothing on the website.
  */
 export function NativeShell() {
   const navigate = useNavigate();
   const navigateRef = useRef(navigate);
   navigateRef.current = navigate;
+  const [intro, setIntro] = useState(PLAY_INTRO);
+
+  useEffect(() => {
+    if (!intro) return;
+    const failsafe = window.setTimeout(() => {
+      liftIntro();
+      setIntro(false);
+    }, INTRO_FAILSAFE_MS);
+    return () => window.clearTimeout(failsafe);
+  }, [intro]);
 
   useEffect(() => {
     if (!isNativeApp) return;
@@ -91,5 +127,12 @@ export function NativeShell() {
     };
   }, []);
 
-  return null;
+  if (!intro) return null;
+  // The intro's own backdrop (public-theme.css), so loading its chunk shows no flash.
+  const backdrop = document.documentElement.dataset.theme === "light" ? "#f5eee3" : "#0f0e0c";
+  return (
+    <Suspense fallback={<div className="fixed inset-0 z-[80]" style={{ background: backdrop }} />}>
+      <AppIntro onLift={liftIntro} onDone={() => setIntro(false)} />
+    </Suspense>
+  );
 }

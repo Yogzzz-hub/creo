@@ -23,6 +23,7 @@ import { ThemeToggle } from "../../components/ui/ThemeToggle";
 import { goToOAuthProvider } from "../../lib/app-oauth";
 import { useAuth } from "../../lib/auth-context";
 import { HttpError } from "../../lib/http";
+import { isNativeApp } from "../../lib/native";
 import { whenIdle } from "../../app/lazy-pages";
 
 const PENDING_REGISTRATION_KEY = "creo_pending_registration";
@@ -380,17 +381,20 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
     />
   );
 
-  // Theme and way out: in the brand band on phones, above the form on desktop
+  // Theme and way out: in the brand band on phones, above the form on desktop.
+  // The apps have no marketing site to go back to.
   const controls = (
     <div className="flex items-center gap-2.5">
       <ThemeToggle variant="site" />
-      <Link
-        to="/"
-        className="inline-flex min-h-10 items-center gap-2 rounded-full border-2 border-hi/15 px-4 text-sm font-semibold text-site-ink transition-colors hover:border-[var(--tone-accent)]"
-      >
-        <ArrowLeft className="size-4" />
-        Back to site
-      </Link>
+      {!isNativeApp && (
+        <Link
+          to="/"
+          className="inline-flex min-h-10 items-center gap-2 rounded-full border-2 border-hi/15 px-4 text-sm font-semibold text-site-ink transition-colors hover:border-[var(--tone-accent)]"
+        >
+          <ArrowLeft className="size-4" />
+          Back to site
+        </Link>
+      )}
     </div>
   );
 

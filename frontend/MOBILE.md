@@ -14,6 +14,9 @@ There is no separate mobile codebase: a change to the web app ships to the apps 
 
 ## How the app differs from the website
 
+- **No marketing site.** The app opens on the website's brand intro (the "creo." wordmark rising out of its
+  mask, `src/app/AppIntro.tsx`), whose curtain lifts onto sign-in, or straight onto the workspace for a
+  signed-in user. Home, Work, Pricing, Clients, About and FAQ send the app to sign-in; Terms and Privacy stay.
 - **API.** Inside the app the page is served from the device (`https://localhost` on Android,
   `capacitor://localhost` on iOS), so there is no `/api` proxy. The app calls the website's API proxy at
   `VITE_PUBLIC_WEB_URL` (default `https://creo.yogalakshmibaskar20.workers.dev`), the same route the website

@@ -784,7 +784,7 @@ export function PlatformAgencyDetailPage() {
                 {copiedPricing ? "Copied!" : "Copy Link"}
               </button>
               <a
-                href={`/pricing?agency=${agency.slug}`}
+                href={pricingUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-app-surface hover:bg-app-line text-xs font-bold text-app-mist hover:text-hi transition-colors"
