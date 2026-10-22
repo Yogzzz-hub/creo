@@ -18,8 +18,7 @@ There is no separate mobile codebase: a change to the web app ships to the apps 
   `capacitor://localhost` on iOS), so there is no `/api` proxy. The app calls the website's API proxy at
   `VITE_PUBLIC_WEB_URL` (default `https://creo.yogalakshmibaskar20.workers.dev`), the same route the website
   uses, and loads media from the Render API. `VITE_API_URL` is ignored in the app; set `VITE_NATIVE_API_URL`
-  to point an app build at another backend (for example `http://10.0.2.2:8000` for a local backend from the
-  Android emulator).
+  to point an app build at another backend (see "Testing against a local backend" below).
 - **Sign-in tokens** stay in `localStorage` (`creo_access_token`, `creo_refresh_token`), which persists in the
   app's WebView like it does in a browser.
 - **Google sign-in and Meta (Facebook/Instagram) connect** run in the system browser, because Google blocks
@@ -78,6 +77,22 @@ Troubleshooting on Windows:
   bundled runtime). Point it at a full JDK 21.
 - `Unable to establish loopback connection`: Java cannot create its local socket in the temp folder. Set
   `JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=C:\some\short\folder` and run Gradle again.
+
+### Testing against a local backend
+
+Debug builds may use plain HTTP to `localhost`, `127.0.0.1` and `10.0.2.2`
+(`android/app/src/debug/res/xml/network_security_config.xml`); release builds stay HTTPS-only.
+
+1. Run the backend on this computer (for example on port 8000). Its CORS rule must include this branch's
+   `https://localhost` origin.
+2. Build the app against it and install it on the emulator or a USB-connected phone:
+   ```bash
+   VITE_NATIVE_API_URL=http://localhost:8000 npm run build && npx cap sync android
+   cd android && ./gradlew assembleDebug && adb install -r app/build/outputs/apk/debug/app-debug.apk
+   adb reverse tcp:8000 tcp:8000   # the device's localhost:8000 now reaches this computer
+   ```
+3. Sign in with an account from `backend/scripts/seed.py`. Run `npm run cap:sync` (without the variable)
+   before building anything you hand to others.
 
 ### Release (Google Play)
 
