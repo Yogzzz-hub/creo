@@ -8,7 +8,6 @@ import {
   Clock,
   TrendingUp,
   AlertCircle,
-  RefreshCw,
   X,
   DollarSign,
   Columns3,
@@ -30,6 +29,7 @@ import {
 } from "../../lib/bde-api";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CustomSelect } from "../../components/ui/CustomSelect";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 export type TaskQueueStage = "contacted" | "negotiation" | "won" | "lost";
 
@@ -427,10 +427,7 @@ export function BDEDashboardPage() {
                       {/* Cards List / Drop Area */}
                       <div className="space-y-3 flex-1 sm:overflow-y-auto sm:pr-0.5">
                         {leadsQuery.isLoading ? (
-                          <div className="py-10 text-center text-app-mist flex flex-col items-center justify-center gap-2">
-                            <RefreshCw className="w-4 h-4 animate-spin text-app-accent" />
-                            <span className="text-xs">Loading {col.title}...</span>
-                          </div>
+                          <CreoInlineLoader compact label={`Loading ${col.title}`} />
                         ) : colLeads.length === 0 ? (
                           <div className="py-8 sm:py-16 text-center">
                             <p className="text-xs text-app-mist">No clients in {col.title}.</p>
@@ -617,10 +614,7 @@ export function BDEDashboardPage() {
                       {leadsQuery.isLoading ? (
                         <tr>
                           <td colSpan={7} className="py-12 text-center text-app-mist">
-                            <div className="flex flex-col items-center justify-center gap-2">
-                              <RefreshCw className="w-5 h-5 animate-spin text-app-accent" />
-                              <span>Loading prospects...</span>
-                            </div>
+                            <CreoInlineLoader compact label="Loading prospects" />
                           </td>
                         </tr>
                       ) : leads.length === 0 ? (
@@ -868,10 +862,7 @@ function LeadDetailModal({
         </div>
 
         {isLoading ? (
-          <div className="py-12 flex flex-col items-center justify-center gap-2 text-app-mist">
-            <RefreshCw className="w-5 h-5 animate-spin text-app-accent" />
-            <span className="text-xs">Loading lead details...</span>
-          </div>
+          <CreoInlineLoader compact label="Loading lead" />
         ) : !lead ? (
           <div className="py-12 text-center text-xs text-app-mist">Lead not found.</div>
         ) : (

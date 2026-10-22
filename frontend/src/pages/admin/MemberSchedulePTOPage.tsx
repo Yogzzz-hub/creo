@@ -4,6 +4,7 @@ import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { fetchPodDashboard, type PodDashboardData } from "../../lib/ops-api";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 type Leave = { id: string; start_date: string; end_date: string; reason: string; status: string; is_self: boolean; can_cancel: boolean; team_lead_name: string };
 
@@ -45,13 +46,13 @@ export function MemberSchedulePTOPage() {
           </form>
         </section>
         <section className="min-w-0 rounded-2xl border border-slate-800 bg-app-surface p-4 sm:p-5"><h2 className="text-lg font-semibold mb-4">My leave requests</h2>
-          {leaves.isPending && <p role="status" className="text-slate-400">Loading requests...</p>}
+          {leaves.isPending && <CreoInlineLoader compact label="Loading requests" />}
           {!leaves.isPending && !leaves.isError && myLeaves.length === 0 && <p className="text-sm text-slate-400">No leave requests yet.</p>}
           <div className="space-y-3">{myLeaves.map((leave) => <article key={leave.id} className="rounded-xl border border-slate-700 p-3 break-words"><div className="flex flex-wrap justify-between gap-2"><p className="text-sm font-medium">{leave.start_date} → {leave.end_date}</p><span className="text-xs capitalize text-blue-300">{leave.status}</span></div><p className="text-sm text-slate-400 mt-2">{leave.reason}</p><p className="text-xs text-slate-500 mt-2">Reviewer: {leave.team_lead_name}</p>{leave.can_cancel && <button disabled={cancel.isPending} onClick={() => { setNotice(""); cancel.mutate(leave.id); }} className="mt-3 min-h-11 px-3 rounded-lg border border-slate-600 text-sm disabled:opacity-50">Cancel request</button>}</article>)}</div>
         </section>
       </div>
       <section className="rounded-2xl border border-slate-800 p-4 sm:p-5"><h2 className="text-lg font-semibold mb-4">Upcoming assignments</h2>
-        {pod.isPending && <p role="status" className="text-slate-400">Loading schedule...</p>}
+        {pod.isPending && <CreoInlineLoader compact label="Loading schedule" />}
         {pod.isError && <p role="alert" className="text-rose-300">Unable to load assignments.</p>}
         {!pod.isPending && !pod.isError && tasks.length === 0 && <p className="text-sm text-slate-400">No upcoming assignments.</p>}
         <div className="grid sm:grid-cols-2 gap-3">{tasks.map((task) => <article key={task.id} className="min-w-0 rounded-xl bg-app-surface p-3 break-words"><h3 className="font-medium">{task.client_name} • {task.deliverable_type}</h3><p className="text-sm text-slate-400 mt-1">{task.status.replaceAll("_", " ")}</p><p className="text-xs text-slate-500 mt-2">Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : "Unscheduled"}</p></article>)}</div>

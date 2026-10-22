@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, Check, Sparkles } from "lucide-react";
 import { request } from "../../lib/http";
 import { useNearViewport } from "../../lib/useNearViewport";
+import { CreoInlineLoader } from "../ui/CreoLoader";
 interface Plan {
   id: string;
   name: string;
@@ -33,21 +34,7 @@ export function PricingCards({
   return (
     <div ref={ref} className={className}>
       {query.isPending && (
-        <output aria-label="Loading plans" className="grid lg:grid-cols-3 gap-6 lg:gap-8">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="creo-glass rounded-3xl p-8 sm:p-9 space-y-6 motion-safe:animate-pulse">
-              <div className="h-6 w-1/2 rounded-full bg-hi/[0.07]" />
-              <div className="h-12 w-2/3 rounded-full bg-hi/[0.07]" />
-              <div className="h-20 rounded-2xl bg-hi/[0.05]" />
-              <div className="space-y-3">
-                <div className="h-3 w-5/6 rounded-full bg-hi/[0.05]" />
-                <div className="h-3 w-4/6 rounded-full bg-hi/[0.05]" />
-                <div className="h-3 w-3/6 rounded-full bg-hi/[0.05]" />
-              </div>
-              <div className="h-12 rounded-full bg-hi/[0.07]" />
-            </div>
-          ))}
-        </output>
+        <CreoInlineLoader label="Loading plans" className="min-h-[420px]" />
       )}
       {query.isError && (
         <p role="alert" className="text-center text-site-amber">

@@ -23,10 +23,16 @@ import { ContentEngineWidget } from "../../components/admin/ContentEngineWidget"
 import { ClientDetailsWidget } from "../../components/admin/ClientDetailsWidget";
 import { SupportTicketsWidget } from "../../components/admin/SupportTicketsWidget";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
+import { CreoLoader } from "../../components/ui/CreoLoader";
 
 
-function LoadingPanel({ label }: { label: string }) {
-  return <div role="status" className="min-h-48 rounded-3xl bg-app-surface border border-app-line p-5 text-sm text-slate-400">{label}</div>;
+/** A dashboard panel's placeholder: the Creo loader while its data loads, or why it is missing. */
+function LoadingPanel({ label, error }: { label: string; error?: string | false }) {
+  return (
+    <div role={error ? "status" : undefined} className="flex min-h-48 items-center justify-center rounded-3xl bg-app-surface border border-app-line p-5 text-sm text-slate-400">
+      {error || <CreoLoader label={label} highlightWord="" fullScreen={false} compact showSecondaryText={false} />}
+    </div>
+  );
 }
 
 export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) {
@@ -79,7 +85,6 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
 
       {/* Main Container */}
       <main className="flex-1 px-3 sm:px-5 lg:px-6 pt-6 sm:pt-8 pb-10 max-w-[1440px] w-full mx-auto">
-        {queries.some((query) => query.isPending) && <p role="status" className="mb-4 text-sm text-slate-400">Loading dashboard data?</p>}
         {error && <p role="alert" className="mb-4 text-sm text-amber-300">{error instanceof Error ? error.message : "Some dashboard data could not be loaded."} <button onClick={() => { queries.forEach((query) => { if (query.isError) void query.refetch(); }); }} className="underline">Retry</button></p>}
         {/* Status banner */}
         <AnimatePresence>
@@ -119,7 +124,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
               transition={{ duration: 0.35, delay: 0.05, ease: "easeOut" }}
               className="flex flex-col h-full min-h-0 hover-card-innovative rounded-3xl"
             >
-              <Suspense fallback={<div role="status" className="min-h-64 rounded-3xl bg-app-surface border border-app-line p-5 text-sm text-slate-400">Loading revenue chart?</div>}>{kpiQuery.data ? <RevenueEngineWidget kpis={kpis} clients={clients} /> : <LoadingPanel label={kpiQuery.isError ? "Revenue unavailable" : "Loading revenue?"} />}</Suspense>
+              <Suspense fallback={<LoadingPanel label="Loading revenue" />}>{kpiQuery.data ? <RevenueEngineWidget kpis={kpis} clients={clients} /> : <LoadingPanel label="Loading revenue" error={kpiQuery.isError && "Revenue unavailable"} />}</Suspense>
             </motion.div>
           )}
 
@@ -131,7 +136,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
               transition={{ duration: 0.35, delay: 0.1, ease: "easeOut" }}
               className="flex flex-col h-full min-h-0 hover-card-innovative rounded-3xl"
             >
-              {queueQuery.data ? <TeamDetailsWidget queue={queue} /> : <LoadingPanel label={queueQuery.isError ? "Team data unavailable" : "Loading team?"} />}
+              {queueQuery.data ? <TeamDetailsWidget queue={queue} /> : <LoadingPanel label="Loading team" error={queueQuery.isError && "Team data unavailable"} />}
             </motion.div>
           )}
 
@@ -143,7 +148,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
               transition={{ duration: 0.35, delay: 0.15, ease: "easeOut" }}
               className="flex flex-col h-full min-h-0 hover-card-innovative rounded-3xl"
             >
-              {queueQuery.data ? <ContentEngineWidget queue={queue} /> : <LoadingPanel label={queueQuery.isError ? "Production data unavailable" : "Loading production?"} />}
+              {queueQuery.data ? <ContentEngineWidget queue={queue} /> : <LoadingPanel label="Loading production" error={queueQuery.isError && "Production data unavailable"} />}
             </motion.div>
           )}
         </div>
@@ -157,7 +162,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
             transition={{ duration: 0.35, delay: 0.2, ease: "easeOut" }}
             className="mt-3.5 sm:mt-4 hover-card-innovative rounded-2xl"
           >
-            {clientQuery.data ? <ClientDetailsWidget clients={clients} /> : <LoadingPanel label={clientQuery.isError ? "Client data unavailable" : "Loading clients?"} />}
+            {clientQuery.data ? <ClientDetailsWidget clients={clients} /> : <LoadingPanel label="Loading clients" error={clientQuery.isError && "Client data unavailable"} />}
           </motion.div>
         )}
 
@@ -169,7 +174,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
             transition={{ duration: 0.35, delay: 0.25, ease: "easeOut" }}
             className="mt-3.5 sm:mt-4 hover-card-innovative rounded-2xl"
           >
-            {slaQuery.data ? <SupportTicketsWidget slas={slas} /> : <LoadingPanel label={slaQuery.isError ? "Support data unavailable" : "Loading support?"} />}
+            {slaQuery.data ? <SupportTicketsWidget slas={slas} /> : <LoadingPanel label="Loading support" error={slaQuery.isError && "Support data unavailable"} />}
           </motion.div>
         )}
 

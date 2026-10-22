@@ -43,6 +43,7 @@ import {
   type CRMTask,
   type ProposalLine,
 } from "../../lib/revenue-crm";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 const panel = "min-w-0 rounded-2xl border border-app-line bg-[#131C2A]";
 const input =
@@ -310,13 +311,11 @@ export function RevenueCRMPage() {
         <RevenueCRMWorkspace key={agency} />
       ) : (
         <div className="p-6">
-          <Empty
-            title={
-              options.isPending
-                ? "Loading agency access..."
-                : "Choose an agency to view its revenue workspace."
-            }
-          />
+          {options.isPending ? (
+            <CreoInlineLoader compact label="Loading agency access" />
+          ) : (
+            <Empty title="Choose an agency to view its revenue workspace." />
+          )}
         </div>
       )}
     </div>

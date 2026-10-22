@@ -10,7 +10,7 @@ interface CreoLoadingScreenProps {
 /**
  * CREO Nebula Session Verification & Loading Screen
  *
- * Uses the official CREO Nebula wave loader.
+ * Uses the CREO wordmark loader (CreoLoader), the same on every page.
  */
 export function CreoLoadingScreen({
   label,

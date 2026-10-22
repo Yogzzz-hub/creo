@@ -62,7 +62,7 @@ export function PortalLibraryPage() {
   });
 
   if (gate.error) return <div role="alert" className="p-6">Could not load your workspace. <button className="underline" onClick={() => void gate.refetch()}>Retry</button></div>;
-  if (!gate.isReady) return <div role="status" className="p-6 animate-pulse">Loading your library…</div>;
+  if (!gate.isReady) return <CreoInlineLoader label="Loading your library" />;
   if (!gate.isComplete) {
     return (
       <div className="w-full">

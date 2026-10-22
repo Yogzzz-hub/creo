@@ -304,7 +304,7 @@ export function PortalCreativePodPage() {
                 </div>
               );
             })}
-            {isLoadingCallAvailability && <p className="py-3 text-xs sm:text-sm text-app-mist">Loading available call times…</p>}
+            {isLoadingCallAvailability && <CreoInlineLoader compact label="Loading call times" />}
             {!isLoadingCallAvailability && callAvailabilityError && <p className="py-3 text-xs sm:text-sm text-rose-300">Call times could not load. Refresh to try again.</p>}
             {!isLoadingCallAvailability && !callAvailabilityError && !callAvailability?.slots.length && !callAvailability?.bookings.length && (
               <p className="py-3 text-xs sm:text-sm text-app-mist">There are no available call times right now. Please check again shortly.</p>

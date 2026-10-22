@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CalendarClock } from "lucide-react";
 import { Instagram } from "../../ui/brand-icons";
 import { request } from "../../lib/http";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 type Post = { id: string; deliverable_id: string; title: string; scheduled_at: string | null; status: string; stage: string; caption: string; last_error?: string };
 export function UpcomingAutoPosts() {
@@ -24,7 +25,7 @@ export function UpcomingAutoPosts() {
   const upcoming = (posts.data || []).filter(p => !["published", "canceled"].includes(p.status));
   return <section className="rounded-3xl border border-app-line bg-app-surface p-5 sm:p-6 space-y-4">
     <div className="flex items-center gap-3"><CalendarClock className="size-6 text-app-accent" /><div><h2 className="text-lg font-bold text-hi">Upcoming automatic posts</h2><p className="text-sm text-app-mist">Review scheduled Instagram content or request a different time.</p></div></div>
-    {posts.isPending && <p role="status" className="text-app-mist">Loading upcoming posts…</p>}
+    {posts.isPending && <CreoInlineLoader compact label="Loading upcoming posts" />}
     {posts.isError && <p role="alert" className="text-app-warm">{posts.error.message}<button onClick={() => void posts.refetch()} className="ml-2 underline">Retry</button></p>}
     {!posts.isPending && !posts.isError && !upcoming.length && <p className="text-sm text-app-mist">Your team’s planned posts will appear here for review.</p>}
     {message && <p role="status" className="text-sm text-app-accent-soft">{message}</p>}

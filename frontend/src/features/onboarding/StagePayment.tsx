@@ -35,6 +35,7 @@ import {
   CheckCircle2,
   RefreshCw,
 } from "lucide-react";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 interface StagePaymentProps {
   userId: string;
@@ -487,9 +488,8 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
 
       {/* Plan Cards Grid: Dedicated single-card layout for custom negotiated plans, or 3-column grid for standard tiers */}
       {plansLoading ? (
-        <div role="status" className="rounded-2xl border border-app-line bg-app-surface p-12 text-center text-app-mist">
-          <Loader2 aria-hidden="true" className="size-7 animate-spin text-app-accent mx-auto mb-3 motion-reduce:animate-none" />
-          <p className="text-xs font-medium">Loading pricing plans…</p>
+        <div className="rounded-2xl border border-app-line bg-app-surface p-4">
+          <CreoInlineLoader compact label="Loading plans" />
         </div>
       ) : plansError || !plans || plans.length === 0 ? (
         <div role="alert" className="rounded-2xl border border-rose-800/60 bg-rose-950/30 p-8 text-center text-rose-200">

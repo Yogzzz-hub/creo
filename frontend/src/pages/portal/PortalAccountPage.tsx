@@ -404,9 +404,8 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
 
       {/* Loading state */}
       {!isLocked && query.isPending && (
-        <div className="bg-app-surface border border-app-line rounded-2xl p-8 text-center space-y-3">
-          <CreoInlineLoader />
-          <p className="text-sm font-semibold text-app-mist">Loading your account settings…</p>
+        <div className="bg-app-surface border border-app-line rounded-2xl p-4">
+          <CreoInlineLoader compact label="Loading account settings" />
         </div>
       )}
       {/* Error state */}

@@ -7,7 +7,6 @@ import {
   Award,
   Layers,
   Filter,
-  RefreshCw,
   Search,
   Scale,
   Zap,
@@ -16,6 +15,7 @@ import {
 import { fetchProductivityMetrics } from "../../lib/productivity-api";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CustomSelect } from "../../components/ui/CustomSelect";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 export function AdminProductivityDashboardPage() {
   const [period, setPeriod] = useState<string>("monthly");
@@ -421,10 +421,7 @@ export function AdminProductivityDashboardPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={9} className="py-12 text-center text-app-mist">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <RefreshCw className="w-5 h-5 animate-spin text-app-accent" />
-                      <span>Loading team productivity data...</span>
-                    </div>
+                    <CreoInlineLoader compact label="Loading productivity" />
                   </td>
                 </tr>
               ) : specialists.length === 0 ? (

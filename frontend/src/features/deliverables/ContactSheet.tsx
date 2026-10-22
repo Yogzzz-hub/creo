@@ -7,10 +7,11 @@ import {
   requestChanges,
 } from "../../lib/deliverables-api";
 import type { DeliverableItem } from "../../types/api";
-import { EmptyState, Skeleton } from "../../ui";
+import { EmptyState } from "../../ui";
 import { DecisionDock } from "./DecisionDock";
 import { DeliverableFrame } from "./DeliverableFrame";
 import { RevisionDialog } from "./RevisionDialog";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 interface ContactSheetProps {
   clientId: string;
@@ -162,18 +163,7 @@ export function ContactSheet({ clientId }: ContactSheetProps) {
       {/* Main Grid & Groups */}
       <main style={{ maxWidth: "1200px", margin: "0 auto" }}>
         {isLoading ? (
-          /* True 9:16 skeletons */
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-              gap: "1.5rem",
-            }}
-          >
-            {[1, 2, 3, 4, 5, 6].map((n) => (
-              <Skeleton key={n} aspectRatio="9/16" className="w-full rounded-lg" />
-            ))}
-          </div>
+          <CreoInlineLoader label="Loading deliverables" />
         ) : isError ? (
           <div style={{ padding: "2rem 0", color: "var(--color-blocked)" }}>
             Error loading deliverables: {(error as Error)?.message}

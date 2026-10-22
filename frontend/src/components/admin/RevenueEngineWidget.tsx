@@ -16,6 +16,7 @@ import {
   fetchRevenueTrend,
   type RevenueTrendData,
 } from "@/lib/ops-api";
+import { CreoLoader } from "../ui/CreoLoader";
 
 interface RevenueEngineWidgetProps {
   kpis: AdminKPIs | null;
@@ -168,7 +169,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
           <div style={{ height: 125 }}>
             {trendLoading && (
               <div className="absolute inset-0 flex items-center justify-center z-10">
-                <div className="w-4 h-4 border-2 border-app-accent border-t-transparent rounded-full animate-spin" />
+                <CreoLoader label="" fullScreen={false} compact showProgress={false} />
               </div>
             )}
             <ResponsiveContainer width="100%" height="100%">

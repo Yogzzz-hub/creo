@@ -30,6 +30,7 @@ import {
   FreelancerAssignedTask,
 } from "../../lib/freelancer-api";
 import { DeliverableHistoryModal } from "../../components/portal/DeliverableHistoryModal";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 export function FreelancerTasksPage() {
   const queryClient = useQueryClient();
@@ -346,7 +347,7 @@ export function FreelancerTasksPage() {
 
       {/* Task Cards List */}
       {isLoading ? (
-        <div className="text-center py-16 text-sm text-app-mist">Loading assigned tasks...</div>
+        <CreoInlineLoader label="Loading assigned tasks" />
       ) : filteredTasks.length === 0 ? (
         <div className="bg-app-surface rounded-3xl p-12 text-center border border-app-line space-y-3">
           <Briefcase className="w-10 h-10 text-app-mist mx-auto opacity-40" />

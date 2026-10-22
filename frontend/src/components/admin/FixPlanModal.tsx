@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { fixClientPlan } from "../../lib/ops-api";
 import type { ClientRosterItem } from "../../types/ops";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 interface FixPlanModalProps {
   isOpen: boolean;
@@ -204,7 +205,7 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
         {activeTab === "presets" && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-              {catalog.isPending && <p role="status">Loading plans?</p>}
+              {catalog.isPending && <CreoInlineLoader compact label="Loading plans" />}
           {catalog.isError && <p role="alert">Plans unavailable. <button onClick={() => void catalog.refetch()}>Retry</button></p>}
           {PRESETS.map((preset) => {
                 const isCurrent =

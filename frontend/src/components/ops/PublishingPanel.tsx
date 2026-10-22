@@ -17,6 +17,7 @@ import { Link } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { useConfirm } from "../ui/ConfirmDialog";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 export interface PublishingJob {
   stage?: string;
@@ -675,7 +676,7 @@ export function PublishingPanel({
           </button>
           {showHistory && (
             <ul className="mt-2 space-y-1.5 text-xs text-app-accent-soft">
-              {history.isPending && <li>Loading history…</li>}
+              {history.isPending && <li><CreoInlineLoader compact label="Loading history" /></li>}
               {history.isError && <li role="alert">{history.error.message}</li>}
               {history.data?.length === 0 && <li className="text-app-mist">No history yet.</li>}
               {history.data?.map((h, i) => (

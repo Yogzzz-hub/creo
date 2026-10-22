@@ -21,6 +21,7 @@ import {
   ExternalLink,
   FolderGit2,
 } from "lucide-react";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 /** Backlog ages run into hundreds of hours, so show days past a day and keep hours below it. */
 function formatDuration(hours: number): string {
@@ -183,7 +184,7 @@ export function PodTaskBoardPage() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-[1440px] w-full mx-auto px-3 sm:px-5 lg:px-6 py-3.5 pb-20 sm:pb-6 space-y-3.5 sm:space-y-4">
-        {isPending && <p role="status">Loading task queue...</p>}
+        {isPending && <CreoInlineLoader compact label="Loading task queue" />}
         {isError && <p role="alert" className="text-amber-200">{error.message}<button onClick={() => void refetch()} className="ml-3 underline">Retry</button></p>}
         {/* Toast Alert */}
         {toastMessage && (

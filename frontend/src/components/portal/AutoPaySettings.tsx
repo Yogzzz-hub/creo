@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CreditCard, ShieldCheck, ChevronDown, ChevronUp } from "lucide-react";
 import { request } from "../../lib/http";
 import { useConfirm } from "../ui/ConfirmDialog";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 export function AutoPaySettings() {
   const queries = useQueryClient();
@@ -42,7 +43,7 @@ export function AutoPaySettings() {
         </div>
       </div>
       <div className={`${mobileOpen ? "block" : "hidden md:block"} space-y-3 sm:space-y-4`}>
-        {status.isPending && <p role="status" className="text-xs sm:text-sm">Loading renewal settings…</p>}
+        {status.isPending && <CreoInlineLoader compact label="Loading renewal settings" />}
         {status.isError && <p role="alert" className="text-xs sm:text-sm text-app-warm">{status.error.message}<button onClick={() => void status.refetch()} className="ml-2 underline">Retry</button></p>}
         {auto && (
           <>

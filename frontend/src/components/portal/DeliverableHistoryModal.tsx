@@ -11,12 +11,12 @@ import {
   Clock,
   User,
   ShieldCheck,
-  Loader2,
   Mic,
 } from "lucide-react";
 import { fetchDeliverableHistory } from "../../lib/deliverables-api";
 import type { DeliverableHistoryEntry } from "../../types/api";
 import { VoicePlayer } from "./VoicePlayer";
+import { CreoInlineLoader } from "../ui/CreoLoader";
 
 export interface DeliverableHistoryModalProps {
   isOpen: boolean;
@@ -140,10 +140,7 @@ export function DeliverableHistoryModal({
         {/* Timeline Content */}
         <div className="flex-1 overflow-y-auto pr-1 space-y-4 scrollbar-thin">
           {isLoading ? (
-            <div className="py-12 flex flex-col items-center justify-center gap-2 text-app-mist">
-              <Loader2 className="w-6 h-6 animate-spin text-app-accent" />
-              <p className="text-xs font-semibold">Loading deliverable history...</p>
-            </div>
+            <CreoInlineLoader compact label="Loading history" />
           ) : history.length === 0 ? (
             <div className="py-12 text-center text-app-mist space-y-1">
               <p className="text-sm font-semibold text-hi">No historical entries recorded yet</p>

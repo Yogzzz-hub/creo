@@ -1294,11 +1294,7 @@ export function AdminClientsPage() {
           </div>
         ) : !activeClient ? (
           <div className="py-20 text-center space-y-4">
-            <div className="inline-block p-4 rounded-2xl bg-app-surface border border-app-line">
-              <Clock className="w-8 h-8 text-app-accent mx-auto animate-pulse" />
-            </div>
-            <h3 className="text-base font-bold text-hi">Loading Client Details...</h3>
-            <p className="text-xs text-app-mist">Synchronizing live roster and brand profile.</p>
+            <CreoInlineLoader compact label="Loading client" />
             <button
               type="button"
               onClick={() => setSelectedClientId(null)}
@@ -3784,7 +3780,7 @@ export function AdminDeliverablesPage() {
           </div>
         </div>
 
-        {deliverablesQuery.isPending && <p role="status" className="p-4 text-app-mist">Loading uploaded deliverables…</p>}
+        {deliverablesQuery.isPending && <CreoInlineLoader compact label="Loading deliverables" />}
         {(deliverablesQuery.error || reviewError) && !revisionItem && <div role="alert" className="p-4 border border-app-warm rounded-xl text-app-warm">{reviewError || deliverablesQuery.error?.message}<button onClick={() => void deliverablesQuery.refetch()} className="ml-3 underline">Retry loading</button></div>}
         <Dialog.Root open={!!revisionItem} onOpenChange={open => { if (!open && !reviewBusy) setRevisionItem(null); }}>
           <Dialog.Portal>
@@ -6611,9 +6607,7 @@ export function AdminTeamManagementPage() {
             })()}
 
             {bdeTeamQuery.isLoading ? (
-              <div className="p-12 text-center text-xs text-app-mist animate-pulse">
-                Loading BDE sales roster...
-              </div>
+              <CreoInlineLoader compact label="Loading BDE roster" />
             ) : !bdeTeamQuery.data || bdeTeamQuery.data.length === 0 ? (
               <div className="p-12 bg-app-surface rounded-3xl border border-app-line text-center space-y-3">
                 <Briefcase className="w-10 h-10 text-amber-400 mx-auto opacity-70" />
@@ -6879,10 +6873,7 @@ export function AdminTeamManagementPage() {
             })()}
 
             {freelancersQuery.isLoading ? (
-              <div className="text-center py-12 text-sm text-app-mist flex items-center justify-center gap-2">
-                <RefreshCw className="w-4 h-4 text-purple-400 animate-spin" />
-                <span>Loading freelancer roster...</span>
-              </div>
+              <CreoInlineLoader compact label="Loading freelancers" />
             ) : freelancersQuery.isError ? (
               <div className="bg-app-surface rounded-3xl p-8 text-center border border-rose-500/30 space-y-3">
                 <AlertCircle className="w-10 h-10 text-rose-400 mx-auto" />

@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 interface FreelancerLeaveItem {
   id: string;
@@ -344,7 +345,7 @@ export function FreelancerLeavePage() {
 
             <div className="pt-4 flex-1 space-y-3 overflow-y-auto max-h-[580px] pr-1">
               {leavesQuery.isPending && (
-                <div className="py-12 text-center text-xs text-app-mist">Loading schedule...</div>
+                <CreoInlineLoader compact label="Loading schedule" />
               )}
 
               {!leavesQuery.isPending && myLeaves.length === 0 && (

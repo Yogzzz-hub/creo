@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { request } from "../../lib/http";
+import { CreoInlineLoader } from "../ui/CreoLoader";
 interface Plan {
   id: string;
   name: string;
@@ -26,9 +27,7 @@ export function LandingPricingCards({
   return (
     <div className={className}>
       {query.isPending && (
-        <p role="status" className="text-[#97A0B3]">
-          Loading plans?
-        </p>
+        <CreoInlineLoader compact label="Loading plans" />
       )}
       {query.isError && (
         <p role="alert" className="text-amber-300">

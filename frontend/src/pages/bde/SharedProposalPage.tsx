@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiUrl, request } from "../../lib/http";
 import type { CRMProposal } from "../../lib/revenue-crm";
 import { ProposalPreview } from "./RevenueCRMPage";
+import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 
 export function SharedProposalPage() {
 	const { token } = useParams();
@@ -42,7 +43,7 @@ export function SharedProposalPage() {
 				<p className="text-xs font-bold uppercase tracking-widest text-[#8FAEDC]">
 					Creo · Secure proposal review
 				</p>
-				{query.isPending && <p role="status">Loading your proposal...</p>}
+				{query.isPending && <CreoInlineLoader label="Loading your proposal" />}
 				{query.isError && (
 					<p
 						role="alert"
