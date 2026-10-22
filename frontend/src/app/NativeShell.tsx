@@ -1,6 +1,7 @@
 import { SystemBars, SystemBarsStyle, registerPlugin } from "@capacitor/core";
-import { Suspense, lazy, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Navigate, useNavigate } from "react-router";
+import { CreoLoader } from "../components/ui/CreoLoader";
 import { takeOAuthReturn } from "../lib/app-oauth";
 import { isNativeApp } from "../lib/native";
 
@@ -9,34 +10,31 @@ const SystemChrome = registerPlugin<{ setBackgroundColor(options: { color: strin
 
 const HANDLED_LAUNCH_KEY = "creo-handled-launch-url";
 
-const AppIntro = lazy(() => import("./AppIntro"));
-
-// The apps open on "/" with the website's brand intro. The page underneath mounts only
-// once its curtain starts to lift (as on the website), so the intro runs smoothly.
-const PLAY_INTRO =
-  isNativeApp && window.location.pathname === "/" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-// Never keep the app behind the intro if it cannot load or its animation stalls.
-const INTRO_FAILSAFE_MS = 6000;
-let introLifted = !PLAY_INTRO;
-const liftListeners = new Set<() => void>();
-function liftIntro() {
-  if (introLifted) return;
-  introLifted = true;
-  for (const listener of liftListeners) listener();
+// The apps open on "/" with the Creo loader (the same one every page uses). The page
+// underneath mounts only as it fades out, so the animation runs smoothly meanwhile.
+const SHOW_LAUNCH = isNativeApp && window.location.pathname === "/";
+const LAUNCH_MS = 1800;
+const FADE_MS = 400;
+let launchDone = !SHOW_LAUNCH;
+const launchListeners = new Set<() => void>();
+function finishLaunch() {
+  if (launchDone) return;
+  launchDone = true;
+  for (const listener of launchListeners) listener();
 }
-function subscribeToLift(listener: () => void) {
-  liftListeners.add(listener);
-  return () => liftListeners.delete(listener);
+function subscribeToLaunch(listener: () => void) {
+  launchListeners.add(listener);
+  return () => launchListeners.delete(listener);
 }
 
-/** The apps' "/" (App.tsx): waits for the intro, then sign-in, which forwards a signed-in user to their workspace. */
+/** The apps' "/" (App.tsx): waits for the launch loader, then sign-in, which forwards a signed-in user to their workspace. */
 export function AppLaunch() {
-  const lifted = useSyncExternalStore(subscribeToLift, () => introLifted);
-  return lifted ? <Navigate to="/login" replace /> : null;
+  const done = useSyncExternalStore(subscribeToLaunch, () => launchDone);
+  return done ? <Navigate to="/login" replace /> : null;
 }
 
 /**
- * Wires the native app shell to the web app: the launch intro, OAuth return links,
+ * Wires the native app shell to the web app: the launch loader, OAuth return links,
  * the Android back button and system bars that follow the theme. Renders nothing and
  * does nothing on the website.
  */
@@ -44,16 +42,23 @@ export function NativeShell() {
   const navigate = useNavigate();
   const navigateRef = useRef(navigate);
   navigateRef.current = navigate;
-  const [intro, setIntro] = useState(PLAY_INTRO);
+  const [launch, setLaunch] = useState<"showing" | "fading" | "off">(SHOW_LAUNCH ? "showing" : "off");
 
   useEffect(() => {
-    if (!intro) return;
-    const failsafe = window.setTimeout(() => {
-      liftIntro();
-      setIntro(false);
-    }, INTRO_FAILSAFE_MS);
-    return () => window.clearTimeout(failsafe);
-  }, [intro]);
+    if (launch === "off") return;
+    const timer = window.setTimeout(
+      () => {
+        if (launch === "showing") {
+          finishLaunch();
+          setLaunch("fading");
+        } else {
+          setLaunch("off");
+        }
+      },
+      launch === "showing" ? LAUNCH_MS : FADE_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [launch]);
 
   useEffect(() => {
     if (!isNativeApp) return;
@@ -127,12 +132,13 @@ export function NativeShell() {
     };
   }, []);
 
-  if (!intro) return null;
-  // The intro's own backdrop (public-theme.css), so loading its chunk shows no flash.
-  const backdrop = document.documentElement.dataset.theme === "light" ? "#f5eee3" : "#0f0e0c";
+  if (launch === "off") return null;
   return (
-    <Suspense fallback={<div className="fixed inset-0 z-[80]" style={{ background: backdrop }} />}>
-      <AppIntro onLift={liftIntro} onDone={() => setIntro(false)} />
-    </Suspense>
+    <div
+      className="fixed inset-0 z-[80] transition-opacity ease-out"
+      style={{ opacity: launch === "fading" ? 0 : 1, transitionDuration: `${FADE_MS}ms` }}
+    >
+      <CreoLoader label="Loading" highlightWord="" showSecondaryText={false} />
+    </div>
   );
 }
