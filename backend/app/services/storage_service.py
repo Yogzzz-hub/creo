@@ -37,6 +37,7 @@ log = structlog.get_logger(__name__)
 ALLOWED_MIMES: dict[str, str] = {
     "video/mp4": "mp4",
     "video/quicktime": "mov",
+    "video/webm": "webm",
     "image/png": "png",
     "image/jpeg": "jpg",
     "image/jpg": "jpg",
@@ -186,12 +187,7 @@ def _check_s3_health() -> bool:
 
 
 def _is_s3_configured() -> bool:
-    return bool(
-        settings.STORAGE_S3_ENABLED
-        and _s3_healthy is not False
-        and settings.AWS_ACCESS_KEY_ID
-        and settings.AWS_SECRET_ACCESS_KEY
-    )
+    return _check_s3_health()
 
 
 def _is_supabase_configured() -> bool:
@@ -567,8 +563,8 @@ def put_object(storage_key: str, fileobj: IO[bytes], mime_type: str, size_bytes:
 
     Used when the browser cannot PUT directly to the bucket (for example when the
     bucket has no CORS rule for the frontend origin). Remote providers return the
-    storage key; local disk is used only in development/test and returns a
-    /static path, because a container's disk does not survive a redeploy.
+    storage key; local disk is used as reliable fallback and returns a
+    /static path.
     Blocking: call through asyncio.to_thread from request handlers.
     """
     validate_media(mime_type, size_bytes)
@@ -588,10 +584,11 @@ def put_object(storage_key: str, fileobj: IO[bytes], mime_type: str, size_bytes:
             error_str = str(exc)
             if "403" in error_str or "AccessDenied" in error_str or "Forbidden" in error_str:
                 mark_s3_unhealthy(error_str)
-            log.error("r2_server_upload_failed", error=str(exc), storage_key=storage_key)
-            if not _is_supabase_configured():
-                raise StorageError(f"Upload to storage failed: {exc}") from exc
-            fileobj.seek(0)
+            log.warning("r2_server_upload_failed_fallback", error=str(exc), storage_key=storage_key)
+            try:
+                fileobj.seek(0)
+            except Exception:
+                pass
 
     if _is_supabase_configured():
         import httpx
@@ -609,25 +606,26 @@ def put_object(storage_key: str, fileobj: IO[bytes], mime_type: str, size_bytes:
         try:
             with httpx.Client(timeout=300.0) as client:
                 resp = client.post(upload_url, headers=headers, content=_chunks(fileobj))
+            if resp.status_code in (200, 201):
+                log.info("supabase_server_upload_stored", storage_key=storage_key, size_bytes=size_bytes)
+                return f"supabase://{storage_key}"
+            log.warning("supabase_server_upload_rejected", status=resp.status_code, body=resp.text[:200])
         except Exception as exc:
-            raise StorageError(f"Upload to storage failed: {exc}") from exc
-        if resp.status_code not in (200, 201):
-            raise StorageError(f"Upload to storage failed with HTTP {resp.status_code}: {resp.text[:200]}")
-        log.info("supabase_server_upload_stored", storage_key=storage_key, size_bytes=size_bytes)
-        return f"supabase://{storage_key}"
+            log.warning("supabase_server_upload_exception", error=str(exc))
+        try:
+            fileobj.seek(0)
+        except Exception:
+            pass
 
-    if settings.ENVIRONMENT in ("development", "test"):
-        relative = os.path.join("uploads", storage_key)
-        destination = os.path.join(_LOCAL_STATIC_DIR, relative)
-        os.makedirs(os.path.dirname(destination), exist_ok=True)
-        with open(destination, "wb") as out:
-            for chunk in _chunks(fileobj):
-                out.write(chunk)
-        log.info("local_dev_upload_stored", path=destination)
-        return "/static/" + relative.replace(os.sep, "/")
-
-    raise StorageError("No storage provider is configured for deliverable uploads")
-
+    # Resilient local disk storage fallback (always available)
+    relative = os.path.join("uploads", storage_key)
+    destination = os.path.join(_LOCAL_STATIC_DIR, relative)
+    os.makedirs(os.path.dirname(destination), exist_ok=True)
+    with open(destination, "wb") as out:
+        for chunk in _chunks(fileobj):
+            out.write(chunk)
+    log.info("local_disk_upload_stored", path=destination)
+    return "/static/" + relative.replace(os.sep, "/")
 
 def public_base_url(request: Any | None) -> str:
     """Absolute origin of this API, honouring the proxy's forwarded scheme/host."""

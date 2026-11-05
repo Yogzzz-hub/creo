@@ -23,6 +23,8 @@ import {
   Copy,
   Check,
   Settings,
+  FolderGit2,
+  Film,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "../../lib/http";
@@ -108,13 +110,43 @@ export function MemberOverviewPage() {
   const dueTodayCount = metricActiveTasks.filter((t) => isDueTodayOrOverdue(t.due_date || t.sla_due_at)).length;
   const focusTasks = metricActiveTasks;
 
+function formatHours(totalHours: number): string {
+  if (totalHours < 24) {
+    return `${Math.max(1, totalHours)}h`;
+  }
+  const days = Math.floor(totalHours / 24);
+  const remHours = totalHours % 24;
+  const dayStr = days === 1 ? "1 day" : `${days} days`;
+  if (remHours === 0) return dayStr;
+  const hourStr = remHours === 1 ? "1 hr" : `${remHours} hrs`;
+  return `${dayStr} ${hourStr}`;
+}
+
+function getTaskSlaDueText(task: PodTask): { text: string; urgent: boolean } {
+  if (task.sla_due_at) {
+    const hours = (new Date(task.sla_due_at).getTime() - Date.now()) / 3_600_000;
+    if (hours < 0) return { text: `Overdue by ${formatHours(Math.ceil(-hours))}`, urgent: true };
+    if (hours < 48) return { text: `Due in ${formatHours(Math.max(1, Math.round(hours)))}`, urgent: hours < 24 };
+    return { text: `Due ${new Date(task.sla_due_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`, urgent: false };
+  }
+  if (task.due_date) {
+    return { text: `Due ${new Date(task.due_date).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`, urgent: false };
+  }
+  return { text: "Active Sprint", urgent: false };
+}
+
+const FORMAT_SPECS: Record<string, { aspect: string; res: string; desc: string; fps: string }> = {
+  reel: { aspect: "9:16 Vertical", res: "1080 × 1920", desc: "Instagram Reel / TikTok / YouTube Shorts", fps: "30 / 60 fps" },
+  shorts: { aspect: "9:16 Vertical", res: "1080 × 1920", desc: "Shorts / Fullscreen Mobile", fps: "30 / 60 fps" },
+  tiktok: { aspect: "9:16 Vertical", res: "1080 × 1920", desc: "TikTok Master Vertical", fps: "30 / 60 fps" },
+  video: { aspect: "16:9 Landscape", res: "1920 × 1080 / 4K", desc: "YouTube / Website Master Video", fps: "24 / 30 / 60 fps" },
+  post: { aspect: "1:1 Square / 4:5 Portrait", res: "1080 × 1080 / 1080 × 1350", desc: "Static Feed / Ad Graphic", fps: "Static N/A" },
+  carousel: { aspect: "4:5 Portrait", res: "1080 × 1350", desc: "Multi-slide Swipe Carousel", fps: "Static N/A" },
+  story: { aspect: "9:16 Vertical", res: "1080 × 1920", desc: "Instagram Story", fps: "30 fps" },
+};
   const openPreviewModal = (task: PodTask) => {
-    if (task.deliverable) {
-      setPreviewTask(task);
-      setPreviewModalOpen(true);
-    } else {
-      showToast(`No media cut uploaded yet for ${task.client_name} - ${task.blueprint?.concept_name || task.deliverable_type}. Use Handoff to upload.`, "info");
-    }
+    setPreviewTask(task);
+    setPreviewModalOpen(true);
   };
 
   // Deliverables table scoping: Creatives default to "My Deliverables", Leads/Admins to "All Pod"
@@ -452,6 +484,7 @@ export function MemberOverviewPage() {
         (fraction) => setUploadProgress(Math.round(fraction * 100)),
       );
       queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
+      refetch();
       setUploadModalOpen(false);
       showToast(`Successfully uploaded v${result.version} to ${leadName} for QA review!`, "success");
     } catch (err: any) {
@@ -691,7 +724,7 @@ export function MemberOverviewPage() {
                   </div>
 
                   {/* Priority Item 1 */}
-                  <div className="p-3.5 rounded-xl bg-app-base/80 border border-app-line/70 space-y-2.5 hover:border-app-accent/30 transition-all">
+                  <div className="p-3.5 rounded-xl bg-app-base/80 border border-app-line/70 space-y-2.5">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                       <div className="flex items-start gap-2.5">
                         {/* Deliverable Badge */}
@@ -714,7 +747,9 @@ export function MemberOverviewPage() {
                             {primaryTask.sla_due_at && (
                               <>
                                 <span>•</span>
-                                <span className="text-amber-400 font-semibold">SLA Tracked</span>
+                                <span className={getTaskSlaDueText(primaryTask).urgent ? "text-rose-400 font-bold" : "text-amber-400 font-semibold"}>
+                                  {getTaskSlaDueText(primaryTask).text}
+                                </span>
                               </>
                             )}
                           </div>
@@ -734,21 +769,21 @@ export function MemberOverviewPage() {
                     <div className="flex flex-wrap items-center gap-2 pt-0.5">
                       <button
                         onClick={() => openPreviewModal(primaryTask)}
-                        className="px-3 py-1.5 rounded-lg bg-app-surface border border-app-line hover:bg-app-surface text-[11px] font-bold text-app-ink-2 flex items-center gap-1 transition-colors cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg bg-app-surface border border-app-line text-[11px] font-bold text-app-ink-2 flex items-center gap-1 cursor-pointer"
                       >
                         <Eye className="size-3 text-app-mist" />
                         Preview Specs
                       </button>
                       <Link
-                        to="/workstation/tasks"
-                        className="px-3 py-1.5 rounded-lg bg-app-surface border border-app-line hover:bg-app-surface text-[11px] font-bold text-app-ink-2 flex items-center gap-1 transition-colors"
+                        to={`/workstation/tasks?taskId=${encodeURIComponent(primaryTask.id)}`}
+                        className="px-3 py-1.5 rounded-lg bg-app-surface border border-app-line hover:bg-app-accent hover:border-app-accent hover:text-white! text-[11px] font-bold text-app-ink-2 flex items-center gap-1 shadow-2xs transition-all duration-150 cursor-pointer"
                       >
                         <Layers className="size-3 text-app-mist" />
                         Task Board
                       </Link>
                       <button
                         onClick={() => openUploadModal(primaryTask)}
-                        className="px-3 py-1.5 rounded-lg bg-app-accent/15 hover:bg-app-accent/20 text-app-accent text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer ml-auto"
+                        className="px-3 py-1.5 rounded-lg bg-app-accent/15 text-app-accent text-[11px] font-bold flex items-center gap-1 cursor-pointer ml-auto"
                       >
                         <Send className="size-3" />
                         Handoff to Lead
@@ -758,7 +793,7 @@ export function MemberOverviewPage() {
 
                   {/* Priority Item 2 if exists */}
                   {secondaryTask && (
-                    <div className="p-3.5 rounded-xl bg-app-base/80 border border-app-line/70 space-y-2.5 hover:border-app-accent/30 transition-all">
+                    <div className="p-3.5 rounded-xl bg-app-base/80 border border-app-line/70 space-y-2.5">
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                         <div className="flex items-start gap-2.5">
                           <div className="size-10 rounded-lg bg-gradient-to-br from-indigo-700 to-indigo-900 overflow-hidden shrink-0 relative flex items-center justify-center text-app-on-accent! font-mono text-[8px] font-bold">
@@ -774,6 +809,14 @@ export function MemberOverviewPage() {
                               <span>{secondaryTask.deliverable_type?.toUpperCase() || "CREATIVE ASSET"}</span>
                               <span>•</span>
                               <span>{secondaryTask.due_date ? `Due ${new Date(secondaryTask.due_date).toLocaleDateString()}` : "In Progress"}</span>
+                              {secondaryTask.sla_due_at && (
+                                <>
+                                  <span>•</span>
+                                  <span className={getTaskSlaDueText(secondaryTask).urgent ? "text-rose-400 font-bold" : "text-amber-400 font-semibold"}>
+                                    {getTaskSlaDueText(secondaryTask).text}
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -786,14 +829,21 @@ export function MemberOverviewPage() {
                       <div className="flex flex-wrap items-center gap-2 pt-0.5">
                         <button
                           onClick={() => openPreviewModal(secondaryTask)}
-                          className="px-3 py-1.5 rounded-lg bg-app-surface border border-app-line hover:bg-app-surface text-[11px] font-bold text-app-ink-2 flex items-center gap-1 transition-colors cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg bg-app-surface border border-app-line text-[11px] font-bold text-app-ink-2 flex items-center gap-1 cursor-pointer"
                         >
                           <Eye className="size-3 text-app-mist" />
                           Preview Specs
                         </button>
+                        <Link
+                          to={`/workstation/tasks?taskId=${encodeURIComponent(secondaryTask.id)}`}
+                          className="px-3 py-1.5 rounded-lg bg-app-surface border border-app-line hover:bg-app-accent hover:border-app-accent hover:text-white! text-[11px] font-bold text-app-ink-2 flex items-center gap-1 shadow-2xs transition-all duration-150 cursor-pointer"
+                        >
+                          <Layers className="size-3 text-app-mist" />
+                          Task Board
+                        </Link>
                         <button
                           onClick={() => openUploadModal(secondaryTask)}
-                          className="px-3.5 py-1.5 rounded-lg bg-app-accent hover:bg-blue-700 text-app-on-accent! text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer ml-auto"
+                          className="px-3.5 py-1.5 rounded-lg bg-app-accent text-app-on-accent! text-[11px] font-bold flex items-center gap-1 shadow-2xs cursor-pointer ml-auto"
                         >
                           <Send className="size-3" />
                           Submit for QA
@@ -981,7 +1031,7 @@ export function MemberOverviewPage() {
                       className={`px-2.5 py-1 rounded-md transition-all text-[11px] cursor-pointer ${
                         deliverablesScope === "my"
                           ? "bg-app-surface text-hi shadow-2xs font-black border border-app-line"
-                          : "text-app-mist hover:text-hi"
+                          : "text-app-mist"
                       }`}
                     >
                       My Deliverables
@@ -992,7 +1042,7 @@ export function MemberOverviewPage() {
                       className={`px-2.5 py-1 rounded-md transition-all text-[11px] cursor-pointer ${
                         deliverablesScope === "all"
                           ? "bg-app-surface text-hi shadow-2xs font-black border border-app-line"
-                          : "text-app-mist hover:text-hi"
+                          : "text-app-mist"
                       }`}
                     >
                       All Pod Deliverables
@@ -1007,7 +1057,7 @@ export function MemberOverviewPage() {
                       className={`px-2.5 py-1 rounded-md transition-all text-[11px] cursor-pointer ${
                         deliverablesTab === "active"
                           ? "bg-app-surface text-hi shadow-2xs font-black border border-app-line"
-                          : "text-app-mist hover:text-hi"
+                          : "text-app-mist"
                       }`}
                     >
                       Active ({displayActiveTasks.length})
@@ -1018,7 +1068,7 @@ export function MemberOverviewPage() {
                       className={`px-2.5 py-1 rounded-md transition-all text-[11px] cursor-pointer ${
                         deliverablesTab === "archived"
                           ? "bg-app-surface text-hi shadow-2xs font-black border border-app-line"
-                          : "text-app-mist hover:text-hi"
+                          : "text-app-mist"
                       }`}
                     >
                       Archived ({displayCompletedTasks.length})
@@ -1103,7 +1153,7 @@ export function MemberOverviewPage() {
                                     setPreviewTask(t);
                                     setPreviewModalOpen(true);
                                   }}
-                                  className="px-2 py-0.5 rounded-md border border-app-accent/30 bg-app-accent/15 hover:bg-app-accent/25 text-app-accent font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer"
+                                  className="px-2 py-0.5 rounded-md border border-app-accent/30 bg-app-accent/15 text-app-accent font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer"
                                   title="Quick Video Preview"
                                 >
                                   <Eye className="size-3" />
@@ -1115,8 +1165,8 @@ export function MemberOverviewPage() {
                                 onClick={() => openUploadModal(t)}
                                 className={`px-2 py-0.5 rounded-md border font-bold text-[10px] cursor-pointer ${
                                   t.status === "internal_qa"
-                                    ? "border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
-                                    : "border-app-line bg-app-surface hover:bg-app-base text-app-ink-2"
+                                    ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                                    : "border-app-line bg-app-surface text-app-ink-2"
                                 }`}
                               >
                                 {t.status === "internal_qa" ? "Re-upload Cut" : t.status === "in_production" ? "Upload & QA" : "Upload"}
@@ -1141,7 +1191,7 @@ export function MemberOverviewPage() {
                         </thead>
                         <tbody className="divide-y divide-slate-800 font-medium text-app-ink-2">
                           {currentTasks.map((t, idx) => (
-                            <tr key={t.id || idx} className="hover:bg-app-base/60 transition-colors">
+                            <tr key={t.id || idx}>
                               <td className="py-2.5 px-2.5">
                                 <div className="font-bold text-hi text-xs">{t.blueprint?.concept_name || t.deliverable_type || "Sprint Asset"}</div>
                                 <div className="text-[10px] text-app-mist">{t.deliverable_type || "Motion Asset"} · ID: {t.id?.slice(0, 6)}</div>
@@ -1170,7 +1220,7 @@ export function MemberOverviewPage() {
                                       setPreviewTask(t);
                                       setPreviewModalOpen(true);
                                     }}
-                                    className="px-2.5 py-1 rounded-md border border-app-accent/30 bg-app-accent/15 hover:bg-app-accent/25 text-app-accent font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer transition-colors"
+                                    className="px-2.5 py-1 rounded-md border border-app-accent/30 bg-app-accent/15 text-app-accent font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer"
                                     title="Quick Video Preview"
                                   >
                                     <Eye className="size-3" />
@@ -1182,8 +1232,8 @@ export function MemberOverviewPage() {
                                   onClick={() => openUploadModal(t)}
                                   className={`px-2.5 py-1 rounded-md border font-bold text-[10px] cursor-pointer transition-colors ${
                                     t.status === "internal_qa"
-                                      ? "border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
-                                      : "border-app-line hover:bg-app-surface text-app-ink-2"
+                                      ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                                      : "border-app-line bg-app-surface text-app-ink-2"
                                   }`}
                                 >
                                   {t.status === "internal_qa" ? "Re-upload Cut" : t.status === "in_production" ? "Upload & QA" : "Upload"}
@@ -1432,6 +1482,11 @@ export function MemberOverviewPage() {
                   }}
                   className="w-full px-3 py-2 rounded-xl border border-app-line font-semibold bg-app-surface"
                 >
+                  {selectedTaskId && !allEligibleTasks.some((t) => t.id === selectedTaskId) && (
+                    <option value={selectedTaskId}>
+                      {previewTask?.blueprint?.concept_name || previewTask?.deliverable_type || "Selected Deliverable Task"} ({selectedTaskId.slice(0, 6)})
+                    </option>
+                  )}
                   {myAssignedTasks.length > 0 && (
                     <optgroup label="My Assigned Tasks">
                       {myAssignedTasks.map((t) => (
@@ -1480,10 +1535,28 @@ export function MemberOverviewPage() {
               })()}
 
               {/* Drag Drop Area */}
-              <div className="p-5 border-2 border-dashed border-app-line rounded-2xl text-center space-y-2 bg-app-base hover:bg-app-accent/10 hover:border-blue-300 transition-colors">
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (e.dataTransfer.files?.[0]) {
+                    handleFileSelect(e.dataTransfer.files[0]);
+                  }
+                }}
+                onClick={() => document.getElementById("asset-file-input")?.click()}
+                className="p-5 border-2 border-dashed border-app-line hover:border-app-accent rounded-2xl text-center space-y-2 bg-app-base hover:bg-app-accent/10 transition-colors cursor-pointer"
+              >
                 <Upload className="size-6 text-app-accent mx-auto" />
                 <div className="font-bold text-hi text-xs">
-                  {uploadFile ? uploadFile.name : "Drag & drop master render (MP4 / MOV / PNG / JPG)"}
+                  {uploadFile ? uploadFile.name : "Drag & drop master render (MP4 / MOV / WEBM / PNG / JPG)"}
                 </div>
                 <div className="text-[10px] text-app-mist">
                   {uploadFile ? `${(uploadFile.size / (1024 * 1024)).toFixed(2)} MB • Ready to upload` : "Up to 500MB videos, 10MB images • Min 1KB valid media"}
@@ -1496,12 +1569,16 @@ export function MemberOverviewPage() {
                   disabled={isUploading}
                   onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
                 />
-                <label
-                  htmlFor="asset-file-input"
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    document.getElementById("asset-file-input")?.click();
+                  }}
                   className="inline-block px-3 py-1.5 rounded-lg bg-app-surface border border-app-line text-app-ink-2 font-bold text-xs hover:bg-app-line cursor-pointer mt-1"
                 >
                   Browse Computer
-                </label>
+                </button>
               </div>
 
               {/* Upload Notes */}
@@ -1562,69 +1639,226 @@ export function MemberOverviewPage() {
         </div>
       )}
 
-      {/* MODAL: DELIVERABLE VIDEO PREVIEW */}
-      {previewModalOpen && previewTask?.deliverable && (
+      {/* MODAL: DELIVERABLE SPECS & BRIEF PREVIEW */}
+      {previewModalOpen && previewTask && (
         <div
           className="fixed inset-0 w-screen h-screen z-[99999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
           onClick={() => setPreviewModalOpen(false)}
         >
           <div
-            className="w-full max-w-2xl bg-app-surface rounded-3xl p-5 sm:p-6 shadow-2xl border border-app-line space-y-4 animate-scale-up"
+            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-app-surface rounded-3xl p-5 sm:p-6 shadow-2xl border border-app-line space-y-4 animate-scale-up custom-scrollbar"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-app-line pb-3">
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded text-[10px] font-black bg-app-accent/20 text-app-accent border border-app-accent/30">
-                  v{previewTask.deliverable.version}
+                <span className="px-2 py-0.5 rounded text-[10px] font-black bg-app-accent/20 text-app-accent border border-app-accent/30 uppercase">
+                  {previewTask.deliverable_type || "DELIVERABLE"}
                 </span>
+                {previewTask.deliverable && (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    v{previewTask.deliverable.version}
+                  </span>
+                )}
                 <div>
-                  <h3 className="text-sm font-black text-hi">
-                    {previewTask.blueprint?.concept_name || previewTask.deliverable_type || "Sprint Cut Preview"}
+                  <h3 className="text-sm font-black text-hi leading-snug">
+                    {previewTask.blueprint?.concept_name || previewTask.deliverable_type || "Deliverable Specification"}
                   </h3>
-                  <p className="text-[11px] text-app-mist">{previewTask.client_name}</p>
+                  <p className="text-[11px] text-app-mist">{previewTask.client_name} · ID: {previewTask.id.slice(0, 8)}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setPreviewModalOpen(false)}
-                className="size-8 rounded-full bg-app-surface hover:bg-slate-700 text-app-mist flex items-center justify-center cursor-pointer"
+                className="size-8 rounded-full bg-app-base hover:bg-slate-700 text-app-mist hover:text-hi flex items-center justify-center cursor-pointer transition-colors"
+                title="Close modal"
               >
                 <X className="size-4" />
               </button>
             </div>
 
-            <div className="rounded-2xl overflow-hidden bg-black max-h-[380px] flex items-center justify-center border border-app-line/60">
-              <DeliverableMedia
-                url={previewTask.deliverable.file_url}
-                isVideo={previewTask.deliverable.is_video}
-                title={previewTask.blueprint?.concept_name || "Deliverable"}
-                controls={true}
-                className="w-full max-h-[380px]"
-              />
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-app-line text-xs">
-              <div className="text-[11px] text-app-mist">
-                Format: <strong className="text-hi">{previewTask.deliverable.file_type}</strong>
-              </div>
-              <div className="flex items-center gap-2">
-                {previewTask.deliverable.file_url && (
+            {/* Media Cut Player (if uploaded) */}
+            {previewTask.deliverable?.file_url ? (
+              <div className="space-y-2">
+                <div className="rounded-2xl overflow-hidden bg-black max-h-[340px] flex items-center justify-center border border-app-line/60">
+                  <DeliverableMedia
+                    url={previewTask.deliverable.file_url}
+                    isVideo={previewTask.deliverable.is_video}
+                    title={previewTask.blueprint?.concept_name || "Deliverable"}
+                    controls={true}
+                    className="w-full max-h-[340px]"
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-app-mist px-1">
+                  <span>Active Cut Version: <strong className="text-hi font-mono">v{previewTask.deliverable.version}</strong></span>
                   <a
                     href={previewTask.deliverable.file_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-3 py-1.5 rounded-xl border border-app-line hover:bg-app-base text-app-ink-2 font-bold text-xs flex items-center gap-1.5"
+                    className="inline-flex items-center gap-1 text-app-accent hover:underline font-bold"
                   >
-                    <ExternalLink className="size-3.5 text-app-accent" />
-                    Direct Link
+                    <span>Direct File Stream</span>
+                    <ExternalLink className="size-3" />
                   </a>
-                )}
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 rounded-2xl bg-app-base/70 border border-dashed border-app-line flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="size-9 rounded-xl bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent shrink-0">
+                    <Video className="size-4.5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-hi">In Production · No Media Cut Uploaded Yet</h4>
+                    <p className="text-[11px] text-app-mist">Review the creative specs below and upload your master render when ready.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = previewTask;
+                    setPreviewModalOpen(false);
+                    openUploadModal(target);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold text-xs shrink-0 flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                >
+                  <Upload className="size-3.5" />
+                  <span>Upload Cut & QA</span>
+                </button>
+              </div>
+            )}
+
+            {/* Technical Specifications Grid */}
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-bold uppercase tracking-wider text-app-mist">Technical Specifications</h4>
+              {(() => {
+                const typeKey = (previewTask.deliverable_type || "").toLowerCase();
+                const spec = FORMAT_SPECS[typeKey] || {
+                  aspect: "16:9 or 9:16",
+                  res: "1080p HD / 4K UHD",
+                  desc: "Standard Deliverable Format",
+                  fps: "24 / 30 / 60 fps",
+                };
+                const dueInfo = getTaskSlaDueText(previewTask);
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                    <div className="p-2.5 rounded-xl bg-app-base border border-app-line/70">
+                      <div className="text-[10px] text-app-mist uppercase font-semibold">Aspect Ratio</div>
+                      <div className="font-bold text-hi mt-0.5">{spec.aspect}</div>
+                      <div className="text-[9px] text-app-mist mt-0.5 truncate">{spec.res}</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-app-base border border-app-line/70">
+                      <div className="text-[10px] text-app-mist uppercase font-semibold">Target Duration</div>
+                      <div className="font-bold text-hi mt-0.5">{previewTask.blueprint?.target_duration || "30s - 60s"}</div>
+                      <div className="text-[9px] text-app-mist mt-0.5">{spec.fps}</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-app-base border border-app-line/70">
+                      <div className="text-[10px] text-app-mist uppercase font-semibold">Delivery Standard</div>
+                      <div className="font-bold text-hi mt-0.5">ProRes / MP4 H.264</div>
+                      <div className="text-[9px] text-app-mist mt-0.5">Stereo 48kHz audio</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-app-base border border-app-line/70">
+                      <div className="text-[10px] text-app-mist uppercase font-semibold">Target SLA Due</div>
+                      <div className={`font-bold mt-0.5 ${dueInfo.urgent ? "text-rose-400" : "text-amber-400"}`}>
+                        {dueInfo.text}
+                      </div>
+                      <div className="text-[9px] text-app-mist mt-0.5">
+                        {previewTask.due_date ? new Date(previewTask.due_date).toLocaleDateString() : "Active Sprint"}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Raw Footage & Drive Assets Link */}
+            {(() => {
+              const footage = previewTask.blueprint?.raw_footage_url || previewTask.blueprint?.drive_url || previewTask.blueprint?.brief_url;
+              return (
+                <div className="p-3 rounded-xl bg-app-base border border-app-line flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="size-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                      <FolderGit2 className="size-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-hi">Raw Footage & Asset Folder</div>
+                      <div className="text-[10px] text-app-mist truncate max-w-[280px] sm:max-w-md">
+                        {footage || "Client shared pod drive repository"}
+                      </div>
+                    </div>
+                  </div>
+                  {footage ? (
+                    <a
+                      href={footage}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 hover:text-hi border border-blue-500/30 font-bold text-[11px] inline-flex items-center gap-1.5 transition-all shrink-0"
+                    >
+                      <span>Open Drive</span>
+                      <ExternalLink className="size-3" />
+                    </a>
+                  ) : (
+                    <span className="text-[10px] font-semibold text-app-mist">In Client Pod Drive</span>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Creative Brief & Hook */}
+            <div className="p-3.5 rounded-2xl bg-app-base border border-app-line space-y-2 text-xs">
+              <div className="flex items-center justify-between pb-1.5 border-b border-app-line/60">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-app-mist">Creative Brief & Direction</span>
+                <span className="text-[10px] font-semibold text-app-accent">{previewTask.client_name}</span>
+              </div>
+              {previewTask.blueprint?.hook && (
+                <div>
+                  <span className="text-[10px] font-bold text-app-accent uppercase block">Hook / Angle</span>
+                  <p className="text-hi font-medium mt-0.5 leading-relaxed">"{previewTask.blueprint.hook}"</p>
+                </div>
+              )}
+              <div>
+                <span className="text-[10px] font-bold text-app-mist uppercase block">Creative Overview</span>
+                <p className="text-app-ink-2 font-medium mt-0.5 leading-relaxed">
+                  {previewTask.blueprint?.brief || previewTask.blueprint?.concept_name || "Deliver high-quality motion cut adhering to client visual brand identity guidelines."}
+                </p>
+              </div>
+              {previewTask.blueprint?.audio_notes && (
+                <div>
+                  <span className="text-[10px] font-bold text-amber-400 uppercase block">Audio Direction</span>
+                  <p className="text-app-ink-2 text-[11px] mt-0.5">{previewTask.blueprint.audio_notes}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between pt-2 border-t border-app-line text-xs">
+              <Link
+                to={`/workstation/tasks?taskId=${encodeURIComponent(previewTask.id)}`}
+                onClick={() => setPreviewModalOpen(false)}
+                className="px-3.5 py-1.5 rounded-xl border border-app-line hover:bg-app-accent hover:border-app-accent hover:text-white! text-app-ink-2 font-bold text-xs inline-flex items-center gap-1.5 shadow-2xs transition-all duration-150 cursor-pointer"
+              >
+                <Layers className="size-3.5 text-app-mist" />
+                <span>Open in Task Board</span>
+              </Link>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = previewTask;
+                    setPreviewModalOpen(false);
+                    openUploadModal(target);
+                  }}
+                  className="px-4 py-1.5 rounded-xl bg-app-accent text-app-on-accent! font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <Upload className="size-3.5" />
+                  <span>{previewTask.deliverable ? "Re-upload Cut" : "Upload & QA"}</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => setPreviewModalOpen(false)}
-                  className="px-4 py-1.5 rounded-xl bg-app-accent hover:bg-blue-700 text-app-on-accent! font-bold text-xs cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl border border-app-line font-bold text-app-ink-2 text-xs cursor-pointer"
                 >
-                  Close Preview
+                  Close
                 </button>
               </div>
             </div>
@@ -1761,7 +1995,7 @@ export function MemberOverviewPage() {
                 className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   meetingPlatform === "meet"
                     ? "bg-emerald-600 text-app-on-accent! shadow-sm"
-                    : "text-app-mist hover:text-hi"
+                    : "text-app-mist"
                 }`}
               >
                 <Video className="size-3.5" />
@@ -1773,7 +2007,7 @@ export function MemberOverviewPage() {
                 className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   meetingPlatform === "zoom"
                     ? "bg-blue-600 text-app-on-accent! shadow-sm"
-                    : "text-app-mist hover:text-hi"
+                    : "text-app-mist"
                 }`}
               >
                 <ExternalLink className="size-3.5" />

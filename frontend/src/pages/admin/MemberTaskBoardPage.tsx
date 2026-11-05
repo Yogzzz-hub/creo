@@ -83,11 +83,23 @@ function columnOf(bucket: keyof PodDashboardData["tasks"]): Column {
   return "review";
 }
 
+function formatHours(totalHours: number): string {
+  if (totalHours < 24) {
+    return `${Math.max(1, totalHours)}h`;
+  }
+  const days = Math.floor(totalHours / 24);
+  const remHours = totalHours % 24;
+  const dayStr = days === 1 ? "1 day" : `${days} days`;
+  if (remHours === 0) return dayStr;
+  const hourStr = remHours === 1 ? "1 hr" : `${remHours} hrs`;
+  return `${dayStr} ${hourStr}`;
+}
+
 function dueText(task: PodTask): { text: string; urgent: boolean } {
   if (task.sla_due_at) {
     const hours = (new Date(task.sla_due_at).getTime() - Date.now()) / 3_600_000;
-    if (hours < 0) return { text: `Overdue by ${Math.ceil(-hours)}h`, urgent: true };
-    if (hours < 48) return { text: `Due in ${Math.max(1, Math.round(hours))}h`, urgent: hours < 24 };
+    if (hours < 0) return { text: `Overdue by ${formatHours(Math.ceil(-hours))}`, urgent: true };
+    if (hours < 48) return { text: `Due in ${formatHours(Math.max(1, Math.round(hours)))}`, urgent: hours < 24 };
     return { text: `Due ${new Date(task.sla_due_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`, urgent: false };
   }
   if (task.due_date) {

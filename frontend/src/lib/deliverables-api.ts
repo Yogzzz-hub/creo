@@ -160,11 +160,12 @@ export async function downloadApprovedZip(): Promise<void> {
 
 // ── Creative team ────────────────────────────────────────────────────────────
 
-export const UPLOAD_ACCEPT = "video/mp4,video/quicktime,image/png,image/jpeg,image/webp,image/gif,.mp4,.mov,.png,.jpg,.jpeg,.webp,.gif";
+export const UPLOAD_ACCEPT = "video/mp4,video/quicktime,video/webm,image/png,image/jpeg,image/webp,image/gif,.mp4,.mov,.webm,.png,.jpg,.jpeg,.webp,.gif";
 
 const EXTENSION_MIMES: Record<string, string> = {
   mp4: "video/mp4",
   mov: "video/quicktime",
+  webm: "video/webm",
   png: "image/png",
   jpg: "image/jpeg",
   jpeg: "image/jpeg",

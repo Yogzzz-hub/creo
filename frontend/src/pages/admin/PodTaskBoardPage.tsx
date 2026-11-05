@@ -22,11 +22,16 @@ import {
   FolderGit2,
 } from "lucide-react";
 
-/** Backlog ages run into hundreds of hours, so show days past a day and keep hours below it. */
+/** Backlog ages run into hundreds of hours, so show days and hours past a day and keep hours below it. */
 function formatDuration(hours: number): string {
   if (!Number.isFinite(hours) || hours <= 0) return "0h";
   if (hours < 24) return `${Math.round(hours * 10) / 10}h`;
-  return `${Math.round(hours / 24)}d`;
+  const days = Math.floor(hours / 24);
+  const remHours = Math.round(hours % 24);
+  const dayStr = days === 1 ? "1 day" : `${days} days`;
+  if (remHours === 0) return dayStr;
+  const hourStr = remHours === 1 ? "1 hr" : `${remHours} hrs`;
+  return `${dayStr} ${hourStr}`;
 }
 
 export function PodTaskBoardPage() {

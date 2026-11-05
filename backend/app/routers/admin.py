@@ -1795,16 +1795,20 @@ async def get_sla_performance(
         hours = int(diff.total_seconds() // 3600)
         minutes = int((diff.total_seconds() % 3600) // 60)
         
+        d = hours // 24
+        h = hours % 24
+        day_str = "1 day" if d == 1 else f"{d} days"
+        hour_str = f" {h} hr{'s' if h != 1 else ''}" if h else ""
         if is_breached:
-            if hours > 24:
-                time_str = f"Overdue by {hours // 24}d {hours % 24}h"
+            if hours >= 24:
+                time_str = f"Overdue by {day_str}{hour_str}"
             else:
                 time_str = f"Overdue by {hours}h {minutes}m"
             state = "breached"
             severity = "CRITICAL"
         else:
-            if hours > 24:
-                time_str = f"{hours // 24}d {hours % 24}h remaining"
+            if hours >= 24:
+                time_str = f"{day_str}{hour_str} remaining"
             else:
                 time_str = f"{hours}h {minutes}m remaining"
             state = "approaching"
