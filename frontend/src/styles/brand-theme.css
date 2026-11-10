@@ -79,10 +79,10 @@
   --app-surface: #fbf7f0;
   --app-line: #d8c8b2;
   --app-line-soft: #e6dac8;
-  --app-mist: #6e5f50;
+  --app-mist: #4a3b2c;
   --app-ink: #2b1e15;
   --app-ink-2: #33241a;
-  --app-ink-3: #54473b;
+  --app-ink-3: #3d3125;
   --app-accent: #8a5a2b;
   --app-accent-soft: #2b1e15;
   --app-warm: #9a3f2f;
@@ -95,8 +95,8 @@
   --site-surface: #fbf7f0;
   --site-surface-2: #f2e9dc;
   --site-line: #d8c8b2;
-  --site-mist: #6e5f50;
-  --site-mist-2: #54473b;
+  --site-mist: #4a3b2c;
+  --site-mist-2: #3d3125;
   --site-ink: #2b1e15;
   --site-blue: #dda56c;
   --site-blue-deep: #d2965a;

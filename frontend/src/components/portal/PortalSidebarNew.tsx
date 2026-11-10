@@ -157,7 +157,7 @@ export function PortalSidebarNew() {
               creo
               <span className="ml-[1px] inline-block size-[0.36em] rounded-full bg-[var(--portal-amber)] transition-transform duration-500 group-hover:-translate-y-1" />
             </Link>
-            <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.18em] text-app-mist">Client portal</p>
+            <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.18em] text-app-ink-3 dark:text-app-mist">Client portal</p>
           </div>
           {/* Phones get the toggle in the top header instead */}
           <div className="hidden lg:block">
@@ -177,7 +177,7 @@ export function PortalSidebarNew() {
         <nav aria-label="Portal" className="min-h-0 flex-1 space-y-7 overflow-y-auto overflow-x-hidden overscroll-contain px-4 pb-6 text-left [scrollbar-width:thin]">
           {sections.map((section) => (
             <div key={section.label}>
-              <div className="px-3 pb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-app-mist/80">{section.label}</div>
+              <div className="px-3 pb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-app-ink-3 dark:text-app-mist">{section.label}</div>
               <ul className="space-y-0.5">
                 {section.items.map((item) => {
                   const active = isActive(item.href, location.pathname, location.search);
@@ -190,7 +190,7 @@ export function PortalSidebarNew() {
                         aria-current={active ? "page" : undefined}
                         onClick={() => setMobileOpen(false)}
                         className={`flex items-center justify-between gap-3 rounded-full px-4 py-2.5 text-[15px] font-medium tracking-[-0.01em] transition-colors duration-200 ${
-                          active ? "bg-app-ink text-app-base" : "text-app-mist hover:bg-hi/[0.04] hover:text-hi"
+                          active ? "bg-app-ink text-app-base shadow-xs" : "text-app-ink-2 hover:bg-hi/[0.06] hover:text-hi font-medium"
                         }`}
                       >
                         <span className="flex min-w-0 items-center gap-3">
@@ -222,7 +222,7 @@ export function PortalSidebarNew() {
                       type="button"
                       onClick={handleLogout}
                       disabled={loggingOut}
-                      className="flex w-full cursor-pointer items-center gap-3 rounded-full px-4 py-2.5 text-[15px] font-medium tracking-[-0.01em] text-app-mist transition-colors hover:bg-hi/[0.04] hover:text-hi"
+                      className="flex w-full cursor-pointer items-center gap-3 rounded-full px-4 py-2.5 text-[15px] font-medium tracking-[-0.01em] text-app-ink-2 transition-colors hover:bg-hi/[0.06] hover:text-hi"
                     >
                       <LogOut className="size-[18px] shrink-0" />
                       <span className="truncate">{loggingOut ? "Signing out..." : "Log out"}</span>

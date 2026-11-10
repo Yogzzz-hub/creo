@@ -111,7 +111,7 @@ function useStableSrc(id: string, url: string | null) {
 function Thumbnail({ item }: { item: DeliverableItem }) {
   const { src, failed, onError } = useStableSrc(item.id, item.file_url);
   if (!src || failed) {
-    return item.is_video ? <Film className="w-5 h-5 text-app-mist" /> : <ImageIcon className="w-5 h-5 text-app-mist" />;
+    return item.is_video ? <Film className="w-5 h-5 text-zinc-400" /> : <ImageIcon className="w-5 h-5 text-zinc-400" />;
   }
   if (item.is_video) {
     return <video src={`${src}#t=0.5`} muted playsInline preload="metadata" onError={onError} className="w-full h-full object-cover" />;
@@ -137,11 +137,11 @@ function MediaPreview({ item, onRefresh }: { item: DeliverableItem; onRefresh: (
       )}
       {!src || failed ? (
         <div className="text-center p-6 space-y-3">
-          <p className="text-hi text-sm font-semibold">Preview unavailable</p>
-          <p className="text-xs text-app-mist">The secure preview link may have expired.</p>
+          <p className="text-white text-base font-bold">Preview unavailable</p>
+          <p className="text-xs text-zinc-300 font-medium">The secure preview link may have expired.</p>
           <button
             onClick={onRefresh}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-app-line text-xs font-bold text-hi hover:bg-hi/[0.04]"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-white/30 text-xs font-bold text-white hover:bg-white/15 transition-colors cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" /> Reload preview
           </button>
@@ -543,11 +543,11 @@ export function PortalDeliverablesPage() {
                     className={`py-1.5 px-3 rounded-md text-xs font-bold transition-all truncate flex items-center justify-center gap-1.5 cursor-pointer ${
                       isActive
                         ? "bg-app-accent-soft text-app-base shadow-xs font-black"
-                        : "text-app-mist hover:text-hi hover:bg-hi/[0.04]"
+                        : "text-app-ink-2 hover:text-hi hover:bg-hi/[0.04]"
                     }`}
                   >
                     <span>{tab.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none ${isActive ? "bg-app-base/20 text-app-base" : tab.key === "needs_you" && tab.count > 0 ? "bg-amber-500/20 text-amber-300" : "bg-app-base text-app-mist"}`}>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none ${isActive ? "bg-app-base/20 text-app-base" : tab.key === "needs_you" && tab.count > 0 ? "bg-amber-500/25 text-amber-800 dark:text-amber-300 font-extrabold" : "bg-app-base text-app-ink-2 font-bold"}`}>
                       {tab.count}
                     </span>
                   </button>
@@ -574,7 +574,7 @@ export function PortalDeliverablesPage() {
                     className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all shrink-0 cursor-pointer ${
                       isFmtActive
                         ? "bg-app-accent text-app-base shadow-xs font-black"
-                        : "text-app-mist hover:text-hi hover:bg-hi/[0.04]"
+                        : "text-app-ink-2 hover:text-hi hover:bg-hi/[0.04]"
                     }`}
                   >
                     {fmt.label}
