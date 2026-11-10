@@ -186,3 +186,50 @@ test("razorpay credentials bound in worker env are forwarded to api origin and c
   assert.equal(intercepted.headers.get("X-Razorpay-Key-Id"), "rzp_test_bound_123");
   assert.equal(intercepted.headers.get("X-Razorpay-Key-Secret"), "secret_bound_456");
 });
+
+test("render hibernate rate limit triggers retry and recovers when backend wakes up", async () => {
+  const f = fixture();
+  let calls = 0;
+  globalThis.fetch = async (request) => {
+    calls++;
+    if (calls === 1) {
+      return new Response("Too Many Requests", {
+        status: 429,
+        headers: { "x-render-routing": "hibernate-rate-limited", "Content-Type": "text/plain" },
+      });
+    }
+    return Response.json({ access_token: "test-token" });
+  };
+  const req = new Request("https://site.example.com/api/v1/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: "admin@creo.agency", password: "pwd" }),
+  });
+  const res = await worker.fetch(req, f.env, f.context);
+  assert.equal(res.status, 200);
+  assert.equal(calls, 2);
+  const data = await res.json();
+  assert.equal(data.access_token, "test-token");
+});
+
+test("render hibernate rate limit returns clean JSON error when retries are exhausted", async () => {
+  const f = fixture();
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return new Response("Too Many Requests", {
+      status: 429,
+      headers: { "x-render-routing": "hibernate-rate-limited", "Content-Type": "text/plain" },
+    });
+  };
+  const req = new Request("https://site.example.com/api/v1/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: "admin@creo.agency", password: "pwd" }),
+  });
+  const res = await worker.fetch(req, f.env, f.context);
+  assert.equal(res.status, 503);
+  assert.equal(calls, 3);
+  const body = await res.json();
+  assert.equal(body.error.code, "SERVER_WAKING_UP");
+});

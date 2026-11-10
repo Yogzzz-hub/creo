@@ -24,7 +24,6 @@ import {
   Check,
   Settings,
   FolderGit2,
-  Film,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "../../lib/http";

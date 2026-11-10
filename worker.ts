@@ -39,8 +39,24 @@ async function proxyApi(request: Request, env: Environment, context: WorkerConte
     try { cached = await cache.match(cacheKey); } catch { /* Cache is optional. */ }
   }
 
-  const load = async (): Promise<Response> => {
-    const upstream = new Request(destination, request);
+  // Cache request body in memory so retries on hibernating instances can safely replay it
+  let requestBody: ArrayBuffer | undefined = undefined;
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    try {
+      const buffer = await request.arrayBuffer();
+      if (buffer.byteLength > 0) requestBody = buffer;
+    } catch {
+      // Body already consumed or unavailable
+    }
+  }
+
+  const createUpstream = (): Request => {
+    const upstream = new Request(destination, {
+      method: request.method,
+      headers: request.headers,
+      body: requestBody,
+      redirect: "manual",
+    });
     upstream.headers.set("Host", destination.host);
     if (isPublic) {
       upstream.headers.delete("Authorization");
@@ -53,8 +69,58 @@ async function proxyApi(request: Request, env: Environment, context: WorkerConte
     if (env.RAZORPAY_KEY_ID) upstream.headers.set("X-Razorpay-Key-Id", env.RAZORPAY_KEY_ID);
     if (env.RAZORPAY_KEY_SECRET) upstream.headers.set("X-Razorpay-Key-Secret", env.RAZORPAY_KEY_SECRET);
     if (env.RAZORPAY_WEBHOOK_SECRET) upstream.headers.set("X-Razorpay-Webhook-Secret", env.RAZORPAY_WEBHOOK_SECRET);
-    const response = await fetch(upstream, { redirect: "manual" });
-    if (response.status === 101) return response;
+    return upstream;
+  };
+
+  const load = async (): Promise<Response> => {
+    let response: Response | undefined;
+    const maxAttempts = 3;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const upstream = createUpstream();
+      response = await fetch(upstream);
+      if (response.status === 101) return response;
+
+      const isHibernating =
+        response.status === 429 &&
+        response.headers.get("x-render-routing") === "hibernate-rate-limited";
+      const isGatewayWakeup =
+        response.status === 502 || response.status === 503 || response.status === 504;
+
+      if ((isHibernating || isGatewayWakeup) && attempt < maxAttempts) {
+        // Render free tier instance is spinning up from cold sleep.
+        // Wait briefly before retrying so the container has time to bind to its port.
+        await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+        continue;
+      }
+      break;
+    }
+
+    if (!response) {
+      throw new Error("No upstream response");
+    }
+
+    if (
+      response.status === 429 &&
+      response.headers.get("x-render-routing") === "hibernate-rate-limited"
+    ) {
+      return Response.json(
+        {
+          error: {
+            code: "SERVER_WAKING_UP",
+            message: "The backend server is waking up from idle mode. Please wait a few moments and try again.",
+          },
+        },
+        {
+          status: 503,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+            "Retry-After": "5",
+          },
+        },
+      );
+    }
     if (isPublic && cache && response.status === 200
       && response.headers.get("Content-Type")?.includes("application/json")
       && !response.headers.has("Set-Cookie")) {

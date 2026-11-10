@@ -29,6 +29,7 @@ const httpModule = await import(
   dataUrl(
     load("../frontend/src/lib/http.ts", [
       ['from "./auth-token"', `from "${dataUrl(load("../frontend/src/lib/auth-token.ts"))}"`],
+      ["from \"./native\"", `from "${dataUrl("export const isNativeApp = false; export const PUBLIC_WEB_ORIGIN = \"\"; export const NATIVE_API_URL = \"\";")}"`],
       ["import.meta.env.VITE_API_URL", "undefined"],
     ]),
   )

@@ -149,35 +149,69 @@ async function performRequest<T>(path: string, options: RequestOptions = {}, ren
 
     if (!response.ok) {
       let errorCode = "HTTP_ERROR";
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      let errorMessage = `HTTP ${response.status}${response.statusText ? `: ${response.statusText}` : ""}`;
       let errorDetails: Record<string, unknown> = {};
 
+      let responseText = "";
       try {
-        const errorJson = (await response.json()) as
-          | ApiErrorResponse
-          | { detail?: string | Array<{ loc?: string[]; msg: string }> | { code?: string; message?: string; [key: string]: unknown } }
-          | undefined;
-        if (errorJson && "error" in errorJson && errorJson.error) {
-          errorCode = errorJson.error.code || errorCode;
-          errorMessage = errorJson.error.message || errorMessage;
-          errorDetails = errorJson.error.details || {};
-        } else if (errorJson && "detail" in errorJson && errorJson.detail) {
-          errorCode = "VALIDATION_ERROR";
-          if (Array.isArray(errorJson.detail)) {
-            errorMessage =
-              errorJson.detail
-                .map((d) => `${d.loc ? d.loc.filter((l) => l !== "body").join(".") + ": " : ""}${d.msg}`)
-                .join("; ") || errorMessage;
-          } else if (typeof errorJson.detail === "string") {
-            errorMessage = errorJson.detail;
-          } else {
-            errorCode = errorJson.detail.code || errorCode;
-            errorMessage = errorJson.detail.message || errorMessage;
-            errorDetails = errorJson.detail;
+        responseText = await response.text();
+      } catch {
+        // Body reading failed
+      }
+
+      if (responseText) {
+        try {
+          const errorJson = JSON.parse(responseText) as
+            | ApiErrorResponse
+            | { detail?: string | Array<{ loc?: string[]; msg: string }> | { code?: string; message?: string; [key: string]: unknown } }
+            | undefined;
+          if (errorJson && "error" in errorJson && errorJson.error) {
+            errorCode = errorJson.error.code || errorCode;
+            errorMessage = errorJson.error.message || errorMessage;
+            errorDetails = errorJson.error.details || {};
+          } else if (errorJson && "detail" in errorJson && errorJson.detail) {
+            errorCode = "VALIDATION_ERROR";
+            if (Array.isArray(errorJson.detail)) {
+              errorMessage =
+                errorJson.detail
+                  .map((d) => `${d.loc ? d.loc.filter((l) => l !== "body").join(".") + ": " : ""}${d.msg}`)
+                  .join("; ") || errorMessage;
+            } else if (typeof errorJson.detail === "string") {
+              errorMessage = errorJson.detail;
+            } else {
+              errorCode = errorJson.detail.code || errorCode;
+              errorMessage = errorJson.detail.message || errorMessage;
+              errorDetails = errorJson.detail;
+            }
+          }
+        } catch {
+          // Body was not JSON. If a short, clean plaintext message is present, use it.
+          const trimmed = responseText.trim();
+          if (trimmed && trimmed.length < 200 && !trimmed.startsWith("<")) {
+            errorMessage = trimmed;
           }
         }
-      } catch {
-        // Body was not JSON
+      }
+
+      // Friendly fallback for blank statusText (HTTP/2, HTTP/3, or proxy cold-starts)
+      if (response.status === 429) {
+        errorCode = errorCode === "HTTP_ERROR" ? "RATE_LIMITED" : errorCode;
+        if (!responseText || errorMessage.startsWith("HTTP 429")) {
+          errorMessage = "Too many sign-in attempts or the server is warming up. Please wait a moment and try again.";
+        }
+      } else if (response.status === 502 || response.status === 503 || response.status === 504) {
+        errorCode = errorCode === "HTTP_ERROR" ? "SERVER_STARTING" : errorCode;
+        if (!responseText || errorMessage.startsWith(`HTTP ${response.status}`)) {
+          errorMessage = "The server is currently waking up or starting up. Please try again in a few moments.";
+        }
+      }
+
+      const isHibernating =
+        response.headers.get("x-render-routing") === "hibernate-rate-limited" ||
+        errorCode === "SERVER_WAKING_UP";
+      if (!renewed && (response.status === 429 || response.status === 503) && isHibernating) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        return performRequest<T>(path, { ...options, headers, timeoutMs }, true);
       }
 
       if (response.status === 401 && !isAuthEntry(path)) {
