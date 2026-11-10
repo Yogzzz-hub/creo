@@ -75,14 +75,7 @@ export function PortalSidebarNew() {
     enabled: !!clientId && (user?.onboarding_stage ?? 0) >= 8,
   });
 
-  const companyName = user?.company_name || user?.full_name || "Your Brand";
-  const initials = companyName
-    .split(" ")
-    .filter((w: string) => w.length > 0)
-    .map((w: string) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+
 
   async function handleLogout() {
     const ok = await confirm({
@@ -138,9 +131,7 @@ export function PortalSidebarNew() {
     },
   ];
 
-  const planLabel = dashboardData?.active_plan?.tier
-    ? `${dashboardData.active_plan.tier.charAt(0).toUpperCase()}${dashboardData.active_plan.tier.slice(1)} plan`
-    : "Growth plan";
+
 
   return (
     <>
@@ -243,32 +234,9 @@ export function PortalSidebarNew() {
           ))}
         </nav>
 
-        {/* Account */}
-        <div className="shrink-0 space-y-3 border-t border-app-line/60 px-5 py-5 text-left">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--portal-amber)] text-xs font-bold text-[var(--portal-on-amber)]">
-              {initials}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-hi">{companyName}</p>
-              <p className="truncate text-xs text-app-mist">
-                {planLabel} · Pod {dashboardData?.assigned_team?.length ? "assigned" : "pending"}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleLogout}
-              disabled={loggingOut}
-              className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-app-mist transition-colors hover:bg-app-warm/10 hover:text-app-warm"
-              title="Sign out"
-              aria-label="Sign out"
-            >
-              <LogOut className="size-4" />
-            </button>
-          </div>
-
-          {/* Admin Escape Hatch for staff / admin roles */}
-          {(user?.role === "admin" || user?.role === "super_admin") && (
+        {/* Admin Escape Hatch for staff / admin roles */}
+        {(user?.role === "admin" || user?.role === "super_admin") && (
+          <div className="shrink-0 border-t border-app-line/60 px-5 py-4 text-left">
             <Link
               to="/admin"
               className="flex w-full items-center justify-between rounded-full border-2 border-app-line px-4 py-2 text-sm font-semibold text-hi transition-colors hover:border-app-accent"
@@ -276,8 +244,8 @@ export function PortalSidebarNew() {
               <span>Admin dashboard</span>
               <LayoutDashboard className="size-4 text-app-accent" />
             </Link>
-          )}
-        </div>
+          </div>
+        )}
       </aside>
     </>
   );
