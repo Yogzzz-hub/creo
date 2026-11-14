@@ -35,3 +35,11 @@ The web handoff was found in the current deployed web bundle. The hosted Render 
 ## Latest-main review
 
 Remote backend blob 1b18f340d69602875bd337beb17d25ca7a41e361 differs from the older checkout. The five OAuth definitions affected by this patch are semantically identical in that remote source; the prepared latest-main patch preserves all newer non-OAuth code. All 10 isolated compatibility checks passed against that patched remote source as well. No push or deployment has been performed.
+
+## Native Android account picker
+
+The optional GET /api/v1/auth/google/android/config returns only the existing public server client ID. POST /api/v1/auth/google/android/callback accepts a one-use Google SDK server authorization code as JSON with the code field. The backend exchanges it with Google using the existing server credentials and an empty redirect, then runs the existing account-linking, suspension, role and session processor. Native exchanges have no browser redirect fallback. Existing browser endpoints retain their contracts. No database or environment changes are needed.
+
+Flutter uses google_sign_in 7.2.0. Google identifies the Android OAuth client from the installed applicationId and signing certificate. The supplied Android client ID and backend server client must be in the same Cloud project. The SDK uses the Web client as serverClientId. Only public registration metadata is bundled.
+
+Deploy this extension before testing the new Android app. A missing config endpoint produces an explicit setup-pending error before opening account selection. Verify a real native account selection and server exchange on a Google-enabled Android device, existing web sign-in, cancellation, logout and role gates. Local fixtures and compilation do not prove provider registration.
