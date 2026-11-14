@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import secrets
+import re
 import time
 import urllib.parse
 import uuid
@@ -378,6 +379,7 @@ class SetMandatoryPasswordRequest(BaseModel):
 class OAuthCallbackRequest(BaseModel):
     code: str
     redirect_uri: str | None = None
+    code_verifier: str | None = Field(default=None, min_length=43, max_length=128, pattern=r"^[A-Za-z0-9._~-]+$")
 
 
 @router.post("/register-intent", response_model=dict[str, Any])
@@ -1017,8 +1019,15 @@ async def get_me_role(
 
 
 @router.get("/google/url", response_model=dict[str, Any])
-async def get_google_auth_url(redirect_uri: str | None = None) -> dict[str, Any]:
+async def get_google_auth_url(
+    redirect_uri: str | None = None,
+    code_challenge: str | None = None,
+    code_challenge_method: str | None = None,
+) -> dict[str, Any]:
     """Generate Google OAuth 2.0 authorization consent URL."""
+    if code_challenge is not None or code_challenge_method is not None:
+        if code_challenge_method != "S256" or not code_challenge or not re.fullmatch(r"[A-Za-z0-9_-]{43}", code_challenge):
+            raise HTTPException(status_code=400, detail="A valid S256 PKCE challenge is required")
     state = uuid.uuid4().hex
     client_id = settings.GOOGLE_CLIENT_ID or "mock_google_client_id"
     redirect = redirect_uri or settings.GOOGLE_REDIRECT_URI or "http://localhost:5173/auth/google/callback"
@@ -1034,6 +1043,9 @@ async def get_google_auth_url(redirect_uri: str | None = None) -> dict[str, Any]
         "&access_type=offline"
         "&prompt=consent"
     )
+    if code_challenge is not None:
+        url += f"&code_challenge={urllib.parse.quote(code_challenge, safe='')}&code_challenge_method=S256"
+        return {"url": url, "state": state, "client_id": client_id, "pkce_supported": True}
     return {"url": url, "state": state, "client_id": client_id}
 
 
@@ -1076,7 +1088,7 @@ def _profile_from_id_token(id_token: str | None) -> dict[str, Any]:
     }
 
 
-async def _fetch_google_profile(code: str, redirect_uri: str) -> dict[str, Any]:
+async def _fetch_google_profile(code: str, redirect_uri: str, code_verifier: str | None = None) -> dict[str, Any]:
     """Exchange a Google authorization code for the account's profile."""
     if code == "mock_code":
         if settings.ENVIRONMENT != "test":
@@ -1110,6 +1122,10 @@ async def _fetch_google_profile(code: str, redirect_uri: str) -> dict[str, Any]:
         if fallback and fallback not in candidate_uris:
             candidate_uris.append(fallback)
 
+    # PKCE mobile exchanges use only the exact original redirect. Legacy web
+    # requests retain their established fallback behavior.
+    if code_verifier is not None:
+        candidate_uris = [redirect_uri]
     client = _google_client()
     try:
         async with asyncio.timeout(15):
@@ -1122,6 +1138,7 @@ async def _fetch_google_profile(code: str, redirect_uri: str) -> dict[str, Any]:
                         "client_secret": client_secret,
                         "redirect_uri": uri,
                         "grant_type": "authorization_code",
+                        **({"code_verifier": code_verifier} if code_verifier is not None else {}),
                     },
                 )
                 if token_resp.status_code == 200:
@@ -1161,6 +1178,7 @@ async def _process_google_code(
     code: str,
     redirect_uri: str,
     db: AsyncSession,
+    code_verifier: str | None = None,
 ) -> dict[str, Any]:
     """Sign in with Google, linking to the existing account for the same email.
 
@@ -1169,7 +1187,8 @@ async def _process_google_code(
     then a new account. A password account and a Google sign-in for the same
     address therefore always land on the same user.
     """
-    user_info = await _fetch_google_profile(code, redirect_uri)
+    user_info = (await _fetch_google_profile(code, redirect_uri) if code_verifier is None
+                 else await _fetch_google_profile(code, redirect_uri, code_verifier))
     if not user_info.get("email"):
         raise HTTPException(
             status_code=400,
@@ -1255,6 +1274,8 @@ async def google_auth_callback(
 ) -> dict[str, Any]:
     """Exchange Google OAuth authorization code for session (JSON POST)."""
     redirect_uri = payload.redirect_uri or settings.GOOGLE_REDIRECT_URI or "http://localhost:5173/auth/google/callback"
+    if payload.code_verifier is not None:
+        return await _process_google_code(payload.code, redirect_uri, db, payload.code_verifier)
     return await _process_google_code(payload.code, redirect_uri, db)
 
 
