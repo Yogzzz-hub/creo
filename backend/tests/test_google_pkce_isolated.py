@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field, ValidationError
 @pytest.fixture
 def protocol():
     source = Path(os.environ.get("GOOGLE_AUTH_SOURCE_UNDER_TEST", str(Path(__file__).parents[1] / "app/routers/auth.py")))
-    names = {"OAuthCallbackRequest", "get_google_auth_url", "_profile_from_id_token", "_fetch_google_profile", "google_auth_callback"}
+    names = {"OAuthCallbackRequest", "get_google_auth_url", "_profile_from_id_token", "_fetch_google_profile", "google_auth_callback", "GoogleAndroidCallbackRequest", "google_android_config", "google_android_callback"}
     tree = ast.parse(source.read_text(encoding="utf-8"))
     nodes = [node for node in tree.body if getattr(node, "name", None) in names]
     for node in nodes:
@@ -118,3 +118,42 @@ async def test_callback_dispatch_preserves_legacy_arguments(protocol):
     await protocol["google_auth_callback"](model(code="mobile", code_verifier="v" * 43), None)
     assert calls[0] == ("web", "https://web.example.test/callback", None)
     assert calls[1] == ("mobile", "https://web.example.test/callback", None, "v" * 43)
+
+
+@pytest.mark.asyncio
+async def test_android_configuration_uses_existing_server_audience(protocol):
+    result = await protocol["google_android_config"]()
+    assert result == {"server_client_id": "test-client"}
+    assert "test-secret" not in str(result)
+
+
+@pytest.mark.asyncio
+async def test_android_config_rejects_missing_server_credentials(protocol):
+    protocol["settings"].GOOGLE_CLIENT_SECRET = ""
+    with pytest.raises(HTTPException) as failure:
+        await protocol["google_android_config"]()
+    assert failure.value.status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_native_code_uses_only_empty_redirect_without_browser_fallback(protocol):
+    fake = Google([(400, {"error": "redirect_uri_mismatch"})])
+    protocol["_google_client"] = lambda: fake
+    assert await protocol["_fetch_google_profile"]("native-code", "") == {}
+    assert len(fake.calls) == 1
+    assert fake.calls[0]["redirect_uri"] == ""
+    assert "code_verifier" not in fake.calls[0]
+
+
+@pytest.mark.asyncio
+async def test_android_callback_reuses_existing_account_and_role_processor(protocol):
+    calls = []
+    async def process(*args):
+        calls.append(args)
+        return {"status": "session"}
+    protocol["_process_google_code"] = process
+    payload = protocol["GoogleAndroidCallbackRequest"](code="one-use-native-code")
+    assert await protocol["google_android_callback"](payload, None) == {"status": "session"}
+    assert calls == [("one-use-native-code", "", None)]
+    with pytest.raises(ValidationError):
+        protocol["GoogleAndroidCallbackRequest"](code="")

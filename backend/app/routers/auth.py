@@ -1124,7 +1124,7 @@ async def _fetch_google_profile(code: str, redirect_uri: str, code_verifier: str
 
     # PKCE mobile exchanges use only the exact original redirect. Legacy web
     # requests retain their established fallback behavior.
-    if code_verifier is not None:
+    if code_verifier is not None or redirect_uri == "":
         candidate_uris = [redirect_uri]
     client = _google_client()
     try:
@@ -1277,6 +1277,27 @@ async def google_auth_callback(
     if payload.code_verifier is not None:
         return await _process_google_code(payload.code, redirect_uri, db, payload.code_verifier)
     return await _process_google_code(payload.code, redirect_uri, db)
+
+
+class GoogleAndroidCallbackRequest(BaseModel):
+    code: str = Field(min_length=1, max_length=4096)
+
+
+@router.get("/google/android/config", response_model=dict[str, Any])
+async def google_android_config() -> dict[str, Any]:
+    """Public server audience used by the registered Android Google client."""
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
+        raise HTTPException(status_code=503, detail="Google sign-in is not configured")
+    return {"server_client_id": settings.GOOGLE_CLIENT_ID}
+
+
+@router.post("/google/android/callback", response_model=dict[str, Any])
+async def google_android_callback(
+    payload: GoogleAndroidCallbackRequest,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Exchange a one-use native SDK server code using the server credentials."""
+    return await _process_google_code(payload.code, "", db)
 
 
 @router.get("/google/callback")
