@@ -919,7 +919,7 @@ async def get_chat_contacts(
     # --- RULE 5: ADMIN -> ALL TEAM LEADS, ALL TEAM MEMBERS, BDE MEMBERS, CLIENTS, FREELANCERS ---
     if is_admin:
         # A. All Team Leads
-        tl_stmt = select(User).where(User.role.in_([UserRole.TEAM_LEAD, "team_lead", "lead"])).order_by(User.full_name.asc())
+        tl_stmt = select(User).where(User.role.in_([UserRole.TEAM_LEAD])).order_by(User.full_name.asc())
         for tu in (await db.execute(tl_stmt)).scalars().all():
             if tu.id != current_user_id:
                 contacts.append({
@@ -931,7 +931,8 @@ async def get_chat_contacts(
                 })
 
         # B. All Team Members (Specialists across all pods)
-        tm_roles = ["editor", "video_editor", "designer", "graphic_designer", "copywriter", "specialist"]
+        # Only values that exist in the user_role enum: Postgres rejects unknown labels.
+        tm_roles = [UserRole.EDITOR, UserRole.DESIGNER]
         tm_stmt = select(User).where(User.role.in_(tm_roles)).order_by(User.full_name.asc())
         for mu in (await db.execute(tm_stmt)).scalars().all():
             if mu.id != current_user_id:
@@ -969,7 +970,7 @@ async def get_chat_contacts(
                 })
 
         # E. All Freelancers
-        free_stmt = select(User).where(User.role.in_(["freelancer", "freelance"])).order_by(User.full_name.asc())
+        free_stmt = select(User).where(User.role.in_([UserRole.FREELANCER])).order_by(User.full_name.asc())
         for fu in (await db.execute(free_stmt)).scalars().all():
             if fu.id != current_user_id:
                 contacts.append({

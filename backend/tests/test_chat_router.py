@@ -31,3 +31,18 @@ def test_is_staff_channel() -> None:
     assert _is_staff_channel("client-123") is False
     assert _is_staff_channel("pod-creative-hub") is False
     assert _is_staff_channel(None) is False
+
+
+def test_user_role_filters_use_only_enum_values() -> None:
+    # Postgres rejects labels missing from the user_role enum (e.g. "lead"),
+    # which made GET /chat/contacts return 500 for admins.
+    import re
+    from pathlib import Path
+    from app.models.enums import UserRole
+
+    source = (Path(__file__).parents[1] / "app/routers/chat.py").read_text()
+    valid = {r.value for r in UserRole}
+    for args in re.findall(r"User\.role\.in_\(\[([^\]]*)\]", source):
+        for literal in re.findall(r'"([^"]+)"', args):
+            assert literal in valid, f"{literal!r} is not a user_role enum value"
+    assert "tm_roles = [UserRole.EDITOR, UserRole.DESIGNER]" in source
