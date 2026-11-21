@@ -114,7 +114,39 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             except Exception as e:
                 logger.warning("schema_patch_teams_failed", error=str(e))
 
-            # 1.4 Ensure all critical columns exist on users
+            # 1.4 Ensure enums and all critical columns exist on users
+            try:
+                await db.execute(text("""
+                    DO $$ BEGIN
+                        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+                            CREATE TYPE user_role AS ENUM (
+                                'super_admin', 'admin', 'sales', 'bde', 'bde_head', 'team_lead',
+                                'editor', 'designer', 'freelancer', 'client', 'investor_relations'
+                            );
+                        ELSE
+                            BEGIN
+                                ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'bde';
+                                ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'bde_head';
+                                ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'freelancer';
+                            EXCEPTION WHEN OTHERS THEN
+                                NULL;
+                            END;
+                        END IF;
+                    END $$;
+                """))
+                await db.execute(text("""
+                    DO $$ BEGIN
+                        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'account_status') THEN
+                            CREATE TYPE account_status AS ENUM (
+                                'pending_verification', 'active', 'lapsed', 'suspended', 'cancelled'
+                            );
+                        END IF;
+                    END $$;
+                """))
+                await db.commit()
+            except Exception as e:
+                logger.warning("schema_patch_enums_failed", error=str(e))
+
             user_cols = [
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS agency_id UUID;",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS owning_team_id UUID;",
@@ -125,6 +157,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS hashed_password VARCHAR(255);",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_id VARCHAR(255);",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL;",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL;",
                 "UPDATE users SET agency_id = '00000000-0000-0000-0000-000000000001' WHERE agency_id IS NULL;",
             ]
             for col_stmt in user_cols:
@@ -133,6 +167,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                     await db.commit()
                 except Exception as e:
                     logger.warning("schema_patch_users_failed", stmt=col_stmt, error=str(e))
+
+            try:
+                await db.execute(text("""
+                    DO $$
+                    BEGIN
+                        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'role') THEN
+                            ALTER TABLE users ADD COLUMN role user_role DEFAULT 'client' NOT NULL;
+                        END IF;
+                        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'account_status') THEN
+                            ALTER TABLE users ADD COLUMN account_status account_status DEFAULT 'pending_verification' NOT NULL;
+                        END IF;
+                    END $$;
+                """))
+                await db.commit()
+            except Exception as e:
+                logger.warning("schema_patch_users_roles_failed", error=str(e))
 
             # 1.5 Fix users.id data type if it is not UUID, and guarantee primary key
             try:

@@ -23,6 +23,35 @@ def upgrade() -> None:
     # 1. Ensure extensions
     op.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
 
+    # 1.1 Ensure enums exist
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+                CREATE TYPE user_role AS ENUM (
+                    'super_admin', 'admin', 'sales', 'bde', 'bde_head', 'team_lead',
+                    'editor', 'designer', 'freelancer', 'client', 'investor_relations'
+                );
+            ELSE
+                BEGIN
+                    ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'bde';
+                    ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'bde_head';
+                    ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'freelancer';
+                EXCEPTION WHEN OTHERS THEN
+                    NULL;
+                END;
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'account_status') THEN
+                CREATE TYPE account_status AS ENUM (
+                    'pending_verification', 'active', 'lapsed', 'suspended', 'cancelled'
+                );
+            END IF;
+        END $$;
+    """)
+
     # 2. Ensure agencies table exists
     op.execute("""
         CREATE TABLE IF NOT EXISTS agencies (
@@ -69,6 +98,20 @@ def upgrade() -> None:
     op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);")
     op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS hashed_password VARCHAR(255);")
     op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_id VARCHAR(255);")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL;")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL;")
+
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'role') THEN
+                ALTER TABLE users ADD COLUMN role user_role DEFAULT 'client' NOT NULL;
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'account_status') THEN
+                ALTER TABLE users ADD COLUMN account_status account_status DEFAULT 'pending_verification' NOT NULL;
+            END IF;
+        END $$;
+    """)
 
     # Set agency_id fallback
     op.execute("""
@@ -261,11 +304,35 @@ def upgrade() -> None:
         END $$;
     """)
 
-    # 8. Ensure indexes
-    op.execute("CREATE INDEX IF NOT EXISTS idx_users_agency ON users (agency_id, role, created_at);")
-    op.execute("CREATE INDEX IF NOT EXISTS idx_users_role_created_at ON users (role, created_at);")
-    op.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_google_sub ON users (google_sub);")
-    op.execute("CREATE INDEX IF NOT EXISTS ix_users_email_lower ON users (lower(email));")
+    # 8. Ensure indexes safely
+    op.execute("""
+        DO $$
+        BEGIN
+            BEGIN
+                CREATE INDEX IF NOT EXISTS idx_users_agency ON users (agency_id, role, created_at);
+            EXCEPTION WHEN OTHERS THEN
+                NULL;
+            END;
+
+            BEGIN
+                CREATE INDEX IF NOT EXISTS idx_users_role_created_at ON users (role, created_at);
+            EXCEPTION WHEN OTHERS THEN
+                NULL;
+            END;
+
+            BEGIN
+                CREATE UNIQUE INDEX IF NOT EXISTS ix_users_google_sub ON users (google_sub);
+            EXCEPTION WHEN OTHERS THEN
+                NULL;
+            END;
+
+            BEGIN
+                CREATE INDEX IF NOT EXISTS ix_users_email_lower ON users (lower(email));
+            EXCEPTION WHEN OTHERS THEN
+                NULL;
+            END;
+        END $$;
+    """)
 
 
 def downgrade() -> None:
