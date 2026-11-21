@@ -134,23 +134,76 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 except Exception as e:
                     logger.warning("schema_patch_users_failed", stmt=col_stmt, error=str(e))
 
-            # 1.5 Fix any integer vs uuid mismatch on client_profiles and ensure it exists
+            # 1.5 Fix users.id data type if it is not UUID, and guarantee primary key
             try:
                 await db.execute(text("""
                     DO $$
                     DECLARE
                         u_type text;
-                        cp_type text;
+                        u_udt text;
+                        fk_rec record;
                     BEGIN
-                        SELECT data_type INTO u_type FROM information_schema.columns 
+                        SELECT data_type, udt_name INTO u_type, u_udt FROM information_schema.columns 
                         WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'id';
                         
-                        SELECT data_type INTO cp_type FROM information_schema.columns 
-                        WHERE table_schema = 'public' AND table_name = 'client_profiles' AND column_name = 'user_id';
-                        
-                        IF cp_type IS NULL THEN
-                            CREATE TABLE IF NOT EXISTS client_profiles (
-                                user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                        IF u_type IS NOT NULL AND u_type != 'uuid' AND u_udt != 'uuid' THEN
+                            FOR fk_rec IN (
+                                SELECT tc.table_name, tc.constraint_name
+                                FROM information_schema.table_constraints tc
+                                JOIN information_schema.constraint_column_usage ccu 
+                                  ON ccu.constraint_name = tc.constraint_name 
+                                  AND ccu.table_schema = tc.table_schema
+                                WHERE ccu.table_name = 'users' 
+                                  AND ccu.column_name = 'id' 
+                                  AND tc.constraint_type = 'FOREIGN KEY'
+                                  AND tc.table_schema = 'public'
+                            ) LOOP
+                                EXECUTE 'ALTER TABLE ' || quote_ident(fk_rec.table_name) || ' DROP CONSTRAINT IF EXISTS ' || quote_ident(fk_rec.constraint_name) || ' CASCADE';
+                            END LOOP;
+                            
+                            ALTER TABLE users DROP CONSTRAINT IF EXISTS users_pkey CASCADE;
+                            
+                            ALTER TABLE users ADD COLUMN IF NOT EXISTS new_uuid_id UUID DEFAULT gen_random_uuid();
+                            UPDATE users SET new_uuid_id = 
+                                CASE 
+                                    WHEN id::text ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' 
+                                    THEN id::text::uuid 
+                                    ELSE gen_random_uuid() 
+                                END;
+                            ALTER TABLE users DROP COLUMN id CASCADE;
+                            ALTER TABLE users RENAME COLUMN new_uuid_id TO id;
+                            ALTER TABLE users ALTER COLUMN id SET NOT NULL;
+                            ALTER TABLE users ALTER COLUMN id SET DEFAULT gen_random_uuid();
+                            ALTER TABLE users ADD PRIMARY KEY (id);
+                        END IF;
+
+                        IF NOT EXISTS (
+                            SELECT 1 FROM information_schema.table_constraints tc
+                            JOIN information_schema.constraint_column_usage ccu 
+                              ON ccu.constraint_name = tc.constraint_name 
+                              AND ccu.table_schema = tc.table_schema
+                            WHERE tc.table_name = 'users' 
+                              AND ccu.column_name = 'id' 
+                              AND tc.constraint_type = 'PRIMARY KEY'
+                              AND tc.table_schema = 'public'
+                        ) THEN
+                            ALTER TABLE users DROP CONSTRAINT IF EXISTS users_pkey CASCADE;
+                            ALTER TABLE users ADD PRIMARY KEY (id);
+                        END IF;
+                    END $$;
+                """))
+                await db.commit()
+            except Exception as e:
+                logger.warning("schema_patch_users_id_failed", error=str(e))
+
+            # 1.6 Ensure client_profiles table exists and has UUID primary key
+            try:
+                await db.execute(text("""
+                    DO $$
+                    BEGIN
+                        IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'client_profiles') THEN
+                            CREATE TABLE client_profiles (
+                                user_id UUID PRIMARY KEY,
                                 company_name TEXT,
                                 brand_logo_url TEXT,
                                 instagram_username VARCHAR(255),
@@ -173,65 +226,87 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                                 created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
                                 updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
                             );
-                        ELSIF cp_type IN ('integer', 'bigint', 'smallint') AND u_type = 'uuid' THEN
+                        ELSE
                             BEGIN
                                 ALTER TABLE client_profiles DROP CONSTRAINT IF EXISTS client_profiles_pkey CASCADE;
                                 ALTER TABLE client_profiles ALTER COLUMN user_id TYPE UUID USING user_id::text::uuid;
                                 ALTER TABLE client_profiles ADD PRIMARY KEY (user_id);
-                                ALTER TABLE client_profiles ADD CONSTRAINT client_profiles_user_id_fkey 
-                                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
                             EXCEPTION WHEN OTHERS THEN
-                                DROP TABLE client_profiles CASCADE;
-                                CREATE TABLE client_profiles (
-                                    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-                                    company_name TEXT,
-                                    brand_logo_url TEXT,
-                                    instagram_username VARCHAR(255),
-                                    instagram_user_id VARCHAR(255),
-                                    ig_token_encrypted BYTEA,
-                                    ig_connection_id UUID,
-                                    ig_connection_status VARCHAR(30) DEFAULT 'disconnected',
-                                    ig_metadata JSONB DEFAULT '{}'::jsonb,
-                                    ig_token_expires_at TIMESTAMPTZ,
-                                    brand_summary TEXT,
-                                    brand_dna JSONB DEFAULT '{}'::jsonb NOT NULL,
-                                    brand_dna_version INT DEFAULT 1 NOT NULL,
-                                    brand_dna_source VARCHAR(20) DEFAULT 'template' NOT NULL,
-                                    timezone VARCHAR(50) DEFAULT 'Asia/Kolkata' NOT NULL,
-                                    calendar_template JSONB DEFAULT NULL,
-                                    terms_accepted_at TIMESTAMPTZ,
-                                    terms_version VARCHAR(50),
-                                    onboarding_completed_at TIMESTAMPTZ,
-                                    onboarding_deadline TIMESTAMPTZ,
-                                    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-                                    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
-                                );
+                                NULL;
                             END;
                         END IF;
+
+                        BEGIN
+                            ALTER TABLE client_profiles DROP CONSTRAINT IF EXISTS client_profiles_user_id_fkey;
+                            ALTER TABLE client_profiles ADD CONSTRAINT client_profiles_user_id_fkey 
+                                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+                        EXCEPTION WHEN OTHERS THEN
+                            NULL;
+                        END;
                     END $$;
                 """))
                 await db.commit()
             except Exception as e:
                 logger.warning("schema_patch_client_profiles_failed", error=str(e))
 
-            # 1.6 Ensure staff_profiles table exists
+            # 1.7 Ensure staff_profiles table exists and has safe foreign keys
             try:
                 await db.execute(text("""
-                    CREATE TABLE IF NOT EXISTS staff_profiles (
-                        user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-                        agency_id UUID,
-                        department VARCHAR(50) DEFAULT 'creative' NOT NULL,
-                        craft_role VARCHAR(30) DEFAULT 'graphic_designer' NOT NULL,
-                        skills TEXT[] DEFAULT '{}'::text[] NOT NULL,
-                        sub_skills TEXT[] DEFAULT '{}'::text[] NOT NULL,
-                        daily_capacity INT DEFAULT 4 NOT NULL,
-                        daily_points INT DEFAULT 8 NOT NULL,
-                        monthly_points INT DEFAULT 100 NOT NULL,
-                        is_accepting_work BOOLEAN DEFAULT true NOT NULL,
-                        team_lead_id UUID REFERENCES users(id) ON DELETE SET NULL,
-                        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-                        updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
-                    );
+                    DO $$
+                    BEGIN
+                        IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'staff_profiles') THEN
+                            CREATE TABLE staff_profiles (
+                                user_id UUID PRIMARY KEY,
+                                agency_id UUID,
+                                department VARCHAR(50) DEFAULT 'creative' NOT NULL,
+                                craft_role VARCHAR(30) DEFAULT 'graphic_designer' NOT NULL,
+                                skills TEXT[] DEFAULT '{}'::text[] NOT NULL,
+                                sub_skills TEXT[] DEFAULT '{}'::text[] NOT NULL,
+                                daily_capacity INT DEFAULT 4 NOT NULL,
+                                daily_points INT DEFAULT 8 NOT NULL,
+                                monthly_points INT DEFAULT 100 NOT NULL,
+                                is_accepting_work BOOLEAN DEFAULT true NOT NULL,
+                                team_lead_id UUID,
+                                created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+                                updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+                            );
+                        ELSE
+                            ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS agency_id UUID;
+                            ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS department VARCHAR(50) DEFAULT 'creative' NOT NULL;
+                            ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS craft_role VARCHAR(30) DEFAULT 'graphic_designer' NOT NULL;
+                            ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS skills TEXT[] DEFAULT '{}'::text[] NOT NULL;
+                            ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS sub_skills TEXT[] DEFAULT '{}'::text[] NOT NULL;
+                            ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS daily_capacity INT DEFAULT 4 NOT NULL;
+                            ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS daily_points INT DEFAULT 8 NOT NULL;
+                            ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS monthly_points INT DEFAULT 100 NOT NULL;
+                            ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS is_accepting_work BOOLEAN DEFAULT true NOT NULL;
+                            ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS team_lead_id UUID;
+                        END IF;
+
+                        BEGIN
+                            ALTER TABLE staff_profiles DROP CONSTRAINT IF EXISTS staff_profiles_user_id_fkey;
+                            ALTER TABLE staff_profiles ADD CONSTRAINT staff_profiles_user_id_fkey 
+                                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+                        EXCEPTION WHEN OTHERS THEN
+                            NULL;
+                        END;
+
+                        BEGIN
+                            ALTER TABLE staff_profiles DROP CONSTRAINT IF EXISTS staff_profiles_agency_id_fkey;
+                            ALTER TABLE staff_profiles ADD CONSTRAINT staff_profiles_agency_id_fkey 
+                                FOREIGN KEY (agency_id) REFERENCES agencies(id) ON DELETE CASCADE;
+                        EXCEPTION WHEN OTHERS THEN
+                            NULL;
+                        END;
+
+                        BEGIN
+                            ALTER TABLE staff_profiles DROP CONSTRAINT IF EXISTS staff_profiles_team_lead_id_fkey;
+                            ALTER TABLE staff_profiles ADD CONSTRAINT staff_profiles_team_lead_id_fkey 
+                                FOREIGN KEY (team_lead_id) REFERENCES users(id) ON DELETE SET NULL;
+                        EXCEPTION WHEN OTHERS THEN
+                            NULL;
+                        END;
+                    END $$;
                 """))
                 await db.commit()
             except Exception as e:
