@@ -7,12 +7,12 @@ services:
     region: singapore
     plan: standard
     numInstances: 2
-    buildCommand: "cd backend && (poetry install --no-root --only main || pip install -r requirements.txt)"
+    buildCommand: "if [ -d backend ]; then cd backend; fi; (poetry install --no-root --only main || pip install -r requirements.txt)"
     # IMPORTANT: alembic upgrade head runs in startCommand, NEVER in buildCommand.
     # Build commands execute before database environment bindings are provisioned
     # and multiple concurrent builds can cause DDL race conditions.
-    preDeployCommand: "cd backend && alembic upgrade head"
-    startCommand: "cd backend && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2"
+    preDeployCommand: "if [ -d backend ]; then cd backend; fi; python -m alembic upgrade head"
+    startCommand: "if [ -d backend ]; then cd backend; fi; python -m alembic upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2"
     # Liveness must not repeatedly poll PostgreSQL and Redis.
     # /api/v1/health remains available for dependency monitoring.
     healthCheckPath: /
@@ -95,8 +95,8 @@ services:
     runtime: python
     region: singapore
     plan: standard
-    buildCommand: "cd backend && (poetry install --no-root --only main || pip install -r requirements.txt)"
-    startCommand: "cd backend && celery -A app.workers.celery_app worker -Q publish,default -c 4 --loglevel=info"
+    buildCommand: "if [ -d backend ]; then cd backend; fi; (poetry install --no-root --only main || pip install -r requirements.txt)"
+    startCommand: "if [ -d backend ]; then cd backend; fi; python -m celery -A app.workers.celery_app worker -Q publish,default -c 4 --loglevel=info"
     envVars:
       - key: JWT_SECRET
         fromService:
@@ -236,12 +236,12 @@ services:
     runtime: python
     region: singapore
     plan: starter
-    buildCommand: "cd backend && (poetry install --no-root --only main || pip install -r requirements.txt)"
+    buildCommand: "if [ -d backend ]; then cd backend; fi; (poetry install --no-root --only main || pip install -r requirements.txt)"
     # CRITICAL INVARIANT: NEVER scale creo-beat above 1 instance.
     # While database rows use FOR UPDATE SKIP LOCKED for due publish pickup,
     # running multiple Celery beat instances causes duplicate scheduling of
     # notification sweeps, KPI refreshes, and maintenance crons.
-    startCommand: "cd backend && celery -A app.workers.celery_app beat --loglevel=info"
+    startCommand: "if [ -d backend ]; then cd backend; fi; python -m celery -A app.workers.celery_app beat --loglevel=info"
     envVars:
       - key: DATABASE_URL
         fromDatabase:

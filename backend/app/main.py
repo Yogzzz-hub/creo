@@ -181,6 +181,20 @@ async def bootstrap_admin_accounts(db: AsyncSession) -> None:
     await db.commit()
 
 
+def _run_alembic_upgrade() -> None:
+    """Run alembic upgrade head synchronously in a worker thread."""
+    from alembic.config import Config
+    from alembic import command
+    import os
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ini_path = os.path.join(base_dir, "alembic.ini")
+    alembic_cfg = Config(ini_path)
+    alembic_cfg.set_main_option("script_location", os.path.join(base_dir, "alembic"))
+    alembic_cfg.set_main_option("prepend_sys_path", base_dir)
+    command.upgrade(alembic_cfg, "head")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan context manager for startup and shutdown."""
@@ -192,6 +206,19 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     )
     # 1. Deployment and database schema readiness verification
     from app.db.session import AsyncSessionLocal
+    async with AsyncSessionLocal() as db:
+        ready, reason = await check_database_schema_ready(db)
+        if not ready:
+            logger.warning("database_schema_not_ready_attempting_auto_upgrade", reason=reason)
+
+    if not ready:
+        try:
+            import asyncio
+            await asyncio.to_thread(_run_alembic_upgrade)
+            logger.info("auto_alembic_upgrade_completed")
+        except Exception as exc:
+            logger.error("auto_alembic_upgrade_failed", error=str(exc))
+
     async with AsyncSessionLocal() as db:
         ready, reason = await check_database_schema_ready(db)
         if not ready:
