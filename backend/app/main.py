@@ -60,62 +60,185 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         environment=settings.ENVIRONMENT,
         version=settings.VERSION,
     )
-    # Ensure default super admin exists and has valid hashed credentials
+    # 1. Self-healing database schema initialization (raw DDL without ORM models)
     try:
         from app.db.session import AsyncSessionLocal
-        from app.models.user import User
-        from app.models.enums import UserRole, AccountStatus
-        from app.core.security import hash_password
-        from sqlalchemy import select
         async with AsyncSessionLocal() as db:
-            for s_email, s_auth, s_name in [
-                ("admin@creo.agency", "auth_admin_001", "Creo Super Admin"),
-                ("superadmin@creo.agency", "auth_superadmin_001", "Creo Platform Super Admin"),
-            ]:
-                res = await db.execute(select(User).where(User.email == s_email))
-                user_record = res.scalar_one_or_none()
-                if not user_record and settings.ENVIRONMENT == "development":
-                    user_record = User(
-                        email=s_email,
-                        auth_id=s_auth,
-                        full_name=s_name,
-                        role=UserRole.SUPER_ADMIN,
-                        account_status=AccountStatus.ACTIVE,
-                        hashed_password=hash_password("Admin123!"),
-                    )
-                    db.add(user_record)
-                    await db.commit()
+            # 1.1 Ensure required extensions
+            try:
+                await db.execute(text("CREATE EXTENSION IF NOT EXISTS pgcrypto;"))
+            except Exception:
+                pass
 
-            # Ensure plan_negotiations table exists
-            await db.execute(text("""
-                CREATE TABLE IF NOT EXISTS plan_negotiations (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                    client_email VARCHAR(255) NOT NULL,
-                    client_name VARCHAR(255),
-                    proposed_budget VARCHAR(255),
-                    contact_phone VARCHAR(50) NOT NULL,
-                    preferred_window VARCHAR(100) NOT NULL,
-                    target_topic VARCHAR(255),
-                    notes TEXT,
-                    status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED')),
-                    agreed_amount INTEGER,
-                    razorpay_custom_plan_id VARCHAR(255),
-                    order_id VARCHAR(255),
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
-                );
-            """))
-            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_negotiations_client_id ON plan_negotiations(client_id);"))
-            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_negotiations_status ON plan_negotiations(status);"))
-            # Ensure custom quota columns exist in plan_negotiations
+            # 1.2 Ensure agencies table exists and default agency is seeded
+            try:
+                await db.execute(text("""
+                    CREATE TABLE IF NOT EXISTS agencies (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        name TEXT NOT NULL,
+                        slug VARCHAR(100) UNIQUE NOT NULL,
+                        custom_domain VARCHAR(255) UNIQUE,
+                        status VARCHAR(20) DEFAULT 'active' NOT NULL,
+                        plan_tier VARCHAR(30) DEFAULT 'enterprise' NOT NULL,
+                        max_clients INT DEFAULT 2000 NOT NULL,
+                        max_staff INT DEFAULT 100 NOT NULL,
+                        branding JSONB DEFAULT '{}'::jsonb NOT NULL,
+                        timezone VARCHAR(50) DEFAULT 'Asia/Kolkata' NOT NULL,
+                        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+                        updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+                    );
+                """))
+                await db.execute(text("""
+                    INSERT INTO agencies (id, name, slug, status, plan_tier, max_clients, max_staff, branding, timezone)
+                    VALUES ('00000000-0000-0000-0000-000000000001', 'Creo Digital', 'creo', 'active', 'enterprise', 2000, 100, '{}', 'Asia/Kolkata')
+                    ON CONFLICT (slug) DO NOTHING;
+                """))
+                await db.commit()
+            except Exception as e:
+                logger.warning("schema_patch_agencies_failed", error=str(e))
+
+            # 1.3 Ensure teams table exists
+            try:
+                await db.execute(text("""
+                    CREATE TABLE IF NOT EXISTS teams (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        agency_id UUID NOT NULL REFERENCES agencies(id) ON DELETE CASCADE,
+                        name VARCHAR(150) NOT NULL,
+                        lead_id UUID,
+                        is_active BOOLEAN DEFAULT TRUE NOT NULL,
+                        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+                        updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+                    );
+                """))
+                await db.commit()
+            except Exception as e:
+                logger.warning("schema_patch_teams_failed", error=str(e))
+
+            # 1.4 Ensure all critical columns exist on users
+            user_cols = [
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS agency_id UUID;",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS owning_team_id UUID;",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS must_reset_password BOOLEAN DEFAULT FALSE NOT NULL;",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub VARCHAR(255);",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INT DEFAULT 0 NOT NULL;",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS hashed_password VARCHAR(255);",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_id VARCHAR(255);",
+                "UPDATE users SET agency_id = '00000000-0000-0000-0000-000000000001' WHERE agency_id IS NULL;",
+            ]
+            for col_stmt in user_cols:
+                try:
+                    await db.execute(text(col_stmt))
+                    await db.commit()
+                except Exception as e:
+                    logger.warning("schema_patch_users_failed", stmt=col_stmt, error=str(e))
+
+            # 1.5 Fix any integer vs uuid mismatch on client_profiles and ensure it exists
+            try:
+                await db.execute(text("""
+                    DO $$
+                    DECLARE
+                        u_type text;
+                        cp_type text;
+                    BEGIN
+                        SELECT data_type INTO u_type FROM information_schema.columns 
+                        WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'id';
+                        
+                        SELECT data_type INTO cp_type FROM information_schema.columns 
+                        WHERE table_schema = 'public' AND table_name = 'client_profiles' AND column_name = 'user_id';
+                        
+                        IF cp_type IS NULL THEN
+                            CREATE TABLE IF NOT EXISTS client_profiles (
+                                user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                                company_name TEXT,
+                                brand_logo_url TEXT,
+                                instagram_username VARCHAR(255),
+                                instagram_user_id VARCHAR(255),
+                                ig_token_encrypted BYTEA,
+                                ig_connection_id UUID,
+                                ig_connection_status VARCHAR(30) DEFAULT 'disconnected',
+                                ig_metadata JSONB DEFAULT '{}'::jsonb,
+                                ig_token_expires_at TIMESTAMPTZ,
+                                brand_summary TEXT,
+                                brand_dna JSONB DEFAULT '{}'::jsonb NOT NULL,
+                                brand_dna_version INT DEFAULT 1 NOT NULL,
+                                brand_dna_source VARCHAR(20) DEFAULT 'template' NOT NULL,
+                                timezone VARCHAR(50) DEFAULT 'Asia/Kolkata' NOT NULL,
+                                calendar_template JSONB DEFAULT NULL,
+                                terms_accepted_at TIMESTAMPTZ,
+                                terms_version VARCHAR(50),
+                                onboarding_completed_at TIMESTAMPTZ,
+                                onboarding_deadline TIMESTAMPTZ,
+                                created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+                                updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+                            );
+                        ELSIF cp_type IN ('integer', 'bigint', 'smallint') AND u_type = 'uuid' THEN
+                            BEGIN
+                                ALTER TABLE client_profiles DROP CONSTRAINT IF EXISTS client_profiles_pkey CASCADE;
+                                ALTER TABLE client_profiles ALTER COLUMN user_id TYPE UUID USING user_id::text::uuid;
+                                ALTER TABLE client_profiles ADD PRIMARY KEY (user_id);
+                                ALTER TABLE client_profiles ADD CONSTRAINT client_profiles_user_id_fkey 
+                                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+                            EXCEPTION WHEN OTHERS THEN
+                                DROP TABLE client_profiles CASCADE;
+                                CREATE TABLE client_profiles (
+                                    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                                    company_name TEXT,
+                                    brand_logo_url TEXT,
+                                    instagram_username VARCHAR(255),
+                                    instagram_user_id VARCHAR(255),
+                                    ig_token_encrypted BYTEA,
+                                    ig_connection_id UUID,
+                                    ig_connection_status VARCHAR(30) DEFAULT 'disconnected',
+                                    ig_metadata JSONB DEFAULT '{}'::jsonb,
+                                    ig_token_expires_at TIMESTAMPTZ,
+                                    brand_summary TEXT,
+                                    brand_dna JSONB DEFAULT '{}'::jsonb NOT NULL,
+                                    brand_dna_version INT DEFAULT 1 NOT NULL,
+                                    brand_dna_source VARCHAR(20) DEFAULT 'template' NOT NULL,
+                                    timezone VARCHAR(50) DEFAULT 'Asia/Kolkata' NOT NULL,
+                                    calendar_template JSONB DEFAULT NULL,
+                                    terms_accepted_at TIMESTAMPTZ,
+                                    terms_version VARCHAR(50),
+                                    onboarding_completed_at TIMESTAMPTZ,
+                                    onboarding_deadline TIMESTAMPTZ,
+                                    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+                                    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+                                );
+                            END;
+                        END IF;
+                    END $$;
+                """))
+                await db.commit()
+            except Exception as e:
+                logger.warning("schema_patch_client_profiles_failed", error=str(e))
+
+            # 1.6 Ensure staff_profiles table exists
+            try:
+                await db.execute(text("""
+                    CREATE TABLE IF NOT EXISTS staff_profiles (
+                        user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                        agency_id UUID,
+                        department VARCHAR(50) DEFAULT 'creative' NOT NULL,
+                        craft_role VARCHAR(30) DEFAULT 'graphic_designer' NOT NULL,
+                        skills TEXT[] DEFAULT '{}'::text[] NOT NULL,
+                        sub_skills TEXT[] DEFAULT '{}'::text[] NOT NULL,
+                        daily_capacity INT DEFAULT 4 NOT NULL,
+                        daily_points INT DEFAULT 8 NOT NULL,
+                        monthly_points INT DEFAULT 100 NOT NULL,
+                        is_accepting_work BOOLEAN DEFAULT true NOT NULL,
+                        team_lead_id UUID REFERENCES users(id) ON DELETE SET NULL,
+                        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+                        updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+                    );
+                """))
+                await db.commit()
+            except Exception as e:
+                logger.warning("schema_patch_staff_profiles_failed", error=str(e))
+
+            # 1.7 Ensure other supporting tables & columns
             col_stmts = [
-                "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS agreed_amount bigint;",
-                "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS reel_quota integer DEFAULT 8;",
-                "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS poster_quota integer DEFAULT 12;",
-                "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS story_quota integer DEFAULT 15;",
-                "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS order_id varchar(255);",
-                "ALTER TABLE plan_negotiations ADD COLUMN IF NOT EXISTS razorpay_custom_plan_id varchar(255);",
                 "ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS voice_note_url text;",
                 "ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS voice_note_duration integer;",
                 "ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS attachment_url text;",
@@ -126,75 +249,163 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             for col_stmt in col_stmts:
                 try:
                     await db.execute(text(col_stmt))
+                    await db.commit()
                 except Exception:
                     pass
-            # Ensure manual_payment_requests table exists
-            await db.execute(text("""
-                CREATE TABLE IF NOT EXISTS manual_payment_requests (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                    plan_id UUID NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
-                    payment_method VARCHAR(50) NOT NULL DEFAULT 'cash',
-                    amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
-                    reference_note TEXT,
-                    status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED')),
-                    reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
-                    reviewed_at TIMESTAMP WITH TIME ZONE,
-                    admin_notes TEXT,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
-                );
-            """))
-            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_manual_payments_client_id ON manual_payment_requests(client_id);"))
-            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_manual_payments_status ON manual_payment_requests(status);"))
-            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_manual_payments_created_at ON manual_payment_requests(created_at);"))
 
-            # Ensure BDE Proposals table exists
-            await db.execute(text("""
-                CREATE TABLE IF NOT EXISTS bde_proposals (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    lead_id UUID NOT NULL REFERENCES bde_leads(id) ON DELETE CASCADE,
-                    bde_id UUID REFERENCES users(id) ON DELETE SET NULL,
-                    plan_name VARCHAR(100) NOT NULL DEFAULT 'Growth Retainer',
-                    monthly_fee BIGINT NOT NULL,
-                    discount_pct BIGINT NOT NULL DEFAULT 0,
-                    final_monthly_fee BIGINT NOT NULL,
-                    contract_months BIGINT NOT NULL DEFAULT 6,
-                    total_contract_value BIGINT NOT NULL,
-                    deliverables JSONB NOT NULL DEFAULT '{}'::jsonb,
-                    status VARCHAR(50) NOT NULL DEFAULT 'sent',
-                    notes TEXT,
-                    valid_until TIMESTAMP WITH TIME ZONE,
-                    accepted_at TIMESTAMP WITH TIME ZONE,
-                    metadata_extra JSONB NOT NULL DEFAULT '{}'::jsonb,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
-                );
-            """))
-            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_bde_proposals_lead_id ON bde_proposals(lead_id);"))
-            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_bde_proposals_status ON bde_proposals(status);"))
+            # 1.8 Ensure plan_negotiations
+            try:
+                await db.execute(text("""
+                    CREATE TABLE IF NOT EXISTS plan_negotiations (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                        client_email VARCHAR(255) NOT NULL,
+                        client_name VARCHAR(255),
+                        proposed_budget VARCHAR(255),
+                        contact_phone VARCHAR(50) NOT NULL,
+                        preferred_window VARCHAR(100) NOT NULL,
+                        target_topic VARCHAR(255),
+                        notes TEXT,
+                        status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED')),
+                        agreed_amount BIGINT,
+                        reel_quota INTEGER DEFAULT 8,
+                        poster_quota INTEGER DEFAULT 12,
+                        story_quota INTEGER DEFAULT 15,
+                        razorpay_custom_plan_id VARCHAR(255),
+                        order_id VARCHAR(255),
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+                    );
+                """))
+                await db.execute(text("CREATE INDEX IF NOT EXISTS idx_negotiations_client_id ON plan_negotiations(client_id);"))
+                await db.execute(text("CREATE INDEX IF NOT EXISTS idx_negotiations_status ON plan_negotiations(status);"))
+                await db.commit()
+            except Exception as e:
+                logger.warning("schema_patch_negotiations_failed", error=str(e))
 
-            # Ensure BDE Targets & Quota table exists
-            await db.execute(text("""
-                CREATE TABLE IF NOT EXISTS bde_targets (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    bde_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                    month VARCHAR(7) NOT NULL,
-                    monthly_quota BIGINT NOT NULL DEFAULT 2500000,
-                    closed_revenue BIGINT NOT NULL DEFAULT 0,
-                    commission_rate DOUBLE PRECISION NOT NULL DEFAULT 5.0,
-                    commission_earned BIGINT NOT NULL DEFAULT 0,
-                    deals_won BIGINT NOT NULL DEFAULT 0,
-                    notes TEXT,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
-                );
-            """))
-            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_bde_targets_bde_month ON bde_targets(bde_id, month);"))
+            # 1.9 Ensure manual_payment_requests
+            try:
+                await db.execute(text("""
+                    CREATE TABLE IF NOT EXISTS manual_payment_requests (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                        plan_id UUID NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
+                        payment_method VARCHAR(50) NOT NULL DEFAULT 'cash',
+                        amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+                        reference_note TEXT,
+                        status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED')),
+                        reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+                        reviewed_at TIMESTAMP WITH TIME ZONE,
+                        admin_notes TEXT,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+                    );
+                """))
+                await db.execute(text("CREATE INDEX IF NOT EXISTS idx_manual_payments_client_id ON manual_payment_requests(client_id);"))
+                await db.execute(text("CREATE INDEX IF NOT EXISTS idx_manual_payments_status ON manual_payment_requests(status);"))
+                await db.execute(text("CREATE INDEX IF NOT EXISTS idx_manual_payments_created_at ON manual_payment_requests(created_at);"))
+                await db.commit()
+            except Exception as e:
+                logger.warning("schema_patch_manual_payments_failed", error=str(e))
 
-            await db.commit()
+            # 1.10 Ensure bde_proposals and bde_targets
+            try:
+                await db.execute(text("""
+                    CREATE TABLE IF NOT EXISTS bde_proposals (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        lead_id UUID NOT NULL REFERENCES bde_leads(id) ON DELETE CASCADE,
+                        bde_id UUID REFERENCES users(id) ON DELETE SET NULL,
+                        plan_name VARCHAR(100) NOT NULL DEFAULT 'Growth Retainer',
+                        monthly_fee BIGINT NOT NULL,
+                        discount_pct BIGINT NOT NULL DEFAULT 0,
+                        final_monthly_fee BIGINT NOT NULL,
+                        contract_months BIGINT NOT NULL DEFAULT 6,
+                        total_contract_value BIGINT NOT NULL,
+                        deliverables JSONB NOT NULL DEFAULT '{}'::jsonb,
+                        status VARCHAR(50) NOT NULL DEFAULT 'sent',
+                        notes TEXT,
+                        valid_until TIMESTAMP WITH TIME ZONE,
+                        accepted_at TIMESTAMP WITH TIME ZONE,
+                        metadata_extra JSONB NOT NULL DEFAULT '{}'::jsonb,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+                    );
+                """))
+                await db.execute(text("CREATE INDEX IF NOT EXISTS idx_bde_proposals_lead_id ON bde_proposals(lead_id);"))
+                await db.execute(text("CREATE INDEX IF NOT EXISTS idx_bde_proposals_status ON bde_proposals(status);"))
+                await db.execute(text("""
+                    CREATE TABLE IF NOT EXISTS bde_targets (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        bde_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                        month VARCHAR(7) NOT NULL,
+                        monthly_quota BIGINT NOT NULL DEFAULT 2500000,
+                        closed_revenue BIGINT NOT NULL DEFAULT 0,
+                        commission_rate DOUBLE PRECISION NOT NULL DEFAULT 5.0,
+                        commission_earned BIGINT NOT NULL DEFAULT 0,
+                        deals_won BIGINT NOT NULL DEFAULT 0,
+                        notes TEXT,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+                    );
+                """))
+                await db.execute(text("CREATE INDEX IF NOT EXISTS idx_bde_targets_bde_month ON bde_targets(bde_id, month);"))
+                await db.commit()
+            except Exception as e:
+                logger.warning("schema_patch_bde_failed", error=str(e))
+
+            # 2. Seed and ensure all core staff accounts exist with valid Admin123! credentials
+            try:
+                import uuid
+                from app.models.user import User
+                from app.models.enums import UserRole, AccountStatus
+                from app.core.security import hash_password
+                from sqlalchemy import select, func
+
+                default_staff = [
+                    ("admin@creo.agency", "auth_admin_001", "Creo Super Admin", UserRole.SUPER_ADMIN),
+                    ("superadmin@creo.agency", "auth_superadmin_001", "Creo Platform Super Admin", UserRole.SUPER_ADMIN),
+                    ("ops.admin@creo.agency", "auth_ops_admin", "Aarav Sharma (Operations Admin)", UserRole.ADMIN),
+                    ("creative.admin@creo.agency", "auth_creative_admin", "Pooja Nambiar (Creative Admin)", UserRole.ADMIN),
+                    ("lead.alpha@creo.agency", "auth_lead_alpha", "Vikram Malhotra (Lead - Pod Alpha)", UserRole.TEAM_LEAD),
+                    ("editor.alpha@creo.agency", "auth_editor_alpha", "Karthik Raja (Editor - Pod Alpha)", UserRole.EDITOR),
+                    ("designer.alpha@creo.agency", "auth_designer_alpha", "Ananya Deshmukh (Designer - Pod Alpha)", UserRole.DESIGNER),
+                    ("lead.beta@creo.agency", "auth_lead_beta", "Sarah Connor (Lead - Pod B)", UserRole.TEAM_LEAD),
+                    ("lead@creo.agency", "auth_lead_generic", "Sarah Connor (Lead - Pod B)", UserRole.TEAM_LEAD),
+                    ("editor@creo.agency", "auth_editor_generic", "Pranav Rajesh (Video)", UserRole.EDITOR),
+                    ("designer@creo.agency", "auth_designer_generic", "Rishi Varma (Design)", UserRole.DESIGNER),
+                ]
+                default_agency_id = uuid.UUID("00000000-0000-0000-0000-000000000001")
+                admin_pw_hash = hash_password("Admin123!")
+
+                for s_email, s_auth, s_name, s_role in default_staff:
+                    res = await db.execute(select(User).where(func.lower(User.email) == s_email.lower()))
+                    user_record = res.scalar_one_or_none()
+                    if not user_record:
+                        user_record = User(
+                            id=uuid.uuid4(),
+                            agency_id=default_agency_id,
+                            email=s_email.lower(),
+                            auth_id=s_auth,
+                            full_name=s_name,
+                            role=s_role,
+                            account_status=AccountStatus.ACTIVE,
+                            hashed_password=admin_pw_hash,
+                            must_reset_password=False,
+                        )
+                        db.add(user_record)
+                    else:
+                        user_record.role = s_role
+                        user_record.account_status = AccountStatus.ACTIVE
+                        user_record.hashed_password = admin_pw_hash
+                        user_record.must_reset_password = False
+                        if not user_record.agency_id:
+                            user_record.agency_id = default_agency_id
+                await db.commit()
+            except Exception as e:
+                logger.warning("admin_bootstrap_warning", error=str(e))
+
     except Exception as e:
-        logger.warning("admin_bootstrap_warning", error=str(e))
+        logger.warning("database_lifespan_init_warning", error=str(e))
     import asyncio
     from app.services.instagram_test_post import scheduled_test_loop
     from app.workers.tasks.scheduler import publishing_recovery_loop

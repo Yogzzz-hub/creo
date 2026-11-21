@@ -18,7 +18,7 @@ from fastapi.responses import RedirectResponse
 import httpx
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select, func, update, or_
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -181,7 +181,7 @@ async def _get_user_by_email(db: AsyncSession, email: str) -> User | None:
     """Case-insensitive lookup; the oldest row wins if legacy case-variant duplicates exist."""
     stmt = (
         select(User)
-        .options(joinedload(User.client_profile))
+        .options(selectinload(User.client_profile))
         .where(func.lower(User.email) == _normalize_email(email))
         .order_by(User.created_at.asc())
         .limit(1)
@@ -266,11 +266,12 @@ async def _apply_new_password(user: User, new_password: str) -> None:
 
 
 def _user_payload(user: User, stage: int) -> dict[str, Any]:
-    company_name = (
-        user.client_profile.company_name
-        if "client_profile" in user.__dict__ and user.client_profile
-        else None
-    )
+    company_name = None
+    try:
+        if getattr(user, "client_profile", None):
+            company_name = user.client_profile.company_name
+    except Exception:
+        company_name = None
     return {
         "id": str(user.id),
         "email": user.email,
