@@ -23,6 +23,19 @@ target_metadata = Base.metadata
 # Reason: PgBouncer in transaction pooling mode prevents DDL operations, schema lock acquisition,
 # and causes Prepared Statement Cache conflicts during migration runs.
 direct_db_url = settings.DIRECT_DATABASE_URL
+if not direct_db_url or ("localhost" in direct_db_url and "localhost" not in (settings.DATABASE_URL or "")):
+    direct_db_url = settings.DATABASE_URL or direct_db_url
+
+# If the URL points to Supabase transaction pooler (port 6543), switch to direct port 5432
+if ":6543" in direct_db_url:
+    direct_db_url = direct_db_url.replace(":6543", ":5432")
+
+# Ensure asyncpg dialect is present for async engine
+for prefix in ("postgres://", "postgresql://"):
+    if direct_db_url.startswith(prefix):
+        direct_db_url = "postgresql+asyncpg://" + direct_db_url[len(prefix):]
+        break
+
 # Escape '%' as '%%' to prevent configparser interpolation errors with URL-encoded passwords
 config.set_main_option("sqlalchemy.url", direct_db_url.replace("%", "%%"))
 

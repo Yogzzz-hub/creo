@@ -217,6 +217,16 @@ class Settings(BaseSettings):
 
     def model_post_init(self, __context: Any) -> None:
         """Resolve cross-field dependencies like SECRET_KEY fallback and CORS origins."""
+        # Database URL reconciliation:
+        # If DIRECT_DATABASE_URL is not set or defaults to localhost while DATABASE_URL
+        # points to a remote host (e.g. Render/Supabase), fall back to DATABASE_URL.
+        if (
+            "DIRECT_DATABASE_URL" not in self.model_fields_set
+            or not self.DIRECT_DATABASE_URL
+            or ("localhost" in self.DIRECT_DATABASE_URL and "localhost" not in self.DATABASE_URL)
+        ):
+            self.DIRECT_DATABASE_URL = self.DATABASE_URL
+
         # A deployment that supplies REDIS_URL must not silently leave background
         # jobs pointing at localhost. Preserve explicitly configured queue stores.
         if "CELERY_BROKER_URL" not in self.model_fields_set:
