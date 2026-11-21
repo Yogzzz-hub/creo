@@ -232,7 +232,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             await asyncio.to_thread(_run_alembic_upgrade)
             logger.info("auto_alembic_upgrade_completed")
         except Exception as exc:
-            logger.error("auto_alembic_upgrade_failed", error=str(exc))
+            logger.error("auto_alembic_upgrade_failed", error=str(exc), exc_info=True)
 
     async with AsyncSessionLocal() as db:
         ready, reason = await check_database_schema_ready(db)

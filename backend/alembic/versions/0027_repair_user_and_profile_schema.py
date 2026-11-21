@@ -26,34 +26,32 @@ def upgrade() -> None:
     # 1. Ensure extensions
     op.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
 
-    # 1.1 Ensure enums exist
-    op.execute("""
-        DO $$ BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-                CREATE TYPE user_role AS ENUM (
-                    'super_admin', 'admin', 'sales', 'bde', 'bde_head', 'team_lead',
-                    'editor', 'designer', 'freelancer', 'client', 'investor_relations'
-                );
-            ELSE
-                BEGIN
-                    ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'bde';
-                    ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'bde_head';
-                    ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'freelancer';
-                EXCEPTION WHEN OTHERS THEN
-                    NULL;
-                END;
-            END IF;
-        END $$;
-    """)
-    op.execute("""
-        DO $$ BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'account_status') THEN
-                CREATE TYPE account_status AS ENUM (
-                    'pending_verification', 'active', 'lapsed', 'suspended', 'cancelled'
-                );
-            END IF;
-        END $$;
-    """)
+    # 1.1 Ensure enums exist safely without illegal ALTER TYPE inside DO $$ blocks
+    with op.get_context().autocommit_block():
+        op.execute("""
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+                    CREATE TYPE user_role AS ENUM (
+                        'super_admin', 'admin', 'sales', 'bde', 'bde_head', 'team_lead',
+                        'editor', 'designer', 'freelancer', 'client', 'investor_relations'
+                    );
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'account_status') THEN
+                    CREATE TYPE account_status AS ENUM (
+                        'pending_verification', 'active', 'lapsed', 'suspended', 'cancelled'
+                    );
+                END IF;
+            END $$;
+        """)
+        for role_val in (
+            'super_admin', 'admin', 'sales', 'bde', 'bde_head', 'team_lead',
+            'editor', 'designer', 'freelancer', 'client', 'investor_relations'
+        ):
+            op.execute(f"ALTER TYPE user_role ADD VALUE IF NOT EXISTS '{role_val}';")
+        for status_val in (
+            'pending_verification', 'active', 'lapsed', 'suspended', 'cancelled'
+        ):
+            op.execute(f"ALTER TYPE account_status ADD VALUE IF NOT EXISTS '{status_val}';")
 
     # 2. Ensure agencies table exists and default agency is seeded safely
     op.execute("""
