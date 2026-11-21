@@ -117,6 +117,13 @@ async def check_database_schema_ready(session: AsyncSession) -> tuple[bool, str 
             if ("users", col) not in col_map:
                 return False, f"Required column 'users.{col}' is missing from the database."
 
+        # 4. Direct SQL query probe to guarantee PostgreSQL query resolution matches model definitions
+        await session.execute(text("SELECT id, agency_id, role, account_status FROM users LIMIT 0;"))
+        await session.execute(text("SELECT id FROM agencies LIMIT 0;"))
+        await session.execute(text("SELECT user_id FROM client_profiles LIMIT 0;"))
+        await session.execute(text("SELECT user_id FROM staff_profiles LIMIT 0;"))
+        await session.execute(text("SELECT client_id, stage FROM v_client_onboarding LIMIT 0;"))
+
         return True, None
     except Exception as exc:
         return False, f"Error validating database schema readiness: {exc}"
