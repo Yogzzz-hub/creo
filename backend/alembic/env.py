@@ -60,6 +60,12 @@ def do_run_migrations(connection: Connection) -> None:
         from sqlalchemy import text
         connection.execute(text("CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(64) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num));"))
         connection.execute(text("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(64);"))
+        connection.execute(text("""
+            INSERT INTO alembic_version (version_num)
+            SELECT '0026_revenue_crm'
+            WHERE NOT EXISTS (SELECT 1 FROM alembic_version)
+              AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users');
+        """))
         connection.commit()
     except Exception:
         pass

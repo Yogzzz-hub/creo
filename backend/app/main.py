@@ -206,7 +206,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     )
     # 1. Deployment and database schema readiness verification
     from app.db.session import AsyncSessionLocal
+    from sqlalchemy import text
     async with AsyncSessionLocal() as db:
+        # Pre-seed alembic_version with 0026_revenue_crm if empty on an existing database
+        try:
+            await db.execute(text("CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(64) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num));"))
+            await db.execute(text("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(64);"))
+            await db.execute(text("""
+                INSERT INTO alembic_version (version_num)
+                SELECT '0026_revenue_crm'
+                WHERE NOT EXISTS (SELECT 1 FROM alembic_version)
+                  AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users');
+            """))
+            await db.commit()
+        except Exception as exc:
+            logger.warning("alembic_version_precheck_failed", error=str(exc))
+
         ready, reason = await check_database_schema_ready(db)
         if not ready:
             logger.warning("database_schema_not_ready_attempting_auto_upgrade", reason=reason)
