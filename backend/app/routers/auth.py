@@ -18,7 +18,7 @@ from fastapi.responses import RedirectResponse
 import httpx
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select, func, update, or_
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -181,7 +181,7 @@ async def _get_user_by_email(db: AsyncSession, email: str) -> User | None:
     """Case-insensitive lookup; the oldest row wins if legacy case-variant duplicates exist."""
     stmt = (
         select(User)
-        .options(selectinload(User.client_profile))
+        .options(joinedload(User.client_profile))
         .where(func.lower(User.email) == _normalize_email(email))
         .order_by(User.created_at.asc())
         .limit(1)

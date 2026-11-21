@@ -119,7 +119,7 @@ const COPY: Record<
 
 export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
   return (
-    <div className="public-site auth-page min-h-[100svh]">
+    <div className="public-site auth-page min-h-[100svh] lg:h-[100svh] lg:max-h-[100svh] lg:overflow-hidden">
       <Stage3DRoot>
         <AuthScreen defaultView={defaultView} />
       </Stage3DRoot>
@@ -376,7 +376,7 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
       playOnMount
       delay={0.1}
       text={copy.title}
-      className={`creo-display block text-[clamp(2.75rem,5.4vw,5.5rem)] leading-[0.95] ${DISPLAY} ${className}`}
+      className={`creo-display block text-[clamp(2.2rem,3.8vw,4.5rem)] leading-[0.95] ${DISPLAY} ${className}`}
     />
   );
 
@@ -386,24 +386,24 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
       <ThemeToggle variant="site" />
       <Link
         to="/"
-        className="inline-flex min-h-10 items-center gap-2 rounded-full border-2 border-hi/15 px-4 text-sm font-semibold text-site-ink transition-colors hover:border-[var(--tone-accent)]"
+        className="inline-flex min-h-9 lg:min-h-10 items-center gap-2 rounded-full border-2 border-hi/15 px-3.5 lg:px-4 text-xs lg:text-sm font-semibold text-site-ink transition-colors hover:border-[var(--tone-accent)]"
       >
-        <ArrowLeft className="size-4" />
+        <ArrowLeft className="size-3.5 lg:size-4" />
         Back to site
       </Link>
     </div>
   );
 
   return (
-    <div className="grid min-h-[100svh] lg:grid-cols-2">
+    <div className="grid min-h-[100svh] lg:h-[100svh] lg:max-h-[100svh] lg:grid-cols-2 lg:overflow-hidden">
       {/* Brand panel — the chrome "c." turning on amber, with the headline for each step */}
       <section
         ref={brandRef}
-        className="st-tone st-brand relative flex h-[26svh] min-h-[200px] flex-col overflow-hidden px-6 pt-5 sm:px-10 lg:sticky lg:top-0 lg:h-[100svh] lg:px-12 lg:pb-12 lg:pt-8"
+        className="st-tone st-brand relative flex h-[26svh] min-h-[200px] flex-col overflow-hidden px-6 pt-5 sm:px-10 lg:sticky lg:top-0 lg:h-[100svh] lg:max-h-[100svh] lg:px-10 xl:px-12 lg:pb-8 xl:pb-10 lg:pt-6"
       >
         <div
           ref={markViewRef}
-          className="pointer-events-none absolute inset-0 top-10 lg:bottom-[47%] lg:top-[5%]"
+          className="pointer-events-none absolute inset-0 top-10 lg:bottom-[45%] lg:top-[3%]"
         />
         <header className="relative z-10 flex items-center justify-between gap-3">
           <AuthWordmark />
@@ -411,24 +411,24 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
         </header>
         <div className="relative z-10 mt-auto hidden lg:block">
           <p className={EYEBROW}>{copy.eyebrow}</p>
-          {headline("mt-5 max-w-[12ch]")}
+          {headline("mt-3 lg:mt-4 max-w-[12ch]")}
           <motion.p
             key={lead}
             initial={reduce ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.35, ease: EASE_OUT_EXPO }}
-            className="mt-6 max-w-md text-lg leading-relaxed text-site-mist"
+            className="mt-3 lg:mt-4 max-w-md text-sm lg:text-base leading-relaxed text-site-mist"
           >
             {lead}
           </motion.p>
           {copy.points.length > 0 && (
-            <ul className="mt-8 grid gap-2.5 border-t border-hi/15 pt-6 [@media(max-height:760px)]:hidden">
+            <ul className="mt-4 lg:mt-5 grid gap-2 border-t border-hi/15 pt-4 text-sm [@media(max-height:800px)]:hidden">
               {copy.points.map((point) => (
                 <li
                   key={point}
-                  className="flex items-start gap-3 text-base font-medium text-site-ink"
+                  className="flex items-start gap-2.5 font-medium text-site-ink"
                 >
-                  <Check className="mt-1 size-4 shrink-0" strokeWidth={3} />
+                  <Check className="mt-0.5 size-3.5 shrink-0" strokeWidth={3} />
                   {point}
                 </li>
               ))}
@@ -438,10 +438,10 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
       </section>
 
       {/* Form panel */}
-      <section className="st-tone st-base relative flex flex-col px-6 pb-8 pt-6 sm:px-10 lg:px-16 lg:pt-8">
+      <section className="st-tone st-base relative flex flex-col justify-between px-6 pb-6 pt-5 sm:px-10 lg:h-[100svh] lg:max-h-[100svh] lg:overflow-hidden lg:px-12 xl:px-16 lg:py-6">
         <div className="hidden justify-end lg:flex">{controls}</div>
 
-        <div className="mx-auto flex w-full max-w-[440px] flex-1 flex-col justify-center pb-10 pt-4 lg:py-16">
+        <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center my-auto py-2">
           {/* Phones get the headline here, under the brand band */}
           <div className="mb-9 lg:hidden">
             <p className={EYEBROW}>{copy.eyebrow}</p>
@@ -451,7 +451,7 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
 
           {/* Sign in / create account; hidden while verifying so the code step stays focused */}
           {!registrationPending && (
-            <div className="mb-10 flex w-full rounded-full border-2 border-hi/15 p-1">
+            <div className="mb-4 lg:mb-5 flex w-full rounded-full border-2 border-hi/15 p-1">
               {(["signin", "signup"] as const).map((option) => {
                 const active = mode === option;
                 return (
@@ -460,7 +460,7 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
                     type="button"
                     aria-pressed={active}
                     onClick={() => switchMode(option)}
-                    className={`relative flex-1 cursor-pointer rounded-full px-4 py-2.5 text-sm font-semibold transition-colors duration-300 ${
+                    className={`relative flex-1 cursor-pointer rounded-full px-4 py-1.5 lg:py-2 text-sm font-semibold transition-colors duration-300 ${
                       active ? "text-[var(--tone-bg)]" : "text-site-mist hover:text-site-ink"
                     }`}
                   >
@@ -506,7 +506,7 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
                 return (
                   <div
                     role="alert"
-                    className="mb-8 rounded-[1.75rem] border-2 border-[var(--tone-accent)] p-5"
+                    className="mb-4 lg:mb-5 rounded-[1.75rem] border-2 border-[var(--tone-accent)] p-4 sm:p-5"
                   >
                     <div className="flex items-start gap-3.5">
                       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#d2965a] text-[var(--on-brand)]">
@@ -567,7 +567,7 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
             : error && (
                 <div
                   role="alert"
-                  className="mb-8 rounded-2xl border border-site-rose/40 bg-site-rose/10 px-5 py-4 text-sm font-medium leading-relaxed text-site-ink"
+                  className="mb-4 lg:mb-5 rounded-2xl border border-site-rose/40 bg-site-rose/10 px-4 py-3 text-sm font-medium leading-relaxed text-site-ink"
                 >
                   {error.message}
                   {error.code === "INVALID_CREDENTIALS" && (
@@ -586,7 +586,7 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
               )}
 
           {registrationPending ? (
-            <form onSubmit={handleVerifyRegistration} className="space-y-8">
+            <form onSubmit={handleVerifyRegistration} className="space-y-4 lg:space-y-5">
               <AuthField id={fieldId("otp")} label="Verification code">
                 <input
                   id={fieldId("otp")}
@@ -596,7 +596,7 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   placeholder="000000"
-                  className={`${FIELD_INPUT} text-center font-mono text-4xl! tracking-[0.45em]`}
+                  className={`${FIELD_INPUT} text-center font-mono text-3xl lg:text-4xl! tracking-[0.45em]`}
                   autoFocus
                   required
                 />
@@ -631,7 +631,7 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
               </div>
             </form>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-7">
+            <form onSubmit={handleSubmit} className="space-y-3 lg:space-y-3.5">
               {mode === "signup" && (
                 <>
                   <AuthField id={fieldId("name")} label="Full name">
@@ -688,7 +688,7 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
                     <button
                       type="button"
                       onClick={() => setForgotOpen(true)}
-                      className={`text-sm ${TEXT_ACTION}`}
+                      className={`text-xs lg:text-sm ${TEXT_ACTION}`}
                     >
                       Forgot password?
                     </button>
@@ -710,14 +710,14 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-site-mist transition-colors hover:text-site-ink"
+                  className="flex size-9 lg:size-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-site-mist transition-colors hover:text-site-ink"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                  {showPassword ? <EyeOff className="size-4 lg:size-5" /> : <Eye className="size-4 lg:size-5" />}
                 </button>
               </AuthField>
 
-              <label className="flex w-fit cursor-pointer select-none items-center gap-3 text-sm font-medium text-site-mist transition-colors hover:text-site-ink">
+              <label className="flex w-fit cursor-pointer select-none items-center gap-2.5 text-xs lg:text-sm font-medium text-site-mist transition-colors hover:text-site-ink">
                 <input
                   type="checkbox"
                   className="peer sr-only"
@@ -728,8 +728,8 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
                       : setRememberMe(e.target.checked)
                   }
                 />
-                <span className="flex size-5 shrink-0 items-center justify-center rounded-md border-2 border-hi/25 text-[var(--on-brand)] transition-colors peer-checked:border-[#d2965a] peer-checked:bg-[#d2965a] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--site-blue)] [&>svg]:opacity-0 peer-checked:[&>svg]:opacity-100">
-                  <Check className="size-3.5" strokeWidth={3.5} />
+                <span className="flex size-4.5 lg:size-5 shrink-0 items-center justify-center rounded-md border-2 border-hi/25 text-[var(--on-brand)] transition-colors peer-checked:border-[#d2965a] peer-checked:bg-[#d2965a] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--site-blue)] [&>svg]:opacity-0 peer-checked:[&>svg]:opacity-100">
+                  <Check className="size-3 lg:size-3.5" strokeWidth={3.5} />
                 </span>
                 {mode === "signup" ? (
                   <span>
@@ -753,10 +753,10 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
                 )}
               </label>
 
-              <div className="pt-1">
+              <div className="pt-0.5">
                 <SubmitPill loading={loading}>{submitLabel}</SubmitPill>
                 {loading && slowServerWake && (
-                  <output className="mt-3 block text-center text-sm text-site-mist">
+                  <output className="mt-2 block text-center text-xs lg:text-sm text-site-mist">
                     The server was asleep after a quiet spell. Waking it up can take about 30
                     seconds.
                   </output>
@@ -767,7 +767,7 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
 
           {!registrationPending && (
             <>
-              <div className={`my-7 flex items-center gap-4 ${EYEBROW}`}>
+              <div className={`my-3 lg:my-3.5 flex items-center gap-4 ${EYEBROW}`}>
                 <span className="h-px flex-1 bg-hi/10" />
                 or
                 <span className="h-px flex-1 bg-hi/10" />
@@ -785,7 +785,7 @@ function AuthScreen({ defaultView }: { defaultView: string }) {
           )}
         </div>
 
-        <p className="mx-auto w-full max-w-[440px] text-center text-sm text-site-mist">
+        <p className="mx-auto w-full max-w-[420px] text-center text-xs lg:text-sm text-site-mist shrink-0 pt-1 lg:pt-0">
           Need a hand?{" "}
           <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className={TEXT_ACTION}>
             Message us on WhatsApp

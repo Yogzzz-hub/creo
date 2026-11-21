@@ -47,7 +47,7 @@ export const EYEBROW = "text-xs font-bold uppercase tracking-[0.18em] text-site-
 
 /** Bare input that sits on an AuthField's ruled line. */
 export const FIELD_INPUT =
-  "w-full min-w-0 bg-transparent py-3 text-xl font-medium tracking-[-0.02em] text-site-ink placeholder:text-site-mist/45 focus:outline-none";
+  "w-full min-w-0 bg-transparent py-1.5 lg:py-2 text-lg lg:text-xl font-medium tracking-[-0.02em] text-site-ink placeholder:text-site-mist/45 focus:outline-none";
 
 /** Label above a ruled line that turns the section accent while its input has focus. */
 export function AuthField({
@@ -69,7 +69,7 @@ export function AuthField({
         </label>
         {hint}
       </div>
-      <div className="mt-1 flex items-center gap-3 border-b-2 border-hi/15 transition-colors duration-300 focus-within:border-[var(--tone-accent)]">
+      <div className="mt-0.5 lg:mt-1 flex items-center gap-2 border-b-2 border-hi/15 transition-colors duration-300 focus-within:border-[var(--tone-accent)]">
         {children}
       </div>
     </div>
@@ -95,11 +95,11 @@ export function SubmitPill({
       type={type}
       onClick={onClick}
       disabled={disabled || loading}
-      className="group flex w-full cursor-pointer items-center justify-between gap-4 rounded-full bg-site-ink py-2 pl-7 pr-2 text-left text-base font-semibold text-[var(--tone-bg,var(--site-bg))] transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+      className="group flex w-full cursor-pointer items-center justify-between gap-4 rounded-full bg-site-ink py-1.5 lg:py-2 pl-6 pr-1.5 text-left text-sm lg:text-base font-semibold text-[var(--tone-bg,var(--site-bg))] transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
     >
       <span>{children}</span>
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#d2965a] text-[var(--on-brand)] transition-transform duration-300 group-enabled:group-hover:translate-x-1">
-        {loading ? <Loader2 className="size-5 animate-spin" /> : <ArrowRight className="size-5" />}
+      <span className="flex size-9 lg:size-10 shrink-0 items-center justify-center rounded-full bg-[#d2965a] text-[var(--on-brand)] transition-transform duration-300 group-enabled:group-hover:translate-x-1">
+        {loading ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
       </span>
     </button>
   );
@@ -107,7 +107,7 @@ export function SubmitPill({
 
 /** Outlined pill for second choices (Google, start over, cancel). */
 export const OUTLINE_PILL =
-  "flex min-h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-full border-2 border-hi/15 px-5 py-2.5 text-base font-semibold text-site-ink transition-colors duration-300 hover:border-[var(--tone-accent)] disabled:cursor-not-allowed disabled:opacity-50";
+  "flex min-h-10 lg:min-h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-full border-2 border-hi/15 px-5 py-2 text-sm lg:text-base font-semibold text-site-ink transition-colors duration-300 hover:border-[var(--tone-accent)] disabled:cursor-not-allowed disabled:opacity-50";
 
 /** Underlined text action in the section accent. */
 export const TEXT_ACTION =

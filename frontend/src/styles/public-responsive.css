@@ -94,6 +94,14 @@
   }
 }
 
+@media (min-width: 1024px) {
+  .auth-page {
+    height: 100svh;
+    max-height: 100svh;
+    overflow: hidden;
+  }
+}
+
 @media (pointer: coarse) {
   .public-site :where(input, select, textarea),
   .auth-page input {

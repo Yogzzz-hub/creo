@@ -20,6 +20,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # 0. Ensure alembic_version column is wide enough to store this and future revision IDs
+    op.execute("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(64);")
+
     # 1. Ensure extensions
     op.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
 
@@ -52,7 +55,7 @@ def upgrade() -> None:
         END $$;
     """)
 
-    # 2. Ensure agencies table exists
+    # 2. Ensure agencies table exists and default agency is seeded safely
     op.execute("""
         CREATE TABLE IF NOT EXISTS agencies (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -71,8 +74,10 @@ def upgrade() -> None:
     """)
     op.execute("""
         INSERT INTO agencies (id, name, slug, status, plan_tier, max_clients, max_staff, branding, timezone)
-        VALUES ('00000000-0000-0000-0000-000000000001', 'Creo Digital', 'creo', 'active', 'enterprise', 2000, 100, '{}', 'Asia/Kolkata')
-        ON CONFLICT (slug) DO NOTHING;
+        SELECT '00000000-0000-0000-0000-000000000001', 'Creo Digital', 'creo', 'active', 'enterprise', 2000, 100, '{}'::jsonb, 'Asia/Kolkata'
+        WHERE NOT EXISTS (
+            SELECT 1 FROM agencies WHERE id = '00000000-0000-0000-0000-000000000001' OR slug = 'creo'
+        );
     """)
 
     # 3. Ensure teams table exists
@@ -87,6 +92,9 @@ def upgrade() -> None:
             updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
         );
     """)
+
+    # 3.1 Drop dependent views temporarily to allow column type alters without error
+    op.execute("DROP VIEW IF EXISTS v_client_onboarding CASCADE;")
 
     # 4. Ensure all user columns exist
     op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS agency_id UUID;")
@@ -113,11 +121,22 @@ def upgrade() -> None:
         END $$;
     """)
 
-    # Set agency_id fallback
+    # Set agency_id fallback and foreign key
     op.execute("""
         UPDATE users
-        SET agency_id = '00000000-0000-0000-0000-000000000001'
+        SET agency_id = (SELECT id FROM agencies ORDER BY (status = 'active') DESC, created_at ASC LIMIT 1)
         WHERE agency_id IS NULL;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.table_constraints
+                WHERE table_name = 'users' AND constraint_name = 'users_agency_id_fkey' AND table_schema = 'public'
+            ) THEN
+                ALTER TABLE users ADD CONSTRAINT users_agency_id_fkey
+                    FOREIGN KEY (agency_id) REFERENCES agencies(id) ON DELETE CASCADE;
+            END IF;
+        END $$;
     """)
 
     # 5. Fix users.id data type if it is not UUID, and guarantee primary key
@@ -180,13 +199,16 @@ def upgrade() -> None:
         END $$;
     """)
 
-    # 6. Ensure client_profiles table exists and has UUID primary key
+    # 6. Ensure client_profiles table exists and has UUID primary key matching users(id)
     op.execute("""
         DO $$
+        DECLARE
+            cp_type text;
+            cp_udt text;
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'client_profiles') THEN
                 CREATE TABLE client_profiles (
-                    user_id UUID PRIMARY KEY,
+                    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
                     company_name TEXT,
                     brand_logo_url TEXT,
                     instagram_username VARCHAR(255),
@@ -210,22 +232,40 @@ def upgrade() -> None:
                     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
                 );
             ELSE
-                BEGIN
+                SELECT data_type, udt_name INTO cp_type, cp_udt 
+                FROM information_schema.columns 
+                WHERE table_schema = 'public' AND table_name = 'client_profiles' AND column_name = 'user_id';
+                
+                IF cp_type IS NOT NULL AND cp_type != 'uuid' AND cp_udt != 'uuid' THEN
                     ALTER TABLE client_profiles DROP CONSTRAINT IF EXISTS client_profiles_pkey CASCADE;
-                    ALTER TABLE client_profiles ALTER COLUMN user_id TYPE UUID USING user_id::text::uuid;
+                    ALTER TABLE client_profiles DROP CONSTRAINT IF EXISTS client_profiles_user_id_fkey CASCADE;
+                    ALTER TABLE client_profiles ALTER COLUMN user_id TYPE UUID 
+                        USING (
+                            CASE 
+                                WHEN user_id::text ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' 
+                                THEN user_id::text::uuid 
+                                ELSE gen_random_uuid() 
+                            END
+                        );
                     ALTER TABLE client_profiles ADD PRIMARY KEY (user_id);
-                EXCEPTION WHEN OTHERS THEN
-                    NULL;
-                END;
-            END IF;
+                END IF;
 
-            BEGIN
-                ALTER TABLE client_profiles DROP CONSTRAINT IF EXISTS client_profiles_user_id_fkey;
-                ALTER TABLE client_profiles ADD CONSTRAINT client_profiles_user_id_fkey 
-                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-            EXCEPTION WHEN OTHERS THEN
-                NULL;
-            END;
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints 
+                    WHERE table_name = 'client_profiles' AND constraint_type = 'PRIMARY KEY' AND table_schema = 'public'
+                ) THEN
+                    ALTER TABLE client_profiles ADD PRIMARY KEY (user_id);
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints 
+                    WHERE table_name = 'client_profiles' AND constraint_name = 'client_profiles_user_id_fkey' AND table_schema = 'public'
+                ) THEN
+                    DELETE FROM client_profiles WHERE user_id NOT IN (SELECT id FROM users);
+                    ALTER TABLE client_profiles ADD CONSTRAINT client_profiles_user_id_fkey 
+                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+                END IF;
+            END IF;
         END $$;
     """)
 
@@ -248,11 +288,14 @@ def upgrade() -> None:
     # 7. Ensure staff_profiles table exists and has safe foreign keys
     op.execute("""
         DO $$
+        DECLARE
+            sp_type text;
+            sp_udt text;
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'staff_profiles') THEN
                 CREATE TABLE staff_profiles (
-                    user_id UUID PRIMARY KEY,
-                    agency_id UUID,
+                    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                    agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE,
                     department VARCHAR(50) DEFAULT 'creative' NOT NULL,
                     craft_role VARCHAR(30) DEFAULT 'graphic_designer' NOT NULL,
                     skills TEXT[] DEFAULT '{}'::text[] NOT NULL,
@@ -261,11 +304,29 @@ def upgrade() -> None:
                     daily_points INT DEFAULT 8 NOT NULL,
                     monthly_points INT DEFAULT 100 NOT NULL,
                     is_accepting_work BOOLEAN DEFAULT true NOT NULL,
-                    team_lead_id UUID,
+                    team_lead_id UUID REFERENCES users(id) ON DELETE SET NULL,
                     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
                     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
                 );
             ELSE
+                SELECT data_type, udt_name INTO sp_type, sp_udt 
+                FROM information_schema.columns 
+                WHERE table_schema = 'public' AND table_name = 'staff_profiles' AND column_name = 'user_id';
+                
+                IF sp_type IS NOT NULL AND sp_type != 'uuid' AND sp_udt != 'uuid' THEN
+                    ALTER TABLE staff_profiles DROP CONSTRAINT IF EXISTS staff_profiles_pkey CASCADE;
+                    ALTER TABLE staff_profiles DROP CONSTRAINT IF EXISTS staff_profiles_user_id_fkey CASCADE;
+                    ALTER TABLE staff_profiles ALTER COLUMN user_id TYPE UUID 
+                        USING (
+                            CASE 
+                                WHEN user_id::text ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' 
+                                THEN user_id::text::uuid 
+                                ELSE gen_random_uuid() 
+                            END
+                        );
+                    ALTER TABLE staff_profiles ADD PRIMARY KEY (user_id);
+                END IF;
+
                 ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS agency_id UUID;
                 ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS department VARCHAR(50) DEFAULT 'creative' NOT NULL;
                 ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS craft_role VARCHAR(30) DEFAULT 'graphic_designer' NOT NULL;
@@ -276,64 +337,131 @@ def upgrade() -> None:
                 ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS monthly_points INT DEFAULT 100 NOT NULL;
                 ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS is_accepting_work BOOLEAN DEFAULT true NOT NULL;
                 ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS team_lead_id UUID;
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints 
+                    WHERE table_name = 'staff_profiles' AND constraint_type = 'PRIMARY KEY' AND table_schema = 'public'
+                ) THEN
+                    ALTER TABLE staff_profiles ADD PRIMARY KEY (user_id);
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints 
+                    WHERE table_name = 'staff_profiles' AND constraint_name = 'staff_profiles_user_id_fkey' AND table_schema = 'public'
+                ) THEN
+                    DELETE FROM staff_profiles WHERE user_id NOT IN (SELECT id FROM users);
+                    ALTER TABLE staff_profiles ADD CONSTRAINT staff_profiles_user_id_fkey 
+                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints 
+                    WHERE table_name = 'staff_profiles' AND constraint_name = 'staff_profiles_agency_id_fkey' AND table_schema = 'public'
+                ) THEN
+                    ALTER TABLE staff_profiles ADD CONSTRAINT staff_profiles_agency_id_fkey 
+                        FOREIGN KEY (agency_id) REFERENCES agencies(id) ON DELETE CASCADE;
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints 
+                    WHERE table_name = 'staff_profiles' AND constraint_name = 'staff_profiles_team_lead_id_fkey' AND table_schema = 'public'
+                ) THEN
+                    ALTER TABLE staff_profiles ADD CONSTRAINT staff_profiles_team_lead_id_fkey 
+                        FOREIGN KEY (team_lead_id) REFERENCES users(id) ON DELETE SET NULL;
+                END IF;
             END IF;
-
-            BEGIN
-                ALTER TABLE staff_profiles DROP CONSTRAINT IF EXISTS staff_profiles_user_id_fkey;
-                ALTER TABLE staff_profiles ADD CONSTRAINT staff_profiles_user_id_fkey 
-                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-            EXCEPTION WHEN OTHERS THEN
-                NULL;
-            END;
-
-            BEGIN
-                ALTER TABLE staff_profiles DROP CONSTRAINT IF EXISTS staff_profiles_agency_id_fkey;
-                ALTER TABLE staff_profiles ADD CONSTRAINT staff_profiles_agency_id_fkey 
-                    FOREIGN KEY (agency_id) REFERENCES agencies(id) ON DELETE CASCADE;
-            EXCEPTION WHEN OTHERS THEN
-                NULL;
-            END;
-
-            BEGIN
-                ALTER TABLE staff_profiles DROP CONSTRAINT IF EXISTS staff_profiles_team_lead_id_fkey;
-                ALTER TABLE staff_profiles ADD CONSTRAINT staff_profiles_team_lead_id_fkey 
-                    FOREIGN KEY (team_lead_id) REFERENCES users(id) ON DELETE SET NULL;
-            EXCEPTION WHEN OTHERS THEN
-                NULL;
-            END;
         END $$;
     """)
 
-    # 8. Ensure indexes safely
+    # 8. Re-create v_client_onboarding view with complete stage derivation
+    op.execute("""
+        CREATE OR REPLACE VIEW v_client_onboarding AS
+        SELECT
+            u.id AS client_id,
+            CASE
+                WHEN cp.onboarding_completed_at IS NOT NULL 
+                     AND EXISTS (SELECT 1 FROM content_calendar cc WHERE cc.client_id = u.id)
+                     AND EXISTS (SELECT 1 FROM client_assignments ca WHERE ca.client_id = u.id)
+                     AND cp.brand_dna IS NOT NULL AND cp.brand_dna <> '{}'::jsonb
+                     AND q.core_completed_at IS NOT NULL
+                     AND s.id IS NOT NULL AND s.status IN ('trialing', 'active')
+                     AND cp.terms_accepted_at IS NOT NULL
+                     AND (u.email_verified_at IS NOT NULL OR u.account_status <> 'pending_verification')
+                THEN 8
+                WHEN EXISTS (SELECT 1 FROM content_calendar cc WHERE cc.client_id = u.id)
+                     AND EXISTS (SELECT 1 FROM client_assignments ca WHERE ca.client_id = u.id)
+                     AND cp.brand_dna IS NOT NULL AND cp.brand_dna <> '{}'::jsonb
+                     AND q.core_completed_at IS NOT NULL
+                     AND s.id IS NOT NULL AND s.status IN ('trialing', 'active')
+                     AND cp.terms_accepted_at IS NOT NULL
+                     AND (u.email_verified_at IS NOT NULL OR u.account_status <> 'pending_verification')
+                THEN 7
+                WHEN EXISTS (SELECT 1 FROM client_assignments ca WHERE ca.client_id = u.id)
+                     AND cp.brand_dna IS NOT NULL AND cp.brand_dna <> '{}'::jsonb
+                     AND q.core_completed_at IS NOT NULL
+                     AND s.id IS NOT NULL AND s.status IN ('trialing', 'active')
+                     AND cp.terms_accepted_at IS NOT NULL
+                     AND (u.email_verified_at IS NOT NULL OR u.account_status <> 'pending_verification')
+                THEN 6
+                WHEN cp.brand_dna IS NOT NULL AND cp.brand_dna <> '{}'::jsonb
+                     AND q.core_completed_at IS NOT NULL
+                     AND s.id IS NOT NULL AND s.status IN ('trialing', 'active')
+                     AND cp.terms_accepted_at IS NOT NULL
+                     AND (u.email_verified_at IS NOT NULL OR u.account_status <> 'pending_verification')
+                THEN 5
+                WHEN q.core_completed_at IS NOT NULL
+                     AND s.id IS NOT NULL AND s.status IN ('trialing', 'active')
+                     AND cp.terms_accepted_at IS NOT NULL
+                     AND (u.email_verified_at IS NOT NULL OR u.account_status <> 'pending_verification')
+                THEN 4
+                WHEN s.id IS NOT NULL AND s.status IN ('trialing', 'active')
+                     AND cp.terms_accepted_at IS NOT NULL
+                     AND (u.email_verified_at IS NOT NULL OR u.account_status <> 'pending_verification')
+                THEN 3
+                WHEN cp.terms_accepted_at IS NOT NULL
+                     AND (u.email_verified_at IS NOT NULL OR u.account_status <> 'pending_verification')
+                THEN 2
+                WHEN u.email_verified_at IS NOT NULL OR u.account_status <> 'pending_verification'
+                THEN 1
+                ELSE 0
+            END AS stage
+        FROM users u
+        LEFT JOIN client_profiles cp ON cp.user_id = u.id
+        LEFT JOIN questionnaires q ON q.user_id = u.id
+        LEFT JOIN subscriptions s ON s.client_id = u.id AND s.status IN ('trialing', 'active')
+        WHERE u.role = 'client';
+    """)
+
+    # 9. Ensure indexes safely
     op.execute("""
         DO $$
         BEGIN
-            BEGIN
-                CREATE INDEX IF NOT EXISTS idx_users_agency ON users (agency_id, role, created_at);
-            EXCEPTION WHEN OTHERS THEN
-                NULL;
-            END;
-
-            BEGIN
-                CREATE INDEX IF NOT EXISTS idx_users_role_created_at ON users (role, created_at);
-            EXCEPTION WHEN OTHERS THEN
-                NULL;
-            END;
-
-            BEGIN
-                CREATE UNIQUE INDEX IF NOT EXISTS ix_users_google_sub ON users (google_sub);
-            EXCEPTION WHEN OTHERS THEN
-                NULL;
-            END;
-
-            BEGIN
-                CREATE INDEX IF NOT EXISTS ix_users_email_lower ON users (lower(email));
-            EXCEPTION WHEN OTHERS THEN
-                NULL;
-            END;
+            IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_users_agency') THEN
+                CREATE INDEX idx_users_agency ON users (agency_id, role, created_at);
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_users_role_created_at') THEN
+                CREATE INDEX idx_users_role_created_at ON users (role, created_at);
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'ix_users_google_sub') THEN
+                CREATE UNIQUE INDEX ix_users_google_sub ON users (google_sub);
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'ix_users_email_lower') THEN
+                CREATE INDEX ix_users_email_lower ON users (lower(email));
+            END IF;
         END $$;
     """)
 
 
 def downgrade() -> None:
-    pass
+    # 1. Drop indexes created in upgrade
+    op.execute("DROP INDEX IF EXISTS idx_users_agency;")
+    op.execute("DROP INDEX IF EXISTS idx_users_role_created_at;")
+    op.execute("DROP INDEX IF EXISTS ix_users_google_sub;")
+    op.execute("DROP INDEX IF EXISTS ix_users_email_lower;")
+
+    # 2. Drop foreign keys added in upgrade
+    op.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_agency_id_fkey;")
+    op.execute("ALTER TABLE client_profiles DROP CONSTRAINT IF EXISTS client_profiles_user_id_fkey;")
+    op.execute("ALTER TABLE staff_profiles DROP CONSTRAINT IF EXISTS staff_profiles_user_id_fkey;")
+    op.execute("ALTER TABLE staff_profiles DROP CONSTRAINT IF EXISTS staff_profiles_agency_id_fkey;")
+    op.execute("ALTER TABLE staff_profiles DROP CONSTRAINT IF EXISTS staff_profiles_team_lead_id_fkey;")
